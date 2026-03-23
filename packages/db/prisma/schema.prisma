@@ -43,6 +43,61 @@ enum StoryStatus {
   in_progress
 }
 
+enum GovernedObjectOriginType {
+  seeded
+  native
+  imported
+}
+
+enum GovernedObjectCreatedMode {
+  demo
+  clean
+  promotion
+}
+
+enum LineageSourceType {
+  artifact_intake_session
+  artifact_intake_file
+  artifact_aas_candidate
+}
+
+enum ArtifactAasCandidateType {
+  outcome
+  epic
+  story
+}
+
+enum ArtifactAasMappingState {
+  mapped
+  uncertain
+  missing
+}
+
+enum ArtifactComplianceFindingCategory {
+  missing
+  uncertain
+  human_only
+  blocked
+}
+
+enum ArtifactCandidateReviewStatus {
+  pending
+  confirmed
+  edited
+  rejected
+  follow_up_needed
+  promoted
+}
+
+enum ImportedGovernedReadinessState {
+  imported
+  imported_incomplete
+  imported_human_review_needed
+  imported_framing_ready
+  imported_design_ready
+  blocked
+}
+
 enum TollgateEntityType {
   outcome
   story
@@ -67,12 +122,14 @@ enum ActivityEntityType {
   tollgate
   artifact_intake_session
   artifact_intake_file
+  artifact_aas_candidate
 }
 
 enum ActivityEventType {
   demo_seeded
   outcome_created
   outcome_updated
+  epic_created
   story_created
   story_updated
   tollgate_recorded
@@ -80,6 +137,14 @@ enum ActivityEventType {
   artifact_intake_session_created
   artifact_file_uploaded
   artifact_file_rejected
+  artifact_candidate_compliance_analyzed
+  artifact_candidate_confirmed
+  artifact_candidate_edited
+  artifact_candidate_rejected
+  artifact_candidate_follow_up_marked
+  artifact_candidate_promoted
+  imported_progression_blocked
+  imported_progression_allowed
 }
 
 enum ArtifactIntakeSessionStatus {
@@ -137,6 +202,7 @@ model Organization {
   activityEvents        ActivityEvent[]
   artifactIntakeSessions ArtifactIntakeSession[]
   artifactIntakeFiles   ArtifactIntakeFile[]
+  artifactAasCandidates ArtifactAasCandidate[]
 }
 
 model AppUser {
@@ -180,6 +246,12 @@ model Outcome {
   riskProfile         RiskProfile         @default(medium)
   aiAccelerationLevel AiAccelerationLevel @default(level_2)
   status              OutcomeStatus       @default(draft)
+  originType          GovernedObjectOriginType @default(native)
+  createdMode         GovernedObjectCreatedMode @default(clean)
+  lineageSourceType   LineageSourceType?
+  lineageSourceId     String?
+  lineageNote         String?
+  importedReadinessState ImportedGovernedReadinessState?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -188,6 +260,7 @@ model Outcome {
   stories             Story[]
 
   @@unique([organizationId, key])
+  @@index([organizationId, originType])
 }
 
 model Epic {
@@ -198,6 +271,12 @@ model Epic {
   title          String
   purpose        String
   status         EpicStatus   @default(draft)
+  originType     GovernedObjectOriginType @default(native)
+  createdMode    GovernedObjectCreatedMode @default(clean)
+  lineageSourceType LineageSourceType?
+  lineageSourceId   String?
+  lineageNote       String?
+  importedReadinessState ImportedGovernedReadinessState?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -205,6 +284,7 @@ model Epic {
   stories        Story[]
 
   @@unique([organizationId, key])
+  @@index([organizationId, originType])
 }
 
 model Story {
@@ -222,6 +302,12 @@ model Story {
   testDefinition      String?
   definitionOfDone    String[]            @default([])
   status              StoryStatus         @default(draft)
+  originType          GovernedObjectOriginType @default(native)
+  createdMode         GovernedObjectCreatedMode @default(clean)
+  lineageSourceType   LineageSourceType?
+  lineageSourceId     String?
+  lineageNote         String?
+  importedReadinessState ImportedGovernedReadinessState?
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -229,6 +315,7 @@ model Story {
   epic                Epic                @relation(fields: [epicId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, key])
+  @@index([organizationId, originType])
 }
 
 model Tollgate {
@@ -281,6 +368,7 @@ model ArtifactIntakeSession {
   organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   creator        AppUser?                  @relation("ArtifactIntakeSessionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   files          ArtifactIntakeFile[]
+  candidates     ArtifactAasCandidate[]
 
   @@index([organizationId, createdAt])
   @@index([organizationId, status])
@@ -306,8 +394,50 @@ model ArtifactIntakeFile {
   intakeSession    ArtifactIntakeSession    @relation(fields: [intakeSessionId], references: [id], onDelete: Cascade)
   organization     Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   uploader         AppUser?                 @relation("ArtifactIntakeFileUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
+  candidates       ArtifactAasCandidate[]
 
   @@index([organizationId, uploadedAt])
   @@index([organizationId, sourceTypeStatus])
   @@index([intakeSessionId])
+}
+
+model ArtifactAasCandidate {
+  id                        String                        @id
+  intakeSessionId           String
+  fileId                    String
+  organizationId            String
+  type                      ArtifactAasCandidateType
+  title                     String
+  summary                   String
+  mappingState              ArtifactAasMappingState
+  sourceType                ArtifactSourceType
+  sourceConfidence          ExtractionConfidence
+  sourceSectionId           String
+  sourceSectionTitle        String
+  sourceSectionMarker       String
+  inferredOutcomeCandidateId String?
+  inferredEpicCandidateId   String?
+  relationshipState         ArtifactAasMappingState
+  relationshipNote          String?
+  acceptanceCriteria        String[]                      @default([])
+  testNotes                 String[]                      @default([])
+  draftRecord               Json
+  humanDecisions            Json
+  complianceResult          Json
+  reviewStatus              ArtifactCandidateReviewStatus @default(pending)
+  reviewComment             String?
+  followUpNeeded            Boolean                       @default(false)
+  importedReadinessState    ImportedGovernedReadinessState?
+  promotedEntityType        ArtifactAasCandidateType?
+  promotedEntityId          String?
+  promotedAt                DateTime?
+  createdAt                 DateTime                      @default(now())
+  updatedAt                 DateTime                      @updatedAt
+  organization              Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  intakeSession             ArtifactIntakeSession         @relation(fields: [intakeSessionId], references: [id], onDelete: Cascade)
+  file                      ArtifactIntakeFile            @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, intakeSessionId])
+  @@index([organizationId, fileId])
+  @@index([organizationId, reviewStatus])
 }

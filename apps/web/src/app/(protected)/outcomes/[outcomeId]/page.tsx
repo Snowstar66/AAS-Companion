@@ -145,6 +145,18 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Risk profile</p>
                   <p className="mt-2 text-lg font-semibold capitalize">{outcome.riskProfile}</p>
                 </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin</p>
+                  <p className="mt-2 text-lg font-semibold capitalize">{outcome.originType.replaceAll("_", " ")}</p>
+                </div>
+                {outcome.importedReadinessState ? (
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Imported readiness</p>
+                    <p className="mt-2 text-lg font-semibold capitalize text-sky-950">
+                      {outcome.importedReadinessState.replaceAll("_", " ")}
+                    </p>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 
@@ -353,6 +365,20 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 )}
               </CardContent>
             </Card>
+
+            {outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? (
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Imported lineage</CardTitle>
+                  <CardDescription>Trace this governed Outcome back to its reviewed import candidate.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="gap-2" variant="secondary">
+                    <Link href={`/review?candidateId=${outcome.lineageSourceId}`}>Open source candidate review</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         </div>
 

@@ -4,6 +4,12 @@ export {
   createArtifactIntakeSession,
   listArtifactIntakeSessions
 } from "./repositories/artifact-intake-repository";
+export {
+  getArtifactCandidateById,
+  listArtifactCandidatesForOrganization,
+  promoteArtifactCandidate,
+  reviewArtifactCandidate
+} from "./repositories/artifact-candidate-repository";
 export { appendActivityEvent, listActivityEventsForEntity } from "./repositories/activity-repository";
 export {
   getOrganizationContextForUser,
@@ -18,6 +24,7 @@ export {
   listOutcomes,
   updateOutcome
 } from "./repositories/outcome-repository";
+export { createEpic } from "./repositories/epic-repository";
 export {
   createStory,
   getStoryById,

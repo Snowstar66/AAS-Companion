@@ -63,6 +63,11 @@ export type ArtifactIntakeSession = $Result.DefaultSelection<Prisma.$ArtifactInt
  * 
  */
 export type ArtifactIntakeFile = $Result.DefaultSelection<Prisma.$ArtifactIntakeFilePayload>
+/**
+ * Model ArtifactAasCandidate
+ * 
+ */
+export type ArtifactAasCandidate = $Result.DefaultSelection<Prisma.$ArtifactAasCandidatePayload>
 
 /**
  * Enums
@@ -118,6 +123,85 @@ export const StoryStatus: {
 export type StoryStatus = (typeof StoryStatus)[keyof typeof StoryStatus]
 
 
+export const GovernedObjectOriginType: {
+  seeded: 'seeded',
+  native: 'native',
+  imported: 'imported'
+};
+
+export type GovernedObjectOriginType = (typeof GovernedObjectOriginType)[keyof typeof GovernedObjectOriginType]
+
+
+export const GovernedObjectCreatedMode: {
+  demo: 'demo',
+  clean: 'clean',
+  promotion: 'promotion'
+};
+
+export type GovernedObjectCreatedMode = (typeof GovernedObjectCreatedMode)[keyof typeof GovernedObjectCreatedMode]
+
+
+export const LineageSourceType: {
+  artifact_intake_session: 'artifact_intake_session',
+  artifact_intake_file: 'artifact_intake_file',
+  artifact_aas_candidate: 'artifact_aas_candidate'
+};
+
+export type LineageSourceType = (typeof LineageSourceType)[keyof typeof LineageSourceType]
+
+
+export const ArtifactAasCandidateType: {
+  outcome: 'outcome',
+  epic: 'epic',
+  story: 'story'
+};
+
+export type ArtifactAasCandidateType = (typeof ArtifactAasCandidateType)[keyof typeof ArtifactAasCandidateType]
+
+
+export const ArtifactAasMappingState: {
+  mapped: 'mapped',
+  uncertain: 'uncertain',
+  missing: 'missing'
+};
+
+export type ArtifactAasMappingState = (typeof ArtifactAasMappingState)[keyof typeof ArtifactAasMappingState]
+
+
+export const ArtifactComplianceFindingCategory: {
+  missing: 'missing',
+  uncertain: 'uncertain',
+  human_only: 'human_only',
+  blocked: 'blocked'
+};
+
+export type ArtifactComplianceFindingCategory = (typeof ArtifactComplianceFindingCategory)[keyof typeof ArtifactComplianceFindingCategory]
+
+
+export const ArtifactCandidateReviewStatus: {
+  pending: 'pending',
+  confirmed: 'confirmed',
+  edited: 'edited',
+  rejected: 'rejected',
+  follow_up_needed: 'follow_up_needed',
+  promoted: 'promoted'
+};
+
+export type ArtifactCandidateReviewStatus = (typeof ArtifactCandidateReviewStatus)[keyof typeof ArtifactCandidateReviewStatus]
+
+
+export const ImportedGovernedReadinessState: {
+  imported: 'imported',
+  imported_incomplete: 'imported_incomplete',
+  imported_human_review_needed: 'imported_human_review_needed',
+  imported_framing_ready: 'imported_framing_ready',
+  imported_design_ready: 'imported_design_ready',
+  blocked: 'blocked'
+};
+
+export type ImportedGovernedReadinessState = (typeof ImportedGovernedReadinessState)[keyof typeof ImportedGovernedReadinessState]
+
+
 export const TollgateEntityType: {
   outcome: 'outcome',
   story: 'story'
@@ -150,7 +234,8 @@ export const ActivityEntityType: {
   story: 'story',
   tollgate: 'tollgate',
   artifact_intake_session: 'artifact_intake_session',
-  artifact_intake_file: 'artifact_intake_file'
+  artifact_intake_file: 'artifact_intake_file',
+  artifact_aas_candidate: 'artifact_aas_candidate'
 };
 
 export type ActivityEntityType = (typeof ActivityEntityType)[keyof typeof ActivityEntityType]
@@ -160,13 +245,22 @@ export const ActivityEventType: {
   demo_seeded: 'demo_seeded',
   outcome_created: 'outcome_created',
   outcome_updated: 'outcome_updated',
+  epic_created: 'epic_created',
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
   execution_contract_generated: 'execution_contract_generated',
   artifact_intake_session_created: 'artifact_intake_session_created',
   artifact_file_uploaded: 'artifact_file_uploaded',
-  artifact_file_rejected: 'artifact_file_rejected'
+  artifact_file_rejected: 'artifact_file_rejected',
+  artifact_candidate_compliance_analyzed: 'artifact_candidate_compliance_analyzed',
+  artifact_candidate_confirmed: 'artifact_candidate_confirmed',
+  artifact_candidate_edited: 'artifact_candidate_edited',
+  artifact_candidate_rejected: 'artifact_candidate_rejected',
+  artifact_candidate_follow_up_marked: 'artifact_candidate_follow_up_marked',
+  artifact_candidate_promoted: 'artifact_candidate_promoted',
+  imported_progression_blocked: 'imported_progression_blocked',
+  imported_progression_allowed: 'imported_progression_allowed'
 };
 
 export type ActivityEventType = (typeof ActivityEventType)[keyof typeof ActivityEventType]
@@ -251,6 +345,38 @@ export const StoryType: typeof $Enums.StoryType
 export type StoryStatus = $Enums.StoryStatus
 
 export const StoryStatus: typeof $Enums.StoryStatus
+
+export type GovernedObjectOriginType = $Enums.GovernedObjectOriginType
+
+export const GovernedObjectOriginType: typeof $Enums.GovernedObjectOriginType
+
+export type GovernedObjectCreatedMode = $Enums.GovernedObjectCreatedMode
+
+export const GovernedObjectCreatedMode: typeof $Enums.GovernedObjectCreatedMode
+
+export type LineageSourceType = $Enums.LineageSourceType
+
+export const LineageSourceType: typeof $Enums.LineageSourceType
+
+export type ArtifactAasCandidateType = $Enums.ArtifactAasCandidateType
+
+export const ArtifactAasCandidateType: typeof $Enums.ArtifactAasCandidateType
+
+export type ArtifactAasMappingState = $Enums.ArtifactAasMappingState
+
+export const ArtifactAasMappingState: typeof $Enums.ArtifactAasMappingState
+
+export type ArtifactComplianceFindingCategory = $Enums.ArtifactComplianceFindingCategory
+
+export const ArtifactComplianceFindingCategory: typeof $Enums.ArtifactComplianceFindingCategory
+
+export type ArtifactCandidateReviewStatus = $Enums.ArtifactCandidateReviewStatus
+
+export const ArtifactCandidateReviewStatus: typeof $Enums.ArtifactCandidateReviewStatus
+
+export type ImportedGovernedReadinessState = $Enums.ImportedGovernedReadinessState
+
+export const ImportedGovernedReadinessState: typeof $Enums.ImportedGovernedReadinessState
 
 export type TollgateEntityType = $Enums.TollgateEntityType
 
@@ -513,6 +639,16 @@ export class PrismaClient<
     * ```
     */
   get artifactIntakeFile(): Prisma.ArtifactIntakeFileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.artifactAasCandidate`: Exposes CRUD operations for the **ArtifactAasCandidate** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ArtifactAasCandidates
+    * const artifactAasCandidates = await prisma.artifactAasCandidate.findMany()
+    * ```
+    */
+  get artifactAasCandidate(): Prisma.ArtifactAasCandidateDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -963,7 +1099,8 @@ export namespace Prisma {
     Tollgate: 'Tollgate',
     ActivityEvent: 'ActivityEvent',
     ArtifactIntakeSession: 'ArtifactIntakeSession',
-    ArtifactIntakeFile: 'ArtifactIntakeFile'
+    ArtifactIntakeFile: 'ArtifactIntakeFile',
+    ArtifactAasCandidate: 'ArtifactAasCandidate'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -982,7 +1119,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "organization" | "appUser" | "membership" | "outcome" | "epic" | "story" | "tollgate" | "activityEvent" | "artifactIntakeSession" | "artifactIntakeFile"
+      modelProps: "organization" | "appUser" | "membership" | "outcome" | "epic" | "story" | "tollgate" | "activityEvent" | "artifactIntakeSession" | "artifactIntakeFile" | "artifactAasCandidate"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1726,6 +1863,80 @@ export namespace Prisma {
           }
         }
       }
+      ArtifactAasCandidate: {
+        payload: Prisma.$ArtifactAasCandidatePayload<ExtArgs>
+        fields: Prisma.ArtifactAasCandidateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ArtifactAasCandidateFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ArtifactAasCandidateFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>
+          }
+          findFirst: {
+            args: Prisma.ArtifactAasCandidateFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ArtifactAasCandidateFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>
+          }
+          findMany: {
+            args: Prisma.ArtifactAasCandidateFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>[]
+          }
+          create: {
+            args: Prisma.ArtifactAasCandidateCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>
+          }
+          createMany: {
+            args: Prisma.ArtifactAasCandidateCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ArtifactAasCandidateCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>[]
+          }
+          delete: {
+            args: Prisma.ArtifactAasCandidateDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>
+          }
+          update: {
+            args: Prisma.ArtifactAasCandidateUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>
+          }
+          deleteMany: {
+            args: Prisma.ArtifactAasCandidateDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ArtifactAasCandidateUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ArtifactAasCandidateUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>[]
+          }
+          upsert: {
+            args: Prisma.ArtifactAasCandidateUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactAasCandidatePayload>
+          }
+          aggregate: {
+            args: Prisma.ArtifactAasCandidateAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateArtifactAasCandidate>
+          }
+          groupBy: {
+            args: Prisma.ArtifactAasCandidateGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ArtifactAasCandidateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ArtifactAasCandidateCountArgs<ExtArgs>
+            result: $Utils.Optional<ArtifactAasCandidateCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1832,6 +2043,7 @@ export namespace Prisma {
     activityEvent?: ActivityEventOmit
     artifactIntakeSession?: ArtifactIntakeSessionOmit
     artifactIntakeFile?: ArtifactIntakeFileOmit
+    artifactAasCandidate?: ArtifactAasCandidateOmit
   }
 
   /* Types for Logging */
@@ -1920,6 +2132,7 @@ export namespace Prisma {
     activityEvents: number
     artifactIntakeSessions: number
     artifactIntakeFiles: number
+    artifactAasCandidates: number
   }
 
   export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1931,6 +2144,7 @@ export namespace Prisma {
     activityEvents?: boolean | OrganizationCountOutputTypeCountActivityEventsArgs
     artifactIntakeSessions?: boolean | OrganizationCountOutputTypeCountArtifactIntakeSessionsArgs
     artifactIntakeFiles?: boolean | OrganizationCountOutputTypeCountArtifactIntakeFilesArgs
+    artifactAasCandidates?: boolean | OrganizationCountOutputTypeCountArtifactAasCandidatesArgs
   }
 
   // Custom InputTypes
@@ -1998,6 +2212,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountArtifactIntakeFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ArtifactIntakeFileWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountArtifactAasCandidatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactAasCandidateWhereInput
   }
 
 
@@ -2154,10 +2375,12 @@ export namespace Prisma {
 
   export type ArtifactIntakeSessionCountOutputType = {
     files: number
+    candidates: number
   }
 
   export type ArtifactIntakeSessionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     files?: boolean | ArtifactIntakeSessionCountOutputTypeCountFilesArgs
+    candidates?: boolean | ArtifactIntakeSessionCountOutputTypeCountCandidatesArgs
   }
 
   // Custom InputTypes
@@ -2176,6 +2399,44 @@ export namespace Prisma {
    */
   export type ArtifactIntakeSessionCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ArtifactIntakeFileWhereInput
+  }
+
+  /**
+   * ArtifactIntakeSessionCountOutputType without action
+   */
+  export type ArtifactIntakeSessionCountOutputTypeCountCandidatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactAasCandidateWhereInput
+  }
+
+
+  /**
+   * Count Type ArtifactIntakeFileCountOutputType
+   */
+
+  export type ArtifactIntakeFileCountOutputType = {
+    candidates: number
+  }
+
+  export type ArtifactIntakeFileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    candidates?: boolean | ArtifactIntakeFileCountOutputTypeCountCandidatesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ArtifactIntakeFileCountOutputType without action
+   */
+  export type ArtifactIntakeFileCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFileCountOutputType
+     */
+    select?: ArtifactIntakeFileCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactIntakeFileCountOutputType without action
+   */
+  export type ArtifactIntakeFileCountOutputTypeCountCandidatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactAasCandidateWhereInput
   }
 
 
@@ -2355,6 +2616,7 @@ export namespace Prisma {
     activityEvents?: boolean | Organization$activityEventsArgs<ExtArgs>
     artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
     artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
+    artifactAasCandidates?: boolean | Organization$artifactAasCandidatesArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -2392,6 +2654,7 @@ export namespace Prisma {
     activityEvents?: boolean | Organization$activityEventsArgs<ExtArgs>
     artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
     artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
+    artifactAasCandidates?: boolean | Organization$artifactAasCandidatesArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2408,6 +2671,7 @@ export namespace Prisma {
       activityEvents: Prisma.$ActivityEventPayload<ExtArgs>[]
       artifactIntakeSessions: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>[]
       artifactIntakeFiles: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
+      artifactAasCandidates: Prisma.$ArtifactAasCandidatePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2817,6 +3081,7 @@ export namespace Prisma {
     activityEvents<T extends Organization$activityEventsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$activityEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ActivityEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     artifactIntakeSessions<T extends Organization$artifactIntakeSessionsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     artifactIntakeFiles<T extends Organization$artifactIntakeFilesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    artifactAasCandidates<T extends Organization$artifactAasCandidatesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactAasCandidatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3428,6 +3693,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ArtifactIntakeFileScalarFieldEnum | ArtifactIntakeFileScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.artifactAasCandidates
+   */
+  export type Organization$artifactAasCandidatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    where?: ArtifactAasCandidateWhereInput
+    orderBy?: ArtifactAasCandidateOrderByWithRelationInput | ArtifactAasCandidateOrderByWithRelationInput[]
+    cursor?: ArtifactAasCandidateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactAasCandidateScalarFieldEnum | ArtifactAasCandidateScalarFieldEnum[]
   }
 
   /**
@@ -5762,6 +6051,12 @@ export namespace Prisma {
     riskProfile: $Enums.RiskProfile | null
     aiAccelerationLevel: $Enums.AiAccelerationLevel | null
     status: $Enums.OutcomeStatus | null
+    originType: $Enums.GovernedObjectOriginType | null
+    createdMode: $Enums.GovernedObjectCreatedMode | null
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5780,6 +6075,12 @@ export namespace Prisma {
     riskProfile: $Enums.RiskProfile | null
     aiAccelerationLevel: $Enums.AiAccelerationLevel | null
     status: $Enums.OutcomeStatus | null
+    originType: $Enums.GovernedObjectOriginType | null
+    createdMode: $Enums.GovernedObjectCreatedMode | null
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5798,6 +6099,12 @@ export namespace Prisma {
     riskProfile: number
     aiAccelerationLevel: number
     status: number
+    originType: number
+    createdMode: number
+    lineageSourceType: number
+    lineageSourceId: number
+    lineageNote: number
+    importedReadinessState: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -5818,6 +6125,12 @@ export namespace Prisma {
     riskProfile?: true
     aiAccelerationLevel?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5836,6 +6149,12 @@ export namespace Prisma {
     riskProfile?: true
     aiAccelerationLevel?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5854,6 +6173,12 @@ export namespace Prisma {
     riskProfile?: true
     aiAccelerationLevel?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -5945,6 +6270,12 @@ export namespace Prisma {
     riskProfile: $Enums.RiskProfile
     aiAccelerationLevel: $Enums.AiAccelerationLevel
     status: $Enums.OutcomeStatus
+    originType: $Enums.GovernedObjectOriginType
+    createdMode: $Enums.GovernedObjectCreatedMode
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date
     updatedAt: Date
     _count: OutcomeCountAggregateOutputType | null
@@ -5980,6 +6311,12 @@ export namespace Prisma {
     riskProfile?: boolean
     aiAccelerationLevel?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -6003,6 +6340,12 @@ export namespace Prisma {
     riskProfile?: boolean
     aiAccelerationLevel?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -6023,6 +6366,12 @@ export namespace Prisma {
     riskProfile?: boolean
     aiAccelerationLevel?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -6043,11 +6392,17 @@ export namespace Prisma {
     riskProfile?: boolean
     aiAccelerationLevel?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OutcomeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "key" | "title" | "problemStatement" | "outcomeStatement" | "baselineDefinition" | "baselineSource" | "timeframe" | "valueOwnerId" | "riskProfile" | "aiAccelerationLevel" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["outcome"]>
+  export type OutcomeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "key" | "title" | "problemStatement" | "outcomeStatement" | "baselineDefinition" | "baselineSource" | "timeframe" | "valueOwnerId" | "riskProfile" | "aiAccelerationLevel" | "status" | "originType" | "createdMode" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["outcome"]>
   export type OutcomeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     valueOwner?: boolean | Outcome$valueOwnerArgs<ExtArgs>
@@ -6086,6 +6441,12 @@ export namespace Prisma {
       riskProfile: $Enums.RiskProfile
       aiAccelerationLevel: $Enums.AiAccelerationLevel
       status: $Enums.OutcomeStatus
+      originType: $Enums.GovernedObjectOriginType
+      createdMode: $Enums.GovernedObjectCreatedMode
+      lineageSourceType: $Enums.LineageSourceType | null
+      lineageSourceId: string | null
+      lineageNote: string | null
+      importedReadinessState: $Enums.ImportedGovernedReadinessState | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["outcome"]>
@@ -6528,6 +6889,12 @@ export namespace Prisma {
     readonly riskProfile: FieldRef<"Outcome", 'RiskProfile'>
     readonly aiAccelerationLevel: FieldRef<"Outcome", 'AiAccelerationLevel'>
     readonly status: FieldRef<"Outcome", 'OutcomeStatus'>
+    readonly originType: FieldRef<"Outcome", 'GovernedObjectOriginType'>
+    readonly createdMode: FieldRef<"Outcome", 'GovernedObjectCreatedMode'>
+    readonly lineageSourceType: FieldRef<"Outcome", 'LineageSourceType'>
+    readonly lineageSourceId: FieldRef<"Outcome", 'String'>
+    readonly lineageNote: FieldRef<"Outcome", 'String'>
+    readonly importedReadinessState: FieldRef<"Outcome", 'ImportedGovernedReadinessState'>
     readonly createdAt: FieldRef<"Outcome", 'DateTime'>
     readonly updatedAt: FieldRef<"Outcome", 'DateTime'>
   }
@@ -7029,6 +7396,12 @@ export namespace Prisma {
     title: string | null
     purpose: string | null
     status: $Enums.EpicStatus | null
+    originType: $Enums.GovernedObjectOriginType | null
+    createdMode: $Enums.GovernedObjectCreatedMode | null
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7041,6 +7414,12 @@ export namespace Prisma {
     title: string | null
     purpose: string | null
     status: $Enums.EpicStatus | null
+    originType: $Enums.GovernedObjectOriginType | null
+    createdMode: $Enums.GovernedObjectCreatedMode | null
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7053,6 +7432,12 @@ export namespace Prisma {
     title: number
     purpose: number
     status: number
+    originType: number
+    createdMode: number
+    lineageSourceType: number
+    lineageSourceId: number
+    lineageNote: number
+    importedReadinessState: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -7067,6 +7452,12 @@ export namespace Prisma {
     title?: true
     purpose?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7079,6 +7470,12 @@ export namespace Prisma {
     title?: true
     purpose?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7091,6 +7488,12 @@ export namespace Prisma {
     title?: true
     purpose?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -7176,6 +7579,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status: $Enums.EpicStatus
+    originType: $Enums.GovernedObjectOriginType
+    createdMode: $Enums.GovernedObjectCreatedMode
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date
     updatedAt: Date
     _count: EpicCountAggregateOutputType | null
@@ -7205,6 +7614,12 @@ export namespace Prisma {
     title?: boolean
     purpose?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -7221,6 +7636,12 @@ export namespace Prisma {
     title?: boolean
     purpose?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -7235,6 +7656,12 @@ export namespace Prisma {
     title?: boolean
     purpose?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -7249,11 +7676,17 @@ export namespace Prisma {
     title?: boolean
     purpose?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type EpicOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "key" | "title" | "purpose" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["epic"]>
+  export type EpicOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "key" | "title" | "purpose" | "status" | "originType" | "createdMode" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["epic"]>
   export type EpicInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     outcome?: boolean | OutcomeDefaultArgs<ExtArgs>
@@ -7284,6 +7717,12 @@ export namespace Prisma {
       title: string
       purpose: string
       status: $Enums.EpicStatus
+      originType: $Enums.GovernedObjectOriginType
+      createdMode: $Enums.GovernedObjectCreatedMode
+      lineageSourceType: $Enums.LineageSourceType | null
+      lineageSourceId: string | null
+      lineageNote: string | null
+      importedReadinessState: $Enums.ImportedGovernedReadinessState | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["epic"]>
@@ -7719,6 +8158,12 @@ export namespace Prisma {
     readonly title: FieldRef<"Epic", 'String'>
     readonly purpose: FieldRef<"Epic", 'String'>
     readonly status: FieldRef<"Epic", 'EpicStatus'>
+    readonly originType: FieldRef<"Epic", 'GovernedObjectOriginType'>
+    readonly createdMode: FieldRef<"Epic", 'GovernedObjectCreatedMode'>
+    readonly lineageSourceType: FieldRef<"Epic", 'LineageSourceType'>
+    readonly lineageSourceId: FieldRef<"Epic", 'String'>
+    readonly lineageNote: FieldRef<"Epic", 'String'>
+    readonly importedReadinessState: FieldRef<"Epic", 'ImportedGovernedReadinessState'>
     readonly createdAt: FieldRef<"Epic", 'DateTime'>
     readonly updatedAt: FieldRef<"Epic", 'DateTime'>
   }
@@ -8181,6 +8626,12 @@ export namespace Prisma {
     aiAccelerationLevel: $Enums.AiAccelerationLevel | null
     testDefinition: string | null
     status: $Enums.StoryStatus | null
+    originType: $Enums.GovernedObjectOriginType | null
+    createdMode: $Enums.GovernedObjectCreatedMode | null
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8197,6 +8648,12 @@ export namespace Prisma {
     aiAccelerationLevel: $Enums.AiAccelerationLevel | null
     testDefinition: string | null
     status: $Enums.StoryStatus | null
+    originType: $Enums.GovernedObjectOriginType | null
+    createdMode: $Enums.GovernedObjectCreatedMode | null
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8216,6 +8673,12 @@ export namespace Prisma {
     testDefinition: number
     definitionOfDone: number
     status: number
+    originType: number
+    createdMode: number
+    lineageSourceType: number
+    lineageSourceId: number
+    lineageNote: number
+    importedReadinessState: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -8234,6 +8697,12 @@ export namespace Prisma {
     aiAccelerationLevel?: true
     testDefinition?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8250,6 +8719,12 @@ export namespace Prisma {
     aiAccelerationLevel?: true
     testDefinition?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8269,6 +8744,12 @@ export namespace Prisma {
     testDefinition?: true
     definitionOfDone?: true
     status?: true
+    originType?: true
+    createdMode?: true
+    lineageSourceType?: true
+    lineageSourceId?: true
+    lineageNote?: true
+    importedReadinessState?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -8361,6 +8842,12 @@ export namespace Prisma {
     testDefinition: string | null
     definitionOfDone: string[]
     status: $Enums.StoryStatus
+    originType: $Enums.GovernedObjectOriginType
+    createdMode: $Enums.GovernedObjectCreatedMode
+    lineageSourceType: $Enums.LineageSourceType | null
+    lineageSourceId: string | null
+    lineageNote: string | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
     createdAt: Date
     updatedAt: Date
     _count: StoryCountAggregateOutputType | null
@@ -8397,6 +8884,12 @@ export namespace Prisma {
     testDefinition?: boolean
     definitionOfDone?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -8419,6 +8912,12 @@ export namespace Prisma {
     testDefinition?: boolean
     definitionOfDone?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -8441,6 +8940,12 @@ export namespace Prisma {
     testDefinition?: boolean
     definitionOfDone?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -8463,11 +8968,17 @@ export namespace Prisma {
     testDefinition?: boolean
     definitionOfDone?: boolean
     status?: boolean
+    originType?: boolean
+    createdMode?: boolean
+    lineageSourceType?: boolean
+    lineageSourceId?: boolean
+    lineageNote?: boolean
+    importedReadinessState?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type StoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "epicId" | "key" | "title" | "storyType" | "valueIntent" | "acceptanceCriteria" | "aiUsageScope" | "aiAccelerationLevel" | "testDefinition" | "definitionOfDone" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["story"]>
+  export type StoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "epicId" | "key" | "title" | "storyType" | "valueIntent" | "acceptanceCriteria" | "aiUsageScope" | "aiAccelerationLevel" | "testDefinition" | "definitionOfDone" | "status" | "originType" | "createdMode" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["story"]>
   export type StoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     outcome?: boolean | OutcomeDefaultArgs<ExtArgs>
@@ -8506,6 +9017,12 @@ export namespace Prisma {
       testDefinition: string | null
       definitionOfDone: string[]
       status: $Enums.StoryStatus
+      originType: $Enums.GovernedObjectOriginType
+      createdMode: $Enums.GovernedObjectCreatedMode
+      lineageSourceType: $Enums.LineageSourceType | null
+      lineageSourceId: string | null
+      lineageNote: string | null
+      importedReadinessState: $Enums.ImportedGovernedReadinessState | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["story"]>
@@ -8948,6 +9465,12 @@ export namespace Prisma {
     readonly testDefinition: FieldRef<"Story", 'String'>
     readonly definitionOfDone: FieldRef<"Story", 'String[]'>
     readonly status: FieldRef<"Story", 'StoryStatus'>
+    readonly originType: FieldRef<"Story", 'GovernedObjectOriginType'>
+    readonly createdMode: FieldRef<"Story", 'GovernedObjectCreatedMode'>
+    readonly lineageSourceType: FieldRef<"Story", 'LineageSourceType'>
+    readonly lineageSourceId: FieldRef<"Story", 'String'>
+    readonly lineageNote: FieldRef<"Story", 'String'>
+    readonly importedReadinessState: FieldRef<"Story", 'ImportedGovernedReadinessState'>
     readonly createdAt: FieldRef<"Story", 'DateTime'>
     readonly updatedAt: FieldRef<"Story", 'DateTime'>
   }
@@ -11860,6 +12383,7 @@ export namespace Prisma {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
     files?: boolean | ArtifactIntakeSession$filesArgs<ExtArgs>
+    candidates?: boolean | ArtifactIntakeSession$candidatesArgs<ExtArgs>
     _count?: boolean | ArtifactIntakeSessionCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["artifactIntakeSession"]>
 
@@ -11908,6 +12432,7 @@ export namespace Prisma {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
     files?: boolean | ArtifactIntakeSession$filesArgs<ExtArgs>
+    candidates?: boolean | ArtifactIntakeSession$candidatesArgs<ExtArgs>
     _count?: boolean | ArtifactIntakeSessionCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ArtifactIntakeSessionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11925,6 +12450,7 @@ export namespace Prisma {
       organization: Prisma.$OrganizationPayload<ExtArgs>
       creator: Prisma.$AppUserPayload<ExtArgs> | null
       files: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
+      candidates: Prisma.$ArtifactAasCandidatePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -12333,6 +12859,7 @@ export namespace Prisma {
     organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     creator<T extends ArtifactIntakeSession$creatorArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSession$creatorArgs<ExtArgs>>): Prisma__AppUserClient<$Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     files<T extends ArtifactIntakeSession$filesArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSession$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    candidates<T extends ArtifactIntakeSession$candidatesArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSession$candidatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12810,6 +13337,30 @@ export namespace Prisma {
   }
 
   /**
+   * ArtifactIntakeSession.candidates
+   */
+  export type ArtifactIntakeSession$candidatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    where?: ArtifactAasCandidateWhereInput
+    orderBy?: ArtifactAasCandidateOrderByWithRelationInput | ArtifactAasCandidateOrderByWithRelationInput[]
+    cursor?: ArtifactAasCandidateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactAasCandidateScalarFieldEnum | ArtifactAasCandidateScalarFieldEnum[]
+  }
+
+  /**
    * ArtifactIntakeSession without action
    */
   export type ArtifactIntakeSessionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13113,6 +13664,8 @@ export namespace Prisma {
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+    candidates?: boolean | ArtifactIntakeFile$candidatesArgs<ExtArgs>
+    _count?: boolean | ArtifactIntakeFileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["artifactIntakeFile"]>
 
   export type ArtifactIntakeFileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -13183,6 +13736,8 @@ export namespace Prisma {
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+    candidates?: boolean | ArtifactIntakeFile$candidatesArgs<ExtArgs>
+    _count?: boolean | ArtifactIntakeFileCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ArtifactIntakeFileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
@@ -13201,6 +13756,7 @@ export namespace Prisma {
       intakeSession: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>
       organization: Prisma.$OrganizationPayload<ExtArgs>
       uploader: Prisma.$AppUserPayload<ExtArgs> | null
+      candidates: Prisma.$ArtifactAasCandidatePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -13616,6 +14172,7 @@ export namespace Prisma {
     intakeSession<T extends ArtifactIntakeSessionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSessionDefaultArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     uploader<T extends ArtifactIntakeFile$uploaderArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeFile$uploaderArgs<ExtArgs>>): Prisma__AppUserClient<$Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    candidates<T extends ArtifactIntakeFile$candidatesArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeFile$candidatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14076,6 +14633,30 @@ export namespace Prisma {
   }
 
   /**
+   * ArtifactIntakeFile.candidates
+   */
+  export type ArtifactIntakeFile$candidatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    where?: ArtifactAasCandidateWhereInput
+    orderBy?: ArtifactAasCandidateOrderByWithRelationInput | ArtifactAasCandidateOrderByWithRelationInput[]
+    cursor?: ArtifactAasCandidateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactAasCandidateScalarFieldEnum | ArtifactAasCandidateScalarFieldEnum[]
+  }
+
+  /**
    * ArtifactIntakeFile without action
    */
   export type ArtifactIntakeFileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14091,6 +14672,1398 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ArtifactIntakeFileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ArtifactAasCandidate
+   */
+
+  export type AggregateArtifactAasCandidate = {
+    _count: ArtifactAasCandidateCountAggregateOutputType | null
+    _min: ArtifactAasCandidateMinAggregateOutputType | null
+    _max: ArtifactAasCandidateMaxAggregateOutputType | null
+  }
+
+  export type ArtifactAasCandidateMinAggregateOutputType = {
+    id: string | null
+    intakeSessionId: string | null
+    fileId: string | null
+    organizationId: string | null
+    type: $Enums.ArtifactAasCandidateType | null
+    title: string | null
+    summary: string | null
+    mappingState: $Enums.ArtifactAasMappingState | null
+    sourceType: $Enums.ArtifactSourceType | null
+    sourceConfidence: $Enums.ExtractionConfidence | null
+    sourceSectionId: string | null
+    sourceSectionTitle: string | null
+    sourceSectionMarker: string | null
+    inferredOutcomeCandidateId: string | null
+    inferredEpicCandidateId: string | null
+    relationshipState: $Enums.ArtifactAasMappingState | null
+    relationshipNote: string | null
+    reviewStatus: $Enums.ArtifactCandidateReviewStatus | null
+    reviewComment: string | null
+    followUpNeeded: boolean | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId: string | null
+    promotedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ArtifactAasCandidateMaxAggregateOutputType = {
+    id: string | null
+    intakeSessionId: string | null
+    fileId: string | null
+    organizationId: string | null
+    type: $Enums.ArtifactAasCandidateType | null
+    title: string | null
+    summary: string | null
+    mappingState: $Enums.ArtifactAasMappingState | null
+    sourceType: $Enums.ArtifactSourceType | null
+    sourceConfidence: $Enums.ExtractionConfidence | null
+    sourceSectionId: string | null
+    sourceSectionTitle: string | null
+    sourceSectionMarker: string | null
+    inferredOutcomeCandidateId: string | null
+    inferredEpicCandidateId: string | null
+    relationshipState: $Enums.ArtifactAasMappingState | null
+    relationshipNote: string | null
+    reviewStatus: $Enums.ArtifactCandidateReviewStatus | null
+    reviewComment: string | null
+    followUpNeeded: boolean | null
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId: string | null
+    promotedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ArtifactAasCandidateCountAggregateOutputType = {
+    id: number
+    intakeSessionId: number
+    fileId: number
+    organizationId: number
+    type: number
+    title: number
+    summary: number
+    mappingState: number
+    sourceType: number
+    sourceConfidence: number
+    sourceSectionId: number
+    sourceSectionTitle: number
+    sourceSectionMarker: number
+    inferredOutcomeCandidateId: number
+    inferredEpicCandidateId: number
+    relationshipState: number
+    relationshipNote: number
+    acceptanceCriteria: number
+    testNotes: number
+    draftRecord: number
+    humanDecisions: number
+    complianceResult: number
+    reviewStatus: number
+    reviewComment: number
+    followUpNeeded: number
+    importedReadinessState: number
+    promotedEntityType: number
+    promotedEntityId: number
+    promotedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ArtifactAasCandidateMinAggregateInputType = {
+    id?: true
+    intakeSessionId?: true
+    fileId?: true
+    organizationId?: true
+    type?: true
+    title?: true
+    summary?: true
+    mappingState?: true
+    sourceType?: true
+    sourceConfidence?: true
+    sourceSectionId?: true
+    sourceSectionTitle?: true
+    sourceSectionMarker?: true
+    inferredOutcomeCandidateId?: true
+    inferredEpicCandidateId?: true
+    relationshipState?: true
+    relationshipNote?: true
+    reviewStatus?: true
+    reviewComment?: true
+    followUpNeeded?: true
+    importedReadinessState?: true
+    promotedEntityType?: true
+    promotedEntityId?: true
+    promotedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ArtifactAasCandidateMaxAggregateInputType = {
+    id?: true
+    intakeSessionId?: true
+    fileId?: true
+    organizationId?: true
+    type?: true
+    title?: true
+    summary?: true
+    mappingState?: true
+    sourceType?: true
+    sourceConfidence?: true
+    sourceSectionId?: true
+    sourceSectionTitle?: true
+    sourceSectionMarker?: true
+    inferredOutcomeCandidateId?: true
+    inferredEpicCandidateId?: true
+    relationshipState?: true
+    relationshipNote?: true
+    reviewStatus?: true
+    reviewComment?: true
+    followUpNeeded?: true
+    importedReadinessState?: true
+    promotedEntityType?: true
+    promotedEntityId?: true
+    promotedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ArtifactAasCandidateCountAggregateInputType = {
+    id?: true
+    intakeSessionId?: true
+    fileId?: true
+    organizationId?: true
+    type?: true
+    title?: true
+    summary?: true
+    mappingState?: true
+    sourceType?: true
+    sourceConfidence?: true
+    sourceSectionId?: true
+    sourceSectionTitle?: true
+    sourceSectionMarker?: true
+    inferredOutcomeCandidateId?: true
+    inferredEpicCandidateId?: true
+    relationshipState?: true
+    relationshipNote?: true
+    acceptanceCriteria?: true
+    testNotes?: true
+    draftRecord?: true
+    humanDecisions?: true
+    complianceResult?: true
+    reviewStatus?: true
+    reviewComment?: true
+    followUpNeeded?: true
+    importedReadinessState?: true
+    promotedEntityType?: true
+    promotedEntityId?: true
+    promotedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ArtifactAasCandidateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArtifactAasCandidate to aggregate.
+     */
+    where?: ArtifactAasCandidateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactAasCandidates to fetch.
+     */
+    orderBy?: ArtifactAasCandidateOrderByWithRelationInput | ArtifactAasCandidateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ArtifactAasCandidateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactAasCandidates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactAasCandidates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ArtifactAasCandidates
+    **/
+    _count?: true | ArtifactAasCandidateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ArtifactAasCandidateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ArtifactAasCandidateMaxAggregateInputType
+  }
+
+  export type GetArtifactAasCandidateAggregateType<T extends ArtifactAasCandidateAggregateArgs> = {
+        [P in keyof T & keyof AggregateArtifactAasCandidate]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateArtifactAasCandidate[P]>
+      : GetScalarType<T[P], AggregateArtifactAasCandidate[P]>
+  }
+
+
+
+
+  export type ArtifactAasCandidateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactAasCandidateWhereInput
+    orderBy?: ArtifactAasCandidateOrderByWithAggregationInput | ArtifactAasCandidateOrderByWithAggregationInput[]
+    by: ArtifactAasCandidateScalarFieldEnum[] | ArtifactAasCandidateScalarFieldEnum
+    having?: ArtifactAasCandidateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ArtifactAasCandidateCountAggregateInputType | true
+    _min?: ArtifactAasCandidateMinAggregateInputType
+    _max?: ArtifactAasCandidateMaxAggregateInputType
+  }
+
+  export type ArtifactAasCandidateGroupByOutputType = {
+    id: string
+    intakeSessionId: string
+    fileId: string
+    organizationId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId: string | null
+    inferredEpicCandidateId: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote: string | null
+    acceptanceCriteria: string[]
+    testNotes: string[]
+    draftRecord: JsonValue
+    humanDecisions: JsonValue
+    complianceResult: JsonValue
+    reviewStatus: $Enums.ArtifactCandidateReviewStatus
+    reviewComment: string | null
+    followUpNeeded: boolean
+    importedReadinessState: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId: string | null
+    promotedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ArtifactAasCandidateCountAggregateOutputType | null
+    _min: ArtifactAasCandidateMinAggregateOutputType | null
+    _max: ArtifactAasCandidateMaxAggregateOutputType | null
+  }
+
+  type GetArtifactAasCandidateGroupByPayload<T extends ArtifactAasCandidateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ArtifactAasCandidateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ArtifactAasCandidateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ArtifactAasCandidateGroupByOutputType[P]>
+            : GetScalarType<T[P], ArtifactAasCandidateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ArtifactAasCandidateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    intakeSessionId?: boolean
+    fileId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    title?: boolean
+    summary?: boolean
+    mappingState?: boolean
+    sourceType?: boolean
+    sourceConfidence?: boolean
+    sourceSectionId?: boolean
+    sourceSectionTitle?: boolean
+    sourceSectionMarker?: boolean
+    inferredOutcomeCandidateId?: boolean
+    inferredEpicCandidateId?: boolean
+    relationshipState?: boolean
+    relationshipNote?: boolean
+    acceptanceCriteria?: boolean
+    testNotes?: boolean
+    draftRecord?: boolean
+    humanDecisions?: boolean
+    complianceResult?: boolean
+    reviewStatus?: boolean
+    reviewComment?: boolean
+    followUpNeeded?: boolean
+    importedReadinessState?: boolean
+    promotedEntityType?: boolean
+    promotedEntityId?: boolean
+    promotedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    file?: boolean | ArtifactIntakeFileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactAasCandidate"]>
+
+  export type ArtifactAasCandidateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    intakeSessionId?: boolean
+    fileId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    title?: boolean
+    summary?: boolean
+    mappingState?: boolean
+    sourceType?: boolean
+    sourceConfidence?: boolean
+    sourceSectionId?: boolean
+    sourceSectionTitle?: boolean
+    sourceSectionMarker?: boolean
+    inferredOutcomeCandidateId?: boolean
+    inferredEpicCandidateId?: boolean
+    relationshipState?: boolean
+    relationshipNote?: boolean
+    acceptanceCriteria?: boolean
+    testNotes?: boolean
+    draftRecord?: boolean
+    humanDecisions?: boolean
+    complianceResult?: boolean
+    reviewStatus?: boolean
+    reviewComment?: boolean
+    followUpNeeded?: boolean
+    importedReadinessState?: boolean
+    promotedEntityType?: boolean
+    promotedEntityId?: boolean
+    promotedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    file?: boolean | ArtifactIntakeFileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactAasCandidate"]>
+
+  export type ArtifactAasCandidateSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    intakeSessionId?: boolean
+    fileId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    title?: boolean
+    summary?: boolean
+    mappingState?: boolean
+    sourceType?: boolean
+    sourceConfidence?: boolean
+    sourceSectionId?: boolean
+    sourceSectionTitle?: boolean
+    sourceSectionMarker?: boolean
+    inferredOutcomeCandidateId?: boolean
+    inferredEpicCandidateId?: boolean
+    relationshipState?: boolean
+    relationshipNote?: boolean
+    acceptanceCriteria?: boolean
+    testNotes?: boolean
+    draftRecord?: boolean
+    humanDecisions?: boolean
+    complianceResult?: boolean
+    reviewStatus?: boolean
+    reviewComment?: boolean
+    followUpNeeded?: boolean
+    importedReadinessState?: boolean
+    promotedEntityType?: boolean
+    promotedEntityId?: boolean
+    promotedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    file?: boolean | ArtifactIntakeFileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactAasCandidate"]>
+
+  export type ArtifactAasCandidateSelectScalar = {
+    id?: boolean
+    intakeSessionId?: boolean
+    fileId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    title?: boolean
+    summary?: boolean
+    mappingState?: boolean
+    sourceType?: boolean
+    sourceConfidence?: boolean
+    sourceSectionId?: boolean
+    sourceSectionTitle?: boolean
+    sourceSectionMarker?: boolean
+    inferredOutcomeCandidateId?: boolean
+    inferredEpicCandidateId?: boolean
+    relationshipState?: boolean
+    relationshipNote?: boolean
+    acceptanceCriteria?: boolean
+    testNotes?: boolean
+    draftRecord?: boolean
+    humanDecisions?: boolean
+    complianceResult?: boolean
+    reviewStatus?: boolean
+    reviewComment?: boolean
+    followUpNeeded?: boolean
+    importedReadinessState?: boolean
+    promotedEntityType?: boolean
+    promotedEntityId?: boolean
+    promotedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ArtifactAasCandidateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "intakeSessionId" | "fileId" | "organizationId" | "type" | "title" | "summary" | "mappingState" | "sourceType" | "sourceConfidence" | "sourceSectionId" | "sourceSectionTitle" | "sourceSectionMarker" | "inferredOutcomeCandidateId" | "inferredEpicCandidateId" | "relationshipState" | "relationshipNote" | "acceptanceCriteria" | "testNotes" | "draftRecord" | "humanDecisions" | "complianceResult" | "reviewStatus" | "reviewComment" | "followUpNeeded" | "importedReadinessState" | "promotedEntityType" | "promotedEntityId" | "promotedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["artifactAasCandidate"]>
+  export type ArtifactAasCandidateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    file?: boolean | ArtifactIntakeFileDefaultArgs<ExtArgs>
+  }
+  export type ArtifactAasCandidateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    file?: boolean | ArtifactIntakeFileDefaultArgs<ExtArgs>
+  }
+  export type ArtifactAasCandidateIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    file?: boolean | ArtifactIntakeFileDefaultArgs<ExtArgs>
+  }
+
+  export type $ArtifactAasCandidatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ArtifactAasCandidate"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      intakeSession: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>
+      file: Prisma.$ArtifactIntakeFilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      intakeSessionId: string
+      fileId: string
+      organizationId: string
+      type: $Enums.ArtifactAasCandidateType
+      title: string
+      summary: string
+      mappingState: $Enums.ArtifactAasMappingState
+      sourceType: $Enums.ArtifactSourceType
+      sourceConfidence: $Enums.ExtractionConfidence
+      sourceSectionId: string
+      sourceSectionTitle: string
+      sourceSectionMarker: string
+      inferredOutcomeCandidateId: string | null
+      inferredEpicCandidateId: string | null
+      relationshipState: $Enums.ArtifactAasMappingState
+      relationshipNote: string | null
+      acceptanceCriteria: string[]
+      testNotes: string[]
+      draftRecord: Prisma.JsonValue
+      humanDecisions: Prisma.JsonValue
+      complianceResult: Prisma.JsonValue
+      reviewStatus: $Enums.ArtifactCandidateReviewStatus
+      reviewComment: string | null
+      followUpNeeded: boolean
+      importedReadinessState: $Enums.ImportedGovernedReadinessState | null
+      promotedEntityType: $Enums.ArtifactAasCandidateType | null
+      promotedEntityId: string | null
+      promotedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["artifactAasCandidate"]>
+    composites: {}
+  }
+
+  type ArtifactAasCandidateGetPayload<S extends boolean | null | undefined | ArtifactAasCandidateDefaultArgs> = $Result.GetResult<Prisma.$ArtifactAasCandidatePayload, S>
+
+  type ArtifactAasCandidateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ArtifactAasCandidateFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ArtifactAasCandidateCountAggregateInputType | true
+    }
+
+  export interface ArtifactAasCandidateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ArtifactAasCandidate'], meta: { name: 'ArtifactAasCandidate' } }
+    /**
+     * Find zero or one ArtifactAasCandidate that matches the filter.
+     * @param {ArtifactAasCandidateFindUniqueArgs} args - Arguments to find a ArtifactAasCandidate
+     * @example
+     * // Get one ArtifactAasCandidate
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ArtifactAasCandidateFindUniqueArgs>(args: SelectSubset<T, ArtifactAasCandidateFindUniqueArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ArtifactAasCandidate that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ArtifactAasCandidateFindUniqueOrThrowArgs} args - Arguments to find a ArtifactAasCandidate
+     * @example
+     * // Get one ArtifactAasCandidate
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ArtifactAasCandidateFindUniqueOrThrowArgs>(args: SelectSubset<T, ArtifactAasCandidateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArtifactAasCandidate that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactAasCandidateFindFirstArgs} args - Arguments to find a ArtifactAasCandidate
+     * @example
+     * // Get one ArtifactAasCandidate
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ArtifactAasCandidateFindFirstArgs>(args?: SelectSubset<T, ArtifactAasCandidateFindFirstArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArtifactAasCandidate that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactAasCandidateFindFirstOrThrowArgs} args - Arguments to find a ArtifactAasCandidate
+     * @example
+     * // Get one ArtifactAasCandidate
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ArtifactAasCandidateFindFirstOrThrowArgs>(args?: SelectSubset<T, ArtifactAasCandidateFindFirstOrThrowArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ArtifactAasCandidates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactAasCandidateFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ArtifactAasCandidates
+     * const artifactAasCandidates = await prisma.artifactAasCandidate.findMany()
+     * 
+     * // Get first 10 ArtifactAasCandidates
+     * const artifactAasCandidates = await prisma.artifactAasCandidate.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const artifactAasCandidateWithIdOnly = await prisma.artifactAasCandidate.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ArtifactAasCandidateFindManyArgs>(args?: SelectSubset<T, ArtifactAasCandidateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ArtifactAasCandidate.
+     * @param {ArtifactAasCandidateCreateArgs} args - Arguments to create a ArtifactAasCandidate.
+     * @example
+     * // Create one ArtifactAasCandidate
+     * const ArtifactAasCandidate = await prisma.artifactAasCandidate.create({
+     *   data: {
+     *     // ... data to create a ArtifactAasCandidate
+     *   }
+     * })
+     * 
+     */
+    create<T extends ArtifactAasCandidateCreateArgs>(args: SelectSubset<T, ArtifactAasCandidateCreateArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ArtifactAasCandidates.
+     * @param {ArtifactAasCandidateCreateManyArgs} args - Arguments to create many ArtifactAasCandidates.
+     * @example
+     * // Create many ArtifactAasCandidates
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ArtifactAasCandidateCreateManyArgs>(args?: SelectSubset<T, ArtifactAasCandidateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ArtifactAasCandidates and returns the data saved in the database.
+     * @param {ArtifactAasCandidateCreateManyAndReturnArgs} args - Arguments to create many ArtifactAasCandidates.
+     * @example
+     * // Create many ArtifactAasCandidates
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ArtifactAasCandidates and only return the `id`
+     * const artifactAasCandidateWithIdOnly = await prisma.artifactAasCandidate.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ArtifactAasCandidateCreateManyAndReturnArgs>(args?: SelectSubset<T, ArtifactAasCandidateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ArtifactAasCandidate.
+     * @param {ArtifactAasCandidateDeleteArgs} args - Arguments to delete one ArtifactAasCandidate.
+     * @example
+     * // Delete one ArtifactAasCandidate
+     * const ArtifactAasCandidate = await prisma.artifactAasCandidate.delete({
+     *   where: {
+     *     // ... filter to delete one ArtifactAasCandidate
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ArtifactAasCandidateDeleteArgs>(args: SelectSubset<T, ArtifactAasCandidateDeleteArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ArtifactAasCandidate.
+     * @param {ArtifactAasCandidateUpdateArgs} args - Arguments to update one ArtifactAasCandidate.
+     * @example
+     * // Update one ArtifactAasCandidate
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ArtifactAasCandidateUpdateArgs>(args: SelectSubset<T, ArtifactAasCandidateUpdateArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ArtifactAasCandidates.
+     * @param {ArtifactAasCandidateDeleteManyArgs} args - Arguments to filter ArtifactAasCandidates to delete.
+     * @example
+     * // Delete a few ArtifactAasCandidates
+     * const { count } = await prisma.artifactAasCandidate.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ArtifactAasCandidateDeleteManyArgs>(args?: SelectSubset<T, ArtifactAasCandidateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArtifactAasCandidates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactAasCandidateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ArtifactAasCandidates
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ArtifactAasCandidateUpdateManyArgs>(args: SelectSubset<T, ArtifactAasCandidateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArtifactAasCandidates and returns the data updated in the database.
+     * @param {ArtifactAasCandidateUpdateManyAndReturnArgs} args - Arguments to update many ArtifactAasCandidates.
+     * @example
+     * // Update many ArtifactAasCandidates
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ArtifactAasCandidates and only return the `id`
+     * const artifactAasCandidateWithIdOnly = await prisma.artifactAasCandidate.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ArtifactAasCandidateUpdateManyAndReturnArgs>(args: SelectSubset<T, ArtifactAasCandidateUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ArtifactAasCandidate.
+     * @param {ArtifactAasCandidateUpsertArgs} args - Arguments to update or create a ArtifactAasCandidate.
+     * @example
+     * // Update or create a ArtifactAasCandidate
+     * const artifactAasCandidate = await prisma.artifactAasCandidate.upsert({
+     *   create: {
+     *     // ... data to create a ArtifactAasCandidate
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ArtifactAasCandidate we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ArtifactAasCandidateUpsertArgs>(args: SelectSubset<T, ArtifactAasCandidateUpsertArgs<ExtArgs>>): Prisma__ArtifactAasCandidateClient<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ArtifactAasCandidates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactAasCandidateCountArgs} args - Arguments to filter ArtifactAasCandidates to count.
+     * @example
+     * // Count the number of ArtifactAasCandidates
+     * const count = await prisma.artifactAasCandidate.count({
+     *   where: {
+     *     // ... the filter for the ArtifactAasCandidates we want to count
+     *   }
+     * })
+    **/
+    count<T extends ArtifactAasCandidateCountArgs>(
+      args?: Subset<T, ArtifactAasCandidateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ArtifactAasCandidateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ArtifactAasCandidate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactAasCandidateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ArtifactAasCandidateAggregateArgs>(args: Subset<T, ArtifactAasCandidateAggregateArgs>): Prisma.PrismaPromise<GetArtifactAasCandidateAggregateType<T>>
+
+    /**
+     * Group by ArtifactAasCandidate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactAasCandidateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ArtifactAasCandidateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ArtifactAasCandidateGroupByArgs['orderBy'] }
+        : { orderBy?: ArtifactAasCandidateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ArtifactAasCandidateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetArtifactAasCandidateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ArtifactAasCandidate model
+   */
+  readonly fields: ArtifactAasCandidateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ArtifactAasCandidate.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ArtifactAasCandidateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    intakeSession<T extends ArtifactIntakeSessionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSessionDefaultArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    file<T extends ArtifactIntakeFileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeFileDefaultArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ArtifactAasCandidate model
+   */
+  interface ArtifactAasCandidateFieldRefs {
+    readonly id: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly intakeSessionId: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly fileId: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly organizationId: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly type: FieldRef<"ArtifactAasCandidate", 'ArtifactAasCandidateType'>
+    readonly title: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly summary: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly mappingState: FieldRef<"ArtifactAasCandidate", 'ArtifactAasMappingState'>
+    readonly sourceType: FieldRef<"ArtifactAasCandidate", 'ArtifactSourceType'>
+    readonly sourceConfidence: FieldRef<"ArtifactAasCandidate", 'ExtractionConfidence'>
+    readonly sourceSectionId: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly sourceSectionTitle: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly sourceSectionMarker: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly inferredOutcomeCandidateId: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly inferredEpicCandidateId: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly relationshipState: FieldRef<"ArtifactAasCandidate", 'ArtifactAasMappingState'>
+    readonly relationshipNote: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly acceptanceCriteria: FieldRef<"ArtifactAasCandidate", 'String[]'>
+    readonly testNotes: FieldRef<"ArtifactAasCandidate", 'String[]'>
+    readonly draftRecord: FieldRef<"ArtifactAasCandidate", 'Json'>
+    readonly humanDecisions: FieldRef<"ArtifactAasCandidate", 'Json'>
+    readonly complianceResult: FieldRef<"ArtifactAasCandidate", 'Json'>
+    readonly reviewStatus: FieldRef<"ArtifactAasCandidate", 'ArtifactCandidateReviewStatus'>
+    readonly reviewComment: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly followUpNeeded: FieldRef<"ArtifactAasCandidate", 'Boolean'>
+    readonly importedReadinessState: FieldRef<"ArtifactAasCandidate", 'ImportedGovernedReadinessState'>
+    readonly promotedEntityType: FieldRef<"ArtifactAasCandidate", 'ArtifactAasCandidateType'>
+    readonly promotedEntityId: FieldRef<"ArtifactAasCandidate", 'String'>
+    readonly promotedAt: FieldRef<"ArtifactAasCandidate", 'DateTime'>
+    readonly createdAt: FieldRef<"ArtifactAasCandidate", 'DateTime'>
+    readonly updatedAt: FieldRef<"ArtifactAasCandidate", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ArtifactAasCandidate findUnique
+   */
+  export type ArtifactAasCandidateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactAasCandidate to fetch.
+     */
+    where: ArtifactAasCandidateWhereUniqueInput
+  }
+
+  /**
+   * ArtifactAasCandidate findUniqueOrThrow
+   */
+  export type ArtifactAasCandidateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactAasCandidate to fetch.
+     */
+    where: ArtifactAasCandidateWhereUniqueInput
+  }
+
+  /**
+   * ArtifactAasCandidate findFirst
+   */
+  export type ArtifactAasCandidateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactAasCandidate to fetch.
+     */
+    where?: ArtifactAasCandidateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactAasCandidates to fetch.
+     */
+    orderBy?: ArtifactAasCandidateOrderByWithRelationInput | ArtifactAasCandidateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArtifactAasCandidates.
+     */
+    cursor?: ArtifactAasCandidateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactAasCandidates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactAasCandidates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArtifactAasCandidates.
+     */
+    distinct?: ArtifactAasCandidateScalarFieldEnum | ArtifactAasCandidateScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactAasCandidate findFirstOrThrow
+   */
+  export type ArtifactAasCandidateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactAasCandidate to fetch.
+     */
+    where?: ArtifactAasCandidateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactAasCandidates to fetch.
+     */
+    orderBy?: ArtifactAasCandidateOrderByWithRelationInput | ArtifactAasCandidateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArtifactAasCandidates.
+     */
+    cursor?: ArtifactAasCandidateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactAasCandidates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactAasCandidates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArtifactAasCandidates.
+     */
+    distinct?: ArtifactAasCandidateScalarFieldEnum | ArtifactAasCandidateScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactAasCandidate findMany
+   */
+  export type ArtifactAasCandidateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactAasCandidates to fetch.
+     */
+    where?: ArtifactAasCandidateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactAasCandidates to fetch.
+     */
+    orderBy?: ArtifactAasCandidateOrderByWithRelationInput | ArtifactAasCandidateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ArtifactAasCandidates.
+     */
+    cursor?: ArtifactAasCandidateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactAasCandidates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactAasCandidates.
+     */
+    skip?: number
+    distinct?: ArtifactAasCandidateScalarFieldEnum | ArtifactAasCandidateScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactAasCandidate create
+   */
+  export type ArtifactAasCandidateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ArtifactAasCandidate.
+     */
+    data: XOR<ArtifactAasCandidateCreateInput, ArtifactAasCandidateUncheckedCreateInput>
+  }
+
+  /**
+   * ArtifactAasCandidate createMany
+   */
+  export type ArtifactAasCandidateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ArtifactAasCandidates.
+     */
+    data: ArtifactAasCandidateCreateManyInput | ArtifactAasCandidateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ArtifactAasCandidate createManyAndReturn
+   */
+  export type ArtifactAasCandidateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * The data used to create many ArtifactAasCandidates.
+     */
+    data: ArtifactAasCandidateCreateManyInput | ArtifactAasCandidateCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactAasCandidate update
+   */
+  export type ArtifactAasCandidateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ArtifactAasCandidate.
+     */
+    data: XOR<ArtifactAasCandidateUpdateInput, ArtifactAasCandidateUncheckedUpdateInput>
+    /**
+     * Choose, which ArtifactAasCandidate to update.
+     */
+    where: ArtifactAasCandidateWhereUniqueInput
+  }
+
+  /**
+   * ArtifactAasCandidate updateMany
+   */
+  export type ArtifactAasCandidateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ArtifactAasCandidates.
+     */
+    data: XOR<ArtifactAasCandidateUpdateManyMutationInput, ArtifactAasCandidateUncheckedUpdateManyInput>
+    /**
+     * Filter which ArtifactAasCandidates to update
+     */
+    where?: ArtifactAasCandidateWhereInput
+    /**
+     * Limit how many ArtifactAasCandidates to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArtifactAasCandidate updateManyAndReturn
+   */
+  export type ArtifactAasCandidateUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * The data used to update ArtifactAasCandidates.
+     */
+    data: XOR<ArtifactAasCandidateUpdateManyMutationInput, ArtifactAasCandidateUncheckedUpdateManyInput>
+    /**
+     * Filter which ArtifactAasCandidates to update
+     */
+    where?: ArtifactAasCandidateWhereInput
+    /**
+     * Limit how many ArtifactAasCandidates to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactAasCandidate upsert
+   */
+  export type ArtifactAasCandidateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ArtifactAasCandidate to update in case it exists.
+     */
+    where: ArtifactAasCandidateWhereUniqueInput
+    /**
+     * In case the ArtifactAasCandidate found by the `where` argument doesn't exist, create a new ArtifactAasCandidate with this data.
+     */
+    create: XOR<ArtifactAasCandidateCreateInput, ArtifactAasCandidateUncheckedCreateInput>
+    /**
+     * In case the ArtifactAasCandidate was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ArtifactAasCandidateUpdateInput, ArtifactAasCandidateUncheckedUpdateInput>
+  }
+
+  /**
+   * ArtifactAasCandidate delete
+   */
+  export type ArtifactAasCandidateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
+    /**
+     * Filter which ArtifactAasCandidate to delete.
+     */
+    where: ArtifactAasCandidateWhereUniqueInput
+  }
+
+  /**
+   * ArtifactAasCandidate deleteMany
+   */
+  export type ArtifactAasCandidateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArtifactAasCandidates to delete
+     */
+    where?: ArtifactAasCandidateWhereInput
+    /**
+     * Limit how many ArtifactAasCandidates to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArtifactAasCandidate without action
+   */
+  export type ArtifactAasCandidateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactAasCandidate
+     */
+    select?: ArtifactAasCandidateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactAasCandidate
+     */
+    omit?: ArtifactAasCandidateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactAasCandidateInclude<ExtArgs> | null
   }
 
 
@@ -14156,6 +16129,12 @@ export namespace Prisma {
     riskProfile: 'riskProfile',
     aiAccelerationLevel: 'aiAccelerationLevel',
     status: 'status',
+    originType: 'originType',
+    createdMode: 'createdMode',
+    lineageSourceType: 'lineageSourceType',
+    lineageSourceId: 'lineageSourceId',
+    lineageNote: 'lineageNote',
+    importedReadinessState: 'importedReadinessState',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -14171,6 +16150,12 @@ export namespace Prisma {
     title: 'title',
     purpose: 'purpose',
     status: 'status',
+    originType: 'originType',
+    createdMode: 'createdMode',
+    lineageSourceType: 'lineageSourceType',
+    lineageSourceId: 'lineageSourceId',
+    lineageNote: 'lineageNote',
+    importedReadinessState: 'importedReadinessState',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -14193,6 +16178,12 @@ export namespace Prisma {
     testDefinition: 'testDefinition',
     definitionOfDone: 'definitionOfDone',
     status: 'status',
+    originType: 'originType',
+    createdMode: 'createdMode',
+    lineageSourceType: 'lineageSourceType',
+    lineageSourceId: 'lineageSourceId',
+    lineageNote: 'lineageNote',
+    importedReadinessState: 'importedReadinessState',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -14270,6 +16261,43 @@ export namespace Prisma {
   export type ArtifactIntakeFileScalarFieldEnum = (typeof ArtifactIntakeFileScalarFieldEnum)[keyof typeof ArtifactIntakeFileScalarFieldEnum]
 
 
+  export const ArtifactAasCandidateScalarFieldEnum: {
+    id: 'id',
+    intakeSessionId: 'intakeSessionId',
+    fileId: 'fileId',
+    organizationId: 'organizationId',
+    type: 'type',
+    title: 'title',
+    summary: 'summary',
+    mappingState: 'mappingState',
+    sourceType: 'sourceType',
+    sourceConfidence: 'sourceConfidence',
+    sourceSectionId: 'sourceSectionId',
+    sourceSectionTitle: 'sourceSectionTitle',
+    sourceSectionMarker: 'sourceSectionMarker',
+    inferredOutcomeCandidateId: 'inferredOutcomeCandidateId',
+    inferredEpicCandidateId: 'inferredEpicCandidateId',
+    relationshipState: 'relationshipState',
+    relationshipNote: 'relationshipNote',
+    acceptanceCriteria: 'acceptanceCriteria',
+    testNotes: 'testNotes',
+    draftRecord: 'draftRecord',
+    humanDecisions: 'humanDecisions',
+    complianceResult: 'complianceResult',
+    reviewStatus: 'reviewStatus',
+    reviewComment: 'reviewComment',
+    followUpNeeded: 'followUpNeeded',
+    importedReadinessState: 'importedReadinessState',
+    promotedEntityType: 'promotedEntityType',
+    promotedEntityId: 'promotedEntityId',
+    promotedAt: 'promotedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ArtifactAasCandidateScalarFieldEnum = (typeof ArtifactAasCandidateScalarFieldEnum)[keyof typeof ArtifactAasCandidateScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -14284,6 +16312,13 @@ export namespace Prisma {
   };
 
   export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -14397,6 +16432,62 @@ export namespace Prisma {
    * Reference to a field of type 'OutcomeStatus[]'
    */
   export type ListEnumOutcomeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OutcomeStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'GovernedObjectOriginType'
+   */
+  export type EnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GovernedObjectOriginType'>
+    
+
+
+  /**
+   * Reference to a field of type 'GovernedObjectOriginType[]'
+   */
+  export type ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GovernedObjectOriginType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'GovernedObjectCreatedMode'
+   */
+  export type EnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GovernedObjectCreatedMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'GovernedObjectCreatedMode[]'
+   */
+  export type ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GovernedObjectCreatedMode[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'LineageSourceType'
+   */
+  export type EnumLineageSourceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LineageSourceType'>
+    
+
+
+  /**
+   * Reference to a field of type 'LineageSourceType[]'
+   */
+  export type ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LineageSourceType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ImportedGovernedReadinessState'
+   */
+  export type EnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ImportedGovernedReadinessState'>
+    
+
+
+  /**
+   * Reference to a field of type 'ImportedGovernedReadinessState[]'
+   */
+  export type ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ImportedGovernedReadinessState[]'>
     
 
 
@@ -14597,6 +16688,55 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'ArtifactAasCandidateType'
+   */
+  export type EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactAasCandidateType'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactAasCandidateType[]'
+   */
+  export type ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactAasCandidateType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactAasMappingState'
+   */
+  export type EnumArtifactAasMappingStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactAasMappingState'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactAasMappingState[]'
+   */
+  export type ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactAasMappingState[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactCandidateReviewStatus'
+   */
+  export type EnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactCandidateReviewStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactCandidateReviewStatus[]'
+   */
+  export type ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactCandidateReviewStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -14630,6 +16770,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventListRelationFilter
     artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
+    artifactAasCandidates?: ArtifactAasCandidateListRelationFilter
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -14646,6 +16787,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventOrderByRelationAggregateInput
     artifactIntakeSessions?: ArtifactIntakeSessionOrderByRelationAggregateInput
     artifactIntakeFiles?: ArtifactIntakeFileOrderByRelationAggregateInput
+    artifactAasCandidates?: ArtifactAasCandidateOrderByRelationAggregateInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -14665,6 +16807,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventListRelationFilter
     artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
+    artifactAasCandidates?: ArtifactAasCandidateListRelationFilter
   }, "id" | "slug">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -14840,6 +16983,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFilter<"Outcome"> | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"Outcome"> | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFilter<"Outcome"> | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Outcome"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Outcome"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Outcome"> | string | null
+    lineageNote?: StringNullableFilter<"Outcome"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Outcome"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Outcome"> | Date | string
     updatedAt?: DateTimeFilter<"Outcome"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -14862,6 +17011,12 @@ export namespace Prisma {
     riskProfile?: SortOrder
     aiAccelerationLevel?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrderInput | SortOrder
+    lineageSourceId?: SortOrderInput | SortOrder
+    lineageNote?: SortOrderInput | SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
@@ -14888,6 +17043,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFilter<"Outcome"> | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"Outcome"> | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFilter<"Outcome"> | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Outcome"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Outcome"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Outcome"> | string | null
+    lineageNote?: StringNullableFilter<"Outcome"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Outcome"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Outcome"> | Date | string
     updatedAt?: DateTimeFilter<"Outcome"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -14910,6 +17071,12 @@ export namespace Prisma {
     riskProfile?: SortOrder
     aiAccelerationLevel?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrderInput | SortOrder
+    lineageSourceId?: SortOrderInput | SortOrder
+    lineageNote?: SortOrderInput | SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: OutcomeCountOrderByAggregateInput
@@ -14934,6 +17101,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileWithAggregatesFilter<"Outcome"> | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelWithAggregatesFilter<"Outcome"> | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusWithAggregatesFilter<"Outcome"> | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeWithAggregatesFilter<"Outcome"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeWithAggregatesFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableWithAggregatesFilter<"Outcome"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableWithAggregatesFilter<"Outcome"> | string | null
+    lineageNote?: StringNullableWithAggregatesFilter<"Outcome"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableWithAggregatesFilter<"Outcome"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeWithAggregatesFilter<"Outcome"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Outcome"> | Date | string
   }
@@ -14949,6 +17122,12 @@ export namespace Prisma {
     title?: StringFilter<"Epic"> | string
     purpose?: StringFilter<"Epic"> | string
     status?: EnumEpicStatusFilter<"Epic"> | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Epic"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Epic"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Epic"> | string | null
+    lineageNote?: StringNullableFilter<"Epic"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Epic"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Epic"> | Date | string
     updatedAt?: DateTimeFilter<"Epic"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -14964,6 +17143,12 @@ export namespace Prisma {
     title?: SortOrder
     purpose?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrderInput | SortOrder
+    lineageSourceId?: SortOrderInput | SortOrder
+    lineageNote?: SortOrderInput | SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
@@ -14983,6 +17168,12 @@ export namespace Prisma {
     title?: StringFilter<"Epic"> | string
     purpose?: StringFilter<"Epic"> | string
     status?: EnumEpicStatusFilter<"Epic"> | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Epic"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Epic"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Epic"> | string | null
+    lineageNote?: StringNullableFilter<"Epic"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Epic"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Epic"> | Date | string
     updatedAt?: DateTimeFilter<"Epic"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -14998,6 +17189,12 @@ export namespace Prisma {
     title?: SortOrder
     purpose?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrderInput | SortOrder
+    lineageSourceId?: SortOrderInput | SortOrder
+    lineageNote?: SortOrderInput | SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: EpicCountOrderByAggregateInput
@@ -15016,6 +17213,12 @@ export namespace Prisma {
     title?: StringWithAggregatesFilter<"Epic"> | string
     purpose?: StringWithAggregatesFilter<"Epic"> | string
     status?: EnumEpicStatusWithAggregatesFilter<"Epic"> | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeWithAggregatesFilter<"Epic"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeWithAggregatesFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableWithAggregatesFilter<"Epic"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableWithAggregatesFilter<"Epic"> | string | null
+    lineageNote?: StringNullableWithAggregatesFilter<"Epic"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableWithAggregatesFilter<"Epic"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeWithAggregatesFilter<"Epic"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Epic"> | Date | string
   }
@@ -15038,6 +17241,12 @@ export namespace Prisma {
     testDefinition?: StringNullableFilter<"Story"> | string | null
     definitionOfDone?: StringNullableListFilter<"Story">
     status?: EnumStoryStatusFilter<"Story"> | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Story"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Story"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Story"> | string | null
+    lineageNote?: StringNullableFilter<"Story"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Story"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Story"> | Date | string
     updatedAt?: DateTimeFilter<"Story"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -15060,6 +17269,12 @@ export namespace Prisma {
     testDefinition?: SortOrderInput | SortOrder
     definitionOfDone?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrderInput | SortOrder
+    lineageSourceId?: SortOrderInput | SortOrder
+    lineageNote?: SortOrderInput | SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
@@ -15086,6 +17301,12 @@ export namespace Prisma {
     testDefinition?: StringNullableFilter<"Story"> | string | null
     definitionOfDone?: StringNullableListFilter<"Story">
     status?: EnumStoryStatusFilter<"Story"> | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Story"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Story"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Story"> | string | null
+    lineageNote?: StringNullableFilter<"Story"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Story"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Story"> | Date | string
     updatedAt?: DateTimeFilter<"Story"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
@@ -15108,6 +17329,12 @@ export namespace Prisma {
     testDefinition?: SortOrderInput | SortOrder
     definitionOfDone?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrderInput | SortOrder
+    lineageSourceId?: SortOrderInput | SortOrder
+    lineageNote?: SortOrderInput | SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: StoryCountOrderByAggregateInput
@@ -15133,6 +17360,12 @@ export namespace Prisma {
     testDefinition?: StringNullableWithAggregatesFilter<"Story"> | string | null
     definitionOfDone?: StringNullableListFilter<"Story">
     status?: EnumStoryStatusWithAggregatesFilter<"Story"> | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeWithAggregatesFilter<"Story"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeWithAggregatesFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableWithAggregatesFilter<"Story"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableWithAggregatesFilter<"Story"> | string | null
+    lineageNote?: StringNullableWithAggregatesFilter<"Story"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableWithAggregatesFilter<"Story"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeWithAggregatesFilter<"Story"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Story"> | Date | string
   }
@@ -15325,6 +17558,7 @@ export namespace Prisma {
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     creator?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
     files?: ArtifactIntakeFileListRelationFilter
+    candidates?: ArtifactAasCandidateListRelationFilter
   }
 
   export type ArtifactIntakeSessionOrderByWithRelationInput = {
@@ -15340,6 +17574,7 @@ export namespace Prisma {
     organization?: OrganizationOrderByWithRelationInput
     creator?: AppUserOrderByWithRelationInput
     files?: ArtifactIntakeFileOrderByRelationAggregateInput
+    candidates?: ArtifactAasCandidateOrderByRelationAggregateInput
   }
 
   export type ArtifactIntakeSessionWhereUniqueInput = Prisma.AtLeast<{
@@ -15358,6 +17593,7 @@ export namespace Prisma {
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     creator?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
     files?: ArtifactIntakeFileListRelationFilter
+    candidates?: ArtifactAasCandidateListRelationFilter
   }, "id">
 
   export type ArtifactIntakeSessionOrderByWithAggregationInput = {
@@ -15413,6 +17649,7 @@ export namespace Prisma {
     intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     uploader?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+    candidates?: ArtifactAasCandidateListRelationFilter
   }
 
   export type ArtifactIntakeFileOrderByWithRelationInput = {
@@ -15435,6 +17672,7 @@ export namespace Prisma {
     intakeSession?: ArtifactIntakeSessionOrderByWithRelationInput
     organization?: OrganizationOrderByWithRelationInput
     uploader?: AppUserOrderByWithRelationInput
+    candidates?: ArtifactAasCandidateOrderByRelationAggregateInput
   }
 
   export type ArtifactIntakeFileWhereUniqueInput = Prisma.AtLeast<{
@@ -15460,6 +17698,7 @@ export namespace Prisma {
     intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     uploader?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+    candidates?: ArtifactAasCandidateListRelationFilter
   }, "id">
 
   export type ArtifactIntakeFileOrderByWithAggregationInput = {
@@ -15508,6 +17747,197 @@ export namespace Prisma {
     uploadedAt?: DateTimeWithAggregatesFilter<"ArtifactIntakeFile"> | Date | string
   }
 
+  export type ArtifactAasCandidateWhereInput = {
+    AND?: ArtifactAasCandidateWhereInput | ArtifactAasCandidateWhereInput[]
+    OR?: ArtifactAasCandidateWhereInput[]
+    NOT?: ArtifactAasCandidateWhereInput | ArtifactAasCandidateWhereInput[]
+    id?: StringFilter<"ArtifactAasCandidate"> | string
+    intakeSessionId?: StringFilter<"ArtifactAasCandidate"> | string
+    fileId?: StringFilter<"ArtifactAasCandidate"> | string
+    organizationId?: StringFilter<"ArtifactAasCandidate"> | string
+    type?: EnumArtifactAasCandidateTypeFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType
+    title?: StringFilter<"ArtifactAasCandidate"> | string
+    summary?: StringFilter<"ArtifactAasCandidate"> | string
+    mappingState?: EnumArtifactAasMappingStateFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFilter<"ArtifactAasCandidate"> | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFilter<"ArtifactAasCandidate"> | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFilter<"ArtifactAasCandidate"> | string
+    sourceSectionTitle?: StringFilter<"ArtifactAasCandidate"> | string
+    sourceSectionMarker?: StringFilter<"ArtifactAasCandidate"> | string
+    inferredOutcomeCandidateId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    inferredEpicCandidateId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    relationshipState?: EnumArtifactAasMappingStateFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    relationshipNote?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    acceptanceCriteria?: StringNullableListFilter<"ArtifactAasCandidate">
+    testNotes?: StringNullableListFilter<"ArtifactAasCandidate">
+    draftRecord?: JsonFilter<"ArtifactAasCandidate">
+    humanDecisions?: JsonFilter<"ArtifactAasCandidate">
+    complianceResult?: JsonFilter<"ArtifactAasCandidate">
+    reviewStatus?: EnumArtifactCandidateReviewStatusFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    followUpNeeded?: BoolFilter<"ArtifactAasCandidate"> | boolean
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"ArtifactAasCandidate"> | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: EnumArtifactAasCandidateTypeNullableFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    promotedAt?: DateTimeNullableFilter<"ArtifactAasCandidate"> | Date | string | null
+    createdAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
+    updatedAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
+    file?: XOR<ArtifactIntakeFileScalarRelationFilter, ArtifactIntakeFileWhereInput>
+  }
+
+  export type ArtifactAasCandidateOrderByWithRelationInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    fileId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    title?: SortOrder
+    summary?: SortOrder
+    mappingState?: SortOrder
+    sourceType?: SortOrder
+    sourceConfidence?: SortOrder
+    sourceSectionId?: SortOrder
+    sourceSectionTitle?: SortOrder
+    sourceSectionMarker?: SortOrder
+    inferredOutcomeCandidateId?: SortOrderInput | SortOrder
+    inferredEpicCandidateId?: SortOrderInput | SortOrder
+    relationshipState?: SortOrder
+    relationshipNote?: SortOrderInput | SortOrder
+    acceptanceCriteria?: SortOrder
+    testNotes?: SortOrder
+    draftRecord?: SortOrder
+    humanDecisions?: SortOrder
+    complianceResult?: SortOrder
+    reviewStatus?: SortOrder
+    reviewComment?: SortOrderInput | SortOrder
+    followUpNeeded?: SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
+    promotedEntityType?: SortOrderInput | SortOrder
+    promotedEntityId?: SortOrderInput | SortOrder
+    promotedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    intakeSession?: ArtifactIntakeSessionOrderByWithRelationInput
+    file?: ArtifactIntakeFileOrderByWithRelationInput
+  }
+
+  export type ArtifactAasCandidateWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ArtifactAasCandidateWhereInput | ArtifactAasCandidateWhereInput[]
+    OR?: ArtifactAasCandidateWhereInput[]
+    NOT?: ArtifactAasCandidateWhereInput | ArtifactAasCandidateWhereInput[]
+    intakeSessionId?: StringFilter<"ArtifactAasCandidate"> | string
+    fileId?: StringFilter<"ArtifactAasCandidate"> | string
+    organizationId?: StringFilter<"ArtifactAasCandidate"> | string
+    type?: EnumArtifactAasCandidateTypeFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType
+    title?: StringFilter<"ArtifactAasCandidate"> | string
+    summary?: StringFilter<"ArtifactAasCandidate"> | string
+    mappingState?: EnumArtifactAasMappingStateFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFilter<"ArtifactAasCandidate"> | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFilter<"ArtifactAasCandidate"> | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFilter<"ArtifactAasCandidate"> | string
+    sourceSectionTitle?: StringFilter<"ArtifactAasCandidate"> | string
+    sourceSectionMarker?: StringFilter<"ArtifactAasCandidate"> | string
+    inferredOutcomeCandidateId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    inferredEpicCandidateId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    relationshipState?: EnumArtifactAasMappingStateFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    relationshipNote?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    acceptanceCriteria?: StringNullableListFilter<"ArtifactAasCandidate">
+    testNotes?: StringNullableListFilter<"ArtifactAasCandidate">
+    draftRecord?: JsonFilter<"ArtifactAasCandidate">
+    humanDecisions?: JsonFilter<"ArtifactAasCandidate">
+    complianceResult?: JsonFilter<"ArtifactAasCandidate">
+    reviewStatus?: EnumArtifactCandidateReviewStatusFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    followUpNeeded?: BoolFilter<"ArtifactAasCandidate"> | boolean
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"ArtifactAasCandidate"> | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: EnumArtifactAasCandidateTypeNullableFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    promotedAt?: DateTimeNullableFilter<"ArtifactAasCandidate"> | Date | string | null
+    createdAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
+    updatedAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
+    file?: XOR<ArtifactIntakeFileScalarRelationFilter, ArtifactIntakeFileWhereInput>
+  }, "id">
+
+  export type ArtifactAasCandidateOrderByWithAggregationInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    fileId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    title?: SortOrder
+    summary?: SortOrder
+    mappingState?: SortOrder
+    sourceType?: SortOrder
+    sourceConfidence?: SortOrder
+    sourceSectionId?: SortOrder
+    sourceSectionTitle?: SortOrder
+    sourceSectionMarker?: SortOrder
+    inferredOutcomeCandidateId?: SortOrderInput | SortOrder
+    inferredEpicCandidateId?: SortOrderInput | SortOrder
+    relationshipState?: SortOrder
+    relationshipNote?: SortOrderInput | SortOrder
+    acceptanceCriteria?: SortOrder
+    testNotes?: SortOrder
+    draftRecord?: SortOrder
+    humanDecisions?: SortOrder
+    complianceResult?: SortOrder
+    reviewStatus?: SortOrder
+    reviewComment?: SortOrderInput | SortOrder
+    followUpNeeded?: SortOrder
+    importedReadinessState?: SortOrderInput | SortOrder
+    promotedEntityType?: SortOrderInput | SortOrder
+    promotedEntityId?: SortOrderInput | SortOrder
+    promotedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ArtifactAasCandidateCountOrderByAggregateInput
+    _max?: ArtifactAasCandidateMaxOrderByAggregateInput
+    _min?: ArtifactAasCandidateMinOrderByAggregateInput
+  }
+
+  export type ArtifactAasCandidateScalarWhereWithAggregatesInput = {
+    AND?: ArtifactAasCandidateScalarWhereWithAggregatesInput | ArtifactAasCandidateScalarWhereWithAggregatesInput[]
+    OR?: ArtifactAasCandidateScalarWhereWithAggregatesInput[]
+    NOT?: ArtifactAasCandidateScalarWhereWithAggregatesInput | ArtifactAasCandidateScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    intakeSessionId?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    fileId?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    organizationId?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    type?: EnumArtifactAasCandidateTypeWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType
+    title?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    summary?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    mappingState?: EnumArtifactAasMappingStateWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ExtractionConfidence
+    sourceSectionId?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    sourceSectionTitle?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    sourceSectionMarker?: StringWithAggregatesFilter<"ArtifactAasCandidate"> | string
+    inferredOutcomeCandidateId?: StringNullableWithAggregatesFilter<"ArtifactAasCandidate"> | string | null
+    inferredEpicCandidateId?: StringNullableWithAggregatesFilter<"ArtifactAasCandidate"> | string | null
+    relationshipState?: EnumArtifactAasMappingStateWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    relationshipNote?: StringNullableWithAggregatesFilter<"ArtifactAasCandidate"> | string | null
+    acceptanceCriteria?: StringNullableListFilter<"ArtifactAasCandidate">
+    testNotes?: StringNullableListFilter<"ArtifactAasCandidate">
+    draftRecord?: JsonWithAggregatesFilter<"ArtifactAasCandidate">
+    humanDecisions?: JsonWithAggregatesFilter<"ArtifactAasCandidate">
+    complianceResult?: JsonWithAggregatesFilter<"ArtifactAasCandidate">
+    reviewStatus?: EnumArtifactCandidateReviewStatusWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: StringNullableWithAggregatesFilter<"ArtifactAasCandidate"> | string | null
+    followUpNeeded?: BoolWithAggregatesFilter<"ArtifactAasCandidate"> | boolean
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: EnumArtifactAasCandidateTypeNullableWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: StringNullableWithAggregatesFilter<"ArtifactAasCandidate"> | string | null
+    promotedAt?: DateTimeNullableWithAggregatesFilter<"ArtifactAasCandidate"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ArtifactAasCandidate"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ArtifactAasCandidate"> | Date | string
+  }
+
   export type OrganizationCreateInput = {
     id: string
     slug: string
@@ -15522,6 +17952,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -15538,6 +17969,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
@@ -15554,6 +17986,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -15570,6 +18003,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -15749,6 +18183,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutOutcomesInput
@@ -15771,6 +18211,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     epics?: EpicUncheckedCreateNestedManyWithoutOutcomeInput
@@ -15789,6 +18235,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutOutcomesNestedInput
@@ -15811,6 +18263,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     epics?: EpicUncheckedUpdateManyWithoutOutcomeNestedInput
@@ -15831,6 +18289,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -15847,6 +18311,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15865,6 +18335,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15875,6 +18351,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutEpicsInput
@@ -15890,6 +18372,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     stories?: StoryUncheckedCreateNestedManyWithoutEpicInput
@@ -15901,6 +18389,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutEpicsNestedInput
@@ -15916,6 +18410,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stories?: StoryUncheckedUpdateManyWithoutEpicNestedInput
@@ -15929,6 +18429,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -15939,6 +18445,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15951,6 +18463,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15967,6 +18485,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutStoriesInput
@@ -15989,6 +18513,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -16005,6 +18535,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutStoriesNestedInput
@@ -16027,6 +18563,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16046,6 +18588,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -16062,6 +18610,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16081,6 +18635,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -16281,6 +18841,7 @@ export namespace Prisma {
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput
     creator?: AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput
     files?: ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionUncheckedCreateInput = {
@@ -16294,6 +18855,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     files?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionUpdateInput = {
@@ -16307,6 +18869,7 @@ export namespace Prisma {
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput
     creator?: AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput
     files?: ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type ArtifactIntakeSessionUncheckedUpdateInput = {
@@ -16320,6 +18883,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     files?: ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type ArtifactIntakeSessionCreateManyInput = {
@@ -16373,6 +18937,7 @@ export namespace Prisma {
     intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
     uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileUncheckedCreateInput = {
@@ -16392,6 +18957,7 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileUpdateInput = {
@@ -16411,6 +18977,7 @@ export namespace Prisma {
     intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
     uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileUncheckedUpdateInput = {
@@ -16430,6 +18997,7 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileCreateManyInput = {
@@ -16484,6 +19052,241 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateCreateInput = {
+    id: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactAasCandidatesInput
+    intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutCandidatesInput
+    file: ArtifactIntakeFileCreateNestedOneWithoutCandidatesInput
+  }
+
+  export type ArtifactAasCandidateUncheckedCreateInput = {
+    id: string
+    intakeSessionId: string
+    fileId: string
+    organizationId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactAasCandidateUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactAasCandidatesNestedInput
+    intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutCandidatesNestedInput
+    file?: ArtifactIntakeFileUpdateOneRequiredWithoutCandidatesNestedInput
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateCreateManyInput = {
+    id: string
+    intakeSessionId: string
+    fileId: string
+    organizationId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactAasCandidateUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -16560,6 +19363,12 @@ export namespace Prisma {
     none?: ArtifactIntakeFileWhereInput
   }
 
+  export type ArtifactAasCandidateListRelationFilter = {
+    every?: ArtifactAasCandidateWhereInput
+    some?: ArtifactAasCandidateWhereInput
+    none?: ArtifactAasCandidateWhereInput
+  }
+
   export type MembershipOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -16589,6 +19398,10 @@ export namespace Prisma {
   }
 
   export type ArtifactIntakeFileOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ArtifactAasCandidateOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -16790,6 +19603,34 @@ export namespace Prisma {
     not?: NestedEnumOutcomeStatusFilter<$PrismaModel> | $Enums.OutcomeStatus
   }
 
+  export type EnumGovernedObjectOriginTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectOriginType | EnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectOriginTypeFilter<$PrismaModel> | $Enums.GovernedObjectOriginType
+  }
+
+  export type EnumGovernedObjectCreatedModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectCreatedMode | EnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel> | $Enums.GovernedObjectCreatedMode
+  }
+
+  export type EnumLineageSourceTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.LineageSourceType | EnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumLineageSourceTypeNullableFilter<$PrismaModel> | $Enums.LineageSourceType | null
+  }
+
+  export type EnumImportedGovernedReadinessStateNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ImportedGovernedReadinessState | EnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumImportedGovernedReadinessStateNullableFilter<$PrismaModel> | $Enums.ImportedGovernedReadinessState | null
+  }
+
   export type AppUserNullableScalarRelationFilter = {
     is?: AppUserWhereInput | null
     isNot?: AppUserWhereInput | null
@@ -16814,6 +19655,12 @@ export namespace Prisma {
     riskProfile?: SortOrder
     aiAccelerationLevel?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -16832,6 +19679,12 @@ export namespace Prisma {
     riskProfile?: SortOrder
     aiAccelerationLevel?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -16850,6 +19703,12 @@ export namespace Prisma {
     riskProfile?: SortOrder
     aiAccelerationLevel?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -16884,6 +19743,46 @@ export namespace Prisma {
     _max?: NestedEnumOutcomeStatusFilter<$PrismaModel>
   }
 
+  export type EnumGovernedObjectOriginTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectOriginType | EnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectOriginTypeWithAggregatesFilter<$PrismaModel> | $Enums.GovernedObjectOriginType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGovernedObjectOriginTypeFilter<$PrismaModel>
+    _max?: NestedEnumGovernedObjectOriginTypeFilter<$PrismaModel>
+  }
+
+  export type EnumGovernedObjectCreatedModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectCreatedMode | EnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectCreatedModeWithAggregatesFilter<$PrismaModel> | $Enums.GovernedObjectCreatedMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel>
+    _max?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel>
+  }
+
+  export type EnumLineageSourceTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LineageSourceType | EnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumLineageSourceTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.LineageSourceType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumLineageSourceTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumLineageSourceTypeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumImportedGovernedReadinessStateNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ImportedGovernedReadinessState | EnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumImportedGovernedReadinessStateNullableWithAggregatesFilter<$PrismaModel> | $Enums.ImportedGovernedReadinessState | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumImportedGovernedReadinessStateNullableFilter<$PrismaModel>
+    _max?: NestedEnumImportedGovernedReadinessStateNullableFilter<$PrismaModel>
+  }
+
   export type EnumEpicStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.EpicStatus | EnumEpicStatusFieldRefInput<$PrismaModel>
     in?: $Enums.EpicStatus[] | ListEnumEpicStatusFieldRefInput<$PrismaModel>
@@ -16909,6 +19808,12 @@ export namespace Prisma {
     title?: SortOrder
     purpose?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -16921,6 +19826,12 @@ export namespace Prisma {
     title?: SortOrder
     purpose?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -16933,6 +19844,12 @@ export namespace Prisma {
     title?: SortOrder
     purpose?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -16994,6 +19911,12 @@ export namespace Prisma {
     testDefinition?: SortOrder
     definitionOfDone?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -17010,6 +19933,12 @@ export namespace Prisma {
     aiAccelerationLevel?: SortOrder
     testDefinition?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -17026,6 +19955,12 @@ export namespace Prisma {
     aiAccelerationLevel?: SortOrder
     testDefinition?: SortOrder
     status?: SortOrder
+    originType?: SortOrder
+    createdMode?: SortOrder
+    lineageSourceType?: SortOrder
+    lineageSourceId?: SortOrder
+    lineageNote?: SortOrder
+    importedReadinessState?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -17496,6 +20431,267 @@ export namespace Prisma {
     _max?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel>
   }
 
+  export type EnumArtifactAasCandidateTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasCandidateTypeFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType
+  }
+
+  export type EnumArtifactAasMappingStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasMappingState | EnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasMappingStateFilter<$PrismaModel> | $Enums.ArtifactAasMappingState
+  }
+
+  export type EnumArtifactSourceTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeFilter<$PrismaModel> | $Enums.ArtifactSourceType
+  }
+
+  export type EnumExtractionConfidenceFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumExtractionConfidenceFilter<$PrismaModel> | $Enums.ExtractionConfidence
+  }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type EnumArtifactCandidateReviewStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactCandidateReviewStatus | EnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel> | $Enums.ArtifactCandidateReviewStatus
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type EnumArtifactAasCandidateTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType | null
+  }
+
+  export type ArtifactIntakeFileScalarRelationFilter = {
+    is?: ArtifactIntakeFileWhereInput
+    isNot?: ArtifactIntakeFileWhereInput
+  }
+
+  export type ArtifactAasCandidateCountOrderByAggregateInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    fileId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    title?: SortOrder
+    summary?: SortOrder
+    mappingState?: SortOrder
+    sourceType?: SortOrder
+    sourceConfidence?: SortOrder
+    sourceSectionId?: SortOrder
+    sourceSectionTitle?: SortOrder
+    sourceSectionMarker?: SortOrder
+    inferredOutcomeCandidateId?: SortOrder
+    inferredEpicCandidateId?: SortOrder
+    relationshipState?: SortOrder
+    relationshipNote?: SortOrder
+    acceptanceCriteria?: SortOrder
+    testNotes?: SortOrder
+    draftRecord?: SortOrder
+    humanDecisions?: SortOrder
+    complianceResult?: SortOrder
+    reviewStatus?: SortOrder
+    reviewComment?: SortOrder
+    followUpNeeded?: SortOrder
+    importedReadinessState?: SortOrder
+    promotedEntityType?: SortOrder
+    promotedEntityId?: SortOrder
+    promotedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ArtifactAasCandidateMaxOrderByAggregateInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    fileId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    title?: SortOrder
+    summary?: SortOrder
+    mappingState?: SortOrder
+    sourceType?: SortOrder
+    sourceConfidence?: SortOrder
+    sourceSectionId?: SortOrder
+    sourceSectionTitle?: SortOrder
+    sourceSectionMarker?: SortOrder
+    inferredOutcomeCandidateId?: SortOrder
+    inferredEpicCandidateId?: SortOrder
+    relationshipState?: SortOrder
+    relationshipNote?: SortOrder
+    reviewStatus?: SortOrder
+    reviewComment?: SortOrder
+    followUpNeeded?: SortOrder
+    importedReadinessState?: SortOrder
+    promotedEntityType?: SortOrder
+    promotedEntityId?: SortOrder
+    promotedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ArtifactAasCandidateMinOrderByAggregateInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    fileId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    title?: SortOrder
+    summary?: SortOrder
+    mappingState?: SortOrder
+    sourceType?: SortOrder
+    sourceConfidence?: SortOrder
+    sourceSectionId?: SortOrder
+    sourceSectionTitle?: SortOrder
+    sourceSectionMarker?: SortOrder
+    inferredOutcomeCandidateId?: SortOrder
+    inferredEpicCandidateId?: SortOrder
+    relationshipState?: SortOrder
+    relationshipNote?: SortOrder
+    reviewStatus?: SortOrder
+    reviewComment?: SortOrder
+    followUpNeeded?: SortOrder
+    importedReadinessState?: SortOrder
+    promotedEntityType?: SortOrder
+    promotedEntityId?: SortOrder
+    promotedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumArtifactAasCandidateTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasCandidateTypeWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactAasCandidateTypeFilter<$PrismaModel>
+    _max?: NestedEnumArtifactAasCandidateTypeFilter<$PrismaModel>
+  }
+
+  export type EnumArtifactAasMappingStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasMappingState | EnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasMappingStateWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactAasMappingState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactAasMappingStateFilter<$PrismaModel>
+    _max?: NestedEnumArtifactAasMappingStateFilter<$PrismaModel>
+  }
+
+  export type EnumArtifactSourceTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactSourceType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactSourceTypeFilter<$PrismaModel>
+    _max?: NestedEnumArtifactSourceTypeFilter<$PrismaModel>
+  }
+
+  export type EnumExtractionConfidenceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumExtractionConfidenceWithAggregatesFilter<$PrismaModel> | $Enums.ExtractionConfidence
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumExtractionConfidenceFilter<$PrismaModel>
+    _max?: NestedEnumExtractionConfidenceFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type EnumArtifactCandidateReviewStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactCandidateReviewStatus | EnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactCandidateReviewStatusWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactCandidateReviewStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel>
+    _max?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type EnumArtifactAasCandidateTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactAasCandidateTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel>
+  }
+
   export type MembershipCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -17552,6 +20748,13 @@ export namespace Prisma {
     connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
   }
 
+  export type ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutOrganizationInput, ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput> | ArtifactAasCandidateCreateWithoutOrganizationInput[] | ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput | ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ArtifactAasCandidateCreateManyOrganizationInputEnvelope
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+  }
+
   export type MembershipUncheckedCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -17606,6 +20809,13 @@ export namespace Prisma {
     connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput | ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput[]
     createMany?: ArtifactIntakeFileCreateManyOrganizationInputEnvelope
     connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+  }
+
+  export type ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutOrganizationInput, ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput> | ArtifactAasCandidateCreateWithoutOrganizationInput[] | ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput | ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ArtifactAasCandidateCreateManyOrganizationInputEnvelope
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -17728,6 +20938,20 @@ export namespace Prisma {
     deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
   }
 
+  export type ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutOrganizationInput, ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput> | ArtifactAasCandidateCreateWithoutOrganizationInput[] | ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput | ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ArtifactAasCandidateUpsertWithWhereUniqueWithoutOrganizationInput | ArtifactAasCandidateUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ArtifactAasCandidateCreateManyOrganizationInputEnvelope
+    set?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    disconnect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    delete?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    update?: ArtifactAasCandidateUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactAasCandidateUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ArtifactAasCandidateUpdateManyWithWhereWithoutOrganizationInput | ArtifactAasCandidateUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
+  }
+
   export type MembershipUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -17838,6 +21062,20 @@ export namespace Prisma {
     update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutOrganizationInput | ArtifactIntakeFileUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutOrganizationInput, ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput> | ArtifactAasCandidateCreateWithoutOrganizationInput[] | ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput | ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ArtifactAasCandidateUpsertWithWhereUniqueWithoutOrganizationInput | ArtifactAasCandidateUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ArtifactAasCandidateCreateManyOrganizationInputEnvelope
+    set?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    disconnect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    delete?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    update?: ArtifactAasCandidateUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactAasCandidateUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ArtifactAasCandidateUpdateManyWithWhereWithoutOrganizationInput | ArtifactAasCandidateUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
   }
 
   export type MembershipCreateNestedManyWithoutUserInput = {
@@ -18178,6 +21416,22 @@ export namespace Prisma {
 
   export type EnumOutcomeStatusFieldUpdateOperationsInput = {
     set?: $Enums.OutcomeStatus
+  }
+
+  export type EnumGovernedObjectOriginTypeFieldUpdateOperationsInput = {
+    set?: $Enums.GovernedObjectOriginType
+  }
+
+  export type EnumGovernedObjectCreatedModeFieldUpdateOperationsInput = {
+    set?: $Enums.GovernedObjectCreatedMode
+  }
+
+  export type NullableEnumLineageSourceTypeFieldUpdateOperationsInput = {
+    set?: $Enums.LineageSourceType | null
+  }
+
+  export type NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput = {
+    set?: $Enums.ImportedGovernedReadinessState | null
   }
 
   export type OrganizationUpdateOneRequiredWithoutOutcomesNestedInput = {
@@ -18526,11 +21780,25 @@ export namespace Prisma {
     connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
   }
 
+  export type ArtifactAasCandidateCreateNestedManyWithoutIntakeSessionInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput> | ArtifactAasCandidateCreateWithoutIntakeSessionInput[] | ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput | ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput[]
+    createMany?: ArtifactAasCandidateCreateManyIntakeSessionInputEnvelope
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+  }
+
   export type ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput = {
     create?: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput> | ArtifactIntakeFileCreateWithoutIntakeSessionInput[] | ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput[]
     connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput | ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput[]
     createMany?: ArtifactIntakeFileCreateManyIntakeSessionInputEnvelope
     connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+  }
+
+  export type ArtifactAasCandidateUncheckedCreateNestedManyWithoutIntakeSessionInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput> | ArtifactAasCandidateCreateWithoutIntakeSessionInput[] | ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput | ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput[]
+    createMany?: ArtifactAasCandidateCreateManyIntakeSessionInputEnvelope
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
   }
 
   export type EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput = {
@@ -18569,6 +21837,20 @@ export namespace Prisma {
     deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
   }
 
+  export type ArtifactAasCandidateUpdateManyWithoutIntakeSessionNestedInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput> | ArtifactAasCandidateCreateWithoutIntakeSessionInput[] | ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput | ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput[]
+    upsert?: ArtifactAasCandidateUpsertWithWhereUniqueWithoutIntakeSessionInput | ArtifactAasCandidateUpsertWithWhereUniqueWithoutIntakeSessionInput[]
+    createMany?: ArtifactAasCandidateCreateManyIntakeSessionInputEnvelope
+    set?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    disconnect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    delete?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    update?: ArtifactAasCandidateUpdateWithWhereUniqueWithoutIntakeSessionInput | ArtifactAasCandidateUpdateWithWhereUniqueWithoutIntakeSessionInput[]
+    updateMany?: ArtifactAasCandidateUpdateManyWithWhereWithoutIntakeSessionInput | ArtifactAasCandidateUpdateManyWithWhereWithoutIntakeSessionInput[]
+    deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
+  }
+
   export type ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput = {
     create?: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput> | ArtifactIntakeFileCreateWithoutIntakeSessionInput[] | ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput[]
     connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput | ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput[]
@@ -18581,6 +21863,20 @@ export namespace Prisma {
     update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutIntakeSessionInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutIntakeSessionInput[]
     updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutIntakeSessionInput | ArtifactIntakeFileUpdateManyWithWhereWithoutIntakeSessionInput[]
     deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateManyWithoutIntakeSessionNestedInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput> | ArtifactAasCandidateCreateWithoutIntakeSessionInput[] | ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput | ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput[]
+    upsert?: ArtifactAasCandidateUpsertWithWhereUniqueWithoutIntakeSessionInput | ArtifactAasCandidateUpsertWithWhereUniqueWithoutIntakeSessionInput[]
+    createMany?: ArtifactAasCandidateCreateManyIntakeSessionInputEnvelope
+    set?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    disconnect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    delete?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    update?: ArtifactAasCandidateUpdateWithWhereUniqueWithoutIntakeSessionInput | ArtifactAasCandidateUpdateWithWhereUniqueWithoutIntakeSessionInput[]
+    updateMany?: ArtifactAasCandidateUpdateManyWithWhereWithoutIntakeSessionInput | ArtifactAasCandidateUpdateManyWithWhereWithoutIntakeSessionInput[]
+    deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
   }
 
   export type ArtifactIntakeSessionCreateNestedOneWithoutFilesInput = {
@@ -18599,6 +21895,20 @@ export namespace Prisma {
     create?: XOR<AppUserCreateWithoutUploadedIntakeFilesInput, AppUserUncheckedCreateWithoutUploadedIntakeFilesInput>
     connectOrCreate?: AppUserCreateOrConnectWithoutUploadedIntakeFilesInput
     connect?: AppUserWhereUniqueInput
+  }
+
+  export type ArtifactAasCandidateCreateNestedManyWithoutFileInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutFileInput, ArtifactAasCandidateUncheckedCreateWithoutFileInput> | ArtifactAasCandidateCreateWithoutFileInput[] | ArtifactAasCandidateUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutFileInput | ArtifactAasCandidateCreateOrConnectWithoutFileInput[]
+    createMany?: ArtifactAasCandidateCreateManyFileInputEnvelope
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+  }
+
+  export type ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutFileInput, ArtifactAasCandidateUncheckedCreateWithoutFileInput> | ArtifactAasCandidateCreateWithoutFileInput[] | ArtifactAasCandidateUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutFileInput | ArtifactAasCandidateCreateOrConnectWithoutFileInput[]
+    createMany?: ArtifactAasCandidateCreateManyFileInputEnvelope
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -18645,6 +21955,122 @@ export namespace Prisma {
     delete?: AppUserWhereInput | boolean
     connect?: AppUserWhereUniqueInput
     update?: XOR<XOR<AppUserUpdateToOneWithWhereWithoutUploadedIntakeFilesInput, AppUserUpdateWithoutUploadedIntakeFilesInput>, AppUserUncheckedUpdateWithoutUploadedIntakeFilesInput>
+  }
+
+  export type ArtifactAasCandidateUpdateManyWithoutFileNestedInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutFileInput, ArtifactAasCandidateUncheckedCreateWithoutFileInput> | ArtifactAasCandidateCreateWithoutFileInput[] | ArtifactAasCandidateUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutFileInput | ArtifactAasCandidateCreateOrConnectWithoutFileInput[]
+    upsert?: ArtifactAasCandidateUpsertWithWhereUniqueWithoutFileInput | ArtifactAasCandidateUpsertWithWhereUniqueWithoutFileInput[]
+    createMany?: ArtifactAasCandidateCreateManyFileInputEnvelope
+    set?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    disconnect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    delete?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    update?: ArtifactAasCandidateUpdateWithWhereUniqueWithoutFileInput | ArtifactAasCandidateUpdateWithWhereUniqueWithoutFileInput[]
+    updateMany?: ArtifactAasCandidateUpdateManyWithWhereWithoutFileInput | ArtifactAasCandidateUpdateManyWithWhereWithoutFileInput[]
+    deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput = {
+    create?: XOR<ArtifactAasCandidateCreateWithoutFileInput, ArtifactAasCandidateUncheckedCreateWithoutFileInput> | ArtifactAasCandidateCreateWithoutFileInput[] | ArtifactAasCandidateUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutFileInput | ArtifactAasCandidateCreateOrConnectWithoutFileInput[]
+    upsert?: ArtifactAasCandidateUpsertWithWhereUniqueWithoutFileInput | ArtifactAasCandidateUpsertWithWhereUniqueWithoutFileInput[]
+    createMany?: ArtifactAasCandidateCreateManyFileInputEnvelope
+    set?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    disconnect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    delete?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+    update?: ArtifactAasCandidateUpdateWithWhereUniqueWithoutFileInput | ArtifactAasCandidateUpdateWithWhereUniqueWithoutFileInput[]
+    updateMany?: ArtifactAasCandidateUpdateManyWithWhereWithoutFileInput | ArtifactAasCandidateUpdateManyWithWhereWithoutFileInput[]
+    deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
+  }
+
+  export type ArtifactAasCandidateCreateacceptanceCriteriaInput = {
+    set: string[]
+  }
+
+  export type ArtifactAasCandidateCreatetestNotesInput = {
+    set: string[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutArtifactAasCandidatesInput = {
+    create?: XOR<OrganizationCreateWithoutArtifactAasCandidatesInput, OrganizationUncheckedCreateWithoutArtifactAasCandidatesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutArtifactAasCandidatesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type ArtifactIntakeSessionCreateNestedOneWithoutCandidatesInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutCandidatesInput, ArtifactIntakeSessionUncheckedCreateWithoutCandidatesInput>
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutCandidatesInput
+    connect?: ArtifactIntakeSessionWhereUniqueInput
+  }
+
+  export type ArtifactIntakeFileCreateNestedOneWithoutCandidatesInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutCandidatesInput, ArtifactIntakeFileUncheckedCreateWithoutCandidatesInput>
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutCandidatesInput
+    connect?: ArtifactIntakeFileWhereUniqueInput
+  }
+
+  export type EnumArtifactAasCandidateTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactAasCandidateType
+  }
+
+  export type EnumArtifactAasMappingStateFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactAasMappingState
+  }
+
+  export type EnumArtifactSourceTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactSourceType
+  }
+
+  export type EnumExtractionConfidenceFieldUpdateOperationsInput = {
+    set?: $Enums.ExtractionConfidence
+  }
+
+  export type ArtifactAasCandidateUpdateacceptanceCriteriaInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type ArtifactAasCandidateUpdatetestNotesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactCandidateReviewStatus
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactAasCandidateType | null
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutArtifactAasCandidatesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutArtifactAasCandidatesInput, OrganizationUncheckedCreateWithoutArtifactAasCandidatesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutArtifactAasCandidatesInput
+    upsert?: OrganizationUpsertWithoutArtifactAasCandidatesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutArtifactAasCandidatesInput, OrganizationUpdateWithoutArtifactAasCandidatesInput>, OrganizationUncheckedUpdateWithoutArtifactAasCandidatesInput>
+  }
+
+  export type ArtifactIntakeSessionUpdateOneRequiredWithoutCandidatesNestedInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutCandidatesInput, ArtifactIntakeSessionUncheckedCreateWithoutCandidatesInput>
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutCandidatesInput
+    upsert?: ArtifactIntakeSessionUpsertWithoutCandidatesInput
+    connect?: ArtifactIntakeSessionWhereUniqueInput
+    update?: XOR<XOR<ArtifactIntakeSessionUpdateToOneWithWhereWithoutCandidatesInput, ArtifactIntakeSessionUpdateWithoutCandidatesInput>, ArtifactIntakeSessionUncheckedUpdateWithoutCandidatesInput>
+  }
+
+  export type ArtifactIntakeFileUpdateOneRequiredWithoutCandidatesNestedInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutCandidatesInput, ArtifactIntakeFileUncheckedCreateWithoutCandidatesInput>
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutCandidatesInput
+    upsert?: ArtifactIntakeFileUpsertWithoutCandidatesInput
+    connect?: ArtifactIntakeFileWhereUniqueInput
+    update?: XOR<XOR<ArtifactIntakeFileUpdateToOneWithWhereWithoutCandidatesInput, ArtifactIntakeFileUpdateWithoutCandidatesInput>, ArtifactIntakeFileUncheckedUpdateWithoutCandidatesInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -18794,6 +22220,34 @@ export namespace Prisma {
     not?: NestedEnumOutcomeStatusFilter<$PrismaModel> | $Enums.OutcomeStatus
   }
 
+  export type NestedEnumGovernedObjectOriginTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectOriginType | EnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectOriginTypeFilter<$PrismaModel> | $Enums.GovernedObjectOriginType
+  }
+
+  export type NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectCreatedMode | EnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel> | $Enums.GovernedObjectCreatedMode
+  }
+
+  export type NestedEnumLineageSourceTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.LineageSourceType | EnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumLineageSourceTypeNullableFilter<$PrismaModel> | $Enums.LineageSourceType | null
+  }
+
+  export type NestedEnumImportedGovernedReadinessStateNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ImportedGovernedReadinessState | EnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumImportedGovernedReadinessStateNullableFilter<$PrismaModel> | $Enums.ImportedGovernedReadinessState | null
+  }
+
   export type NestedEnumRiskProfileWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.RiskProfile | EnumRiskProfileFieldRefInput<$PrismaModel>
     in?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
@@ -18822,6 +22276,46 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumOutcomeStatusFilter<$PrismaModel>
     _max?: NestedEnumOutcomeStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumGovernedObjectOriginTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectOriginType | EnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectOriginType[] | ListEnumGovernedObjectOriginTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectOriginTypeWithAggregatesFilter<$PrismaModel> | $Enums.GovernedObjectOriginType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGovernedObjectOriginTypeFilter<$PrismaModel>
+    _max?: NestedEnumGovernedObjectOriginTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumGovernedObjectCreatedModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedObjectCreatedMode | EnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedObjectCreatedMode[] | ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedObjectCreatedModeWithAggregatesFilter<$PrismaModel> | $Enums.GovernedObjectCreatedMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel>
+    _max?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLineageSourceTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LineageSourceType | EnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumLineageSourceTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.LineageSourceType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumLineageSourceTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumLineageSourceTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumImportedGovernedReadinessStateNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ImportedGovernedReadinessState | EnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ImportedGovernedReadinessState[] | ListEnumImportedGovernedReadinessStateFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumImportedGovernedReadinessStateNullableWithAggregatesFilter<$PrismaModel> | $Enums.ImportedGovernedReadinessState | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumImportedGovernedReadinessStateNullableFilter<$PrismaModel>
+    _max?: NestedEnumImportedGovernedReadinessStateNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumEpicStatusFilter<$PrismaModel = never> = {
@@ -19103,6 +22597,144 @@ export namespace Prisma {
     _max?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumArtifactAasCandidateTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasCandidateTypeFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType
+  }
+
+  export type NestedEnumArtifactAasMappingStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasMappingState | EnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasMappingStateFilter<$PrismaModel> | $Enums.ArtifactAasMappingState
+  }
+
+  export type NestedEnumArtifactSourceTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeFilter<$PrismaModel> | $Enums.ArtifactSourceType
+  }
+
+  export type NestedEnumExtractionConfidenceFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumExtractionConfidenceFilter<$PrismaModel> | $Enums.ExtractionConfidence
+  }
+
+  export type NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactCandidateReviewStatus | EnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel> | $Enums.ArtifactCandidateReviewStatus
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType | null
+  }
+
+  export type NestedEnumArtifactAasCandidateTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasCandidateTypeWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactAasCandidateTypeFilter<$PrismaModel>
+    _max?: NestedEnumArtifactAasCandidateTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumArtifactAasMappingStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasMappingState | EnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactAasMappingState[] | ListEnumArtifactAasMappingStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactAasMappingStateWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactAasMappingState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactAasMappingStateFilter<$PrismaModel>
+    _max?: NestedEnumArtifactAasMappingStateFilter<$PrismaModel>
+  }
+
+  export type NestedEnumArtifactSourceTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactSourceType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactSourceTypeFilter<$PrismaModel>
+    _max?: NestedEnumArtifactSourceTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumExtractionConfidenceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel>
+    not?: NestedEnumExtractionConfidenceWithAggregatesFilter<$PrismaModel> | $Enums.ExtractionConfidence
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumExtractionConfidenceFilter<$PrismaModel>
+    _max?: NestedEnumExtractionConfidenceFilter<$PrismaModel>
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumArtifactCandidateReviewStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactCandidateReviewStatus | EnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactCandidateReviewStatusWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactCandidateReviewStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel>
+    _max?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedEnumArtifactAasCandidateTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactAasCandidateTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactAasCandidateType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel>
+  }
+
   export type MembershipCreateWithoutOrganizationInput = {
     id: string
     role: $Enums.MembershipRole
@@ -19141,6 +22773,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     valueOwner?: AppUserCreateNestedOneWithoutOwnedOutcomesInput
@@ -19161,6 +22799,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     epics?: EpicUncheckedCreateNestedManyWithoutOutcomeInput
@@ -19183,6 +22827,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     outcome: OutcomeCreateNestedOneWithoutEpicsInput
@@ -19196,6 +22846,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     stories?: StoryUncheckedCreateNestedManyWithoutEpicInput
@@ -19223,6 +22879,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     outcome: OutcomeCreateNestedOneWithoutStoriesInput
@@ -19243,6 +22905,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -19337,6 +23005,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     creator?: AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput
     files?: ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput = {
@@ -19349,6 +23018,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     files?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput = {
@@ -19377,6 +23047,7 @@ export namespace Prisma {
     uploadedAt?: Date | string
     intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
     uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput = {
@@ -19395,6 +23066,7 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput = {
@@ -19404,6 +23076,82 @@ export namespace Prisma {
 
   export type ArtifactIntakeFileCreateManyOrganizationInputEnvelope = {
     data: ArtifactIntakeFileCreateManyOrganizationInput | ArtifactIntakeFileCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ArtifactAasCandidateCreateWithoutOrganizationInput = {
+    id: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutCandidatesInput
+    file: ArtifactIntakeFileCreateNestedOneWithoutCandidatesInput
+  }
+
+  export type ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    intakeSessionId: string
+    fileId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    create: XOR<ArtifactAasCandidateCreateWithoutOrganizationInput, ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ArtifactAasCandidateCreateManyOrganizationInputEnvelope = {
+    data: ArtifactAasCandidateCreateManyOrganizationInput | ArtifactAasCandidateCreateManyOrganizationInput[]
     skipDuplicates?: boolean
   }
 
@@ -19468,6 +23216,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFilter<"Outcome"> | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"Outcome"> | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFilter<"Outcome"> | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Outcome"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Outcome"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Outcome"> | string | null
+    lineageNote?: StringNullableFilter<"Outcome"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Outcome"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Outcome"> | Date | string
     updatedAt?: DateTimeFilter<"Outcome"> | Date | string
   }
@@ -19499,6 +23253,12 @@ export namespace Prisma {
     title?: StringFilter<"Epic"> | string
     purpose?: StringFilter<"Epic"> | string
     status?: EnumEpicStatusFilter<"Epic"> | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Epic"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Epic"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Epic"> | string | null
+    lineageNote?: StringNullableFilter<"Epic"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Epic"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Epic"> | Date | string
     updatedAt?: DateTimeFilter<"Epic"> | Date | string
   }
@@ -19537,6 +23297,12 @@ export namespace Prisma {
     testDefinition?: StringNullableFilter<"Story"> | string | null
     definitionOfDone?: StringNullableListFilter<"Story">
     status?: EnumStoryStatusFilter<"Story"> | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFilter<"Story"> | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Story"> | $Enums.LineageSourceType | null
+    lineageSourceId?: StringNullableFilter<"Story"> | string | null
+    lineageNote?: StringNullableFilter<"Story"> | string | null
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"Story"> | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFilter<"Story"> | Date | string
     updatedAt?: DateTimeFilter<"Story"> | Date | string
   }
@@ -19675,6 +23441,59 @@ export namespace Prisma {
     uploadedAt?: DateTimeFilter<"ArtifactIntakeFile"> | Date | string
   }
 
+  export type ArtifactAasCandidateUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    update: XOR<ArtifactAasCandidateUpdateWithoutOrganizationInput, ArtifactAasCandidateUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<ArtifactAasCandidateCreateWithoutOrganizationInput, ArtifactAasCandidateUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ArtifactAasCandidateUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    data: XOR<ArtifactAasCandidateUpdateWithoutOrganizationInput, ArtifactAasCandidateUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ArtifactAasCandidateUpdateManyWithWhereWithoutOrganizationInput = {
+    where: ArtifactAasCandidateScalarWhereInput
+    data: XOR<ArtifactAasCandidateUpdateManyMutationInput, ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type ArtifactAasCandidateScalarWhereInput = {
+    AND?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
+    OR?: ArtifactAasCandidateScalarWhereInput[]
+    NOT?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
+    id?: StringFilter<"ArtifactAasCandidate"> | string
+    intakeSessionId?: StringFilter<"ArtifactAasCandidate"> | string
+    fileId?: StringFilter<"ArtifactAasCandidate"> | string
+    organizationId?: StringFilter<"ArtifactAasCandidate"> | string
+    type?: EnumArtifactAasCandidateTypeFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType
+    title?: StringFilter<"ArtifactAasCandidate"> | string
+    summary?: StringFilter<"ArtifactAasCandidate"> | string
+    mappingState?: EnumArtifactAasMappingStateFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFilter<"ArtifactAasCandidate"> | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFilter<"ArtifactAasCandidate"> | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFilter<"ArtifactAasCandidate"> | string
+    sourceSectionTitle?: StringFilter<"ArtifactAasCandidate"> | string
+    sourceSectionMarker?: StringFilter<"ArtifactAasCandidate"> | string
+    inferredOutcomeCandidateId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    inferredEpicCandidateId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    relationshipState?: EnumArtifactAasMappingStateFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasMappingState
+    relationshipNote?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    acceptanceCriteria?: StringNullableListFilter<"ArtifactAasCandidate">
+    testNotes?: StringNullableListFilter<"ArtifactAasCandidate">
+    draftRecord?: JsonFilter<"ArtifactAasCandidate">
+    humanDecisions?: JsonFilter<"ArtifactAasCandidate">
+    complianceResult?: JsonFilter<"ArtifactAasCandidate">
+    reviewStatus?: EnumArtifactCandidateReviewStatusFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    followUpNeeded?: BoolFilter<"ArtifactAasCandidate"> | boolean
+    importedReadinessState?: EnumImportedGovernedReadinessStateNullableFilter<"ArtifactAasCandidate"> | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: EnumArtifactAasCandidateTypeNullableFilter<"ArtifactAasCandidate"> | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
+    promotedAt?: DateTimeNullableFilter<"ArtifactAasCandidate"> | Date | string | null
+    createdAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
+    updatedAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
+  }
+
   export type MembershipCreateWithoutUserInput = {
     id: string
     role: $Enums.MembershipRole
@@ -19713,6 +23532,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutOutcomesInput
@@ -19733,6 +23558,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     epics?: EpicUncheckedCreateNestedManyWithoutOutcomeInput
@@ -19829,6 +23660,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput
     files?: ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput = {
@@ -19841,6 +23673,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     files?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput = {
@@ -19869,6 +23702,7 @@ export namespace Prisma {
     uploadedAt?: Date | string
     intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileUncheckedCreateWithoutUploaderInput = {
@@ -19887,6 +23721,7 @@ export namespace Prisma {
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileCreateOrConnectWithoutUploaderInput = {
@@ -20008,6 +23843,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -20023,6 +23859,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -20085,6 +23922,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -20100,6 +23938,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutMembershipsInput = {
@@ -20152,6 +23991,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOutcomesInput = {
@@ -20167,6 +24007,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOutcomesInput = {
@@ -20211,6 +24052,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutEpicsInput
@@ -20224,6 +24071,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     stories?: StoryUncheckedCreateNestedManyWithoutEpicInput
@@ -20251,6 +24104,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutStoriesInput
@@ -20271,6 +24130,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -20309,6 +24174,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOutcomesInput = {
@@ -20324,6 +24190,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutOwnedOutcomesInput = {
@@ -20408,6 +24275,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEpicsInput = {
@@ -20423,6 +24291,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEpicsInput = {
@@ -20442,6 +24311,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutOutcomesInput
@@ -20463,6 +24338,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     stories?: StoryUncheckedCreateNestedManyWithoutOutcomeInput
@@ -20485,6 +24366,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutStoriesInput
@@ -20505,6 +24392,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -20543,6 +24436,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEpicsInput = {
@@ -20558,6 +24452,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OutcomeUpsertWithoutEpicsInput = {
@@ -20583,6 +24478,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutOutcomesNestedInput
@@ -20604,6 +24505,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stories?: StoryUncheckedUpdateManyWithoutOutcomeNestedInput
@@ -20638,6 +24545,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutStoriesInput = {
@@ -20653,6 +24561,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutStoriesInput = {
@@ -20672,6 +24581,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutOutcomesInput
@@ -20693,6 +24608,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     epics?: EpicUncheckedCreateNestedManyWithoutOutcomeInput
@@ -20709,6 +24630,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutEpicsInput
@@ -20723,6 +24650,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -20756,6 +24689,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutStoriesInput = {
@@ -20771,6 +24705,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OutcomeUpsertWithoutStoriesInput = {
@@ -20796,6 +24731,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutOutcomesNestedInput
@@ -20817,6 +24758,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     epics?: EpicUncheckedUpdateManyWithoutOutcomeNestedInput
@@ -20839,6 +24786,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutEpicsNestedInput
@@ -20853,6 +24806,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -20870,6 +24829,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutTollgatesInput = {
@@ -20885,6 +24845,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutTollgatesInput = {
@@ -20947,6 +24908,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutTollgatesInput = {
@@ -20962,6 +24924,7 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutTollgateDecisionsInput = {
@@ -21014,6 +24977,7 @@ export namespace Prisma {
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutActivityEventsInput = {
@@ -21029,6 +24993,7 @@ export namespace Prisma {
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutActivityEventsInput = {
@@ -21091,6 +25056,7 @@ export namespace Prisma {
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutActivityEventsInput = {
@@ -21106,6 +25072,7 @@ export namespace Prisma {
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutActivityEventsInput = {
@@ -21158,6 +25125,7 @@ export namespace Prisma {
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutArtifactIntakeSessionsInput = {
@@ -21173,6 +25141,7 @@ export namespace Prisma {
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutArtifactIntakeSessionsInput = {
@@ -21227,6 +25196,7 @@ export namespace Prisma {
     uploadedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
     uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput = {
@@ -21245,6 +25215,7 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
   }
 
   export type ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput = {
@@ -21254,6 +25225,82 @@ export namespace Prisma {
 
   export type ArtifactIntakeFileCreateManyIntakeSessionInputEnvelope = {
     data: ArtifactIntakeFileCreateManyIntakeSessionInput | ArtifactIntakeFileCreateManyIntakeSessionInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ArtifactAasCandidateCreateWithoutIntakeSessionInput = {
+    id: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactAasCandidatesInput
+    file: ArtifactIntakeFileCreateNestedOneWithoutCandidatesInput
+  }
+
+  export type ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput = {
+    id: string
+    fileId: string
+    organizationId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactAasCandidateCreateOrConnectWithoutIntakeSessionInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    create: XOR<ArtifactAasCandidateCreateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput>
+  }
+
+  export type ArtifactAasCandidateCreateManyIntakeSessionInputEnvelope = {
+    data: ArtifactAasCandidateCreateManyIntakeSessionInput | ArtifactAasCandidateCreateManyIntakeSessionInput[]
     skipDuplicates?: boolean
   }
 
@@ -21281,6 +25328,7 @@ export namespace Prisma {
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutArtifactIntakeSessionsInput = {
@@ -21296,6 +25344,7 @@ export namespace Prisma {
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutCreatedIntakeSessionsInput = {
@@ -21351,6 +25400,22 @@ export namespace Prisma {
     data: XOR<ArtifactIntakeFileUpdateManyMutationInput, ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionInput>
   }
 
+  export type ArtifactAasCandidateUpsertWithWhereUniqueWithoutIntakeSessionInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    update: XOR<ArtifactAasCandidateUpdateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedUpdateWithoutIntakeSessionInput>
+    create: XOR<ArtifactAasCandidateCreateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedCreateWithoutIntakeSessionInput>
+  }
+
+  export type ArtifactAasCandidateUpdateWithWhereUniqueWithoutIntakeSessionInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    data: XOR<ArtifactAasCandidateUpdateWithoutIntakeSessionInput, ArtifactAasCandidateUncheckedUpdateWithoutIntakeSessionInput>
+  }
+
+  export type ArtifactAasCandidateUpdateManyWithWhereWithoutIntakeSessionInput = {
+    where: ArtifactAasCandidateScalarWhereInput
+    data: XOR<ArtifactAasCandidateUpdateManyMutationInput, ArtifactAasCandidateUncheckedUpdateManyWithoutIntakeSessionInput>
+  }
+
   export type ArtifactIntakeSessionCreateWithoutFilesInput = {
     id: string
     label: string
@@ -21361,6 +25426,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput
     creator?: AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput
+    candidates?: ArtifactAasCandidateCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionUncheckedCreateWithoutFilesInput = {
@@ -21373,6 +25439,7 @@ export namespace Prisma {
     createdBy?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutIntakeSessionInput
   }
 
   export type ArtifactIntakeSessionCreateOrConnectWithoutFilesInput = {
@@ -21393,6 +25460,7 @@ export namespace Prisma {
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutArtifactIntakeFilesInput = {
@@ -21408,6 +25476,7 @@ export namespace Prisma {
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutArtifactIntakeFilesInput = {
@@ -21446,6 +25515,82 @@ export namespace Prisma {
     create: XOR<AppUserCreateWithoutUploadedIntakeFilesInput, AppUserUncheckedCreateWithoutUploadedIntakeFilesInput>
   }
 
+  export type ArtifactAasCandidateCreateWithoutFileInput = {
+    id: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactAasCandidatesInput
+    intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutCandidatesInput
+  }
+
+  export type ArtifactAasCandidateUncheckedCreateWithoutFileInput = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactAasCandidateCreateOrConnectWithoutFileInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    create: XOR<ArtifactAasCandidateCreateWithoutFileInput, ArtifactAasCandidateUncheckedCreateWithoutFileInput>
+  }
+
+  export type ArtifactAasCandidateCreateManyFileInputEnvelope = {
+    data: ArtifactAasCandidateCreateManyFileInput | ArtifactAasCandidateCreateManyFileInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ArtifactIntakeSessionUpsertWithoutFilesInput = {
     update: XOR<ArtifactIntakeSessionUpdateWithoutFilesInput, ArtifactIntakeSessionUncheckedUpdateWithoutFilesInput>
     create: XOR<ArtifactIntakeSessionCreateWithoutFilesInput, ArtifactIntakeSessionUncheckedCreateWithoutFilesInput>
@@ -21467,6 +25612,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput
     creator?: AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type ArtifactIntakeSessionUncheckedUpdateWithoutFilesInput = {
@@ -21479,6 +25625,7 @@ export namespace Prisma {
     createdBy?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type OrganizationUpsertWithoutArtifactIntakeFilesInput = {
@@ -21505,6 +25652,7 @@ export namespace Prisma {
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutArtifactIntakeFilesInput = {
@@ -21520,6 +25668,7 @@ export namespace Prisma {
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutUploadedIntakeFilesInput = {
@@ -21559,6 +25708,262 @@ export namespace Prisma {
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
+  export type ArtifactAasCandidateUpsertWithWhereUniqueWithoutFileInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    update: XOR<ArtifactAasCandidateUpdateWithoutFileInput, ArtifactAasCandidateUncheckedUpdateWithoutFileInput>
+    create: XOR<ArtifactAasCandidateCreateWithoutFileInput, ArtifactAasCandidateUncheckedCreateWithoutFileInput>
+  }
+
+  export type ArtifactAasCandidateUpdateWithWhereUniqueWithoutFileInput = {
+    where: ArtifactAasCandidateWhereUniqueInput
+    data: XOR<ArtifactAasCandidateUpdateWithoutFileInput, ArtifactAasCandidateUncheckedUpdateWithoutFileInput>
+  }
+
+  export type ArtifactAasCandidateUpdateManyWithWhereWithoutFileInput = {
+    where: ArtifactAasCandidateScalarWhereInput
+    data: XOR<ArtifactAasCandidateUpdateManyMutationInput, ArtifactAasCandidateUncheckedUpdateManyWithoutFileInput>
+  }
+
+  export type OrganizationCreateWithoutArtifactAasCandidatesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutArtifactAasCandidatesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutArtifactAasCandidatesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutArtifactAasCandidatesInput, OrganizationUncheckedCreateWithoutArtifactAasCandidatesInput>
+  }
+
+  export type ArtifactIntakeSessionCreateWithoutCandidatesInput = {
+    id: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput
+    creator?: AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput
+    files?: ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedCreateWithoutCandidatesInput = {
+    id: string
+    organizationId: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    files?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionCreateOrConnectWithoutCandidatesInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    create: XOR<ArtifactIntakeSessionCreateWithoutCandidatesInput, ArtifactIntakeSessionUncheckedCreateWithoutCandidatesInput>
+  }
+
+  export type ArtifactIntakeFileCreateWithoutCandidatesInput = {
+    id: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string
+    intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
+    uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateWithoutCandidatesInput = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: string | null
+    uploadedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileCreateOrConnectWithoutCandidatesInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    create: XOR<ArtifactIntakeFileCreateWithoutCandidatesInput, ArtifactIntakeFileUncheckedCreateWithoutCandidatesInput>
+  }
+
+  export type OrganizationUpsertWithoutArtifactAasCandidatesInput = {
+    update: XOR<OrganizationUpdateWithoutArtifactAasCandidatesInput, OrganizationUncheckedUpdateWithoutArtifactAasCandidatesInput>
+    create: XOR<OrganizationCreateWithoutArtifactAasCandidatesInput, OrganizationUncheckedCreateWithoutArtifactAasCandidatesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutArtifactAasCandidatesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutArtifactAasCandidatesInput, OrganizationUncheckedUpdateWithoutArtifactAasCandidatesInput>
+  }
+
+  export type OrganizationUpdateWithoutArtifactAasCandidatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutArtifactAasCandidatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type ArtifactIntakeSessionUpsertWithoutCandidatesInput = {
+    update: XOR<ArtifactIntakeSessionUpdateWithoutCandidatesInput, ArtifactIntakeSessionUncheckedUpdateWithoutCandidatesInput>
+    create: XOR<ArtifactIntakeSessionCreateWithoutCandidatesInput, ArtifactIntakeSessionUncheckedCreateWithoutCandidatesInput>
+    where?: ArtifactIntakeSessionWhereInput
+  }
+
+  export type ArtifactIntakeSessionUpdateToOneWithWhereWithoutCandidatesInput = {
+    where?: ArtifactIntakeSessionWhereInput
+    data: XOR<ArtifactIntakeSessionUpdateWithoutCandidatesInput, ArtifactIntakeSessionUncheckedUpdateWithoutCandidatesInput>
+  }
+
+  export type ArtifactIntakeSessionUpdateWithoutCandidatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput
+    creator?: AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput
+    files?: ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateWithoutCandidatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    files?: ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeFileUpsertWithoutCandidatesInput = {
+    update: XOR<ArtifactIntakeFileUpdateWithoutCandidatesInput, ArtifactIntakeFileUncheckedUpdateWithoutCandidatesInput>
+    create: XOR<ArtifactIntakeFileCreateWithoutCandidatesInput, ArtifactIntakeFileUncheckedCreateWithoutCandidatesInput>
+    where?: ArtifactIntakeFileWhereInput
+  }
+
+  export type ArtifactIntakeFileUpdateToOneWithWhereWithoutCandidatesInput = {
+    where?: ArtifactIntakeFileWhereInput
+    data: XOR<ArtifactIntakeFileUpdateWithoutCandidatesInput, ArtifactIntakeFileUncheckedUpdateWithoutCandidatesInput>
+  }
+
+  export type ArtifactIntakeFileUpdateWithoutCandidatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
+    uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateWithoutCandidatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type MembershipCreateManyOrganizationInput = {
     id: string
     userId: string
@@ -21580,6 +25985,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -21591,6 +26002,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -21609,6 +26026,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -21667,6 +26090,39 @@ export namespace Prisma {
     uploadedAt?: Date | string
   }
 
+  export type ArtifactAasCandidateCreateManyOrganizationInput = {
+    id: string
+    intakeSessionId: string
+    fileId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type MembershipUpdateWithoutOrganizationInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: EnumMembershipRoleFieldUpdateOperationsInput | $Enums.MembershipRole
@@ -21703,6 +26159,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     valueOwner?: AppUserUpdateOneWithoutOwnedOutcomesNestedInput
@@ -21723,6 +26185,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     epics?: EpicUncheckedUpdateManyWithoutOutcomeNestedInput
@@ -21742,6 +26210,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21752,6 +26226,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     outcome?: OutcomeUpdateOneRequiredWithoutEpicsNestedInput
@@ -21765,6 +26245,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stories?: StoryUncheckedUpdateManyWithoutEpicNestedInput
@@ -21777,6 +26263,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21793,6 +26285,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     outcome?: OutcomeUpdateOneRequiredWithoutStoriesNestedInput
@@ -21813,6 +26311,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21831,6 +26335,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21920,6 +26430,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     creator?: AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput
     files?: ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type ArtifactIntakeSessionUncheckedUpdateWithoutOrganizationInput = {
@@ -21932,6 +26443,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     files?: ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationInput = {
@@ -21961,6 +26473,7 @@ export namespace Prisma {
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
     uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileUncheckedUpdateWithoutOrganizationInput = {
@@ -21979,6 +26492,7 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationInput = {
@@ -21997,6 +26511,105 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutCandidatesNestedInput
+    file?: ArtifactIntakeFileUpdateOneRequiredWithoutCandidatesNestedInput
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MembershipCreateManyUserInput = {
@@ -22020,6 +26633,12 @@ export namespace Prisma {
     riskProfile?: $Enums.RiskProfile
     aiAccelerationLevel?: $Enums.AiAccelerationLevel
     status?: $Enums.OutcomeStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22114,6 +26733,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutOutcomesNestedInput
@@ -22134,6 +26759,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     epics?: EpicUncheckedUpdateManyWithoutOutcomeNestedInput
@@ -22153,6 +26784,12 @@ export namespace Prisma {
     riskProfile?: EnumRiskProfileFieldUpdateOperationsInput | $Enums.RiskProfile
     aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22242,6 +26879,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput
     files?: ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type ArtifactIntakeSessionUncheckedUpdateWithoutCreatorInput = {
@@ -22254,6 +26892,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     files?: ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutIntakeSessionNestedInput
   }
 
   export type ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorInput = {
@@ -22283,6 +26922,7 @@ export namespace Prisma {
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileUncheckedUpdateWithoutUploaderInput = {
@@ -22301,6 +26941,7 @@ export namespace Prisma {
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderInput = {
@@ -22328,6 +26969,12 @@ export namespace Prisma {
     title: string
     purpose: string
     status?: $Enums.EpicStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22346,6 +26993,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22356,6 +27009,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutEpicsNestedInput
@@ -22369,6 +27028,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stories?: StoryUncheckedUpdateManyWithoutEpicNestedInput
@@ -22381,6 +27046,12 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22397,6 +27068,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutStoriesNestedInput
@@ -22417,6 +27094,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22435,6 +27118,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22453,6 +27142,12 @@ export namespace Prisma {
     testDefinition?: string | null
     definitionOfDone?: StoryCreatedefinitionOfDoneInput | string[]
     status?: $Enums.StoryStatus
+    originType?: $Enums.GovernedObjectOriginType
+    createdMode?: $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: $Enums.LineageSourceType | null
+    lineageSourceId?: string | null
+    lineageNote?: string | null
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22469,6 +27164,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutStoriesNestedInput
@@ -22489,6 +27190,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22507,6 +27214,12 @@ export namespace Prisma {
     testDefinition?: NullableStringFieldUpdateOperationsInput | string | null
     definitionOfDone?: StoryUpdatedefinitionOfDoneInput | string[]
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
+    originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
+    createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
+    lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22529,6 +27242,39 @@ export namespace Prisma {
     uploadedAt?: Date | string
   }
 
+  export type ArtifactAasCandidateCreateManyIntakeSessionInput = {
+    id: string
+    fileId: string
+    organizationId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type ArtifactIntakeFileUpdateWithoutIntakeSessionInput = {
     id?: StringFieldUpdateOperationsInput | string
     fileName?: StringFieldUpdateOperationsInput | string
@@ -22545,6 +27291,7 @@ export namespace Prisma {
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
     uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
+    candidates?: ArtifactAasCandidateUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileUncheckedUpdateWithoutIntakeSessionInput = {
@@ -22563,6 +27310,7 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
   }
 
   export type ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionInput = {
@@ -22581,6 +27329,237 @@ export namespace Prisma {
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateUpdateWithoutIntakeSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactAasCandidatesNestedInput
+    file?: ArtifactIntakeFileUpdateOneRequiredWithoutCandidatesNestedInput
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateWithoutIntakeSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateManyWithoutIntakeSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateCreateManyFileInput = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    type: $Enums.ArtifactAasCandidateType
+    title: string
+    summary: string
+    mappingState: $Enums.ArtifactAasMappingState
+    sourceType: $Enums.ArtifactSourceType
+    sourceConfidence: $Enums.ExtractionConfidence
+    sourceSectionId: string
+    sourceSectionTitle: string
+    sourceSectionMarker: string
+    inferredOutcomeCandidateId?: string | null
+    inferredEpicCandidateId?: string | null
+    relationshipState: $Enums.ArtifactAasMappingState
+    relationshipNote?: string | null
+    acceptanceCriteria?: ArtifactAasCandidateCreateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateCreatetestNotesInput | string[]
+    draftRecord: JsonNullValueInput | InputJsonValue
+    humanDecisions: JsonNullValueInput | InputJsonValue
+    complianceResult: JsonNullValueInput | InputJsonValue
+    reviewStatus?: $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: string | null
+    followUpNeeded?: boolean
+    importedReadinessState?: $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: string | null
+    promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactAasCandidateUpdateWithoutFileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactAasCandidatesNestedInput
+    intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutCandidatesNestedInput
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateWithoutFileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactAasCandidateUncheckedUpdateManyWithoutFileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: StringFieldUpdateOperationsInput | string
+    mappingState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    sourceType?: EnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType
+    sourceConfidence?: EnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence
+    sourceSectionId?: StringFieldUpdateOperationsInput | string
+    sourceSectionTitle?: StringFieldUpdateOperationsInput | string
+    sourceSectionMarker?: StringFieldUpdateOperationsInput | string
+    inferredOutcomeCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    inferredEpicCandidateId?: NullableStringFieldUpdateOperationsInput | string | null
+    relationshipState?: EnumArtifactAasMappingStateFieldUpdateOperationsInput | $Enums.ArtifactAasMappingState
+    relationshipNote?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptanceCriteria?: ArtifactAasCandidateUpdateacceptanceCriteriaInput | string[]
+    testNotes?: ArtifactAasCandidateUpdatetestNotesInput | string[]
+    draftRecord?: JsonNullValueInput | InputJsonValue
+    humanDecisions?: JsonNullValueInput | InputJsonValue
+    complianceResult?: JsonNullValueInput | InputJsonValue
+    reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
+    reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
+    followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
+    importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
+    promotedEntityType?: NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput | $Enums.ArtifactAasCandidateType | null
+    promotedEntityId?: NullableStringFieldUpdateOperationsInput | string | null
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

@@ -1,7 +1,9 @@
 export * from "./activity";
 export * from "./artifact-intake";
 export * from "./auth";
+export * from "./epic";
 export * from "./enums";
+export * from "./governed-object";
 export * from "./handoff";
 export * from "./organization";
 export * from "./outcome";
@@ -88,6 +90,11 @@ export const primaryNavigation: NavigationItem[] = [
     description: "Upload source artifacts before interpretation and mapping."
   },
   {
+    label: "Human Review",
+    href: "/review",
+    description: "Confirm imported candidates before promotion into governed work."
+  },
+  {
     label: "Framing",
     href: "/framing",
     description: "Outcome framing and baseline readiness."
@@ -101,6 +108,11 @@ export const primaryNavigation: NavigationItem[] = [
     label: "Stories",
     href: "/stories",
     description: "Story workspace and validation checkpoints."
+  },
+  {
+    label: "Value Spine",
+    href: "/workspace",
+    description: "Compare native and imported governed objects in one shared spine view."
   },
   {
     label: "Governance",

@@ -43,6 +43,24 @@ enum StoryStatus {
   in_progress
 }
 
+enum GovernedObjectOriginType {
+  seeded
+  native
+  imported
+}
+
+enum GovernedObjectCreatedMode {
+  demo
+  clean
+  promotion
+}
+
+enum LineageSourceType {
+  artifact_intake_session
+  artifact_intake_file
+  artifact_aas_candidate
+}
+
 enum TollgateEntityType {
   outcome
   story
@@ -167,7 +185,7 @@ model Membership {
 }
 
 model Outcome {
-  id                  String              @id
+  id                  String                    @id
   organizationId      String
   key                 String
   title               String
@@ -177,38 +195,50 @@ model Outcome {
   baselineSource      String?
   timeframe           String?
   valueOwnerId        String?
-  riskProfile         RiskProfile         @default(medium)
-  aiAccelerationLevel AiAccelerationLevel @default(level_2)
-  status              OutcomeStatus       @default(draft)
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  valueOwner          AppUser?            @relation("OutcomeValueOwner", fields: [valueOwnerId], references: [id], onDelete: SetNull)
+  riskProfile         RiskProfile               @default(medium)
+  aiAccelerationLevel AiAccelerationLevel       @default(level_2)
+  status              OutcomeStatus             @default(draft)
+  originType          GovernedObjectOriginType  @default(native)
+  createdMode         GovernedObjectCreatedMode @default(clean)
+  lineageSourceType   LineageSourceType?
+  lineageSourceId     String?
+  lineageNote         String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  organization        Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  valueOwner          AppUser?                  @relation("OutcomeValueOwner", fields: [valueOwnerId], references: [id], onDelete: SetNull)
   epics               Epic[]
   stories             Story[]
 
   @@unique([organizationId, key])
+  @@index([organizationId, originType])
 }
 
 model Epic {
-  id             String       @id
-  organizationId String
-  outcomeId      String
-  key            String
-  title          String
-  purpose        String
-  status         EpicStatus   @default(draft)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  outcome        Outcome      @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
-  stories        Story[]
+  id                String                    @id
+  organizationId    String
+  outcomeId         String
+  key               String
+  title             String
+  purpose           String
+  status            EpicStatus                @default(draft)
+  originType        GovernedObjectOriginType  @default(native)
+  createdMode       GovernedObjectCreatedMode @default(clean)
+  lineageSourceType LineageSourceType?
+  lineageSourceId   String?
+  lineageNote       String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  organization      Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  outcome           Outcome                   @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  stories           Story[]
 
   @@unique([organizationId, key])
+  @@index([organizationId, originType])
 }
 
 model Story {
-  id                  String              @id
+  id                  String                    @id
   organizationId      String
   outcomeId           String
   epicId              String
@@ -216,19 +246,25 @@ model Story {
   title               String
   storyType           StoryType
   valueIntent         String
-  acceptanceCriteria  String[]            @default([])
-  aiUsageScope        String[]            @default([])
-  aiAccelerationLevel AiAccelerationLevel @default(level_2)
+  acceptanceCriteria  String[]                  @default([])
+  aiUsageScope        String[]                  @default([])
+  aiAccelerationLevel AiAccelerationLevel       @default(level_2)
   testDefinition      String?
-  definitionOfDone    String[]            @default([])
-  status              StoryStatus         @default(draft)
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  outcome             Outcome             @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
-  epic                Epic                @relation(fields: [epicId], references: [id], onDelete: Cascade)
+  definitionOfDone    String[]                  @default([])
+  status              StoryStatus               @default(draft)
+  originType          GovernedObjectOriginType  @default(native)
+  createdMode         GovernedObjectCreatedMode @default(clean)
+  lineageSourceType   LineageSourceType?
+  lineageSourceId     String?
+  lineageNote         String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  organization        Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  outcome             Outcome                   @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  epic                Epic                      @relation(fields: [epicId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, key])
+  @@index([organizationId, originType])
 }
 
 model Tollgate {

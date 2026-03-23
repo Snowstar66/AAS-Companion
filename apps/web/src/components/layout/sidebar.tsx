@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
+import { Compass, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain";
 
 const icons = {
   "/": LayoutDashboard,
   "/intake": Inbox,
+  "/review": FileSearch,
   "/framing": Compass,
   "/outcomes": Workflow,
   "/stories": LibraryBig,
+  "/workspace": Workflow,
   "/governance": Shield
 } as const;
 

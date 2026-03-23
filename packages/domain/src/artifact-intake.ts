@@ -1,12 +1,18 @@
 import { z } from "zod";
 import {
+  aiAccelerationLevelSchema,
   artifactAasCandidateTypeSchema,
+  artifactCandidateReviewStatusSchema,
+  artifactComplianceFindingCategorySchema,
   artifactAasMappingStateSchema,
   artifactIntakeSessionStatusSchema,
   artifactParsedSectionKindSchema,
   artifactSourceTypeSchema,
   artifactSourceTypeStatusSchema,
-  extractionConfidenceSchema
+  extractionConfidenceSchema,
+  importedGovernedReadinessStateSchema,
+  riskProfileSchema,
+  storyTypeSchema
 } from "./enums";
 
 export const supportedArtifactExtensions = [".md", ".mdx", ".markdown"] as const;
@@ -123,6 +129,103 @@ export const artifactMappingResultSchema = z.object({
   unmappedSections: z.array(artifactParsedSectionSchema)
 });
 
+export const artifactCandidateHumanDecisionSchema = z.object({
+  valueOwnerId: z.string().nullish(),
+  baselineValidity: z.enum(["confirmed", "needs_follow_up"]).nullish(),
+  aiAccelerationLevel: aiAccelerationLevelSchema.nullish(),
+  riskProfile: riskProfileSchema.nullish(),
+  riskAcceptanceStatus: z.enum(["accepted", "needs_review"]).nullish()
+});
+
+export const artifactCandidateDraftRecordSchema = z.object({
+  key: z.string().nullish(),
+  title: z.string().nullish(),
+  problemStatement: z.string().nullish(),
+  outcomeStatement: z.string().nullish(),
+  baselineDefinition: z.string().nullish(),
+  baselineSource: z.string().nullish(),
+  timeframe: z.string().nullish(),
+  purpose: z.string().nullish(),
+  storyType: storyTypeSchema.nullish(),
+  valueIntent: z.string().nullish(),
+  acceptanceCriteria: z.array(z.string()).default([]),
+  aiUsageScope: z.array(z.string()).default([]),
+  testDefinition: z.string().nullish(),
+  definitionOfDone: z.array(z.string()).default([]),
+  outcomeCandidateId: z.string().nullish(),
+  epicCandidateId: z.string().nullish()
+});
+
+export const artifactComplianceFindingSchema = z.object({
+  code: z.string().min(1),
+  category: artifactComplianceFindingCategorySchema,
+  message: z.string().min(1),
+  fieldLabel: z.string().min(1).nullish()
+});
+
+export const artifactComplianceResultSchema = z.object({
+  findings: z.array(artifactComplianceFindingSchema),
+  summary: z.object({
+    missing: z.number().int().nonnegative(),
+    uncertain: z.number().int().nonnegative(),
+    humanOnly: z.number().int().nonnegative(),
+    blocked: z.number().int().nonnegative()
+  }),
+  promotionBlocked: z.boolean(),
+  humanReviewRequired: z.boolean()
+});
+
+export const artifactCandidateRecordSchema = z.object({
+  id: z.string().min(1),
+  intakeSessionId: z.string().min(1),
+  organizationId: z.string().min(1),
+  fileId: z.string().min(1),
+  type: artifactAasCandidateTypeSchema,
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  mappingState: artifactAasMappingStateSchema,
+  sourceType: artifactSourceTypeSchema,
+  sourceConfidence: extractionConfidenceSchema,
+  sourceSectionId: z.string().min(1),
+  sourceSectionTitle: z.string().min(1),
+  sourceSectionMarker: z.string().min(1),
+  inferredOutcomeCandidateId: z.string().nullish(),
+  inferredEpicCandidateId: z.string().nullish(),
+  relationshipState: artifactAasMappingStateSchema,
+  relationshipNote: z.string().nullish(),
+  acceptanceCriteria: z.array(z.string()).default([]),
+  testNotes: z.array(z.string()).default([]),
+  draftRecord: artifactCandidateDraftRecordSchema,
+  humanDecisions: artifactCandidateHumanDecisionSchema,
+  complianceResult: artifactComplianceResultSchema,
+  reviewStatus: artifactCandidateReviewStatusSchema,
+  reviewComment: z.string().nullish(),
+  followUpNeeded: z.boolean(),
+  importedReadinessState: importedGovernedReadinessStateSchema.nullish(),
+  promotedEntityType: artifactAasCandidateTypeSchema.nullish(),
+  promotedEntityId: z.string().nullish(),
+  promotedAt: z.date().nullish(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+});
+
+export const artifactCandidateReviewActionInputSchema = z.object({
+  organizationId: z.string().min(1),
+  actorId: z.string().nullish(),
+  candidateId: z.string().min(1),
+  reviewStatus: artifactCandidateReviewStatusSchema,
+  reviewComment: z.string().trim().max(1000).nullish(),
+  draftRecord: artifactCandidateDraftRecordSchema.partial().optional(),
+  humanDecisions: artifactCandidateHumanDecisionSchema.partial().optional()
+});
+
+export const artifactCandidatePromotionResultSchema = z.object({
+  candidateId: z.string().min(1),
+  promotedEntityType: artifactAasCandidateTypeSchema,
+  promotedEntityId: z.string().min(1),
+  importedReadinessState: importedGovernedReadinessStateSchema
+});
+
 export type ArtifactIntakeFileRecord = z.infer<typeof artifactIntakeFileRecordSchema>;
 export type ArtifactIntakeSessionRecord = z.infer<typeof artifactIntakeSessionRecordSchema>;
 export type ArtifactIntakeUploadRequest = z.infer<typeof artifactIntakeUploadRequestSchema>;
@@ -132,6 +235,13 @@ export type ArtifactParsedSection = z.infer<typeof artifactParsedSectionSchema>;
 export type ArtifactParseResult = z.infer<typeof artifactParseResultSchema>;
 export type ArtifactAasCandidate = z.infer<typeof artifactAasCandidateSchema>;
 export type ArtifactMappingResult = z.infer<typeof artifactMappingResultSchema>;
+export type ArtifactCandidateHumanDecision = z.infer<typeof artifactCandidateHumanDecisionSchema>;
+export type ArtifactCandidateDraftRecord = z.infer<typeof artifactCandidateDraftRecordSchema>;
+export type ArtifactComplianceFinding = z.infer<typeof artifactComplianceFindingSchema>;
+export type ArtifactComplianceResult = z.infer<typeof artifactComplianceResultSchema>;
+export type ArtifactCandidateRecord = z.infer<typeof artifactCandidateRecordSchema>;
+export type ArtifactCandidateReviewActionInput = z.infer<typeof artifactCandidateReviewActionInputSchema>;
+export type ArtifactCandidatePromotionResult = z.infer<typeof artifactCandidatePromotionResultSchema>;
 
 export function getArtifactFileExtension(fileName: string) {
   const normalized = fileName.trim().toLowerCase();
@@ -398,6 +508,341 @@ function extractListItems(text: string) {
     .filter((line) => /^[-*]\s+/.test(line))
     .map((line) => line.replace(/^[-*]\s+/, "").trim())
     .filter(Boolean);
+}
+
+export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandidate | ArtifactCandidateRecord): ArtifactCandidateDraftRecord {
+  if (candidate.type === "outcome") {
+    return {
+      key: null,
+      title: candidate.title,
+      problemStatement: null,
+      outcomeStatement: candidate.summary,
+      baselineDefinition: null,
+      baselineSource: null,
+      timeframe: null,
+      purpose: null,
+      storyType: null,
+      valueIntent: null,
+      acceptanceCriteria: [],
+      aiUsageScope: [],
+      testDefinition: null,
+      definitionOfDone: [],
+      outcomeCandidateId: null,
+      epicCandidateId: null
+    };
+  }
+
+  if (candidate.type === "epic") {
+    return {
+      key: null,
+      title: candidate.title,
+      problemStatement: null,
+      outcomeStatement: null,
+      baselineDefinition: null,
+      baselineSource: null,
+      timeframe: null,
+      purpose: candidate.summary,
+      storyType: null,
+      valueIntent: null,
+      acceptanceCriteria: [],
+      aiUsageScope: [],
+      testDefinition: null,
+      definitionOfDone: [],
+      outcomeCandidateId: candidate.inferredOutcomeCandidateId ?? null,
+      epicCandidateId: null
+    };
+  }
+
+  return {
+    key: null,
+    title: candidate.title,
+    problemStatement: null,
+    outcomeStatement: null,
+    baselineDefinition: null,
+    baselineSource: null,
+    timeframe: null,
+    purpose: null,
+    storyType: "outcome_delivery",
+    valueIntent: candidate.summary,
+    acceptanceCriteria: candidate.acceptanceCriteria,
+    aiUsageScope: [],
+    testDefinition: candidate.testNotes[0] ?? null,
+    definitionOfDone: [],
+    outcomeCandidateId: candidate.inferredOutcomeCandidateId ?? null,
+    epicCandidateId: candidate.inferredEpicCandidateId ?? null
+  };
+}
+
+function shouldSurfaceUncertainty(
+  candidate: ArtifactAasCandidate | ArtifactCandidateRecord,
+  reviewStatus: "pending" | "follow_up_needed" | "confirmed" | "edited" | "rejected" | "promoted"
+) {
+  return reviewStatus === "pending" || reviewStatus === "follow_up_needed";
+}
+
+function getCandidateSourceConfidence(candidate: ArtifactAasCandidate | ArtifactCandidateRecord) {
+  return "source" in candidate ? candidate.source.confidence : candidate.sourceConfidence;
+}
+
+export function analyzeArtifactCandidateCompliance(input: {
+  candidate: ArtifactAasCandidate | ArtifactCandidateRecord;
+  reviewStatus?: ArtifactCandidateRecord["reviewStatus"];
+  draftRecord?: Partial<ArtifactCandidateDraftRecord>;
+  humanDecisions?: Partial<ArtifactCandidateHumanDecision>;
+}): ArtifactComplianceResult {
+  const draftRecord = artifactCandidateDraftRecordSchema.parse({
+    ...createArtifactCandidateDraftRecord(input.candidate),
+    ...(input.draftRecord ?? {})
+  });
+  const humanDecisions = artifactCandidateHumanDecisionSchema.parse({
+    valueOwnerId: null,
+    baselineValidity: null,
+    aiAccelerationLevel: null,
+    riskProfile: null,
+    riskAcceptanceStatus: null,
+    ...(input.humanDecisions ?? {})
+  });
+  const reviewStatus = input.reviewStatus ?? "pending";
+  const findings: ArtifactComplianceFinding[] = [];
+
+  if (shouldSurfaceUncertainty(input.candidate, reviewStatus)) {
+    if (input.candidate.mappingState !== "mapped") {
+      findings.push({
+        code: "candidate_mapping_uncertain",
+        category: "uncertain",
+        message: "The imported candidate interpretation still needs human confirmation.",
+        fieldLabel: "Candidate interpretation"
+      });
+    }
+
+    if (input.candidate.relationshipState !== "mapped") {
+      findings.push({
+        code: "candidate_relationship_uncertain",
+        category: input.candidate.relationshipState === "missing" ? "blocked" : "uncertain",
+        message:
+          input.candidate.relationshipState === "missing"
+            ? input.candidate.relationshipNote ?? "A required Value Spine relationship is missing."
+            : input.candidate.relationshipNote ?? "A Value Spine relationship remains uncertain.",
+        fieldLabel: "Value Spine linkage"
+      });
+    }
+
+    if (getCandidateSourceConfidence(input.candidate) !== "high") {
+      findings.push({
+        code: "source_confidence_below_high",
+        category: "uncertain",
+        message: "Source confidence is below high and should be checked by a reviewer.",
+        fieldLabel: "Source confidence"
+      });
+    }
+  }
+
+  if (input.candidate.type === "outcome") {
+    if (!draftRecord.key?.trim()) {
+      findings.push({
+        code: "outcome_key_missing",
+        category: "missing",
+        message: "Outcome key is missing.",
+        fieldLabel: "Outcome key"
+      });
+    }
+
+    if (!draftRecord.outcomeStatement?.trim()) {
+      findings.push({
+        code: "outcome_statement_missing",
+        category: "missing",
+        message: "Outcome statement is missing.",
+        fieldLabel: "Outcome statement"
+      });
+    }
+
+    if (!draftRecord.baselineDefinition?.trim()) {
+      findings.push({
+        code: "baseline_definition_missing",
+        category: "missing",
+        message: "Baseline definition is missing.",
+        fieldLabel: "Baseline definition"
+      });
+    }
+
+    if (!draftRecord.baselineSource?.trim()) {
+      findings.push({
+        code: "baseline_source_missing",
+        category: "missing",
+        message: "Baseline source is missing.",
+        fieldLabel: "Baseline source"
+      });
+    }
+
+    if (!humanDecisions.valueOwnerId) {
+      findings.push({
+        code: "value_owner_human_only",
+        category: "human_only",
+        message: "Value Owner must be confirmed by a human reviewer.",
+        fieldLabel: "Value Owner"
+      });
+    }
+
+    if (!humanDecisions.aiAccelerationLevel) {
+      findings.push({
+        code: "ai_level_human_only",
+        category: "human_only",
+        message: "AI level must be confirmed by a human reviewer.",
+        fieldLabel: "AI level"
+      });
+    }
+
+    if (!humanDecisions.riskProfile) {
+      findings.push({
+        code: "risk_profile_human_only",
+        category: "human_only",
+        message: "Risk profile must be confirmed by a human reviewer.",
+        fieldLabel: "Risk profile"
+      });
+    }
+
+    if (!humanDecisions.baselineValidity) {
+      findings.push({
+        code: "baseline_validity_human_only",
+        category: "human_only",
+        message: "Baseline validity must be explicitly confirmed by a human reviewer.",
+        fieldLabel: "Baseline validity"
+      });
+    }
+  }
+
+  if (input.candidate.type === "epic") {
+    if (!draftRecord.key?.trim()) {
+      findings.push({
+        code: "epic_key_missing",
+        category: "missing",
+        message: "Epic key is missing.",
+        fieldLabel: "Epic key"
+      });
+    }
+
+    if (!draftRecord.outcomeCandidateId?.trim()) {
+      findings.push({
+        code: "epic_outcome_link_missing",
+        category: "blocked",
+        message: "Outcome → Epic linkage is missing.",
+        fieldLabel: "Outcome linkage"
+      });
+    }
+  }
+
+  if (input.candidate.type === "story") {
+    if (!draftRecord.key?.trim()) {
+      findings.push({
+        code: "story_key_missing",
+        category: "missing",
+        message: "Story-ID is missing.",
+        fieldLabel: "Story-ID"
+      });
+    }
+
+    if (!draftRecord.acceptanceCriteria.length) {
+      findings.push({
+        code: "story_acceptance_criteria_missing",
+        category: "missing",
+        message: "Acceptance criteria are missing.",
+        fieldLabel: "Acceptance criteria"
+      });
+    }
+
+    if (!draftRecord.testDefinition?.trim()) {
+      findings.push({
+        code: "story_test_definition_missing",
+        category: "missing",
+        message: "Test Definition is missing.",
+        fieldLabel: "Test Definition"
+      });
+      findings.push({
+        code: "story_test_link_missing",
+        category: "blocked",
+        message: "Story → Test-related definition linkage is missing.",
+        fieldLabel: "Test linkage"
+      });
+    }
+
+    if (!draftRecord.definitionOfDone.length) {
+      findings.push({
+        code: "story_definition_of_done_missing",
+        category: "missing",
+        message: "Definition of Done is missing.",
+        fieldLabel: "Definition of Done"
+      });
+    }
+
+    if (!draftRecord.outcomeCandidateId?.trim()) {
+      findings.push({
+        code: "story_outcome_link_missing",
+        category: "blocked",
+        message: "Outcome → Epic → Story linkage is incomplete because the Outcome is missing.",
+        fieldLabel: "Outcome linkage"
+      });
+    }
+
+    if (!draftRecord.epicCandidateId?.trim()) {
+      findings.push({
+        code: "story_epic_link_missing",
+        category: "blocked",
+        message: "Epic → Story linkage is missing.",
+        fieldLabel: "Epic linkage"
+      });
+    }
+
+    if (!humanDecisions.aiAccelerationLevel) {
+      findings.push({
+        code: "story_ai_level_human_only",
+        category: "human_only",
+        message: "AI level must be confirmed by a human reviewer.",
+        fieldLabel: "AI level"
+      });
+    }
+
+    if (!humanDecisions.riskAcceptanceStatus) {
+      findings.push({
+        code: "risk_acceptance_human_only",
+        category: "human_only",
+        message: "Risk acceptance status must be confirmed by a human reviewer.",
+        fieldLabel: "Risk acceptance status"
+      });
+    }
+  }
+
+  const summary = {
+    missing: findings.filter((finding) => finding.category === "missing").length,
+    uncertain: findings.filter((finding) => finding.category === "uncertain").length,
+    humanOnly: findings.filter((finding) => finding.category === "human_only").length,
+    blocked: findings.filter((finding) => finding.category === "blocked").length
+  };
+
+  return {
+    findings,
+    summary,
+    promotionBlocked: summary.blocked > 0 || summary.humanOnly > 0 || reviewStatus === "rejected" || reviewStatus === "follow_up_needed",
+    humanReviewRequired: summary.uncertain > 0 || summary.humanOnly > 0 || reviewStatus === "pending" || reviewStatus === "follow_up_needed"
+  };
+}
+
+export function inferImportedReadinessState(input: {
+  type: ArtifactAasCandidate["type"];
+  complianceResult: ArtifactComplianceResult;
+}): z.infer<typeof importedGovernedReadinessStateSchema> {
+  if (input.complianceResult.summary.blocked > 0) {
+    return "blocked";
+  }
+
+  if (input.complianceResult.summary.humanOnly > 0) {
+    return "imported_human_review_needed";
+  }
+
+  if (input.complianceResult.summary.missing > 0 || input.complianceResult.summary.uncertain > 0) {
+    return "imported_incomplete";
+  }
+
+  return input.type === "story" ? "imported_design_ready" : "imported_framing_ready";
 }
 
 export function mapParsedArtifactsToAasCandidates(input: {

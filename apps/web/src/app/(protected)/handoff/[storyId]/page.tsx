@@ -55,6 +55,18 @@ export default async function HandoffPage({ params }: HandoffPageProps) {
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
             Governed handoff preview built from the persisted Story, Outcome, and Epic records.
           </p>
+          {storyResult.data.story.originType === "imported" ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+                Imported origin
+              </span>
+              {storyResult.data.story.importedReadinessState ? (
+                <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+                  {storyResult.data.story.importedReadinessState.replaceAll("_", " ")}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {!previewResult.ok ? (
@@ -68,6 +80,11 @@ export default async function HandoffPage({ params }: HandoffPageProps) {
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <p>{previewResult.errors[0]?.message ?? "Contract generation is currently unavailable."}</p>
+              {storyResult.data.story.lineageSourceType === "artifact_aas_candidate" && storyResult.data.story.lineageSourceId ? (
+                <Button asChild className="gap-2" variant="secondary">
+                  <Link href={`/review?candidateId=${storyResult.data.story.lineageSourceId}`}>Open import lineage review</Link>
+                </Button>
+              ) : null}
               <Button asChild className="gap-2" variant="secondary">
                 <Link href={`/stories/${storyId}`}>Open Story Workspace</Link>
               </Button>

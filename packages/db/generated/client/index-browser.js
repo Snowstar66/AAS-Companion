@@ -160,6 +160,12 @@ exports.Prisma.OutcomeScalarFieldEnum = {
   riskProfile: 'riskProfile',
   aiAccelerationLevel: 'aiAccelerationLevel',
   status: 'status',
+  originType: 'originType',
+  createdMode: 'createdMode',
+  lineageSourceType: 'lineageSourceType',
+  lineageSourceId: 'lineageSourceId',
+  lineageNote: 'lineageNote',
+  importedReadinessState: 'importedReadinessState',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -172,6 +178,12 @@ exports.Prisma.EpicScalarFieldEnum = {
   title: 'title',
   purpose: 'purpose',
   status: 'status',
+  originType: 'originType',
+  createdMode: 'createdMode',
+  lineageSourceType: 'lineageSourceType',
+  lineageSourceId: 'lineageSourceId',
+  lineageNote: 'lineageNote',
+  importedReadinessState: 'importedReadinessState',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -191,6 +203,12 @@ exports.Prisma.StoryScalarFieldEnum = {
   testDefinition: 'testDefinition',
   definitionOfDone: 'definitionOfDone',
   status: 'status',
+  originType: 'originType',
+  createdMode: 'createdMode',
+  lineageSourceType: 'lineageSourceType',
+  lineageSourceId: 'lineageSourceId',
+  lineageNote: 'lineageNote',
+  importedReadinessState: 'importedReadinessState',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -253,6 +271,40 @@ exports.Prisma.ArtifactIntakeFileScalarFieldEnum = {
   uploadedAt: 'uploadedAt'
 };
 
+exports.Prisma.ArtifactAasCandidateScalarFieldEnum = {
+  id: 'id',
+  intakeSessionId: 'intakeSessionId',
+  fileId: 'fileId',
+  organizationId: 'organizationId',
+  type: 'type',
+  title: 'title',
+  summary: 'summary',
+  mappingState: 'mappingState',
+  sourceType: 'sourceType',
+  sourceConfidence: 'sourceConfidence',
+  sourceSectionId: 'sourceSectionId',
+  sourceSectionTitle: 'sourceSectionTitle',
+  sourceSectionMarker: 'sourceSectionMarker',
+  inferredOutcomeCandidateId: 'inferredOutcomeCandidateId',
+  inferredEpicCandidateId: 'inferredEpicCandidateId',
+  relationshipState: 'relationshipState',
+  relationshipNote: 'relationshipNote',
+  acceptanceCriteria: 'acceptanceCriteria',
+  testNotes: 'testNotes',
+  draftRecord: 'draftRecord',
+  humanDecisions: 'humanDecisions',
+  complianceResult: 'complianceResult',
+  reviewStatus: 'reviewStatus',
+  reviewComment: 'reviewComment',
+  followUpNeeded: 'followUpNeeded',
+  importedReadinessState: 'importedReadinessState',
+  promotedEntityType: 'promotedEntityType',
+  promotedEntityId: 'promotedEntityId',
+  promotedAt: 'promotedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -260,6 +312,10 @@ exports.Prisma.SortOrder = {
 
 exports.Prisma.NullableJsonNullValueInput = {
   DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
@@ -304,6 +360,33 @@ exports.OutcomeStatus = exports.$Enums.OutcomeStatus = {
   active: 'active'
 };
 
+exports.GovernedObjectOriginType = exports.$Enums.GovernedObjectOriginType = {
+  seeded: 'seeded',
+  native: 'native',
+  imported: 'imported'
+};
+
+exports.GovernedObjectCreatedMode = exports.$Enums.GovernedObjectCreatedMode = {
+  demo: 'demo',
+  clean: 'clean',
+  promotion: 'promotion'
+};
+
+exports.LineageSourceType = exports.$Enums.LineageSourceType = {
+  artifact_intake_session: 'artifact_intake_session',
+  artifact_intake_file: 'artifact_intake_file',
+  artifact_aas_candidate: 'artifact_aas_candidate'
+};
+
+exports.ImportedGovernedReadinessState = exports.$Enums.ImportedGovernedReadinessState = {
+  imported: 'imported',
+  imported_incomplete: 'imported_incomplete',
+  imported_human_review_needed: 'imported_human_review_needed',
+  imported_framing_ready: 'imported_framing_ready',
+  imported_design_ready: 'imported_design_ready',
+  blocked: 'blocked'
+};
+
 exports.EpicStatus = exports.$Enums.EpicStatus = {
   draft: 'draft',
   in_progress: 'in_progress',
@@ -346,20 +429,30 @@ exports.ActivityEntityType = exports.$Enums.ActivityEntityType = {
   story: 'story',
   tollgate: 'tollgate',
   artifact_intake_session: 'artifact_intake_session',
-  artifact_intake_file: 'artifact_intake_file'
+  artifact_intake_file: 'artifact_intake_file',
+  artifact_aas_candidate: 'artifact_aas_candidate'
 };
 
 exports.ActivityEventType = exports.$Enums.ActivityEventType = {
   demo_seeded: 'demo_seeded',
   outcome_created: 'outcome_created',
   outcome_updated: 'outcome_updated',
+  epic_created: 'epic_created',
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
   execution_contract_generated: 'execution_contract_generated',
   artifact_intake_session_created: 'artifact_intake_session_created',
   artifact_file_uploaded: 'artifact_file_uploaded',
-  artifact_file_rejected: 'artifact_file_rejected'
+  artifact_file_rejected: 'artifact_file_rejected',
+  artifact_candidate_compliance_analyzed: 'artifact_candidate_compliance_analyzed',
+  artifact_candidate_confirmed: 'artifact_candidate_confirmed',
+  artifact_candidate_edited: 'artifact_candidate_edited',
+  artifact_candidate_rejected: 'artifact_candidate_rejected',
+  artifact_candidate_follow_up_marked: 'artifact_candidate_follow_up_marked',
+  artifact_candidate_promoted: 'artifact_candidate_promoted',
+  imported_progression_blocked: 'imported_progression_blocked',
+  imported_progression_allowed: 'imported_progression_allowed'
 };
 
 exports.ArtifactIntakeSessionStatus = exports.$Enums.ArtifactIntakeSessionStatus = {
@@ -393,6 +486,27 @@ exports.ExtractionConfidence = exports.$Enums.ExtractionConfidence = {
   low: 'low'
 };
 
+exports.ArtifactAasCandidateType = exports.$Enums.ArtifactAasCandidateType = {
+  outcome: 'outcome',
+  epic: 'epic',
+  story: 'story'
+};
+
+exports.ArtifactAasMappingState = exports.$Enums.ArtifactAasMappingState = {
+  mapped: 'mapped',
+  uncertain: 'uncertain',
+  missing: 'missing'
+};
+
+exports.ArtifactCandidateReviewStatus = exports.$Enums.ArtifactCandidateReviewStatus = {
+  pending: 'pending',
+  confirmed: 'confirmed',
+  edited: 'edited',
+  rejected: 'rejected',
+  follow_up_needed: 'follow_up_needed',
+  promoted: 'promoted'
+};
+
 exports.Prisma.ModelName = {
   Organization: 'Organization',
   AppUser: 'AppUser',
@@ -403,7 +517,8 @@ exports.Prisma.ModelName = {
   Tollgate: 'Tollgate',
   ActivityEvent: 'ActivityEvent',
   ArtifactIntakeSession: 'ArtifactIntakeSession',
-  ArtifactIntakeFile: 'ArtifactIntakeFile'
+  ArtifactIntakeFile: 'ArtifactIntakeFile',
+  ArtifactAasCandidate: 'ArtifactAasCandidate'
 };
 
 /**

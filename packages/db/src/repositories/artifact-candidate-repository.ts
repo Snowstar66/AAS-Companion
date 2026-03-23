@@ -1,0 +1,502 @@
+import { randomUUID } from "node:crypto";
+import type { Prisma } from "../../generated/client";
+import {
+  analyzeArtifactCandidateCompliance,
+  type ArtifactAasCandidate,
+  artifactCandidateDraftRecordSchema,
+  artifactCandidateHumanDecisionSchema,
+  artifactCandidateRecordSchema,
+  artifactCandidateReviewActionInputSchema,
+  createArtifactCandidateDraftRecord,
+  inferImportedReadinessState
+} from "@aas-companion/domain";
+import { prisma } from "../client";
+import { appendActivityEvent } from "./activity-repository";
+import { createEpic } from "./epic-repository";
+import { createOutcome } from "./outcome-repository";
+import { createStory } from "./story-repository";
+
+type DbClient = Prisma.TransactionClient | typeof prisma;
+
+function parseCandidateRecord(candidate: {
+  id: string;
+  intakeSessionId: string;
+  organizationId: string;
+  fileId: string;
+  type: "outcome" | "epic" | "story";
+  title: string;
+  summary: string;
+  mappingState: "mapped" | "uncertain" | "missing";
+  sourceType: "bmad_prd" | "epic_file" | "story_file" | "mixed_markdown_bundle" | "unknown_artifact";
+  sourceConfidence: "high" | "medium" | "low";
+  sourceSectionId: string;
+  sourceSectionTitle: string;
+  sourceSectionMarker: string;
+  inferredOutcomeCandidateId: string | null;
+  inferredEpicCandidateId: string | null;
+  relationshipState: "mapped" | "uncertain" | "missing";
+  relationshipNote: string | null;
+  acceptanceCriteria: string[];
+  testNotes: string[];
+  draftRecord: unknown;
+  humanDecisions: unknown;
+  complianceResult: unknown;
+  reviewStatus: "pending" | "confirmed" | "edited" | "rejected" | "follow_up_needed" | "promoted";
+  reviewComment: string | null;
+  followUpNeeded: boolean;
+  importedReadinessState:
+    | "imported"
+    | "imported_incomplete"
+    | "imported_human_review_needed"
+    | "imported_framing_ready"
+    | "imported_design_ready"
+    | "blocked"
+    | null;
+  promotedEntityType: "outcome" | "epic" | "story" | null;
+  promotedEntityId: string | null;
+  promotedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  return artifactCandidateRecordSchema.parse({
+    ...candidate,
+    draftRecord: artifactCandidateDraftRecordSchema.parse(candidate.draftRecord),
+    humanDecisions: artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions),
+    complianceResult: candidate.complianceResult
+  });
+}
+
+function deriveImportedReadinessState(input: {
+  reviewStatus: "pending" | "confirmed" | "edited" | "rejected" | "follow_up_needed" | "promoted";
+  complianceResult: ReturnType<typeof analyzeArtifactCandidateCompliance>;
+  candidateType: "outcome" | "epic" | "story";
+}) {
+  if (input.reviewStatus === "rejected") {
+    return "blocked" as const;
+  }
+
+  if (input.reviewStatus === "pending" || input.reviewStatus === "follow_up_needed") {
+    return "imported_human_review_needed" as const;
+  }
+
+  return inferImportedReadinessState({
+    type: input.candidateType,
+    complianceResult: input.complianceResult
+  });
+}
+
+export async function createPersistedArtifactCandidates(input: {
+  organizationId: string;
+  intakeSessionId: string;
+  candidates: ArtifactAasCandidate[];
+}, db: DbClient = prisma) {
+  const persisted = [];
+
+  for (const candidate of input.candidates) {
+    const draftRecord = createArtifactCandidateDraftRecord(candidate);
+    const humanDecisions = artifactCandidateHumanDecisionSchema.parse({
+      valueOwnerId: null,
+      baselineValidity: null,
+      aiAccelerationLevel: null,
+      riskProfile: null,
+      riskAcceptanceStatus: null
+    });
+    const complianceResult = analyzeArtifactCandidateCompliance({
+      candidate,
+      draftRecord,
+      humanDecisions,
+      reviewStatus: "pending"
+    });
+
+    const created = await db.artifactAasCandidate.create({
+      data: {
+        id: candidate.id,
+        organizationId: input.organizationId,
+        intakeSessionId: input.intakeSessionId,
+        fileId: candidate.source.fileId,
+        type: candidate.type,
+        title: candidate.title,
+        summary: candidate.summary,
+        mappingState: candidate.mappingState,
+        sourceType: candidate.source.sourceType,
+        sourceConfidence: candidate.source.confidence,
+        sourceSectionId: candidate.source.sectionId,
+        sourceSectionTitle: candidate.source.sectionTitle,
+        sourceSectionMarker: candidate.source.sectionMarker,
+        inferredOutcomeCandidateId: candidate.inferredOutcomeCandidateId ?? null,
+        inferredEpicCandidateId: candidate.inferredEpicCandidateId ?? null,
+        relationshipState: candidate.relationshipState,
+        relationshipNote: candidate.relationshipNote ?? null,
+        acceptanceCriteria: candidate.acceptanceCriteria,
+        testNotes: candidate.testNotes,
+        draftRecord: draftRecord as Prisma.InputJsonValue,
+        humanDecisions: humanDecisions as Prisma.InputJsonValue,
+        complianceResult: complianceResult as Prisma.InputJsonValue,
+        reviewStatus: "pending",
+        reviewComment: null,
+        followUpNeeded: false,
+        importedReadinessState: deriveImportedReadinessState({
+          reviewStatus: "pending",
+          complianceResult,
+          candidateType: candidate.type
+        })
+      }
+    });
+
+    await appendActivityEvent(
+      {
+        organizationId: input.organizationId,
+        entityType: "artifact_aas_candidate",
+        entityId: created.id,
+        eventType: "artifact_candidate_compliance_analyzed",
+        metadata: {
+          intakeSessionId: input.intakeSessionId,
+          fileId: candidate.source.fileId,
+          type: candidate.type,
+          summary: complianceResult.summary
+        }
+      },
+      db
+    );
+
+    persisted.push(created);
+  }
+
+  return persisted;
+}
+
+export async function listArtifactCandidatesForOrganization(organizationId: string) {
+  return prisma.artifactAasCandidate.findMany({
+    where: { organizationId },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    include: {
+      intakeSession: true,
+      file: true
+    }
+  });
+}
+
+export async function getArtifactCandidateById(organizationId: string, candidateId: string) {
+  return prisma.artifactAasCandidate.findFirst({
+    where: {
+      organizationId,
+      id: candidateId
+    },
+    include: {
+      intakeSession: true,
+      file: true
+    }
+  });
+}
+
+export async function reviewArtifactCandidate(input: unknown) {
+  const parsed = artifactCandidateReviewActionInputSchema.parse(input);
+
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.artifactAasCandidate.findFirst({
+      where: {
+        organizationId: parsed.organizationId,
+        id: parsed.candidateId
+      }
+    });
+
+    if (!existing) {
+      throw new Error("Artifact candidate was not found in organization scope.");
+    }
+
+    const draftRecord = artifactCandidateDraftRecordSchema.parse({
+      ...artifactCandidateDraftRecordSchema.parse(existing.draftRecord),
+      ...(parsed.draftRecord ?? {})
+    });
+    const humanDecisions = artifactCandidateHumanDecisionSchema.parse({
+      ...artifactCandidateHumanDecisionSchema.parse(existing.humanDecisions),
+      ...(parsed.humanDecisions ?? {})
+    });
+    const candidateShape = {
+      id: existing.id,
+      type: existing.type,
+      title: existing.title,
+      summary: existing.summary,
+      mappingState: existing.mappingState,
+      source: {
+        fileId: existing.fileId,
+        fileName: existing.sourceSectionTitle,
+        sectionId: existing.sourceSectionId,
+        sectionTitle: existing.sourceSectionTitle,
+        sectionMarker: existing.sourceSectionMarker,
+        sourceType: existing.sourceType,
+        confidence: existing.sourceConfidence
+      },
+      inferredOutcomeCandidateId: existing.inferredOutcomeCandidateId,
+      inferredEpicCandidateId: existing.inferredEpicCandidateId,
+      relationshipState: existing.relationshipState,
+      relationshipNote: existing.relationshipNote,
+      acceptanceCriteria: existing.acceptanceCriteria,
+      testNotes: existing.testNotes
+    } as const;
+    const complianceResult = analyzeArtifactCandidateCompliance({
+      candidate: candidateShape,
+      reviewStatus: parsed.reviewStatus,
+      draftRecord,
+      humanDecisions
+    });
+    const importedReadinessState = deriveImportedReadinessState({
+      reviewStatus: parsed.reviewStatus,
+      complianceResult,
+      candidateType: existing.type
+    });
+
+    const updated = await tx.artifactAasCandidate.update({
+      where: { id: existing.id },
+      data: {
+        draftRecord: draftRecord as Prisma.InputJsonValue,
+        humanDecisions: humanDecisions as Prisma.InputJsonValue,
+        complianceResult: complianceResult as Prisma.InputJsonValue,
+        reviewStatus: parsed.reviewStatus,
+        reviewComment: parsed.reviewComment ?? null,
+        followUpNeeded: parsed.reviewStatus === "follow_up_needed",
+        importedReadinessState
+      }
+    });
+
+    const eventType =
+      parsed.reviewStatus === "confirmed"
+        ? "artifact_candidate_confirmed"
+        : parsed.reviewStatus === "edited"
+          ? "artifact_candidate_edited"
+          : parsed.reviewStatus === "rejected"
+            ? "artifact_candidate_rejected"
+            : "artifact_candidate_follow_up_marked";
+
+    await appendActivityEvent(
+      {
+        organizationId: parsed.organizationId,
+        entityType: "artifact_aas_candidate",
+        entityId: updated.id,
+        eventType,
+        actorId: parsed.actorId ?? null,
+        metadata: {
+          reviewStatus: updated.reviewStatus,
+          complianceSummary: complianceResult.summary,
+          importedReadinessState
+        }
+      },
+      tx
+    );
+
+    return parseCandidateRecord(updated);
+  });
+}
+
+export async function promoteArtifactCandidate(input: {
+  organizationId: string;
+  candidateId: string;
+  actorId?: string | null;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const candidate = await tx.artifactAasCandidate.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        id: input.candidateId
+      }
+    });
+
+    if (!candidate) {
+      throw new Error("Artifact candidate was not found in organization scope.");
+    }
+
+    if (candidate.promotedEntityId) {
+      return {
+        candidateId: candidate.id,
+        promotedEntityType: candidate.promotedEntityType ?? candidate.type,
+        promotedEntityId: candidate.promotedEntityId,
+        importedReadinessState: candidate.importedReadinessState ?? "imported"
+      };
+    }
+
+    const draftRecord = artifactCandidateDraftRecordSchema.parse(candidate.draftRecord);
+    const humanDecisions = artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions);
+    const complianceResult = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: candidate.id,
+        type: candidate.type,
+        title: candidate.title,
+        summary: candidate.summary,
+        mappingState: candidate.mappingState,
+        source: {
+          fileId: candidate.fileId,
+          fileName: candidate.sourceSectionTitle,
+          sectionId: candidate.sourceSectionId,
+          sectionTitle: candidate.sourceSectionTitle,
+          sectionMarker: candidate.sourceSectionMarker,
+          sourceType: candidate.sourceType,
+          confidence: candidate.sourceConfidence
+        },
+        inferredOutcomeCandidateId: candidate.inferredOutcomeCandidateId,
+        inferredEpicCandidateId: candidate.inferredEpicCandidateId,
+        relationshipState: candidate.relationshipState,
+        relationshipNote: candidate.relationshipNote,
+        acceptanceCriteria: candidate.acceptanceCriteria,
+        testNotes: candidate.testNotes
+      },
+      reviewStatus: candidate.reviewStatus,
+      draftRecord,
+      humanDecisions
+    });
+
+    if (candidate.reviewStatus !== "confirmed" && candidate.reviewStatus !== "edited") {
+      throw new Error("Candidate must be confirmed or edited before promotion can continue.");
+    }
+
+    if (complianceResult.summary.humanOnly > 0 || complianceResult.summary.blocked > 0) {
+      throw new Error("Promotion is blocked until required human confirmations and blocked findings are resolved.");
+    }
+
+    const importedReadinessState = deriveImportedReadinessState({
+      reviewStatus: "promoted",
+      complianceResult,
+      candidateType: candidate.type
+    });
+    const lineageReference = {
+      sourceType: "artifact_aas_candidate" as const,
+      sourceId: candidate.id,
+      note: `Promoted from intake session ${candidate.intakeSessionId}`
+    };
+
+    let promotedEntityId = "";
+    let promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
+
+    if (candidate.type === "outcome") {
+      const created = await createOutcome({
+        organizationId: candidate.organizationId,
+        actorId: input.actorId ?? null,
+        key: draftRecord.key ?? `IMP-OUT-${candidate.id.slice(0, 8).toUpperCase()}`,
+        title: draftRecord.title ?? candidate.title,
+        problemStatement: draftRecord.problemStatement ?? null,
+        outcomeStatement: draftRecord.outcomeStatement ?? candidate.summary,
+        baselineDefinition: draftRecord.baselineDefinition ?? null,
+        baselineSource: draftRecord.baselineSource ?? null,
+        timeframe: draftRecord.timeframe ?? null,
+        valueOwnerId: humanDecisions.valueOwnerId ?? null,
+        riskProfile: humanDecisions.riskProfile ?? "medium",
+        aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
+        status: importedReadinessState === "imported_framing_ready" ? "ready_for_tg1" : "baseline_in_progress",
+        originType: "imported",
+        createdMode: "promotion",
+        lineageReference,
+        importedReadinessState
+      }, tx);
+      promotedEntityId = created.id;
+    }
+
+    if (candidate.type === "epic") {
+      const promotedOutcome = draftRecord.outcomeCandidateId
+        ? await tx.artifactAasCandidate.findFirst({
+            where: {
+              organizationId: candidate.organizationId,
+              id: draftRecord.outcomeCandidateId
+            }
+          })
+        : null;
+
+      if (!promotedOutcome?.promotedEntityId) {
+        throw new Error("Promote the linked Outcome candidate before promoting this Epic.");
+      }
+
+      const created = await createEpic({
+        organizationId: candidate.organizationId,
+        actorId: input.actorId ?? null,
+        outcomeId: promotedOutcome.promotedEntityId,
+        key: draftRecord.key ?? `IMP-EPC-${candidate.id.slice(0, 8).toUpperCase()}`,
+        title: draftRecord.title ?? candidate.title,
+        purpose: draftRecord.purpose ?? candidate.summary,
+        status: "draft",
+        originType: "imported",
+        createdMode: "promotion",
+        lineageReference,
+        importedReadinessState
+      }, tx);
+      promotedEntityId = created.id;
+    }
+
+    if (candidate.type === "story") {
+      const promotedOutcome = draftRecord.outcomeCandidateId
+        ? await tx.artifactAasCandidate.findFirst({
+            where: {
+              organizationId: candidate.organizationId,
+              id: draftRecord.outcomeCandidateId
+            }
+          })
+        : null;
+      const promotedEpic = draftRecord.epicCandidateId
+        ? await tx.artifactAasCandidate.findFirst({
+            where: {
+              organizationId: candidate.organizationId,
+              id: draftRecord.epicCandidateId
+            }
+          })
+        : null;
+
+      if (!promotedOutcome?.promotedEntityId || !promotedEpic?.promotedEntityId) {
+        throw new Error("Promote the linked Outcome and Epic candidates before promoting this Story.");
+      }
+
+      const created = await createStory({
+        organizationId: candidate.organizationId,
+        actorId: input.actorId ?? null,
+        outcomeId: promotedOutcome.promotedEntityId,
+        epicId: promotedEpic.promotedEntityId,
+        key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+        title: draftRecord.title ?? candidate.title,
+        storyType: draftRecord.storyType ?? "outcome_delivery",
+        valueIntent: draftRecord.valueIntent ?? candidate.summary,
+        acceptanceCriteria: draftRecord.acceptanceCriteria,
+        aiUsageScope: draftRecord.aiUsageScope,
+        aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
+        testDefinition: draftRecord.testDefinition ?? null,
+        definitionOfDone: draftRecord.definitionOfDone,
+        status: importedReadinessState === "imported_design_ready" ? "ready_for_handoff" : "definition_blocked",
+        originType: "imported",
+        createdMode: "promotion",
+        lineageReference,
+        importedReadinessState
+      }, tx);
+      promotedEntityId = created.id;
+    }
+
+    const promotedAt = new Date();
+    await tx.artifactAasCandidate.update({
+      where: { id: candidate.id },
+      data: {
+        reviewStatus: "promoted",
+        promotedEntityType,
+        promotedEntityId,
+        promotedAt,
+        importedReadinessState
+      }
+    });
+
+    await appendActivityEvent(
+      {
+        organizationId: candidate.organizationId,
+        entityType: "artifact_aas_candidate",
+        entityId: candidate.id,
+        eventType: "artifact_candidate_promoted",
+        actorId: input.actorId ?? null,
+        metadata: {
+          promotedEntityType,
+          promotedEntityId,
+          importedReadinessState
+        }
+      },
+      tx
+    );
+
+    return {
+      candidateId: candidate.id,
+      promotedEntityType,
+      promotedEntityId,
+      importedReadinessState
+    };
+  });
+}

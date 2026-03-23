@@ -7,12 +7,55 @@ import {
   upsertTollgate
 } from "@aas-companion/db";
 import {
+  artifactComplianceResultSchema,
   executionContractSchema,
   executionContractToMarkdown,
-  getOutcomeBaselineBlockers,
-  getStoryReadinessBlockers
+  getOutcomeBaselineReadiness,
+  getStoryHandoffReadiness
 } from "@aas-companion/domain";
+import { getArtifactCandidateById } from "@aas-companion/db";
 import { failure, success, type ApiResult } from "./shared";
+
+async function getImportedStoryBuildBlockers(input: {
+  organizationId: string;
+  originType: string;
+  lineageSourceType: string | null;
+  lineageSourceId: string | null;
+}) {
+  if (input.originType !== "imported" || input.lineageSourceType !== "artifact_aas_candidate" || !input.lineageSourceId) {
+    return [];
+  }
+
+  const candidate = await getArtifactCandidateById(input.organizationId, input.lineageSourceId);
+
+  if (!candidate) {
+    return ["The imported lineage reference can no longer be resolved to its source candidate."];
+  }
+
+  const compliance = artifactComplianceResultSchema.safeParse(candidate.complianceResult);
+  const complianceFindings = compliance.success ? compliance.data.findings : [];
+  const humanOrBlocked = complianceFindings.filter(
+    (finding) => finding.category === "blocked" || finding.category === "human_only"
+  );
+
+  if (candidate.reviewStatus === "pending") {
+    return ["Imported candidate still requires human confirmation before build progression."];
+  }
+
+  if (candidate.reviewStatus === "follow_up_needed") {
+    return ["Imported candidate still has follow-up decisions open and cannot progress to build handoff."];
+  }
+
+  if (candidate.reviewStatus === "rejected") {
+    return ["Imported candidate was rejected and cannot progress to build handoff."];
+  }
+
+  if (candidate.importedReadinessState !== "imported_design_ready") {
+    return humanOrBlocked.map((finding) => finding.message);
+  }
+
+  return [];
+}
 
 export async function getOutcomeWorkspaceService(organizationId: string, outcomeId: string) {
   const snapshot = await getOutcomeWorkspaceSnapshot(organizationId, outcomeId);
@@ -24,7 +67,10 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
     });
   }
 
-  return success(snapshot);
+  return success({
+    ...snapshot,
+    readiness: getOutcomeBaselineReadiness(snapshot.outcome)
+  });
 }
 
 export async function saveOutcomeWorkspaceService(input: {
@@ -70,8 +116,9 @@ export async function submitOutcomeTollgateService(input: {
     });
   }
 
-  const blockers = getOutcomeBaselineBlockers(snapshot.outcome);
-  const isReady = blockers.length === 0;
+  const readiness = getOutcomeBaselineReadiness(snapshot.outcome);
+  const blockers = readiness.reasons.map((reason) => reason.message);
+  const isReady = readiness.state === "ready";
 
   await upsertTollgate({
     organizationId: input.organizationId,
@@ -108,7 +155,18 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
     });
   }
 
-  return success(snapshot);
+  const importedBuildBlockers = await getImportedStoryBuildBlockers({
+    organizationId,
+    originType: snapshot.story.originType,
+    lineageSourceType: snapshot.story.lineageSourceType,
+    lineageSourceId: snapshot.story.lineageSourceId
+  });
+
+  return success({
+    ...snapshot,
+    readiness: getStoryHandoffReadiness(snapshot.story),
+    importedBuildBlockers
+  });
 }
 
 export async function saveStoryWorkspaceService(input: {
@@ -154,8 +212,16 @@ export async function submitStoryReadinessService(input: {
     });
   }
 
-  const blockers = getStoryReadinessBlockers(snapshot.story);
-  const isReady = blockers.length === 0;
+  const readiness = getStoryHandoffReadiness(snapshot.story);
+  const blockers = readiness.reasons.map((reason) => reason.message);
+  const importedBuildBlockers = await getImportedStoryBuildBlockers({
+    organizationId: input.organizationId,
+    originType: snapshot.story.originType,
+    lineageSourceType: snapshot.story.lineageSourceType,
+    lineageSourceId: snapshot.story.lineageSourceId
+  });
+  const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
+  const isReady = readiness.state === "ready" && combinedBlockers.length === 0;
 
   await upsertTollgate({
     organizationId: input.organizationId,
@@ -163,7 +229,7 @@ export async function submitStoryReadinessService(input: {
     entityId: input.storyId,
     tollgateType: "story_readiness",
     status: isReady ? "ready" : "blocked",
-    blockers,
+    blockers: combinedBlockers,
     approverRoles: ["delivery_lead", "builder"],
     comments: input.comments ?? null,
     actorId: input.actorId ?? null
@@ -178,7 +244,7 @@ export async function submitStoryReadinessService(input: {
 
   return success({
     story: updatedStory,
-    blockers
+    blockers: combinedBlockers
   });
 }
 
@@ -201,12 +267,34 @@ export async function previewExecutionContractService(input: {
     });
   }
 
-  const blockers = getStoryReadinessBlockers(snapshot.story);
+  const readiness = getStoryHandoffReadiness(snapshot.story);
+  const blockers = readiness.reasons.map((reason) => reason.message);
+  const importedBuildBlockers = await getImportedStoryBuildBlockers({
+    organizationId: input.organizationId,
+    originType: snapshot.story.originType,
+    lineageSourceType: snapshot.story.lineageSourceType,
+    lineageSourceId: snapshot.story.lineageSourceId
+  });
+  const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
 
-  if (blockers.length > 0) {
+  if (combinedBlockers.length > 0) {
+    if (snapshot.story.originType === "imported") {
+      await appendActivityEvent({
+        organizationId: input.organizationId,
+        entityType: "story",
+        entityId: snapshot.story.id,
+        eventType: "imported_progression_blocked",
+        actorId: input.actorId ?? null,
+        metadata: {
+          storyKey: snapshot.story.key,
+          blockers: combinedBlockers
+        }
+      });
+    }
+
     return failure({
       code: "story_not_ready",
-      message: blockers[0] ?? "Story is not ready for execution contract generation."
+      message: combinedBlockers[0] ?? "Story is not ready for execution contract generation."
     });
   }
 
@@ -231,6 +319,20 @@ export async function previewExecutionContractService(input: {
       storyKey: snapshot.story.key
     }
   });
+
+  if (snapshot.story.originType === "imported") {
+    await appendActivityEvent({
+      organizationId: input.organizationId,
+      entityType: "story",
+      entityId: snapshot.story.id,
+      eventType: "imported_progression_allowed",
+      actorId: input.actorId ?? null,
+      metadata: {
+        storyKey: snapshot.story.key,
+        importedReadinessState: snapshot.story.importedReadinessState ?? null
+      }
+    });
+  }
 
   return success({
     contract,

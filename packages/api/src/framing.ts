@@ -1,4 +1,4 @@
-import { DEMO_ORGANIZATION } from "@aas-companion/domain";
+import { DEMO_ORGANIZATION, getOutcomeBaselineReadiness } from "@aas-companion/domain";
 import { listOutcomeCockpitEntries } from "@aas-companion/db";
 
 export type FramingReadinessTone = "blocked" | "progress" | "ready";
@@ -7,6 +7,9 @@ export type FramingOutcomeItem = {
   id: string;
   key: string;
   title: string;
+  originType: string;
+  importedReadinessState: string | null;
+  lineageHref: string | null;
   status: string;
   statusLabel: string;
   readinessLabel: string;
@@ -81,11 +84,13 @@ export async function getFramingCockpitData(
     const entries = await listOutcomeCockpitEntries(organizationId);
 
     const items: FramingOutcomeItem[] = entries.map((entry) => {
-      const blockers = entry.tollgates
+      const readiness = getOutcomeBaselineReadiness(entry);
+      const tollgateBlockers = entry.tollgates
         .filter((tollgate) => tollgate.status === "blocked")
         .flatMap((tollgate) => tollgate.blockers);
+      const blockers = [...new Set([...readiness.reasons.map((reason) => reason.message), ...tollgateBlockers])];
       const missingBaselineFields = countMissingBaselineFields(entry);
-      const isBlocked = blockers.length > 0 || missingBaselineFields > 0;
+      const isBlocked = blockers.length > 0 || readiness.state === "blocked";
 
       let readinessLabel = "Ready for framing review";
       let readinessTone: FramingReadinessTone = "ready";
@@ -97,7 +102,7 @@ export async function getFramingCockpitData(
         readinessDetail =
           blockers[0] ??
           `${missingBaselineFields} baseline field${missingBaselineFields === 1 ? "" : "s"} still missing.`;
-      } else if (entry.status !== "ready_for_tg1") {
+      } else if (readiness.state === "in_progress") {
         readinessLabel = "In progress";
         readinessTone = "progress";
         readinessDetail = "Framing has started, but the outcome is not yet marked ready for TG1.";
@@ -107,6 +112,12 @@ export async function getFramingCockpitData(
         id: entry.id,
         key: entry.key,
         title: entry.title,
+        originType: entry.originType,
+        importedReadinessState: entry.importedReadinessState ?? null,
+        lineageHref:
+          entry.lineageSourceType === "artifact_aas_candidate" && entry.lineageSourceId
+            ? `/review?candidateId=${entry.lineageSourceId}`
+            : null,
         status: entry.status,
         statusLabel: statusLabels[entry.status] ?? entry.status,
         readinessLabel,

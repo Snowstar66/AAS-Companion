@@ -10,6 +10,7 @@ import {
 } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
+import { createPersistedArtifactCandidates } from "./artifact-candidate-repository";
 
 type ArtifactRejectionContext = {
   organizationId: string;
@@ -44,8 +45,14 @@ export async function listArtifactIntakeSessions(organizationId: string) {
               fullName: true,
               email: true
             }
+          },
+          candidates: {
+            orderBy: [{ updatedAt: "desc" }, { createdAt: "asc" }]
           }
         }
+      },
+      candidates: {
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "asc" }]
       }
     }
   });
@@ -160,6 +167,22 @@ async function processArtifactIntakeSession(
       mappingCompletedAt
     }
   });
+
+  await db.artifactAasCandidate.deleteMany({
+    where: {
+      organizationId: input.organizationId,
+      intakeSessionId: session.id
+    }
+  });
+
+  await createPersistedArtifactCandidates(
+    {
+      organizationId: input.organizationId,
+      intakeSessionId: session.id,
+      candidates: mappingResult.candidates
+    },
+    db
+  );
 
   return mappingResult;
 }

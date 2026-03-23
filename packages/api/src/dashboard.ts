@@ -1,4 +1,4 @@
-import { DEMO_ORGANIZATION } from "@aas-companion/domain";
+import { DEMO_ORGANIZATION, getStoryHandoffReadiness } from "@aas-companion/domain";
 import { getWorkspaceSnapshot } from "@aas-companion/db";
 
 export type HomeSummaryMetric = {
@@ -76,9 +76,13 @@ const activityLabels: Record<string, string> = {
   demo_seeded: "Demo workspace seeded",
   outcome_created: "Outcome created",
   outcome_updated: "Outcome updated",
+  epic_created: "Epic created",
   story_created: "Story created",
   story_updated: "Story updated",
-  tollgate_recorded: "Tollgate updated"
+  tollgate_recorded: "Tollgate updated",
+  artifact_candidate_promoted: "Imported candidate promoted",
+  imported_progression_blocked: "Imported build progression blocked",
+  imported_progression_allowed: "Imported build progression allowed"
 };
 
 function formatDate(value: Date) {
@@ -150,17 +154,17 @@ export async function getHomeDashboardData(
       }))
     );
 
-    const storyDefinitionBlockers: HomeBlocker[] = organization.stories
-      .filter((story) => story.status === "definition_blocked")
-      .map((story) => ({
-        id: `${story.id}-definition`,
+    const storyDefinitionBlockers: HomeBlocker[] = organization.stories.flatMap((story) => {
+      const readiness = getStoryHandoffReadiness(story);
+
+      return readiness.reasons.map((reason) => ({
+        id: `${story.id}-${reason.code}`,
         title: `${story.key} is blocked`,
-        detail: story.testDefinition
-          ? "Definition work remains incomplete."
-          : "Test Definition is missing and blocks readiness.",
-        severity: "medium",
+        detail: reason.message,
+        severity: reason.severity,
         href: "/stories"
       }));
+    });
 
     const pendingActions: HomePendingAction[] = [
       ...pendingTollgates.map((tollgate) => ({
@@ -170,11 +174,12 @@ export async function getHomeDashboardData(
         href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       })),
       ...organization.stories
-        .filter((story) => story.status === "definition_blocked" || !story.testDefinition)
+        .filter((story) => getStoryHandoffReadiness(story).state !== "ready")
         .map((story) => ({
           id: `${story.id}-action`,
           title: `Complete ${story.key}`,
-          detail: story.testDefinition ? "Story still needs readiness work." : "Add a test definition before handoff.",
+          detail:
+            getStoryHandoffReadiness(story).reasons[0]?.message ?? "Story still needs readiness work before handoff.",
           href: "/stories"
         }))
     ].slice(0, 5);
@@ -195,8 +200,8 @@ export async function getHomeDashboardData(
       },
       {
         label: "Stories Ready",
-        value: String(organization.stories.filter((story) => story.status === "ready_for_handoff").length),
-        tone: organization.stories.some((story) => story.status === "ready_for_handoff") ? "success" : "warning",
+        value: String(organization.stories.filter((story) => getStoryHandoffReadiness(story).state === "ready").length),
+        tone: organization.stories.some((story) => getStoryHandoffReadiness(story).state === "ready") ? "success" : "warning",
         description: "Stories that can move toward execution handoff."
       },
       {

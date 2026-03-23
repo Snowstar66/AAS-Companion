@@ -7,10 +7,29 @@ export {
   authModeSchema
 } from "./auth";
 export {
+  artifactCandidateDraftRecordSchema,
+  artifactCandidateHumanDecisionSchema,
+  artifactCandidatePromotionResultSchema,
+  artifactCandidateRecordSchema,
+  artifactCandidateReviewActionInputSchema,
+  artifactComplianceFindingSchema,
+  artifactComplianceResultSchema,
+  artifactIntakeUploadRequestSchema,
+  artifactMappingResultSchema,
+  artifactParseResultSchema
+} from "./artifact-intake";
+export {
+  epicCreateInputSchema,
+  epicRecordSchema
+} from "./epic";
+export {
   aiAccelerationLevelSchema,
   activityEntityTypeSchema,
   activityEventTypeSchema,
+  artifactCandidateReviewStatusSchema,
+  artifactComplianceFindingCategorySchema,
   epicStatusSchema,
+  importedGovernedReadinessStateSchema,
   membershipRoleSchema,
   outcomeStatusSchema,
   riskProfileSchema,
@@ -27,6 +46,13 @@ export {
 export {
   executionContractSchema
 } from "./handoff";
+export {
+  governedLineageReferenceSchema,
+  governedObjectProvenanceInputSchema,
+  governedObjectProvenanceSchema,
+  readinessAssessmentSchema,
+  readinessBlockReasonSchema
+} from "./governed-object";
 export {
   outcomeCreateInputSchema,
   outcomeRecordSchema,

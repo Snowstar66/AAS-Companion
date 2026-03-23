@@ -1,4 +1,8 @@
 import {
+  artifactCandidateDraftRecordSchema,
+  artifactCandidateHumanDecisionSchema,
+  artifactComplianceResultSchema,
+  artifactCandidateReviewStatusSchema,
   artifactMappingResultSchema,
   artifactParseResultSchema,
   type ArtifactMappingResult,
@@ -15,6 +19,26 @@ function parseStoredParseResult(value: unknown): ArtifactParseResult | null {
 function parseStoredMappingResult(value: unknown): ArtifactMappingResult | null {
   const parsed = artifactMappingResultSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
+}
+
+function parseStoredCandidateDraftRecord(value: unknown) {
+  const parsed = artifactCandidateDraftRecordSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+function parseStoredCandidateHumanDecisions(value: unknown) {
+  const parsed = artifactCandidateHumanDecisionSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+function parseStoredComplianceResult(value: unknown) {
+  const parsed = artifactComplianceResultSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+function parseStoredReviewStatus(value: unknown) {
+  const parsed = artifactCandidateReviewStatusSchema.safeParse(value);
+  return parsed.success ? parsed.data : "pending";
 }
 
 export async function loadArtifactIntakeWorkspace() {
@@ -54,16 +78,47 @@ export async function loadArtifactIntakeWorkspace() {
       });
 
       const mappedArtifacts = parseStoredMappingResult(artifactSession.mappedArtifacts);
+      const candidates = (artifactSession.candidates ?? []).map((candidate) => ({
+        ...candidate,
+        source: {
+          fileId: candidate.fileId,
+          fileName: files.find((file) => file.id === candidate.fileId)?.fileName ?? candidate.sourceSectionTitle,
+          sectionId: candidate.sourceSectionId,
+          sectionTitle: candidate.sourceSectionTitle,
+          sectionMarker: candidate.sourceSectionMarker,
+          sourceType: candidate.sourceType,
+          confidence: candidate.sourceConfidence
+        },
+        draftRecord: parseStoredCandidateDraftRecord(candidate.draftRecord),
+        humanDecisions: parseStoredCandidateHumanDecisions(candidate.humanDecisions),
+        complianceResult: parseStoredComplianceResult(candidate.complianceResult),
+        reviewStatus: parseStoredReviewStatus(candidate.reviewStatus)
+      }));
+      const displayCandidates =
+        candidates.length > 0
+          ? candidates
+          : (mappedArtifacts?.candidates ?? []).map((candidate) => ({
+              ...candidate,
+              draftRecord: null,
+              humanDecisions: null,
+              complianceResult: null,
+              reviewStatus: "pending" as const
+            }));
 
       return {
         ...artifactSession,
         files,
+        candidates,
+        displayCandidates,
         mappedArtifacts,
-        candidateCount: mappedArtifacts?.candidates.length ?? 0,
-        uncertainCandidateCount:
-          mappedArtifacts?.candidates.filter(
-            (candidate) => candidate.mappingState !== "mapped" || candidate.relationshipState !== "mapped"
-          ).length ?? 0,
+        candidateCount: displayCandidates.length,
+        uncertainCandidateCount: candidates.filter(
+          (candidate) => candidate.complianceResult?.summary.uncertain || candidate.mappingState !== "mapped" || candidate.relationshipState !== "mapped"
+        ).length,
+        blockedCandidateCount: candidates.filter((candidate) => (candidate.complianceResult?.summary.blocked ?? 0) > 0).length,
+        pendingReviewCount: candidates.filter((candidate) =>
+          candidate.reviewStatus === "pending" || candidate.reviewStatus === "follow_up_needed"
+        ).length,
         unmappedSectionCount: mappedArtifacts?.unmappedSections.length ?? 0
       };
     });

@@ -36,7 +36,9 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
 
   const { story, tollgate, activities } = storyResult.data;
   const computedBlockers = getStoryReadinessBlockers(story);
-  const blockers = blockersFromQuery.length > 0 ? blockersFromQuery : tollgate?.blockers ?? computedBlockers;
+  const importedBuildBlockers = storyResult.data.importedBuildBlockers ?? [];
+  const blockers =
+    blockersFromQuery.length > 0 ? blockersFromQuery : [...new Set([...(tollgate?.blockers ?? computedBlockers), ...importedBuildBlockers])];
 
   return (
     <AppShell
@@ -133,6 +135,18 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
                   <p className="mt-2 text-lg font-semibold capitalize">{story.aiAccelerationLevel.replaceAll("_", " ")}</p>
                 </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin</p>
+                  <p className="mt-2 text-lg font-semibold capitalize">{story.originType.replaceAll("_", " ")}</p>
+                </div>
+                {story.importedReadinessState ? (
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Imported readiness</p>
+                    <p className="mt-2 text-lg font-semibold capitalize text-sky-950">
+                      {story.importedReadinessState.replaceAll("_", " ")}
+                    </p>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 
@@ -295,6 +309,20 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                 )}
               </CardContent>
             </Card>
+
+            {story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId ? (
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Imported lineage</CardTitle>
+                  <CardDescription>Trace this governed Story back to its reviewed import candidate.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="gap-2" variant="secondary">
+                    <Link href={`/review?candidateId=${story.lineageSourceId}`}>Open source candidate review</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         </div>
       </section>

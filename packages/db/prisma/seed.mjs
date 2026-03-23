@@ -135,7 +135,9 @@ async function main() {
     },
     update: {
       title: "Close the governance readiness gap",
-      status: "draft"
+      status: "draft",
+      originType: "seeded",
+      createdMode: "demo"
     },
     create: {
       id: ids.outcomes.draft,
@@ -150,7 +152,9 @@ async function main() {
       valueOwnerId: ids.users.valueOwner,
       riskProfile: "high",
       aiAccelerationLevel: "level_2",
-      status: "draft"
+      status: "draft",
+      originType: "seeded",
+      createdMode: "demo"
     }
   });
 
@@ -163,7 +167,9 @@ async function main() {
     },
     update: {
       title: "Make outcome delivery reviewable",
-      status: "ready_for_tg1"
+      status: "ready_for_tg1",
+      originType: "seeded",
+      createdMode: "demo"
     },
     create: {
       id: ids.outcomes.almostReady,
@@ -178,7 +184,9 @@ async function main() {
       valueOwnerId: ids.users.valueOwner,
       riskProfile: "medium",
       aiAccelerationLevel: "level_2",
-      status: "ready_for_tg1"
+      status: "ready_for_tg1",
+      originType: "seeded",
+      createdMode: "demo"
     }
   });
 
@@ -191,7 +199,9 @@ async function main() {
     },
     update: {
       title: "Framing and delivery visibility",
-      status: "in_progress"
+      status: "in_progress",
+      originType: "seeded",
+      createdMode: "demo"
     },
     create: {
       id: ids.epicId,
@@ -200,7 +210,9 @@ async function main() {
       key: "EPC-001",
       title: "Framing and delivery visibility",
       purpose: "Connect framing, story readiness, and execution handoff in one governed slice.",
-      status: "in_progress"
+      status: "in_progress",
+      originType: "seeded",
+      createdMode: "demo"
     }
   });
 
@@ -267,7 +279,9 @@ async function main() {
         aiUsageScope: story.aiUsageScope,
         testDefinition: story.testDefinition,
         definitionOfDone: story.definitionOfDone,
-        status: story.status
+        status: story.status,
+        originType: "seeded",
+        createdMode: "demo"
       },
       create: {
         id: story.id,
@@ -283,7 +297,9 @@ async function main() {
         aiAccelerationLevel: "level_2",
         testDefinition: story.testDefinition,
         definitionOfDone: story.definitionOfDone,
-        status: story.status
+        status: story.status,
+        originType: "seeded",
+        createdMode: "demo"
       }
     });
   }
@@ -330,7 +346,12 @@ async function main() {
         outcomes: 2,
         epics: 1,
         stories: 3,
-        tollgates: 1
+        tollgates: 1,
+        provenance: {
+          originType: "seeded",
+          createdMode: "demo",
+          lineageReference: null
+        }
       }
     },
     create: {
@@ -345,7 +366,12 @@ async function main() {
         outcomes: 2,
         epics: 1,
         stories: 3,
-        tollgates: 1
+        tollgates: 1,
+        provenance: {
+          originType: "seeded",
+          createdMode: "demo",
+          lineageReference: null
+        }
       }
     }
   });

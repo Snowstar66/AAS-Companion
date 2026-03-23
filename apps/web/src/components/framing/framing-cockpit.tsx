@@ -259,6 +259,14 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                       <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                         {item.statusLabel}
                       </span>
+                      <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                        {item.originType.replaceAll("_", " ")}
+                      </span>
+                      {item.importedReadinessState ? (
+                        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+                          {item.importedReadinessState.replaceAll("_", " ")}
+                        </span>
+                      ) : null}
                       {item.isBlocked ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
                           <AlertTriangle className="h-3.5 w-3.5" />
@@ -316,6 +324,11 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
+                    {item.lineageHref ? (
+                      <Button asChild className="gap-2" variant="secondary">
+                        <Link href={item.lineageHref}>Open Import Lineage</Link>
+                      </Button>
+                    ) : null}
                     {item.readinessTone === "ready" ? (
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
                         <div className="flex items-center gap-2 font-medium">

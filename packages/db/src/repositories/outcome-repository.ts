@@ -3,6 +3,11 @@ import type { Prisma } from "../../generated/client";
 import { outcomeCreateInputSchema, outcomeUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
+import {
+  resolveGovernedObjectProvenance,
+  toGovernedObjectProvenanceFields,
+  toGovernedObjectProvenanceMetadata
+} from "./governed-object-provenance";
 
 export async function listOutcomes(organizationId: string) {
   return prisma.outcome.findMany({
@@ -118,10 +123,11 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
   };
 }
 
-export async function createOutcome(input: unknown) {
+export async function createOutcome(input: unknown, db: Prisma.TransactionClient | typeof prisma = prisma) {
   const parsed = outcomeCreateInputSchema.parse(input);
+  const provenance = resolveGovernedObjectProvenance(parsed);
 
-  return prisma.$transaction(async (tx) => {
+  const persist = async (tx: Prisma.TransactionClient) => {
     const outcome = await tx.outcome.create({
       data: {
         id: randomUUID(),
@@ -136,7 +142,9 @@ export async function createOutcome(input: unknown) {
         valueOwnerId: parsed.valueOwnerId ?? null,
         riskProfile: parsed.riskProfile,
         aiAccelerationLevel: parsed.aiAccelerationLevel,
-        status: parsed.status
+        status: parsed.status,
+        importedReadinessState: parsed.importedReadinessState ?? null,
+        ...toGovernedObjectProvenanceFields(provenance)
       }
     });
 
@@ -149,14 +157,22 @@ export async function createOutcome(input: unknown) {
         actorId: parsed.actorId ?? null,
         metadata: {
           key: outcome.key,
-          status: outcome.status
+          status: outcome.status,
+          importedReadinessState: outcome.importedReadinessState ?? null,
+          ...toGovernedObjectProvenanceMetadata(provenance)
         }
       },
       tx
     );
 
     return outcome;
-  });
+  };
+
+  if (db === prisma) {
+    return prisma.$transaction((tx) => persist(tx));
+  }
+
+  return persist(db);
 }
 
 export async function updateOutcome(input: unknown) {
@@ -175,6 +191,21 @@ export async function updateOutcome(input: unknown) {
     }
 
     const data: Prisma.OutcomeUncheckedUpdateInput = {};
+    const provenance = resolveGovernedObjectProvenance({
+      organizationId: parsed.organizationId,
+      originType: parsed.originType ?? existing.originType,
+      createdMode: parsed.createdMode ?? existing.createdMode,
+      lineageReference:
+        parsed.lineageReference === undefined
+          ? existing.lineageSourceType && existing.lineageSourceId
+            ? {
+                sourceType: existing.lineageSourceType,
+                sourceId: existing.lineageSourceId,
+                note: existing.lineageNote
+              }
+            : null
+          : parsed.lineageReference
+    });
 
     if (parsed.key !== undefined) {
       data.key = parsed.key;
@@ -220,6 +251,18 @@ export async function updateOutcome(input: unknown) {
       data.status = parsed.status;
     }
 
+    if (parsed.importedReadinessState !== undefined) {
+      data.importedReadinessState = parsed.importedReadinessState;
+    }
+
+    if (
+      parsed.originType !== undefined ||
+      parsed.createdMode !== undefined ||
+      parsed.lineageReference !== undefined
+    ) {
+      Object.assign(data, toGovernedObjectProvenanceFields(provenance));
+    }
+
     const outcome = await tx.outcome.update({
       where: { id: existing.id },
       data
@@ -234,7 +277,9 @@ export async function updateOutcome(input: unknown) {
         actorId: parsed.actorId ?? null,
         metadata: {
           key: outcome.key,
-          status: outcome.status
+          status: outcome.status,
+          importedReadinessState: outcome.importedReadinessState ?? null,
+          ...toGovernedObjectProvenanceMetadata(provenance)
         }
       },
       tx

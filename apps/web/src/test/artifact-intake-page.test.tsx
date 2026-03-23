@@ -26,8 +26,38 @@ vi.mock("@/lib/intake/workspace", () => ({
           email: "value.owner@aas-companion.local"
         },
         candidateCount: 3,
+        blockedCandidateCount: 0,
+        pendingReviewCount: 1,
         uncertainCandidateCount: 1,
         unmappedSectionCount: 1,
+        displayCandidates: [
+          {
+            id: "candidate-1",
+            type: "story",
+            title: "Story",
+            summary: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+            mappingState: "mapped",
+            relationshipState: "uncertain",
+            relationshipNote: "Story likely belongs to the nearest Epic candidate, but the relationship remains uncertain.",
+            inferredOutcomeCandidateId: "candidate-outcome",
+            inferredEpicCandidateId: "candidate-epic",
+            acceptanceCriteria: ["Candidate objects show source lineage"],
+            testNotes: ["Regression should verify candidate relationships."],
+            draftRecord: null,
+            humanDecisions: null,
+            complianceResult: null,
+            reviewStatus: "pending",
+            source: {
+              fileId: "file-1",
+              fileName: "story-pack.md",
+              sectionId: "section-1",
+              sectionTitle: "Story",
+              sectionMarker: "## Story",
+              sourceType: "story_file",
+              confidence: "high"
+            }
+          }
+        ],
         mappedArtifacts: {
           candidates: [
             {

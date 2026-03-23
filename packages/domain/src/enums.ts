@@ -8,6 +8,11 @@ export const storyStatuses = ["draft", "definition_blocked", "ready_for_handoff"
 export const tollgateEntityTypes = ["outcome", "story"] as const;
 export const tollgateTypes = ["tg1_baseline", "story_readiness"] as const;
 export const tollgateStatuses = ["blocked", "ready", "approved"] as const;
+export const governedObjectOriginTypes = ["seeded", "native", "imported"] as const;
+export const governedObjectCreatedModes = ["demo", "clean", "promotion"] as const;
+export const lineageSourceTypes = ["artifact_intake_session", "artifact_intake_file", "artifact_aas_candidate"] as const;
+export const readinessStates = ["blocked", "in_progress", "ready"] as const;
+export const readinessBlockReasonSeverities = ["high", "medium"] as const;
 export const artifactIntakeSessionStatuses = [
   "uploaded",
   "source_classification_pending",
@@ -34,6 +39,23 @@ export const artifactParsedSectionKinds = [
 ] as const;
 export const artifactAasCandidateTypes = ["outcome", "epic", "story"] as const;
 export const artifactAasMappingStates = ["mapped", "uncertain", "missing"] as const;
+export const artifactComplianceFindingCategories = ["missing", "uncertain", "human_only", "blocked"] as const;
+export const artifactCandidateReviewStatuses = [
+  "pending",
+  "confirmed",
+  "edited",
+  "rejected",
+  "follow_up_needed",
+  "promoted"
+] as const;
+export const importedGovernedReadinessStates = [
+  "imported",
+  "imported_incomplete",
+  "imported_human_review_needed",
+  "imported_framing_ready",
+  "imported_design_ready",
+  "blocked"
+] as const;
 export const activityEntityTypes = [
   "organization",
   "outcome",
@@ -41,19 +63,29 @@ export const activityEntityTypes = [
   "story",
   "tollgate",
   "artifact_intake_session",
-  "artifact_intake_file"
+  "artifact_intake_file",
+  "artifact_aas_candidate"
 ] as const;
 export const activityEventTypes = [
   "demo_seeded",
   "outcome_created",
   "outcome_updated",
+  "epic_created",
   "story_created",
   "story_updated",
   "tollgate_recorded",
   "execution_contract_generated",
   "artifact_intake_session_created",
   "artifact_file_uploaded",
-  "artifact_file_rejected"
+  "artifact_file_rejected",
+  "artifact_candidate_compliance_analyzed",
+  "artifact_candidate_confirmed",
+  "artifact_candidate_edited",
+  "artifact_candidate_rejected",
+  "artifact_candidate_follow_up_marked",
+  "artifact_candidate_promoted",
+  "imported_progression_blocked",
+  "imported_progression_allowed"
 ] as const;
 export const riskProfiles = ["low", "medium", "high"] as const;
 export const aiAccelerationLevels = ["level_2"] as const;
@@ -66,6 +98,11 @@ export const storyStatusSchema = z.enum(storyStatuses);
 export const tollgateEntityTypeSchema = z.enum(tollgateEntityTypes);
 export const tollgateTypeSchema = z.enum(tollgateTypes);
 export const tollgateStatusSchema = z.enum(tollgateStatuses);
+export const governedObjectOriginTypeSchema = z.enum(governedObjectOriginTypes);
+export const governedObjectCreatedModeSchema = z.enum(governedObjectCreatedModes);
+export const lineageSourceTypeSchema = z.enum(lineageSourceTypes);
+export const readinessStateSchema = z.enum(readinessStates);
+export const readinessBlockReasonSeveritySchema = z.enum(readinessBlockReasonSeverities);
 export const artifactIntakeSessionStatusSchema = z.enum(artifactIntakeSessionStatuses);
 export const artifactSourceTypeStatusSchema = z.enum(artifactSourceTypeStatuses);
 export const artifactSourceTypeSchema = z.enum(artifactSourceTypes);
@@ -73,6 +110,9 @@ export const extractionConfidenceSchema = z.enum(extractionConfidences);
 export const artifactParsedSectionKindSchema = z.enum(artifactParsedSectionKinds);
 export const artifactAasCandidateTypeSchema = z.enum(artifactAasCandidateTypes);
 export const artifactAasMappingStateSchema = z.enum(artifactAasMappingStates);
+export const artifactComplianceFindingCategorySchema = z.enum(artifactComplianceFindingCategories);
+export const artifactCandidateReviewStatusSchema = z.enum(artifactCandidateReviewStatuses);
+export const importedGovernedReadinessStateSchema = z.enum(importedGovernedReadinessStates);
 export const activityEntityTypeSchema = z.enum(activityEntityTypes);
 export const activityEventTypeSchema = z.enum(activityEventTypes);
 export const riskProfileSchema = z.enum(riskProfiles);
@@ -86,6 +126,11 @@ export type StoryStatus = z.infer<typeof storyStatusSchema>;
 export type TollgateEntityType = z.infer<typeof tollgateEntityTypeSchema>;
 export type TollgateType = z.infer<typeof tollgateTypeSchema>;
 export type TollgateStatus = z.infer<typeof tollgateStatusSchema>;
+export type GovernedObjectOriginType = z.infer<typeof governedObjectOriginTypeSchema>;
+export type GovernedObjectCreatedMode = z.infer<typeof governedObjectCreatedModeSchema>;
+export type LineageSourceType = z.infer<typeof lineageSourceTypeSchema>;
+export type ReadinessState = z.infer<typeof readinessStateSchema>;
+export type ReadinessBlockReasonSeverity = z.infer<typeof readinessBlockReasonSeveritySchema>;
 export type ArtifactIntakeSessionStatus = z.infer<typeof artifactIntakeSessionStatusSchema>;
 export type ArtifactSourceTypeStatus = z.infer<typeof artifactSourceTypeStatusSchema>;
 export type ArtifactSourceType = z.infer<typeof artifactSourceTypeSchema>;
@@ -93,6 +138,9 @@ export type ExtractionConfidence = z.infer<typeof extractionConfidenceSchema>;
 export type ArtifactParsedSectionKind = z.infer<typeof artifactParsedSectionKindSchema>;
 export type ArtifactAasCandidateType = z.infer<typeof artifactAasCandidateTypeSchema>;
 export type ArtifactAasMappingState = z.infer<typeof artifactAasMappingStateSchema>;
+export type ArtifactComplianceFindingCategory = z.infer<typeof artifactComplianceFindingCategorySchema>;
+export type ArtifactCandidateReviewStatus = z.infer<typeof artifactCandidateReviewStatusSchema>;
+export type ImportedGovernedReadinessState = z.infer<typeof importedGovernedReadinessStateSchema>;
 export type ActivityEntityType = z.infer<typeof activityEntityTypeSchema>;
 export type ActivityEventType = z.infer<typeof activityEventTypeSchema>;
 export type RiskProfile = z.infer<typeof riskProfileSchema>;

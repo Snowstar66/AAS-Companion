@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Inbox, Upload } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
@@ -121,6 +122,9 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <Button className="gap-2" type="submit">
                 <Upload className="h-4 w-4" />
                 Create intake session
+              </Button>
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href="/review">Open Human Review queue</Link>
               </Button>
             </form>
           </CardContent>
@@ -256,7 +260,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                           </p>
                         </div>
                         <div className="grid gap-3">
-                          {artifactSession.mappedArtifacts.candidates.map((candidate) => (
+                          {artifactSession.displayCandidates.map((candidate) => (
                             <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={candidate.id}>
                               <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
@@ -276,6 +280,11 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                                   >
                                     relationship {candidate.relationshipState}
                                   </span>
+                                  {candidate.complianceResult ? (
+                                    <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-800">
+                                      {candidate.complianceResult.summary.missing} missing / {candidate.complianceResult.summary.uncertain} uncertain / {candidate.complianceResult.summary.humanOnly} human-only / {candidate.complianceResult.summary.blocked} blocked
+                                    </span>
+                                  ) : null}
                                 </div>
                               </div>
                               <p className="mt-3 text-sm leading-6 text-muted-foreground">{candidate.summary}</p>
@@ -340,9 +349,12 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                             Human review queue
                           </p>
                           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                            {artifactSession.uncertainCandidateCount} candidate(s) need a closer look, and{" "}
+                            {artifactSession.pendingReviewCount} candidate(s) are still pending review, {artifactSession.uncertainCandidateCount} candidate(s) carry uncertainty, and{" "}
                             {artifactSession.unmappedSectionCount} section(s) stayed visible instead of being silently dropped.
                           </p>
+                          <Button asChild className="mt-4 gap-2" variant="secondary">
+                            <Link href="/review">Inspect candidate queue</Link>
+                          </Button>
                         </div>
 
                         <Card className="border-border/70 shadow-none">

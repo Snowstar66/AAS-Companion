@@ -1,9 +1,14 @@
 import {
   appendArtifactFileRejections,
   createArtifactIntakeSession,
-  listArtifactIntakeSessions
+  getArtifactCandidateById,
+  listArtifactCandidatesForOrganization,
+  listArtifactIntakeSessions,
+  promoteArtifactCandidate,
+  reviewArtifactCandidate
 } from "@aas-companion/db";
 import {
+  artifactCandidateReviewActionInputSchema,
   artifactIntakeRejectedFileSchema,
   isSupportedArtifactFile,
   type ArtifactIntakeRejectedFile
@@ -52,6 +57,14 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
 
 export async function listArtifactIntakeSessionsService(organizationId: string) {
   return success(await listArtifactIntakeSessions(organizationId));
+}
+
+export async function listArtifactCandidateQueueService(organizationId: string) {
+  return success(await listArtifactCandidatesForOrganization(organizationId));
+}
+
+export async function getArtifactCandidateService(organizationId: string, candidateId: string) {
+  return success(await getArtifactCandidateById(organizationId, candidateId));
 }
 
 export async function createArtifactIntakeSessionService(input: {
@@ -107,4 +120,38 @@ export async function createArtifactIntakeSessionService(input: {
     rejectedCount: rejected.length,
     rejectedFiles: rejected
   });
+}
+
+export async function reviewArtifactCandidateService(input: unknown) {
+  const parsed = artifactCandidateReviewActionInputSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return failure({
+      code: "invalid_artifact_candidate_review",
+      message: parsed.error.issues[0]?.message ?? "Artifact candidate review input is invalid."
+    });
+  }
+
+  return success(await reviewArtifactCandidate(parsed.data));
+}
+
+export async function promoteArtifactCandidateService(input: {
+  organizationId: string;
+  candidateId: string;
+  actorId?: string | null;
+}) {
+  try {
+    return success(
+      await promoteArtifactCandidate({
+        organizationId: input.organizationId,
+        candidateId: input.candidateId,
+        actorId: input.actorId ?? null
+      })
+    );
+  } catch (error) {
+    return failure({
+      code: "artifact_candidate_promotion_blocked",
+      message: error instanceof Error ? error.message : "Artifact candidate promotion is blocked."
+    });
+  }
 }

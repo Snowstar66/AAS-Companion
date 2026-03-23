@@ -1,5 +1,18 @@
 import { z } from "zod";
-import { aiAccelerationLevelSchema, outcomeStatusSchema, riskProfileSchema } from "./enums";
+import {
+  aiAccelerationLevelSchema,
+  governedObjectCreatedModeSchema,
+  governedObjectOriginTypeSchema,
+  importedGovernedReadinessStateSchema,
+  outcomeStatusSchema,
+  riskProfileSchema
+} from "./enums";
+import {
+  createReadinessAssessment,
+  governedLineageReferenceSchema,
+  governedObjectProvenanceInputSchema,
+  type ReadinessBlockReason
+} from "./governed-object";
 
 export const outcomeRecordSchema = z.object({
   id: z.string().min(1),
@@ -15,44 +28,102 @@ export const outcomeRecordSchema = z.object({
   riskProfile: riskProfileSchema,
   aiAccelerationLevel: aiAccelerationLevelSchema,
   status: outcomeStatusSchema,
+  originType: governedObjectOriginTypeSchema,
+  createdMode: governedObjectCreatedModeSchema,
+  lineageReference: governedLineageReferenceSchema.nullish(),
+  importedReadinessState: importedGovernedReadinessStateSchema.nullish(),
   createdAt: z.date(),
   updatedAt: z.date()
 });
 
-export const outcomeCreateInputSchema = outcomeRecordSchema
-  .omit({ id: true, createdAt: true, updatedAt: true })
+const outcomeCreateInputBaseSchema = outcomeRecordSchema
+  .omit({
+    id: true,
+    originType: true,
+    createdMode: true,
+    lineageReference: true,
+    importedReadinessState: true,
+    createdAt: true,
+    updatedAt: true
+  })
   .extend({
+    originType: governedObjectOriginTypeSchema.optional(),
+    createdMode: governedObjectCreatedModeSchema.optional(),
+    lineageReference: governedLineageReferenceSchema.nullish(),
+    importedReadinessState: importedGovernedReadinessStateSchema.nullish(),
     actorId: z.string().nullish()
   });
 
-export const outcomeUpdateInputSchema = outcomeCreateInputSchema
+export const outcomeCreateInputSchema = outcomeCreateInputBaseSchema.superRefine((value, context) => {
+  const parsed = governedObjectProvenanceInputSchema.safeParse({
+    originType: value.originType,
+    createdMode: value.createdMode,
+    lineageReference: value.lineageReference
+  });
+
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      context.addIssue(issue);
+    }
+  }
+});
+
+export const outcomeUpdateInputSchema = outcomeCreateInputBaseSchema
   .partial()
   .extend({
     organizationId: z.string().min(1),
     id: z.string().min(1),
     actorId: z.string().nullish()
+  })
+  .superRefine((value, context) => {
+    const parsed = governedObjectProvenanceInputSchema.safeParse({
+      originType: value.originType,
+      createdMode: value.createdMode,
+      lineageReference: value.lineageReference
+    });
+
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        context.addIssue(issue);
+      }
+    }
   });
 
 export type OutcomeRecord = z.infer<typeof outcomeRecordSchema>;
 export type OutcomeCreateInput = z.infer<typeof outcomeCreateInputSchema>;
 export type OutcomeUpdateInput = z.infer<typeof outcomeUpdateInputSchema>;
 
-type OutcomeBaselineFields = Pick<OutcomeRecord, "baselineDefinition" | "baselineSource">;
+type OutcomeBaselineFields = Pick<OutcomeRecord, "baselineDefinition" | "baselineSource" | "status">;
 
-export function getOutcomeBaselineBlockers(outcome: OutcomeBaselineFields) {
-  const blockers: string[] = [];
+export function getOutcomeBaselineReadiness(outcome: OutcomeBaselineFields) {
+  const reasons: ReadinessBlockReason[] = [];
 
   if (!outcome.baselineDefinition?.trim()) {
-    blockers.push("Baseline definition is missing.");
+    reasons.push({
+      code: "baseline_definition_missing",
+      message: "Baseline definition is missing.",
+      severity: "high"
+    });
   }
 
   if (!outcome.baselineSource?.trim()) {
-    blockers.push("Baseline source is missing.");
+    reasons.push({
+      code: "baseline_source_missing",
+      message: "Baseline source is missing.",
+      severity: "high"
+    });
   }
 
-  return blockers;
+  return createReadinessAssessment({
+    reasons,
+    isReadyForProgression: outcome.status === "ready_for_tg1"
+  });
+}
+
+export function getOutcomeBaselineBlockers(outcome: OutcomeBaselineFields) {
+  return getOutcomeBaselineReadiness(outcome).reasons.map((reason) => reason.message);
 }
 
 export function isOutcomeReadyForTollgateOne(outcome: OutcomeBaselineFields) {
-  return getOutcomeBaselineBlockers(outcome).length === 0;
+  return getOutcomeBaselineReadiness(outcome).state === "ready";
 }

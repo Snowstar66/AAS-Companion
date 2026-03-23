@@ -42,6 +42,7 @@ export default async function StoriesPage() {
             {storiesResult.data.map((story) => {
               const blockers = getStoryReadinessBlockers(story);
               const ready = blockers.length === 0;
+              const imported = story.originType === "imported";
 
               return (
                 <Card className="border-border/70 shadow-sm" key={story.id}>
@@ -61,6 +62,16 @@ export default async function StoriesPage() {
                           {ready ? <CircleCheckBig className="h-3.5 w-3.5" /> : <CircleAlert className="h-3.5 w-3.5" />}
                           {ready ? "Ready" : "Blocked"}
                         </span>
+                        {imported ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-900">
+                            Imported
+                          </span>
+                        ) : null}
+                        {story.importedReadinessState ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-900">
+                            {story.importedReadinessState.replaceAll("_", " ")}
+                          </span>
+                        ) : null}
                       </div>
                       <div>
                         <h2 className="text-2xl font-semibold tracking-tight">{story.title}</h2>

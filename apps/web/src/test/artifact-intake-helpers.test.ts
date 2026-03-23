@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  analyzeArtifactCandidateCompliance,
   classifyArtifactSource,
   getArtifactFileExtension,
+  inferImportedReadinessState,
   isSupportedArtifactFile,
   mapParsedArtifactsToAasCandidates,
   parseMarkdownArtifact
@@ -105,5 +107,102 @@ describe("artifact intake helpers", () => {
     expect(storyCandidate?.relationshipState).toBe("mapped");
     expect(storyCandidate?.source.fileName).toBe("delivery-plan.md");
     expect(mapping.unmappedSections.some((section) => section.kind === "architecture_notes")).toBe(true);
+  });
+
+  it("keeps imported stories in human review until human-only decisions are resolved", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-story-1",
+        type: "story",
+        title: "Imported Story",
+        summary: "As a builder I want imported work to stay reviewable.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-1",
+          fileName: "story-pack.md",
+          sectionId: "section-story",
+          sectionTitle: "Story",
+          sectionMarker: "## Story",
+          sourceType: "story_file",
+          confidence: "high"
+        },
+        inferredOutcomeCandidateId: "candidate-outcome-1",
+        inferredEpicCandidateId: "candidate-epic-1",
+        relationshipState: "mapped",
+        relationshipNote: null,
+        acceptanceCriteria: ["Candidate is traceable"],
+        testNotes: ["Add regression coverage for promotion"]
+      },
+      reviewStatus: "edited",
+      draftRecord: {
+        key: "IMP-STORY-1",
+        title: "Imported Story",
+        storyType: "outcome_delivery",
+        valueIntent: "Keep imported work reviewable",
+        acceptanceCriteria: ["Candidate is traceable"],
+        aiUsageScope: ["Summarization only"],
+        testDefinition: "Regression covers promotion gating",
+        definitionOfDone: ["Review complete"],
+        outcomeCandidateId: "candidate-outcome-1",
+        epicCandidateId: "candidate-epic-1"
+      },
+      humanDecisions: {
+        aiAccelerationLevel: null,
+        riskAcceptanceStatus: null
+      }
+    });
+
+    expect(compliance.summary.humanOnly).toBe(2);
+    expect(compliance.humanReviewRequired).toBe(true);
+    expect(inferImportedReadinessState({ type: "story", complianceResult: compliance })).toBe("imported_human_review_needed");
+  });
+
+  it("marks imported stories as design-ready once required fields and decisions are confirmed", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-story-2",
+        type: "story",
+        title: "Ready Imported Story",
+        summary: "As a builder I want imported work to progress into handoff safely.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-2",
+          fileName: "story-pack.md",
+          sectionId: "section-story",
+          sectionTitle: "Story",
+          sectionMarker: "## Story",
+          sourceType: "story_file",
+          confidence: "high"
+        },
+        inferredOutcomeCandidateId: "candidate-outcome-2",
+        inferredEpicCandidateId: "candidate-epic-2",
+        relationshipState: "mapped",
+        relationshipNote: null,
+        acceptanceCriteria: ["Story stays linked to lineage"],
+        testNotes: ["Execution contract remains blocked until ready"]
+      },
+      reviewStatus: "confirmed",
+      draftRecord: {
+        key: "IMP-STORY-2",
+        title: "Ready Imported Story",
+        storyType: "outcome_delivery",
+        valueIntent: "Progress into build handoff safely",
+        acceptanceCriteria: ["Story stays linked to lineage"],
+        aiUsageScope: ["Drafting"],
+        testDefinition: "Contract preview remains gated",
+        definitionOfDone: ["Human review complete"],
+        outcomeCandidateId: "candidate-outcome-2",
+        epicCandidateId: "candidate-epic-2"
+      },
+      humanDecisions: {
+        aiAccelerationLevel: "level_2",
+        riskAcceptanceStatus: "accepted"
+      }
+    });
+
+    expect(compliance.summary.missing).toBe(0);
+    expect(compliance.summary.humanOnly).toBe(0);
+    expect(compliance.promotionBlocked).toBe(false);
+    expect(inferImportedReadinessState({ type: "story", complianceResult: compliance })).toBe("imported_design_ready");
   });
 });

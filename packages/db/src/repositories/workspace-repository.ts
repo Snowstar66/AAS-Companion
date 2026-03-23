@@ -7,22 +7,38 @@ export async function getWorkspaceSnapshot(organizationId: string) {
     },
     include: {
       outcomes: {
+        include: {
+          epics: {
+            include: {
+              stories: {
+                orderBy: {
+                  createdAt: "asc"
+                }
+              }
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
+          stories: {
+            orderBy: {
+              createdAt: "asc"
+            }
+          }
+        },
         orderBy: {
           createdAt: "desc"
-        },
-        take: 5
+        }
       },
       epics: {
         orderBy: {
           createdAt: "desc"
-        },
-        take: 5
+        }
       },
       stories: {
         orderBy: {
           createdAt: "desc"
-        },
-        take: 5
+        }
       },
       tollgates: {
         orderBy: {
