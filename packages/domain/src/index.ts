@@ -1,4 +1,5 @@
 export * from "./activity";
+export * from "./artifact-intake";
 export * from "./auth";
 export * from "./enums";
 export * from "./handoff";
@@ -80,6 +81,11 @@ export const primaryNavigation: NavigationItem[] = [
     label: "Home",
     href: "/",
     description: "System overview and milestone status."
+  },
+  {
+    label: "Artifact Intake",
+    href: "/intake",
+    description: "Upload source artifacts before interpretation and mapping."
   },
   {
     label: "Framing",

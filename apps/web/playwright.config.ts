@@ -10,7 +10,7 @@ export default defineConfig({
     video: "retain-on-failure"
   },
   webServer: {
-    command: "pnpm --filter @aas-companion/web exec next dev -p 3001",
+    command: "pnpm --filter @aas-companion/web dev -- --port 3001",
     url: "http://127.0.0.1:3001",
     reuseExistingServer: !process.env.CI
   },

@@ -12,7 +12,7 @@ const {
   Public,
   getRuntime,
   skip
-} = require('@prisma/client/runtime/index-browser.js')
+} = require('./runtime/index-browser.js')
 
 
 const Prisma = {}
@@ -222,6 +222,37 @@ exports.Prisma.ActivityEventScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ArtifactIntakeSessionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  label: 'label',
+  status: 'status',
+  mappedArtifacts: 'mappedArtifacts',
+  mappingCompletedAt: 'mappingCompletedAt',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ArtifactIntakeFileScalarFieldEnum = {
+  id: 'id',
+  intakeSessionId: 'intakeSessionId',
+  organizationId: 'organizationId',
+  fileName: 'fileName',
+  mimeType: 'mimeType',
+  extension: 'extension',
+  sizeBytes: 'sizeBytes',
+  content: 'content',
+  sourceTypeStatus: 'sourceTypeStatus',
+  sourceType: 'sourceType',
+  sourceTypeConfidence: 'sourceTypeConfidence',
+  classifiedAt: 'classifiedAt',
+  parsedAt: 'parsedAt',
+  parsedArtifacts: 'parsedArtifacts',
+  uploadedBy: 'uploadedBy',
+  uploadedAt: 'uploadedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -313,7 +344,9 @@ exports.ActivityEntityType = exports.$Enums.ActivityEntityType = {
   outcome: 'outcome',
   epic: 'epic',
   story: 'story',
-  tollgate: 'tollgate'
+  tollgate: 'tollgate',
+  artifact_intake_session: 'artifact_intake_session',
+  artifact_intake_file: 'artifact_intake_file'
 };
 
 exports.ActivityEventType = exports.$Enums.ActivityEventType = {
@@ -323,7 +356,41 @@ exports.ActivityEventType = exports.$Enums.ActivityEventType = {
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
-  execution_contract_generated: 'execution_contract_generated'
+  execution_contract_generated: 'execution_contract_generated',
+  artifact_intake_session_created: 'artifact_intake_session_created',
+  artifact_file_uploaded: 'artifact_file_uploaded',
+  artifact_file_rejected: 'artifact_file_rejected'
+};
+
+exports.ArtifactIntakeSessionStatus = exports.$Enums.ArtifactIntakeSessionStatus = {
+  uploaded: 'uploaded',
+  source_classification_pending: 'source_classification_pending',
+  source_classified: 'source_classified',
+  parsing_pending: 'parsing_pending',
+  parsed: 'parsed',
+  mapping_pending: 'mapping_pending',
+  human_review_required: 'human_review_required',
+  promoted: 'promoted',
+  blocked: 'blocked'
+};
+
+exports.ArtifactSourceTypeStatus = exports.$Enums.ArtifactSourceTypeStatus = {
+  pending: 'pending',
+  classified: 'classified'
+};
+
+exports.ArtifactSourceType = exports.$Enums.ArtifactSourceType = {
+  bmad_prd: 'bmad_prd',
+  epic_file: 'epic_file',
+  story_file: 'story_file',
+  mixed_markdown_bundle: 'mixed_markdown_bundle',
+  unknown_artifact: 'unknown_artifact'
+};
+
+exports.ExtractionConfidence = exports.$Enums.ExtractionConfidence = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low'
 };
 
 exports.Prisma.ModelName = {
@@ -334,7 +401,9 @@ exports.Prisma.ModelName = {
   Epic: 'Epic',
   Story: 'Story',
   Tollgate: 'Tollgate',
-  ActivityEvent: 'ActivityEvent'
+  ActivityEvent: 'ActivityEvent',
+  ArtifactIntakeSession: 'ArtifactIntakeSession',
+  ArtifactIntakeFile: 'ArtifactIntakeFile'
 };
 
 /**

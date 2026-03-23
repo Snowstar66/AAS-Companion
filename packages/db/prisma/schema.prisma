@@ -65,6 +65,8 @@ enum ActivityEntityType {
   epic
   story
   tollgate
+  artifact_intake_session
+  artifact_intake_file
 }
 
 enum ActivityEventType {
@@ -75,6 +77,40 @@ enum ActivityEventType {
   story_updated
   tollgate_recorded
   execution_contract_generated
+  artifact_intake_session_created
+  artifact_file_uploaded
+  artifact_file_rejected
+}
+
+enum ArtifactIntakeSessionStatus {
+  uploaded
+  source_classification_pending
+  source_classified
+  parsing_pending
+  parsed
+  mapping_pending
+  human_review_required
+  promoted
+  blocked
+}
+
+enum ArtifactSourceTypeStatus {
+  pending
+  classified
+}
+
+enum ArtifactSourceType {
+  bmad_prd
+  epic_file
+  story_file
+  mixed_markdown_bundle
+  unknown_artifact
+}
+
+enum ExtractionConfidence {
+  high
+  medium
+  low
 }
 
 enum RiskProfile {
@@ -88,29 +124,33 @@ enum AiAccelerationLevel {
 }
 
 model Organization {
-  id             String          @id
-  slug           String          @unique
-  name           String
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  memberships    Membership[]
-  outcomes       Outcome[]
-  epics          Epic[]
-  stories        Story[]
-  tollgates      Tollgate[]
-  activityEvents ActivityEvent[]
+  id                    String                 @id
+  slug                  String                 @unique
+  name                  String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  memberships           Membership[]
+  outcomes              Outcome[]
+  epics                 Epic[]
+  stories               Story[]
+  tollgates             Tollgate[]
+  activityEvents        ActivityEvent[]
+  artifactIntakeSessions ArtifactIntakeSession[]
+  artifactIntakeFiles   ArtifactIntakeFile[]
 }
 
 model AppUser {
-  id                 String          @id
-  email              String          @unique
-  fullName           String?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  memberships        Membership[]
-  ownedOutcomes      Outcome[]       @relation("OutcomeValueOwner")
-  tollgateDecisions  Tollgate[]      @relation("TollgateDecisionActor")
-  activityEvents     ActivityEvent[] @relation("ActivityActor")
+  id                   String                @id
+  email                String                @unique
+  fullName             String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  memberships          Membership[]
+  ownedOutcomes        Outcome[]             @relation("OutcomeValueOwner")
+  tollgateDecisions    Tollgate[]            @relation("TollgateDecisionActor")
+  activityEvents       ActivityEvent[]       @relation("ActivityActor")
+  createdIntakeSessions ArtifactIntakeSession[] @relation("ArtifactIntakeSessionCreator")
+  uploadedIntakeFiles  ArtifactIntakeFile[]  @relation("ArtifactIntakeFileUploader")
 }
 
 model Membership {
@@ -226,4 +266,48 @@ model ActivityEvent {
 
   @@index([organizationId, entityType, entityId])
   @@index([organizationId, createdAt])
+}
+
+model ArtifactIntakeSession {
+  id             String                    @id
+  organizationId String
+  label          String
+  status         ArtifactIntakeSessionStatus @default(uploaded)
+  mappedArtifacts Json?
+  mappingCompletedAt DateTime?
+  createdBy      String?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creator        AppUser?                  @relation("ArtifactIntakeSessionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  files          ArtifactIntakeFile[]
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, status])
+}
+
+model ArtifactIntakeFile {
+  id               String                   @id
+  intakeSessionId  String
+  organizationId   String
+  fileName         String
+  mimeType         String?
+  extension        String
+  sizeBytes        Int
+  content          String
+  sourceTypeStatus ArtifactSourceTypeStatus @default(pending)
+  sourceType       ArtifactSourceType?
+  sourceTypeConfidence ExtractionConfidence?
+  classifiedAt     DateTime?
+  parsedAt         DateTime?
+  parsedArtifacts  Json?
+  uploadedBy       String?
+  uploadedAt       DateTime                 @default(now())
+  intakeSession    ArtifactIntakeSession    @relation(fields: [intakeSessionId], references: [id], onDelete: Cascade)
+  organization     Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploader         AppUser?                 @relation("ArtifactIntakeFileUploader", fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, uploadedAt])
+  @@index([organizationId, sourceTypeStatus])
+  @@index([intakeSessionId])
 }

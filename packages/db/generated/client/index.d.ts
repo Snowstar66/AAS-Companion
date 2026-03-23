@@ -3,7 +3,7 @@
  * Client
 **/
 
-import * as runtime from '@prisma/client/runtime/library.js';
+import * as runtime from './runtime/library.js';
 import $Types = runtime.Types // general types
 import $Public = runtime.Types.Public
 import $Utils = runtime.Types.Utils
@@ -53,6 +53,16 @@ export type Tollgate = $Result.DefaultSelection<Prisma.$TollgatePayload>
  * 
  */
 export type ActivityEvent = $Result.DefaultSelection<Prisma.$ActivityEventPayload>
+/**
+ * Model ArtifactIntakeSession
+ * 
+ */
+export type ArtifactIntakeSession = $Result.DefaultSelection<Prisma.$ArtifactIntakeSessionPayload>
+/**
+ * Model ArtifactIntakeFile
+ * 
+ */
+export type ArtifactIntakeFile = $Result.DefaultSelection<Prisma.$ArtifactIntakeFilePayload>
 
 /**
  * Enums
@@ -138,7 +148,9 @@ export const ActivityEntityType: {
   outcome: 'outcome',
   epic: 'epic',
   story: 'story',
-  tollgate: 'tollgate'
+  tollgate: 'tollgate',
+  artifact_intake_session: 'artifact_intake_session',
+  artifact_intake_file: 'artifact_intake_file'
 };
 
 export type ActivityEntityType = (typeof ActivityEntityType)[keyof typeof ActivityEntityType]
@@ -151,10 +163,56 @@ export const ActivityEventType: {
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
-  execution_contract_generated: 'execution_contract_generated'
+  execution_contract_generated: 'execution_contract_generated',
+  artifact_intake_session_created: 'artifact_intake_session_created',
+  artifact_file_uploaded: 'artifact_file_uploaded',
+  artifact_file_rejected: 'artifact_file_rejected'
 };
 
 export type ActivityEventType = (typeof ActivityEventType)[keyof typeof ActivityEventType]
+
+
+export const ArtifactIntakeSessionStatus: {
+  uploaded: 'uploaded',
+  source_classification_pending: 'source_classification_pending',
+  source_classified: 'source_classified',
+  parsing_pending: 'parsing_pending',
+  parsed: 'parsed',
+  mapping_pending: 'mapping_pending',
+  human_review_required: 'human_review_required',
+  promoted: 'promoted',
+  blocked: 'blocked'
+};
+
+export type ArtifactIntakeSessionStatus = (typeof ArtifactIntakeSessionStatus)[keyof typeof ArtifactIntakeSessionStatus]
+
+
+export const ArtifactSourceTypeStatus: {
+  pending: 'pending',
+  classified: 'classified'
+};
+
+export type ArtifactSourceTypeStatus = (typeof ArtifactSourceTypeStatus)[keyof typeof ArtifactSourceTypeStatus]
+
+
+export const ArtifactSourceType: {
+  bmad_prd: 'bmad_prd',
+  epic_file: 'epic_file',
+  story_file: 'story_file',
+  mixed_markdown_bundle: 'mixed_markdown_bundle',
+  unknown_artifact: 'unknown_artifact'
+};
+
+export type ArtifactSourceType = (typeof ArtifactSourceType)[keyof typeof ArtifactSourceType]
+
+
+export const ExtractionConfidence: {
+  high: 'high',
+  medium: 'medium',
+  low: 'low'
+};
+
+export type ExtractionConfidence = (typeof ExtractionConfidence)[keyof typeof ExtractionConfidence]
 
 
 export const RiskProfile: {
@@ -213,6 +271,22 @@ export const ActivityEntityType: typeof $Enums.ActivityEntityType
 export type ActivityEventType = $Enums.ActivityEventType
 
 export const ActivityEventType: typeof $Enums.ActivityEventType
+
+export type ArtifactIntakeSessionStatus = $Enums.ArtifactIntakeSessionStatus
+
+export const ArtifactIntakeSessionStatus: typeof $Enums.ArtifactIntakeSessionStatus
+
+export type ArtifactSourceTypeStatus = $Enums.ArtifactSourceTypeStatus
+
+export const ArtifactSourceTypeStatus: typeof $Enums.ArtifactSourceTypeStatus
+
+export type ArtifactSourceType = $Enums.ArtifactSourceType
+
+export const ArtifactSourceType: typeof $Enums.ArtifactSourceType
+
+export type ExtractionConfidence = $Enums.ExtractionConfidence
+
+export const ExtractionConfidence: typeof $Enums.ExtractionConfidence
 
 export type RiskProfile = $Enums.RiskProfile
 
@@ -419,6 +493,26 @@ export class PrismaClient<
     * ```
     */
   get activityEvent(): Prisma.ActivityEventDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.artifactIntakeSession`: Exposes CRUD operations for the **ArtifactIntakeSession** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ArtifactIntakeSessions
+    * const artifactIntakeSessions = await prisma.artifactIntakeSession.findMany()
+    * ```
+    */
+  get artifactIntakeSession(): Prisma.ArtifactIntakeSessionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.artifactIntakeFile`: Exposes CRUD operations for the **ArtifactIntakeFile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ArtifactIntakeFiles
+    * const artifactIntakeFiles = await prisma.artifactIntakeFile.findMany()
+    * ```
+    */
+  get artifactIntakeFile(): Prisma.ArtifactIntakeFileDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -867,7 +961,9 @@ export namespace Prisma {
     Epic: 'Epic',
     Story: 'Story',
     Tollgate: 'Tollgate',
-    ActivityEvent: 'ActivityEvent'
+    ActivityEvent: 'ActivityEvent',
+    ArtifactIntakeSession: 'ArtifactIntakeSession',
+    ArtifactIntakeFile: 'ArtifactIntakeFile'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -886,7 +982,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "organization" | "appUser" | "membership" | "outcome" | "epic" | "story" | "tollgate" | "activityEvent"
+      modelProps: "organization" | "appUser" | "membership" | "outcome" | "epic" | "story" | "tollgate" | "activityEvent" | "artifactIntakeSession" | "artifactIntakeFile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1482,6 +1578,154 @@ export namespace Prisma {
           }
         }
       }
+      ArtifactIntakeSession: {
+        payload: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>
+        fields: Prisma.ArtifactIntakeSessionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ArtifactIntakeSessionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ArtifactIntakeSessionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>
+          }
+          findFirst: {
+            args: Prisma.ArtifactIntakeSessionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ArtifactIntakeSessionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>
+          }
+          findMany: {
+            args: Prisma.ArtifactIntakeSessionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>[]
+          }
+          create: {
+            args: Prisma.ArtifactIntakeSessionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>
+          }
+          createMany: {
+            args: Prisma.ArtifactIntakeSessionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ArtifactIntakeSessionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>[]
+          }
+          delete: {
+            args: Prisma.ArtifactIntakeSessionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>
+          }
+          update: {
+            args: Prisma.ArtifactIntakeSessionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>
+          }
+          deleteMany: {
+            args: Prisma.ArtifactIntakeSessionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ArtifactIntakeSessionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ArtifactIntakeSessionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>[]
+          }
+          upsert: {
+            args: Prisma.ArtifactIntakeSessionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeSessionPayload>
+          }
+          aggregate: {
+            args: Prisma.ArtifactIntakeSessionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateArtifactIntakeSession>
+          }
+          groupBy: {
+            args: Prisma.ArtifactIntakeSessionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ArtifactIntakeSessionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ArtifactIntakeSessionCountArgs<ExtArgs>
+            result: $Utils.Optional<ArtifactIntakeSessionCountAggregateOutputType> | number
+          }
+        }
+      }
+      ArtifactIntakeFile: {
+        payload: Prisma.$ArtifactIntakeFilePayload<ExtArgs>
+        fields: Prisma.ArtifactIntakeFileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ArtifactIntakeFileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ArtifactIntakeFileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>
+          }
+          findFirst: {
+            args: Prisma.ArtifactIntakeFileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ArtifactIntakeFileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>
+          }
+          findMany: {
+            args: Prisma.ArtifactIntakeFileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>[]
+          }
+          create: {
+            args: Prisma.ArtifactIntakeFileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>
+          }
+          createMany: {
+            args: Prisma.ArtifactIntakeFileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ArtifactIntakeFileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>[]
+          }
+          delete: {
+            args: Prisma.ArtifactIntakeFileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>
+          }
+          update: {
+            args: Prisma.ArtifactIntakeFileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>
+          }
+          deleteMany: {
+            args: Prisma.ArtifactIntakeFileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ArtifactIntakeFileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ArtifactIntakeFileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>[]
+          }
+          upsert: {
+            args: Prisma.ArtifactIntakeFileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ArtifactIntakeFilePayload>
+          }
+          aggregate: {
+            args: Prisma.ArtifactIntakeFileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateArtifactIntakeFile>
+          }
+          groupBy: {
+            args: Prisma.ArtifactIntakeFileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ArtifactIntakeFileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ArtifactIntakeFileCountArgs<ExtArgs>
+            result: $Utils.Optional<ArtifactIntakeFileCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1586,6 +1830,8 @@ export namespace Prisma {
     story?: StoryOmit
     tollgate?: TollgateOmit
     activityEvent?: ActivityEventOmit
+    artifactIntakeSession?: ArtifactIntakeSessionOmit
+    artifactIntakeFile?: ArtifactIntakeFileOmit
   }
 
   /* Types for Logging */
@@ -1672,6 +1918,8 @@ export namespace Prisma {
     stories: number
     tollgates: number
     activityEvents: number
+    artifactIntakeSessions: number
+    artifactIntakeFiles: number
   }
 
   export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1681,6 +1929,8 @@ export namespace Prisma {
     stories?: boolean | OrganizationCountOutputTypeCountStoriesArgs
     tollgates?: boolean | OrganizationCountOutputTypeCountTollgatesArgs
     activityEvents?: boolean | OrganizationCountOutputTypeCountActivityEventsArgs
+    artifactIntakeSessions?: boolean | OrganizationCountOutputTypeCountArtifactIntakeSessionsArgs
+    artifactIntakeFiles?: boolean | OrganizationCountOutputTypeCountArtifactIntakeFilesArgs
   }
 
   // Custom InputTypes
@@ -1736,6 +1986,20 @@ export namespace Prisma {
     where?: ActivityEventWhereInput
   }
 
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountArtifactIntakeSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactIntakeSessionWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountArtifactIntakeFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactIntakeFileWhereInput
+  }
+
 
   /**
    * Count Type AppUserCountOutputType
@@ -1746,6 +2010,8 @@ export namespace Prisma {
     ownedOutcomes: number
     tollgateDecisions: number
     activityEvents: number
+    createdIntakeSessions: number
+    uploadedIntakeFiles: number
   }
 
   export type AppUserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1753,6 +2019,8 @@ export namespace Prisma {
     ownedOutcomes?: boolean | AppUserCountOutputTypeCountOwnedOutcomesArgs
     tollgateDecisions?: boolean | AppUserCountOutputTypeCountTollgateDecisionsArgs
     activityEvents?: boolean | AppUserCountOutputTypeCountActivityEventsArgs
+    createdIntakeSessions?: boolean | AppUserCountOutputTypeCountCreatedIntakeSessionsArgs
+    uploadedIntakeFiles?: boolean | AppUserCountOutputTypeCountUploadedIntakeFilesArgs
   }
 
   // Custom InputTypes
@@ -1792,6 +2060,20 @@ export namespace Prisma {
    */
   export type AppUserCountOutputTypeCountActivityEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ActivityEventWhereInput
+  }
+
+  /**
+   * AppUserCountOutputType without action
+   */
+  export type AppUserCountOutputTypeCountCreatedIntakeSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactIntakeSessionWhereInput
+  }
+
+  /**
+   * AppUserCountOutputType without action
+   */
+  export type AppUserCountOutputTypeCountUploadedIntakeFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactIntakeFileWhereInput
   }
 
 
@@ -1863,6 +2145,37 @@ export namespace Prisma {
    */
   export type EpicCountOutputTypeCountStoriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: StoryWhereInput
+  }
+
+
+  /**
+   * Count Type ArtifactIntakeSessionCountOutputType
+   */
+
+  export type ArtifactIntakeSessionCountOutputType = {
+    files: number
+  }
+
+  export type ArtifactIntakeSessionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    files?: boolean | ArtifactIntakeSessionCountOutputTypeCountFilesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ArtifactIntakeSessionCountOutputType without action
+   */
+  export type ArtifactIntakeSessionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSessionCountOutputType
+     */
+    select?: ArtifactIntakeSessionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactIntakeSessionCountOutputType without action
+   */
+  export type ArtifactIntakeSessionCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactIntakeFileWhereInput
   }
 
 
@@ -2040,6 +2353,8 @@ export namespace Prisma {
     stories?: boolean | Organization$storiesArgs<ExtArgs>
     tollgates?: boolean | Organization$tollgatesArgs<ExtArgs>
     activityEvents?: boolean | Organization$activityEventsArgs<ExtArgs>
+    artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
+    artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -2075,6 +2390,8 @@ export namespace Prisma {
     stories?: boolean | Organization$storiesArgs<ExtArgs>
     tollgates?: boolean | Organization$tollgatesArgs<ExtArgs>
     activityEvents?: boolean | Organization$activityEventsArgs<ExtArgs>
+    artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
+    artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2089,6 +2406,8 @@ export namespace Prisma {
       stories: Prisma.$StoryPayload<ExtArgs>[]
       tollgates: Prisma.$TollgatePayload<ExtArgs>[]
       activityEvents: Prisma.$ActivityEventPayload<ExtArgs>[]
+      artifactIntakeSessions: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>[]
+      artifactIntakeFiles: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2496,6 +2815,8 @@ export namespace Prisma {
     stories<T extends Organization$storiesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$storiesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tollgates<T extends Organization$tollgatesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$tollgatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TollgatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     activityEvents<T extends Organization$activityEventsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$activityEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ActivityEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    artifactIntakeSessions<T extends Organization$artifactIntakeSessionsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    artifactIntakeFiles<T extends Organization$artifactIntakeFilesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3062,6 +3383,54 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.artifactIntakeSessions
+   */
+  export type Organization$artifactIntakeSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    where?: ArtifactIntakeSessionWhereInput
+    orderBy?: ArtifactIntakeSessionOrderByWithRelationInput | ArtifactIntakeSessionOrderByWithRelationInput[]
+    cursor?: ArtifactIntakeSessionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactIntakeSessionScalarFieldEnum | ArtifactIntakeSessionScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.artifactIntakeFiles
+   */
+  export type Organization$artifactIntakeFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    where?: ArtifactIntakeFileWhereInput
+    orderBy?: ArtifactIntakeFileOrderByWithRelationInput | ArtifactIntakeFileOrderByWithRelationInput[]
+    cursor?: ArtifactIntakeFileWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactIntakeFileScalarFieldEnum | ArtifactIntakeFileScalarFieldEnum[]
+  }
+
+  /**
    * Organization without action
    */
   export type OrganizationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3248,6 +3617,8 @@ export namespace Prisma {
     ownedOutcomes?: boolean | AppUser$ownedOutcomesArgs<ExtArgs>
     tollgateDecisions?: boolean | AppUser$tollgateDecisionsArgs<ExtArgs>
     activityEvents?: boolean | AppUser$activityEventsArgs<ExtArgs>
+    createdIntakeSessions?: boolean | AppUser$createdIntakeSessionsArgs<ExtArgs>
+    uploadedIntakeFiles?: boolean | AppUser$uploadedIntakeFilesArgs<ExtArgs>
     _count?: boolean | AppUserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["appUser"]>
 
@@ -3281,6 +3652,8 @@ export namespace Prisma {
     ownedOutcomes?: boolean | AppUser$ownedOutcomesArgs<ExtArgs>
     tollgateDecisions?: boolean | AppUser$tollgateDecisionsArgs<ExtArgs>
     activityEvents?: boolean | AppUser$activityEventsArgs<ExtArgs>
+    createdIntakeSessions?: boolean | AppUser$createdIntakeSessionsArgs<ExtArgs>
+    uploadedIntakeFiles?: boolean | AppUser$uploadedIntakeFilesArgs<ExtArgs>
     _count?: boolean | AppUserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type AppUserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -3293,6 +3666,8 @@ export namespace Prisma {
       ownedOutcomes: Prisma.$OutcomePayload<ExtArgs>[]
       tollgateDecisions: Prisma.$TollgatePayload<ExtArgs>[]
       activityEvents: Prisma.$ActivityEventPayload<ExtArgs>[]
+      createdIntakeSessions: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>[]
+      uploadedIntakeFiles: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3698,6 +4073,8 @@ export namespace Prisma {
     ownedOutcomes<T extends AppUser$ownedOutcomesArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$ownedOutcomesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutcomePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tollgateDecisions<T extends AppUser$tollgateDecisionsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$tollgateDecisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TollgatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     activityEvents<T extends AppUser$activityEventsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$activityEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ActivityEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    createdIntakeSessions<T extends AppUser$createdIntakeSessionsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$createdIntakeSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    uploadedIntakeFiles<T extends AppUser$uploadedIntakeFilesArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$uploadedIntakeFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4213,6 +4590,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ActivityEventScalarFieldEnum | ActivityEventScalarFieldEnum[]
+  }
+
+  /**
+   * AppUser.createdIntakeSessions
+   */
+  export type AppUser$createdIntakeSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    where?: ArtifactIntakeSessionWhereInput
+    orderBy?: ArtifactIntakeSessionOrderByWithRelationInput | ArtifactIntakeSessionOrderByWithRelationInput[]
+    cursor?: ArtifactIntakeSessionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactIntakeSessionScalarFieldEnum | ArtifactIntakeSessionScalarFieldEnum[]
+  }
+
+  /**
+   * AppUser.uploadedIntakeFiles
+   */
+  export type AppUser$uploadedIntakeFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    where?: ArtifactIntakeFileWhereInput
+    orderBy?: ArtifactIntakeFileOrderByWithRelationInput | ArtifactIntakeFileOrderByWithRelationInput[]
+    cursor?: ArtifactIntakeFileWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactIntakeFileScalarFieldEnum | ArtifactIntakeFileScalarFieldEnum[]
   }
 
   /**
@@ -11241,6 +11666,2435 @@ export namespace Prisma {
 
 
   /**
+   * Model ArtifactIntakeSession
+   */
+
+  export type AggregateArtifactIntakeSession = {
+    _count: ArtifactIntakeSessionCountAggregateOutputType | null
+    _min: ArtifactIntakeSessionMinAggregateOutputType | null
+    _max: ArtifactIntakeSessionMaxAggregateOutputType | null
+  }
+
+  export type ArtifactIntakeSessionMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    label: string | null
+    status: $Enums.ArtifactIntakeSessionStatus | null
+    mappingCompletedAt: Date | null
+    createdBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ArtifactIntakeSessionMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    label: string | null
+    status: $Enums.ArtifactIntakeSessionStatus | null
+    mappingCompletedAt: Date | null
+    createdBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ArtifactIntakeSessionCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    label: number
+    status: number
+    mappedArtifacts: number
+    mappingCompletedAt: number
+    createdBy: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ArtifactIntakeSessionMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    label?: true
+    status?: true
+    mappingCompletedAt?: true
+    createdBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ArtifactIntakeSessionMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    label?: true
+    status?: true
+    mappingCompletedAt?: true
+    createdBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ArtifactIntakeSessionCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    label?: true
+    status?: true
+    mappedArtifacts?: true
+    mappingCompletedAt?: true
+    createdBy?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ArtifactIntakeSessionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArtifactIntakeSession to aggregate.
+     */
+    where?: ArtifactIntakeSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeSessions to fetch.
+     */
+    orderBy?: ArtifactIntakeSessionOrderByWithRelationInput | ArtifactIntakeSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ArtifactIntakeSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ArtifactIntakeSessions
+    **/
+    _count?: true | ArtifactIntakeSessionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ArtifactIntakeSessionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ArtifactIntakeSessionMaxAggregateInputType
+  }
+
+  export type GetArtifactIntakeSessionAggregateType<T extends ArtifactIntakeSessionAggregateArgs> = {
+        [P in keyof T & keyof AggregateArtifactIntakeSession]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateArtifactIntakeSession[P]>
+      : GetScalarType<T[P], AggregateArtifactIntakeSession[P]>
+  }
+
+
+
+
+  export type ArtifactIntakeSessionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactIntakeSessionWhereInput
+    orderBy?: ArtifactIntakeSessionOrderByWithAggregationInput | ArtifactIntakeSessionOrderByWithAggregationInput[]
+    by: ArtifactIntakeSessionScalarFieldEnum[] | ArtifactIntakeSessionScalarFieldEnum
+    having?: ArtifactIntakeSessionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ArtifactIntakeSessionCountAggregateInputType | true
+    _min?: ArtifactIntakeSessionMinAggregateInputType
+    _max?: ArtifactIntakeSessionMaxAggregateInputType
+  }
+
+  export type ArtifactIntakeSessionGroupByOutputType = {
+    id: string
+    organizationId: string
+    label: string
+    status: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts: JsonValue | null
+    mappingCompletedAt: Date | null
+    createdBy: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ArtifactIntakeSessionCountAggregateOutputType | null
+    _min: ArtifactIntakeSessionMinAggregateOutputType | null
+    _max: ArtifactIntakeSessionMaxAggregateOutputType | null
+  }
+
+  type GetArtifactIntakeSessionGroupByPayload<T extends ArtifactIntakeSessionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ArtifactIntakeSessionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ArtifactIntakeSessionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ArtifactIntakeSessionGroupByOutputType[P]>
+            : GetScalarType<T[P], ArtifactIntakeSessionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ArtifactIntakeSessionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    label?: boolean
+    status?: boolean
+    mappedArtifacts?: boolean
+    mappingCompletedAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
+    files?: boolean | ArtifactIntakeSession$filesArgs<ExtArgs>
+    _count?: boolean | ArtifactIntakeSessionCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactIntakeSession"]>
+
+  export type ArtifactIntakeSessionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    label?: boolean
+    status?: boolean
+    mappedArtifacts?: boolean
+    mappingCompletedAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactIntakeSession"]>
+
+  export type ArtifactIntakeSessionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    label?: boolean
+    status?: boolean
+    mappedArtifacts?: boolean
+    mappingCompletedAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactIntakeSession"]>
+
+  export type ArtifactIntakeSessionSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    label?: boolean
+    status?: boolean
+    mappedArtifacts?: boolean
+    mappingCompletedAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ArtifactIntakeSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "label" | "status" | "mappedArtifacts" | "mappingCompletedAt" | "createdBy" | "createdAt" | "updatedAt", ExtArgs["result"]["artifactIntakeSession"]>
+  export type ArtifactIntakeSessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
+    files?: boolean | ArtifactIntakeSession$filesArgs<ExtArgs>
+    _count?: boolean | ArtifactIntakeSessionCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ArtifactIntakeSessionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
+  }
+  export type ArtifactIntakeSessionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    creator?: boolean | ArtifactIntakeSession$creatorArgs<ExtArgs>
+  }
+
+  export type $ArtifactIntakeSessionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ArtifactIntakeSession"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      creator: Prisma.$AppUserPayload<ExtArgs> | null
+      files: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      label: string
+      status: $Enums.ArtifactIntakeSessionStatus
+      mappedArtifacts: Prisma.JsonValue | null
+      mappingCompletedAt: Date | null
+      createdBy: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["artifactIntakeSession"]>
+    composites: {}
+  }
+
+  type ArtifactIntakeSessionGetPayload<S extends boolean | null | undefined | ArtifactIntakeSessionDefaultArgs> = $Result.GetResult<Prisma.$ArtifactIntakeSessionPayload, S>
+
+  type ArtifactIntakeSessionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ArtifactIntakeSessionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ArtifactIntakeSessionCountAggregateInputType | true
+    }
+
+  export interface ArtifactIntakeSessionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ArtifactIntakeSession'], meta: { name: 'ArtifactIntakeSession' } }
+    /**
+     * Find zero or one ArtifactIntakeSession that matches the filter.
+     * @param {ArtifactIntakeSessionFindUniqueArgs} args - Arguments to find a ArtifactIntakeSession
+     * @example
+     * // Get one ArtifactIntakeSession
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ArtifactIntakeSessionFindUniqueArgs>(args: SelectSubset<T, ArtifactIntakeSessionFindUniqueArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ArtifactIntakeSession that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ArtifactIntakeSessionFindUniqueOrThrowArgs} args - Arguments to find a ArtifactIntakeSession
+     * @example
+     * // Get one ArtifactIntakeSession
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ArtifactIntakeSessionFindUniqueOrThrowArgs>(args: SelectSubset<T, ArtifactIntakeSessionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArtifactIntakeSession that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeSessionFindFirstArgs} args - Arguments to find a ArtifactIntakeSession
+     * @example
+     * // Get one ArtifactIntakeSession
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ArtifactIntakeSessionFindFirstArgs>(args?: SelectSubset<T, ArtifactIntakeSessionFindFirstArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArtifactIntakeSession that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeSessionFindFirstOrThrowArgs} args - Arguments to find a ArtifactIntakeSession
+     * @example
+     * // Get one ArtifactIntakeSession
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ArtifactIntakeSessionFindFirstOrThrowArgs>(args?: SelectSubset<T, ArtifactIntakeSessionFindFirstOrThrowArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ArtifactIntakeSessions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeSessionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ArtifactIntakeSessions
+     * const artifactIntakeSessions = await prisma.artifactIntakeSession.findMany()
+     * 
+     * // Get first 10 ArtifactIntakeSessions
+     * const artifactIntakeSessions = await prisma.artifactIntakeSession.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const artifactIntakeSessionWithIdOnly = await prisma.artifactIntakeSession.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ArtifactIntakeSessionFindManyArgs>(args?: SelectSubset<T, ArtifactIntakeSessionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ArtifactIntakeSession.
+     * @param {ArtifactIntakeSessionCreateArgs} args - Arguments to create a ArtifactIntakeSession.
+     * @example
+     * // Create one ArtifactIntakeSession
+     * const ArtifactIntakeSession = await prisma.artifactIntakeSession.create({
+     *   data: {
+     *     // ... data to create a ArtifactIntakeSession
+     *   }
+     * })
+     * 
+     */
+    create<T extends ArtifactIntakeSessionCreateArgs>(args: SelectSubset<T, ArtifactIntakeSessionCreateArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ArtifactIntakeSessions.
+     * @param {ArtifactIntakeSessionCreateManyArgs} args - Arguments to create many ArtifactIntakeSessions.
+     * @example
+     * // Create many ArtifactIntakeSessions
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ArtifactIntakeSessionCreateManyArgs>(args?: SelectSubset<T, ArtifactIntakeSessionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ArtifactIntakeSessions and returns the data saved in the database.
+     * @param {ArtifactIntakeSessionCreateManyAndReturnArgs} args - Arguments to create many ArtifactIntakeSessions.
+     * @example
+     * // Create many ArtifactIntakeSessions
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ArtifactIntakeSessions and only return the `id`
+     * const artifactIntakeSessionWithIdOnly = await prisma.artifactIntakeSession.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ArtifactIntakeSessionCreateManyAndReturnArgs>(args?: SelectSubset<T, ArtifactIntakeSessionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ArtifactIntakeSession.
+     * @param {ArtifactIntakeSessionDeleteArgs} args - Arguments to delete one ArtifactIntakeSession.
+     * @example
+     * // Delete one ArtifactIntakeSession
+     * const ArtifactIntakeSession = await prisma.artifactIntakeSession.delete({
+     *   where: {
+     *     // ... filter to delete one ArtifactIntakeSession
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ArtifactIntakeSessionDeleteArgs>(args: SelectSubset<T, ArtifactIntakeSessionDeleteArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ArtifactIntakeSession.
+     * @param {ArtifactIntakeSessionUpdateArgs} args - Arguments to update one ArtifactIntakeSession.
+     * @example
+     * // Update one ArtifactIntakeSession
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ArtifactIntakeSessionUpdateArgs>(args: SelectSubset<T, ArtifactIntakeSessionUpdateArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ArtifactIntakeSessions.
+     * @param {ArtifactIntakeSessionDeleteManyArgs} args - Arguments to filter ArtifactIntakeSessions to delete.
+     * @example
+     * // Delete a few ArtifactIntakeSessions
+     * const { count } = await prisma.artifactIntakeSession.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ArtifactIntakeSessionDeleteManyArgs>(args?: SelectSubset<T, ArtifactIntakeSessionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArtifactIntakeSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeSessionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ArtifactIntakeSessions
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ArtifactIntakeSessionUpdateManyArgs>(args: SelectSubset<T, ArtifactIntakeSessionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArtifactIntakeSessions and returns the data updated in the database.
+     * @param {ArtifactIntakeSessionUpdateManyAndReturnArgs} args - Arguments to update many ArtifactIntakeSessions.
+     * @example
+     * // Update many ArtifactIntakeSessions
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ArtifactIntakeSessions and only return the `id`
+     * const artifactIntakeSessionWithIdOnly = await prisma.artifactIntakeSession.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ArtifactIntakeSessionUpdateManyAndReturnArgs>(args: SelectSubset<T, ArtifactIntakeSessionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ArtifactIntakeSession.
+     * @param {ArtifactIntakeSessionUpsertArgs} args - Arguments to update or create a ArtifactIntakeSession.
+     * @example
+     * // Update or create a ArtifactIntakeSession
+     * const artifactIntakeSession = await prisma.artifactIntakeSession.upsert({
+     *   create: {
+     *     // ... data to create a ArtifactIntakeSession
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ArtifactIntakeSession we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ArtifactIntakeSessionUpsertArgs>(args: SelectSubset<T, ArtifactIntakeSessionUpsertArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ArtifactIntakeSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeSessionCountArgs} args - Arguments to filter ArtifactIntakeSessions to count.
+     * @example
+     * // Count the number of ArtifactIntakeSessions
+     * const count = await prisma.artifactIntakeSession.count({
+     *   where: {
+     *     // ... the filter for the ArtifactIntakeSessions we want to count
+     *   }
+     * })
+    **/
+    count<T extends ArtifactIntakeSessionCountArgs>(
+      args?: Subset<T, ArtifactIntakeSessionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ArtifactIntakeSessionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ArtifactIntakeSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeSessionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ArtifactIntakeSessionAggregateArgs>(args: Subset<T, ArtifactIntakeSessionAggregateArgs>): Prisma.PrismaPromise<GetArtifactIntakeSessionAggregateType<T>>
+
+    /**
+     * Group by ArtifactIntakeSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeSessionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ArtifactIntakeSessionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ArtifactIntakeSessionGroupByArgs['orderBy'] }
+        : { orderBy?: ArtifactIntakeSessionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ArtifactIntakeSessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetArtifactIntakeSessionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ArtifactIntakeSession model
+   */
+  readonly fields: ArtifactIntakeSessionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ArtifactIntakeSession.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ArtifactIntakeSessionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    creator<T extends ArtifactIntakeSession$creatorArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSession$creatorArgs<ExtArgs>>): Prisma__AppUserClient<$Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    files<T extends ArtifactIntakeSession$filesArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSession$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ArtifactIntakeSession model
+   */
+  interface ArtifactIntakeSessionFieldRefs {
+    readonly id: FieldRef<"ArtifactIntakeSession", 'String'>
+    readonly organizationId: FieldRef<"ArtifactIntakeSession", 'String'>
+    readonly label: FieldRef<"ArtifactIntakeSession", 'String'>
+    readonly status: FieldRef<"ArtifactIntakeSession", 'ArtifactIntakeSessionStatus'>
+    readonly mappedArtifacts: FieldRef<"ArtifactIntakeSession", 'Json'>
+    readonly mappingCompletedAt: FieldRef<"ArtifactIntakeSession", 'DateTime'>
+    readonly createdBy: FieldRef<"ArtifactIntakeSession", 'String'>
+    readonly createdAt: FieldRef<"ArtifactIntakeSession", 'DateTime'>
+    readonly updatedAt: FieldRef<"ArtifactIntakeSession", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ArtifactIntakeSession findUnique
+   */
+  export type ArtifactIntakeSessionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeSession to fetch.
+     */
+    where: ArtifactIntakeSessionWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeSession findUniqueOrThrow
+   */
+  export type ArtifactIntakeSessionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeSession to fetch.
+     */
+    where: ArtifactIntakeSessionWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeSession findFirst
+   */
+  export type ArtifactIntakeSessionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeSession to fetch.
+     */
+    where?: ArtifactIntakeSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeSessions to fetch.
+     */
+    orderBy?: ArtifactIntakeSessionOrderByWithRelationInput | ArtifactIntakeSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArtifactIntakeSessions.
+     */
+    cursor?: ArtifactIntakeSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArtifactIntakeSessions.
+     */
+    distinct?: ArtifactIntakeSessionScalarFieldEnum | ArtifactIntakeSessionScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactIntakeSession findFirstOrThrow
+   */
+  export type ArtifactIntakeSessionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeSession to fetch.
+     */
+    where?: ArtifactIntakeSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeSessions to fetch.
+     */
+    orderBy?: ArtifactIntakeSessionOrderByWithRelationInput | ArtifactIntakeSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArtifactIntakeSessions.
+     */
+    cursor?: ArtifactIntakeSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArtifactIntakeSessions.
+     */
+    distinct?: ArtifactIntakeSessionScalarFieldEnum | ArtifactIntakeSessionScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactIntakeSession findMany
+   */
+  export type ArtifactIntakeSessionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeSessions to fetch.
+     */
+    where?: ArtifactIntakeSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeSessions to fetch.
+     */
+    orderBy?: ArtifactIntakeSessionOrderByWithRelationInput | ArtifactIntakeSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ArtifactIntakeSessions.
+     */
+    cursor?: ArtifactIntakeSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeSessions.
+     */
+    skip?: number
+    distinct?: ArtifactIntakeSessionScalarFieldEnum | ArtifactIntakeSessionScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactIntakeSession create
+   */
+  export type ArtifactIntakeSessionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ArtifactIntakeSession.
+     */
+    data: XOR<ArtifactIntakeSessionCreateInput, ArtifactIntakeSessionUncheckedCreateInput>
+  }
+
+  /**
+   * ArtifactIntakeSession createMany
+   */
+  export type ArtifactIntakeSessionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ArtifactIntakeSessions.
+     */
+    data: ArtifactIntakeSessionCreateManyInput | ArtifactIntakeSessionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ArtifactIntakeSession createManyAndReturn
+   */
+  export type ArtifactIntakeSessionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * The data used to create many ArtifactIntakeSessions.
+     */
+    data: ArtifactIntakeSessionCreateManyInput | ArtifactIntakeSessionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactIntakeSession update
+   */
+  export type ArtifactIntakeSessionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ArtifactIntakeSession.
+     */
+    data: XOR<ArtifactIntakeSessionUpdateInput, ArtifactIntakeSessionUncheckedUpdateInput>
+    /**
+     * Choose, which ArtifactIntakeSession to update.
+     */
+    where: ArtifactIntakeSessionWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeSession updateMany
+   */
+  export type ArtifactIntakeSessionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ArtifactIntakeSessions.
+     */
+    data: XOR<ArtifactIntakeSessionUpdateManyMutationInput, ArtifactIntakeSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which ArtifactIntakeSessions to update
+     */
+    where?: ArtifactIntakeSessionWhereInput
+    /**
+     * Limit how many ArtifactIntakeSessions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArtifactIntakeSession updateManyAndReturn
+   */
+  export type ArtifactIntakeSessionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * The data used to update ArtifactIntakeSessions.
+     */
+    data: XOR<ArtifactIntakeSessionUpdateManyMutationInput, ArtifactIntakeSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which ArtifactIntakeSessions to update
+     */
+    where?: ArtifactIntakeSessionWhereInput
+    /**
+     * Limit how many ArtifactIntakeSessions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactIntakeSession upsert
+   */
+  export type ArtifactIntakeSessionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ArtifactIntakeSession to update in case it exists.
+     */
+    where: ArtifactIntakeSessionWhereUniqueInput
+    /**
+     * In case the ArtifactIntakeSession found by the `where` argument doesn't exist, create a new ArtifactIntakeSession with this data.
+     */
+    create: XOR<ArtifactIntakeSessionCreateInput, ArtifactIntakeSessionUncheckedCreateInput>
+    /**
+     * In case the ArtifactIntakeSession was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ArtifactIntakeSessionUpdateInput, ArtifactIntakeSessionUncheckedUpdateInput>
+  }
+
+  /**
+   * ArtifactIntakeSession delete
+   */
+  export type ArtifactIntakeSessionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+    /**
+     * Filter which ArtifactIntakeSession to delete.
+     */
+    where: ArtifactIntakeSessionWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeSession deleteMany
+   */
+  export type ArtifactIntakeSessionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArtifactIntakeSessions to delete
+     */
+    where?: ArtifactIntakeSessionWhereInput
+    /**
+     * Limit how many ArtifactIntakeSessions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArtifactIntakeSession.creator
+   */
+  export type ArtifactIntakeSession$creatorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppUser
+     */
+    select?: AppUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppUser
+     */
+    omit?: AppUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AppUserInclude<ExtArgs> | null
+    where?: AppUserWhereInput
+  }
+
+  /**
+   * ArtifactIntakeSession.files
+   */
+  export type ArtifactIntakeSession$filesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    where?: ArtifactIntakeFileWhereInput
+    orderBy?: ArtifactIntakeFileOrderByWithRelationInput | ArtifactIntakeFileOrderByWithRelationInput[]
+    cursor?: ArtifactIntakeFileWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ArtifactIntakeFileScalarFieldEnum | ArtifactIntakeFileScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactIntakeSession without action
+   */
+  export type ArtifactIntakeSessionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeSession
+     */
+    select?: ArtifactIntakeSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeSession
+     */
+    omit?: ArtifactIntakeSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeSessionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ArtifactIntakeFile
+   */
+
+  export type AggregateArtifactIntakeFile = {
+    _count: ArtifactIntakeFileCountAggregateOutputType | null
+    _avg: ArtifactIntakeFileAvgAggregateOutputType | null
+    _sum: ArtifactIntakeFileSumAggregateOutputType | null
+    _min: ArtifactIntakeFileMinAggregateOutputType | null
+    _max: ArtifactIntakeFileMaxAggregateOutputType | null
+  }
+
+  export type ArtifactIntakeFileAvgAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type ArtifactIntakeFileSumAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type ArtifactIntakeFileMinAggregateOutputType = {
+    id: string | null
+    intakeSessionId: string | null
+    organizationId: string | null
+    fileName: string | null
+    mimeType: string | null
+    extension: string | null
+    sizeBytes: number | null
+    content: string | null
+    sourceTypeStatus: $Enums.ArtifactSourceTypeStatus | null
+    sourceType: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence: $Enums.ExtractionConfidence | null
+    classifiedAt: Date | null
+    parsedAt: Date | null
+    uploadedBy: string | null
+    uploadedAt: Date | null
+  }
+
+  export type ArtifactIntakeFileMaxAggregateOutputType = {
+    id: string | null
+    intakeSessionId: string | null
+    organizationId: string | null
+    fileName: string | null
+    mimeType: string | null
+    extension: string | null
+    sizeBytes: number | null
+    content: string | null
+    sourceTypeStatus: $Enums.ArtifactSourceTypeStatus | null
+    sourceType: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence: $Enums.ExtractionConfidence | null
+    classifiedAt: Date | null
+    parsedAt: Date | null
+    uploadedBy: string | null
+    uploadedAt: Date | null
+  }
+
+  export type ArtifactIntakeFileCountAggregateOutputType = {
+    id: number
+    intakeSessionId: number
+    organizationId: number
+    fileName: number
+    mimeType: number
+    extension: number
+    sizeBytes: number
+    content: number
+    sourceTypeStatus: number
+    sourceType: number
+    sourceTypeConfidence: number
+    classifiedAt: number
+    parsedAt: number
+    parsedArtifacts: number
+    uploadedBy: number
+    uploadedAt: number
+    _all: number
+  }
+
+
+  export type ArtifactIntakeFileAvgAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type ArtifactIntakeFileSumAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type ArtifactIntakeFileMinAggregateInputType = {
+    id?: true
+    intakeSessionId?: true
+    organizationId?: true
+    fileName?: true
+    mimeType?: true
+    extension?: true
+    sizeBytes?: true
+    content?: true
+    sourceTypeStatus?: true
+    sourceType?: true
+    sourceTypeConfidence?: true
+    classifiedAt?: true
+    parsedAt?: true
+    uploadedBy?: true
+    uploadedAt?: true
+  }
+
+  export type ArtifactIntakeFileMaxAggregateInputType = {
+    id?: true
+    intakeSessionId?: true
+    organizationId?: true
+    fileName?: true
+    mimeType?: true
+    extension?: true
+    sizeBytes?: true
+    content?: true
+    sourceTypeStatus?: true
+    sourceType?: true
+    sourceTypeConfidence?: true
+    classifiedAt?: true
+    parsedAt?: true
+    uploadedBy?: true
+    uploadedAt?: true
+  }
+
+  export type ArtifactIntakeFileCountAggregateInputType = {
+    id?: true
+    intakeSessionId?: true
+    organizationId?: true
+    fileName?: true
+    mimeType?: true
+    extension?: true
+    sizeBytes?: true
+    content?: true
+    sourceTypeStatus?: true
+    sourceType?: true
+    sourceTypeConfidence?: true
+    classifiedAt?: true
+    parsedAt?: true
+    parsedArtifacts?: true
+    uploadedBy?: true
+    uploadedAt?: true
+    _all?: true
+  }
+
+  export type ArtifactIntakeFileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArtifactIntakeFile to aggregate.
+     */
+    where?: ArtifactIntakeFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeFiles to fetch.
+     */
+    orderBy?: ArtifactIntakeFileOrderByWithRelationInput | ArtifactIntakeFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ArtifactIntakeFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ArtifactIntakeFiles
+    **/
+    _count?: true | ArtifactIntakeFileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ArtifactIntakeFileAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ArtifactIntakeFileSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ArtifactIntakeFileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ArtifactIntakeFileMaxAggregateInputType
+  }
+
+  export type GetArtifactIntakeFileAggregateType<T extends ArtifactIntakeFileAggregateArgs> = {
+        [P in keyof T & keyof AggregateArtifactIntakeFile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateArtifactIntakeFile[P]>
+      : GetScalarType<T[P], AggregateArtifactIntakeFile[P]>
+  }
+
+
+
+
+  export type ArtifactIntakeFileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ArtifactIntakeFileWhereInput
+    orderBy?: ArtifactIntakeFileOrderByWithAggregationInput | ArtifactIntakeFileOrderByWithAggregationInput[]
+    by: ArtifactIntakeFileScalarFieldEnum[] | ArtifactIntakeFileScalarFieldEnum
+    having?: ArtifactIntakeFileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ArtifactIntakeFileCountAggregateInputType | true
+    _avg?: ArtifactIntakeFileAvgAggregateInputType
+    _sum?: ArtifactIntakeFileSumAggregateInputType
+    _min?: ArtifactIntakeFileMinAggregateInputType
+    _max?: ArtifactIntakeFileMaxAggregateInputType
+  }
+
+  export type ArtifactIntakeFileGroupByOutputType = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    fileName: string
+    mimeType: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus: $Enums.ArtifactSourceTypeStatus
+    sourceType: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence: $Enums.ExtractionConfidence | null
+    classifiedAt: Date | null
+    parsedAt: Date | null
+    parsedArtifacts: JsonValue | null
+    uploadedBy: string | null
+    uploadedAt: Date
+    _count: ArtifactIntakeFileCountAggregateOutputType | null
+    _avg: ArtifactIntakeFileAvgAggregateOutputType | null
+    _sum: ArtifactIntakeFileSumAggregateOutputType | null
+    _min: ArtifactIntakeFileMinAggregateOutputType | null
+    _max: ArtifactIntakeFileMaxAggregateOutputType | null
+  }
+
+  type GetArtifactIntakeFileGroupByPayload<T extends ArtifactIntakeFileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ArtifactIntakeFileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ArtifactIntakeFileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ArtifactIntakeFileGroupByOutputType[P]>
+            : GetScalarType<T[P], ArtifactIntakeFileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ArtifactIntakeFileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    intakeSessionId?: boolean
+    organizationId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    extension?: boolean
+    sizeBytes?: boolean
+    content?: boolean
+    sourceTypeStatus?: boolean
+    sourceType?: boolean
+    sourceTypeConfidence?: boolean
+    classifiedAt?: boolean
+    parsedAt?: boolean
+    parsedArtifacts?: boolean
+    uploadedBy?: boolean
+    uploadedAt?: boolean
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactIntakeFile"]>
+
+  export type ArtifactIntakeFileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    intakeSessionId?: boolean
+    organizationId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    extension?: boolean
+    sizeBytes?: boolean
+    content?: boolean
+    sourceTypeStatus?: boolean
+    sourceType?: boolean
+    sourceTypeConfidence?: boolean
+    classifiedAt?: boolean
+    parsedAt?: boolean
+    parsedArtifacts?: boolean
+    uploadedBy?: boolean
+    uploadedAt?: boolean
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactIntakeFile"]>
+
+  export type ArtifactIntakeFileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    intakeSessionId?: boolean
+    organizationId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    extension?: boolean
+    sizeBytes?: boolean
+    content?: boolean
+    sourceTypeStatus?: boolean
+    sourceType?: boolean
+    sourceTypeConfidence?: boolean
+    classifiedAt?: boolean
+    parsedAt?: boolean
+    parsedArtifacts?: boolean
+    uploadedBy?: boolean
+    uploadedAt?: boolean
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+  }, ExtArgs["result"]["artifactIntakeFile"]>
+
+  export type ArtifactIntakeFileSelectScalar = {
+    id?: boolean
+    intakeSessionId?: boolean
+    organizationId?: boolean
+    fileName?: boolean
+    mimeType?: boolean
+    extension?: boolean
+    sizeBytes?: boolean
+    content?: boolean
+    sourceTypeStatus?: boolean
+    sourceType?: boolean
+    sourceTypeConfidence?: boolean
+    classifiedAt?: boolean
+    parsedAt?: boolean
+    parsedArtifacts?: boolean
+    uploadedBy?: boolean
+    uploadedAt?: boolean
+  }
+
+  export type ArtifactIntakeFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "intakeSessionId" | "organizationId" | "fileName" | "mimeType" | "extension" | "sizeBytes" | "content" | "sourceTypeStatus" | "sourceType" | "sourceTypeConfidence" | "classifiedAt" | "parsedAt" | "parsedArtifacts" | "uploadedBy" | "uploadedAt", ExtArgs["result"]["artifactIntakeFile"]>
+  export type ArtifactIntakeFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+  }
+  export type ArtifactIntakeFileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+  }
+  export type ArtifactIntakeFileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    uploader?: boolean | ArtifactIntakeFile$uploaderArgs<ExtArgs>
+  }
+
+  export type $ArtifactIntakeFilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ArtifactIntakeFile"
+    objects: {
+      intakeSession: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      uploader: Prisma.$AppUserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      intakeSessionId: string
+      organizationId: string
+      fileName: string
+      mimeType: string | null
+      extension: string
+      sizeBytes: number
+      content: string
+      sourceTypeStatus: $Enums.ArtifactSourceTypeStatus
+      sourceType: $Enums.ArtifactSourceType | null
+      sourceTypeConfidence: $Enums.ExtractionConfidence | null
+      classifiedAt: Date | null
+      parsedAt: Date | null
+      parsedArtifacts: Prisma.JsonValue | null
+      uploadedBy: string | null
+      uploadedAt: Date
+    }, ExtArgs["result"]["artifactIntakeFile"]>
+    composites: {}
+  }
+
+  type ArtifactIntakeFileGetPayload<S extends boolean | null | undefined | ArtifactIntakeFileDefaultArgs> = $Result.GetResult<Prisma.$ArtifactIntakeFilePayload, S>
+
+  type ArtifactIntakeFileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ArtifactIntakeFileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ArtifactIntakeFileCountAggregateInputType | true
+    }
+
+  export interface ArtifactIntakeFileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ArtifactIntakeFile'], meta: { name: 'ArtifactIntakeFile' } }
+    /**
+     * Find zero or one ArtifactIntakeFile that matches the filter.
+     * @param {ArtifactIntakeFileFindUniqueArgs} args - Arguments to find a ArtifactIntakeFile
+     * @example
+     * // Get one ArtifactIntakeFile
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ArtifactIntakeFileFindUniqueArgs>(args: SelectSubset<T, ArtifactIntakeFileFindUniqueArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ArtifactIntakeFile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ArtifactIntakeFileFindUniqueOrThrowArgs} args - Arguments to find a ArtifactIntakeFile
+     * @example
+     * // Get one ArtifactIntakeFile
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ArtifactIntakeFileFindUniqueOrThrowArgs>(args: SelectSubset<T, ArtifactIntakeFileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArtifactIntakeFile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeFileFindFirstArgs} args - Arguments to find a ArtifactIntakeFile
+     * @example
+     * // Get one ArtifactIntakeFile
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ArtifactIntakeFileFindFirstArgs>(args?: SelectSubset<T, ArtifactIntakeFileFindFirstArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ArtifactIntakeFile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeFileFindFirstOrThrowArgs} args - Arguments to find a ArtifactIntakeFile
+     * @example
+     * // Get one ArtifactIntakeFile
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ArtifactIntakeFileFindFirstOrThrowArgs>(args?: SelectSubset<T, ArtifactIntakeFileFindFirstOrThrowArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ArtifactIntakeFiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeFileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ArtifactIntakeFiles
+     * const artifactIntakeFiles = await prisma.artifactIntakeFile.findMany()
+     * 
+     * // Get first 10 ArtifactIntakeFiles
+     * const artifactIntakeFiles = await prisma.artifactIntakeFile.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const artifactIntakeFileWithIdOnly = await prisma.artifactIntakeFile.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ArtifactIntakeFileFindManyArgs>(args?: SelectSubset<T, ArtifactIntakeFileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ArtifactIntakeFile.
+     * @param {ArtifactIntakeFileCreateArgs} args - Arguments to create a ArtifactIntakeFile.
+     * @example
+     * // Create one ArtifactIntakeFile
+     * const ArtifactIntakeFile = await prisma.artifactIntakeFile.create({
+     *   data: {
+     *     // ... data to create a ArtifactIntakeFile
+     *   }
+     * })
+     * 
+     */
+    create<T extends ArtifactIntakeFileCreateArgs>(args: SelectSubset<T, ArtifactIntakeFileCreateArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ArtifactIntakeFiles.
+     * @param {ArtifactIntakeFileCreateManyArgs} args - Arguments to create many ArtifactIntakeFiles.
+     * @example
+     * // Create many ArtifactIntakeFiles
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ArtifactIntakeFileCreateManyArgs>(args?: SelectSubset<T, ArtifactIntakeFileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ArtifactIntakeFiles and returns the data saved in the database.
+     * @param {ArtifactIntakeFileCreateManyAndReturnArgs} args - Arguments to create many ArtifactIntakeFiles.
+     * @example
+     * // Create many ArtifactIntakeFiles
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ArtifactIntakeFiles and only return the `id`
+     * const artifactIntakeFileWithIdOnly = await prisma.artifactIntakeFile.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ArtifactIntakeFileCreateManyAndReturnArgs>(args?: SelectSubset<T, ArtifactIntakeFileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ArtifactIntakeFile.
+     * @param {ArtifactIntakeFileDeleteArgs} args - Arguments to delete one ArtifactIntakeFile.
+     * @example
+     * // Delete one ArtifactIntakeFile
+     * const ArtifactIntakeFile = await prisma.artifactIntakeFile.delete({
+     *   where: {
+     *     // ... filter to delete one ArtifactIntakeFile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ArtifactIntakeFileDeleteArgs>(args: SelectSubset<T, ArtifactIntakeFileDeleteArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ArtifactIntakeFile.
+     * @param {ArtifactIntakeFileUpdateArgs} args - Arguments to update one ArtifactIntakeFile.
+     * @example
+     * // Update one ArtifactIntakeFile
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ArtifactIntakeFileUpdateArgs>(args: SelectSubset<T, ArtifactIntakeFileUpdateArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ArtifactIntakeFiles.
+     * @param {ArtifactIntakeFileDeleteManyArgs} args - Arguments to filter ArtifactIntakeFiles to delete.
+     * @example
+     * // Delete a few ArtifactIntakeFiles
+     * const { count } = await prisma.artifactIntakeFile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ArtifactIntakeFileDeleteManyArgs>(args?: SelectSubset<T, ArtifactIntakeFileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArtifactIntakeFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeFileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ArtifactIntakeFiles
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ArtifactIntakeFileUpdateManyArgs>(args: SelectSubset<T, ArtifactIntakeFileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ArtifactIntakeFiles and returns the data updated in the database.
+     * @param {ArtifactIntakeFileUpdateManyAndReturnArgs} args - Arguments to update many ArtifactIntakeFiles.
+     * @example
+     * // Update many ArtifactIntakeFiles
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ArtifactIntakeFiles and only return the `id`
+     * const artifactIntakeFileWithIdOnly = await prisma.artifactIntakeFile.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ArtifactIntakeFileUpdateManyAndReturnArgs>(args: SelectSubset<T, ArtifactIntakeFileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ArtifactIntakeFile.
+     * @param {ArtifactIntakeFileUpsertArgs} args - Arguments to update or create a ArtifactIntakeFile.
+     * @example
+     * // Update or create a ArtifactIntakeFile
+     * const artifactIntakeFile = await prisma.artifactIntakeFile.upsert({
+     *   create: {
+     *     // ... data to create a ArtifactIntakeFile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ArtifactIntakeFile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ArtifactIntakeFileUpsertArgs>(args: SelectSubset<T, ArtifactIntakeFileUpsertArgs<ExtArgs>>): Prisma__ArtifactIntakeFileClient<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ArtifactIntakeFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeFileCountArgs} args - Arguments to filter ArtifactIntakeFiles to count.
+     * @example
+     * // Count the number of ArtifactIntakeFiles
+     * const count = await prisma.artifactIntakeFile.count({
+     *   where: {
+     *     // ... the filter for the ArtifactIntakeFiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends ArtifactIntakeFileCountArgs>(
+      args?: Subset<T, ArtifactIntakeFileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ArtifactIntakeFileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ArtifactIntakeFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeFileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ArtifactIntakeFileAggregateArgs>(args: Subset<T, ArtifactIntakeFileAggregateArgs>): Prisma.PrismaPromise<GetArtifactIntakeFileAggregateType<T>>
+
+    /**
+     * Group by ArtifactIntakeFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ArtifactIntakeFileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ArtifactIntakeFileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ArtifactIntakeFileGroupByArgs['orderBy'] }
+        : { orderBy?: ArtifactIntakeFileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ArtifactIntakeFileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetArtifactIntakeFileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ArtifactIntakeFile model
+   */
+  readonly fields: ArtifactIntakeFileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ArtifactIntakeFile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ArtifactIntakeFileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    intakeSession<T extends ArtifactIntakeSessionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeSessionDefaultArgs<ExtArgs>>): Prisma__ArtifactIntakeSessionClient<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    uploader<T extends ArtifactIntakeFile$uploaderArgs<ExtArgs> = {}>(args?: Subset<T, ArtifactIntakeFile$uploaderArgs<ExtArgs>>): Prisma__AppUserClient<$Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ArtifactIntakeFile model
+   */
+  interface ArtifactIntakeFileFieldRefs {
+    readonly id: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly intakeSessionId: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly organizationId: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly fileName: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly mimeType: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly extension: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly sizeBytes: FieldRef<"ArtifactIntakeFile", 'Int'>
+    readonly content: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly sourceTypeStatus: FieldRef<"ArtifactIntakeFile", 'ArtifactSourceTypeStatus'>
+    readonly sourceType: FieldRef<"ArtifactIntakeFile", 'ArtifactSourceType'>
+    readonly sourceTypeConfidence: FieldRef<"ArtifactIntakeFile", 'ExtractionConfidence'>
+    readonly classifiedAt: FieldRef<"ArtifactIntakeFile", 'DateTime'>
+    readonly parsedAt: FieldRef<"ArtifactIntakeFile", 'DateTime'>
+    readonly parsedArtifacts: FieldRef<"ArtifactIntakeFile", 'Json'>
+    readonly uploadedBy: FieldRef<"ArtifactIntakeFile", 'String'>
+    readonly uploadedAt: FieldRef<"ArtifactIntakeFile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ArtifactIntakeFile findUnique
+   */
+  export type ArtifactIntakeFileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeFile to fetch.
+     */
+    where: ArtifactIntakeFileWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeFile findUniqueOrThrow
+   */
+  export type ArtifactIntakeFileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeFile to fetch.
+     */
+    where: ArtifactIntakeFileWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeFile findFirst
+   */
+  export type ArtifactIntakeFileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeFile to fetch.
+     */
+    where?: ArtifactIntakeFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeFiles to fetch.
+     */
+    orderBy?: ArtifactIntakeFileOrderByWithRelationInput | ArtifactIntakeFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArtifactIntakeFiles.
+     */
+    cursor?: ArtifactIntakeFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArtifactIntakeFiles.
+     */
+    distinct?: ArtifactIntakeFileScalarFieldEnum | ArtifactIntakeFileScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactIntakeFile findFirstOrThrow
+   */
+  export type ArtifactIntakeFileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeFile to fetch.
+     */
+    where?: ArtifactIntakeFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeFiles to fetch.
+     */
+    orderBy?: ArtifactIntakeFileOrderByWithRelationInput | ArtifactIntakeFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ArtifactIntakeFiles.
+     */
+    cursor?: ArtifactIntakeFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ArtifactIntakeFiles.
+     */
+    distinct?: ArtifactIntakeFileScalarFieldEnum | ArtifactIntakeFileScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactIntakeFile findMany
+   */
+  export type ArtifactIntakeFileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ArtifactIntakeFiles to fetch.
+     */
+    where?: ArtifactIntakeFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ArtifactIntakeFiles to fetch.
+     */
+    orderBy?: ArtifactIntakeFileOrderByWithRelationInput | ArtifactIntakeFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ArtifactIntakeFiles.
+     */
+    cursor?: ArtifactIntakeFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ArtifactIntakeFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ArtifactIntakeFiles.
+     */
+    skip?: number
+    distinct?: ArtifactIntakeFileScalarFieldEnum | ArtifactIntakeFileScalarFieldEnum[]
+  }
+
+  /**
+   * ArtifactIntakeFile create
+   */
+  export type ArtifactIntakeFileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ArtifactIntakeFile.
+     */
+    data: XOR<ArtifactIntakeFileCreateInput, ArtifactIntakeFileUncheckedCreateInput>
+  }
+
+  /**
+   * ArtifactIntakeFile createMany
+   */
+  export type ArtifactIntakeFileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ArtifactIntakeFiles.
+     */
+    data: ArtifactIntakeFileCreateManyInput | ArtifactIntakeFileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ArtifactIntakeFile createManyAndReturn
+   */
+  export type ArtifactIntakeFileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * The data used to create many ArtifactIntakeFiles.
+     */
+    data: ArtifactIntakeFileCreateManyInput | ArtifactIntakeFileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactIntakeFile update
+   */
+  export type ArtifactIntakeFileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ArtifactIntakeFile.
+     */
+    data: XOR<ArtifactIntakeFileUpdateInput, ArtifactIntakeFileUncheckedUpdateInput>
+    /**
+     * Choose, which ArtifactIntakeFile to update.
+     */
+    where: ArtifactIntakeFileWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeFile updateMany
+   */
+  export type ArtifactIntakeFileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ArtifactIntakeFiles.
+     */
+    data: XOR<ArtifactIntakeFileUpdateManyMutationInput, ArtifactIntakeFileUncheckedUpdateManyInput>
+    /**
+     * Filter which ArtifactIntakeFiles to update
+     */
+    where?: ArtifactIntakeFileWhereInput
+    /**
+     * Limit how many ArtifactIntakeFiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArtifactIntakeFile updateManyAndReturn
+   */
+  export type ArtifactIntakeFileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * The data used to update ArtifactIntakeFiles.
+     */
+    data: XOR<ArtifactIntakeFileUpdateManyMutationInput, ArtifactIntakeFileUncheckedUpdateManyInput>
+    /**
+     * Filter which ArtifactIntakeFiles to update
+     */
+    where?: ArtifactIntakeFileWhereInput
+    /**
+     * Limit how many ArtifactIntakeFiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ArtifactIntakeFile upsert
+   */
+  export type ArtifactIntakeFileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ArtifactIntakeFile to update in case it exists.
+     */
+    where: ArtifactIntakeFileWhereUniqueInput
+    /**
+     * In case the ArtifactIntakeFile found by the `where` argument doesn't exist, create a new ArtifactIntakeFile with this data.
+     */
+    create: XOR<ArtifactIntakeFileCreateInput, ArtifactIntakeFileUncheckedCreateInput>
+    /**
+     * In case the ArtifactIntakeFile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ArtifactIntakeFileUpdateInput, ArtifactIntakeFileUncheckedUpdateInput>
+  }
+
+  /**
+   * ArtifactIntakeFile delete
+   */
+  export type ArtifactIntakeFileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+    /**
+     * Filter which ArtifactIntakeFile to delete.
+     */
+    where: ArtifactIntakeFileWhereUniqueInput
+  }
+
+  /**
+   * ArtifactIntakeFile deleteMany
+   */
+  export type ArtifactIntakeFileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ArtifactIntakeFiles to delete
+     */
+    where?: ArtifactIntakeFileWhereInput
+    /**
+     * Limit how many ArtifactIntakeFiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ArtifactIntakeFile.uploader
+   */
+  export type ArtifactIntakeFile$uploaderArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppUser
+     */
+    select?: AppUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppUser
+     */
+    omit?: AppUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AppUserInclude<ExtArgs> | null
+    where?: AppUserWhereInput
+  }
+
+  /**
+   * ArtifactIntakeFile without action
+   */
+  export type ArtifactIntakeFileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ArtifactIntakeFile
+     */
+    select?: ArtifactIntakeFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ArtifactIntakeFile
+     */
+    omit?: ArtifactIntakeFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ArtifactIntakeFileInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -11377,6 +14231,43 @@ export namespace Prisma {
   };
 
   export type ActivityEventScalarFieldEnum = (typeof ActivityEventScalarFieldEnum)[keyof typeof ActivityEventScalarFieldEnum]
+
+
+  export const ArtifactIntakeSessionScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    label: 'label',
+    status: 'status',
+    mappedArtifacts: 'mappedArtifacts',
+    mappingCompletedAt: 'mappingCompletedAt',
+    createdBy: 'createdBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ArtifactIntakeSessionScalarFieldEnum = (typeof ArtifactIntakeSessionScalarFieldEnum)[keyof typeof ArtifactIntakeSessionScalarFieldEnum]
+
+
+  export const ArtifactIntakeFileScalarFieldEnum: {
+    id: 'id',
+    intakeSessionId: 'intakeSessionId',
+    organizationId: 'organizationId',
+    fileName: 'fileName',
+    mimeType: 'mimeType',
+    extension: 'extension',
+    sizeBytes: 'sizeBytes',
+    content: 'content',
+    sourceTypeStatus: 'sourceTypeStatus',
+    sourceType: 'sourceType',
+    sourceTypeConfidence: 'sourceTypeConfidence',
+    classifiedAt: 'classifiedAt',
+    parsedAt: 'parsedAt',
+    parsedArtifacts: 'parsedArtifacts',
+    uploadedBy: 'uploadedBy',
+    uploadedAt: 'uploadedAt'
+  };
+
+  export type ArtifactIntakeFileScalarFieldEnum = (typeof ArtifactIntakeFileScalarFieldEnum)[keyof typeof ArtifactIntakeFileScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -11636,6 +14527,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'ArtifactIntakeSessionStatus'
+   */
+  export type EnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactIntakeSessionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactIntakeSessionStatus[]'
+   */
+  export type ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactIntakeSessionStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -11646,6 +14551,62 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactSourceTypeStatus'
+   */
+  export type EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactSourceTypeStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactSourceTypeStatus[]'
+   */
+  export type ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactSourceTypeStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactSourceType'
+   */
+  export type EnumArtifactSourceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactSourceType'>
+    
+
+
+  /**
+   * Reference to a field of type 'ArtifactSourceType[]'
+   */
+  export type ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactSourceType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ExtractionConfidence'
+   */
+  export type EnumExtractionConfidenceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExtractionConfidence'>
+    
+
+
+  /**
+   * Reference to a field of type 'ExtractionConfidence[]'
+   */
+  export type ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExtractionConfidence[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -11667,6 +14628,8 @@ export namespace Prisma {
     stories?: StoryListRelationFilter
     tollgates?: TollgateListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
+    artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
+    artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -11681,6 +14644,8 @@ export namespace Prisma {
     stories?: StoryOrderByRelationAggregateInput
     tollgates?: TollgateOrderByRelationAggregateInput
     activityEvents?: ActivityEventOrderByRelationAggregateInput
+    artifactIntakeSessions?: ArtifactIntakeSessionOrderByRelationAggregateInput
+    artifactIntakeFiles?: ArtifactIntakeFileOrderByRelationAggregateInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -11698,6 +14663,8 @@ export namespace Prisma {
     stories?: StoryListRelationFilter
     tollgates?: TollgateListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
+    artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
+    artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
   }, "id" | "slug">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -11735,6 +14702,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeListRelationFilter
     tollgateDecisions?: TollgateListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
+    createdIntakeSessions?: ArtifactIntakeSessionListRelationFilter
+    uploadedIntakeFiles?: ArtifactIntakeFileListRelationFilter
   }
 
   export type AppUserOrderByWithRelationInput = {
@@ -11747,6 +14716,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeOrderByRelationAggregateInput
     tollgateDecisions?: TollgateOrderByRelationAggregateInput
     activityEvents?: ActivityEventOrderByRelationAggregateInput
+    createdIntakeSessions?: ArtifactIntakeSessionOrderByRelationAggregateInput
+    uploadedIntakeFiles?: ArtifactIntakeFileOrderByRelationAggregateInput
   }
 
   export type AppUserWhereUniqueInput = Prisma.AtLeast<{
@@ -11762,6 +14733,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeListRelationFilter
     tollgateDecisions?: TollgateListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
+    createdIntakeSessions?: ArtifactIntakeSessionListRelationFilter
+    uploadedIntakeFiles?: ArtifactIntakeFileListRelationFilter
   }, "id" | "email">
 
   export type AppUserOrderByWithAggregationInput = {
@@ -12336,6 +15309,205 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"ActivityEvent"> | Date | string
   }
 
+  export type ArtifactIntakeSessionWhereInput = {
+    AND?: ArtifactIntakeSessionWhereInput | ArtifactIntakeSessionWhereInput[]
+    OR?: ArtifactIntakeSessionWhereInput[]
+    NOT?: ArtifactIntakeSessionWhereInput | ArtifactIntakeSessionWhereInput[]
+    id?: StringFilter<"ArtifactIntakeSession"> | string
+    organizationId?: StringFilter<"ArtifactIntakeSession"> | string
+    label?: StringFilter<"ArtifactIntakeSession"> | string
+    status?: EnumArtifactIntakeSessionStatusFilter<"ArtifactIntakeSession"> | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: JsonNullableFilter<"ArtifactIntakeSession">
+    mappingCompletedAt?: DateTimeNullableFilter<"ArtifactIntakeSession"> | Date | string | null
+    createdBy?: StringNullableFilter<"ArtifactIntakeSession"> | string | null
+    createdAt?: DateTimeFilter<"ArtifactIntakeSession"> | Date | string
+    updatedAt?: DateTimeFilter<"ArtifactIntakeSession"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    creator?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+    files?: ArtifactIntakeFileListRelationFilter
+  }
+
+  export type ArtifactIntakeSessionOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    label?: SortOrder
+    status?: SortOrder
+    mappedArtifacts?: SortOrderInput | SortOrder
+    mappingCompletedAt?: SortOrderInput | SortOrder
+    createdBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    creator?: AppUserOrderByWithRelationInput
+    files?: ArtifactIntakeFileOrderByRelationAggregateInput
+  }
+
+  export type ArtifactIntakeSessionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ArtifactIntakeSessionWhereInput | ArtifactIntakeSessionWhereInput[]
+    OR?: ArtifactIntakeSessionWhereInput[]
+    NOT?: ArtifactIntakeSessionWhereInput | ArtifactIntakeSessionWhereInput[]
+    organizationId?: StringFilter<"ArtifactIntakeSession"> | string
+    label?: StringFilter<"ArtifactIntakeSession"> | string
+    status?: EnumArtifactIntakeSessionStatusFilter<"ArtifactIntakeSession"> | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: JsonNullableFilter<"ArtifactIntakeSession">
+    mappingCompletedAt?: DateTimeNullableFilter<"ArtifactIntakeSession"> | Date | string | null
+    createdBy?: StringNullableFilter<"ArtifactIntakeSession"> | string | null
+    createdAt?: DateTimeFilter<"ArtifactIntakeSession"> | Date | string
+    updatedAt?: DateTimeFilter<"ArtifactIntakeSession"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    creator?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+    files?: ArtifactIntakeFileListRelationFilter
+  }, "id">
+
+  export type ArtifactIntakeSessionOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    label?: SortOrder
+    status?: SortOrder
+    mappedArtifacts?: SortOrderInput | SortOrder
+    mappingCompletedAt?: SortOrderInput | SortOrder
+    createdBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ArtifactIntakeSessionCountOrderByAggregateInput
+    _max?: ArtifactIntakeSessionMaxOrderByAggregateInput
+    _min?: ArtifactIntakeSessionMinOrderByAggregateInput
+  }
+
+  export type ArtifactIntakeSessionScalarWhereWithAggregatesInput = {
+    AND?: ArtifactIntakeSessionScalarWhereWithAggregatesInput | ArtifactIntakeSessionScalarWhereWithAggregatesInput[]
+    OR?: ArtifactIntakeSessionScalarWhereWithAggregatesInput[]
+    NOT?: ArtifactIntakeSessionScalarWhereWithAggregatesInput | ArtifactIntakeSessionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ArtifactIntakeSession"> | string
+    organizationId?: StringWithAggregatesFilter<"ArtifactIntakeSession"> | string
+    label?: StringWithAggregatesFilter<"ArtifactIntakeSession"> | string
+    status?: EnumArtifactIntakeSessionStatusWithAggregatesFilter<"ArtifactIntakeSession"> | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: JsonNullableWithAggregatesFilter<"ArtifactIntakeSession">
+    mappingCompletedAt?: DateTimeNullableWithAggregatesFilter<"ArtifactIntakeSession"> | Date | string | null
+    createdBy?: StringNullableWithAggregatesFilter<"ArtifactIntakeSession"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ArtifactIntakeSession"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ArtifactIntakeSession"> | Date | string
+  }
+
+  export type ArtifactIntakeFileWhereInput = {
+    AND?: ArtifactIntakeFileWhereInput | ArtifactIntakeFileWhereInput[]
+    OR?: ArtifactIntakeFileWhereInput[]
+    NOT?: ArtifactIntakeFileWhereInput | ArtifactIntakeFileWhereInput[]
+    id?: StringFilter<"ArtifactIntakeFile"> | string
+    intakeSessionId?: StringFilter<"ArtifactIntakeFile"> | string
+    organizationId?: StringFilter<"ArtifactIntakeFile"> | string
+    fileName?: StringFilter<"ArtifactIntakeFile"> | string
+    mimeType?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
+    extension?: StringFilter<"ArtifactIntakeFile"> | string
+    sizeBytes?: IntFilter<"ArtifactIntakeFile"> | number
+    content?: StringFilter<"ArtifactIntakeFile"> | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceTypeStatus
+    sourceType?: EnumArtifactSourceTypeNullableFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: EnumExtractionConfidenceNullableFilter<"ArtifactIntakeFile"> | $Enums.ExtractionConfidence | null
+    classifiedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedArtifacts?: JsonNullableFilter<"ArtifactIntakeFile">
+    uploadedBy?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
+    uploadedAt?: DateTimeFilter<"ArtifactIntakeFile"> | Date | string
+    intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    uploader?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+  }
+
+  export type ArtifactIntakeFileOrderByWithRelationInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    organizationId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrderInput | SortOrder
+    extension?: SortOrder
+    sizeBytes?: SortOrder
+    content?: SortOrder
+    sourceTypeStatus?: SortOrder
+    sourceType?: SortOrderInput | SortOrder
+    sourceTypeConfidence?: SortOrderInput | SortOrder
+    classifiedAt?: SortOrderInput | SortOrder
+    parsedAt?: SortOrderInput | SortOrder
+    parsedArtifacts?: SortOrderInput | SortOrder
+    uploadedBy?: SortOrderInput | SortOrder
+    uploadedAt?: SortOrder
+    intakeSession?: ArtifactIntakeSessionOrderByWithRelationInput
+    organization?: OrganizationOrderByWithRelationInput
+    uploader?: AppUserOrderByWithRelationInput
+  }
+
+  export type ArtifactIntakeFileWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ArtifactIntakeFileWhereInput | ArtifactIntakeFileWhereInput[]
+    OR?: ArtifactIntakeFileWhereInput[]
+    NOT?: ArtifactIntakeFileWhereInput | ArtifactIntakeFileWhereInput[]
+    intakeSessionId?: StringFilter<"ArtifactIntakeFile"> | string
+    organizationId?: StringFilter<"ArtifactIntakeFile"> | string
+    fileName?: StringFilter<"ArtifactIntakeFile"> | string
+    mimeType?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
+    extension?: StringFilter<"ArtifactIntakeFile"> | string
+    sizeBytes?: IntFilter<"ArtifactIntakeFile"> | number
+    content?: StringFilter<"ArtifactIntakeFile"> | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceTypeStatus
+    sourceType?: EnumArtifactSourceTypeNullableFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: EnumExtractionConfidenceNullableFilter<"ArtifactIntakeFile"> | $Enums.ExtractionConfidence | null
+    classifiedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedArtifacts?: JsonNullableFilter<"ArtifactIntakeFile">
+    uploadedBy?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
+    uploadedAt?: DateTimeFilter<"ArtifactIntakeFile"> | Date | string
+    intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    uploader?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+  }, "id">
+
+  export type ArtifactIntakeFileOrderByWithAggregationInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    organizationId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrderInput | SortOrder
+    extension?: SortOrder
+    sizeBytes?: SortOrder
+    content?: SortOrder
+    sourceTypeStatus?: SortOrder
+    sourceType?: SortOrderInput | SortOrder
+    sourceTypeConfidence?: SortOrderInput | SortOrder
+    classifiedAt?: SortOrderInput | SortOrder
+    parsedAt?: SortOrderInput | SortOrder
+    parsedArtifacts?: SortOrderInput | SortOrder
+    uploadedBy?: SortOrderInput | SortOrder
+    uploadedAt?: SortOrder
+    _count?: ArtifactIntakeFileCountOrderByAggregateInput
+    _avg?: ArtifactIntakeFileAvgOrderByAggregateInput
+    _max?: ArtifactIntakeFileMaxOrderByAggregateInput
+    _min?: ArtifactIntakeFileMinOrderByAggregateInput
+    _sum?: ArtifactIntakeFileSumOrderByAggregateInput
+  }
+
+  export type ArtifactIntakeFileScalarWhereWithAggregatesInput = {
+    AND?: ArtifactIntakeFileScalarWhereWithAggregatesInput | ArtifactIntakeFileScalarWhereWithAggregatesInput[]
+    OR?: ArtifactIntakeFileScalarWhereWithAggregatesInput[]
+    NOT?: ArtifactIntakeFileScalarWhereWithAggregatesInput | ArtifactIntakeFileScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ArtifactIntakeFile"> | string
+    intakeSessionId?: StringWithAggregatesFilter<"ArtifactIntakeFile"> | string
+    organizationId?: StringWithAggregatesFilter<"ArtifactIntakeFile"> | string
+    fileName?: StringWithAggregatesFilter<"ArtifactIntakeFile"> | string
+    mimeType?: StringNullableWithAggregatesFilter<"ArtifactIntakeFile"> | string | null
+    extension?: StringWithAggregatesFilter<"ArtifactIntakeFile"> | string
+    sizeBytes?: IntWithAggregatesFilter<"ArtifactIntakeFile"> | number
+    content?: StringWithAggregatesFilter<"ArtifactIntakeFile"> | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusWithAggregatesFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceTypeStatus
+    sourceType?: EnumArtifactSourceTypeNullableWithAggregatesFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: EnumExtractionConfidenceNullableWithAggregatesFilter<"ArtifactIntakeFile"> | $Enums.ExtractionConfidence | null
+    classifiedAt?: DateTimeNullableWithAggregatesFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedAt?: DateTimeNullableWithAggregatesFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedArtifacts?: JsonNullableWithAggregatesFilter<"ArtifactIntakeFile">
+    uploadedBy?: StringNullableWithAggregatesFilter<"ArtifactIntakeFile"> | string | null
+    uploadedAt?: DateTimeWithAggregatesFilter<"ArtifactIntakeFile"> | Date | string
+  }
+
   export type OrganizationCreateInput = {
     id: string
     slug: string
@@ -12348,6 +15520,8 @@ export namespace Prisma {
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -12362,6 +15536,8 @@ export namespace Prisma {
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
@@ -12376,6 +15552,8 @@ export namespace Prisma {
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -12390,6 +15568,8 @@ export namespace Prisma {
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -12426,6 +15606,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserUncheckedCreateInput = {
@@ -12438,6 +15620,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserUpdateInput = {
@@ -12450,6 +15634,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
   }
 
   export type AppUserUncheckedUpdateInput = {
@@ -12462,6 +15648,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
   }
 
   export type AppUserCreateManyInput = {
@@ -13082,6 +16270,222 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ArtifactIntakeSessionCreateInput = {
+    id: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput
+    creator?: AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput
+    files?: ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedCreateInput = {
+    id: string
+    organizationId: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    files?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput
+    creator?: AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput
+    files?: ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    files?: ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeSessionCreateManyInput = {
+    id: string
+    organizationId: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactIntakeSessionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileCreateInput = {
+    id: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string
+    intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
+    uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateInput = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: string | null
+    uploadedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
+    uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileCreateManyInput = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: string | null
+    uploadedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -13144,6 +16548,18 @@ export namespace Prisma {
     none?: ActivityEventWhereInput
   }
 
+  export type ArtifactIntakeSessionListRelationFilter = {
+    every?: ArtifactIntakeSessionWhereInput
+    some?: ArtifactIntakeSessionWhereInput
+    none?: ArtifactIntakeSessionWhereInput
+  }
+
+  export type ArtifactIntakeFileListRelationFilter = {
+    every?: ArtifactIntakeFileWhereInput
+    some?: ArtifactIntakeFileWhereInput
+    none?: ArtifactIntakeFileWhereInput
+  }
+
   export type MembershipOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -13165,6 +16581,14 @@ export namespace Prisma {
   }
 
   export type ActivityEventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ArtifactIntakeSessionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ArtifactIntakeFileOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -13875,6 +17299,203 @@ export namespace Prisma {
     _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
+  export type EnumArtifactIntakeSessionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactIntakeSessionStatus | EnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel> | $Enums.ArtifactIntakeSessionStatus
+  }
+
+  export type ArtifactIntakeSessionCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    label?: SortOrder
+    status?: SortOrder
+    mappedArtifacts?: SortOrder
+    mappingCompletedAt?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ArtifactIntakeSessionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    label?: SortOrder
+    status?: SortOrder
+    mappingCompletedAt?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ArtifactIntakeSessionMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    label?: SortOrder
+    status?: SortOrder
+    mappingCompletedAt?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumArtifactIntakeSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactIntakeSessionStatus | EnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactIntakeSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactIntakeSessionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel>
+    _max?: NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel>
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type EnumArtifactSourceTypeStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceTypeStatus | EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeStatusFilter<$PrismaModel> | $Enums.ArtifactSourceTypeStatus
+  }
+
+  export type EnumArtifactSourceTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactSourceTypeNullableFilter<$PrismaModel> | $Enums.ArtifactSourceType | null
+  }
+
+  export type EnumExtractionConfidenceNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel> | $Enums.ExtractionConfidence | null
+  }
+
+  export type ArtifactIntakeSessionScalarRelationFilter = {
+    is?: ArtifactIntakeSessionWhereInput
+    isNot?: ArtifactIntakeSessionWhereInput
+  }
+
+  export type ArtifactIntakeFileCountOrderByAggregateInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    organizationId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    extension?: SortOrder
+    sizeBytes?: SortOrder
+    content?: SortOrder
+    sourceTypeStatus?: SortOrder
+    sourceType?: SortOrder
+    sourceTypeConfidence?: SortOrder
+    classifiedAt?: SortOrder
+    parsedAt?: SortOrder
+    parsedArtifacts?: SortOrder
+    uploadedBy?: SortOrder
+    uploadedAt?: SortOrder
+  }
+
+  export type ArtifactIntakeFileAvgOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type ArtifactIntakeFileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    organizationId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    extension?: SortOrder
+    sizeBytes?: SortOrder
+    content?: SortOrder
+    sourceTypeStatus?: SortOrder
+    sourceType?: SortOrder
+    sourceTypeConfidence?: SortOrder
+    classifiedAt?: SortOrder
+    parsedAt?: SortOrder
+    uploadedBy?: SortOrder
+    uploadedAt?: SortOrder
+  }
+
+  export type ArtifactIntakeFileMinOrderByAggregateInput = {
+    id?: SortOrder
+    intakeSessionId?: SortOrder
+    organizationId?: SortOrder
+    fileName?: SortOrder
+    mimeType?: SortOrder
+    extension?: SortOrder
+    sizeBytes?: SortOrder
+    content?: SortOrder
+    sourceTypeStatus?: SortOrder
+    sourceType?: SortOrder
+    sourceTypeConfidence?: SortOrder
+    classifiedAt?: SortOrder
+    parsedAt?: SortOrder
+    uploadedBy?: SortOrder
+    uploadedAt?: SortOrder
+  }
+
+  export type ArtifactIntakeFileSumOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type EnumArtifactSourceTypeStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceTypeStatus | EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeStatusWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactSourceTypeStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactSourceTypeStatusFilter<$PrismaModel>
+    _max?: NestedEnumArtifactSourceTypeStatusFilter<$PrismaModel>
+  }
+
+  export type EnumArtifactSourceTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactSourceTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactSourceType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumArtifactSourceTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumArtifactSourceTypeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumExtractionConfidenceNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumExtractionConfidenceNullableWithAggregatesFilter<$PrismaModel> | $Enums.ExtractionConfidence | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel>
+    _max?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel>
+  }
+
   export type MembershipCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -13917,6 +17538,20 @@ export namespace Prisma {
     connect?: ActivityEventWhereUniqueInput | ActivityEventWhereUniqueInput[]
   }
 
+  export type ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeSessionCreateWithoutOrganizationInput[] | ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput | ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeSessionCreateManyOrganizationInputEnvelope
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+  }
+
+  export type ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutOrganizationInput, ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeFileCreateWithoutOrganizationInput[] | ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput | ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeFileCreateManyOrganizationInputEnvelope
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+  }
+
   export type MembershipUncheckedCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -13957,6 +17592,20 @@ export namespace Prisma {
     connectOrCreate?: ActivityEventCreateOrConnectWithoutOrganizationInput | ActivityEventCreateOrConnectWithoutOrganizationInput[]
     createMany?: ActivityEventCreateManyOrganizationInputEnvelope
     connect?: ActivityEventWhereUniqueInput | ActivityEventWhereUniqueInput[]
+  }
+
+  export type ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeSessionCreateWithoutOrganizationInput[] | ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput | ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeSessionCreateManyOrganizationInputEnvelope
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutOrganizationInput, ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeFileCreateWithoutOrganizationInput[] | ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput | ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeFileCreateManyOrganizationInputEnvelope
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -14051,6 +17700,34 @@ export namespace Prisma {
     deleteMany?: ActivityEventScalarWhereInput | ActivityEventScalarWhereInput[]
   }
 
+  export type ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeSessionCreateWithoutOrganizationInput[] | ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput | ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ArtifactIntakeSessionUpsertWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeSessionUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeSessionCreateManyOrganizationInputEnvelope
+    set?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    disconnect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    delete?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    update?: ArtifactIntakeSessionUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeSessionUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ArtifactIntakeSessionUpdateManyWithWhereWithoutOrganizationInput | ArtifactIntakeSessionUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ArtifactIntakeSessionScalarWhereInput | ArtifactIntakeSessionScalarWhereInput[]
+  }
+
+  export type ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutOrganizationInput, ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeFileCreateWithoutOrganizationInput[] | ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput | ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ArtifactIntakeFileUpsertWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeFileUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeFileCreateManyOrganizationInputEnvelope
+    set?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    disconnect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    delete?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutOrganizationInput | ArtifactIntakeFileUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+  }
+
   export type MembershipUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -14135,6 +17812,34 @@ export namespace Prisma {
     deleteMany?: ActivityEventScalarWhereInput | ActivityEventScalarWhereInput[]
   }
 
+  export type ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeSessionCreateWithoutOrganizationInput[] | ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput | ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ArtifactIntakeSessionUpsertWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeSessionUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeSessionCreateManyOrganizationInputEnvelope
+    set?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    disconnect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    delete?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    update?: ArtifactIntakeSessionUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeSessionUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ArtifactIntakeSessionUpdateManyWithWhereWithoutOrganizationInput | ArtifactIntakeSessionUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ArtifactIntakeSessionScalarWhereInput | ArtifactIntakeSessionScalarWhereInput[]
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutOrganizationInput, ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput> | ArtifactIntakeFileCreateWithoutOrganizationInput[] | ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput | ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ArtifactIntakeFileUpsertWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeFileUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ArtifactIntakeFileCreateManyOrganizationInputEnvelope
+    set?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    disconnect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    delete?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutOrganizationInput | ArtifactIntakeFileUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+  }
+
   export type MembershipCreateNestedManyWithoutUserInput = {
     create?: XOR<MembershipCreateWithoutUserInput, MembershipUncheckedCreateWithoutUserInput> | MembershipCreateWithoutUserInput[] | MembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutUserInput | MembershipCreateOrConnectWithoutUserInput[]
@@ -14163,6 +17868,20 @@ export namespace Prisma {
     connect?: ActivityEventWhereUniqueInput | ActivityEventWhereUniqueInput[]
   }
 
+  export type ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutCreatorInput, ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput> | ArtifactIntakeSessionCreateWithoutCreatorInput[] | ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput | ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput[]
+    createMany?: ArtifactIntakeSessionCreateManyCreatorInputEnvelope
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+  }
+
+  export type ArtifactIntakeFileCreateNestedManyWithoutUploaderInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutUploaderInput, ArtifactIntakeFileUncheckedCreateWithoutUploaderInput> | ArtifactIntakeFileCreateWithoutUploaderInput[] | ArtifactIntakeFileUncheckedCreateWithoutUploaderInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutUploaderInput | ArtifactIntakeFileCreateOrConnectWithoutUploaderInput[]
+    createMany?: ArtifactIntakeFileCreateManyUploaderInputEnvelope
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+  }
+
   export type MembershipUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<MembershipCreateWithoutUserInput, MembershipUncheckedCreateWithoutUserInput> | MembershipCreateWithoutUserInput[] | MembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutUserInput | MembershipCreateOrConnectWithoutUserInput[]
@@ -14189,6 +17908,20 @@ export namespace Prisma {
     connectOrCreate?: ActivityEventCreateOrConnectWithoutActorInput | ActivityEventCreateOrConnectWithoutActorInput[]
     createMany?: ActivityEventCreateManyActorInputEnvelope
     connect?: ActivityEventWhereUniqueInput | ActivityEventWhereUniqueInput[]
+  }
+
+  export type ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutCreatorInput, ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput> | ArtifactIntakeSessionCreateWithoutCreatorInput[] | ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput | ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput[]
+    createMany?: ArtifactIntakeSessionCreateManyCreatorInputEnvelope
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutUploaderInput, ArtifactIntakeFileUncheckedCreateWithoutUploaderInput> | ArtifactIntakeFileCreateWithoutUploaderInput[] | ArtifactIntakeFileUncheckedCreateWithoutUploaderInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutUploaderInput | ArtifactIntakeFileCreateOrConnectWithoutUploaderInput[]
+    createMany?: ArtifactIntakeFileCreateManyUploaderInputEnvelope
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
@@ -14251,6 +17984,34 @@ export namespace Prisma {
     deleteMany?: ActivityEventScalarWhereInput | ActivityEventScalarWhereInput[]
   }
 
+  export type ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutCreatorInput, ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput> | ArtifactIntakeSessionCreateWithoutCreatorInput[] | ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput | ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput[]
+    upsert?: ArtifactIntakeSessionUpsertWithWhereUniqueWithoutCreatorInput | ArtifactIntakeSessionUpsertWithWhereUniqueWithoutCreatorInput[]
+    createMany?: ArtifactIntakeSessionCreateManyCreatorInputEnvelope
+    set?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    disconnect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    delete?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    update?: ArtifactIntakeSessionUpdateWithWhereUniqueWithoutCreatorInput | ArtifactIntakeSessionUpdateWithWhereUniqueWithoutCreatorInput[]
+    updateMany?: ArtifactIntakeSessionUpdateManyWithWhereWithoutCreatorInput | ArtifactIntakeSessionUpdateManyWithWhereWithoutCreatorInput[]
+    deleteMany?: ArtifactIntakeSessionScalarWhereInput | ArtifactIntakeSessionScalarWhereInput[]
+  }
+
+  export type ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutUploaderInput, ArtifactIntakeFileUncheckedCreateWithoutUploaderInput> | ArtifactIntakeFileCreateWithoutUploaderInput[] | ArtifactIntakeFileUncheckedCreateWithoutUploaderInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutUploaderInput | ArtifactIntakeFileCreateOrConnectWithoutUploaderInput[]
+    upsert?: ArtifactIntakeFileUpsertWithWhereUniqueWithoutUploaderInput | ArtifactIntakeFileUpsertWithWhereUniqueWithoutUploaderInput[]
+    createMany?: ArtifactIntakeFileCreateManyUploaderInputEnvelope
+    set?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    disconnect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    delete?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutUploaderInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutUploaderInput[]
+    updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutUploaderInput | ArtifactIntakeFileUpdateManyWithWhereWithoutUploaderInput[]
+    deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+  }
+
   export type MembershipUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<MembershipCreateWithoutUserInput, MembershipUncheckedCreateWithoutUserInput> | MembershipCreateWithoutUserInput[] | MembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutUserInput | MembershipCreateOrConnectWithoutUserInput[]
@@ -14305,6 +18066,34 @@ export namespace Prisma {
     update?: ActivityEventUpdateWithWhereUniqueWithoutActorInput | ActivityEventUpdateWithWhereUniqueWithoutActorInput[]
     updateMany?: ActivityEventUpdateManyWithWhereWithoutActorInput | ActivityEventUpdateManyWithWhereWithoutActorInput[]
     deleteMany?: ActivityEventScalarWhereInput | ActivityEventScalarWhereInput[]
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutCreatorInput, ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput> | ArtifactIntakeSessionCreateWithoutCreatorInput[] | ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput | ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput[]
+    upsert?: ArtifactIntakeSessionUpsertWithWhereUniqueWithoutCreatorInput | ArtifactIntakeSessionUpsertWithWhereUniqueWithoutCreatorInput[]
+    createMany?: ArtifactIntakeSessionCreateManyCreatorInputEnvelope
+    set?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    disconnect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    delete?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    connect?: ArtifactIntakeSessionWhereUniqueInput | ArtifactIntakeSessionWhereUniqueInput[]
+    update?: ArtifactIntakeSessionUpdateWithWhereUniqueWithoutCreatorInput | ArtifactIntakeSessionUpdateWithWhereUniqueWithoutCreatorInput[]
+    updateMany?: ArtifactIntakeSessionUpdateManyWithWhereWithoutCreatorInput | ArtifactIntakeSessionUpdateManyWithWhereWithoutCreatorInput[]
+    deleteMany?: ArtifactIntakeSessionScalarWhereInput | ArtifactIntakeSessionScalarWhereInput[]
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutUploaderInput, ArtifactIntakeFileUncheckedCreateWithoutUploaderInput> | ArtifactIntakeFileCreateWithoutUploaderInput[] | ArtifactIntakeFileUncheckedCreateWithoutUploaderInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutUploaderInput | ArtifactIntakeFileCreateOrConnectWithoutUploaderInput[]
+    upsert?: ArtifactIntakeFileUpsertWithWhereUniqueWithoutUploaderInput | ArtifactIntakeFileUpsertWithWhereUniqueWithoutUploaderInput[]
+    createMany?: ArtifactIntakeFileCreateManyUploaderInputEnvelope
+    set?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    disconnect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    delete?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutUploaderInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutUploaderInput[]
+    updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutUploaderInput | ArtifactIntakeFileUpdateManyWithWhereWithoutUploaderInput[]
+    deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
   }
 
   export type OrganizationCreateNestedOneWithoutMembershipsInput = {
@@ -14718,6 +18507,146 @@ export namespace Prisma {
     update?: XOR<XOR<AppUserUpdateToOneWithWhereWithoutActivityEventsInput, AppUserUpdateWithoutActivityEventsInput>, AppUserUncheckedUpdateWithoutActivityEventsInput>
   }
 
+  export type OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput = {
+    create?: XOR<OrganizationCreateWithoutArtifactIntakeSessionsInput, OrganizationUncheckedCreateWithoutArtifactIntakeSessionsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutArtifactIntakeSessionsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput = {
+    create?: XOR<AppUserCreateWithoutCreatedIntakeSessionsInput, AppUserUncheckedCreateWithoutCreatedIntakeSessionsInput>
+    connectOrCreate?: AppUserCreateOrConnectWithoutCreatedIntakeSessionsInput
+    connect?: AppUserWhereUniqueInput
+  }
+
+  export type ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput> | ArtifactIntakeFileCreateWithoutIntakeSessionInput[] | ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput | ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput[]
+    createMany?: ArtifactIntakeFileCreateManyIntakeSessionInputEnvelope
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput> | ArtifactIntakeFileCreateWithoutIntakeSessionInput[] | ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput | ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput[]
+    createMany?: ArtifactIntakeFileCreateManyIntakeSessionInputEnvelope
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+  }
+
+  export type EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactIntakeSessionStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutArtifactIntakeSessionsInput, OrganizationUncheckedCreateWithoutArtifactIntakeSessionsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutArtifactIntakeSessionsInput
+    upsert?: OrganizationUpsertWithoutArtifactIntakeSessionsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutArtifactIntakeSessionsInput, OrganizationUpdateWithoutArtifactIntakeSessionsInput>, OrganizationUncheckedUpdateWithoutArtifactIntakeSessionsInput>
+  }
+
+  export type AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput = {
+    create?: XOR<AppUserCreateWithoutCreatedIntakeSessionsInput, AppUserUncheckedCreateWithoutCreatedIntakeSessionsInput>
+    connectOrCreate?: AppUserCreateOrConnectWithoutCreatedIntakeSessionsInput
+    upsert?: AppUserUpsertWithoutCreatedIntakeSessionsInput
+    disconnect?: AppUserWhereInput | boolean
+    delete?: AppUserWhereInput | boolean
+    connect?: AppUserWhereUniqueInput
+    update?: XOR<XOR<AppUserUpdateToOneWithWhereWithoutCreatedIntakeSessionsInput, AppUserUpdateWithoutCreatedIntakeSessionsInput>, AppUserUncheckedUpdateWithoutCreatedIntakeSessionsInput>
+  }
+
+  export type ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput> | ArtifactIntakeFileCreateWithoutIntakeSessionInput[] | ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput | ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput[]
+    upsert?: ArtifactIntakeFileUpsertWithWhereUniqueWithoutIntakeSessionInput | ArtifactIntakeFileUpsertWithWhereUniqueWithoutIntakeSessionInput[]
+    createMany?: ArtifactIntakeFileCreateManyIntakeSessionInputEnvelope
+    set?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    disconnect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    delete?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutIntakeSessionInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutIntakeSessionInput[]
+    updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutIntakeSessionInput | ArtifactIntakeFileUpdateManyWithWhereWithoutIntakeSessionInput[]
+    deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput = {
+    create?: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput> | ArtifactIntakeFileCreateWithoutIntakeSessionInput[] | ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput[]
+    connectOrCreate?: ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput | ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput[]
+    upsert?: ArtifactIntakeFileUpsertWithWhereUniqueWithoutIntakeSessionInput | ArtifactIntakeFileUpsertWithWhereUniqueWithoutIntakeSessionInput[]
+    createMany?: ArtifactIntakeFileCreateManyIntakeSessionInputEnvelope
+    set?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    disconnect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    delete?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    connect?: ArtifactIntakeFileWhereUniqueInput | ArtifactIntakeFileWhereUniqueInput[]
+    update?: ArtifactIntakeFileUpdateWithWhereUniqueWithoutIntakeSessionInput | ArtifactIntakeFileUpdateWithWhereUniqueWithoutIntakeSessionInput[]
+    updateMany?: ArtifactIntakeFileUpdateManyWithWhereWithoutIntakeSessionInput | ArtifactIntakeFileUpdateManyWithWhereWithoutIntakeSessionInput[]
+    deleteMany?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+  }
+
+  export type ArtifactIntakeSessionCreateNestedOneWithoutFilesInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutFilesInput, ArtifactIntakeSessionUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutFilesInput
+    connect?: ArtifactIntakeSessionWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput = {
+    create?: XOR<OrganizationCreateWithoutArtifactIntakeFilesInput, OrganizationUncheckedCreateWithoutArtifactIntakeFilesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutArtifactIntakeFilesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type AppUserCreateNestedOneWithoutUploadedIntakeFilesInput = {
+    create?: XOR<AppUserCreateWithoutUploadedIntakeFilesInput, AppUserUncheckedCreateWithoutUploadedIntakeFilesInput>
+    connectOrCreate?: AppUserCreateOrConnectWithoutUploadedIntakeFilesInput
+    connect?: AppUserWhereUniqueInput
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type EnumArtifactSourceTypeStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactSourceTypeStatus
+  }
+
+  export type NullableEnumArtifactSourceTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ArtifactSourceType | null
+  }
+
+  export type NullableEnumExtractionConfidenceFieldUpdateOperationsInput = {
+    set?: $Enums.ExtractionConfidence | null
+  }
+
+  export type ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput = {
+    create?: XOR<ArtifactIntakeSessionCreateWithoutFilesInput, ArtifactIntakeSessionUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: ArtifactIntakeSessionCreateOrConnectWithoutFilesInput
+    upsert?: ArtifactIntakeSessionUpsertWithoutFilesInput
+    connect?: ArtifactIntakeSessionWhereUniqueInput
+    update?: XOR<XOR<ArtifactIntakeSessionUpdateToOneWithWhereWithoutFilesInput, ArtifactIntakeSessionUpdateWithoutFilesInput>, ArtifactIntakeSessionUncheckedUpdateWithoutFilesInput>
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutArtifactIntakeFilesInput, OrganizationUncheckedCreateWithoutArtifactIntakeFilesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutArtifactIntakeFilesInput
+    upsert?: OrganizationUpsertWithoutArtifactIntakeFilesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutArtifactIntakeFilesInput, OrganizationUpdateWithoutArtifactIntakeFilesInput>, OrganizationUncheckedUpdateWithoutArtifactIntakeFilesInput>
+  }
+
+  export type AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput = {
+    create?: XOR<AppUserCreateWithoutUploadedIntakeFilesInput, AppUserUncheckedCreateWithoutUploadedIntakeFilesInput>
+    connectOrCreate?: AppUserCreateOrConnectWithoutUploadedIntakeFilesInput
+    upsert?: AppUserUpsertWithoutUploadedIntakeFilesInput
+    disconnect?: AppUserWhereInput | boolean
+    delete?: AppUserWhereInput | boolean
+    connect?: AppUserWhereUniqueInput
+    update?: XOR<XOR<AppUserUpdateToOneWithWhereWithoutUploadedIntakeFilesInput, AppUserUpdateWithoutUploadedIntakeFilesInput>, AppUserUncheckedUpdateWithoutUploadedIntakeFilesInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -15079,6 +19008,101 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactIntakeSessionStatus | EnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel> | $Enums.ArtifactIntakeSessionStatus
+  }
+
+  export type NestedEnumArtifactIntakeSessionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactIntakeSessionStatus | EnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactIntakeSessionStatus[] | ListEnumArtifactIntakeSessionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactIntakeSessionStatusWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactIntakeSessionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel>
+    _max?: NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumArtifactSourceTypeStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceTypeStatus | EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeStatusFilter<$PrismaModel> | $Enums.ArtifactSourceTypeStatus
+  }
+
+  export type NestedEnumArtifactSourceTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactSourceTypeNullableFilter<$PrismaModel> | $Enums.ArtifactSourceType | null
+  }
+
+  export type NestedEnumExtractionConfidenceNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel> | $Enums.ExtractionConfidence | null
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumArtifactSourceTypeStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceTypeStatus | EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumArtifactSourceTypeStatusWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactSourceTypeStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumArtifactSourceTypeStatusFilter<$PrismaModel>
+    _max?: NestedEnumArtifactSourceTypeStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumArtifactSourceTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ArtifactSourceType | EnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ArtifactSourceType[] | ListEnumArtifactSourceTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumArtifactSourceTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.ArtifactSourceType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumArtifactSourceTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumArtifactSourceTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumExtractionConfidenceNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ExtractionConfidence | EnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    in?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.ExtractionConfidence[] | ListEnumExtractionConfidenceFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumExtractionConfidenceNullableWithAggregatesFilter<$PrismaModel> | $Enums.ExtractionConfidence | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel>
+    _max?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel>
+  }
+
   export type MembershipCreateWithoutOrganizationInput = {
     id: string
     role: $Enums.MembershipRole
@@ -15303,6 +19327,86 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ArtifactIntakeSessionCreateWithoutOrganizationInput = {
+    id: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    creator?: AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput
+    files?: ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    files?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionCreateOrConnectWithoutOrganizationInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    create: XOR<ArtifactIntakeSessionCreateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeSessionCreateManyOrganizationInputEnvelope = {
+    data: ArtifactIntakeSessionCreateManyOrganizationInput | ArtifactIntakeSessionCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ArtifactIntakeFileCreateWithoutOrganizationInput = {
+    id: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string
+    intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
+    uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    intakeSessionId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: string | null
+    uploadedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileCreateOrConnectWithoutOrganizationInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    create: XOR<ArtifactIntakeFileCreateWithoutOrganizationInput, ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeFileCreateManyOrganizationInputEnvelope = {
+    data: ArtifactIntakeFileCreateManyOrganizationInput | ArtifactIntakeFileCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type MembershipUpsertWithWhereUniqueWithoutOrganizationInput = {
     where: MembershipWhereUniqueInput
     update: XOR<MembershipUpdateWithoutOrganizationInput, MembershipUncheckedUpdateWithoutOrganizationInput>
@@ -15502,6 +19606,75 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"ActivityEvent"> | Date | string
   }
 
+  export type ArtifactIntakeSessionUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    update: XOR<ArtifactIntakeSessionUpdateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<ArtifactIntakeSessionCreateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeSessionUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    data: XOR<ArtifactIntakeSessionUpdateWithoutOrganizationInput, ArtifactIntakeSessionUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeSessionUpdateManyWithWhereWithoutOrganizationInput = {
+    where: ArtifactIntakeSessionScalarWhereInput
+    data: XOR<ArtifactIntakeSessionUpdateManyMutationInput, ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeSessionScalarWhereInput = {
+    AND?: ArtifactIntakeSessionScalarWhereInput | ArtifactIntakeSessionScalarWhereInput[]
+    OR?: ArtifactIntakeSessionScalarWhereInput[]
+    NOT?: ArtifactIntakeSessionScalarWhereInput | ArtifactIntakeSessionScalarWhereInput[]
+    id?: StringFilter<"ArtifactIntakeSession"> | string
+    organizationId?: StringFilter<"ArtifactIntakeSession"> | string
+    label?: StringFilter<"ArtifactIntakeSession"> | string
+    status?: EnumArtifactIntakeSessionStatusFilter<"ArtifactIntakeSession"> | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: JsonNullableFilter<"ArtifactIntakeSession">
+    mappingCompletedAt?: DateTimeNullableFilter<"ArtifactIntakeSession"> | Date | string | null
+    createdBy?: StringNullableFilter<"ArtifactIntakeSession"> | string | null
+    createdAt?: DateTimeFilter<"ArtifactIntakeSession"> | Date | string
+    updatedAt?: DateTimeFilter<"ArtifactIntakeSession"> | Date | string
+  }
+
+  export type ArtifactIntakeFileUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    update: XOR<ArtifactIntakeFileUpdateWithoutOrganizationInput, ArtifactIntakeFileUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<ArtifactIntakeFileCreateWithoutOrganizationInput, ArtifactIntakeFileUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeFileUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    data: XOR<ArtifactIntakeFileUpdateWithoutOrganizationInput, ArtifactIntakeFileUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeFileUpdateManyWithWhereWithoutOrganizationInput = {
+    where: ArtifactIntakeFileScalarWhereInput
+    data: XOR<ArtifactIntakeFileUpdateManyMutationInput, ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type ArtifactIntakeFileScalarWhereInput = {
+    AND?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+    OR?: ArtifactIntakeFileScalarWhereInput[]
+    NOT?: ArtifactIntakeFileScalarWhereInput | ArtifactIntakeFileScalarWhereInput[]
+    id?: StringFilter<"ArtifactIntakeFile"> | string
+    intakeSessionId?: StringFilter<"ArtifactIntakeFile"> | string
+    organizationId?: StringFilter<"ArtifactIntakeFile"> | string
+    fileName?: StringFilter<"ArtifactIntakeFile"> | string
+    mimeType?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
+    extension?: StringFilter<"ArtifactIntakeFile"> | string
+    sizeBytes?: IntFilter<"ArtifactIntakeFile"> | number
+    content?: StringFilter<"ArtifactIntakeFile"> | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceTypeStatus
+    sourceType?: EnumArtifactSourceTypeNullableFilter<"ArtifactIntakeFile"> | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: EnumExtractionConfidenceNullableFilter<"ArtifactIntakeFile"> | $Enums.ExtractionConfidence | null
+    classifiedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
+    parsedArtifacts?: JsonNullableFilter<"ArtifactIntakeFile">
+    uploadedBy?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
+    uploadedAt?: DateTimeFilter<"ArtifactIntakeFile"> | Date | string
+  }
+
   export type MembershipCreateWithoutUserInput = {
     id: string
     role: $Enums.MembershipRole
@@ -15646,6 +19819,86 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ArtifactIntakeSessionCreateWithoutCreatorInput = {
+    id: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput
+    files?: ArtifactIntakeFileCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput = {
+    id: string
+    organizationId: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    files?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutIntakeSessionInput
+  }
+
+  export type ArtifactIntakeSessionCreateOrConnectWithoutCreatorInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    create: XOR<ArtifactIntakeSessionCreateWithoutCreatorInput, ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput>
+  }
+
+  export type ArtifactIntakeSessionCreateManyCreatorInputEnvelope = {
+    data: ArtifactIntakeSessionCreateManyCreatorInput | ArtifactIntakeSessionCreateManyCreatorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ArtifactIntakeFileCreateWithoutUploaderInput = {
+    id: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string
+    intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateWithoutUploaderInput = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileCreateOrConnectWithoutUploaderInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    create: XOR<ArtifactIntakeFileCreateWithoutUploaderInput, ArtifactIntakeFileUncheckedCreateWithoutUploaderInput>
+  }
+
+  export type ArtifactIntakeFileCreateManyUploaderInputEnvelope = {
+    data: ArtifactIntakeFileCreateManyUploaderInput | ArtifactIntakeFileCreateManyUploaderInput[]
+    skipDuplicates?: boolean
+  }
+
   export type MembershipUpsertWithWhereUniqueWithoutUserInput = {
     where: MembershipWhereUniqueInput
     update: XOR<MembershipUpdateWithoutUserInput, MembershipUncheckedUpdateWithoutUserInput>
@@ -15710,6 +19963,38 @@ export namespace Prisma {
     data: XOR<ActivityEventUpdateManyMutationInput, ActivityEventUncheckedUpdateManyWithoutActorInput>
   }
 
+  export type ArtifactIntakeSessionUpsertWithWhereUniqueWithoutCreatorInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    update: XOR<ArtifactIntakeSessionUpdateWithoutCreatorInput, ArtifactIntakeSessionUncheckedUpdateWithoutCreatorInput>
+    create: XOR<ArtifactIntakeSessionCreateWithoutCreatorInput, ArtifactIntakeSessionUncheckedCreateWithoutCreatorInput>
+  }
+
+  export type ArtifactIntakeSessionUpdateWithWhereUniqueWithoutCreatorInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    data: XOR<ArtifactIntakeSessionUpdateWithoutCreatorInput, ArtifactIntakeSessionUncheckedUpdateWithoutCreatorInput>
+  }
+
+  export type ArtifactIntakeSessionUpdateManyWithWhereWithoutCreatorInput = {
+    where: ArtifactIntakeSessionScalarWhereInput
+    data: XOR<ArtifactIntakeSessionUpdateManyMutationInput, ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorInput>
+  }
+
+  export type ArtifactIntakeFileUpsertWithWhereUniqueWithoutUploaderInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    update: XOR<ArtifactIntakeFileUpdateWithoutUploaderInput, ArtifactIntakeFileUncheckedUpdateWithoutUploaderInput>
+    create: XOR<ArtifactIntakeFileCreateWithoutUploaderInput, ArtifactIntakeFileUncheckedCreateWithoutUploaderInput>
+  }
+
+  export type ArtifactIntakeFileUpdateWithWhereUniqueWithoutUploaderInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    data: XOR<ArtifactIntakeFileUpdateWithoutUploaderInput, ArtifactIntakeFileUncheckedUpdateWithoutUploaderInput>
+  }
+
+  export type ArtifactIntakeFileUpdateManyWithWhereWithoutUploaderInput = {
+    where: ArtifactIntakeFileScalarWhereInput
+    data: XOR<ArtifactIntakeFileUpdateManyMutationInput, ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderInput>
+  }
+
   export type OrganizationCreateWithoutMembershipsInput = {
     id: string
     slug: string
@@ -15721,6 +20006,8 @@ export namespace Prisma {
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -15734,6 +20021,8 @@ export namespace Prisma {
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -15750,6 +20039,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserUncheckedCreateWithoutMembershipsInput = {
@@ -15761,6 +20052,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserCreateOrConnectWithoutMembershipsInput = {
@@ -15790,6 +20083,8 @@ export namespace Prisma {
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -15803,6 +20098,8 @@ export namespace Prisma {
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutMembershipsInput = {
@@ -15825,6 +20122,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
   }
 
   export type AppUserUncheckedUpdateWithoutMembershipsInput = {
@@ -15836,6 +20135,8 @@ export namespace Prisma {
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
   }
 
   export type OrganizationCreateWithoutOutcomesInput = {
@@ -15849,6 +20150,8 @@ export namespace Prisma {
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOutcomesInput = {
@@ -15862,6 +20165,8 @@ export namespace Prisma {
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOutcomesInput = {
@@ -15878,6 +20183,8 @@ export namespace Prisma {
     memberships?: MembershipCreateNestedManyWithoutUserInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserUncheckedCreateWithoutOwnedOutcomesInput = {
@@ -15889,6 +20196,8 @@ export namespace Prisma {
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserCreateOrConnectWithoutOwnedOutcomesInput = {
@@ -15998,6 +20307,8 @@ export namespace Prisma {
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOutcomesInput = {
@@ -16011,6 +20322,8 @@ export namespace Prisma {
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutOwnedOutcomesInput = {
@@ -16033,6 +20346,8 @@ export namespace Prisma {
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
   }
 
   export type AppUserUncheckedUpdateWithoutOwnedOutcomesInput = {
@@ -16044,6 +20359,8 @@ export namespace Prisma {
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
   }
 
   export type EpicUpsertWithWhereUniqueWithoutOutcomeInput = {
@@ -16089,6 +20406,8 @@ export namespace Prisma {
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEpicsInput = {
@@ -16102,6 +20421,8 @@ export namespace Prisma {
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEpicsInput = {
@@ -16220,6 +20541,8 @@ export namespace Prisma {
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEpicsInput = {
@@ -16233,6 +20556,8 @@ export namespace Prisma {
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OutcomeUpsertWithoutEpicsInput = {
@@ -16311,6 +20636,8 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutStoriesInput = {
@@ -16324,6 +20651,8 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutStoriesInput = {
@@ -16425,6 +20754,8 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutStoriesInput = {
@@ -16438,6 +20769,8 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OutcomeUpsertWithoutStoriesInput = {
@@ -16535,6 +20868,8 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutTollgatesInput = {
@@ -16548,6 +20883,8 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutTollgatesInput = {
@@ -16564,6 +20901,8 @@ export namespace Prisma {
     memberships?: MembershipCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserUncheckedCreateWithoutTollgateDecisionsInput = {
@@ -16575,6 +20914,8 @@ export namespace Prisma {
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserCreateOrConnectWithoutTollgateDecisionsInput = {
@@ -16604,6 +20945,8 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutTollgatesInput = {
@@ -16617,6 +20960,8 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutTollgateDecisionsInput = {
@@ -16639,6 +20984,8 @@ export namespace Prisma {
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
   }
 
   export type AppUserUncheckedUpdateWithoutTollgateDecisionsInput = {
@@ -16650,6 +20997,8 @@ export namespace Prisma {
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
   }
 
   export type OrganizationCreateWithoutActivityEventsInput = {
@@ -16663,6 +21012,8 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutActivityEventsInput = {
@@ -16676,6 +21027,8 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutActivityEventsInput = {
@@ -16692,6 +21045,8 @@ export namespace Prisma {
     memberships?: MembershipCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserUncheckedCreateWithoutActivityEventsInput = {
@@ -16703,6 +21058,8 @@ export namespace Prisma {
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
   }
 
   export type AppUserCreateOrConnectWithoutActivityEventsInput = {
@@ -16732,6 +21089,8 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutActivityEventsInput = {
@@ -16745,6 +21104,8 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutActivityEventsInput = {
@@ -16767,6 +21128,8 @@ export namespace Prisma {
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
   }
 
   export type AppUserUncheckedUpdateWithoutActivityEventsInput = {
@@ -16778,6 +21141,422 @@ export namespace Prisma {
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
+  }
+
+  export type OrganizationCreateWithoutArtifactIntakeSessionsInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutArtifactIntakeSessionsInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutArtifactIntakeSessionsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutArtifactIntakeSessionsInput, OrganizationUncheckedCreateWithoutArtifactIntakeSessionsInput>
+  }
+
+  export type AppUserCreateWithoutCreatedIntakeSessionsInput = {
+    id: string
+    email: string
+    fullName?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutUserInput
+    ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
+    tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
+  }
+
+  export type AppUserUncheckedCreateWithoutCreatedIntakeSessionsInput = {
+    id: string
+    email: string
+    fullName?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
+    ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
+    tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
+  }
+
+  export type AppUserCreateOrConnectWithoutCreatedIntakeSessionsInput = {
+    where: AppUserWhereUniqueInput
+    create: XOR<AppUserCreateWithoutCreatedIntakeSessionsInput, AppUserUncheckedCreateWithoutCreatedIntakeSessionsInput>
+  }
+
+  export type ArtifactIntakeFileCreateWithoutIntakeSessionInput = {
+    id: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
+    uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
+  }
+
+  export type ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput = {
+    id: string
+    organizationId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: string | null
+    uploadedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileCreateOrConnectWithoutIntakeSessionInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    create: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput>
+  }
+
+  export type ArtifactIntakeFileCreateManyIntakeSessionInputEnvelope = {
+    data: ArtifactIntakeFileCreateManyIntakeSessionInput | ArtifactIntakeFileCreateManyIntakeSessionInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutArtifactIntakeSessionsInput = {
+    update: XOR<OrganizationUpdateWithoutArtifactIntakeSessionsInput, OrganizationUncheckedUpdateWithoutArtifactIntakeSessionsInput>
+    create: XOR<OrganizationCreateWithoutArtifactIntakeSessionsInput, OrganizationUncheckedCreateWithoutArtifactIntakeSessionsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutArtifactIntakeSessionsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutArtifactIntakeSessionsInput, OrganizationUncheckedUpdateWithoutArtifactIntakeSessionsInput>
+  }
+
+  export type OrganizationUpdateWithoutArtifactIntakeSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutArtifactIntakeSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type AppUserUpsertWithoutCreatedIntakeSessionsInput = {
+    update: XOR<AppUserUpdateWithoutCreatedIntakeSessionsInput, AppUserUncheckedUpdateWithoutCreatedIntakeSessionsInput>
+    create: XOR<AppUserCreateWithoutCreatedIntakeSessionsInput, AppUserUncheckedCreateWithoutCreatedIntakeSessionsInput>
+    where?: AppUserWhereInput
+  }
+
+  export type AppUserUpdateToOneWithWhereWithoutCreatedIntakeSessionsInput = {
+    where?: AppUserWhereInput
+    data: XOR<AppUserUpdateWithoutCreatedIntakeSessionsInput, AppUserUncheckedUpdateWithoutCreatedIntakeSessionsInput>
+  }
+
+  export type AppUserUpdateWithoutCreatedIntakeSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutUserNestedInput
+    ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
+    tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
+  }
+
+  export type AppUserUncheckedUpdateWithoutCreatedIntakeSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
+    ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
+    tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
+  }
+
+  export type ArtifactIntakeFileUpsertWithWhereUniqueWithoutIntakeSessionInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    update: XOR<ArtifactIntakeFileUpdateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedUpdateWithoutIntakeSessionInput>
+    create: XOR<ArtifactIntakeFileCreateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedCreateWithoutIntakeSessionInput>
+  }
+
+  export type ArtifactIntakeFileUpdateWithWhereUniqueWithoutIntakeSessionInput = {
+    where: ArtifactIntakeFileWhereUniqueInput
+    data: XOR<ArtifactIntakeFileUpdateWithoutIntakeSessionInput, ArtifactIntakeFileUncheckedUpdateWithoutIntakeSessionInput>
+  }
+
+  export type ArtifactIntakeFileUpdateManyWithWhereWithoutIntakeSessionInput = {
+    where: ArtifactIntakeFileScalarWhereInput
+    data: XOR<ArtifactIntakeFileUpdateManyMutationInput, ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionInput>
+  }
+
+  export type ArtifactIntakeSessionCreateWithoutFilesInput = {
+    id: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutArtifactIntakeSessionsInput
+    creator?: AppUserCreateNestedOneWithoutCreatedIntakeSessionsInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedCreateWithoutFilesInput = {
+    id: string
+    organizationId: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactIntakeSessionCreateOrConnectWithoutFilesInput = {
+    where: ArtifactIntakeSessionWhereUniqueInput
+    create: XOR<ArtifactIntakeSessionCreateWithoutFilesInput, ArtifactIntakeSessionUncheckedCreateWithoutFilesInput>
+  }
+
+  export type OrganizationCreateWithoutArtifactIntakeFilesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutArtifactIntakeFilesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutArtifactIntakeFilesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutArtifactIntakeFilesInput, OrganizationUncheckedCreateWithoutArtifactIntakeFilesInput>
+  }
+
+  export type AppUserCreateWithoutUploadedIntakeFilesInput = {
+    id: string
+    email: string
+    fullName?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutUserInput
+    ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
+    tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
+  }
+
+  export type AppUserUncheckedCreateWithoutUploadedIntakeFilesInput = {
+    id: string
+    email: string
+    fullName?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
+    ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
+    tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
+  }
+
+  export type AppUserCreateOrConnectWithoutUploadedIntakeFilesInput = {
+    where: AppUserWhereUniqueInput
+    create: XOR<AppUserCreateWithoutUploadedIntakeFilesInput, AppUserUncheckedCreateWithoutUploadedIntakeFilesInput>
+  }
+
+  export type ArtifactIntakeSessionUpsertWithoutFilesInput = {
+    update: XOR<ArtifactIntakeSessionUpdateWithoutFilesInput, ArtifactIntakeSessionUncheckedUpdateWithoutFilesInput>
+    create: XOR<ArtifactIntakeSessionCreateWithoutFilesInput, ArtifactIntakeSessionUncheckedCreateWithoutFilesInput>
+    where?: ArtifactIntakeSessionWhereInput
+  }
+
+  export type ArtifactIntakeSessionUpdateToOneWithWhereWithoutFilesInput = {
+    where?: ArtifactIntakeSessionWhereInput
+    data: XOR<ArtifactIntakeSessionUpdateWithoutFilesInput, ArtifactIntakeSessionUncheckedUpdateWithoutFilesInput>
+  }
+
+  export type ArtifactIntakeSessionUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput
+    creator?: AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationUpsertWithoutArtifactIntakeFilesInput = {
+    update: XOR<OrganizationUpdateWithoutArtifactIntakeFilesInput, OrganizationUncheckedUpdateWithoutArtifactIntakeFilesInput>
+    create: XOR<OrganizationCreateWithoutArtifactIntakeFilesInput, OrganizationUncheckedCreateWithoutArtifactIntakeFilesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutArtifactIntakeFilesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutArtifactIntakeFilesInput, OrganizationUncheckedUpdateWithoutArtifactIntakeFilesInput>
+  }
+
+  export type OrganizationUpdateWithoutArtifactIntakeFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutArtifactIntakeFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type AppUserUpsertWithoutUploadedIntakeFilesInput = {
+    update: XOR<AppUserUpdateWithoutUploadedIntakeFilesInput, AppUserUncheckedUpdateWithoutUploadedIntakeFilesInput>
+    create: XOR<AppUserCreateWithoutUploadedIntakeFilesInput, AppUserUncheckedCreateWithoutUploadedIntakeFilesInput>
+    where?: AppUserWhereInput
+  }
+
+  export type AppUserUpdateToOneWithWhereWithoutUploadedIntakeFilesInput = {
+    where?: AppUserWhereInput
+    data: XOR<AppUserUpdateWithoutUploadedIntakeFilesInput, AppUserUncheckedUpdateWithoutUploadedIntakeFilesInput>
+  }
+
+  export type AppUserUpdateWithoutUploadedIntakeFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutUserNestedInput
+    ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
+    tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
+  }
+
+  export type AppUserUncheckedUpdateWithoutUploadedIntakeFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
+    ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
+    tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
   }
 
   export type MembershipCreateManyOrganizationInput = {
@@ -16857,6 +21636,35 @@ export namespace Prisma {
     actorId?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
+  }
+
+  export type ArtifactIntakeSessionCreateManyOrganizationInput = {
+    id: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileCreateManyOrganizationInput = {
+    id: string
+    intakeSessionId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: string | null
+    uploadedAt?: Date | string
   }
 
   export type MembershipUpdateWithoutOrganizationInput = {
@@ -17102,6 +21910,95 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ArtifactIntakeSessionUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    creator?: AppUserUpdateOneWithoutCreatedIntakeSessionsNestedInput
+    files?: ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    files?: ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
+    uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type MembershipCreateManyUserInput = {
     id: string
     organizationId: string
@@ -17150,6 +22047,35 @@ export namespace Prisma {
     eventType: $Enums.ActivityEventType
     metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
+  }
+
+  export type ArtifactIntakeSessionCreateManyCreatorInput = {
+    id: string
+    organizationId: string
+    label: string
+    status?: $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileCreateManyUploaderInput = {
+    id: string
+    intakeSessionId: string
+    organizationId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string
   }
 
   export type MembershipUpdateWithoutUserInput = {
@@ -17304,6 +22230,95 @@ export namespace Prisma {
     eventType?: EnumActivityEventTypeFieldUpdateOperationsInput | $Enums.ActivityEventType
     metadata?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeSessionUpdateWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeSessionsNestedInput
+    files?: ArtifactIntakeFileUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    files?: ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionNestedInput
+  }
+
+  export type ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    label?: StringFieldUpdateOperationsInput | string
+    status?: EnumArtifactIntakeSessionStatusFieldUpdateOperationsInput | $Enums.ArtifactIntakeSessionStatus
+    mappedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    mappingCompletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileUpdateWithoutUploaderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateWithoutUploaderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    intakeSessionId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type EpicCreateManyOutcomeInput = {
@@ -17494,6 +22509,78 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileCreateManyIntakeSessionInput = {
+    id: string
+    organizationId: string
+    fileName: string
+    mimeType?: string | null
+    extension: string
+    sizeBytes: number
+    content: string
+    sourceTypeStatus?: $Enums.ArtifactSourceTypeStatus
+    sourceType?: $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: $Enums.ExtractionConfidence | null
+    classifiedAt?: Date | string | null
+    parsedAt?: Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: string | null
+    uploadedAt?: Date | string
+  }
+
+  export type ArtifactIntakeFileUpdateWithoutIntakeSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
+    uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateWithoutIntakeSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ArtifactIntakeFileUncheckedUpdateManyWithoutIntakeSessionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fileName?: StringFieldUpdateOperationsInput | string
+    mimeType?: NullableStringFieldUpdateOperationsInput | string | null
+    extension?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    content?: StringFieldUpdateOperationsInput | string
+    sourceTypeStatus?: EnumArtifactSourceTypeStatusFieldUpdateOperationsInput | $Enums.ArtifactSourceTypeStatus
+    sourceType?: NullableEnumArtifactSourceTypeFieldUpdateOperationsInput | $Enums.ArtifactSourceType | null
+    sourceTypeConfidence?: NullableEnumExtractionConfidenceFieldUpdateOperationsInput | $Enums.ExtractionConfidence | null
+    classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

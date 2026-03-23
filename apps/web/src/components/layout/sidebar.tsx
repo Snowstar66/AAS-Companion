@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
+import { Compass, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain";
 
 const icons = {
   "/": LayoutDashboard,
+  "/intake": Inbox,
   "/framing": Compass,
   "/outcomes": Workflow,
   "/stories": LibraryBig,
@@ -57,7 +58,7 @@ export function Sidebar() {
         <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/12 to-white/4 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Stop rule</p>
           <p className="mt-3 text-sm leading-6 text-slate-200">
-            Stories 001-005 are approved. The current implementation pass is completing the remaining M1 stories.
+            M2 work follows strict order and must stop again after M2-STORY-003 for human review.
           </p>
         </div>
       </div>

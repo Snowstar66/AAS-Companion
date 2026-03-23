@@ -1,4 +1,9 @@
 export { prisma } from "./client";
+export {
+  appendArtifactFileRejections,
+  createArtifactIntakeSession,
+  listArtifactIntakeSessions
+} from "./repositories/artifact-intake-repository";
 export { appendActivityEvent, listActivityEventsForEntity } from "./repositories/activity-repository";
 export {
   getOrganizationContextForUser,
