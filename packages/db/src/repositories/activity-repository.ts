@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "../../generated/client";
 import { activityEventCreateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 

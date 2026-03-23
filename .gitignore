@@ -13,4 +13,8 @@ test-results
 .env.*.local
 
 apps/web/.next
+apps/web/.prisma
 apps/web/test-results
+.postgres/
+.admin-check-*.txt
+.pg-install-*.txt

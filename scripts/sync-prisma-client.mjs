@@ -1,0 +1,40 @@
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, "..");
+const sourceDir = path.join(repoRoot, "packages", "db", "generated", "client");
+const targetDir = path.join(repoRoot, "apps", "web", ".prisma", "client");
+
+if (!existsSync(sourceDir)) {
+  throw new Error(
+    `Prisma client not found at ${sourceDir}. Run "pnpm db:generate" or sync the generated client first.`
+  );
+}
+
+mkdirSync(path.dirname(targetDir), { recursive: true });
+
+try {
+  rmSync(targetDir, { recursive: true, force: true });
+  cpSync(sourceDir, targetDir, { recursive: true });
+} catch (error) {
+  if (!(error instanceof Error) || !("code" in error) || error.code !== "EPERM") {
+    throw error;
+  }
+
+  mkdirSync(targetDir, { recursive: true });
+
+  for (const entry of readdirSync(sourceDir)) {
+    const sourcePath = path.join(sourceDir, entry);
+    const targetPath = path.join(targetDir, entry);
+
+    try {
+      cpSync(sourcePath, targetPath, { recursive: true, force: false });
+    } catch (copyError) {
+      if (!(copyError instanceof Error) || !("code" in copyError) || copyError.code !== "EEXIST") {
+        throw copyError;
+      }
+    }
+  }
+}
