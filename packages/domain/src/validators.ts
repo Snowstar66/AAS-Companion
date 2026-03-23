@@ -25,6 +25,9 @@ export {
   organizationSummarySchema
 } from "./organization";
 export {
+  executionContractSchema
+} from "./handoff";
+export {
   outcomeCreateInputSchema,
   outcomeRecordSchema,
   outcomeUpdateInputSchema

@@ -80,11 +80,11 @@ export default async function WorkspacePage() {
                 <Fingerprint className="h-4 w-4 text-primary" />
                 M1 Foundation
               </CardTitle>
-              <CardDescription>Stories 001-003 are the current implementation ceiling.</CardDescription>
+              <CardDescription>M1 now extends into workspace, handoff, telemetry, and e2e verification flows.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>Demo data includes two outcomes, one epic, three stories, one blocked tollgate, and activity events.</p>
-              <p>Human review is required before any `M1-STORY-004+` UI implementation proceeds.</p>
+              <p>The remaining M1 work now focuses on demonstrating coherent end-to-end behavior across those seeded records.</p>
             </CardContent>
           </Card>
         </div>

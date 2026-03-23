@@ -15,7 +15,8 @@ export const activityEventTypes = [
   "outcome_updated",
   "story_created",
   "story_updated",
-  "tollgate_recorded"
+  "tollgate_recorded",
+  "execution_contract_generated"
 ] as const;
 export const riskProfiles = ["low", "medium", "high"] as const;
 export const aiAccelerationLevels = ["level_2"] as const;

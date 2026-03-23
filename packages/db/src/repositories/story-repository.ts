@@ -22,6 +22,50 @@ export async function getStoryById(organizationId: string, id: string) {
   });
 }
 
+export async function getStoryWorkspaceSnapshot(organizationId: string, id: string) {
+  const [story, tollgate, activities] = await prisma.$transaction([
+    prisma.story.findFirst({
+      where: {
+        organizationId,
+        id
+      },
+      include: {
+        outcome: true,
+        epic: true
+      }
+    }),
+    prisma.tollgate.findFirst({
+      where: {
+        organizationId,
+        entityType: "story",
+        entityId: id,
+        tollgateType: "story_readiness"
+      }
+    }),
+    prisma.activityEvent.findMany({
+      where: {
+        organizationId,
+        entityType: "story",
+        entityId: id
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 10
+    })
+  ]);
+
+  if (!story) {
+    return null;
+  }
+
+  return {
+    story,
+    tollgate,
+    activities
+  };
+}
+
 export async function createStory(input: unknown) {
   const parsed = storyCreateInputSchema.parse(input);
 

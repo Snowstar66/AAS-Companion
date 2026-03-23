@@ -18,8 +18,18 @@ const checkpoints = [
   },
   {
     title: "M1-STORY-004",
+    status: "Approved",
+    description: "Home dashboard widgets, recent activity, and right-rail actions are available."
+  },
+  {
+    title: "M1-STORY-005",
+    status: "Approved",
+    description: "Framing Cockpit list, filters, quick creation, and outcome navigation are available."
+  },
+  {
+    title: "M1-STORY-006 to 010",
     status: "In progress",
-    description: "Home dashboard widgets, recent activity, and right-rail actions."
+    description: "Outcome Workspace, Story Workspace, handoff preview, telemetry, and end-to-end verification."
   }
 ];
 
@@ -29,7 +39,7 @@ export function RightRail() {
       <Card className="border-border/70 bg-background/90 shadow-sm">
         <CardHeader>
           <CardTitle>Delivery checkpoints</CardTitle>
-          <CardDescription>Stories 001-003 are approved. Story 004 is the active implementation slice.</CardDescription>
+          <CardDescription>Stories 001-005 are approved. The remaining M1 implementation slice is 006-010.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {checkpoints.map((item) => (

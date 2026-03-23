@@ -37,3 +37,34 @@ export const storyUpdateInputSchema = storyCreateInputSchema
 export type StoryRecord = z.infer<typeof storyRecordSchema>;
 export type StoryCreateInput = z.infer<typeof storyCreateInputSchema>;
 export type StoryUpdateInput = z.infer<typeof storyUpdateInputSchema>;
+
+type StoryReadinessFields = Pick<
+  StoryRecord,
+  "key" | "testDefinition" | "definitionOfDone" | "acceptanceCriteria"
+>;
+
+export function getStoryReadinessBlockers(story: StoryReadinessFields) {
+  const blockers: string[] = [];
+
+  if (!story.key?.trim()) {
+    blockers.push("Story-ID is missing.");
+  }
+
+  if (!story.testDefinition?.trim()) {
+    blockers.push("Test Definition is required before handoff.");
+  }
+
+  if (!story.definitionOfDone.length) {
+    blockers.push("Definition of Done is required before handoff.");
+  }
+
+  if (!story.acceptanceCriteria.length) {
+    blockers.push("At least one acceptance criterion is required.");
+  }
+
+  return blockers;
+}
+
+export function isStoryReadyForHandoff(story: StoryReadinessFields) {
+  return getStoryReadinessBlockers(story).length === 0;
+}

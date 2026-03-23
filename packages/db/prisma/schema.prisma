@@ -73,6 +73,7 @@ enum ActivityEventType {
   story_created
   story_updated
   tollgate_recorded
+  execution_contract_generated
 }
 
 enum RiskProfile {

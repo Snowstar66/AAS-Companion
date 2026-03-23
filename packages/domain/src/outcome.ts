@@ -36,3 +36,23 @@ export const outcomeUpdateInputSchema = outcomeCreateInputSchema
 export type OutcomeRecord = z.infer<typeof outcomeRecordSchema>;
 export type OutcomeCreateInput = z.infer<typeof outcomeCreateInputSchema>;
 export type OutcomeUpdateInput = z.infer<typeof outcomeUpdateInputSchema>;
+
+type OutcomeBaselineFields = Pick<OutcomeRecord, "baselineDefinition" | "baselineSource">;
+
+export function getOutcomeBaselineBlockers(outcome: OutcomeBaselineFields) {
+  const blockers: string[] = [];
+
+  if (!outcome.baselineDefinition?.trim()) {
+    blockers.push("Baseline definition is missing.");
+  }
+
+  if (!outcome.baselineSource?.trim()) {
+    blockers.push("Baseline source is missing.");
+  }
+
+  return blockers;
+}
+
+export function isOutcomeReadyForTollgateOne(outcome: OutcomeBaselineFields) {
+  return getOutcomeBaselineBlockers(outcome).length === 0;
+}

@@ -8,23 +8,45 @@ function hasSupabaseCookies(request: NextRequest) {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const requestId = crypto.randomUUID();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
 
-  if (!pathname.startsWith("/workspace")) {
-    return NextResponse.next();
+  console.warn(`[request] ${requestId} ${request.method} ${pathname}`);
+
+  const protectedPrefixes = ["/workspace", "/framing", "/outcomes", "/stories", "/handoff"];
+  const isProtectedRoute = protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+
+  if (!isProtectedRoute) {
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders
+      }
+    });
+    response.headers.set("x-request-id", requestId);
+    return response;
   }
 
   const hasDemoAccess = request.cookies.get(DEMO_SESSION_COOKIE_NAME)?.value === "demo";
 
   if (hasDemoAccess || hasSupabaseCookies(request)) {
-    return NextResponse.next();
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders
+      }
+    });
+    response.headers.set("x-request-id", requestId);
+    return response;
   }
 
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("redirectTo", pathname);
 
-  return NextResponse.redirect(loginUrl);
+  const response = NextResponse.redirect(loginUrl);
+  response.headers.set("x-request-id", requestId);
+  return response;
 }
 
 export const config = {
-  matcher: ["/workspace/:path*"]
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"]
 };

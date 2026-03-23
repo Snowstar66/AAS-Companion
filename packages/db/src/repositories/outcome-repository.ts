@@ -13,6 +13,43 @@ export async function listOutcomes(organizationId: string) {
   });
 }
 
+export async function listOutcomeCockpitEntries(organizationId: string) {
+  const [outcomes, tollgates] = await prisma.$transaction([
+    prisma.outcome.findMany({
+      where: { organizationId },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      include: {
+        valueOwner: {
+          select: {
+            fullName: true,
+            email: true
+          }
+        },
+        _count: {
+          select: {
+            epics: true,
+            stories: true
+          }
+        }
+      }
+    }),
+    prisma.tollgate.findMany({
+      where: {
+        organizationId,
+        entityType: "outcome"
+      },
+      orderBy: {
+        updatedAt: "desc"
+      }
+    })
+  ]);
+
+  return outcomes.map((outcome) => ({
+    ...outcome,
+    tollgates: tollgates.filter((tollgate) => tollgate.entityId === outcome.id)
+  }));
+}
+
 export async function getOutcomeById(organizationId: string, id: string) {
   return prisma.outcome.findFirst({
     where: {
@@ -20,6 +57,65 @@ export async function getOutcomeById(organizationId: string, id: string) {
       id
     }
   });
+}
+
+export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: string) {
+  const [outcome, tollgate, activities] = await prisma.$transaction([
+    prisma.outcome.findFirst({
+      where: {
+        organizationId,
+        id
+      },
+      include: {
+        valueOwner: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        },
+        epics: {
+          orderBy: {
+            createdAt: "asc"
+          }
+        },
+        stories: {
+          orderBy: {
+            createdAt: "asc"
+          }
+        }
+      }
+    }),
+    prisma.tollgate.findFirst({
+      where: {
+        organizationId,
+        entityType: "outcome",
+        entityId: id,
+        tollgateType: "tg1_baseline"
+      }
+    }),
+    prisma.activityEvent.findMany({
+      where: {
+        organizationId,
+        entityType: "outcome",
+        entityId: id
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 10
+    })
+  ]);
+
+  if (!outcome) {
+    return null;
+  }
+
+  return {
+    outcome,
+    tollgate,
+    activities
+  };
 }
 
 export async function createOutcome(input: unknown) {

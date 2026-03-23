@@ -8,12 +8,15 @@ export {
 export {
   createOutcome,
   getOutcomeById,
+  getOutcomeWorkspaceSnapshot,
+  listOutcomeCockpitEntries,
   listOutcomes,
   updateOutcome
 } from "./repositories/outcome-repository";
 export {
   createStory,
   getStoryById,
+  getStoryWorkspaceSnapshot,
   listStories,
   updateStory
 } from "./repositories/story-repository";

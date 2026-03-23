@@ -1,6 +1,7 @@
 export * from "./activity";
 export * from "./auth";
 export * from "./enums";
+export * from "./handoff";
 export * from "./organization";
 export * from "./outcome";
 export * from "./roles";

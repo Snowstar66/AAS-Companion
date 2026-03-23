@@ -146,7 +146,7 @@ export async function getHomeDashboardData(
         title: blocker,
         detail: `${tollgate.tollgateType.replaceAll("_", " ")} on ${tollgate.entityType} ${tollgate.entityId}`,
         severity: "high",
-        href: tollgate.entityType === "outcome" ? "/outcomes" : "/stories"
+        href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       }))
     );
 
@@ -167,7 +167,7 @@ export async function getHomeDashboardData(
         id: tollgate.id,
         title: `${tollgate.tollgateType.replaceAll("_", " ")} requires attention`,
         detail: `${tollgate.blockers.length || 1} blocker${tollgate.blockers.length === 1 ? "" : "s"} to clear`,
-        href: tollgate.entityType === "outcome" ? "/outcomes" : "/stories"
+        href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       })),
       ...organization.stories
         .filter((story) => story.status === "definition_blocked" || !story.testDefinition)

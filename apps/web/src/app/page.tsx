@@ -98,11 +98,11 @@ export default async function HomePage() {
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>Current scope note</CardTitle>
-            <CardDescription>M1-STORY-004 delivers the Home dashboard only.</CardDescription>
+            <CardDescription>Home remains the overview layer while deeper framing and handoff flows live in dedicated workspaces.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Outcome, Story, and execution flows remain separate stories and are not silently widened here.</p>
-            <p>The dashboard tolerates missing or partial data and surfaces that state explicitly to reviewers.</p>
+            <p>The dashboard stays intentionally summary-first even as Outcome, Story, and handoff flows become available elsewhere.</p>
+            <p>The dashboard still tolerates missing or partial data and surfaces that state explicitly to reviewers.</p>
           </CardContent>
         </Card>
       </section>
