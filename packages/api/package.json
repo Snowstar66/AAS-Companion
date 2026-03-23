@@ -1,0 +1,17 @@
+{
+  "name": "@aas-companion/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@aas-companion/db": "workspace:*",
+    "@aas-companion/domain": "workspace:*"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@aas-companion/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:push": "prisma db push --schema prisma/schema.prisma",
+    "db:seed": "node prisma/seed.mjs"
+  },
+  "dependencies": {
+    "@aas-companion/domain": "workspace:*",
+    "@prisma/client": "^6.4.1",
+    "prisma": "^6.4.1"
+  }
+}

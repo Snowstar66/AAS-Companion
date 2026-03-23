@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole {
+  value_owner
+  aida
+  aqa
+  architect
+  delivery_lead
+  builder
+}
+
+enum OutcomeStatus {
+  draft
+  baseline_in_progress
+  ready_for_tg1
+  active
+}
+
+enum EpicStatus {
+  draft
+  in_progress
+  completed
+}
+
+enum StoryType {
+  outcome_delivery
+  governance
+  enablement
+}
+
+enum StoryStatus {
+  draft
+  definition_blocked
+  ready_for_handoff
+  in_progress
+}
+
+enum TollgateEntityType {
+  outcome
+  story
+}
+
+enum TollgateType {
+  tg1_baseline
+  story_readiness
+}
+
+enum TollgateStatus {
+  blocked
+  ready
+  approved
+}
+
+enum ActivityEntityType {
+  organization
+  outcome
+  epic
+  story
+  tollgate
+}
+
+enum ActivityEventType {
+  demo_seeded
+  outcome_created
+  outcome_updated
+  story_created
+  story_updated
+  tollgate_recorded
+}
+
+enum RiskProfile {
+  low
+  medium
+  high
+}
+
+enum AiAccelerationLevel {
+  level_2
+}
+
+model Organization {
+  id             String          @id
+  slug           String          @unique
+  name           String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  memberships    Membership[]
+  outcomes       Outcome[]
+  epics          Epic[]
+  stories        Story[]
+  tollgates      Tollgate[]
+  activityEvents ActivityEvent[]
+}
+
+model AppUser {
+  id                 String          @id
+  email              String          @unique
+  fullName           String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  memberships        Membership[]
+  ownedOutcomes      Outcome[]       @relation("OutcomeValueOwner")
+  tollgateDecisions  Tollgate[]      @relation("TollgateDecisionActor")
+  activityEvents     ActivityEvent[] @relation("ActivityActor")
+}
+
+model Membership {
+  id             String         @id
+  organizationId String
+  userId         String
+  role           MembershipRole
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+model Outcome {
+  id                  String              @id
+  organizationId      String
+  key                 String
+  title               String
+  problemStatement    String?
+  outcomeStatement    String?
+  baselineDefinition  String?
+  baselineSource      String?
+  timeframe           String?
+  valueOwnerId        String?
+  riskProfile         RiskProfile         @default(medium)
+  aiAccelerationLevel AiAccelerationLevel @default(level_2)
+  status              OutcomeStatus       @default(draft)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  valueOwner          AppUser?            @relation("OutcomeValueOwner", fields: [valueOwnerId], references: [id], onDelete: SetNull)
+  epics               Epic[]
+  stories             Story[]
+
+  @@unique([organizationId, key])
+}
+
+model Epic {
+  id             String       @id
+  organizationId String
+  outcomeId      String
+  key            String
+  title          String
+  purpose        String
+  status         EpicStatus   @default(draft)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  outcome        Outcome      @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  stories        Story[]
+
+  @@unique([organizationId, key])
+}
+
+model Story {
+  id                  String              @id
+  organizationId      String
+  outcomeId           String
+  epicId              String
+  key                 String
+  title               String
+  storyType           StoryType
+  valueIntent         String
+  acceptanceCriteria  String[]            @default([])
+  aiUsageScope        String[]            @default([])
+  aiAccelerationLevel AiAccelerationLevel @default(level_2)
+  testDefinition      String?
+  definitionOfDone    String[]            @default([])
+  status              StoryStatus         @default(draft)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  outcome             Outcome             @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  epic                Epic                @relation(fields: [epicId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, key])
+}
+
+model Tollgate {
+  id             String             @id
+  organizationId String
+  entityType     TollgateEntityType
+  entityId       String
+  tollgateType   TollgateType
+  status         TollgateStatus     @default(blocked)
+  blockers       String[]           @default([])
+  approverRoles  MembershipRole[]   @default([])
+  decidedBy      String?
+  decidedAt      DateTime?
+  comments       String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  decisionActor  AppUser?           @relation("TollgateDecisionActor", fields: [decidedBy], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, entityType, entityId, tollgateType])
+  @@index([organizationId, entityType, entityId])
+}
+
+model ActivityEvent {
+  id             String             @id
+  organizationId String
+  entityType     ActivityEntityType
+  entityId       String
+  eventType      ActivityEventType
+  actorId        String?
+  metadata       Json?
+  createdAt      DateTime           @default(now())
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor          AppUser?           @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, createdAt])
+}
