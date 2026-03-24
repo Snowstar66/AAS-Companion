@@ -56,6 +56,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
     baselineSource: String(formData.get("baselineSource") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
+    valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
     riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium"
   });
 

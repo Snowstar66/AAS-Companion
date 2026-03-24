@@ -414,6 +414,8 @@ export async function promoteArtifactCandidate(input: {
         key: draftRecord.key ?? `IMP-EPC-${candidate.id.slice(0, 8).toUpperCase()}`,
         title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
         purpose: draftRecord.purpose ?? sanitizeArtifactPersistenceText(candidate.summary),
+        scopeBoundary: draftRecord.scopeBoundary ?? null,
+        riskNote: draftRecord.riskNote ?? null,
         status: "draft",
         originType: "imported",
         createdMode: "promotion",

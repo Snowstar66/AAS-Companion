@@ -1,4 +1,5 @@
 import { prisma } from "../client";
+import { withEpicShape } from "./epic-shape";
 
 export async function getWorkspaceSnapshot(organizationId: string) {
   const organization = await prisma.organization.findUnique({
@@ -60,7 +61,19 @@ export async function getWorkspaceSnapshot(organizationId: string) {
   }
 
   return {
-    organization,
+    organization: {
+      ...organization,
+      outcomes: organization.outcomes.map((outcome) => ({
+        ...outcome,
+        epics: outcome.epics.map((epic) =>
+          withEpicShape({
+            ...epic,
+            stories: epic.stories
+          })
+        )
+      })),
+      epics: organization.epics.map((epic) => withEpicShape(epic))
+    },
     counts: {
       outcomes: organization.outcomes.length,
       epics: organization.epics.length,

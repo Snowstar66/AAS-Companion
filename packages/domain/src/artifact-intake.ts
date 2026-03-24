@@ -146,6 +146,8 @@ export const artifactCandidateDraftRecordSchema = z.object({
   baselineSource: z.string().nullish(),
   timeframe: z.string().nullish(),
   purpose: z.string().nullish(),
+  scopeBoundary: z.string().nullish(),
+  riskNote: z.string().nullish(),
   storyType: storyTypeSchema.nullish(),
   valueIntent: z.string().nullish(),
   acceptanceCriteria: z.array(z.string()).default([]),
@@ -596,6 +598,8 @@ export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandida
       baselineSource: null,
       timeframe: null,
       purpose: candidate.summary,
+      scopeBoundary: null,
+      riskNote: null,
       storyType: null,
       valueIntent: null,
       acceptanceCriteria: [],
@@ -616,6 +620,8 @@ export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandida
     baselineSource: null,
     timeframe: null,
     purpose: null,
+    scopeBoundary: null,
+    riskNote: null,
     storyType: "outcome_delivery",
     valueIntent: candidate.summary,
     acceptanceCriteria: candidate.acceptanceCriteria,
@@ -781,6 +787,15 @@ export function analyzeArtifactCandidateCompliance(input: {
         category: "blocked",
         message: "Outcome -> Epic linkage is missing.",
         fieldLabel: "Outcome linkage"
+      });
+    }
+
+    if (!draftRecord.scopeBoundary?.trim()) {
+      findings.push({
+        code: "epic_scope_boundary_missing",
+        category: "missing",
+        message: "Scope boundary is missing.",
+        fieldLabel: "Scope boundary"
       });
     }
   }

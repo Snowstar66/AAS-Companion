@@ -119,6 +119,7 @@ vi.mock("@aas-companion/api", async () => {
             createdAt: new Date("2026-03-23T20:00:00.000Z")
           }
         ],
+        availableOwners: [],
         readiness: {
           state: "blocked",
           reasons: [
@@ -217,9 +218,9 @@ describe("Outcome page", () => {
     expect(screen.getByText("Case provenance")).toBeDefined();
     expect(screen.getByText("Active Framing context")).toBeDefined();
     expect(screen.getByText("Current native working scope")).toBeDefined();
-    expect(screen.getByText("Origin: Native")).toBeDefined();
-    expect(screen.getByText("Project mode: Clean")).toBeDefined();
-    expect(screen.getByText("Status: draft")).toBeDefined();
+    expect(screen.getAllByText("Origin: Native").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Project mode: Clean").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Status: draft").length).toBeGreaterThan(0);
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
     expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();

@@ -3,6 +3,7 @@ import type { Prisma } from "../../generated/client";
 import { outcomeCreateInputSchema, outcomeUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
+import { withEpicShape } from "./epic-shape";
 import {
   resolveGovernedObjectProvenance,
   toGovernedObjectProvenanceFields,
@@ -134,7 +135,9 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
   return {
     outcome: {
       ...outcome,
-      epics: outcome.epics.filter((epic) => epic.lifecycleState === relatedLifecycleState),
+      epics: outcome.epics
+        .filter((epic) => epic.lifecycleState === relatedLifecycleState)
+        .map((epic) => withEpicShape(epic)),
       stories: outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState)
     },
     tollgate,

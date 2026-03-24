@@ -63,6 +63,8 @@ export async function submitArtifactCandidateReviewAction(formData: FormData) {
       baselineSource: String(formData.get("baselineSource") ?? "") || null,
       timeframe: String(formData.get("timeframe") ?? "") || null,
       purpose: String(formData.get("purpose") ?? "") || null,
+      scopeBoundary: String(formData.get("scopeBoundary") ?? "") || null,
+      riskNote: String(formData.get("riskNote") ?? "") || null,
       storyType:
         candidateType === "story"
           ? ((String(formData.get("storyType") ?? "") || null) as "outcome_delivery" | "governance" | "enablement" | null)

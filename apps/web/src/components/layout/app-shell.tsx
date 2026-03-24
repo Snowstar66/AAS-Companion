@@ -8,9 +8,10 @@ type AppShellProps = {
   rightRail?: ReactNode;
   topbarProps?: TopbarProps;
   activeProjectName?: string;
+  hideRightRail?: boolean;
 };
 
-export function AppShell({ children, rightRail, topbarProps, activeProjectName }: AppShellProps) {
+export function AppShell({ children, rightRail, topbarProps, activeProjectName, hideRightRail = false }: AppShellProps) {
   const sidebarProps = {
     ...(activeProjectName || topbarProps?.projectName
       ? { activeProjectName: activeProjectName ?? topbarProps?.projectName ?? "" }
@@ -22,7 +23,11 @@ export function AppShell({ children, rightRail, topbarProps, activeProjectName }
 
   return (
     <div className="min-h-screen p-3 text-foreground sm:p-5">
-      <div className="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-[1920px] grid-cols-1 gap-5 xl:grid-cols-[248px_minmax(0,1fr)] 2xl:grid-cols-[248px_minmax(0,1fr)_292px]">
+      <div
+        className={`mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-[1920px] grid-cols-1 gap-5 xl:grid-cols-[248px_minmax(0,1fr)] ${
+          hideRightRail ? "" : "2xl:grid-cols-[248px_minmax(0,1fr)_292px]"
+        }`}
+      >
         <div className="xl:sticky xl:top-5 xl:self-start">
           <Sidebar {...sidebarProps} />
         </div>
@@ -32,9 +37,11 @@ export function AppShell({ children, rightRail, topbarProps, activeProjectName }
             {children}
           </main>
         </div>
-        <div className="order-3 xl:col-start-2 2xl:col-start-3 2xl:sticky 2xl:top-5 2xl:self-start">
-          {rightRail ?? <RightRail />}
-        </div>
+        {!hideRightRail ? (
+          <div className="order-3 xl:col-start-2 2xl:col-start-3 2xl:sticky 2xl:top-5 2xl:self-start">
+            {rightRail ?? <RightRail />}
+          </div>
+        ) : null}
       </div>
     </div>
   );

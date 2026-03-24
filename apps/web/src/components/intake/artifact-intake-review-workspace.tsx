@@ -163,6 +163,8 @@ function candidateFields(candidate: IntakeArtifactCandidate) {
       ["Key", draft?.key ?? null, !hasText(draft?.key) ? "missing" : "resolved"],
       ["Title", draft?.title ?? candidate.title, "neutral"],
       ["Purpose", draft?.purpose ?? candidate.summary, uncertain ? "uncertain" : "neutral"],
+      ["Scope boundary", draft?.scopeBoundary ?? null, !hasText(draft?.scopeBoundary) ? "missing" : "resolved"],
+      ["Risk note", draft?.riskNote ?? null, "neutral"],
       ["Linked Outcome candidate", draft?.outcomeCandidateId ?? null, !hasText(draft?.outcomeCandidateId) ? "missing" : candidate.relationshipState !== "mapped" ? "uncertain" : "resolved"]
     ] as const;
   }
@@ -705,6 +707,22 @@ export function ArtifactIntakeReviewWorkspace({
                           className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                           defaultValue={selectedCandidate.draftRecord?.purpose ?? ""}
                           name="purpose"
+                        />
+                      </label>
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Scope boundary</span>
+                        <textarea
+                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                          defaultValue={selectedCandidate.draftRecord?.scopeBoundary ?? ""}
+                          name="scopeBoundary"
+                        />
+                      </label>
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Risk note</span>
+                        <textarea
+                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                          defaultValue={selectedCandidate.draftRecord?.riskNote ?? ""}
+                          name="riskNote"
                         />
                       </label>
                       <label className="space-y-2">

@@ -74,7 +74,9 @@ export async function createNativeEpicFromOutcomeService(input: {
       outcomeId: outcome.id,
       key,
       title: "New epic",
-      purpose: "Describe the value slice for this outcome.",
+      purpose: "Describe the value area this Epic advances.",
+      scopeBoundary: "Describe what this Epic includes, excludes, or leaves for later.",
+      riskNote: null,
       status: "draft",
       originType: "native",
       createdMode: "clean",
@@ -99,6 +101,7 @@ export async function createNativeStoryFromEpicService(input: {
 
   const stories = await listStories(input.organizationId, { includeArchived: true });
   const key = buildNextKey(stories.map((story) => story.key), "STR");
+  const outcome = await getOutcomeById(input.organizationId, epic.outcomeId);
 
   return success(
     await createStory({
@@ -111,7 +114,7 @@ export async function createNativeStoryFromEpicService(input: {
       valueIntent: "Describe the intended value for this story.",
       acceptanceCriteria: [],
       aiUsageScope: [],
-      aiAccelerationLevel: "level_2",
+      aiAccelerationLevel: outcome?.aiAccelerationLevel ?? "level_2",
       testDefinition: null,
       definitionOfDone: [],
       status: "draft",
@@ -128,7 +131,8 @@ export async function saveEpicWorkspaceService(input: {
   actorId?: string | null;
   title?: string;
   purpose?: string;
-  summary?: string | null;
+  scopeBoundary?: string | null;
+  riskNote?: string | null;
 }) {
   const result = await updateEpic({
     organizationId: input.organizationId,
@@ -136,7 +140,8 @@ export async function saveEpicWorkspaceService(input: {
     actorId: input.actorId ?? null,
     title: input.title,
     purpose: input.purpose,
-    summary: input.summary
+    scopeBoundary: input.scopeBoundary,
+    riskNote: input.riskNote
   });
 
   return success(result);

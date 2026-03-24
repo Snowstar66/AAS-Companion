@@ -1,6 +1,7 @@
 import {
   appendActivityEvent,
   getGovernedRemovalState,
+  listOrganizationUsers,
   getOutcomeWorkspaceSnapshot,
   getStoryWorkspaceSnapshot,
   updateOutcome,
@@ -78,9 +79,11 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
     fallbackBlockers: snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
     fallbackComments: snapshot.tollgate?.comments ?? null
   });
+  const availableOwners = await listOrganizationUsers(organizationId);
 
   return success({
     ...snapshot,
+    availableOwners,
     readiness: getOutcomeBaselineReadiness(snapshot.outcome),
     tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
     removal: await getGovernedRemovalState({
@@ -101,6 +104,7 @@ export async function saveOutcomeWorkspaceService(input: {
   baselineDefinition?: string | null;
   baselineSource?: string | null;
   timeframe?: string | null;
+  valueOwnerId?: string | null;
   riskProfile?: "low" | "medium" | "high";
 }) {
   const result = await updateOutcome({
@@ -113,6 +117,7 @@ export async function saveOutcomeWorkspaceService(input: {
     baselineDefinition: input.baselineDefinition,
     baselineSource: input.baselineSource,
     timeframe: input.timeframe,
+    valueOwnerId: input.valueOwnerId,
     riskProfile: input.riskProfile
   });
 

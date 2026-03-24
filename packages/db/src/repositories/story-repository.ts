@@ -3,6 +3,7 @@ import type { Prisma } from "../../generated/client";
 import { storyCreateInputSchema, storyUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
+import { withEpicShape } from "./epic-shape";
 import {
   resolveGovernedObjectProvenance,
   toGovernedObjectProvenanceFields,
@@ -73,7 +74,10 @@ export async function getStoryWorkspaceSnapshot(organizationId: string, id: stri
   }
 
   return {
-    story,
+    story: {
+      ...story,
+      epic: withEpicShape(story.epic)
+    },
     tollgate,
     activities
   };

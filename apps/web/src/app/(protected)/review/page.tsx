@@ -348,6 +348,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                             <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.purpose ?? ""} name="purpose" />
                           </label>
                           <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Scope boundary</span>
+                            <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.scopeBoundary ?? ""} name="scopeBoundary" />
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Risk note</span>
+                            <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.riskNote ?? ""} name="riskNote" />
+                          </label>
+                          <label className="space-y-2">
                             <span className="text-sm font-medium text-foreground">Linked Outcome candidate ID</span>
                             <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.outcomeCandidateId ?? ""} name="outcomeCandidateId" type="text" />
                           </label>

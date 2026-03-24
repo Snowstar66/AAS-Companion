@@ -77,13 +77,15 @@ vi.mock("@/lib/home/dashboard", () => ({
 }));
 
 describe("Home dashboard", () => {
-  it("renders Home as a project selector and return point", async () => {
+  it("renders active project signals ahead of switching controls on Home", async () => {
     render(await HomePage({}));
 
-    expect(screen.getByRole("heading", { name: "Choose how to enter work", level: 1 })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Project Home", level: 1 })).toBeDefined();
+    expect(screen.getByText("Project overview")).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open Framing" })).toBeDefined();
     expect(screen.getAllByRole("heading", { name: "Open project" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Create project" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Open demo project" })).toBeDefined();
-    expect(screen.getByText("Project status at a glance")).toBeDefined();
+    expect(screen.queryByText("Project status at a glance")).toBeNull();
   });
 });

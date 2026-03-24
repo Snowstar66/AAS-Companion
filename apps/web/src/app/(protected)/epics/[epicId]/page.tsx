@@ -163,7 +163,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                   title: epic.title,
                   href: `/epics/${epic.id}`,
                   isCurrent: true,
-                  summary: epic.summary ?? epic.purpose,
+                  scopeBoundary: epic.scopeBoundary ?? null,
                   stories: epic.stories.map((story) => ({
                     id: story.id,
                     key: story.key,
@@ -189,7 +189,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Epic definition</CardTitle>
-                  <CardDescription>This native Epic stays scoped to the current Outcome only.</CardDescription>
+                  <CardDescription>Keep Epic focused on purpose, scope boundary and any local risk note.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <label className="space-y-2">
@@ -203,7 +203,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Value intent</span>
+                    <span className="text-sm font-medium text-foreground">Purpose</span>
                     <textarea
                       className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                       defaultValue={epic.purpose}
@@ -212,12 +212,21 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Summary</span>
+                    <span className="text-sm font-medium text-foreground">Scope boundary</span>
                     <textarea
                       className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                      defaultValue={epic.summary ?? ""}
+                      defaultValue={epic.scopeBoundary ?? ""}
                       disabled={isArchived}
-                      name="summary"
+                      name="scopeBoundary"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">Risk note</span>
+                    <textarea
+                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      defaultValue={epic.riskNote ?? ""}
+                      disabled={isArchived}
+                      name="riskNote"
                     />
                   </label>
                 </CardContent>

@@ -273,7 +273,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                           <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{epic.key}</p>
                             <h2 className="mt-2 text-lg font-semibold text-foreground">{epic.title}</h2>
-                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{epic.summary ?? epic.purpose}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{epic.scopeBoundary ?? epic.purpose}</p>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">

@@ -167,6 +167,35 @@ export async function listAppUsers(): Promise<AppUserIdentity[]> {
   }));
 }
 
+export async function listOrganizationUsers(organizationId: string): Promise<AppUserIdentity[]> {
+  const memberships = await prisma.membership.findMany({
+    where: {
+      organizationId
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          fullName: true
+        }
+      }
+    }
+  });
+
+  return memberships
+    .map((membership) => ({
+      userId: membership.user.id,
+      email: membership.user.email,
+      fullName: membership.user.fullName
+    }))
+    .sort((left, right) => {
+      const leftLabel = left.fullName ?? left.email;
+      const rightLabel = right.fullName ?? right.email;
+      return leftLabel.localeCompare(rightLabel, "en");
+    });
+}
+
 export async function upsertAppUserByEmail(input: {
   email: string;
   fullName?: string | null;

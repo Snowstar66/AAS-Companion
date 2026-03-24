@@ -1,10 +1,13 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  ClipboardList,
   FolderKanban,
   FolderOpen,
+  GitBranch,
   LogOut,
   PlusCircle,
+  ShieldCheck,
   Sparkles,
   Trash2
 } from "lucide-react";
@@ -113,50 +116,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       ? "You are signed in, but no operational project is active until you select or create one."
       : "Sign in, then choose an existing project, create a new one, or enter Demo explicitly.";
 
+  const projectQuickLinks = [
+    { href: "/framing", label: "Open Framing", icon: FolderKanban },
+    { href: "/workspace", label: "Open Value Spine", icon: GitBranch },
+    { href: "/review", label: "Open Review", icon: ShieldCheck },
+    { href: "/intake", label: "Open Import", icon: ClipboardList }
+  ];
+
   return (
     <AppShell
       {...(activeProject?.organizationName ? { activeProjectName: activeProject.organizationName } : {})}
-      rightRail={
-        <aside className="space-y-4">
-          <Card className="border-border/70 bg-background/90 shadow-sm">
-            <CardHeader>
-              <CardTitle>Project rules</CardTitle>
-              <CardDescription>Normal work starts only after an explicit project choice.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>Startup no longer opens a hidden project implicitly.</p>
-              <p>Open project shows only real created projects, not demo fallback data.</p>
-              <p>Demo remains available only through an explicit separate action.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/70 bg-background/90 shadow-sm">
-            <CardHeader>
-              <CardTitle>Current status</CardTitle>
-              <CardDescription>High-level posture for the currently active project only.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="font-medium text-foreground">{status.label}</p>
-                <p className="mt-2 leading-6">{status.detail}</p>
-              </div>
-              {!hasActiveProject ? (
-                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4">
-                  <p className="font-medium text-foreground">No data leakage</p>
-                  <p className="mt-2 leading-6">
-                    Operational lists stay empty until a project is chosen explicitly.
-                  </p>
-                </div>
-              ) : dashboard.state !== "live" ? (
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="font-medium text-foreground">Data note</p>
-                  <p className="mt-2 leading-6">{dashboard.message}</p>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </aside>
-      }
+      hideRightRail
       topbarProps={{
         eyebrow: "AAS Companion",
         title: "Home",
@@ -173,11 +143,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               </div>
               <div className="space-y-3">
                 <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-                  Choose how to enter work
+                  {hasActiveProject ? "Project Home" : "Choose how to enter work"}
                 </h1>
                 <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-                  Open an existing project, create a new one, or open Demo explicitly. Nothing operational becomes active
-                  until you make that choice.
+                  {hasActiveProject
+                    ? "The active project gets the first screen now. Switching, creating and demo access stay available, but they no longer crowd out the current project's signals."
+                    : "Open an existing project, create a new one, or open Demo explicitly. Nothing operational becomes active until you make that choice."}
                 </p>
               </div>
             </div>
@@ -195,6 +166,131 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         {flashMessage ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             {flashMessage}
+          </div>
+        ) : null}
+
+        {hasActiveProject ? (
+          <div className="space-y-6">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.82fr)]">
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Project overview</CardTitle>
+                  <CardDescription>Live signals for the currently active project.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {dashboard.summary.length > 0 ? (
+                      dashboard.summary.map((item) => (
+                        <div className="rounded-2xl border border-border/70 bg-background/90 p-4" key={item.label}>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
+                          <p className="mt-2 text-2xl font-semibold text-foreground">{item.value}</p>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground sm:col-span-2 xl:col-span-4">
+                        {dashboard.state === "unavailable"
+                          ? dashboard.message
+                          : "The project is active but still does not have enough operational data to summarize."}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.85fr)]">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Quick links</p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {projectQuickLinks.map((item) => {
+                          const Icon = item.icon;
+
+                          return (
+                            <Button asChild className="justify-start gap-2" key={item.href} variant="secondary">
+                              <Link href={item.href}>
+                                <Icon className="h-4 w-4" />
+                                {item.label}
+                              </Link>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-5">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current posture</p>
+                      <p className="mt-4 text-lg font-semibold text-foreground">{status.label}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{status.detail}</p>
+                      {dashboard.state !== "live" ? (
+                        <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm leading-6 text-muted-foreground">
+                          {dashboard.message}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="space-y-5">
+                <Card className="border-border/70 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Needs attention</CardTitle>
+                    <CardDescription>Highest-signal blockers and follow-ups in the active project.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {[...dashboard.topBlockers.slice(0, 2), ...dashboard.pendingActions.slice(0, 2)].length > 0 ? (
+                      [...dashboard.topBlockers.slice(0, 2), ...dashboard.pendingActions.slice(0, 2)].map((item) => (
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={item.id}>
+                          <p className="font-medium text-foreground">{item.title}</p>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">
+                        No active blockers or pending review items are currently surfaced.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border/70 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Recent activity</CardTitle>
+                    <CardDescription>Latest append-only project events.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {dashboard.recentActivity.length > 0 ? (
+                      dashboard.recentActivity.slice(0, 4).map((item) => (
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={item.id}>
+                          <p className="font-medium text-foreground">{item.title}</p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p>
+                          <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{item.timestamp}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
+                        No recent project activity is available yet.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {dashboard.outcomesByStatus.length > 0 ? (
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Outcome spread</CardTitle>
+                  <CardDescription>How the active project's Framing cases are distributed right now.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {dashboard.outcomesByStatus.map((item) => (
+                    <div className="rounded-2xl border border-border/70 bg-background/90 p-4" key={item.status}>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{item.count}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         ) : null}
 
@@ -435,56 +531,44 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               ) : null}
             </CardContent>
           </Card>
-        ) : null}
-
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Project status at a glance</CardTitle>
-            <CardDescription>
-              Signals apply only to the currently active project. Without a project selection, operational lists stay empty.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-            <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Project</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">
-                {hasActiveProject ? (isDemoSession ? "Demo" : "Active") : "None selected"}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {hasActiveProject
-                  ? "Operational views are now scoped to this project only."
-                  : "Choose or create a project before any operational data is shown."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Framing</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">{status.label}</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{status.detail}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Review</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">
-                {hasActiveProject && dashboard.pendingActions.length > 0 ? "Awaiting review" : "No active review queue"}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {hasActiveProject && dashboard.pendingActions.length > 0
-                  ? `${dashboard.pendingActions.length} follow-up action(s) remain in the active project.`
-                  : "No project-scoped review actions are currently surfaced."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Build posture</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">
-                {hasActiveProject && (Number.parseInt(blockedCount, 10) || 0) > 0 ? "Not ready for build" : "No active build scope"}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {hasActiveProject && (Number.parseInt(blockedCount, 10) || 0) > 0
-                  ? `${blockedCount} blocking issue(s) still need attention.`
-                  : "Build-readiness stays unset until a project and its stories are explicitly in play."}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        ) : (
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>Project status at a glance</CardTitle>
+              <CardDescription>
+                Signals apply only to the currently active project. Without a project selection, operational lists stay empty.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+              <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Project</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">None selected</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Choose or create a project before any operational data is shown.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Framing</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{status.label}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{status.detail}</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Review</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">No active review queue</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  No project-scoped review actions are currently surfaced.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Build posture</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">No active build scope</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Build-readiness stays unset until a project and its stories are explicitly in play.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </section>
     </AppShell>
   );

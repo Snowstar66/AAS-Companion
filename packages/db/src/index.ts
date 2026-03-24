@@ -24,6 +24,7 @@ export {
   getAppUserById,
   getOrganizationContextForUser,
   listAppUsers,
+  listOrganizationUsers,
   listOrganizationContextsForUser,
   upsertAppUserByEmail,
   type AppUserIdentity,

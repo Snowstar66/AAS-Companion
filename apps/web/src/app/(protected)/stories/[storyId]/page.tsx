@@ -197,7 +197,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                   title: story.epic.title,
                   href: `/epics/${story.epicId}`,
                   isCurrent: false,
-                  summary: story.epic.summary ?? story.epic.purpose,
+                  scopeBoundary: story.epic.scopeBoundary ?? null,
                   stories: [
                     {
                       id: story.id,
@@ -238,6 +238,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
                   <p className="mt-2 text-lg font-semibold capitalize">{story.aiAccelerationLevel.replaceAll("_", " ")}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Inherited from the parent Outcome framing unless explicitly lowered later.</p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Lifecycle</p>
@@ -265,7 +266,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Story design</CardTitle>
-                  <CardDescription>Keep the structured Story fields explicit and human-reviewable.</CardDescription>
+                  <CardDescription>Keep Story focused on one testable delivery unit and its explicit handoff inputs.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <label className="space-y-2">
@@ -305,8 +306,8 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Execution readiness inputs</CardTitle>
-                  <CardDescription>These fields drive readiness and later contract generation.</CardDescription>
+                  <CardTitle>Handoff inputs</CardTitle>
+                  <CardDescription>These are the only delivery fields this Story needs before readiness review.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <label className="space-y-2">

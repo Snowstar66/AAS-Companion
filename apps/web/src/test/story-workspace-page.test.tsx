@@ -53,7 +53,8 @@ vi.mock("@aas-companion/api", async () => {
             key: "EPC-010",
             title: "Scoped native Epic",
             purpose: "Keep the branch explicit.",
-            summary: null
+            scopeBoundary: null,
+            riskNote: null
           }
         },
         tollgate: {

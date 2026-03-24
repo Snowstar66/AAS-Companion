@@ -32,7 +32,8 @@ export async function saveEpicWorkspaceAction(formData: FormData) {
     actorId: session.userId,
     title: String(formData.get("title") ?? ""),
     purpose: String(formData.get("purpose") ?? ""),
-    summary: String(formData.get("summary") ?? "") || null
+    scopeBoundary: String(formData.get("scopeBoundary") ?? "") || null,
+    riskNote: String(formData.get("riskNote") ?? "") || null
   });
 
   revalidatePath(`/epics/${epicId}`);

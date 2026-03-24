@@ -24,7 +24,8 @@ vi.mock("@aas-companion/api", async () => {
           key: "EPC-002",
           title: "New epic",
           purpose: "Describe the value slice for this outcome.",
-          summary: null,
+          scopeBoundary: null,
+          riskNote: null,
           status: "draft",
           originType: "native",
           createdMode: "clean",
@@ -118,8 +119,7 @@ vi.mock("@aas-companion/api", async () => {
 
 vi.mock("@/app/(protected)/epics/[epicId]/actions", () => ({
   archiveEpicAction: vi.fn(),
-  createStoryFromEpicAction: vi.fn()
-  ,
+  createStoryFromEpicAction: vi.fn(),
   hardDeleteEpicAction: vi.fn(),
   restoreEpicAction: vi.fn(),
   saveEpicWorkspaceAction: vi.fn()

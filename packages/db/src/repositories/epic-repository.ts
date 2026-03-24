@@ -3,6 +3,7 @@ import type { Prisma } from "../../generated/client";
 import { epicCreateInputSchema, epicUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
+import { encodeEpicShape, withEpicShape } from "./epic-shape";
 import {
   resolveGovernedObjectProvenance,
   toGovernedObjectProvenanceFields,
@@ -22,7 +23,10 @@ export async function createEpic(input: unknown, db: Prisma.TransactionClient | 
         key: parsed.key,
         title: parsed.title,
         purpose: parsed.purpose,
-        summary: parsed.summary ?? null,
+        summary: encodeEpicShape({
+          scopeBoundary: parsed.scopeBoundary ?? null,
+          riskNote: parsed.riskNote ?? null
+        }),
         status: parsed.status,
         lifecycleState: "active",
         archivedAt: null,
@@ -49,7 +53,7 @@ export async function createEpic(input: unknown, db: Prisma.TransactionClient | 
       tx
     );
 
-    return epic;
+    return withEpicShape(epic);
   };
 
   if (db === prisma) {
@@ -68,21 +72,25 @@ export async function listEpics(organizationId: string, options?: { includeArchi
     where.lifecycleState = "active";
   }
 
-  return prisma.epic.findMany({
+  const epics = await prisma.epic.findMany({
     where,
     orderBy: {
       createdAt: "desc"
     }
   });
+
+  return epics.map((epic) => withEpicShape(epic));
 }
 
 export async function getEpicById(organizationId: string, id: string) {
-  return prisma.epic.findFirst({
+  const epic = await prisma.epic.findFirst({
     where: {
       organizationId,
       id
     }
   });
+
+  return epic ? withEpicShape(epic) : null;
 }
 
 export async function getEpicWorkspaceSnapshot(organizationId: string, id: string) {
@@ -121,10 +129,10 @@ export async function getEpicWorkspaceSnapshot(organizationId: string, id: strin
   const relatedLifecycleState = epic.lifecycleState === "archived" ? "archived" : "active";
 
   return {
-    epic: {
+    epic: withEpicShape({
       ...epic,
       stories: epic.stories.filter((story) => story.lifecycleState === relatedLifecycleState)
-    },
+    }),
     activities
   };
 }
@@ -177,8 +185,12 @@ export async function updateEpic(input: unknown) {
       data.purpose = parsed.purpose;
     }
 
-    if (parsed.summary !== undefined) {
-      data.summary = parsed.summary;
+    if (parsed.scopeBoundary !== undefined || parsed.riskNote !== undefined) {
+      const existingShape = withEpicShape(existing);
+      data.summary = encodeEpicShape({
+        scopeBoundary: parsed.scopeBoundary === undefined ? existingShape.scopeBoundary : parsed.scopeBoundary,
+        riskNote: parsed.riskNote === undefined ? existingShape.riskNote : parsed.riskNote
+      });
     }
 
     if (parsed.status !== undefined) {
@@ -219,6 +231,6 @@ export async function updateEpic(input: unknown) {
       tx
     );
 
-    return epic;
+    return withEpicShape(epic);
   });
 }
