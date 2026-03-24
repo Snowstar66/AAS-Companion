@@ -9,7 +9,7 @@ import {
   getOrganizationContextForUser,
   getWorkspaceSnapshot
 } from "@aas-companion/db";
-import { DEMO_ORGANIZATION } from "@aas-companion/domain";
+import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { clearDemoSession, createDemoSession } from "@/lib/auth/demo";
 import { requireActiveProjectSession, requireProjectAccountIdentity, requireProtectedSession } from "@/lib/auth/guards";
 import { clearOrganizationContextCookie, setOrganizationContextCookie } from "@/lib/org-context";

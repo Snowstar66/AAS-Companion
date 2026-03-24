@@ -372,6 +372,33 @@ function splitMarkdownSections(content: string) {
       ];
 }
 
+function normalizeHeading(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function isStructuredStorySpecArtifact(input: {
+  fileName: string;
+  content: string;
+  sections?: Array<{ title: string }>;
+}) {
+  const normalizedFileName = input.fileName.toLowerCase();
+  const normalizedContent = normalizeText(input.content).toLowerCase();
+  const headings = new Set((input.sections ?? []).map((section) => normalizeHeading(section.title)));
+  const hasStoryIdentity =
+    /(^|[\\/])m\d+-story-\d+/.test(normalizedFileName) ||
+    /#\s*m\d+-story-\d+/.test(normalizedContent) ||
+    headings.has("story type");
+  const requiredHeadings = [
+    "title",
+    "summary",
+    "acceptance criteria",
+    "test definition",
+    "definition of done"
+  ];
+
+  return hasStoryIdentity && requiredHeadings.every((heading) => headings.has(heading));
+}
+
 function confidenceFromSignals(strongSignals: number, mediumSignals: number) {
   if (strongSignals > 0) {
     return "high" as const;
@@ -438,6 +465,15 @@ function summarizeText(text: string, maxLength = 180) {
 export function classifyArtifactSource(fileName: string, content: string): ArtifactSourceClassification {
   const normalizedFileName = fileName.toLowerCase();
   const normalized = normalizeText(content).toLowerCase();
+  const sections = splitMarkdownSections(content);
+
+  if (isStructuredStorySpecArtifact({ fileName, content, sections })) {
+    return {
+      sourceType: "story_file",
+      confidence: "high",
+      rationale: "Detected a structured story specification with dedicated story headings and delivery fields."
+    };
+  }
 
   const hasStorySignals =
     /story[-\s]id|acceptance criteria|definition of done|test definition|as a .* i want .* so that/.test(normalized);
@@ -514,6 +550,7 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
   const classification = classifyArtifactSource(fileName, content);
   const sections = splitMarkdownSections(content);
   const parsedSections: ArtifactParsedSection[] = [];
+  const structuredStorySpec = isStructuredStorySpecArtifact({ fileName, content, sections });
 
   for (const section of sections) {
     const title = section.title.toLowerCase();
@@ -541,7 +578,11 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
       });
     }
 
-    if (/story/.test(title) || /story[-\s]id|acceptance criteria|as a .* i want .* so that/.test(text)) {
+    if (
+      /story/.test(title) ||
+      /story[-\s]id|as a .* i want .* so that/.test(text) ||
+      (structuredStorySpec && /^(title|summary|story type|value intent)$/i.test(section.title))
+    ) {
       candidates.push({
         kind: "story_candidate",
         confidence: confidenceFromSignals(/story/.test(title) ? 1 : 0, /story[-\s]id|as a .* i want .* so that/.test(text) ? 1 : 0)
@@ -588,12 +629,12 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
 }
 
 function extractListItems(text: string) {
-  return text
+  return [...new Set(text
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => /^[-*]\s+/.test(line))
     .map((line) => line.replace(/^[-*]\s+/, "").trim())
-    .filter(Boolean);
+    .filter(Boolean))];
 }
 
 function buildArtifactCandidateId(input: {
@@ -602,6 +643,13 @@ function buildArtifactCandidateId(input: {
   candidateType: ArtifactAasCandidate["type"];
 }) {
   return `mapped-${input.fileId}-${input.sectionId}-${input.candidateType}`;
+}
+
+function findStructuredSection(
+  sections: ArtifactParseResult["sections"],
+  title: string
+) {
+  return sections.find((section) => normalizeHeading(section.title) === normalizeHeading(title));
 }
 
 export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandidate | ArtifactCandidateRecord): ArtifactCandidateDraftRecord {
@@ -1095,6 +1143,95 @@ export function mapParsedArtifactsToAasCandidates(input: {
     const parsedArtifacts = file.parsedArtifacts;
 
     if (!parsedArtifacts) {
+      continue;
+    }
+
+    if (
+      file.sourceType === "story_file" &&
+      isStructuredStorySpecArtifact({
+        fileName: file.fileName,
+        content: parsedArtifacts.sections.map((section) => section.text).join("\n\n"),
+        sections: parsedArtifacts.sections
+      })
+    ) {
+      const titleSection =
+        findStructuredSection(parsedArtifacts.sections, "Title") ??
+        findStructuredSection(parsedArtifacts.sections, "Summary") ??
+        parsedArtifacts.sections[0];
+      const summarySection =
+        findStructuredSection(parsedArtifacts.sections, "Summary") ??
+        findStructuredSection(parsedArtifacts.sections, "Value Intent") ??
+        titleSection;
+      const acceptanceCriteriaSection = findStructuredSection(parsedArtifacts.sections, "Acceptance Criteria");
+      const testDefinitionSection = findStructuredSection(parsedArtifacts.sections, "Test Definition");
+
+      if (titleSection && summarySection) {
+        candidates.push({
+          id: buildArtifactCandidateId({
+            fileId: file.id,
+            sectionId: titleSection.id,
+            candidateType: "story"
+          }),
+          type: "story",
+          title: summarizeText(
+            titleSection.text
+              .split("\n")
+              .slice(1)
+              .join(" ")
+              .trim() || titleSection.title,
+            80
+          ),
+          summary: summarizeText(
+            summarySection.text
+              .split("\n")
+              .slice(1)
+              .join(" ")
+              .trim() || summarySection.text
+          ),
+          mappingState: "mapped",
+          source: {
+            fileId: titleSection.sourceReference.fileId,
+            fileName: titleSection.sourceReference.fileName,
+            sectionId: titleSection.sourceReference.sectionId,
+            sectionTitle: titleSection.sourceReference.sectionTitle,
+            sectionMarker: titleSection.sourceReference.sectionMarker,
+            sourceType: file.sourceType,
+            confidence: "high"
+          },
+          inferredOutcomeCandidateId: undefined,
+          inferredEpicCandidateId: undefined,
+          relationshipState: "missing",
+          relationshipNote: "This story spec still needs explicit Outcome and Epic linkage inside the project Value Spine.",
+          acceptanceCriteria: acceptanceCriteriaSection ? extractListItems(acceptanceCriteriaSection.text) : [],
+          testNotes: testDefinitionSection ? extractListItems(testDefinitionSection.text) : []
+        });
+      }
+
+      const consumedTitles = new Set([
+        "title",
+        "story type",
+        "value intent",
+        "summary",
+        "acceptance criteria",
+        "ai usage scope",
+        "test definition",
+        "definition of done",
+        "scope in",
+        "scope out",
+        "constraints",
+        "required evidence"
+      ]);
+
+      for (const section of parsedArtifacts.sections) {
+        if (consumedTitles.has(normalizeHeading(section.title))) {
+          continue;
+        }
+
+        if (section.kind === "architecture_notes" || section.kind === "unmapped") {
+          unmappedSections.push(section);
+        }
+      }
+
       continue;
     }
 

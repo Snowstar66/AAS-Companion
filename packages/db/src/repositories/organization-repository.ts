@@ -8,6 +8,15 @@ export type OrganizationMembershipContext = {
   role: MembershipRole;
 };
 
+export type OrganizationMembershipProjectSummary = OrganizationMembershipContext & {
+  counts: {
+    outcomes: number;
+    epics: number;
+    stories: number;
+    activityEvents: number;
+  };
+};
+
 export type AppUserIdentity = {
   userId: string;
   email: string;
@@ -71,6 +80,52 @@ export async function listOrganizationContextsForUser(userId: string): Promise<O
     organizationName: membership.organization.name,
     organizationSlug: membership.organization.slug,
     role: membership.role as MembershipRole
+  }));
+}
+
+export async function listOrganizationProjectSummariesForUser(
+  userId: string
+): Promise<OrganizationMembershipProjectSummary[]> {
+  const memberships = await prisma.membership.findMany({
+    where: {
+      userId
+    },
+    orderBy: {
+      organization: {
+        name: "asc"
+      }
+    },
+    select: {
+      role: true,
+      organization: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          _count: {
+            select: {
+              outcomes: true,
+              epics: true,
+              stories: true,
+              activityEvents: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return memberships.map((membership) => ({
+    organizationId: membership.organization.id,
+    organizationName: membership.organization.name,
+    organizationSlug: membership.organization.slug,
+    role: membership.role as MembershipRole,
+    counts: {
+      outcomes: membership.organization._count.outcomes,
+      epics: membership.organization._count.epics,
+      stories: membership.organization._count.stories,
+      activityEvents: membership.organization._count.activityEvents
+    }
   }));
 }
 

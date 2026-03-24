@@ -113,6 +113,30 @@ function getSummaryAction(input: { label: string; value: string }) {
   return null;
 }
 
+function summaryTone(label: string) {
+  if (label === "Blocked Items") {
+    return "border-rose-200/80 bg-rose-50/70";
+  }
+
+  if (label === "Stories Ready") {
+    return "border-emerald-200/80 bg-emerald-50/70";
+  }
+
+  if (label === "Outcomes") {
+    return "border-sky-200/80 bg-sky-50/60";
+  }
+
+  return "border-border/70 bg-background/90";
+}
+
+function attentionTone(kind: "blocker" | "pending") {
+  if (kind === "blocker") {
+    return "border-rose-200/80 bg-rose-50/65";
+  }
+
+  return "border-amber-200/80 bg-amber-50/65";
+}
+
 export default async function HomePage({ searchParams }: HomePageProps) {
   const query = searchParams ? await searchParams : {};
   const {
@@ -215,7 +239,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                           <ActionSummaryCard
                             actionHref={action?.href}
                             actionLabel={action?.label}
-                            className="border-border/70 bg-background/90"
+                            className={summaryTone(item.label)}
                             description={item.description}
                             key={item.label}
                             label={item.label}
@@ -273,8 +297,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {[...dashboard.topBlockers.slice(0, 2), ...dashboard.pendingActions.slice(0, 2)].length > 0 ? (
-                      [...dashboard.topBlockers.slice(0, 2), ...dashboard.pendingActions.slice(0, 2)].map((item) => (
-                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={item.id}>
+                      [
+                        ...dashboard.topBlockers.slice(0, 2).map((item) => ({ ...item, attentionKind: "blocker" as const })),
+                        ...dashboard.pendingActions.slice(0, 2).map((item) => ({ ...item, attentionKind: "pending" as const }))
+                      ].map((item) => (
+                        <div className={`rounded-2xl border p-4 ${attentionTone(item.attentionKind)}`} key={item.id}>
                           <p className="font-medium text-foreground">{item.title}</p>
                           <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
                         </div>

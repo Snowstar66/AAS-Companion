@@ -1,6 +1,7 @@
 import {
   appendArtifactFileRejections,
   createArtifactIntakeSession,
+  getArtifactIntakeFileById,
   getArtifactCandidateById,
   listArtifactCandidatesForOrganization,
   listArtifactIntakeSessions,
@@ -59,6 +60,10 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
 
 export async function listArtifactIntakeSessionsService(organizationId: string) {
   return success(await listArtifactIntakeSessions(organizationId));
+}
+
+export async function getArtifactIntakeFileService(organizationId: string, fileId: string) {
+  return success(await getArtifactIntakeFileById(organizationId, fileId));
 }
 
 export async function listArtifactCandidateQueueService(organizationId: string) {

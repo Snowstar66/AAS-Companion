@@ -39,6 +39,48 @@ function getUnmappedSectionContext(input: {
   };
 }
 
+function clearPendingUnmappedSectionsForRejectedFile(input: {
+  mappedArtifacts: unknown;
+  fileId: string;
+  sectionDispositions: unknown;
+}) {
+  const mapping = artifactMappingResultSchema.safeParse(input.mappedArtifacts);
+  const sectionDispositions = artifactIssueDispositionMapSchema.parse(input.sectionDispositions ?? {});
+
+  if (!mapping.success) {
+    return {
+      changed: false,
+      sectionDispositions
+    };
+  }
+
+  let changed = false;
+  const next = { ...sectionDispositions };
+
+  for (const section of mapping.data.unmappedSections) {
+    if (section.sourceReference.fileId !== input.fileId) {
+      continue;
+    }
+
+    const existing = next[section.id];
+    if (existing && existing.action !== "pending" && existing.action !== "blocked") {
+      continue;
+    }
+
+    next[section.id] = sanitizeArtifactPersistenceValue({
+      issueId: section.id,
+      action: "not_relevant",
+      note: "Cleared when the final active candidate for this artifact was rejected."
+    });
+    changed = true;
+  }
+
+  return {
+    changed,
+    sectionDispositions: artifactIssueDispositionMapSchema.parse(next)
+  };
+}
+
 function parseCandidateRecord(candidate: {
   id: string;
   intakeSessionId: string;
@@ -291,10 +333,44 @@ export async function reviewArtifactCandidate(input: unknown) {
       draftRecord,
       humanDecisions
     });
+    let effectiveSectionDispositions = artifactIssueDispositionMapSchema.parse(file?.sectionDispositions ?? {});
+
+    if (parsed.reviewStatus === "rejected" && file) {
+      const otherActiveCandidates = await tx.artifactAasCandidate.count({
+        where: {
+          organizationId: parsed.organizationId,
+          fileId: existing.fileId,
+          id: { not: existing.id },
+          reviewStatus: {
+            notIn: ["rejected", "promoted"]
+          }
+        }
+      });
+
+      if (otherActiveCandidates === 0) {
+        const clearedSections = clearPendingUnmappedSectionsForRejectedFile({
+          mappedArtifacts: file.intakeSession.mappedArtifacts ?? null,
+          fileId: existing.fileId,
+          sectionDispositions: effectiveSectionDispositions
+        });
+
+        effectiveSectionDispositions = clearedSections.sectionDispositions;
+
+        if (clearedSections.changed) {
+          await tx.artifactIntakeFile.update({
+            where: { id: file.id },
+            data: {
+              sectionDispositions: effectiveSectionDispositions as Prisma.InputJsonValue
+            }
+          });
+        }
+      }
+    }
+
     const unmappedSectionContext = getUnmappedSectionContext({
       mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
       fileId: existing.fileId,
-      sectionDispositions: file?.sectionDispositions ?? null
+      sectionDispositions: effectiveSectionDispositions
     });
     const reviewComment = parsed.reviewComment ? sanitizeArtifactPersistenceText(parsed.reviewComment) : null;
     const importedReadinessState = deriveImportedReadinessState({
@@ -535,7 +611,7 @@ export async function promoteArtifactCandidate(input: {
     }
 
     if (candidate.type === "epic") {
-      const promotedOutcome = draftRecord.outcomeCandidateId
+      const promotedOutcomeCandidate = draftRecord.outcomeCandidateId
         ? await tx.artifactAasCandidate.findFirst({
             where: {
               organizationId: candidate.organizationId,
@@ -543,15 +619,31 @@ export async function promoteArtifactCandidate(input: {
             }
           })
         : null;
+      const linkedOutcome =
+        promotedOutcomeCandidate?.promotedEntityId
+          ? await tx.outcome.findFirst({
+              where: {
+                organizationId: candidate.organizationId,
+                id: promotedOutcomeCandidate.promotedEntityId
+              }
+            })
+          : draftRecord.outcomeCandidateId
+            ? await tx.outcome.findFirst({
+                where: {
+                  organizationId: candidate.organizationId,
+                  id: draftRecord.outcomeCandidateId
+                }
+              })
+            : null;
 
-      if (!promotedOutcome?.promotedEntityId) {
-        throw new Error("Promote the linked Outcome candidate before promoting this Epic.");
+      if (!linkedOutcome) {
+        throw new Error("Select a valid project Outcome before promoting this Epic.");
       }
 
       const created = await createEpic({
         organizationId: candidate.organizationId,
         actorId: input.actorId ?? null,
-        outcomeId: promotedOutcome.promotedEntityId,
+        outcomeId: linkedOutcome.id,
         key: draftRecord.key ?? `IMP-EPC-${candidate.id.slice(0, 8).toUpperCase()}`,
         title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
         purpose: draftRecord.purpose ?? sanitizeArtifactPersistenceText(candidate.summary),
@@ -567,7 +659,7 @@ export async function promoteArtifactCandidate(input: {
     }
 
     if (candidate.type === "story") {
-      const promotedOutcome = draftRecord.outcomeCandidateId
+      const promotedOutcomeCandidate = draftRecord.outcomeCandidateId
         ? await tx.artifactAasCandidate.findFirst({
             where: {
               organizationId: candidate.organizationId,
@@ -575,7 +667,7 @@ export async function promoteArtifactCandidate(input: {
             }
           })
         : null;
-      const promotedEpic = draftRecord.epicCandidateId
+      const promotedEpicCandidate = draftRecord.epicCandidateId
         ? await tx.artifactAasCandidate.findFirst({
             where: {
               organizationId: candidate.organizationId,
@@ -583,16 +675,48 @@ export async function promoteArtifactCandidate(input: {
             }
           })
         : null;
+      const linkedOutcome =
+        promotedOutcomeCandidate?.promotedEntityId
+          ? await tx.outcome.findFirst({
+              where: {
+                organizationId: candidate.organizationId,
+                id: promotedOutcomeCandidate.promotedEntityId
+              }
+            })
+          : draftRecord.outcomeCandidateId
+            ? await tx.outcome.findFirst({
+                where: {
+                  organizationId: candidate.organizationId,
+                  id: draftRecord.outcomeCandidateId
+                }
+              })
+            : null;
+      const linkedEpic =
+        promotedEpicCandidate?.promotedEntityId
+          ? await tx.epic.findFirst({
+              where: {
+                organizationId: candidate.organizationId,
+                id: promotedEpicCandidate.promotedEntityId
+              }
+            })
+          : draftRecord.epicCandidateId
+            ? await tx.epic.findFirst({
+                where: {
+                  organizationId: candidate.organizationId,
+                  id: draftRecord.epicCandidateId
+                }
+              })
+            : null;
 
-      if (!promotedOutcome?.promotedEntityId || !promotedEpic?.promotedEntityId) {
-        throw new Error("Promote the linked Outcome and Epic candidates before promoting this Story.");
+      if (!linkedOutcome || !linkedEpic) {
+        throw new Error("Select a valid project Outcome and Epic before promoting this Story.");
       }
 
       const created = await createStory({
         organizationId: candidate.organizationId,
         actorId: input.actorId ?? null,
-        outcomeId: promotedOutcome.promotedEntityId,
-        epicId: promotedEpic.promotedEntityId,
+        outcomeId: linkedOutcome.id,
+        epicId: linkedEpic.id,
         key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
         title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
         storyType: draftRecord.storyType ?? "outcome_delivery",

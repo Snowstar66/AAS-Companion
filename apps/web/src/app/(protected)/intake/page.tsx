@@ -8,7 +8,8 @@ import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import {
-  submitArtifactSectionDispositionAction,
+  submitArtifactSectionDispositionInlineAction,
+  submitArtifactCandidateIssueDispositionInlineAction,
   submitArtifactCandidateFromIntakeAction,
   uploadArtifactIntakeFilesAction
 } from "./actions";
@@ -71,17 +72,21 @@ function buildIntakeHref(sessionId: string, fileId: string, candidateId?: string
 
 export default async function ArtifactIntakePage({ searchParams }: ArtifactIntakePageProps) {
   const query = searchParams ? await searchParams : {};
-  const workspace = await loadArtifactIntakeWorkspace();
+  const sessionId = getParamValue(query.sessionId);
+  const fileId = getParamValue(query.fileId);
+  const workspace = await loadArtifactIntakeWorkspace({ sessionId, fileId });
   const error = getParamValue(query.error);
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
-  const sessionId = getParamValue(query.sessionId);
-  const fileId = getParamValue(query.fileId);
   const candidateId = getParamValue(query.candidateId);
   const queueFilter = getParamValue(query.queue) ?? "all";
   const visibleSessions =
     workspace.state === "ready"
       ? workspace.sessions.filter((artifactSession) => {
+          if ((artifactSession.activeImportWorkCount ?? 1) === 0) {
+            return false;
+          }
+
           if (queueFilter === "pending_classification") {
             return artifactSession.files.some((file) => file.sourceTypeStatus === "pending");
           }
@@ -98,8 +103,10 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     workspace.state === "ready"
       ? visibleSessions.find((artifactSession) => artifactSession.id === sessionId) ?? visibleSessions[0] ?? null
       : null;
+  const visibleFiles =
+    selectedSession?.files.filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0) ?? [];
   const selectedFile =
-    selectedSession?.files.find((artifactFile) => artifactFile.id === fileId) ?? selectedSession?.files[0] ?? null;
+    visibleFiles.find((artifactFile) => artifactFile.id === fileId) ?? visibleFiles[0] ?? null;
   const selectedSessionCandidates =
     selectedSession && selectedSession.candidates.length > 0
       ? selectedSession.candidates
@@ -198,6 +205,16 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <CardDescription>{workspace.message}</CardDescription>
             </CardHeader>
           </Card>
+        ) : visibleSessions.length === 0 ? (
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>No active import work remains</CardTitle>
+              <CardDescription>
+                Everything in intake has either been promoted into the project Value Spine, rejected from import, or
+                otherwise cleared from the active queue.
+              </CardDescription>
+            </CardHeader>
+          </Card>
         ) : (
           <>
             <div className="grid gap-4 2xl:grid-cols-[1.15fr,0.85fr]">
@@ -248,8 +265,22 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                         </div>
                       </div>
 
+                      {artifactSession.clearedCandidateCount > 0 ? (
+                        <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                          {artifactSession.rejectedCandidateCount > 0 ? (
+                            <span>{artifactSession.rejectedCandidateCount} candidate(s) were rejected and removed from the active import queue. </span>
+                          ) : null}
+                          {artifactSession.promotedCandidateCount > 0 ? (
+                            <span>{artifactSession.promotedCandidateCount} candidate(s) were already promoted into the project Value Spine. </span>
+                          ) : null}
+                          Review keeps the audit trail, but intake now focuses on work that is still active.
+                        </div>
+                      ) : null}
+
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {artifactSession.files.map((artifactFile) => {
+                        {artifactSession.files
+                          .filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0)
+                          .map((artifactFile) => {
                           const sessionCandidates =
                             artifactSession.candidates.length > 0 ? artifactSession.candidates : artifactSession.displayCandidates;
                           const firstCandidate =
@@ -272,7 +303,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                                   : "secondary"
                               }
                             >
-                              <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, firstCandidate?.id ?? null, queueFilter)}>
+                              <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, firstCandidate?.id ?? null, queueFilter)} prefetch={false}>
                                 {artifactFile.fileName}
                               </Link>
                             </Button>
@@ -333,6 +364,12 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                           </div>
                         ))}
                       </div>
+                      {selectedFileCandidates.length === 0 && (selectedSession?.clearedCandidateCount ?? 0) > 0 ? (
+                        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                          This artifact has no active import candidates left. Any earlier candidates were either rejected
+                          or already promoted into the project Value Spine.
+                        </div>
+                      ) : null}
                     </>
                   ) : (
                     <p className="text-sm text-muted-foreground">Select an artifact file to begin scoped intake review.</p>
@@ -344,11 +381,17 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
             {selectedSession && selectedFile ? (
               <ArtifactIntakeReviewWorkspace
                 fileCandidates={selectedFileCandidates}
+                projectEpics={workspace.projectEpics}
+                projectOutcomes={workspace.projectOutcomes}
                 selectedCandidate={selectedCandidate}
                 selectedFile={selectedFile}
-                session={selectedSession}
-                submitSectionAction={submitArtifactSectionDispositionAction}
+                session={{
+                  ...selectedSession,
+                  allCandidates: selectedSession.allCandidates ?? selectedSession.candidates ?? []
+                }}
                 submitAction={submitArtifactCandidateFromIntakeAction}
+                submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
+                submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
               />
             ) : null}
           </>

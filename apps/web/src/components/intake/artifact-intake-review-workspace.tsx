@@ -9,6 +9,7 @@ import type {
 } from "@aas-companion/domain";
 import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { ArtifactIntakeDispositionButtons } from "@/components/intake/artifact-intake-disposition-buttons";
 
 type ParsedSection = ArtifactParseResult["sections"][number];
 
@@ -60,6 +61,20 @@ type IntakeArtifactSession = {
   id: string;
   label: string;
   mappedArtifacts: { unmappedSections: ParsedSection[] } | null;
+  allCandidates: IntakeArtifactCandidate[];
+};
+
+type ProjectOutcomeOption = {
+  id: string;
+  key: string;
+  title: string;
+};
+
+type ProjectEpicOption = {
+  id: string;
+  key: string;
+  title: string;
+  outcomeId: string;
 };
 
 type QueueItem = {
@@ -69,7 +84,9 @@ type QueueItem = {
   context: string;
   status: "resolved" | "unresolved";
   href: string;
+  selectedAction?: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked" | null;
   dispositionLabel?: string | null;
+  resolvedActions: Array<"corrected" | "confirmed" | "not_relevant" | "pending" | "blocked">;
   actionScope: "candidate" | "section";
   candidateId?: string;
   candidateType?: "outcome" | "epic" | "story";
@@ -84,12 +101,44 @@ type ArtifactIntakeReviewWorkspaceProps = {
   session: IntakeArtifactSession;
   selectedFile: IntakeArtifactFile;
   fileCandidates: IntakeArtifactCandidate[];
+  projectOutcomes: ProjectOutcomeOption[];
+  projectEpics: ProjectEpicOption[];
   selectedCandidate: IntakeArtifactCandidate | null;
   submitAction: (formData: FormData) => Promise<void>;
-  submitSectionAction: (formData: FormData) => Promise<void>;
+  submitCandidateDispositionInlineAction: (input: {
+    candidateId: string;
+    candidateType: "outcome" | "epic" | "story";
+    issueId: string;
+    issueAction: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
+  }) => Promise<{ ok: true; selectedAction: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked" } | { ok: false; message: string }>;
+  submitSectionDispositionInlineAction: (input: {
+    fileId: string;
+    sectionId: string;
+    action: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
+  }) => Promise<{ ok: true; selectedAction: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked" } | { ok: false; message: string }>;
 };
 
-function intakeHref(sessionId: string, fileId: string, candidateId?: string | null, hash?: string) {
+function intakeHref(
+  sessionId: string,
+  fileId: string,
+  candidateId?: string | null,
+  hash?: string,
+  currentSelection?: {
+    sessionId: string;
+    fileId: string;
+    candidateId: string | null;
+  }
+) {
+  if (
+    hash &&
+    currentSelection &&
+    currentSelection.sessionId === sessionId &&
+    currentSelection.fileId === fileId &&
+    currentSelection.candidateId === (candidateId ?? null)
+  ) {
+    return `#${hash}`;
+  }
+
   const params = new URLSearchParams({ sessionId, fileId });
   if (candidateId) {
     params.set("candidateId", candidateId);
@@ -134,16 +183,6 @@ function hasText(value: string | null | undefined) {
 
 function hasItems(value: string[] | null | undefined) {
   return Boolean(value && value.length > 0);
-}
-
-function reviewed(status: IntakeArtifactCandidate["reviewStatus"]) {
-  return status === "confirmed" || status === "edited" || status === "promoted";
-}
-
-function statusTone(status: "resolved" | "unresolved") {
-  return status === "resolved"
-    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-    : "border-amber-200 bg-amber-50 text-amber-800";
 }
 
 function value(value: string | string[] | null) {
@@ -233,14 +272,14 @@ function issueActions(category: "missing" | "uncertain" | "human_only" | "blocke
     return [
       { label: "Not relevant", value: "not_relevant" as const },
       { label: "Keep pending", value: "pending" as const },
-      { label: "Block", value: "blocked" as const }
+      { label: "Mark blocker", value: "blocked" as const }
     ];
   }
 
   if (category === "human_only") {
     return [
       { label: "Keep pending", value: "pending" as const },
-      { label: "Block", value: "blocked" as const }
+      { label: "Mark blocker", value: "blocked" as const }
     ];
   }
 
@@ -248,11 +287,20 @@ function issueActions(category: "missing" | "uncertain" | "human_only" | "blocke
     { label: "Confirm", value: "confirmed" as const },
     { label: "Not relevant", value: "not_relevant" as const },
     { label: "Keep pending", value: "pending" as const },
-    { label: "Block", value: "blocked" as const }
+    { label: "Mark blocker", value: "blocked" as const }
   ];
 }
 
-function queueItems(session: IntakeArtifactSession, file: IntakeArtifactFile, candidates: IntakeArtifactCandidate[]) {
+function queueItems(
+  session: IntakeArtifactSession,
+  file: IntakeArtifactFile,
+  candidates: IntakeArtifactCandidate[],
+  currentSelection?: {
+    sessionId: string;
+    fileId: string;
+    candidateId: string | null;
+  }
+) {
   const items: Array<{ key: string; title: string; description: string; items: QueueItem[] }> = [];
   const baseCandidateId = candidates[0]?.id ?? null;
 
@@ -273,15 +321,17 @@ function queueItems(session: IntakeArtifactSession, file: IntakeArtifactFile, ca
           file.sectionDispositions[section.id]?.action !== "blocked"
             ? ("resolved" as const)
             : ("unresolved" as const),
-        href: intakeHref(session.id, file.id, baseCandidateId, `source-section-${section.id}`),
+        href: intakeHref(session.id, file.id, baseCandidateId, `source-section-${section.id}`, currentSelection),
+        selectedAction: file.sectionDispositions[section.id]?.action ?? null,
         dispositionLabel: dispositionLabel(file.sectionDispositions[section.id]?.action),
+        resolvedActions: ["corrected", "not_relevant"],
         actionScope: "section" as const,
         issueId: section.id,
         actions: [
           { label: "Worked off", value: "corrected" as const },
           { label: "Not relevant", value: "not_relevant" as const },
           { label: "Keep pending", value: "pending" as const },
-          { label: "Block", value: "blocked" as const }
+          { label: "Mark blocker", value: "blocked" as const }
         ]
       }))
   });
@@ -304,8 +354,15 @@ function queueItems(session: IntakeArtifactSession, file: IntakeArtifactFile, ca
           description: finding.message,
           context: candidate.title,
           status: resolved ? ("resolved" as const) : ("unresolved" as const),
-          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor"),
+          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor", currentSelection),
+          selectedAction: action ?? null,
           dispositionLabel: dispositionLabel(action),
+          resolvedActions:
+            finding.category === "uncertain"
+              ? ["confirmed", "not_relevant"]
+              : finding.category === "missing" || finding.category === "blocked"
+                ? ["not_relevant"]
+                : [],
           actionScope: "candidate" as const,
           candidateId: candidate.id,
           candidateType: candidate.type,
@@ -364,15 +421,55 @@ function readiness(candidate: IntakeArtifactCandidate, file: IntakeArtifactFile,
   return ["border-sky-200 bg-sky-50 text-sky-900", "Awaiting explicit human confirmation", "The candidate can now be reviewed directly against the source artifact."] as const;
 }
 
+function candidateLinkageState(candidate: IntakeArtifactCandidate) {
+  if (candidate.relationshipState === "missing") {
+    return {
+      label: "Unlinked import candidate",
+      tone: "border-rose-200 bg-rose-50 text-rose-800",
+      description: "This candidate was extracted from the file, but it is not yet connected to the needed Outcome/Epic context."
+    } as const;
+  }
+
+  if (candidate.relationshipState === "uncertain") {
+    return {
+      label: "Linkage needs confirmation",
+      tone: "border-amber-200 bg-amber-50 text-amber-800",
+      description: "The nearest Outcome/Epic linkage was inferred, but it still needs human confirmation."
+    } as const;
+  }
+
+  return {
+    label: "Linkage looks connected",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    description: "This candidate is already connected to the inferred Value Spine context."
+  } as const;
+}
+
+function describeProjectOutcome(option: ProjectOutcomeOption) {
+  return `${option.key} - ${option.title}`;
+}
+
+function describeProjectEpic(option: ProjectEpicOption) {
+  return `${option.key} - ${option.title}`;
+}
+
 export function ArtifactIntakeReviewWorkspace({
   session,
   selectedFile,
   fileCandidates,
+  projectOutcomes,
+  projectEpics,
   selectedCandidate,
   submitAction,
-  submitSectionAction
+  submitCandidateDispositionInlineAction,
+  submitSectionDispositionInlineAction
 }: ArtifactIntakeReviewWorkspaceProps) {
-  const groups = queueItems(session, selectedFile, fileCandidates);
+  const currentSelection = {
+    sessionId: session.id,
+    fileId: selectedFile.id,
+    candidateId: selectedCandidate?.id ?? null
+  };
+  const groups = queueItems(session, selectedFile, fileCandidates, currentSelection);
   const ready = selectedCandidate ? readiness(selectedCandidate, selectedFile, session) : null;
   const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
     (section) => section.sourceReference.fileId === selectedFile.id
@@ -385,6 +482,24 @@ export function ArtifactIntakeReviewWorkspace({
         sectionDispositions: selectedFile.sectionDispositions
       })
     : null;
+  const outcomeCandidateOptions = projectOutcomes ?? [];
+  const selectedOutcomeCandidateId =
+    selectedCandidate?.draftRecord?.outcomeCandidateId &&
+    outcomeCandidateOptions.some((candidate) => candidate.id === selectedCandidate.draftRecord?.outcomeCandidateId)
+      ? selectedCandidate.draftRecord.outcomeCandidateId
+      : outcomeCandidateOptions.length === 1
+        ? outcomeCandidateOptions[0]?.id ?? ""
+        : "";
+  const epicCandidateOptions = selectedOutcomeCandidateId
+    ? (projectEpics ?? []).filter((epic) => epic.outcomeId === selectedOutcomeCandidateId)
+    : (projectEpics ?? []);
+  const selectedEpicCandidateId =
+    selectedCandidate?.draftRecord?.epicCandidateId &&
+    epicCandidateOptions.some((candidate) => candidate.id === selectedCandidate.draftRecord?.epicCandidateId)
+      ? selectedCandidate.draftRecord.epicCandidateId
+      : epicCandidateOptions.length === 1
+        ? epicCandidateOptions[0]?.id ?? ""
+        : "";
 
   return (
     <div className="space-y-6">
@@ -449,8 +564,15 @@ export function ArtifactIntakeReviewWorkspace({
                   {selectedFile.parsedArtifacts.sections.map((section) => (
                     <Link
                       className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground transition hover:border-primary hover:text-foreground"
-                      href={intakeHref(session.id, selectedFile.id, selectedCandidate?.id ?? null, `source-section-${section.id}`)}
+                      href={intakeHref(
+                        session.id,
+                        selectedFile.id,
+                        selectedCandidate?.id ?? null,
+                        `source-section-${section.id}`,
+                        currentSelection
+                      )}
                       key={section.id}
+                      prefetch={false}
                     >
                       {section.sourceReference.sectionMarker}
                     </Link>
@@ -520,7 +642,7 @@ export function ArtifactIntakeReviewWorkspace({
                       size="sm"
                       variant={candidate.id === selectedCandidate?.id ? "default" : "secondary"}
                     >
-                      <Link href={intakeHref(session.id, selectedFile.id, candidate.id, "candidate-panel")}>
+                      <Link href={intakeHref(session.id, selectedFile.id, candidate.id, "candidate-panel")} prefetch={false}>
                         {candidate.type}: {candidate.title}
                       </Link>
                     </Button>
@@ -552,8 +674,16 @@ export function ArtifactIntakeReviewWorkspace({
                             {ready?.[1] ?? label(selectedCandidate.importedReadinessState)}
                           </span>
                         ) : null}
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${candidateLinkageState(selectedCandidate).tone}`}
+                        >
+                          {candidateLinkageState(selectedCandidate).label}
+                        </span>
                       </div>
                     </div>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                      {candidateLinkageState(selectedCandidate).description}
+                    </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -584,11 +714,20 @@ export function ArtifactIntakeReviewWorkspace({
               <CardHeader>
                 <CardTitle>Correction queue</CardTitle>
                 <CardDescription>
-                  Work through unmapped, uncertain, missing, human-only, and blocked issues one by one for the current
-                  artifact.
+                  Work through unresolved import work in order: link the candidate, resolve real gaps, mark irrelevant
+                  items, and only use blockers when you want progression to stay intentionally stopped.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                  <p className="font-medium">Recommended way to clear this list</p>
+                  <ol className="mt-2 list-decimal space-y-1 pl-5">
+                    <li>Start with linkage issues so each imported candidate belongs to the right Outcome and Epic.</li>
+                    <li>Resolve real content gaps such as missing Test Definition or Definition of Done.</li>
+                    <li>Use <strong>Not relevant</strong> when a finding should be dismissed.</li>
+                    <li>Use <strong>Mark blocker</strong> only when you want the item to stay visible and prevent promotion.</li>
+                  </ol>
+                </div>
                 {progress ? (
                   <div className="space-y-3">
                     <div className="grid gap-3 lg:grid-cols-4">
@@ -600,10 +739,11 @@ export function ArtifactIntakeReviewWorkspace({
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Resolved</p>
                         <p className="mt-2 text-2xl font-semibold text-foreground">{progress.resolved}</p>
                       </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked</p>
-                        <p className="mt-2 text-2xl font-semibold text-foreground">{progress.categories.blocked}</p>
-                      </div>
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked</p>
+                          <p className="mt-2 text-2xl font-semibold text-foreground">{progress.categories.blocked}</p>
+                          <p className="mt-2 text-sm text-muted-foreground">Still intentionally blocking promotion.</p>
+                        </div>
                       <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Progress</p>
                         <p className="mt-2 text-2xl font-semibold text-foreground">
@@ -675,46 +815,48 @@ export function ArtifactIntakeReviewWorkspace({
                                     Disposition: {item.dispositionLabel}
                                   </p>
                                 ) : null}
+                                {item.dispositionLabel === "blocked" ? (
+                                  <p className="mt-2 text-xs text-rose-700">
+                                    This item remains in the queue and continues to block promotion.
+                                  </p>
+                                ) : null}
                               </div>
-                              <span
-                                className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusTone(item.status)}`}
-                              >
-                                {item.status}
+                              <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                                {item.actionScope === "section" ? "Source section" : "Candidate issue"}
                               </span>
                             </div>
                             <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
-                              <Link href={item.href}>
+                              <Link href={item.href} prefetch={false}>
                                 Open in context
                                 <GitBranch className="h-4 w-4" />
                               </Link>
                             </Button>
                             {item.actionScope === "candidate" && item.candidateId && item.candidateType ? (
-                              <form action={submitAction} className="mt-3 flex flex-wrap gap-2">
-                                <input name="sessionId" type="hidden" value={session.id} />
-                                <input name="fileId" type="hidden" value={selectedFile.id} />
-                                <input name="candidateId" type="hidden" value={item.candidateId} />
-                                <input name="candidateType" type="hidden" value={item.candidateType} />
-                                <input name="intent" type="hidden" value="edit" />
-                                <input name="issueId" type="hidden" value={item.issueId} />
-                                {item.actions.map((action) => (
-                                  <Button key={`${item.id}-${action.value}`} name="issueAction" size="sm" type="submit" value={action.value} variant={action.value === "blocked" ? "secondary" : "ghost"}>
-                                    {action.label}
-                                  </Button>
-                                ))}
-                              </form>
+                              <ArtifactIntakeDispositionButtons
+                                actions={item.actions}
+                                candidateId={item.candidateId}
+                                candidateType={item.candidateType}
+                                initialAction={item.selectedAction}
+                                initialStatus={item.status}
+                                issueId={item.issueId}
+                                key={`${item.id}-candidate-actions`}
+                                kind="candidate"
+                                resolvedActions={item.resolvedActions}
+                                submitCandidateDisposition={submitCandidateDispositionInlineAction}
+                              />
                             ) : null}
                             {item.actionScope === "section" ? (
-                              <form action={submitSectionAction} className="mt-3 flex flex-wrap gap-2">
-                                <input name="sessionId" type="hidden" value={session.id} />
-                                <input name="fileId" type="hidden" value={selectedFile.id} />
-                                <input name="candidateId" type="hidden" value={selectedCandidate?.id ?? ""} />
-                                <input name="sectionId" type="hidden" value={item.issueId} />
-                                {item.actions.map((action) => (
-                                  <Button key={`${item.id}-${action.value}`} name="action" size="sm" type="submit" value={action.value} variant={action.value === "blocked" ? "secondary" : "ghost"}>
-                                    {action.label}
-                                  </Button>
-                                ))}
-                              </form>
+                              <ArtifactIntakeDispositionButtons
+                                actions={item.actions}
+                                fileId={selectedFile.id}
+                                initialAction={item.selectedAction}
+                                initialStatus={item.status}
+                                key={`${item.id}-section-actions`}
+                                kind="section"
+                                resolvedActions={item.resolvedActions}
+                                sectionId={item.issueId}
+                                submitSectionDisposition={submitSectionDispositionInlineAction}
+                              />
                             ) : null}
                           </div>
                         ))}
@@ -824,13 +966,19 @@ export function ArtifactIntakeReviewWorkspace({
                         />
                       </label>
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Linked Outcome candidate ID</span>
-                        <input
+                        <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                        <select
                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.draftRecord?.outcomeCandidateId ?? ""}
+                          defaultValue={selectedOutcomeCandidateId}
                           name="outcomeCandidateId"
-                          type="text"
-                        />
+                        >
+                          <option value="">Select project Outcome</option>
+                          {outcomeCandidateOptions.map((candidate) => (
+                            <option key={candidate.id} value={candidate.id}>
+                              {describeProjectOutcome(candidate)}
+                            </option>
+                          ))}
+                        </select>
                       </label>
                     </>
                   ) : null}
@@ -892,24 +1040,40 @@ export function ArtifactIntakeReviewWorkspace({
                       </label>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Linked Outcome candidate ID</span>
-                          <input
+                          <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                          <select
                             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                            defaultValue={selectedCandidate.draftRecord?.outcomeCandidateId ?? ""}
+                            defaultValue={selectedOutcomeCandidateId}
                             name="outcomeCandidateId"
-                            type="text"
-                          />
+                          >
+                            <option value="">Select project Outcome</option>
+                            {outcomeCandidateOptions.map((candidate) => (
+                              <option key={candidate.id} value={candidate.id}>
+                                {describeProjectOutcome(candidate)}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Linked Epic candidate ID</span>
-                          <input
+                          <span className="text-sm font-medium text-foreground">Linked imported Epic</span>
+                          <select
                             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                            defaultValue={selectedCandidate.draftRecord?.epicCandidateId ?? ""}
+                            defaultValue={selectedEpicCandidateId}
                             name="epicCandidateId"
-                            type="text"
-                          />
+                          >
+                            <option value="">Select project Epic</option>
+                            {epicCandidateOptions.map((candidate) => (
+                              <option key={candidate.id} value={candidate.id}>
+                                {describeProjectEpic(candidate)}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                       </div>
+                      <p className="text-xs leading-5 text-muted-foreground">
+                        Choose the project Outcome and Epic this imported work should land in. If there is only one
+                        available option, it is preselected automatically.
+                      </p>
                     </>
                   ) : null}
                   <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">

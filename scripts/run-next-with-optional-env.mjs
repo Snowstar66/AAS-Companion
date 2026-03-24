@@ -22,6 +22,10 @@ if (existsSync(envFile)) {
 
 args.push(nextBin, mode);
 
+if (mode === "dev" && process.env.AAS_NEXT_DISABLE_TURBOPACK !== "1") {
+  args.push("--turbopack");
+}
+
 const child = spawn(process.execPath, args, {
   cwd: webRoot,
   stdio: "inherit",

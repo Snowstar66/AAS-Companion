@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
-import type { AppSession, OrganizationContext } from "@aas-companion/domain";
-import { DEMO_ORGANIZATION, DEMO_SESSION } from "@aas-companion/domain";
-import { getAppUserById, getOrganizationContextForUser } from "@aas-companion/db";
+import type { AppSession } from "@aas-companion/domain/auth";
+import type { OrganizationContext } from "@aas-companion/domain/organization";
+import { DEMO_ORGANIZATION, DEMO_SESSION } from "@aas-companion/domain/demo";
+import { getAppUserById, getOrganizationContextForUser } from "@aas-companion/db/organization-repository";
 import { getOrganizationContextCookie } from "@/lib/org-context";
 import { hasDemoSession } from "@/lib/auth/demo";
 import { getLocalSessionUserId } from "@/lib/auth/local";

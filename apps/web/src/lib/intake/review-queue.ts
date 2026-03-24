@@ -3,8 +3,8 @@ import {
   artifactCandidateHumanDecisionSchema,
   artifactComplianceResultSchema,
   artifactParseResultSchema
-} from "@aas-companion/domain";
-import { listArtifactCandidateQueueService } from "@aas-companion/api";
+} from "@aas-companion/domain/artifact-intake";
+import { listArtifactCandidateQueueService } from "@aas-companion/api/intake";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 
 function parseDraftRecord(value: unknown) {

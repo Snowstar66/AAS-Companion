@@ -288,3 +288,74 @@ export async function submitArtifactSectionDispositionAction(formData: FormData)
     })
   );
 }
+
+export async function submitArtifactCandidateIssueDispositionInlineAction(input: {
+  candidateId: string;
+  candidateType: "outcome" | "epic" | "story";
+  issueId: string;
+  issueAction: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
+}) {
+  const session = await requireActiveProjectSession();
+
+  const reviewResult = await reviewArtifactCandidateService({
+    organizationId: session.organization.organizationId,
+    actorId: session.userId,
+    candidateId: input.candidateId,
+    reviewStatus: "edited",
+    issueDisposition: {
+      issueId: input.issueId,
+      action: input.issueAction,
+      note: null
+    }
+  });
+
+  revalidatePath("/intake");
+  revalidatePath("/review");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!reviewResult.ok) {
+    return {
+      ok: false as const,
+      message: reviewResult.errors[0]?.message ?? "Issue disposition could not be saved."
+    };
+  }
+
+  return {
+    ok: true as const,
+    selectedAction: input.issueAction
+  };
+}
+
+export async function submitArtifactSectionDispositionInlineAction(input: {
+  fileId: string;
+  sectionId: string;
+  action: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
+}) {
+  const session = await requireActiveProjectSession();
+
+  const result = await reviewArtifactFileSectionDispositionService({
+    organizationId: session.organization.organizationId,
+    actorId: session.userId,
+    fileId: input.fileId,
+    sectionId: input.sectionId,
+    action: input.action,
+    note: null
+  });
+
+  revalidatePath("/intake");
+  revalidatePath("/review");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      message: result.errors[0]?.message ?? "Section disposition could not be saved."
+    };
+  }
+
+  return {
+    ok: true as const,
+    selectedAction: input.action
+  };
+}

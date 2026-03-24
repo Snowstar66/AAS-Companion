@@ -30,7 +30,16 @@ export async function listArtifactIntakeSessions(organizationId: string) {
   return prisma.artifactIntakeSession.findMany({
     where: { organizationId },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    include: {
+    select: {
+      id: true,
+      organizationId: true,
+      label: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      createdBy: true,
+      mappingCompletedAt: true,
+      mappedArtifacts: true,
       creator: {
         select: {
           id: true,
@@ -40,21 +49,69 @@ export async function listArtifactIntakeSessions(organizationId: string) {
       },
       files: {
         orderBy: [{ uploadedAt: "desc" }, { fileName: "asc" }],
-        include: {
+        select: {
+          id: true,
+          intakeSessionId: true,
+          organizationId: true,
+          fileName: true,
+          mimeType: true,
+          extension: true,
+          sizeBytes: true,
+          sourceTypeStatus: true,
+          sourceType: true,
+          sourceTypeConfidence: true,
+          classifiedAt: true,
+          parsedAt: true,
+          parsedArtifacts: true,
+          sectionDispositions: true,
+          uploadedAt: true,
+          uploadedBy: true,
           uploader: {
             select: {
               id: true,
               fullName: true,
               email: true
             }
-          },
-          candidates: {
-            orderBy: [{ updatedAt: "desc" }, { createdAt: "asc" }]
           }
         }
       },
       candidates: {
         orderBy: [{ updatedAt: "desc" }, { createdAt: "asc" }]
+      }
+    }
+  });
+}
+
+export async function getArtifactIntakeFileById(organizationId: string, fileId: string) {
+  return prisma.artifactIntakeFile.findFirst({
+    where: {
+      organizationId,
+      id: fileId
+    },
+    select: {
+      id: true,
+      intakeSessionId: true,
+      organizationId: true,
+      fileName: true,
+      mimeType: true,
+      extension: true,
+      sizeBytes: true,
+      content: true,
+      sourceTypeStatus: true,
+      sourceType: true,
+      sourceTypeConfidence: true,
+      classifiedAt: true,
+      parsedAt: true,
+      parsedArtifacts: true,
+      sectionDispositions: true,
+      uploadedAt: true,
+      uploadedBy: true,
+      uploader: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
       }
     }
   });

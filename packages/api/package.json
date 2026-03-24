@@ -3,8 +3,57 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./dashboard": {
+      "types": "./dist/dashboard.d.ts",
+      "default": "./dist/dashboard.js"
+    },
+    "./framing": {
+      "types": "./dist/framing.d.ts",
+      "default": "./dist/framing.js"
+    },
+    "./governance": {
+      "types": "./dist/governance.d.ts",
+      "default": "./dist/governance.js"
+    },
+    "./intake": {
+      "types": "./dist/intake.d.ts",
+      "default": "./dist/intake.js"
+    },
+    "./outcomes": {
+      "types": "./dist/outcomes.d.ts",
+      "default": "./dist/outcomes.js"
+    },
+    "./spine": {
+      "types": "./dist/spine.d.ts",
+      "default": "./dist/spine.js"
+    },
+    "./stories": {
+      "types": "./dist/stories.d.ts",
+      "default": "./dist/stories.js"
+    },
+    "./epics": {
+      "types": "./dist/epics.d.ts",
+      "default": "./dist/epics.js"
+    },
+    "./workspace": {
+      "types": "./dist/workspace.d.ts",
+      "default": "./dist/workspace.js"
+    },
+    "./tollgates": {
+      "types": "./dist/tollgates.d.ts",
+      "default": "./dist/tollgates.js"
+    },
+    "./shared": {
+      "types": "./dist/shared.d.ts",
+      "default": "./dist/shared.js"
+    }
   },
   "scripts": {
     "lint": "eslint src --ext .ts",

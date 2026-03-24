@@ -112,6 +112,75 @@ describe("artifact intake helpers", () => {
     expect(mapping.unmappedSections.some((section) => section.kind === "architecture_notes")).toBe(true);
   });
 
+  it("maps structured story spec files into one story candidate instead of fragmented outcome-like candidates", () => {
+    const content = [
+      "# M1-STORY-006",
+      "",
+      "## Title",
+      "Build Outcome Workspace with Tollgate 1 validation",
+      "",
+      "## Story Type",
+      "UI + Domain Feature",
+      "",
+      "## Value Intent",
+      "Make AAS Framing discipline visible and enforceable in the product.",
+      "",
+      "## Summary",
+      "Build the Outcome Workspace with baseline validation and a Tollgate 1 panel.",
+      "",
+      "## Acceptance Criteria",
+      "- Outcome Workspace shows:",
+      "  - summary",
+      "  - baseline",
+      "- user can edit outcome statement",
+      "- user can edit baseline definition",
+      "",
+      "## AI Usage Scope",
+      "- CODE",
+      "- TEST",
+      "",
+      "## Test Definition",
+      "- unit",
+      "- integration",
+      "- e2e",
+      "",
+      "## Definition of Done",
+      "- validation is enforced server-side",
+      "- blocked and valid states are both demonstrable",
+      "",
+      "## Scope In",
+      "- Outcome detail route",
+      "- summary form"
+    ].join("\n");
+
+    const parsed = parseMarkdownArtifact("file-story-006", "M1-STORY-006.md", content);
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-story-006",
+          fileName: "M1-STORY-006.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ]
+    });
+
+    expect(parsed.classification.sourceType).toBe("story_file");
+    expect(parsed.classification.confidence).toBe("high");
+    expect(mapping.candidates).toHaveLength(1);
+    expect(mapping.candidates[0]?.type).toBe("story");
+    expect(mapping.candidates[0]?.title).toContain("Build Outcome Workspace");
+    expect(mapping.candidates[0]?.summary).toContain("baseline validation");
+    expect(mapping.candidates[0]?.acceptanceCriteria).toEqual([
+      "Outcome Workspace shows:",
+      "summary",
+      "baseline",
+      "user can edit outcome statement",
+      "user can edit baseline definition"
+    ]);
+    expect(mapping.candidates[0]?.testNotes).toEqual(["unit", "integration", "e2e"]);
+  });
+
   it("creates unique candidate ids across different files with the same section structure", () => {
     const outcomeA = parseMarkdownArtifact(
       "file-a",

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { DEMO_SESSION, DEMO_SESSION_COOKIE_NAME } from "@aas-companion/domain";
+import { DEMO_SESSION } from "@aas-companion/domain/demo";
+import { DEMO_SESSION_COOKIE_NAME } from "@aas-companion/domain/session-constants";
 import { clearOrganizationContextCookie, setOrganizationContextCookie } from "@/lib/org-context";
 
 const oneWeekInSeconds = 60 * 60 * 24 * 7;

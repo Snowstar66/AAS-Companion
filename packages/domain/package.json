@@ -3,8 +3,53 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "default": "./dist/auth.js"
+    },
+    "./demo": {
+      "types": "./dist/demo.d.ts",
+      "default": "./dist/demo.js"
+    },
+    "./enums": {
+      "types": "./dist/enums.d.ts",
+      "default": "./dist/enums.js"
+    },
+    "./navigation": {
+      "types": "./dist/navigation.d.ts",
+      "default": "./dist/navigation.js"
+    },
+    "./organization": {
+      "types": "./dist/organization.d.ts",
+      "default": "./dist/organization.js"
+    },
+    "./outcome": {
+      "types": "./dist/outcome.d.ts",
+      "default": "./dist/outcome.js"
+    },
+    "./story": {
+      "types": "./dist/story.d.ts",
+      "default": "./dist/story.js"
+    },
+    "./governance": {
+      "types": "./dist/governance.d.ts",
+      "default": "./dist/governance.js"
+    },
+    "./artifact-intake": {
+      "types": "./dist/artifact-intake.d.ts",
+      "default": "./dist/artifact-intake.js"
+    },
+    "./session-constants": {
+      "types": "./dist/session-constants.d.ts",
+      "default": "./dist/session-constants.js"
+    }
   },
   "scripts": {
     "lint": "eslint src --ext .ts",

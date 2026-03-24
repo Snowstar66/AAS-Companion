@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { LOCAL_SESSION_COOKIE_NAME } from "@aas-companion/domain";
+import { LOCAL_SESSION_COOKIE_NAME } from "@aas-companion/domain/session-constants";
 
 const oneWeekInSeconds = 60 * 60 * 24 * 7;
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { DEMO_SESSION_COOKIE_NAME, LOCAL_SESSION_COOKIE_NAME } from "@aas-companion/domain";
+import { DEMO_SESSION_COOKIE_NAME, LOCAL_SESSION_COOKIE_NAME } from "@aas-companion/domain/session-constants";
 
 function hasSupabaseCookies(request: NextRequest) {
   return request.cookies.getAll().some((cookie) => cookie.name.startsWith("sb-"));

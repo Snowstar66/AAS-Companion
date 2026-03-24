@@ -2,6 +2,7 @@ export { prisma } from "./client";
 export {
   appendArtifactFileRejections,
   createArtifactIntakeSession,
+  getArtifactIntakeFileById,
   listArtifactIntakeSessions,
   reviewArtifactFileSectionDisposition
 } from "./repositories/artifact-intake-repository";
@@ -27,9 +28,11 @@ export {
   listAppUsers,
   listOrganizationUsers,
   listOrganizationContextsForUser,
+  listOrganizationProjectSummariesForUser,
   upsertAppUserByEmail,
   type AppUserIdentity,
-  type OrganizationMembershipContext
+  type OrganizationMembershipContext,
+  type OrganizationMembershipProjectSummary
 } from "./repositories/organization-repository";
 export {
   createAgentRegistryEntry,

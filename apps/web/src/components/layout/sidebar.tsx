@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Compass, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
-import { primaryNavigation } from "@aas-companion/domain";
+import { primaryNavigation } from "@aas-companion/domain/navigation";
 
 const icons = {
   "/": LayoutDashboard,

@@ -1,6 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { DEMO_SESSION_COOKIE_NAME, LOCAL_SESSION_COOKIE_NAME, ORG_CONTEXT_COOKIE_NAME } from "@aas-companion/domain";
+import {
+  DEMO_SESSION_COOKIE_NAME,
+  LOCAL_SESSION_COOKIE_NAME,
+  ORG_CONTEXT_COOKIE_NAME
+} from "@aas-companion/domain/session-constants";
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase/server";
 import { normalizeRedirectPath, redirectWithSearch } from "@/lib/auth/route-helpers";
 

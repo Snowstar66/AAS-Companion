@@ -6,7 +6,10 @@ export async function getWorkspaceSnapshot(organizationId: string) {
     where: {
       id: organizationId
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
       outcomes: {
         include: {
           epics: {
@@ -31,11 +34,6 @@ export async function getWorkspaceSnapshot(organizationId: string) {
           createdAt: "desc"
         }
       },
-      epics: {
-        orderBy: {
-          createdAt: "desc"
-        }
-      },
       stories: {
         orderBy: {
           createdAt: "desc"
@@ -52,6 +50,15 @@ export async function getWorkspaceSnapshot(organizationId: string) {
           createdAt: "desc"
         },
         take: 10
+      },
+      _count: {
+        select: {
+          outcomes: true,
+          epics: true,
+          stories: true,
+          tollgates: true,
+          activityEvents: true
+        }
       }
     }
   });
@@ -71,15 +78,14 @@ export async function getWorkspaceSnapshot(organizationId: string) {
             stories: epic.stories
           })
         )
-      })),
-      epics: organization.epics.map((epic) => withEpicShape(epic))
+      }))
     },
     counts: {
-      outcomes: organization.outcomes.length,
-      epics: organization.epics.length,
-      stories: organization.stories.length,
-      tollgates: organization.tollgates.length,
-      activityEvents: organization.activityEvents.length
+      outcomes: organization._count.outcomes,
+      epics: organization._count.epics,
+      stories: organization._count.stories,
+      tollgates: organization._count.tollgates,
+      activityEvents: organization._count.activityEvents
     }
   };
 }

@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.6.1",
   "scripts": {
+    "build:web-runtime-packages": "node ./scripts/build-web-runtime-packages.mjs",
     "dev": "pnpm --filter @aas-companion/web dev",
     "build": "pnpm --filter @aas-companion/web build",
     "lint": "pnpm --filter \"@aas-companion/*\" -r --if-present lint",

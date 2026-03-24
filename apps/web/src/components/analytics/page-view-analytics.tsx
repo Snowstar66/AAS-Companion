@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import posthog from "posthog-js";
-
 let posthogInitialized = false;
+let posthogPromise: Promise<typeof import("posthog-js")> | null = null;
 
 type PageViewAnalyticsProps = {
   eventName: string;
@@ -12,6 +11,10 @@ type PageViewAnalyticsProps = {
 
 export function PageViewAnalytics({ eventName, properties }: PageViewAnalyticsProps) {
   useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      return;
+    }
+
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
@@ -19,15 +22,19 @@ export function PageViewAnalytics({ eventName, properties }: PageViewAnalyticsPr
       return;
     }
 
-    if (!posthogInitialized) {
-      posthog.init(key, {
-        api_host: host,
-        person_profiles: "never"
-      });
-      posthogInitialized = true;
-    }
+    posthogPromise ??= import("posthog-js");
 
-    posthog.capture(eventName, properties);
+    void posthogPromise.then(({ default: posthog }) => {
+      if (!posthogInitialized) {
+        posthog.init(key, {
+          api_host: host,
+          person_profiles: "never"
+        });
+        posthogInitialized = true;
+      }
+
+      posthog.capture(eventName, properties);
+    });
   }, [eventName, properties]);
 
   return null;

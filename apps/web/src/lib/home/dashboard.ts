@@ -1,6 +1,6 @@
-import { DEMO_ORGANIZATION } from "@aas-companion/domain";
-import { getHomeDashboardData, type HomeDashboardData } from "@aas-companion/api";
-import { getWorkspaceSnapshot, listOrganizationContextsForUser } from "@aas-companion/db";
+import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
+import { getHomeDashboardData, type HomeDashboardData } from "@aas-companion/api/dashboard";
+import { listOrganizationProjectSummariesForUser } from "@aas-companion/db/organization-repository";
 import { getAppSession, getSignedInAccountIdentity } from "@/lib/auth/session";
 
 export type HomeProjectSummary = {
@@ -40,29 +40,18 @@ export async function loadHomeDashboard() {
     };
   } else {
     if (account) {
-      const availableProjects = (await listOrganizationContextsForUser(account.userId)).filter(
+      const availableProjects = (await listOrganizationProjectSummariesForUser(account.userId)).filter(
         (project) => project.organizationId !== DEMO_ORGANIZATION.organizationId
       );
 
-      projects = await Promise.all(
-        availableProjects.map(async (project) => {
-          const snapshot = await getWorkspaceSnapshot(project.organizationId);
-
-          return {
-            organizationId: project.organizationId,
-            organizationName: project.organizationName,
-            organizationSlug: project.organizationSlug,
-            role: project.role,
-            counts: {
-              outcomes: snapshot?.counts.outcomes ?? 0,
-              epics: snapshot?.counts.epics ?? 0,
-              stories: snapshot?.counts.stories ?? 0,
-              activityEvents: snapshot?.counts.activityEvents ?? 0
-            },
-            isActive: session.organization?.organizationId === project.organizationId
-          } satisfies HomeProjectSummary;
-        })
-      );
+      projects = availableProjects.map((project) => ({
+        organizationId: project.organizationId,
+        organizationName: project.organizationName,
+        organizationSlug: project.organizationSlug,
+        role: project.role,
+        counts: project.counts,
+        isActive: session.organization?.organizationId === project.organizationId
+      } satisfies HomeProjectSummary));
     }
 
     if (session.organization?.organizationId) {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, GitBranch, Workflow } from "lucide-react";
-import { getStoryHandoffReadiness } from "@aas-companion/domain";
-import { getValueSpineService } from "@aas-companion/api";
+import { getStoryHandoffReadiness } from "@aas-companion/domain/story";
+import { getValueSpineService } from "@aas-companion/api/spine";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireActiveProjectSession } from "@/lib/auth/guards";

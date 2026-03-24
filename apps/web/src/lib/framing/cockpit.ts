@@ -1,4 +1,4 @@
-import { getFramingCockpitData } from "@aas-companion/api";
+import { getFramingCockpitData } from "@aas-companion/api/framing";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 export async function loadFramingCockpit() {

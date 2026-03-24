@@ -105,6 +105,209 @@ vi.mock("@/lib/intake/workspace", () => ({
             }
           }
         ],
+        allCandidates: [
+          {
+            id: "candidate-outcome",
+            fileId: "file-1",
+            type: "outcome",
+            title: "Imported Outcome",
+            summary: "Outcome framing for the imported story.",
+            mappingState: "mapped",
+            relationshipState: "mapped",
+            relationshipNote: null,
+            acceptanceCriteria: [],
+            testNotes: [],
+            draftRecord: {
+              key: "OUT-001",
+              title: "Imported Outcome",
+              problemStatement: null,
+              outcomeStatement: "Outcome framing for the imported story.",
+              baselineDefinition: "Baseline exists.",
+              baselineSource: "Imported notes",
+              timeframe: null,
+              purpose: null,
+              scopeBoundary: null,
+              riskNote: null,
+              storyType: null,
+              valueIntent: null,
+              acceptanceCriteria: [],
+              aiUsageScope: [],
+              testDefinition: null,
+              definitionOfDone: [],
+              outcomeCandidateId: null,
+              epicCandidateId: null
+            },
+            humanDecisions: {
+              valueOwnerId: "value-owner-1",
+              baselineValidity: "confirmed",
+              aiAccelerationLevel: "level_2",
+              riskProfile: "medium",
+              riskAcceptanceStatus: null
+            },
+            complianceResult: {
+              findings: [],
+              summary: {
+                missing: 0,
+                uncertain: 0,
+                humanOnly: 0,
+                blocked: 0
+              },
+              promotionBlocked: false,
+              humanReviewRequired: false
+            },
+            issueDispositions: {},
+            reviewStatus: "promoted",
+            importedReadinessState: "imported_framing_ready",
+            promotedEntityId: "OUT-001",
+            promotedEntityType: "outcome",
+            source: {
+              fileId: "file-1",
+              fileName: "story-pack.md",
+              sectionId: "section-outcome",
+              sectionTitle: "Outcome",
+              sectionMarker: "## Outcome",
+              sourceType: "story_file",
+              confidence: "high"
+            }
+          },
+          {
+            id: "candidate-epic",
+            fileId: "file-1",
+            type: "epic",
+            title: "Imported Epic",
+            summary: "Epic framing for the imported story.",
+            mappingState: "mapped",
+            relationshipState: "mapped",
+            relationshipNote: null,
+            acceptanceCriteria: [],
+            testNotes: [],
+            draftRecord: {
+              key: "EPC-001",
+              title: "Imported Epic",
+              problemStatement: null,
+              outcomeStatement: null,
+              baselineDefinition: null,
+              baselineSource: null,
+              timeframe: null,
+              purpose: "Epic framing for the imported story.",
+              scopeBoundary: "Within story delivery",
+              riskNote: null,
+              storyType: null,
+              valueIntent: null,
+              acceptanceCriteria: [],
+              aiUsageScope: [],
+              testDefinition: null,
+              definitionOfDone: [],
+              outcomeCandidateId: "candidate-outcome",
+              epicCandidateId: null
+            },
+            humanDecisions: {
+              valueOwnerId: null,
+              baselineValidity: null,
+              aiAccelerationLevel: null,
+              riskProfile: null,
+              riskAcceptanceStatus: null
+            },
+            complianceResult: {
+              findings: [],
+              summary: {
+                missing: 0,
+                uncertain: 0,
+                humanOnly: 0,
+                blocked: 0
+              },
+              promotionBlocked: false,
+              humanReviewRequired: false
+            },
+            issueDispositions: {},
+            reviewStatus: "promoted",
+            importedReadinessState: "imported_framing_ready",
+            promotedEntityId: "EPC-001",
+            promotedEntityType: "epic",
+            source: {
+              fileId: "file-1",
+              fileName: "story-pack.md",
+              sectionId: "section-epic",
+              sectionTitle: "Epic",
+              sectionMarker: "## Epic",
+              sourceType: "story_file",
+              confidence: "high"
+            }
+          },
+          {
+            id: "candidate-1",
+            fileId: "file-1",
+            type: "story",
+            title: "Imported Story",
+            summary: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+            mappingState: "mapped",
+            relationshipState: "uncertain",
+            relationshipNote: "Story likely belongs to the nearest Epic candidate, but the relationship remains uncertain.",
+            acceptanceCriteria: ["Candidate objects show source lineage"],
+            testNotes: ["Regression should verify candidate relationships."],
+            draftRecord: {
+              key: null,
+              title: "Imported Story",
+              problemStatement: null,
+              outcomeStatement: null,
+              baselineDefinition: null,
+              baselineSource: null,
+              timeframe: null,
+              purpose: null,
+              storyType: "outcome_delivery",
+              valueIntent: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+              acceptanceCriteria: ["Candidate objects show source lineage"],
+              aiUsageScope: [],
+              testDefinition: null,
+              definitionOfDone: [],
+              outcomeCandidateId: "candidate-outcome",
+              epicCandidateId: "candidate-epic"
+            },
+            humanDecisions: {
+              valueOwnerId: null,
+              baselineValidity: null,
+              aiAccelerationLevel: null,
+              riskProfile: null,
+              riskAcceptanceStatus: null
+            },
+            complianceResult: {
+              findings: [
+                {
+                  code: "story_test_definition_missing",
+                  category: "missing",
+                  message: "Test Definition is missing.",
+                  fieldLabel: "Test Definition"
+                },
+                {
+                  code: "risk_acceptance_human_only",
+                  category: "human_only",
+                  message: "Risk acceptance status must be confirmed by a human reviewer.",
+                  fieldLabel: "Risk acceptance status"
+                }
+              ],
+              summary: {
+                missing: 1,
+                uncertain: 1,
+                humanOnly: 1,
+                blocked: 0
+              },
+              promotionBlocked: true,
+              humanReviewRequired: true
+            },
+            issueDispositions: {},
+            reviewStatus: "pending",
+            importedReadinessState: "imported_incomplete",
+            source: {
+              fileId: "file-1",
+              fileName: "story-pack.md",
+              sectionId: "section-1",
+              sectionTitle: "Story",
+              sectionMarker: "## Story",
+              sourceType: "story_file",
+              confidence: "medium"
+            }
+          }
+        ],
         displayCandidates: [],
         mappedArtifacts: {
           candidates: [],

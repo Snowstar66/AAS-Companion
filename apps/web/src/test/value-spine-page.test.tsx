@@ -11,76 +11,71 @@ vi.mock("@/lib/auth/guards", () => ({
   }))
 }));
 
-vi.mock("@aas-companion/api", async () => {
-  const actual = await vi.importActual<object>("@aas-companion/api");
-
-  return {
-    ...actual,
-    getValueSpineService: vi.fn(async () => ({
-      ok: true,
-      data: {
-        organization: {
-          outcomes: [
-            {
-              id: "outcome-imported",
-              key: "IMP-OUT-1",
-              title: "Imported Outcome",
-              outcomeStatement: "Imported lineage stays visible",
-              originType: "imported",
-              lifecycleState: "active",
-              importedReadinessState: "imported_framing_ready",
-              lineageSourceType: "artifact_aas_candidate",
-              lineageSourceId: "candidate-outcome-1",
-              epics: [
-                {
-                  id: "epic-imported",
-                  key: "IMP-EPC-1",
-                  title: "Imported Epic",
-                  purpose: "Preserve the Value Spine",
-                  scopeBoundary: null,
-                  riskNote: null,
-                  originType: "imported",
-                  lifecycleState: "active",
-                  importedReadinessState: "imported_framing_ready",
-                  lineageSourceType: "artifact_aas_candidate",
-                  lineageSourceId: "candidate-epic-1",
-                  stories: [
-                    {
-                      id: "story-imported",
-                      key: "IMP-STORY-1",
-                      title: "Imported Story",
-                      status: "definition_blocked",
-                      originType: "imported",
-                      lifecycleState: "active",
-                      importedReadinessState: "imported_design_ready",
-                      lineageSourceType: "artifact_aas_candidate",
-                      lineageSourceId: "candidate-story-1",
-                      acceptanceCriteria: [],
-                      testDefinition: null,
-                      definitionOfDone: ["Human review complete"]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              id: "outcome-native",
-              key: "OUT-002",
-              title: "Native Outcome",
-              outcomeStatement: "Native planning continues",
-              originType: "native",
-              lifecycleState: "active",
-              importedReadinessState: null,
-              lineageSourceType: null,
-              lineageSourceId: null,
-              epics: []
-            }
-          ]
-        }
+vi.mock("@aas-companion/api/spine", () => ({
+  getValueSpineService: vi.fn(async () => ({
+    ok: true,
+    data: {
+      organization: {
+        outcomes: [
+          {
+            id: "outcome-imported",
+            key: "IMP-OUT-1",
+            title: "Imported Outcome",
+            outcomeStatement: "Imported lineage stays visible",
+            originType: "imported",
+            lifecycleState: "active",
+            importedReadinessState: "imported_framing_ready",
+            lineageSourceType: "artifact_aas_candidate",
+            lineageSourceId: "candidate-outcome-1",
+            epics: [
+              {
+                id: "epic-imported",
+                key: "IMP-EPC-1",
+                title: "Imported Epic",
+                purpose: "Preserve the Value Spine",
+                scopeBoundary: null,
+                riskNote: null,
+                originType: "imported",
+                lifecycleState: "active",
+                importedReadinessState: "imported_framing_ready",
+                lineageSourceType: "artifact_aas_candidate",
+                lineageSourceId: "candidate-epic-1",
+                stories: [
+                  {
+                    id: "story-imported",
+                    key: "IMP-STORY-1",
+                    title: "Imported Story",
+                    status: "definition_blocked",
+                    originType: "imported",
+                    lifecycleState: "active",
+                    importedReadinessState: "imported_design_ready",
+                    lineageSourceType: "artifact_aas_candidate",
+                    lineageSourceId: "candidate-story-1",
+                    acceptanceCriteria: [],
+                    testDefinition: null,
+                    definitionOfDone: ["Human review complete"]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: "outcome-native",
+            key: "OUT-002",
+            title: "Native Outcome",
+            outcomeStatement: "Native planning continues",
+            originType: "native",
+            lifecycleState: "active",
+            importedReadinessState: null,
+            lineageSourceType: null,
+            lineageSourceId: null,
+            epics: []
+          }
+        ]
       }
-    }))
-  };
-});
+    }
+  }))
+}));
 
 describe("Value Spine page", () => {
   it("renders the current project through one selected Framing branch", async () => {
