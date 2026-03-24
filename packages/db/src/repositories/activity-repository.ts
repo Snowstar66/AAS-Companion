@@ -15,7 +15,7 @@ export async function appendActivityEvent(
     organizationId: parsed.organizationId,
     entityType: parsed.entityType,
     entityId: parsed.entityId,
-    eventType: parsed.eventType,
+    eventType: parsed.eventType as never,
     actorId: parsed.actorId ?? null
   };
 

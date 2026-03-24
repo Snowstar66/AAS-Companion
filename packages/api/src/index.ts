@@ -1,6 +1,7 @@
 export * from "./dashboard";
 export * from "./epics";
 export * from "./framing";
+export * from "./governed-lifecycle";
 export * from "./intake";
 export * from "./outcomes";
 export * from "./shared";

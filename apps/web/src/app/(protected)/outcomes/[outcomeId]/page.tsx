@@ -6,9 +6,15 @@ import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
+import { FramingContextCard } from "@/components/workspace/framing-context-card";
+import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
+import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
+  archiveOutcomeAction,
   createEpicFromOutcomeAction,
+  hardDeleteOutcomeAction,
+  restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
   submitOutcomeTollgateAction
 } from "./actions";
@@ -59,6 +65,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   const created = getParamValue(query.created) === "1";
   const saveState = getParamValue(query.save);
   const submitState = getParamValue(query.submit);
+  const lifecycleState = getParamValue(query.lifecycle);
   const saveMessage = getParamValue(query.message);
   const blockersFromQuery = getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [];
   const outcomeResult = await getOutcomeWorkspaceService(organization.organizationId, outcomeId);
@@ -67,7 +74,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
     notFound();
   }
 
-  const { outcome, tollgate, activities } = outcomeResult.data;
+  const { outcome, tollgate, activities, removal } = outcomeResult.data;
   const computedBlockers = getOutcomeBaselineBlockers(outcome);
   const blockers = blockersFromQuery.length > 0 ? blockersFromQuery : tollgate?.blockers ?? computedBlockers;
   const baselineComplete = computedBlockers.length === 0;
@@ -75,6 +82,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   const originLabel = getOriginLabel(outcome.originType);
   const workspaceLabel = getWorkspaceLabel(outcome);
   const tollgateStatusLabel = tollgate?.status ? tollgate.status.replaceAll("_", " ") : "not started";
+  const isArchived = outcome.lifecycleState === "archived";
 
   return (
     <AppShell
@@ -110,6 +118,9 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 <strong className="text-foreground">Outcome status:</strong> {statusLabel}
               </p>
               <p>
+                <strong className="text-foreground">Lifecycle:</strong> {outcome.lifecycleState.replaceAll("_", " ")}
+              </p>
+              <p>
                 <strong className="text-foreground">Tollgate:</strong> {tollgateStatusLabel}
               </p>
               <p>
@@ -122,7 +133,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
       topbarProps={{
         eyebrow: "AAS Companion",
         title: "Outcome Workspace",
-        badge: "Story M1-006"
+        badge: "Patch M1-024 to M1-027"
       }}
     >
       <PageViewAnalytics
@@ -156,6 +167,24 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
             Tollgate 1 submission recorded. This outcome is now ready for review.
           </div>
         ) : null}
+        {lifecycleState === "archived" ? (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            Outcome archived. It is now removed from active working views but still traceable here.
+          </div>
+        ) : null}
+        {lifecycleState === "restored" ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Outcome restored to active work.
+          </div>
+        ) : null}
+        {lifecycleState === "error" && saveMessage ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{saveMessage}</div>
+        ) : null}
+        {isArchived ? (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            This Outcome is archived and currently read-only. Restore it to continue active framing work.
+          </div>
+        ) : null}
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
@@ -173,10 +202,24 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
               <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Status: {statusLabel}
               </span>
+              <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+                Lifecycle: {outcome.lifecycleState.replaceAll("_", " ")}
+              </span>
             </div>
             <p className="max-w-2xl text-sm text-muted-foreground">{getOriginSummary(outcome.originType)}</p>
           </CardContent>
         </Card>
+
+        <FramingContextCard
+          epic={null}
+          outcome={{
+            id: outcome.id,
+            key: outcome.key,
+            title: outcome.title,
+            href: `/outcomes/${outcome.id}`
+          }}
+          summary="Opening this Outcome establishes the active Framing context. Only Epics and Stories attached to this case are shown by default."
+        />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
@@ -204,6 +247,10 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin</p>
                   <p className="mt-2 text-lg font-semibold">{originLabel}</p>
                 </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Lifecycle</p>
+                  <p className="mt-2 text-lg font-semibold capitalize">{outcome.lifecycleState}</p>
+                </div>
                 {outcome.importedReadinessState ? (
                   <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Imported readiness</p>
@@ -226,8 +273,9 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Title</span>
                     <input
-                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                       defaultValue={outcome.title}
+                      disabled={isArchived}
                       name="title"
                       type="text"
                     />
@@ -235,24 +283,27 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Problem statement</span>
                     <textarea
-                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                       defaultValue={outcome.problemStatement ?? ""}
+                      disabled={isArchived}
                       name="problemStatement"
                     />
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Outcome statement</span>
                     <textarea
-                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                       defaultValue={outcome.outcomeStatement ?? ""}
+                      disabled={isArchived}
                       name="outcomeStatement"
                     />
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Timeframe</span>
                     <input
-                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                       defaultValue={outcome.timeframe ?? ""}
+                      disabled={isArchived}
                       name="timeframe"
                       type="text"
                     />
@@ -269,16 +320,18 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Baseline definition</span>
                     <textarea
-                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                       defaultValue={outcome.baselineDefinition ?? ""}
+                      disabled={isArchived}
                       name="baselineDefinition"
                     />
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Baseline source</span>
                     <textarea
-                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                       defaultValue={outcome.baselineSource ?? ""}
+                      disabled={isArchived}
                       name="baselineSource"
                     />
                   </label>
@@ -295,8 +348,9 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                     <label className="space-y-2">
                       <span className="text-sm font-medium text-foreground">Risk profile</span>
                       <select
-                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                         defaultValue={outcome.riskProfile}
+                        disabled={isArchived}
                         name="riskProfile"
                       >
                         <option value="low">Low</option>
@@ -314,17 +368,23 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                         <CardTitle>Epics in this case</CardTitle>
                         <CardDescription>Create native Epics directly from this Outcome without using import.</CardDescription>
                       </div>
-                      <Button className="gap-2" formAction={createEpicFromOutcomeAction} type="submit">
-                        Create Epic
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
+                      {!isArchived ? (
+                        <Button className="gap-2" formAction={createEpicFromOutcomeAction} type="submit">
+                          Create Epic
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      ) : null}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-muted-foreground">
                     {outcome.epics.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
                         <p className="font-medium text-foreground">No Epics exist for this case yet.</p>
-                        <p className="mt-2">Create the first native Epic here. No demo-seeded Epics will be attached as fallback.</p>
+                        <p className="mt-2">
+                          {isArchived
+                            ? "Restore the Outcome if you want to continue breaking it down."
+                            : "Create the first native Epic here. No demo-seeded Epics will be attached as fallback."}
+                        </p>
                       </div>
                     ) : (
                       outcome.epics.map((epic) => (
@@ -336,7 +396,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                             </div>
                             <Button asChild className="gap-2" variant="secondary">
                               <Link href={`/epics/${epic.id}`}>
-                                Open Epic Workspace
+                                Open Epic in current Framing
                                 <ArrowRight className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -348,47 +408,59 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 </Card>
               </div>
 
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Stories in this case</CardTitle>
-                  <CardDescription>Only Stories linked to the current Outcome are visible in clean workspace mode.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  {outcome.stories.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
-                      <p className="font-medium text-foreground">No Stories exist for this case yet.</p>
-                      <p className="mt-2">Create an Epic first, then break it down into native Stories from Epic context.</p>
-                    </div>
-                  ) : (
-                    outcome.stories.map((story) => (
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={story.id}>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <p className="font-medium text-foreground">{story.key}</p>
-                            <p className="mt-1">{story.title}</p>
-                          </div>
-                          <Button asChild className="gap-2" variant="secondary">
-                            <Link href={`/stories/${story.id}`}>
-                              Open Story Workspace
-                              <ArrowRight className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
+              <FramingValueSpineTree
+                emptyEpicMessage={
+                  isArchived
+                    ? "Archived Outcomes no longer surface active Epic work in this branch."
+                    : "Create the first native Epic here. Empty branches stay empty until you add child work."
+                }
+                emptyStoryMessage={
+                  isArchived
+                    ? "Archived Outcomes no longer surface active Story work."
+                    : "Create Stories from the relevant Epic so the hierarchy stays scoped to this Framing."
+                }
+                epics={outcome.epics.map((epic) => ({
+                  id: epic.id,
+                  key: epic.key,
+                  title: epic.title,
+                  href: `/epics/${epic.id}`,
+                  isCurrent: false,
+                  summary: epic.summary ?? epic.purpose,
+                  stories: outcome.stories
+                    .filter((story) => story.epicId === epic.id)
+                    .map((story) => ({
+                      id: story.id,
+                      key: story.key,
+                      title: story.title,
+                      href: `/stories/${story.id}`,
+                      isCurrent: false,
+                      testDefinition: story.testDefinition ?? null
+                    }))
+                }))}
+                outcome={{
+                  id: outcome.id,
+                  key: outcome.key,
+                  title: outcome.title,
+                  href: `/outcomes/${outcome.id}`,
+                  isCurrent: true
+                }}
+              />
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button className="gap-2" type="submit">
-                  Save outcome changes
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+              {!isArchived ? (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button className="gap-2" type="submit">
+                    Save outcome changes
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button asChild className="gap-2" variant="secondary">
+                    <Link href="/framing">Back to Framing Cockpit</Link>
+                  </Button>
+                </div>
+              ) : (
                 <Button asChild className="gap-2" variant="secondary">
                   <Link href="/framing">Back to Framing Cockpit</Link>
                 </Button>
-              </div>
+              )}
             </form>
           </div>
 
@@ -437,21 +509,25 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   </p>
                 </div>
 
-                <form action={submitOutcomeTollgateAction} className="space-y-4">
-                  <input name="outcomeId" type="hidden" value={outcome.id} />
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Submission note</span>
-                    <textarea
-                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                      defaultValue={tollgate?.comments ?? ""}
-                      name="comments"
-                    />
-                  </label>
-                  <Button className="gap-2" type="submit">
-                    <ShieldCheck className="h-4 w-4" />
-                    Submit to Tollgate 1
-                  </Button>
-                </form>
+                {!isArchived ? (
+                  <form action={submitOutcomeTollgateAction} className="space-y-4">
+                    <input name="outcomeId" type="hidden" value={outcome.id} />
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-foreground">Submission note</span>
+                      <textarea
+                        className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                        defaultValue={tollgate?.comments ?? ""}
+                        name="comments"
+                      />
+                    </label>
+                    <Button className="gap-2" type="submit">
+                      <ShieldCheck className="h-4 w-4" />
+                      Submit to Tollgate 1
+                    </Button>
+                  </form>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Restore the Outcome before resuming Tollgate progression.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -474,6 +550,15 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
               </CardContent>
             </Card>
 
+            <GovernedLifecycleCard
+              archiveAction={archiveOutcomeAction}
+              decision={removal?.decision ?? null}
+              entityId={outcome.id}
+              entityLabel="Outcome"
+              hardDeleteAction={hardDeleteOutcomeAction}
+              restoreAction={restoreOutcomeAction}
+            />
+
             {outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
@@ -489,16 +574,6 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
             ) : null}
           </div>
         </div>
-
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Scope note</CardTitle>
-            <CardDescription>M1-STORY-006 implements the baseline and Tollgate 1 slice only.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <p>Multi-approver review depth, exceptions, and advanced risk handling remain out of scope for this story.</p>
-          </CardContent>
-        </Card>
       </section>
     </AppShell>
   );

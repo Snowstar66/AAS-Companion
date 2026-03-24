@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   governedObjectCreatedModeSchema,
+  governedLifecycleStateSchema,
   governedObjectOriginTypeSchema,
   lineageSourceTypeSchema,
   readinessBlockReasonSeveritySchema,
@@ -102,11 +103,18 @@ export const readinessAssessmentSchema = z.object({
   reasons: z.array(readinessBlockReasonSchema)
 });
 
+export const governedLifecycleSchema = z.object({
+  lifecycleState: governedLifecycleStateSchema,
+  archivedAt: z.date().nullish(),
+  archiveReason: z.string().min(1).nullish()
+});
+
 export type GovernedLineageReference = z.infer<typeof governedLineageReferenceSchema>;
 export type GovernedObjectProvenance = z.infer<typeof governedObjectProvenanceSchema>;
 export type GovernedObjectProvenanceInput = z.infer<typeof governedObjectProvenanceInputSchema>;
 export type ReadinessBlockReason = z.infer<typeof readinessBlockReasonSchema>;
 export type ReadinessAssessment = z.infer<typeof readinessAssessmentSchema>;
+export type GovernedLifecycle = z.infer<typeof governedLifecycleSchema>;
 
 export function inferCreatedModeForOrganization(organizationId: string) {
   return organizationId === DEMO_ORGANIZATION_ID ? "demo" : "clean";

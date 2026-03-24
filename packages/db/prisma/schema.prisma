@@ -55,6 +55,11 @@ enum GovernedObjectCreatedMode {
   promotion
 }
 
+enum GovernedLifecycleState {
+  active
+  archived
+}
+
 enum LineageSourceType {
   artifact_intake_session
   artifact_intake_file
@@ -130,10 +135,15 @@ enum ActivityEventType {
   outcome_created
   outcome_updated
   epic_created
+  epic_updated
   story_created
   story_updated
   tollgate_recorded
   execution_contract_generated
+  governed_removal_requested
+  governed_hard_deleted
+  governed_archived
+  governed_restored
   artifact_intake_session_created
   artifact_file_uploaded
   artifact_file_rejected
@@ -248,6 +258,9 @@ model Outcome {
   status              OutcomeStatus       @default(draft)
   originType          GovernedObjectOriginType @default(native)
   createdMode         GovernedObjectCreatedMode @default(clean)
+  lifecycleState      GovernedLifecycleState @default(active)
+  archivedAt          DateTime?
+  archiveReason       String?
   lineageSourceType   LineageSourceType?
   lineageSourceId     String?
   lineageNote         String?
@@ -261,6 +274,7 @@ model Outcome {
 
   @@unique([organizationId, key])
   @@index([organizationId, originType])
+  @@index([organizationId, lifecycleState])
 }
 
 model Epic {
@@ -270,9 +284,13 @@ model Epic {
   key            String
   title          String
   purpose        String
+  summary        String?
   status         EpicStatus   @default(draft)
   originType     GovernedObjectOriginType @default(native)
   createdMode    GovernedObjectCreatedMode @default(clean)
+  lifecycleState GovernedLifecycleState @default(active)
+  archivedAt     DateTime?
+  archiveReason  String?
   lineageSourceType LineageSourceType?
   lineageSourceId   String?
   lineageNote       String?
@@ -285,6 +303,7 @@ model Epic {
 
   @@unique([organizationId, key])
   @@index([organizationId, originType])
+  @@index([organizationId, lifecycleState])
 }
 
 model Story {
@@ -304,6 +323,9 @@ model Story {
   status              StoryStatus         @default(draft)
   originType          GovernedObjectOriginType @default(native)
   createdMode         GovernedObjectCreatedMode @default(clean)
+  lifecycleState      GovernedLifecycleState @default(active)
+  archivedAt          DateTime?
+  archiveReason       String?
   lineageSourceType   LineageSourceType?
   lineageSourceId     String?
   lineageNote         String?
@@ -316,6 +338,7 @@ model Story {
 
   @@unique([organizationId, key])
   @@index([organizationId, originType])
+  @@index([organizationId, lifecycleState])
 }
 
 model Tollgate {

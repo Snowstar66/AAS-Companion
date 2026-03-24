@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildGovernedRemovalDecision,
   createImportedPromotionProvenance,
   createNativeProvenance,
   createReadinessAssessment,
@@ -133,5 +134,58 @@ describe("M1 readiness rules", () => {
     expect(markdown).toContain("# Execution Contract");
     expect(markdown).toContain("Story Key: M1-STORY-008");
     expect(markdown).toContain("## Test Definition");
+  });
+
+  it("distinguishes hard delete, archive, and restore using shared governed lifecycle policy", () => {
+    const draftDelete = buildGovernedRemovalDecision({
+      objectType: "epic",
+      key: "EPC-100",
+      title: "Draft Epic",
+      originType: "native",
+      createdMode: "clean",
+      lifecycleState: "active",
+      status: "draft",
+      activityEventCount: 1,
+      tollgateCount: 0,
+      activeChildren: []
+    });
+
+    expect(draftDelete.recommendedAction).toBe("hard_delete");
+    expect(draftDelete.hardDelete.allowed).toBe(true);
+
+    const governedArchive = buildGovernedRemovalDecision({
+      objectType: "story",
+      key: "STR-200",
+      title: "Governed Story",
+      originType: "imported",
+      createdMode: "promotion",
+      lifecycleState: "active",
+      status: "ready_for_handoff",
+      activityEventCount: 4,
+      tollgateCount: 1,
+      activeChildren: [],
+      importedReadinessState: "imported_design_ready"
+    });
+
+    expect(governedArchive.recommendedAction).toBe("archive");
+    expect(governedArchive.hardDelete.allowed).toBe(false);
+    expect(governedArchive.archive.allowed).toBe(true);
+
+    const blockedRestore = buildGovernedRemovalDecision({
+      objectType: "story",
+      key: "STR-201",
+      title: "Archived Story",
+      originType: "native",
+      createdMode: "clean",
+      lifecycleState: "archived",
+      status: "draft",
+      activityEventCount: 2,
+      tollgateCount: 0,
+      activeChildren: [],
+      archivedAncestorLabels: ["Epic EPC-200"]
+    });
+
+    expect(blockedRestore.recommendedAction).toBe("blocked");
+    expect(blockedRestore.restore.allowed).toBe(false);
   });
 });

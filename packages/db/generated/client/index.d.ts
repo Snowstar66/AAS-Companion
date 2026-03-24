@@ -141,6 +141,14 @@ export const GovernedObjectCreatedMode: {
 export type GovernedObjectCreatedMode = (typeof GovernedObjectCreatedMode)[keyof typeof GovernedObjectCreatedMode]
 
 
+export const GovernedLifecycleState: {
+  active: 'active',
+  archived: 'archived'
+};
+
+export type GovernedLifecycleState = (typeof GovernedLifecycleState)[keyof typeof GovernedLifecycleState]
+
+
 export const LineageSourceType: {
   artifact_intake_session: 'artifact_intake_session',
   artifact_intake_file: 'artifact_intake_file',
@@ -246,10 +254,15 @@ export const ActivityEventType: {
   outcome_created: 'outcome_created',
   outcome_updated: 'outcome_updated',
   epic_created: 'epic_created',
+  epic_updated: 'epic_updated',
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
   execution_contract_generated: 'execution_contract_generated',
+  governed_removal_requested: 'governed_removal_requested',
+  governed_hard_deleted: 'governed_hard_deleted',
+  governed_archived: 'governed_archived',
+  governed_restored: 'governed_restored',
   artifact_intake_session_created: 'artifact_intake_session_created',
   artifact_file_uploaded: 'artifact_file_uploaded',
   artifact_file_rejected: 'artifact_file_rejected',
@@ -353,6 +366,10 @@ export const GovernedObjectOriginType: typeof $Enums.GovernedObjectOriginType
 export type GovernedObjectCreatedMode = $Enums.GovernedObjectCreatedMode
 
 export const GovernedObjectCreatedMode: typeof $Enums.GovernedObjectCreatedMode
+
+export type GovernedLifecycleState = $Enums.GovernedLifecycleState
+
+export const GovernedLifecycleState: typeof $Enums.GovernedLifecycleState
 
 export type LineageSourceType = $Enums.LineageSourceType
 
@@ -6053,6 +6070,9 @@ export namespace Prisma {
     status: $Enums.OutcomeStatus | null
     originType: $Enums.GovernedObjectOriginType | null
     createdMode: $Enums.GovernedObjectCreatedMode | null
+    lifecycleState: $Enums.GovernedLifecycleState | null
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -6077,6 +6097,9 @@ export namespace Prisma {
     status: $Enums.OutcomeStatus | null
     originType: $Enums.GovernedObjectOriginType | null
     createdMode: $Enums.GovernedObjectCreatedMode | null
+    lifecycleState: $Enums.GovernedLifecycleState | null
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -6101,6 +6124,9 @@ export namespace Prisma {
     status: number
     originType: number
     createdMode: number
+    lifecycleState: number
+    archivedAt: number
+    archiveReason: number
     lineageSourceType: number
     lineageSourceId: number
     lineageNote: number
@@ -6127,6 +6153,9 @@ export namespace Prisma {
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -6151,6 +6180,9 @@ export namespace Prisma {
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -6175,6 +6207,9 @@ export namespace Prisma {
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -6272,6 +6307,9 @@ export namespace Prisma {
     status: $Enums.OutcomeStatus
     originType: $Enums.GovernedObjectOriginType
     createdMode: $Enums.GovernedObjectCreatedMode
+    lifecycleState: $Enums.GovernedLifecycleState
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -6313,6 +6351,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -6342,6 +6383,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -6368,6 +6412,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -6394,6 +6441,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -6402,7 +6452,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type OutcomeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "key" | "title" | "problemStatement" | "outcomeStatement" | "baselineDefinition" | "baselineSource" | "timeframe" | "valueOwnerId" | "riskProfile" | "aiAccelerationLevel" | "status" | "originType" | "createdMode" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["outcome"]>
+  export type OutcomeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "key" | "title" | "problemStatement" | "outcomeStatement" | "baselineDefinition" | "baselineSource" | "timeframe" | "valueOwnerId" | "riskProfile" | "aiAccelerationLevel" | "status" | "originType" | "createdMode" | "lifecycleState" | "archivedAt" | "archiveReason" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["outcome"]>
   export type OutcomeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     valueOwner?: boolean | Outcome$valueOwnerArgs<ExtArgs>
@@ -6443,6 +6493,9 @@ export namespace Prisma {
       status: $Enums.OutcomeStatus
       originType: $Enums.GovernedObjectOriginType
       createdMode: $Enums.GovernedObjectCreatedMode
+      lifecycleState: $Enums.GovernedLifecycleState
+      archivedAt: Date | null
+      archiveReason: string | null
       lineageSourceType: $Enums.LineageSourceType | null
       lineageSourceId: string | null
       lineageNote: string | null
@@ -6891,6 +6944,9 @@ export namespace Prisma {
     readonly status: FieldRef<"Outcome", 'OutcomeStatus'>
     readonly originType: FieldRef<"Outcome", 'GovernedObjectOriginType'>
     readonly createdMode: FieldRef<"Outcome", 'GovernedObjectCreatedMode'>
+    readonly lifecycleState: FieldRef<"Outcome", 'GovernedLifecycleState'>
+    readonly archivedAt: FieldRef<"Outcome", 'DateTime'>
+    readonly archiveReason: FieldRef<"Outcome", 'String'>
     readonly lineageSourceType: FieldRef<"Outcome", 'LineageSourceType'>
     readonly lineageSourceId: FieldRef<"Outcome", 'String'>
     readonly lineageNote: FieldRef<"Outcome", 'String'>
@@ -7395,9 +7451,13 @@ export namespace Prisma {
     key: string | null
     title: string | null
     purpose: string | null
+    summary: string | null
     status: $Enums.EpicStatus | null
     originType: $Enums.GovernedObjectOriginType | null
     createdMode: $Enums.GovernedObjectCreatedMode | null
+    lifecycleState: $Enums.GovernedLifecycleState | null
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -7413,9 +7473,13 @@ export namespace Prisma {
     key: string | null
     title: string | null
     purpose: string | null
+    summary: string | null
     status: $Enums.EpicStatus | null
     originType: $Enums.GovernedObjectOriginType | null
     createdMode: $Enums.GovernedObjectCreatedMode | null
+    lifecycleState: $Enums.GovernedLifecycleState | null
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -7431,9 +7495,13 @@ export namespace Prisma {
     key: number
     title: number
     purpose: number
+    summary: number
     status: number
     originType: number
     createdMode: number
+    lifecycleState: number
+    archivedAt: number
+    archiveReason: number
     lineageSourceType: number
     lineageSourceId: number
     lineageNote: number
@@ -7451,9 +7519,13 @@ export namespace Prisma {
     key?: true
     title?: true
     purpose?: true
+    summary?: true
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -7469,9 +7541,13 @@ export namespace Prisma {
     key?: true
     title?: true
     purpose?: true
+    summary?: true
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -7487,9 +7563,13 @@ export namespace Prisma {
     key?: true
     title?: true
     purpose?: true
+    summary?: true
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -7578,9 +7658,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary: string | null
     status: $Enums.EpicStatus
     originType: $Enums.GovernedObjectOriginType
     createdMode: $Enums.GovernedObjectCreatedMode
+    lifecycleState: $Enums.GovernedLifecycleState
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -7613,9 +7697,13 @@ export namespace Prisma {
     key?: boolean
     title?: boolean
     purpose?: boolean
+    summary?: boolean
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -7635,9 +7723,13 @@ export namespace Prisma {
     key?: boolean
     title?: boolean
     purpose?: boolean
+    summary?: boolean
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -7655,9 +7747,13 @@ export namespace Prisma {
     key?: boolean
     title?: boolean
     purpose?: boolean
+    summary?: boolean
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -7675,9 +7771,13 @@ export namespace Prisma {
     key?: boolean
     title?: boolean
     purpose?: boolean
+    summary?: boolean
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -7686,7 +7786,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type EpicOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "key" | "title" | "purpose" | "status" | "originType" | "createdMode" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["epic"]>
+  export type EpicOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "key" | "title" | "purpose" | "summary" | "status" | "originType" | "createdMode" | "lifecycleState" | "archivedAt" | "archiveReason" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["epic"]>
   export type EpicInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     outcome?: boolean | OutcomeDefaultArgs<ExtArgs>
@@ -7716,9 +7816,13 @@ export namespace Prisma {
       key: string
       title: string
       purpose: string
+      summary: string | null
       status: $Enums.EpicStatus
       originType: $Enums.GovernedObjectOriginType
       createdMode: $Enums.GovernedObjectCreatedMode
+      lifecycleState: $Enums.GovernedLifecycleState
+      archivedAt: Date | null
+      archiveReason: string | null
       lineageSourceType: $Enums.LineageSourceType | null
       lineageSourceId: string | null
       lineageNote: string | null
@@ -8157,9 +8261,13 @@ export namespace Prisma {
     readonly key: FieldRef<"Epic", 'String'>
     readonly title: FieldRef<"Epic", 'String'>
     readonly purpose: FieldRef<"Epic", 'String'>
+    readonly summary: FieldRef<"Epic", 'String'>
     readonly status: FieldRef<"Epic", 'EpicStatus'>
     readonly originType: FieldRef<"Epic", 'GovernedObjectOriginType'>
     readonly createdMode: FieldRef<"Epic", 'GovernedObjectCreatedMode'>
+    readonly lifecycleState: FieldRef<"Epic", 'GovernedLifecycleState'>
+    readonly archivedAt: FieldRef<"Epic", 'DateTime'>
+    readonly archiveReason: FieldRef<"Epic", 'String'>
     readonly lineageSourceType: FieldRef<"Epic", 'LineageSourceType'>
     readonly lineageSourceId: FieldRef<"Epic", 'String'>
     readonly lineageNote: FieldRef<"Epic", 'String'>
@@ -8628,6 +8736,9 @@ export namespace Prisma {
     status: $Enums.StoryStatus | null
     originType: $Enums.GovernedObjectOriginType | null
     createdMode: $Enums.GovernedObjectCreatedMode | null
+    lifecycleState: $Enums.GovernedLifecycleState | null
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -8650,6 +8761,9 @@ export namespace Prisma {
     status: $Enums.StoryStatus | null
     originType: $Enums.GovernedObjectOriginType | null
     createdMode: $Enums.GovernedObjectCreatedMode | null
+    lifecycleState: $Enums.GovernedLifecycleState | null
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -8675,6 +8789,9 @@ export namespace Prisma {
     status: number
     originType: number
     createdMode: number
+    lifecycleState: number
+    archivedAt: number
+    archiveReason: number
     lineageSourceType: number
     lineageSourceId: number
     lineageNote: number
@@ -8699,6 +8816,9 @@ export namespace Prisma {
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -8721,6 +8841,9 @@ export namespace Prisma {
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -8746,6 +8869,9 @@ export namespace Prisma {
     status?: true
     originType?: true
     createdMode?: true
+    lifecycleState?: true
+    archivedAt?: true
+    archiveReason?: true
     lineageSourceType?: true
     lineageSourceId?: true
     lineageNote?: true
@@ -8844,6 +8970,9 @@ export namespace Prisma {
     status: $Enums.StoryStatus
     originType: $Enums.GovernedObjectOriginType
     createdMode: $Enums.GovernedObjectCreatedMode
+    lifecycleState: $Enums.GovernedLifecycleState
+    archivedAt: Date | null
+    archiveReason: string | null
     lineageSourceType: $Enums.LineageSourceType | null
     lineageSourceId: string | null
     lineageNote: string | null
@@ -8886,6 +9015,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -8914,6 +9046,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -8942,6 +9077,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -8970,6 +9108,9 @@ export namespace Prisma {
     status?: boolean
     originType?: boolean
     createdMode?: boolean
+    lifecycleState?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     lineageSourceType?: boolean
     lineageSourceId?: boolean
     lineageNote?: boolean
@@ -8978,7 +9119,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type StoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "epicId" | "key" | "title" | "storyType" | "valueIntent" | "acceptanceCriteria" | "aiUsageScope" | "aiAccelerationLevel" | "testDefinition" | "definitionOfDone" | "status" | "originType" | "createdMode" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["story"]>
+  export type StoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "outcomeId" | "epicId" | "key" | "title" | "storyType" | "valueIntent" | "acceptanceCriteria" | "aiUsageScope" | "aiAccelerationLevel" | "testDefinition" | "definitionOfDone" | "status" | "originType" | "createdMode" | "lifecycleState" | "archivedAt" | "archiveReason" | "lineageSourceType" | "lineageSourceId" | "lineageNote" | "importedReadinessState" | "createdAt" | "updatedAt", ExtArgs["result"]["story"]>
   export type StoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     outcome?: boolean | OutcomeDefaultArgs<ExtArgs>
@@ -9019,6 +9160,9 @@ export namespace Prisma {
       status: $Enums.StoryStatus
       originType: $Enums.GovernedObjectOriginType
       createdMode: $Enums.GovernedObjectCreatedMode
+      lifecycleState: $Enums.GovernedLifecycleState
+      archivedAt: Date | null
+      archiveReason: string | null
       lineageSourceType: $Enums.LineageSourceType | null
       lineageSourceId: string | null
       lineageNote: string | null
@@ -9467,6 +9611,9 @@ export namespace Prisma {
     readonly status: FieldRef<"Story", 'StoryStatus'>
     readonly originType: FieldRef<"Story", 'GovernedObjectOriginType'>
     readonly createdMode: FieldRef<"Story", 'GovernedObjectCreatedMode'>
+    readonly lifecycleState: FieldRef<"Story", 'GovernedLifecycleState'>
+    readonly archivedAt: FieldRef<"Story", 'DateTime'>
+    readonly archiveReason: FieldRef<"Story", 'String'>
     readonly lineageSourceType: FieldRef<"Story", 'LineageSourceType'>
     readonly lineageSourceId: FieldRef<"Story", 'String'>
     readonly lineageNote: FieldRef<"Story", 'String'>
@@ -16131,6 +16278,9 @@ export namespace Prisma {
     status: 'status',
     originType: 'originType',
     createdMode: 'createdMode',
+    lifecycleState: 'lifecycleState',
+    archivedAt: 'archivedAt',
+    archiveReason: 'archiveReason',
     lineageSourceType: 'lineageSourceType',
     lineageSourceId: 'lineageSourceId',
     lineageNote: 'lineageNote',
@@ -16149,9 +16299,13 @@ export namespace Prisma {
     key: 'key',
     title: 'title',
     purpose: 'purpose',
+    summary: 'summary',
     status: 'status',
     originType: 'originType',
     createdMode: 'createdMode',
+    lifecycleState: 'lifecycleState',
+    archivedAt: 'archivedAt',
+    archiveReason: 'archiveReason',
     lineageSourceType: 'lineageSourceType',
     lineageSourceId: 'lineageSourceId',
     lineageNote: 'lineageNote',
@@ -16180,6 +16334,9 @@ export namespace Prisma {
     status: 'status',
     originType: 'originType',
     createdMode: 'createdMode',
+    lifecycleState: 'lifecycleState',
+    archivedAt: 'archivedAt',
+    archiveReason: 'archiveReason',
     lineageSourceType: 'lineageSourceType',
     lineageSourceId: 'lineageSourceId',
     lineageNote: 'lineageNote',
@@ -16460,6 +16617,20 @@ export namespace Prisma {
    * Reference to a field of type 'GovernedObjectCreatedMode[]'
    */
   export type ListEnumGovernedObjectCreatedModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GovernedObjectCreatedMode[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'GovernedLifecycleState'
+   */
+  export type EnumGovernedLifecycleStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GovernedLifecycleState'>
+    
+
+
+  /**
+   * Reference to a field of type 'GovernedLifecycleState[]'
+   */
+  export type ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GovernedLifecycleState[]'>
     
 
 
@@ -16985,6 +17156,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFilter<"Outcome"> | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Outcome"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Outcome"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Outcome"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Outcome"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Outcome"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Outcome"> | string | null
     lineageNote?: StringNullableFilter<"Outcome"> | string | null
@@ -17013,6 +17187,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     lineageSourceType?: SortOrderInput | SortOrder
     lineageSourceId?: SortOrderInput | SortOrder
     lineageNote?: SortOrderInput | SortOrder
@@ -17045,6 +17222,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFilter<"Outcome"> | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Outcome"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Outcome"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Outcome"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Outcome"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Outcome"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Outcome"> | string | null
     lineageNote?: StringNullableFilter<"Outcome"> | string | null
@@ -17073,6 +17253,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     lineageSourceType?: SortOrderInput | SortOrder
     lineageSourceId?: SortOrderInput | SortOrder
     lineageNote?: SortOrderInput | SortOrder
@@ -17103,6 +17286,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusWithAggregatesFilter<"Outcome"> | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeWithAggregatesFilter<"Outcome"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeWithAggregatesFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateWithAggregatesFilter<"Outcome"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableWithAggregatesFilter<"Outcome"> | Date | string | null
+    archiveReason?: StringNullableWithAggregatesFilter<"Outcome"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableWithAggregatesFilter<"Outcome"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableWithAggregatesFilter<"Outcome"> | string | null
     lineageNote?: StringNullableWithAggregatesFilter<"Outcome"> | string | null
@@ -17121,9 +17307,13 @@ export namespace Prisma {
     key?: StringFilter<"Epic"> | string
     title?: StringFilter<"Epic"> | string
     purpose?: StringFilter<"Epic"> | string
+    summary?: StringNullableFilter<"Epic"> | string | null
     status?: EnumEpicStatusFilter<"Epic"> | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Epic"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Epic"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Epic"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Epic"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Epic"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Epic"> | string | null
     lineageNote?: StringNullableFilter<"Epic"> | string | null
@@ -17142,9 +17332,13 @@ export namespace Prisma {
     key?: SortOrder
     title?: SortOrder
     purpose?: SortOrder
+    summary?: SortOrderInput | SortOrder
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     lineageSourceType?: SortOrderInput | SortOrder
     lineageSourceId?: SortOrderInput | SortOrder
     lineageNote?: SortOrderInput | SortOrder
@@ -17167,9 +17361,13 @@ export namespace Prisma {
     key?: StringFilter<"Epic"> | string
     title?: StringFilter<"Epic"> | string
     purpose?: StringFilter<"Epic"> | string
+    summary?: StringNullableFilter<"Epic"> | string | null
     status?: EnumEpicStatusFilter<"Epic"> | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Epic"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Epic"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Epic"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Epic"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Epic"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Epic"> | string | null
     lineageNote?: StringNullableFilter<"Epic"> | string | null
@@ -17188,9 +17386,13 @@ export namespace Prisma {
     key?: SortOrder
     title?: SortOrder
     purpose?: SortOrder
+    summary?: SortOrderInput | SortOrder
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     lineageSourceType?: SortOrderInput | SortOrder
     lineageSourceId?: SortOrderInput | SortOrder
     lineageNote?: SortOrderInput | SortOrder
@@ -17212,9 +17414,13 @@ export namespace Prisma {
     key?: StringWithAggregatesFilter<"Epic"> | string
     title?: StringWithAggregatesFilter<"Epic"> | string
     purpose?: StringWithAggregatesFilter<"Epic"> | string
+    summary?: StringNullableWithAggregatesFilter<"Epic"> | string | null
     status?: EnumEpicStatusWithAggregatesFilter<"Epic"> | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeWithAggregatesFilter<"Epic"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeWithAggregatesFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateWithAggregatesFilter<"Epic"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableWithAggregatesFilter<"Epic"> | Date | string | null
+    archiveReason?: StringNullableWithAggregatesFilter<"Epic"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableWithAggregatesFilter<"Epic"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableWithAggregatesFilter<"Epic"> | string | null
     lineageNote?: StringNullableWithAggregatesFilter<"Epic"> | string | null
@@ -17243,6 +17449,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFilter<"Story"> | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Story"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Story"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Story"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Story"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Story"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Story"> | string | null
     lineageNote?: StringNullableFilter<"Story"> | string | null
@@ -17271,6 +17480,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     lineageSourceType?: SortOrderInput | SortOrder
     lineageSourceId?: SortOrderInput | SortOrder
     lineageNote?: SortOrderInput | SortOrder
@@ -17303,6 +17515,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFilter<"Story"> | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Story"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Story"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Story"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Story"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Story"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Story"> | string | null
     lineageNote?: StringNullableFilter<"Story"> | string | null
@@ -17331,6 +17546,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     lineageSourceType?: SortOrderInput | SortOrder
     lineageSourceId?: SortOrderInput | SortOrder
     lineageNote?: SortOrderInput | SortOrder
@@ -17362,6 +17580,9 @@ export namespace Prisma {
     status?: EnumStoryStatusWithAggregatesFilter<"Story"> | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeWithAggregatesFilter<"Story"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeWithAggregatesFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateWithAggregatesFilter<"Story"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableWithAggregatesFilter<"Story"> | Date | string | null
+    archiveReason?: StringNullableWithAggregatesFilter<"Story"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableWithAggregatesFilter<"Story"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableWithAggregatesFilter<"Story"> | string | null
     lineageNote?: StringNullableWithAggregatesFilter<"Story"> | string | null
@@ -18185,6 +18406,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18213,6 +18437,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18237,6 +18464,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18265,6 +18495,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18291,6 +18524,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18313,6 +18549,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18337,6 +18576,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18350,9 +18592,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18371,9 +18617,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18388,9 +18638,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18409,9 +18663,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18428,9 +18686,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18444,9 +18706,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18462,9 +18728,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18487,6 +18757,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18515,6 +18788,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18537,6 +18813,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18565,6 +18844,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18590,6 +18872,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -18612,6 +18897,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18637,6 +18925,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -19617,6 +19908,24 @@ export namespace Prisma {
     not?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel> | $Enums.GovernedObjectCreatedMode
   }
 
+  export type EnumGovernedLifecycleStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedLifecycleState | EnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedLifecycleStateFilter<$PrismaModel> | $Enums.GovernedLifecycleState
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type EnumLineageSourceTypeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.LineageSourceType | EnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
@@ -19657,6 +19966,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19681,6 +19993,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19705,6 +20020,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19763,6 +20081,30 @@ export namespace Prisma {
     _max?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel>
   }
 
+  export type EnumGovernedLifecycleStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedLifecycleState | EnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedLifecycleStateWithAggregatesFilter<$PrismaModel> | $Enums.GovernedLifecycleState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGovernedLifecycleStateFilter<$PrismaModel>
+    _max?: NestedEnumGovernedLifecycleStateFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type EnumLineageSourceTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.LineageSourceType | EnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
@@ -19807,9 +20149,13 @@ export namespace Prisma {
     key?: SortOrder
     title?: SortOrder
     purpose?: SortOrder
+    summary?: SortOrder
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19825,9 +20171,13 @@ export namespace Prisma {
     key?: SortOrder
     title?: SortOrder
     purpose?: SortOrder
+    summary?: SortOrder
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19843,9 +20193,13 @@ export namespace Prisma {
     key?: SortOrder
     title?: SortOrder
     purpose?: SortOrder
+    summary?: SortOrder
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19913,6 +20267,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19935,6 +20292,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -19957,6 +20317,9 @@ export namespace Prisma {
     status?: SortOrder
     originType?: SortOrder
     createdMode?: SortOrder
+    lifecycleState?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
     lineageSourceType?: SortOrder
     lineageSourceId?: SortOrder
     lineageNote?: SortOrder
@@ -20012,17 +20375,6 @@ export namespace Prisma {
     hasEvery?: $Enums.MembershipRole[] | ListEnumMembershipRoleFieldRefInput<$PrismaModel>
     hasSome?: $Enums.MembershipRole[] | ListEnumMembershipRoleFieldRefInput<$PrismaModel>
     isEmpty?: boolean
-  }
-
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type TollgateOrganizationIdEntityTypeEntityIdTollgateTypeCompoundUniqueInput = {
@@ -20104,20 +20456,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTollgateStatusFilter<$PrismaModel>
     _max?: NestedEnumTollgateStatusFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type EnumActivityEntityTypeFilter<$PrismaModel = never> = {
@@ -21426,6 +21764,14 @@ export namespace Prisma {
     set?: $Enums.GovernedObjectCreatedMode
   }
 
+  export type EnumGovernedLifecycleStateFieldUpdateOperationsInput = {
+    set?: $Enums.GovernedLifecycleState
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type NullableEnumLineageSourceTypeFieldUpdateOperationsInput = {
     set?: $Enums.LineageSourceType | null
   }
@@ -21699,10 +22045,6 @@ export namespace Prisma {
   export type TollgateUpdateapproverRolesInput = {
     set?: $Enums.MembershipRole[]
     push?: $Enums.MembershipRole | $Enums.MembershipRole[]
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type OrganizationUpdateOneRequiredWithoutTollgatesNestedInput = {
@@ -22234,6 +22576,24 @@ export namespace Prisma {
     not?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel> | $Enums.GovernedObjectCreatedMode
   }
 
+  export type NestedEnumGovernedLifecycleStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedLifecycleState | EnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedLifecycleStateFilter<$PrismaModel> | $Enums.GovernedLifecycleState
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedEnumLineageSourceTypeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.LineageSourceType | EnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.LineageSourceType[] | ListEnumLineageSourceTypeFieldRefInput<$PrismaModel> | null
@@ -22296,6 +22656,30 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel>
     _max?: NestedEnumGovernedObjectCreatedModeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumGovernedLifecycleStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GovernedLifecycleState | EnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    in?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GovernedLifecycleState[] | ListEnumGovernedLifecycleStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumGovernedLifecycleStateWithAggregatesFilter<$PrismaModel> | $Enums.GovernedLifecycleState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGovernedLifecycleStateFilter<$PrismaModel>
+    _max?: NestedEnumGovernedLifecycleStateFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumLineageSourceTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -22390,17 +22774,6 @@ export namespace Prisma {
     not?: NestedEnumTollgateStatusFilter<$PrismaModel> | $Enums.TollgateStatus
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NestedEnumTollgateEntityTypeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.TollgateEntityType | EnumTollgateEntityTypeFieldRefInput<$PrismaModel>
     in?: $Enums.TollgateEntityType[] | ListEnumTollgateEntityTypeFieldRefInput<$PrismaModel>
@@ -22429,20 +22802,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTollgateStatusFilter<$PrismaModel>
     _max?: NestedEnumTollgateStatusFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumActivityEntityTypeFilter<$PrismaModel = never> = {
@@ -22775,6 +23134,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -22801,6 +23163,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -22826,9 +23191,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -22845,9 +23214,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -22881,6 +23254,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -22907,6 +23283,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -23218,6 +23597,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFilter<"Outcome"> | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Outcome"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Outcome"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Outcome"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Outcome"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Outcome"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Outcome"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Outcome"> | string | null
     lineageNote?: StringNullableFilter<"Outcome"> | string | null
@@ -23252,9 +23634,13 @@ export namespace Prisma {
     key?: StringFilter<"Epic"> | string
     title?: StringFilter<"Epic"> | string
     purpose?: StringFilter<"Epic"> | string
+    summary?: StringNullableFilter<"Epic"> | string | null
     status?: EnumEpicStatusFilter<"Epic"> | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Epic"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Epic"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Epic"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Epic"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Epic"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Epic"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Epic"> | string | null
     lineageNote?: StringNullableFilter<"Epic"> | string | null
@@ -23299,6 +23685,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFilter<"Story"> | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFilter<"Story"> | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFilter<"Story"> | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFilter<"Story"> | $Enums.GovernedLifecycleState
+    archivedAt?: DateTimeNullableFilter<"Story"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Story"> | string | null
     lineageSourceType?: EnumLineageSourceTypeNullableFilter<"Story"> | $Enums.LineageSourceType | null
     lineageSourceId?: StringNullableFilter<"Story"> | string | null
     lineageNote?: StringNullableFilter<"Story"> | string | null
@@ -23534,6 +23923,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -23560,6 +23952,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24051,9 +24446,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24070,9 +24469,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24106,6 +24509,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24132,6 +24538,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24313,6 +24722,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24340,6 +24752,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24368,6 +24783,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24394,6 +24812,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24480,6 +24901,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24507,6 +24931,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24583,6 +25010,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24610,6 +25040,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24629,9 +25062,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24649,9 +25086,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -24733,6 +25174,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24760,6 +25204,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24785,9 +25232,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24805,9 +25256,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25987,6 +26442,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -26001,9 +26459,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -26028,6 +26490,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -26161,6 +26626,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26187,6 +26655,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26212,6 +26683,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26225,9 +26699,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26244,9 +26722,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26262,9 +26744,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26287,6 +26773,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26313,6 +26802,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26337,6 +26829,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26635,6 +27130,9 @@ export namespace Prisma {
     status?: $Enums.OutcomeStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -26735,6 +27233,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26761,6 +27262,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26786,6 +27290,9 @@ export namespace Prisma {
     status?: EnumOutcomeStatusFieldUpdateOperationsInput | $Enums.OutcomeStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26968,9 +27475,13 @@ export namespace Prisma {
     key: string
     title: string
     purpose: string
+    summary?: string | null
     status?: $Enums.EpicStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -26995,6 +27506,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -27008,9 +27522,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27027,9 +27545,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27045,9 +27567,13 @@ export namespace Prisma {
     key?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     purpose?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumEpicStatusFieldUpdateOperationsInput | $Enums.EpicStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27070,6 +27596,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27096,6 +27625,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27120,6 +27652,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27144,6 +27679,9 @@ export namespace Prisma {
     status?: $Enums.StoryStatus
     originType?: $Enums.GovernedObjectOriginType
     createdMode?: $Enums.GovernedObjectCreatedMode
+    lifecycleState?: $Enums.GovernedLifecycleState
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     lineageSourceType?: $Enums.LineageSourceType | null
     lineageSourceId?: string | null
     lineageNote?: string | null
@@ -27166,6 +27704,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27192,6 +27733,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27216,6 +27760,9 @@ export namespace Prisma {
     status?: EnumStoryStatusFieldUpdateOperationsInput | $Enums.StoryStatus
     originType?: EnumGovernedObjectOriginTypeFieldUpdateOperationsInput | $Enums.GovernedObjectOriginType
     createdMode?: EnumGovernedObjectCreatedModeFieldUpdateOperationsInput | $Enums.GovernedObjectCreatedMode
+    lifecycleState?: EnumGovernedLifecycleStateFieldUpdateOperationsInput | $Enums.GovernedLifecycleState
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     lineageSourceType?: NullableEnumLineageSourceTypeFieldUpdateOperationsInput | $Enums.LineageSourceType | null
     lineageSourceId?: NullableStringFieldUpdateOperationsInput | string | null
     lineageNote?: NullableStringFieldUpdateOperationsInput | string | null

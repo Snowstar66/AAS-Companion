@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  archiveGovernedObjectService,
   createNativeEpicFromOutcomeService,
+  hardDeleteGovernedObjectService,
+  restoreGovernedObjectService,
   saveOutcomeWorkspaceService,
   submitOutcomeTollgateService
 } from "@aas-companion/api";
@@ -14,6 +17,10 @@ function buildOutcomeRedirect(outcomeId: string, search: Record<string, string>)
   const query = params.toString();
 
   return `/outcomes/${outcomeId}${query ? `?${query}` : ""}`;
+}
+
+function requireExplicitConfirmation(formData: FormData) {
+  return String(formData.get("confirmAction") ?? "") === "yes";
 }
 
 export async function saveOutcomeWorkspaceAction(formData: FormData) {
@@ -117,4 +124,127 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
   }
 
   redirect(`/epics/${result.data.id}?created=1`);
+}
+
+export async function hardDeleteOutcomeAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+
+  if (!requireExplicitConfirmation(formData)) {
+    redirect(
+      buildOutcomeRedirect(outcomeId, {
+        lifecycle: "error",
+        message: "Explicit confirmation is required before hard delete."
+      })
+    );
+  }
+
+  const result = await hardDeleteGovernedObjectService({
+    organizationId: session.organization.organizationId,
+    entityType: "outcome",
+    entityId: outcomeId,
+    actorId: session.userId
+  });
+
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/stories");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildOutcomeRedirect(outcomeId, {
+        lifecycle: "error",
+        message: result.errors[0]?.message ?? "Outcome could not be deleted."
+      })
+    );
+  }
+
+  redirect("/framing");
+}
+
+export async function archiveOutcomeAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const reason = String(formData.get("archiveReason") ?? "");
+
+  if (!requireExplicitConfirmation(formData)) {
+    redirect(
+      buildOutcomeRedirect(outcomeId, {
+        lifecycle: "error",
+        message: "Explicit confirmation is required before archive."
+      })
+    );
+  }
+
+  const result = await archiveGovernedObjectService({
+    organizationId: session.organization.organizationId,
+    entityType: "outcome",
+    entityId: outcomeId,
+    actorId: session.userId,
+    reason
+  });
+
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/stories");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildOutcomeRedirect(outcomeId, {
+        lifecycle: "error",
+        message: result.errors[0]?.message ?? "Outcome could not be archived."
+      })
+    );
+  }
+
+  redirect(
+    buildOutcomeRedirect(outcomeId, {
+      lifecycle: "archived"
+    })
+  );
+}
+
+export async function restoreOutcomeAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+
+  if (!requireExplicitConfirmation(formData)) {
+    redirect(
+      buildOutcomeRedirect(outcomeId, {
+        lifecycle: "error",
+        message: "Explicit confirmation is required before restore."
+      })
+    );
+  }
+
+  const result = await restoreGovernedObjectService({
+    organizationId: session.organization.organizationId,
+    entityType: "outcome",
+    entityId: outcomeId,
+    actorId: session.userId
+  });
+
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/stories");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildOutcomeRedirect(outcomeId, {
+        lifecycle: "error",
+        message: result.errors[0]?.message ?? "Outcome could not be restored."
+      })
+    );
+  }
+
+  redirect(
+    buildOutcomeRedirect(outcomeId, {
+      lifecycle: "restored"
+    })
+  );
 }

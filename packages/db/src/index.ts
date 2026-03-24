@@ -12,6 +12,12 @@ export {
 } from "./repositories/artifact-candidate-repository";
 export { appendActivityEvent, listActivityEventsForEntity } from "./repositories/activity-repository";
 export {
+  archiveGovernedObject,
+  getGovernedRemovalState,
+  hardDeleteGovernedObject,
+  restoreGovernedObject
+} from "./repositories/governed-lifecycle-repository";
+export {
   getOrganizationContextForUser,
   listOrganizationContextsForUser,
   type OrganizationMembershipContext
@@ -28,7 +34,8 @@ export {
   createEpic,
   getEpicById,
   getEpicWorkspaceSnapshot,
-  listEpics
+  listEpics,
+  updateEpic
 } from "./repositories/epic-repository";
 export {
   createStory,

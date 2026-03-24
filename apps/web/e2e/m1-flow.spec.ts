@@ -68,9 +68,11 @@ test("M1 clean case flow covers native creation, blocked TG1, and demo path acce
   await expect(page).toHaveURL(/\/outcomes\//);
   await expect(page.getByText("Clean native case created and ready for framing work.")).toBeVisible();
   await expect(page.getByText("Case provenance")).toBeVisible();
+  await expect(page.getByText("Active Framing context")).toBeVisible();
+  await expect(page.getByText("Framing-scoped Value Spine")).toBeVisible();
   await expect(page.getByText("Origin: Native")).toBeVisible();
   await expect(page.getByText("Status: draft")).toBeVisible();
-  await expect(page.getByText("No epics have been attached to this outcome yet.")).toBeVisible();
+  await expect(page.getByText("No Epics exist for this case yet.")).toBeVisible();
 
   await page.getByRole("button", { name: "Submit to Tollgate 1" }).click();
   await expect(page.getByText("Tollgate 1 is still blocked.")).toBeVisible();
@@ -80,11 +82,13 @@ test("M1 clean case flow covers native creation, blocked TG1, and demo path acce
   await page.getByRole("button", { name: "Create Epic" }).click();
   await expect(page).toHaveURL(/\/epics\//);
   await expect(page.getByText("Native Epic created and ready for Story breakdown.")).toBeVisible();
+  await expect(page.getByText("Active Framing context")).toBeVisible();
   await expect(page.getByText("No Stories exist for this Epic yet.")).toBeVisible();
   await page.getByRole("button", { name: "Create Story" }).click();
 
   await expect(page).toHaveURL(/\/stories\//);
   await expect(page.getByText("Native Story created and ready for design work.")).toBeVisible();
+  await expect(page.getByText("Active Framing context")).toBeVisible();
   await expect(page.getByText("Story readiness is blocked.")).not.toBeVisible();
   await expect(page.getByText("Definition blocked")).toBeVisible();
 

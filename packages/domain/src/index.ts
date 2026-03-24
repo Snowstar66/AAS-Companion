@@ -3,6 +3,7 @@ export * from "./artifact-intake";
 export * from "./auth";
 export * from "./epic";
 export * from "./enums";
+export * from "./governed-lifecycle";
 export * from "./governed-object";
 export * from "./handoff";
 export * from "./organization";

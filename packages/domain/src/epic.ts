@@ -2,10 +2,11 @@ import { z } from "zod";
 import {
   epicStatusSchema,
   governedObjectCreatedModeSchema,
+  governedLifecycleStateSchema,
   governedObjectOriginTypeSchema,
   importedGovernedReadinessStateSchema
 } from "./enums";
-import { governedLineageReferenceSchema } from "./governed-object";
+import { governedLineageReferenceSchema, governedObjectProvenanceInputSchema } from "./governed-object";
 
 export const epicRecordSchema = z.object({
   id: z.string().min(1),
@@ -14,20 +15,27 @@ export const epicRecordSchema = z.object({
   key: z.string().min(1),
   title: z.string().min(1),
   purpose: z.string().min(1),
+  summary: z.string().nullish(),
   status: epicStatusSchema,
   originType: governedObjectOriginTypeSchema,
   createdMode: governedObjectCreatedModeSchema,
+  lifecycleState: governedLifecycleStateSchema,
+  archivedAt: z.date().nullish(),
+  archiveReason: z.string().nullish(),
   lineageReference: governedLineageReferenceSchema.nullish(),
   importedReadinessState: importedGovernedReadinessStateSchema.nullish(),
   createdAt: z.date(),
   updatedAt: z.date()
 });
 
-export const epicCreateInputSchema = epicRecordSchema
+const epicCreateInputBaseSchema = epicRecordSchema
   .omit({
     id: true,
     originType: true,
     createdMode: true,
+    lifecycleState: true,
+    archivedAt: true,
+    archiveReason: true,
     lineageReference: true,
     importedReadinessState: true,
     createdAt: true,
@@ -41,5 +49,42 @@ export const epicCreateInputSchema = epicRecordSchema
     actorId: z.string().nullish()
   });
 
+export const epicCreateInputSchema = epicCreateInputBaseSchema
+  .superRefine((value, context) => {
+    const parsed = governedObjectProvenanceInputSchema.safeParse({
+      originType: value.originType,
+      createdMode: value.createdMode,
+      lineageReference: value.lineageReference
+    });
+
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        context.addIssue(issue);
+      }
+    }
+  });
+
+export const epicUpdateInputSchema = epicCreateInputBaseSchema
+  .partial()
+  .extend({
+    organizationId: z.string().min(1),
+    id: z.string().min(1),
+    actorId: z.string().nullish()
+  })
+  .superRefine((value, context) => {
+    const parsed = governedObjectProvenanceInputSchema.safeParse({
+      originType: value.originType,
+      createdMode: value.createdMode,
+      lineageReference: value.lineageReference
+    });
+
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        context.addIssue(issue);
+      }
+    }
+  });
+
 export type EpicRecord = z.infer<typeof epicRecordSchema>;
 export type EpicCreateInput = z.infer<typeof epicCreateInputSchema>;
+export type EpicUpdateInput = z.infer<typeof epicUpdateInputSchema>;

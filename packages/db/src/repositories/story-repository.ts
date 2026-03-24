@@ -9,9 +9,17 @@ import {
   toGovernedObjectProvenanceMetadata
 } from "./governed-object-provenance";
 
-export async function listStories(organizationId: string) {
+export async function listStories(organizationId: string, options?: { includeArchived?: boolean }) {
+  const where: Prisma.StoryWhereInput = {
+    organizationId
+  };
+
+  if (!options?.includeArchived) {
+    where.lifecycleState = "active";
+  }
+
   return prisma.story.findMany({
-    where: { organizationId },
+    where,
     orderBy: {
       createdAt: "desc"
     }
@@ -92,6 +100,9 @@ export async function createStory(input: unknown, db: Prisma.TransactionClient |
         testDefinition: parsed.testDefinition ?? null,
         definitionOfDone: parsed.definitionOfDone,
         status: parsed.status,
+        lifecycleState: "active",
+        archivedAt: null,
+        archiveReason: null,
         importedReadinessState: parsed.importedReadinessState ?? null,
         ...toGovernedObjectProvenanceFields(provenance)
       }

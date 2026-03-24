@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import OutcomeWorkspacePage from "@/app/(protected)/outcomes/[outcomeId]/page";
+import StoryWorkspacePage from "@/app/(protected)/stories/[storyId]/page";
 
 vi.mock("@/lib/auth/guards", () => ({
   requireOrganizationContext: vi.fn(async () => ({
@@ -14,24 +14,24 @@ vi.mock("@aas-companion/api", async () => {
 
   return {
     ...actual,
-    getOutcomeWorkspaceService: vi.fn(async () => ({
+    getStoryWorkspaceService: vi.fn(async () => ({
       ok: true,
       data: {
-        outcome: {
-          id: "outcome-native-1",
+        story: {
+          id: "story-native-1",
           organizationId: "org_demo_control_plane",
-          key: "OUT-003",
-          title: "New customer case",
-          problemStatement: null,
-          outcomeStatement: null,
-          baselineDefinition: null,
-          baselineSource: null,
-          timeframe: null,
-          valueOwnerId: null,
-          valueOwner: null,
-          riskProfile: "medium",
+          outcomeId: "outcome-native-1",
+          epicId: "epic-native-1",
+          key: "STR-010",
+          title: "Scoped native Story",
+          storyType: "outcome_delivery",
+          valueIntent: "Keep Story work inside the active Framing branch.",
+          acceptanceCriteria: [],
+          aiUsageScope: [],
           aiAccelerationLevel: "level_2",
-          status: "draft",
+          testDefinition: null,
+          definitionOfDone: [],
+          status: "definition_blocked",
           originType: "native",
           createdMode: "clean",
           lifecycleState: "active",
@@ -41,43 +41,54 @@ vi.mock("@aas-companion/api", async () => {
           lineageSourceId: null,
           lineageNote: null,
           importedReadinessState: null,
-          createdAt: new Date("2026-03-23T20:00:00.000Z"),
-          updatedAt: new Date("2026-03-23T20:00:00.000Z"),
-          epics: [],
-          stories: []
+          createdAt: new Date("2026-03-24T07:00:00.000Z"),
+          updatedAt: new Date("2026-03-24T07:00:00.000Z"),
+          outcome: {
+            id: "outcome-native-1",
+            key: "OUT-010",
+            title: "Scoped native Framing"
+          },
+          epic: {
+            id: "epic-native-1",
+            key: "EPC-010",
+            title: "Scoped native Epic",
+            purpose: "Keep the branch explicit.",
+            summary: null
+          }
         },
         tollgate: {
-          id: "tg-1",
-          blockers: ["Baseline definition is missing.", "Baseline source is missing."],
-          approverRoles: ["value_owner", "architect"],
+          id: "tg-story-1",
+          blockers: ["Test Definition is required before handoff."],
+          approverRoles: ["delivery_lead", "builder"],
           comments: null,
           status: "blocked"
         },
         activities: [
           {
-            id: "activity-1",
-            eventType: "outcome_created",
-            createdAt: new Date("2026-03-23T20:00:00.000Z")
+            id: "activity-story-created",
+            eventType: "story_created",
+            createdAt: new Date("2026-03-24T07:00:00.000Z")
           }
         ],
         readiness: {
           state: "blocked",
           reasons: [
             {
-              code: "baseline_definition_missing",
-              message: "Baseline definition is missing.",
+              code: "test_definition_missing",
+              message: "Test Definition is required before handoff.",
               severity: "high"
             }
           ]
         },
+        importedBuildBlockers: [],
         removal: {
-          entityType: "outcome",
-          entityId: "outcome-native-1",
-          key: "OUT-003",
-          title: "New customer case",
+          entityType: "story",
+          entityId: "story-native-1",
+          key: "STR-010",
+          title: "Scoped native Story",
           activeChildren: [],
           decision: {
-            objectType: "outcome",
+            objectType: "story",
             lifecycleState: "active",
             recommendedAction: "hard_delete",
             hardDelete: {
@@ -85,7 +96,7 @@ vi.mock("@aas-companion/api", async () => {
               allowed: true,
               reversible: false,
               reasonRequired: false,
-              summary: "Outcome is still an eligible native draft.",
+              summary: "Story is still an eligible native draft.",
               blockers: [],
               affectedChildren: [],
               affectedActiveChildCount: 0,
@@ -101,7 +112,7 @@ vi.mock("@aas-companion/api", async () => {
               allowed: true,
               reversible: true,
               reasonRequired: true,
-              summary: "Outcome can be archived.",
+              summary: "Story can be archived.",
               blockers: [],
               affectedChildren: [],
               affectedActiveChildCount: 0,
@@ -117,7 +128,7 @@ vi.mock("@aas-companion/api", async () => {
               allowed: false,
               reversible: true,
               reasonRequired: false,
-              summary: "Outcome is already active.",
+              summary: "Story is already active.",
               blockers: ["Restore becomes available only after archive."],
               affectedChildren: [],
               affectedActiveChildCount: 0,
@@ -135,36 +146,32 @@ vi.mock("@aas-companion/api", async () => {
   };
 });
 
-vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
-  archiveOutcomeAction: vi.fn(),
-  createEpicFromOutcomeAction: vi.fn(),
-  hardDeleteOutcomeAction: vi.fn(),
-  restoreOutcomeAction: vi.fn(),
-  saveOutcomeWorkspaceAction: vi.fn(),
-  submitOutcomeTollgateAction: vi.fn()
+vi.mock("@/app/(protected)/stories/[storyId]/actions", () => ({
+  archiveStoryAction: vi.fn(),
+  hardDeleteStoryAction: vi.fn(),
+  restoreStoryAction: vi.fn(),
+  saveStoryWorkspaceAction: vi.fn(),
+  submitStoryReadinessAction: vi.fn()
 }));
 
-describe("Outcome Workspace page", () => {
-  it("shows native provenance and blocked TG1 posture for a clean draft case", async () => {
+describe("Story Workspace page", () => {
+  it("shows the current Framing branch and scoped navigation for native story work", async () => {
     render(
-      await OutcomeWorkspacePage({
-        params: Promise.resolve({ outcomeId: "outcome-native-1" }),
+      await StoryWorkspacePage({
+        params: Promise.resolve({ storyId: "story-native-1" }),
         searchParams: Promise.resolve({ created: "1" })
       })
     );
 
-    expect(screen.getByText("Clean native case created and ready for framing work.")).toBeDefined();
-    expect(screen.getByText("Case provenance")).toBeDefined();
+    expect(screen.getByText("Native Story created and ready for design work.")).toBeDefined();
     expect(screen.getByText("Active Framing context")).toBeDefined();
-    expect(screen.getByText("Current native working scope")).toBeDefined();
-    expect(screen.getByText("Origin: Native")).toBeDefined();
-    expect(screen.getByText("Workspace: Clean")).toBeDefined();
-    expect(screen.getByText("Status: draft")).toBeDefined();
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
-    expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
-    expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
-    expect(screen.getByText("Baseline definition is missing.")).toBeDefined();
-    expect(screen.getByText("Removal and recovery")).toBeDefined();
+    expect(screen.getAllByText("Scoped native Framing").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Scoped native Epic").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Scoped native Story").length).toBeGreaterThan(0);
+    expect(screen.getByText("Empty test branch")).toBeDefined();
+    expect(screen.getByRole("link", { name: "Back to current Epic" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open current Framing" })).toBeDefined();
+    expect(screen.getAllByText("Test Definition is required before handoff.").length).toBeGreaterThan(0);
   });
 });

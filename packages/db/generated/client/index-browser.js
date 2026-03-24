@@ -162,6 +162,9 @@ exports.Prisma.OutcomeScalarFieldEnum = {
   status: 'status',
   originType: 'originType',
   createdMode: 'createdMode',
+  lifecycleState: 'lifecycleState',
+  archivedAt: 'archivedAt',
+  archiveReason: 'archiveReason',
   lineageSourceType: 'lineageSourceType',
   lineageSourceId: 'lineageSourceId',
   lineageNote: 'lineageNote',
@@ -177,9 +180,13 @@ exports.Prisma.EpicScalarFieldEnum = {
   key: 'key',
   title: 'title',
   purpose: 'purpose',
+  summary: 'summary',
   status: 'status',
   originType: 'originType',
   createdMode: 'createdMode',
+  lifecycleState: 'lifecycleState',
+  archivedAt: 'archivedAt',
+  archiveReason: 'archiveReason',
   lineageSourceType: 'lineageSourceType',
   lineageSourceId: 'lineageSourceId',
   lineageNote: 'lineageNote',
@@ -205,6 +212,9 @@ exports.Prisma.StoryScalarFieldEnum = {
   status: 'status',
   originType: 'originType',
   createdMode: 'createdMode',
+  lifecycleState: 'lifecycleState',
+  archivedAt: 'archivedAt',
+  archiveReason: 'archiveReason',
   lineageSourceType: 'lineageSourceType',
   lineageSourceId: 'lineageSourceId',
   lineageNote: 'lineageNote',
@@ -372,6 +382,11 @@ exports.GovernedObjectCreatedMode = exports.$Enums.GovernedObjectCreatedMode = {
   promotion: 'promotion'
 };
 
+exports.GovernedLifecycleState = exports.$Enums.GovernedLifecycleState = {
+  active: 'active',
+  archived: 'archived'
+};
+
 exports.LineageSourceType = exports.$Enums.LineageSourceType = {
   artifact_intake_session: 'artifact_intake_session',
   artifact_intake_file: 'artifact_intake_file',
@@ -438,10 +453,15 @@ exports.ActivityEventType = exports.$Enums.ActivityEventType = {
   outcome_created: 'outcome_created',
   outcome_updated: 'outcome_updated',
   epic_created: 'epic_created',
+  epic_updated: 'epic_updated',
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
   execution_contract_generated: 'execution_contract_generated',
+  governed_removal_requested: 'governed_removal_requested',
+  governed_hard_deleted: 'governed_hard_deleted',
+  governed_archived: 'governed_archived',
+  governed_restored: 'governed_restored',
   artifact_intake_session_created: 'artifact_intake_session_created',
   artifact_file_uploaded: 'artifact_file_uploaded',
   artifact_file_rejected: 'artifact_file_rejected',

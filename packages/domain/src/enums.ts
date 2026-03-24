@@ -10,6 +10,9 @@ export const tollgateTypes = ["tg1_baseline", "story_readiness"] as const;
 export const tollgateStatuses = ["blocked", "ready", "approved"] as const;
 export const governedObjectOriginTypes = ["seeded", "native", "imported"] as const;
 export const governedObjectCreatedModes = ["demo", "clean", "promotion"] as const;
+export const governedLifecycleStates = ["active", "archived"] as const;
+export const governedValueSpineObjectTypes = ["outcome", "epic", "story", "test"] as const;
+export const governedRemovalActionKinds = ["hard_delete", "archive", "restore", "blocked"] as const;
 export const lineageSourceTypes = ["artifact_intake_session", "artifact_intake_file", "artifact_aas_candidate"] as const;
 export const readinessStates = ["blocked", "in_progress", "ready"] as const;
 export const readinessBlockReasonSeverities = ["high", "medium"] as const;
@@ -71,10 +74,15 @@ export const activityEventTypes = [
   "outcome_created",
   "outcome_updated",
   "epic_created",
+  "epic_updated",
   "story_created",
   "story_updated",
   "tollgate_recorded",
   "execution_contract_generated",
+  "governed_removal_requested",
+  "governed_hard_deleted",
+  "governed_archived",
+  "governed_restored",
   "artifact_intake_session_created",
   "artifact_file_uploaded",
   "artifact_file_rejected",
@@ -100,6 +108,9 @@ export const tollgateTypeSchema = z.enum(tollgateTypes);
 export const tollgateStatusSchema = z.enum(tollgateStatuses);
 export const governedObjectOriginTypeSchema = z.enum(governedObjectOriginTypes);
 export const governedObjectCreatedModeSchema = z.enum(governedObjectCreatedModes);
+export const governedLifecycleStateSchema = z.enum(governedLifecycleStates);
+export const governedValueSpineObjectTypeSchema = z.enum(governedValueSpineObjectTypes);
+export const governedRemovalActionKindSchema = z.enum(governedRemovalActionKinds);
 export const lineageSourceTypeSchema = z.enum(lineageSourceTypes);
 export const readinessStateSchema = z.enum(readinessStates);
 export const readinessBlockReasonSeveritySchema = z.enum(readinessBlockReasonSeverities);
@@ -128,6 +139,9 @@ export type TollgateType = z.infer<typeof tollgateTypeSchema>;
 export type TollgateStatus = z.infer<typeof tollgateStatusSchema>;
 export type GovernedObjectOriginType = z.infer<typeof governedObjectOriginTypeSchema>;
 export type GovernedObjectCreatedMode = z.infer<typeof governedObjectCreatedModeSchema>;
+export type GovernedLifecycleState = z.infer<typeof governedLifecycleStateSchema>;
+export type GovernedValueSpineObjectType = z.infer<typeof governedValueSpineObjectTypeSchema>;
+export type GovernedRemovalActionKind = z.infer<typeof governedRemovalActionKindSchema>;
 export type LineageSourceType = z.infer<typeof lineageSourceTypeSchema>;
 export type ReadinessState = z.infer<typeof readinessStateSchema>;
 export type ReadinessBlockReasonSeverity = z.infer<typeof readinessBlockReasonSeveritySchema>;

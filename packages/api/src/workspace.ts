@@ -1,5 +1,6 @@
 import {
   appendActivityEvent,
+  getGovernedRemovalState,
   getOutcomeWorkspaceSnapshot,
   getStoryWorkspaceSnapshot,
   updateOutcome,
@@ -69,7 +70,12 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
 
   return success({
     ...snapshot,
-    readiness: getOutcomeBaselineReadiness(snapshot.outcome)
+    readiness: getOutcomeBaselineReadiness(snapshot.outcome),
+    removal: await getGovernedRemovalState({
+      organizationId,
+      entityType: "outcome",
+      entityId: outcomeId
+    })
   });
 }
 
@@ -165,7 +171,12 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
   return success({
     ...snapshot,
     readiness: getStoryHandoffReadiness(snapshot.story),
-    importedBuildBlockers
+    importedBuildBlockers,
+    removal: await getGovernedRemovalState({
+      organizationId,
+      entityType: "story",
+      entityId: storyId
+    })
   });
 }
 

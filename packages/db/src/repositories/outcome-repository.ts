@@ -9,9 +9,17 @@ import {
   toGovernedObjectProvenanceMetadata
 } from "./governed-object-provenance";
 
-export async function listOutcomes(organizationId: string) {
+export async function listOutcomes(organizationId: string, options?: { includeArchived?: boolean }) {
+  const where: Prisma.OutcomeWhereInput = {
+    organizationId
+  };
+
+  if (!options?.includeArchived) {
+    where.lifecycleState = "active";
+  }
+
   return prisma.outcome.findMany({
-    where: { organizationId },
+    where,
     orderBy: {
       createdAt: "desc"
     }
@@ -19,9 +27,14 @@ export async function listOutcomes(organizationId: string) {
 }
 
 export async function listOutcomeCockpitEntries(organizationId: string) {
+  const outcomeWhere: Prisma.OutcomeWhereInput = {
+    organizationId,
+    lifecycleState: "active"
+  };
+
   const [outcomes, tollgates] = await prisma.$transaction([
     prisma.outcome.findMany({
-      where: { organizationId },
+      where: outcomeWhere,
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       include: {
         valueOwner: {
@@ -116,8 +129,14 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
     return null;
   }
 
+  const relatedLifecycleState = outcome.lifecycleState === "archived" ? "archived" : "active";
+
   return {
-    outcome,
+    outcome: {
+      ...outcome,
+      epics: outcome.epics.filter((epic) => epic.lifecycleState === relatedLifecycleState),
+      stories: outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState)
+    },
     tollgate,
     activities
   };
@@ -143,6 +162,9 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         riskProfile: parsed.riskProfile,
         aiAccelerationLevel: parsed.aiAccelerationLevel,
         status: parsed.status,
+        lifecycleState: "active",
+        archivedAt: null,
+        archiveReason: null,
         importedReadinessState: parsed.importedReadinessState ?? null,
         ...toGovernedObjectProvenanceFields(provenance)
       }

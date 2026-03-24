@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CircleAlert, GitBranch, Layers3 } from "lucide-react";
+import { ArrowRight, GitBranch } from "lucide-react";
 import { getEpicWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
+import { FramingContextCard } from "@/components/workspace/framing-context-card";
+import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
+import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
-import { createStoryFromEpicAction } from "./actions";
+import {
+  archiveEpicAction,
+  createStoryFromEpicAction,
+  hardDeleteEpicAction,
+  restoreEpicAction,
+  saveEpicWorkspaceAction
+} from "./actions";
 
 type EpicWorkspacePageProps = {
   params: Promise<{
@@ -39,24 +48,27 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
   const { epicId } = await params;
   const query = searchParams ? await searchParams : {};
   const created = getParamValue(query.created) === "1";
-  const error = getParamValue(query.error);
+  const saveState = getParamValue(query.save);
+  const lifecycleState = getParamValue(query.lifecycle);
+  const message = getParamValue(query.message);
   const epicResult = await getEpicWorkspaceService(organization.organizationId, epicId);
 
   if (!epicResult.ok || !epicResult.data) {
     notFound();
   }
 
-  const { epic, activities } = epicResult.data;
+  const { epic, activities, removal } = epicResult.data;
   const originLabel = getOriginLabel(epic.originType);
   const workspaceLabel = getWorkspaceLabel(epic);
   const statusLabel = epic.status.replaceAll("_", " ");
+  const isArchived = epic.lifecycleState === "archived";
 
   return (
     <AppShell
       topbarProps={{
         eyebrow: "AAS Companion",
         title: "Epic Workspace",
-        badge: "M1 clean native flow"
+        badge: "Patch M1-024 to M1-027"
       }}
     >
       <section className="space-y-6">
@@ -65,8 +77,26 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
             Native Epic created and ready for Story breakdown.
           </div>
         ) : null}
-        {error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        {saveState === "success" ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Epic changes were saved successfully.
+          </div>
+        ) : null}
+        {lifecycleState === "archived" ? (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            Epic archived. It is now removed from active working views but remains traceable.
+          </div>
+        ) : null}
+        {lifecycleState === "restored" ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Epic restored to active work.
+          </div>
+        ) : null}
+        {message ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{message}</div> : null}
+        {isArchived ? (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            This Epic is archived and currently read-only. Restore it to continue active design work.
+          </div>
         ) : null}
 
         <Card className="border-border/70 shadow-sm">
@@ -76,7 +106,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
               {epic.key} in {organization.organizationName}
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-4">
+          <CardContent className="grid gap-4 md:grid-cols-5">
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin</p>
               <p className="mt-2 text-lg font-semibold">{originLabel}</p>
@@ -90,31 +120,130 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
               <p className="mt-2 text-lg font-semibold capitalize">{statusLabel}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Lifecycle</p>
+              <p className="mt-2 text-lg font-semibold capitalize">{epic.lifecycleState}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Outcome</p>
               <p className="mt-2 text-lg font-semibold">{epic.outcome.key}</p>
             </div>
           </CardContent>
         </Card>
 
+        <FramingContextCard
+          epic={{
+            id: epic.id,
+            key: epic.key,
+            title: epic.title,
+            href: `/epics/${epic.id}`
+          }}
+          outcome={{
+            id: epic.outcome.id,
+            key: epic.outcome.key,
+            title: epic.outcome.title,
+            href: `/outcomes/${epic.outcomeId}`
+          }}
+          summary="This Epic remains inside one active Framing. Only Stories linked to this Epic and its parent Outcome are shown in this workspace."
+        />
+
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Epic purpose</CardTitle>
-                <CardDescription>This native Epic stays scoped to the current Outcome only.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>{epic.purpose}</p>
+            <FramingValueSpineTree
+              emptyEpicMessage="This view is already scoped to one Epic, so no sibling Framing branches are shown here."
+              emptyStoryMessage={
+                isArchived
+                  ? "Restore the Epic before resuming Story breakdown in this branch."
+                  : "Create the first native Story here. Empty branches stay empty until you add scoped child work."
+              }
+              epics={[
+                {
+                  id: epic.id,
+                  key: epic.key,
+                  title: epic.title,
+                  href: `/epics/${epic.id}`,
+                  isCurrent: true,
+                  summary: epic.summary ?? epic.purpose,
+                  stories: epic.stories.map((story) => ({
+                    id: story.id,
+                    key: story.key,
+                    title: story.title,
+                    href: `/stories/${story.id}`,
+                    isCurrent: false,
+                    testDefinition: story.testDefinition ?? null
+                  }))
+                }
+              ]}
+              outcome={{
+                id: epic.outcome.id,
+                key: epic.outcome.key,
+                title: epic.outcome.title,
+                href: `/outcomes/${epic.outcomeId}`,
+                isCurrent: false
+              }}
+            />
+
+            <form action={saveEpicWorkspaceAction} className="space-y-6">
+              <input name="epicId" type="hidden" value={epic.id} />
+              <input name="outcomeId" type="hidden" value={epic.outcomeId} />
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Epic definition</CardTitle>
+                  <CardDescription>This native Epic stays scoped to the current Outcome only.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">Title</span>
+                    <input
+                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      defaultValue={epic.title}
+                      disabled={isArchived}
+                      name="title"
+                      type="text"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">Value intent</span>
+                    <textarea
+                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      defaultValue={epic.purpose}
+                      disabled={isArchived}
+                      name="purpose"
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">Summary</span>
+                    <textarea
+                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      defaultValue={epic.summary ?? ""}
+                      disabled={isArchived}
+                      name="summary"
+                    />
+                  </label>
+                </CardContent>
+              </Card>
+
+              {!isArchived ? (
                 <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button className="gap-2" type="submit">
+                    Save Epic changes
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
                   <Button asChild className="gap-2" variant="secondary">
                     <Link href={`/outcomes/${epic.outcomeId}`}>
-                      Back to Outcome Workspace
+                      Back to current Framing
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              ) : (
+                <Button asChild className="gap-2" variant="secondary">
+                  <Link href={`/outcomes/${epic.outcomeId}`}>
+                    Back to current Framing
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+            </form>
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
@@ -123,13 +252,16 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     <CardTitle>Story breakdown</CardTitle>
                     <CardDescription>Create native Stories directly from this Epic without using import.</CardDescription>
                   </div>
-                  <form action={createStoryFromEpicAction}>
-                    <input name="epicId" type="hidden" value={epic.id} />
-                    <Button className="gap-2" type="submit">
-                      Create Story
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </form>
+                  {!isArchived ? (
+                    <form action={createStoryFromEpicAction}>
+                      <input name="epicId" type="hidden" value={epic.id} />
+                      <input name="outcomeId" type="hidden" value={epic.outcomeId} />
+                      <Button className="gap-2" type="submit">
+                        Create Story
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </form>
+                  ) : null}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -137,8 +269,9 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
                     <p className="font-medium text-foreground">No Stories exist for this Epic yet.</p>
                     <p className="mt-2">
-                      Start the first native Story here. No demo acceptance criteria, tests, or fallback design content
-                      will be injected.
+                      {isArchived
+                        ? "Restore the Epic before resuming Story breakdown."
+                        : "Start the first native Story here. No demo acceptance criteria, tests, or fallback design content will be injected."}
                     </p>
                   </div>
                 ) : (
@@ -151,7 +284,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                         </div>
                         <Button asChild className="gap-2" variant="secondary">
                           <Link href={`/stories/${story.id}`}>
-                            Open Story Workspace
+                            Open Story in current Framing
                             <ArrowRight className="h-4 w-4" />
                           </Link>
                         </Button>
@@ -171,7 +304,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>No demo-seeded Epics or Stories are shown in this context.</p>
-                <p>Use Create Story to continue design work natively from this Epic.</p>
+                <p>{isArchived ? "Restore the Epic to continue native work from here." : "Use Create Story to continue design work natively from this Epic."}</p>
               </CardContent>
             </Card>
 
@@ -193,6 +326,16 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                 )}
               </CardContent>
             </Card>
+
+            <GovernedLifecycleCard
+              archiveAction={archiveEpicAction}
+              decision={removal?.decision ?? null}
+              entityId={epic.id}
+              entityLabel="Epic"
+              hardDeleteAction={hardDeleteEpicAction}
+              hiddenFields={[{ name: "outcomeId", value: epic.outcomeId }]}
+              restoreAction={restoreEpicAction}
+            />
 
             {epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId ? (
               <Card className="border-border/70 shadow-sm">

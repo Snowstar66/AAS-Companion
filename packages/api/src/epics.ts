@@ -1,11 +1,13 @@
 import {
+  getGovernedRemovalState,
   createEpic,
   createStory,
   getEpicById,
   getEpicWorkspaceSnapshot,
   getOutcomeById,
   listEpics,
-  listStories
+  listStories,
+  updateEpic
 } from "@aas-companion/db";
 import { failure, success, type ApiResult } from "./shared";
 
@@ -27,7 +29,7 @@ export async function listEpicsService(organizationId: string): Promise<ApiResul
 export async function getEpicWorkspaceService(
   organizationId: string,
   epicId: string
-): Promise<ApiResult<Awaited<ReturnType<typeof getEpicWorkspaceSnapshot>>>> {
+) {
   const snapshot = await getEpicWorkspaceSnapshot(organizationId, epicId);
 
   if (!snapshot) {
@@ -37,7 +39,16 @@ export async function getEpicWorkspaceService(
     });
   }
 
-  return success(snapshot);
+  const removal = await getGovernedRemovalState({
+    organizationId,
+    entityType: "epic",
+    entityId: epicId
+  });
+
+  return success({
+    ...snapshot,
+    removal
+  });
 }
 
 export async function createNativeEpicFromOutcomeService(input: {
@@ -54,7 +65,7 @@ export async function createNativeEpicFromOutcomeService(input: {
     });
   }
 
-  const epics = await listEpics(input.organizationId);
+  const epics = await listEpics(input.organizationId, { includeArchived: true });
   const key = buildNextKey(epics.map((epic) => epic.key), "EPC");
 
   return success(
@@ -86,7 +97,7 @@ export async function createNativeStoryFromEpicService(input: {
     });
   }
 
-  const stories = await listStories(input.organizationId);
+  const stories = await listStories(input.organizationId, { includeArchived: true });
   const key = buildNextKey(stories.map((story) => story.key), "STR");
 
   return success(
@@ -109,4 +120,24 @@ export async function createNativeStoryFromEpicService(input: {
       actorId: input.actorId ?? null
     })
   );
+}
+
+export async function saveEpicWorkspaceService(input: {
+  organizationId: string;
+  id: string;
+  actorId?: string | null;
+  title?: string;
+  purpose?: string;
+  summary?: string | null;
+}) {
+  const result = await updateEpic({
+    organizationId: input.organizationId,
+    id: input.id,
+    actorId: input.actorId ?? null,
+    title: input.title,
+    purpose: input.purpose,
+    summary: input.summary
+  });
+
+  return success(result);
 }

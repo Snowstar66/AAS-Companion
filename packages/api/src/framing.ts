@@ -93,7 +93,7 @@ export async function createCleanDraftOutcomeFromFramingService(input: {
   organizationId: string;
   actorId?: string | null;
 }): Promise<ApiResult<Awaited<ReturnType<typeof createOutcome>>>> {
-  const existingOutcomes = await listOutcomes(input.organizationId);
+  const existingOutcomes = await listOutcomes(input.organizationId, { includeArchived: true });
   const key = buildNextOutcomeKey(existingOutcomes.map((outcome) => outcome.key));
 
   return success(
