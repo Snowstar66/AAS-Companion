@@ -17,6 +17,30 @@ enum MembershipRole {
   builder
 }
 
+enum OrganizationSide {
+  customer
+  supplier
+}
+
+enum PartyRoleType {
+  customer_sponsor
+  customer_domain_owner
+  value_owner
+  architect
+  aida
+  aqa
+  delivery_lead
+  builder
+  ai_governance_lead
+  risk_owner
+}
+
+enum AgentType {
+  bmad_agent
+  governance_agent
+  automation_agent
+}
+
 enum OutcomeStatus {
   draft
   baseline_in_progress
@@ -125,6 +149,8 @@ enum ActivityEntityType {
   epic
   story
   tollgate
+  party_role_entry
+  agent_registry_entry
   artifact_intake_session
   artifact_intake_file
   artifact_aas_candidate
@@ -144,6 +170,12 @@ enum ActivityEventType {
   governed_hard_deleted
   governed_archived
   governed_restored
+  party_role_entry_created
+  party_role_entry_updated
+  party_role_entry_deactivated
+  agent_registry_entry_created
+  agent_registry_entry_updated
+  agent_registry_entry_deactivated
   artifact_intake_session_created
   artifact_file_uploaded
   artifact_file_rejected
@@ -195,24 +227,30 @@ enum RiskProfile {
 }
 
 enum AiAccelerationLevel {
+  level_1
   level_2
+  level_3
 }
 
 model Organization {
-  id                     String                  @id
-  slug                   String                  @unique
-  name                   String
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  memberships            Membership[]
-  outcomes               Outcome[]
-  epics                  Epic[]
-  stories                Story[]
-  tollgates              Tollgate[]
-  activityEvents         ActivityEvent[]
-  artifactIntakeSessions ArtifactIntakeSession[]
-  artifactIntakeFiles    ArtifactIntakeFile[]
-  artifactAasCandidates  ArtifactAasCandidate[]
+  id                             String                          @id
+  slug                           String                          @unique
+  name                           String
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  memberships                    Membership[]
+  outcomes                       Outcome[]
+  epics                          Epic[]
+  stories                        Story[]
+  tollgates                      Tollgate[]
+  activityEvents                 ActivityEvent[]
+  artifactIntakeSessions         ArtifactIntakeSession[]
+  artifactIntakeFiles            ArtifactIntakeFile[]
+  artifactAasCandidates          ArtifactAasCandidate[]
+  partyRoleEntries               PartyRoleEntry[]
+  agentRegistryEntries           AgentRegistryEntry[]
+  governanceRoleRequirements     GovernanceRoleRequirement[]
+  governanceRiskCombinationRules GovernanceRiskCombinationRule[]
 }
 
 model AppUser {
@@ -240,6 +278,78 @@ model Membership {
   user           AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, userId])
+}
+
+model PartyRoleEntry {
+  id                String               @id
+  organizationId    String
+  fullName          String
+  email             String
+  phoneNumber       String?
+  avatarUrl         String?
+  organizationSide  OrganizationSide
+  roleType          PartyRoleType
+  roleTitle         String
+  mandateNotes      String?
+  isActive          Boolean              @default(true)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  organization      Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supervisingAgents AgentRegistryEntry[] @relation("PartyRoleSupervisor")
+
+  @@index([organizationId, isActive, organizationSide])
+  @@index([organizationId, roleType, isActive])
+}
+
+model AgentRegistryEntry {
+  id                     String         @id
+  organizationId         String
+  agentName              String
+  agentType              AgentType
+  purpose                String
+  scopeOfWork            String
+  allowedArtifactTypes   String[]       @default([])
+  allowedActions         String[]       @default([])
+  supervisingPartyRoleId String
+  isActive               Boolean        @default(true)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  organization           Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supervisingPartyRole   PartyRoleEntry @relation("PartyRoleSupervisor", fields: [supervisingPartyRoleId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, isActive, agentType])
+  @@index([organizationId, supervisingPartyRoleId])
+}
+
+model GovernanceRoleRequirement {
+  id                  String              @id
+  organizationId      String
+  aiAccelerationLevel AiAccelerationLevel
+  organizationSide    OrganizationSide
+  roleType            PartyRoleType
+  minimumCount        Int
+  rationale           String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, aiAccelerationLevel, organizationSide, roleType])
+  @@index([organizationId, aiAccelerationLevel])
+}
+
+model GovernanceRiskCombinationRule {
+  id                  String              @id
+  organizationId      String
+  aiAccelerationLevel AiAccelerationLevel
+  primaryRoleType     PartyRoleType
+  conflictingRoleType PartyRoleType
+  rationale           String
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, aiAccelerationLevel, primaryRoleType, conflictingRoleType])
+  @@index([organizationId, aiAccelerationLevel])
 }
 
 model Outcome {

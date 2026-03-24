@@ -146,6 +146,60 @@ exports.Prisma.MembershipScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PartyRoleEntryScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  fullName: 'fullName',
+  email: 'email',
+  phoneNumber: 'phoneNumber',
+  avatarUrl: 'avatarUrl',
+  organizationSide: 'organizationSide',
+  roleType: 'roleType',
+  roleTitle: 'roleTitle',
+  mandateNotes: 'mandateNotes',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AgentRegistryEntryScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  agentName: 'agentName',
+  agentType: 'agentType',
+  purpose: 'purpose',
+  scopeOfWork: 'scopeOfWork',
+  allowedArtifactTypes: 'allowedArtifactTypes',
+  allowedActions: 'allowedActions',
+  supervisingPartyRoleId: 'supervisingPartyRoleId',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.GovernanceRoleRequirementScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  aiAccelerationLevel: 'aiAccelerationLevel',
+  organizationSide: 'organizationSide',
+  roleType: 'roleType',
+  minimumCount: 'minimumCount',
+  rationale: 'rationale',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.GovernanceRiskCombinationRuleScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  aiAccelerationLevel: 'aiAccelerationLevel',
+  primaryRoleType: 'primaryRoleType',
+  conflictingRoleType: 'conflictingRoleType',
+  rationale: 'rationale',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.OutcomeScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -353,14 +407,40 @@ exports.MembershipRole = exports.$Enums.MembershipRole = {
   builder: 'builder'
 };
 
+exports.OrganizationSide = exports.$Enums.OrganizationSide = {
+  customer: 'customer',
+  supplier: 'supplier'
+};
+
+exports.PartyRoleType = exports.$Enums.PartyRoleType = {
+  customer_sponsor: 'customer_sponsor',
+  customer_domain_owner: 'customer_domain_owner',
+  value_owner: 'value_owner',
+  architect: 'architect',
+  aida: 'aida',
+  aqa: 'aqa',
+  delivery_lead: 'delivery_lead',
+  builder: 'builder',
+  ai_governance_lead: 'ai_governance_lead',
+  risk_owner: 'risk_owner'
+};
+
+exports.AgentType = exports.$Enums.AgentType = {
+  bmad_agent: 'bmad_agent',
+  governance_agent: 'governance_agent',
+  automation_agent: 'automation_agent'
+};
+
+exports.AiAccelerationLevel = exports.$Enums.AiAccelerationLevel = {
+  level_1: 'level_1',
+  level_2: 'level_2',
+  level_3: 'level_3'
+};
+
 exports.RiskProfile = exports.$Enums.RiskProfile = {
   low: 'low',
   medium: 'medium',
   high: 'high'
-};
-
-exports.AiAccelerationLevel = exports.$Enums.AiAccelerationLevel = {
-  level_2: 'level_2'
 };
 
 exports.OutcomeStatus = exports.$Enums.OutcomeStatus = {
@@ -443,6 +523,8 @@ exports.ActivityEntityType = exports.$Enums.ActivityEntityType = {
   epic: 'epic',
   story: 'story',
   tollgate: 'tollgate',
+  party_role_entry: 'party_role_entry',
+  agent_registry_entry: 'agent_registry_entry',
   artifact_intake_session: 'artifact_intake_session',
   artifact_intake_file: 'artifact_intake_file',
   artifact_aas_candidate: 'artifact_aas_candidate'
@@ -462,6 +544,12 @@ exports.ActivityEventType = exports.$Enums.ActivityEventType = {
   governed_hard_deleted: 'governed_hard_deleted',
   governed_archived: 'governed_archived',
   governed_restored: 'governed_restored',
+  party_role_entry_created: 'party_role_entry_created',
+  party_role_entry_updated: 'party_role_entry_updated',
+  party_role_entry_deactivated: 'party_role_entry_deactivated',
+  agent_registry_entry_created: 'agent_registry_entry_created',
+  agent_registry_entry_updated: 'agent_registry_entry_updated',
+  agent_registry_entry_deactivated: 'agent_registry_entry_deactivated',
   artifact_intake_session_created: 'artifact_intake_session_created',
   artifact_file_uploaded: 'artifact_file_uploaded',
   artifact_file_rejected: 'artifact_file_rejected',
@@ -531,6 +619,10 @@ exports.Prisma.ModelName = {
   Organization: 'Organization',
   AppUser: 'AppUser',
   Membership: 'Membership',
+  PartyRoleEntry: 'PartyRoleEntry',
+  AgentRegistryEntry: 'AgentRegistryEntry',
+  GovernanceRoleRequirement: 'GovernanceRoleRequirement',
+  GovernanceRiskCombinationRule: 'GovernanceRiskCombinationRule',
   Outcome: 'Outcome',
   Epic: 'Epic',
   Story: 'Story',

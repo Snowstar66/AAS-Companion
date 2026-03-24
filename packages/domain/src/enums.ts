@@ -1,6 +1,31 @@
 import { z } from "zod";
 
 export const membershipRoles = ["value_owner", "aida", "aqa", "architect", "delivery_lead", "builder"] as const;
+export const organizationSides = ["customer", "supplier"] as const;
+export const partyRoleTypes = [
+  "customer_sponsor",
+  "customer_domain_owner",
+  "value_owner",
+  "architect",
+  "aida",
+  "aqa",
+  "delivery_lead",
+  "builder",
+  "ai_governance_lead",
+  "risk_owner"
+] as const;
+export const agentTypes = ["bmad_agent", "governance_agent", "automation_agent"] as const;
+export const governanceCoverageStatuses = ["satisfied", "missing", "partially_covered", "risky_combination"] as const;
+export const authorityResponsibilityAreas = [
+  "outcome_ownership",
+  "architecture_review",
+  "ai_review",
+  "risk_acceptance",
+  "tollgate_approval",
+  "build_readiness_approval",
+  "escalation_ownership"
+] as const;
+export const authorityAssignmentKinds = ["owner", "reviewer", "approver", "not_assigned"] as const;
 export const outcomeStatuses = ["draft", "baseline_in_progress", "ready_for_tg1", "active"] as const;
 export const epicStatuses = ["draft", "in_progress", "completed"] as const;
 export const storyTypes = ["outcome_delivery", "governance", "enablement"] as const;
@@ -65,6 +90,8 @@ export const activityEntityTypes = [
   "epic",
   "story",
   "tollgate",
+  "party_role_entry",
+  "agent_registry_entry",
   "artifact_intake_session",
   "artifact_intake_file",
   "artifact_aas_candidate"
@@ -83,6 +110,12 @@ export const activityEventTypes = [
   "governed_hard_deleted",
   "governed_archived",
   "governed_restored",
+  "party_role_entry_created",
+  "party_role_entry_updated",
+  "party_role_entry_deactivated",
+  "agent_registry_entry_created",
+  "agent_registry_entry_updated",
+  "agent_registry_entry_deactivated",
   "artifact_intake_session_created",
   "artifact_file_uploaded",
   "artifact_file_rejected",
@@ -96,9 +129,15 @@ export const activityEventTypes = [
   "imported_progression_allowed"
 ] as const;
 export const riskProfiles = ["low", "medium", "high"] as const;
-export const aiAccelerationLevels = ["level_2"] as const;
+export const aiAccelerationLevels = ["level_1", "level_2", "level_3"] as const;
 
 export const membershipRoleSchema = z.enum(membershipRoles);
+export const organizationSideSchema = z.enum(organizationSides);
+export const partyRoleTypeSchema = z.enum(partyRoleTypes);
+export const agentTypeSchema = z.enum(agentTypes);
+export const governanceCoverageStatusSchema = z.enum(governanceCoverageStatuses);
+export const authorityResponsibilityAreaSchema = z.enum(authorityResponsibilityAreas);
+export const authorityAssignmentKindSchema = z.enum(authorityAssignmentKinds);
 export const outcomeStatusSchema = z.enum(outcomeStatuses);
 export const epicStatusSchema = z.enum(epicStatuses);
 export const storyTypeSchema = z.enum(storyTypes);
@@ -130,6 +169,12 @@ export const riskProfileSchema = z.enum(riskProfiles);
 export const aiAccelerationLevelSchema = z.enum(aiAccelerationLevels);
 
 export type MembershipRole = z.infer<typeof membershipRoleSchema>;
+export type OrganizationSide = z.infer<typeof organizationSideSchema>;
+export type PartyRoleType = z.infer<typeof partyRoleTypeSchema>;
+export type AgentType = z.infer<typeof agentTypeSchema>;
+export type GovernanceCoverageStatus = z.infer<typeof governanceCoverageStatusSchema>;
+export type AuthorityResponsibilityArea = z.infer<typeof authorityResponsibilityAreaSchema>;
+export type AuthorityAssignmentKind = z.infer<typeof authorityAssignmentKindSchema>;
 export type OutcomeStatus = z.infer<typeof outcomeStatusSchema>;
 export type EpicStatus = z.infer<typeof epicStatusSchema>;
 export type StoryType = z.infer<typeof storyTypeSchema>;

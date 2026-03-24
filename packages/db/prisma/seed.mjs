@@ -20,6 +20,21 @@ const ids = {
     deliveryLead: "membership_demo_delivery_lead",
     builder: "membership_demo_builder"
   },
+  partyRoles: {
+    sponsor: "party_role_demo_customer_sponsor",
+    domainOwner: "party_role_demo_customer_domain_owner",
+    valueOwner: "party_role_demo_value_owner",
+    riskOwner: "party_role_demo_risk_owner",
+    architect: "party_role_demo_architect",
+    aida: "party_role_demo_aida",
+    aqa: "party_role_demo_aqa",
+    deliveryLead: "party_role_demo_delivery_lead",
+    builder: "party_role_demo_builder"
+  },
+  agents: {
+    framing: "agent_demo_framing",
+    governance: "agent_demo_governance"
+  },
   outcomes: {
     draft: "outcome_demo_governance_gap",
     almostReady: "outcome_demo_outcome_readiness"
@@ -79,6 +94,263 @@ const users = [
   }
 ];
 
+const partyRoles = [
+  {
+    id: ids.partyRoles.sponsor,
+    fullName: "Mikael Sponsor",
+    email: "mikael.sponsor@customer.local",
+    organizationSide: "customer",
+    roleType: "customer_sponsor",
+    roleTitle: "Executive Sponsor",
+    mandateNotes: "Approves escalation and major AI acceleration risk."
+  },
+  {
+    id: ids.partyRoles.domainOwner,
+    fullName: "Karin Domain Owner",
+    email: "karin.domain@customer.local",
+    organizationSide: "customer",
+    roleType: "customer_domain_owner",
+    roleTitle: "Customer Domain Owner",
+    mandateNotes: "Owns outcome framing and domain clarity."
+  },
+  {
+    id: ids.partyRoles.valueOwner,
+    fullName: "Demo Value Owner",
+    email: "value.owner@aas-companion.local",
+    organizationSide: "customer",
+    roleType: "value_owner",
+    roleTitle: "Value Owner",
+    mandateNotes: "Owns business value and framing scope."
+  },
+  {
+    id: ids.partyRoles.riskOwner,
+    fullName: "Sara Risk Owner",
+    email: "sara.risk@customer.local",
+    organizationSide: "customer",
+    roleType: "risk_owner",
+    roleTitle: "Risk Owner",
+    mandateNotes: "Accepts material delivery and AI governance risk."
+  },
+  {
+    id: ids.partyRoles.architect,
+    fullName: "Demo Architect",
+    email: "architect@aas-companion.local",
+    organizationSide: "supplier",
+    roleType: "architect",
+    roleTitle: "Solution Architect",
+    mandateNotes: "Reviews architecture and solution constraints."
+  },
+  {
+    id: ids.partyRoles.aida,
+    fullName: "Demo AIDA",
+    email: "aida@aas-companion.local",
+    organizationSide: "supplier",
+    roleType: "aida",
+    roleTitle: "AI Delivery Architect",
+    mandateNotes: "Shapes governed AI delivery patterns."
+  },
+  {
+    id: ids.partyRoles.aqa,
+    fullName: "Demo AQA",
+    email: "aqa@aas-companion.local",
+    organizationSide: "supplier",
+    roleType: "aqa",
+    roleTitle: "AI Quality Assurance",
+    mandateNotes: "Reviews testability and AI quality posture."
+  },
+  {
+    id: ids.partyRoles.deliveryLead,
+    fullName: "Demo Delivery Lead",
+    email: "delivery.lead@aas-companion.local",
+    organizationSide: "supplier",
+    roleType: "delivery_lead",
+    roleTitle: "Delivery Lead",
+    mandateNotes: "Owns supplier execution readiness and escalation."
+  },
+  {
+    id: ids.partyRoles.builder,
+    fullName: "Demo Builder",
+    email: "builder@aas-companion.local",
+    organizationSide: "supplier",
+    roleType: "builder",
+    roleTitle: "Builder",
+    mandateNotes: "Owns implementation execution inside the governed scope."
+  }
+];
+
+const governanceRoleRequirements = [
+  {
+    aiAccelerationLevel: "level_1",
+    organizationSide: "customer",
+    roleType: "value_owner",
+    minimumCount: 1,
+    rationale: "Level 1 work still needs a named business owner."
+  },
+  {
+    aiAccelerationLevel: "level_1",
+    organizationSide: "supplier",
+    roleType: "delivery_lead",
+    minimumCount: 1,
+    rationale: "Level 1 work needs one supplier-side delivery owner."
+  },
+  {
+    aiAccelerationLevel: "level_1",
+    organizationSide: "supplier",
+    roleType: "builder",
+    minimumCount: 1,
+    rationale: "Level 1 execution needs at least one accountable builder."
+  },
+  {
+    aiAccelerationLevel: "level_2",
+    organizationSide: "customer",
+    roleType: "value_owner",
+    minimumCount: 1,
+    rationale: "Level 2 work needs named value ownership."
+  },
+  {
+    aiAccelerationLevel: "level_2",
+    organizationSide: "customer",
+    roleType: "customer_domain_owner",
+    minimumCount: 1,
+    rationale: "Level 2 work requires explicit customer domain oversight."
+  },
+  {
+    aiAccelerationLevel: "level_2",
+    organizationSide: "supplier",
+    roleType: "architect",
+    minimumCount: 1,
+    rationale: "Level 2 work requires architecture review."
+  },
+  {
+    aiAccelerationLevel: "level_2",
+    organizationSide: "supplier",
+    roleType: "aida",
+    minimumCount: 1,
+    rationale: "Level 2 work requires named AI delivery oversight."
+  },
+  {
+    aiAccelerationLevel: "level_2",
+    organizationSide: "supplier",
+    roleType: "aqa",
+    minimumCount: 1,
+    rationale: "Level 2 work requires AI quality review."
+  },
+  {
+    aiAccelerationLevel: "level_2",
+    organizationSide: "supplier",
+    roleType: "delivery_lead",
+    minimumCount: 1,
+    rationale: "Level 2 work needs one supplier delivery owner."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "customer",
+    roleType: "customer_sponsor",
+    minimumCount: 1,
+    rationale: "Level 3 work requires named sponsor authority."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "customer",
+    roleType: "customer_domain_owner",
+    minimumCount: 1,
+    rationale: "Level 3 work requires customer domain ownership."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "customer",
+    roleType: "risk_owner",
+    minimumCount: 1,
+    rationale: "Level 3 work requires explicit risk ownership."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "supplier",
+    roleType: "architect",
+    minimumCount: 1,
+    rationale: "Level 3 work requires architecture control."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "supplier",
+    roleType: "aida",
+    minimumCount: 1,
+    rationale: "Level 3 work requires AI delivery architecture."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "supplier",
+    roleType: "aqa",
+    minimumCount: 1,
+    rationale: "Level 3 work requires AI quality assurance."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "supplier",
+    roleType: "delivery_lead",
+    minimumCount: 1,
+    rationale: "Level 3 work needs one accountable delivery lead."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "supplier",
+    roleType: "builder",
+    minimumCount: 1,
+    rationale: "Level 3 work still needs direct build ownership."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    organizationSide: "supplier",
+    roleType: "ai_governance_lead",
+    minimumCount: 1,
+    rationale: "Level 3 work requires a named AI governance lead before approval can be trusted."
+  }
+];
+
+const governanceRiskCombinationRules = [
+  {
+    aiAccelerationLevel: "level_2",
+    primaryRoleType: "aida",
+    conflictingRoleType: "aqa",
+    rationale: "The same person should not both shape AI delivery and independently assure AI quality."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    primaryRoleType: "architect",
+    conflictingRoleType: "risk_owner",
+    rationale: "The same person should not own both solution design and final risk acceptance at Level 3."
+  },
+  {
+    aiAccelerationLevel: "level_3",
+    primaryRoleType: "aida",
+    conflictingRoleType: "aqa",
+    rationale: "Level 3 requires separation between AI delivery design and AI quality sign-off."
+  }
+];
+
+const agentRegistryEntries = [
+  {
+    id: ids.agents.framing,
+    agentName: "BMAD Framing Agent",
+    agentType: "bmad_agent",
+    purpose: "Helps teams shape outcomes, epics and stories inside governed project scope.",
+    scopeOfWork: "Framing assistance, story shaping and structured drafting for active project work.",
+    allowedArtifactTypes: ["outcome", "epic", "story"],
+    allowedActions: ["draft", "summarize", "suggest_structure"],
+    supervisingPartyRoleId: ids.partyRoles.aida
+  },
+  {
+    id: ids.agents.governance,
+    agentName: "Governance Review Agent",
+    agentType: "governance_agent",
+    purpose: "Highlights readiness gaps and governance concerns before promotion or handoff.",
+    scopeOfWork: "Review-only checks against role coverage, readiness posture and traceability evidence.",
+    allowedArtifactTypes: ["tollgate", "story", "outcome"],
+    allowedActions: ["review", "flag_risks", "summarize_gaps"],
+    supervisingPartyRoleId: ids.partyRoles.aqa
+  }
+];
+
 async function main() {
   await prisma.organization.upsert({
     where: { id: ids.organizationId },
@@ -122,6 +394,114 @@ async function main() {
         organizationId: ids.organizationId,
         userId: user.id,
         role: user.role
+      }
+    });
+  }
+
+  for (const partyRole of partyRoles) {
+    await prisma.partyRoleEntry.upsert({
+      where: {
+        id: partyRole.id
+      },
+      update: {
+        fullName: partyRole.fullName,
+        email: partyRole.email,
+        organizationSide: partyRole.organizationSide,
+        roleType: partyRole.roleType,
+        roleTitle: partyRole.roleTitle,
+        mandateNotes: partyRole.mandateNotes,
+        isActive: true
+      },
+      create: {
+        id: partyRole.id,
+        organizationId: ids.organizationId,
+        fullName: partyRole.fullName,
+        email: partyRole.email,
+        organizationSide: partyRole.organizationSide,
+        roleType: partyRole.roleType,
+        roleTitle: partyRole.roleTitle,
+        mandateNotes: partyRole.mandateNotes,
+        isActive: true
+      }
+    });
+  }
+
+  for (const requirement of governanceRoleRequirements) {
+    await prisma.governanceRoleRequirement.upsert({
+      where: {
+        organizationId_aiAccelerationLevel_organizationSide_roleType: {
+          organizationId: ids.organizationId,
+          aiAccelerationLevel: requirement.aiAccelerationLevel,
+          organizationSide: requirement.organizationSide,
+          roleType: requirement.roleType
+        }
+      },
+      update: {
+        minimumCount: requirement.minimumCount,
+        rationale: requirement.rationale
+      },
+      create: {
+        id: `gov_req_${requirement.aiAccelerationLevel}_${requirement.organizationSide}_${requirement.roleType}`,
+        organizationId: ids.organizationId,
+        aiAccelerationLevel: requirement.aiAccelerationLevel,
+        organizationSide: requirement.organizationSide,
+        roleType: requirement.roleType,
+        minimumCount: requirement.minimumCount,
+        rationale: requirement.rationale
+      }
+    });
+  }
+
+  for (const rule of governanceRiskCombinationRules) {
+    await prisma.governanceRiskCombinationRule.upsert({
+      where: {
+        organizationId_aiAccelerationLevel_primaryRoleType_conflictingRoleType: {
+          organizationId: ids.organizationId,
+          aiAccelerationLevel: rule.aiAccelerationLevel,
+          primaryRoleType: rule.primaryRoleType,
+          conflictingRoleType: rule.conflictingRoleType
+        }
+      },
+      update: {
+        rationale: rule.rationale
+      },
+      create: {
+        id: `gov_risk_${rule.aiAccelerationLevel}_${rule.primaryRoleType}_${rule.conflictingRoleType}`,
+        organizationId: ids.organizationId,
+        aiAccelerationLevel: rule.aiAccelerationLevel,
+        primaryRoleType: rule.primaryRoleType,
+        conflictingRoleType: rule.conflictingRoleType,
+        rationale: rule.rationale
+      }
+    });
+  }
+
+  for (const agent of agentRegistryEntries) {
+    await prisma.agentRegistryEntry.upsert({
+      where: {
+        id: agent.id
+      },
+      update: {
+        agentName: agent.agentName,
+        agentType: agent.agentType,
+        purpose: agent.purpose,
+        scopeOfWork: agent.scopeOfWork,
+        allowedArtifactTypes: agent.allowedArtifactTypes,
+        allowedActions: agent.allowedActions,
+        supervisingPartyRoleId: agent.supervisingPartyRoleId,
+        isActive: true
+      },
+      create: {
+        id: agent.id,
+        organizationId: ids.organizationId,
+        agentName: agent.agentName,
+        agentType: agent.agentType,
+        purpose: agent.purpose,
+        scopeOfWork: agent.scopeOfWork,
+        allowedArtifactTypes: agent.allowedArtifactTypes,
+        allowedActions: agent.allowedActions,
+        supervisingPartyRoleId: agent.supervisingPartyRoleId,
+        isActive: true
       }
     });
   }
@@ -347,6 +727,10 @@ async function main() {
         epics: 1,
         stories: 3,
         tollgates: 1,
+        partyRoleEntries: partyRoles.length,
+        governanceRoleRequirements: governanceRoleRequirements.length,
+        governanceRiskCombinationRules: governanceRiskCombinationRules.length,
+        agentRegistryEntries: agentRegistryEntries.length,
         provenance: {
           originType: "seeded",
           createdMode: "demo",
@@ -367,6 +751,10 @@ async function main() {
         epics: 1,
         stories: 3,
         tollgates: 1,
+        partyRoleEntries: partyRoles.length,
+        governanceRoleRequirements: governanceRoleRequirements.length,
+        governanceRiskCombinationRules: governanceRiskCombinationRules.length,
+        agentRegistryEntries: agentRegistryEntries.length,
         provenance: {
           originType: "seeded",
           createdMode: "demo",

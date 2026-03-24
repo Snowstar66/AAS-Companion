@@ -164,6 +164,7 @@ describe("Outcome page", () => {
     expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
     expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
     expect(screen.getByText("Baseline definition is missing.")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
   });

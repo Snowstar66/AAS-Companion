@@ -172,6 +172,7 @@ describe("Story Workspace page", () => {
     expect(screen.getByText("Empty test branch")).toBeDefined();
     expect(screen.getByRole("link", { name: "Back to current Epic" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open current Framing" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
     expect(screen.getAllByText("Test Definition is required before handoff.").length).toBeGreaterThan(0);
   });
 });

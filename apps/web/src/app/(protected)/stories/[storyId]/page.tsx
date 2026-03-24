@@ -420,6 +420,20 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
+                <CardTitle>Governance readiness</CardTitle>
+                <CardDescription>Check whether the project is staffed strongly enough for this Story's AI level.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className="gap-2" variant="secondary">
+                  <Link href={`/governance?view=readiness&sourceEntity=story&sourceId=${story.id}&level=${story.aiAccelerationLevel}`}>
+                    Open Governance readiness
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
                 <CardTitle>Latest activity</CardTitle>
                 <CardDescription>Recent Story-specific audit entries.</CardDescription>
               </CardHeader>

@@ -29,6 +29,26 @@ export type AppUser = $Result.DefaultSelection<Prisma.$AppUserPayload>
  */
 export type Membership = $Result.DefaultSelection<Prisma.$MembershipPayload>
 /**
+ * Model PartyRoleEntry
+ * 
+ */
+export type PartyRoleEntry = $Result.DefaultSelection<Prisma.$PartyRoleEntryPayload>
+/**
+ * Model AgentRegistryEntry
+ * 
+ */
+export type AgentRegistryEntry = $Result.DefaultSelection<Prisma.$AgentRegistryEntryPayload>
+/**
+ * Model GovernanceRoleRequirement
+ * 
+ */
+export type GovernanceRoleRequirement = $Result.DefaultSelection<Prisma.$GovernanceRoleRequirementPayload>
+/**
+ * Model GovernanceRiskCombinationRule
+ * 
+ */
+export type GovernanceRiskCombinationRule = $Result.DefaultSelection<Prisma.$GovernanceRiskCombinationRulePayload>
+/**
  * Model Outcome
  * 
  */
@@ -83,6 +103,39 @@ export namespace $Enums {
 };
 
 export type MembershipRole = (typeof MembershipRole)[keyof typeof MembershipRole]
+
+
+export const OrganizationSide: {
+  customer: 'customer',
+  supplier: 'supplier'
+};
+
+export type OrganizationSide = (typeof OrganizationSide)[keyof typeof OrganizationSide]
+
+
+export const PartyRoleType: {
+  customer_sponsor: 'customer_sponsor',
+  customer_domain_owner: 'customer_domain_owner',
+  value_owner: 'value_owner',
+  architect: 'architect',
+  aida: 'aida',
+  aqa: 'aqa',
+  delivery_lead: 'delivery_lead',
+  builder: 'builder',
+  ai_governance_lead: 'ai_governance_lead',
+  risk_owner: 'risk_owner'
+};
+
+export type PartyRoleType = (typeof PartyRoleType)[keyof typeof PartyRoleType]
+
+
+export const AgentType: {
+  bmad_agent: 'bmad_agent',
+  governance_agent: 'governance_agent',
+  automation_agent: 'automation_agent'
+};
+
+export type AgentType = (typeof AgentType)[keyof typeof AgentType]
 
 
 export const OutcomeStatus: {
@@ -241,6 +294,8 @@ export const ActivityEntityType: {
   epic: 'epic',
   story: 'story',
   tollgate: 'tollgate',
+  party_role_entry: 'party_role_entry',
+  agent_registry_entry: 'agent_registry_entry',
   artifact_intake_session: 'artifact_intake_session',
   artifact_intake_file: 'artifact_intake_file',
   artifact_aas_candidate: 'artifact_aas_candidate'
@@ -263,6 +318,12 @@ export const ActivityEventType: {
   governed_hard_deleted: 'governed_hard_deleted',
   governed_archived: 'governed_archived',
   governed_restored: 'governed_restored',
+  party_role_entry_created: 'party_role_entry_created',
+  party_role_entry_updated: 'party_role_entry_updated',
+  party_role_entry_deactivated: 'party_role_entry_deactivated',
+  agent_registry_entry_created: 'agent_registry_entry_created',
+  agent_registry_entry_updated: 'agent_registry_entry_updated',
+  agent_registry_entry_deactivated: 'agent_registry_entry_deactivated',
   artifact_intake_session_created: 'artifact_intake_session_created',
   artifact_file_uploaded: 'artifact_file_uploaded',
   artifact_file_rejected: 'artifact_file_rejected',
@@ -332,7 +393,9 @@ export type RiskProfile = (typeof RiskProfile)[keyof typeof RiskProfile]
 
 
 export const AiAccelerationLevel: {
-  level_2: 'level_2'
+  level_1: 'level_1',
+  level_2: 'level_2',
+  level_3: 'level_3'
 };
 
 export type AiAccelerationLevel = (typeof AiAccelerationLevel)[keyof typeof AiAccelerationLevel]
@@ -342,6 +405,18 @@ export type AiAccelerationLevel = (typeof AiAccelerationLevel)[keyof typeof AiAc
 export type MembershipRole = $Enums.MembershipRole
 
 export const MembershipRole: typeof $Enums.MembershipRole
+
+export type OrganizationSide = $Enums.OrganizationSide
+
+export const OrganizationSide: typeof $Enums.OrganizationSide
+
+export type PartyRoleType = $Enums.PartyRoleType
+
+export const PartyRoleType: typeof $Enums.PartyRoleType
+
+export type AgentType = $Enums.AgentType
+
+export const AgentType: typeof $Enums.AgentType
 
 export type OutcomeStatus = $Enums.OutcomeStatus
 
@@ -586,6 +661,46 @@ export class PrismaClient<
     * ```
     */
   get membership(): Prisma.MembershipDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.partyRoleEntry`: Exposes CRUD operations for the **PartyRoleEntry** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PartyRoleEntries
+    * const partyRoleEntries = await prisma.partyRoleEntry.findMany()
+    * ```
+    */
+  get partyRoleEntry(): Prisma.PartyRoleEntryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.agentRegistryEntry`: Exposes CRUD operations for the **AgentRegistryEntry** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AgentRegistryEntries
+    * const agentRegistryEntries = await prisma.agentRegistryEntry.findMany()
+    * ```
+    */
+  get agentRegistryEntry(): Prisma.AgentRegistryEntryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.governanceRoleRequirement`: Exposes CRUD operations for the **GovernanceRoleRequirement** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more GovernanceRoleRequirements
+    * const governanceRoleRequirements = await prisma.governanceRoleRequirement.findMany()
+    * ```
+    */
+  get governanceRoleRequirement(): Prisma.GovernanceRoleRequirementDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.governanceRiskCombinationRule`: Exposes CRUD operations for the **GovernanceRiskCombinationRule** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more GovernanceRiskCombinationRules
+    * const governanceRiskCombinationRules = await prisma.governanceRiskCombinationRule.findMany()
+    * ```
+    */
+  get governanceRiskCombinationRule(): Prisma.GovernanceRiskCombinationRuleDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.outcome`: Exposes CRUD operations for the **Outcome** model.
@@ -1110,6 +1225,10 @@ export namespace Prisma {
     Organization: 'Organization',
     AppUser: 'AppUser',
     Membership: 'Membership',
+    PartyRoleEntry: 'PartyRoleEntry',
+    AgentRegistryEntry: 'AgentRegistryEntry',
+    GovernanceRoleRequirement: 'GovernanceRoleRequirement',
+    GovernanceRiskCombinationRule: 'GovernanceRiskCombinationRule',
     Outcome: 'Outcome',
     Epic: 'Epic',
     Story: 'Story',
@@ -1136,7 +1255,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "organization" | "appUser" | "membership" | "outcome" | "epic" | "story" | "tollgate" | "activityEvent" | "artifactIntakeSession" | "artifactIntakeFile" | "artifactAasCandidate"
+      modelProps: "organization" | "appUser" | "membership" | "partyRoleEntry" | "agentRegistryEntry" | "governanceRoleRequirement" | "governanceRiskCombinationRule" | "outcome" | "epic" | "story" | "tollgate" | "activityEvent" | "artifactIntakeSession" | "artifactIntakeFile" | "artifactAasCandidate"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1359,6 +1478,302 @@ export namespace Prisma {
           count: {
             args: Prisma.MembershipCountArgs<ExtArgs>
             result: $Utils.Optional<MembershipCountAggregateOutputType> | number
+          }
+        }
+      }
+      PartyRoleEntry: {
+        payload: Prisma.$PartyRoleEntryPayload<ExtArgs>
+        fields: Prisma.PartyRoleEntryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PartyRoleEntryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PartyRoleEntryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>
+          }
+          findFirst: {
+            args: Prisma.PartyRoleEntryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PartyRoleEntryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>
+          }
+          findMany: {
+            args: Prisma.PartyRoleEntryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>[]
+          }
+          create: {
+            args: Prisma.PartyRoleEntryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>
+          }
+          createMany: {
+            args: Prisma.PartyRoleEntryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PartyRoleEntryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>[]
+          }
+          delete: {
+            args: Prisma.PartyRoleEntryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>
+          }
+          update: {
+            args: Prisma.PartyRoleEntryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>
+          }
+          deleteMany: {
+            args: Prisma.PartyRoleEntryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PartyRoleEntryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PartyRoleEntryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>[]
+          }
+          upsert: {
+            args: Prisma.PartyRoleEntryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartyRoleEntryPayload>
+          }
+          aggregate: {
+            args: Prisma.PartyRoleEntryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePartyRoleEntry>
+          }
+          groupBy: {
+            args: Prisma.PartyRoleEntryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PartyRoleEntryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PartyRoleEntryCountArgs<ExtArgs>
+            result: $Utils.Optional<PartyRoleEntryCountAggregateOutputType> | number
+          }
+        }
+      }
+      AgentRegistryEntry: {
+        payload: Prisma.$AgentRegistryEntryPayload<ExtArgs>
+        fields: Prisma.AgentRegistryEntryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AgentRegistryEntryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AgentRegistryEntryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>
+          }
+          findFirst: {
+            args: Prisma.AgentRegistryEntryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AgentRegistryEntryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>
+          }
+          findMany: {
+            args: Prisma.AgentRegistryEntryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>[]
+          }
+          create: {
+            args: Prisma.AgentRegistryEntryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>
+          }
+          createMany: {
+            args: Prisma.AgentRegistryEntryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AgentRegistryEntryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>[]
+          }
+          delete: {
+            args: Prisma.AgentRegistryEntryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>
+          }
+          update: {
+            args: Prisma.AgentRegistryEntryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>
+          }
+          deleteMany: {
+            args: Prisma.AgentRegistryEntryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AgentRegistryEntryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AgentRegistryEntryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>[]
+          }
+          upsert: {
+            args: Prisma.AgentRegistryEntryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRegistryEntryPayload>
+          }
+          aggregate: {
+            args: Prisma.AgentRegistryEntryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAgentRegistryEntry>
+          }
+          groupBy: {
+            args: Prisma.AgentRegistryEntryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AgentRegistryEntryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AgentRegistryEntryCountArgs<ExtArgs>
+            result: $Utils.Optional<AgentRegistryEntryCountAggregateOutputType> | number
+          }
+        }
+      }
+      GovernanceRoleRequirement: {
+        payload: Prisma.$GovernanceRoleRequirementPayload<ExtArgs>
+        fields: Prisma.GovernanceRoleRequirementFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.GovernanceRoleRequirementFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.GovernanceRoleRequirementFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>
+          }
+          findFirst: {
+            args: Prisma.GovernanceRoleRequirementFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.GovernanceRoleRequirementFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>
+          }
+          findMany: {
+            args: Prisma.GovernanceRoleRequirementFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>[]
+          }
+          create: {
+            args: Prisma.GovernanceRoleRequirementCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>
+          }
+          createMany: {
+            args: Prisma.GovernanceRoleRequirementCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.GovernanceRoleRequirementCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>[]
+          }
+          delete: {
+            args: Prisma.GovernanceRoleRequirementDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>
+          }
+          update: {
+            args: Prisma.GovernanceRoleRequirementUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>
+          }
+          deleteMany: {
+            args: Prisma.GovernanceRoleRequirementDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.GovernanceRoleRequirementUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.GovernanceRoleRequirementUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>[]
+          }
+          upsert: {
+            args: Prisma.GovernanceRoleRequirementUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRoleRequirementPayload>
+          }
+          aggregate: {
+            args: Prisma.GovernanceRoleRequirementAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateGovernanceRoleRequirement>
+          }
+          groupBy: {
+            args: Prisma.GovernanceRoleRequirementGroupByArgs<ExtArgs>
+            result: $Utils.Optional<GovernanceRoleRequirementGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.GovernanceRoleRequirementCountArgs<ExtArgs>
+            result: $Utils.Optional<GovernanceRoleRequirementCountAggregateOutputType> | number
+          }
+        }
+      }
+      GovernanceRiskCombinationRule: {
+        payload: Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>
+        fields: Prisma.GovernanceRiskCombinationRuleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.GovernanceRiskCombinationRuleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.GovernanceRiskCombinationRuleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>
+          }
+          findFirst: {
+            args: Prisma.GovernanceRiskCombinationRuleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.GovernanceRiskCombinationRuleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>
+          }
+          findMany: {
+            args: Prisma.GovernanceRiskCombinationRuleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>[]
+          }
+          create: {
+            args: Prisma.GovernanceRiskCombinationRuleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>
+          }
+          createMany: {
+            args: Prisma.GovernanceRiskCombinationRuleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.GovernanceRiskCombinationRuleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>[]
+          }
+          delete: {
+            args: Prisma.GovernanceRiskCombinationRuleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>
+          }
+          update: {
+            args: Prisma.GovernanceRiskCombinationRuleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>
+          }
+          deleteMany: {
+            args: Prisma.GovernanceRiskCombinationRuleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.GovernanceRiskCombinationRuleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.GovernanceRiskCombinationRuleUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>[]
+          }
+          upsert: {
+            args: Prisma.GovernanceRiskCombinationRuleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GovernanceRiskCombinationRulePayload>
+          }
+          aggregate: {
+            args: Prisma.GovernanceRiskCombinationRuleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateGovernanceRiskCombinationRule>
+          }
+          groupBy: {
+            args: Prisma.GovernanceRiskCombinationRuleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<GovernanceRiskCombinationRuleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.GovernanceRiskCombinationRuleCountArgs<ExtArgs>
+            result: $Utils.Optional<GovernanceRiskCombinationRuleCountAggregateOutputType> | number
           }
         }
       }
@@ -2053,6 +2468,10 @@ export namespace Prisma {
     organization?: OrganizationOmit
     appUser?: AppUserOmit
     membership?: MembershipOmit
+    partyRoleEntry?: PartyRoleEntryOmit
+    agentRegistryEntry?: AgentRegistryEntryOmit
+    governanceRoleRequirement?: GovernanceRoleRequirementOmit
+    governanceRiskCombinationRule?: GovernanceRiskCombinationRuleOmit
     outcome?: OutcomeOmit
     epic?: EpicOmit
     story?: StoryOmit
@@ -2150,6 +2569,10 @@ export namespace Prisma {
     artifactIntakeSessions: number
     artifactIntakeFiles: number
     artifactAasCandidates: number
+    partyRoleEntries: number
+    agentRegistryEntries: number
+    governanceRoleRequirements: number
+    governanceRiskCombinationRules: number
   }
 
   export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2162,6 +2585,10 @@ export namespace Prisma {
     artifactIntakeSessions?: boolean | OrganizationCountOutputTypeCountArtifactIntakeSessionsArgs
     artifactIntakeFiles?: boolean | OrganizationCountOutputTypeCountArtifactIntakeFilesArgs
     artifactAasCandidates?: boolean | OrganizationCountOutputTypeCountArtifactAasCandidatesArgs
+    partyRoleEntries?: boolean | OrganizationCountOutputTypeCountPartyRoleEntriesArgs
+    agentRegistryEntries?: boolean | OrganizationCountOutputTypeCountAgentRegistryEntriesArgs
+    governanceRoleRequirements?: boolean | OrganizationCountOutputTypeCountGovernanceRoleRequirementsArgs
+    governanceRiskCombinationRules?: boolean | OrganizationCountOutputTypeCountGovernanceRiskCombinationRulesArgs
   }
 
   // Custom InputTypes
@@ -2238,6 +2665,34 @@ export namespace Prisma {
     where?: ArtifactAasCandidateWhereInput
   }
 
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPartyRoleEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PartyRoleEntryWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountAgentRegistryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentRegistryEntryWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountGovernanceRoleRequirementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: GovernanceRoleRequirementWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountGovernanceRiskCombinationRulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: GovernanceRiskCombinationRuleWhereInput
+  }
+
 
   /**
    * Count Type AppUserCountOutputType
@@ -2312,6 +2767,37 @@ export namespace Prisma {
    */
   export type AppUserCountOutputTypeCountUploadedIntakeFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ArtifactIntakeFileWhereInput
+  }
+
+
+  /**
+   * Count Type PartyRoleEntryCountOutputType
+   */
+
+  export type PartyRoleEntryCountOutputType = {
+    supervisingAgents: number
+  }
+
+  export type PartyRoleEntryCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    supervisingAgents?: boolean | PartyRoleEntryCountOutputTypeCountSupervisingAgentsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PartyRoleEntryCountOutputType without action
+   */
+  export type PartyRoleEntryCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntryCountOutputType
+     */
+    select?: PartyRoleEntryCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PartyRoleEntryCountOutputType without action
+   */
+  export type PartyRoleEntryCountOutputTypeCountSupervisingAgentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentRegistryEntryWhereInput
   }
 
 
@@ -2634,6 +3120,10 @@ export namespace Prisma {
     artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
     artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
     artifactAasCandidates?: boolean | Organization$artifactAasCandidatesArgs<ExtArgs>
+    partyRoleEntries?: boolean | Organization$partyRoleEntriesArgs<ExtArgs>
+    agentRegistryEntries?: boolean | Organization$agentRegistryEntriesArgs<ExtArgs>
+    governanceRoleRequirements?: boolean | Organization$governanceRoleRequirementsArgs<ExtArgs>
+    governanceRiskCombinationRules?: boolean | Organization$governanceRiskCombinationRulesArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -2672,6 +3162,10 @@ export namespace Prisma {
     artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
     artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
     artifactAasCandidates?: boolean | Organization$artifactAasCandidatesArgs<ExtArgs>
+    partyRoleEntries?: boolean | Organization$partyRoleEntriesArgs<ExtArgs>
+    agentRegistryEntries?: boolean | Organization$agentRegistryEntriesArgs<ExtArgs>
+    governanceRoleRequirements?: boolean | Organization$governanceRoleRequirementsArgs<ExtArgs>
+    governanceRiskCombinationRules?: boolean | Organization$governanceRiskCombinationRulesArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2689,6 +3183,10 @@ export namespace Prisma {
       artifactIntakeSessions: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>[]
       artifactIntakeFiles: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
       artifactAasCandidates: Prisma.$ArtifactAasCandidatePayload<ExtArgs>[]
+      partyRoleEntries: Prisma.$PartyRoleEntryPayload<ExtArgs>[]
+      agentRegistryEntries: Prisma.$AgentRegistryEntryPayload<ExtArgs>[]
+      governanceRoleRequirements: Prisma.$GovernanceRoleRequirementPayload<ExtArgs>[]
+      governanceRiskCombinationRules: Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3099,6 +3597,10 @@ export namespace Prisma {
     artifactIntakeSessions<T extends Organization$artifactIntakeSessionsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     artifactIntakeFiles<T extends Organization$artifactIntakeFilesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     artifactAasCandidates<T extends Organization$artifactAasCandidatesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactAasCandidatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactAasCandidatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    partyRoleEntries<T extends Organization$partyRoleEntriesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$partyRoleEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    agentRegistryEntries<T extends Organization$agentRegistryEntriesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$agentRegistryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    governanceRoleRequirements<T extends Organization$governanceRoleRequirementsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$governanceRoleRequirementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    governanceRiskCombinationRules<T extends Organization$governanceRiskCombinationRulesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$governanceRiskCombinationRulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3734,6 +4236,102 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ArtifactAasCandidateScalarFieldEnum | ArtifactAasCandidateScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.partyRoleEntries
+   */
+  export type Organization$partyRoleEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    where?: PartyRoleEntryWhereInput
+    orderBy?: PartyRoleEntryOrderByWithRelationInput | PartyRoleEntryOrderByWithRelationInput[]
+    cursor?: PartyRoleEntryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PartyRoleEntryScalarFieldEnum | PartyRoleEntryScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.agentRegistryEntries
+   */
+  export type Organization$agentRegistryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    where?: AgentRegistryEntryWhereInput
+    orderBy?: AgentRegistryEntryOrderByWithRelationInput | AgentRegistryEntryOrderByWithRelationInput[]
+    cursor?: AgentRegistryEntryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentRegistryEntryScalarFieldEnum | AgentRegistryEntryScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.governanceRoleRequirements
+   */
+  export type Organization$governanceRoleRequirementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    where?: GovernanceRoleRequirementWhereInput
+    orderBy?: GovernanceRoleRequirementOrderByWithRelationInput | GovernanceRoleRequirementOrderByWithRelationInput[]
+    cursor?: GovernanceRoleRequirementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: GovernanceRoleRequirementScalarFieldEnum | GovernanceRoleRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.governanceRiskCombinationRules
+   */
+  export type Organization$governanceRiskCombinationRulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    where?: GovernanceRiskCombinationRuleWhereInput
+    orderBy?: GovernanceRiskCombinationRuleOrderByWithRelationInput | GovernanceRiskCombinationRuleOrderByWithRelationInput[]
+    cursor?: GovernanceRiskCombinationRuleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: GovernanceRiskCombinationRuleScalarFieldEnum | GovernanceRiskCombinationRuleScalarFieldEnum[]
   }
 
   /**
@@ -6041,6 +6639,4588 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: MembershipInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PartyRoleEntry
+   */
+
+  export type AggregatePartyRoleEntry = {
+    _count: PartyRoleEntryCountAggregateOutputType | null
+    _min: PartyRoleEntryMinAggregateOutputType | null
+    _max: PartyRoleEntryMaxAggregateOutputType | null
+  }
+
+  export type PartyRoleEntryMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    fullName: string | null
+    email: string | null
+    phoneNumber: string | null
+    avatarUrl: string | null
+    organizationSide: $Enums.OrganizationSide | null
+    roleType: $Enums.PartyRoleType | null
+    roleTitle: string | null
+    mandateNotes: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PartyRoleEntryMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    fullName: string | null
+    email: string | null
+    phoneNumber: string | null
+    avatarUrl: string | null
+    organizationSide: $Enums.OrganizationSide | null
+    roleType: $Enums.PartyRoleType | null
+    roleTitle: string | null
+    mandateNotes: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PartyRoleEntryCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    fullName: number
+    email: number
+    phoneNumber: number
+    avatarUrl: number
+    organizationSide: number
+    roleType: number
+    roleTitle: number
+    mandateNotes: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PartyRoleEntryMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    fullName?: true
+    email?: true
+    phoneNumber?: true
+    avatarUrl?: true
+    organizationSide?: true
+    roleType?: true
+    roleTitle?: true
+    mandateNotes?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PartyRoleEntryMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    fullName?: true
+    email?: true
+    phoneNumber?: true
+    avatarUrl?: true
+    organizationSide?: true
+    roleType?: true
+    roleTitle?: true
+    mandateNotes?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PartyRoleEntryCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    fullName?: true
+    email?: true
+    phoneNumber?: true
+    avatarUrl?: true
+    organizationSide?: true
+    roleType?: true
+    roleTitle?: true
+    mandateNotes?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PartyRoleEntryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PartyRoleEntry to aggregate.
+     */
+    where?: PartyRoleEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartyRoleEntries to fetch.
+     */
+    orderBy?: PartyRoleEntryOrderByWithRelationInput | PartyRoleEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PartyRoleEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartyRoleEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartyRoleEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PartyRoleEntries
+    **/
+    _count?: true | PartyRoleEntryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PartyRoleEntryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PartyRoleEntryMaxAggregateInputType
+  }
+
+  export type GetPartyRoleEntryAggregateType<T extends PartyRoleEntryAggregateArgs> = {
+        [P in keyof T & keyof AggregatePartyRoleEntry]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePartyRoleEntry[P]>
+      : GetScalarType<T[P], AggregatePartyRoleEntry[P]>
+  }
+
+
+
+
+  export type PartyRoleEntryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PartyRoleEntryWhereInput
+    orderBy?: PartyRoleEntryOrderByWithAggregationInput | PartyRoleEntryOrderByWithAggregationInput[]
+    by: PartyRoleEntryScalarFieldEnum[] | PartyRoleEntryScalarFieldEnum
+    having?: PartyRoleEntryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PartyRoleEntryCountAggregateInputType | true
+    _min?: PartyRoleEntryMinAggregateInputType
+    _max?: PartyRoleEntryMaxAggregateInputType
+  }
+
+  export type PartyRoleEntryGroupByOutputType = {
+    id: string
+    organizationId: string
+    fullName: string
+    email: string
+    phoneNumber: string | null
+    avatarUrl: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes: string | null
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: PartyRoleEntryCountAggregateOutputType | null
+    _min: PartyRoleEntryMinAggregateOutputType | null
+    _max: PartyRoleEntryMaxAggregateOutputType | null
+  }
+
+  type GetPartyRoleEntryGroupByPayload<T extends PartyRoleEntryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PartyRoleEntryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PartyRoleEntryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PartyRoleEntryGroupByOutputType[P]>
+            : GetScalarType<T[P], PartyRoleEntryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PartyRoleEntrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    fullName?: boolean
+    email?: boolean
+    phoneNumber?: boolean
+    avatarUrl?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    roleTitle?: boolean
+    mandateNotes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingAgents?: boolean | PartyRoleEntry$supervisingAgentsArgs<ExtArgs>
+    _count?: boolean | PartyRoleEntryCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["partyRoleEntry"]>
+
+  export type PartyRoleEntrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    fullName?: boolean
+    email?: boolean
+    phoneNumber?: boolean
+    avatarUrl?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    roleTitle?: boolean
+    mandateNotes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["partyRoleEntry"]>
+
+  export type PartyRoleEntrySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    fullName?: boolean
+    email?: boolean
+    phoneNumber?: boolean
+    avatarUrl?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    roleTitle?: boolean
+    mandateNotes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["partyRoleEntry"]>
+
+  export type PartyRoleEntrySelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    fullName?: boolean
+    email?: boolean
+    phoneNumber?: boolean
+    avatarUrl?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    roleTitle?: boolean
+    mandateNotes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PartyRoleEntryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "fullName" | "email" | "phoneNumber" | "avatarUrl" | "organizationSide" | "roleType" | "roleTitle" | "mandateNotes" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["partyRoleEntry"]>
+  export type PartyRoleEntryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingAgents?: boolean | PartyRoleEntry$supervisingAgentsArgs<ExtArgs>
+    _count?: boolean | PartyRoleEntryCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PartyRoleEntryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PartyRoleEntryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $PartyRoleEntryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PartyRoleEntry"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      supervisingAgents: Prisma.$AgentRegistryEntryPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      fullName: string
+      email: string
+      phoneNumber: string | null
+      avatarUrl: string | null
+      organizationSide: $Enums.OrganizationSide
+      roleType: $Enums.PartyRoleType
+      roleTitle: string
+      mandateNotes: string | null
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["partyRoleEntry"]>
+    composites: {}
+  }
+
+  type PartyRoleEntryGetPayload<S extends boolean | null | undefined | PartyRoleEntryDefaultArgs> = $Result.GetResult<Prisma.$PartyRoleEntryPayload, S>
+
+  type PartyRoleEntryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PartyRoleEntryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PartyRoleEntryCountAggregateInputType | true
+    }
+
+  export interface PartyRoleEntryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PartyRoleEntry'], meta: { name: 'PartyRoleEntry' } }
+    /**
+     * Find zero or one PartyRoleEntry that matches the filter.
+     * @param {PartyRoleEntryFindUniqueArgs} args - Arguments to find a PartyRoleEntry
+     * @example
+     * // Get one PartyRoleEntry
+     * const partyRoleEntry = await prisma.partyRoleEntry.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PartyRoleEntryFindUniqueArgs>(args: SelectSubset<T, PartyRoleEntryFindUniqueArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PartyRoleEntry that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PartyRoleEntryFindUniqueOrThrowArgs} args - Arguments to find a PartyRoleEntry
+     * @example
+     * // Get one PartyRoleEntry
+     * const partyRoleEntry = await prisma.partyRoleEntry.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PartyRoleEntryFindUniqueOrThrowArgs>(args: SelectSubset<T, PartyRoleEntryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PartyRoleEntry that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartyRoleEntryFindFirstArgs} args - Arguments to find a PartyRoleEntry
+     * @example
+     * // Get one PartyRoleEntry
+     * const partyRoleEntry = await prisma.partyRoleEntry.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PartyRoleEntryFindFirstArgs>(args?: SelectSubset<T, PartyRoleEntryFindFirstArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PartyRoleEntry that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartyRoleEntryFindFirstOrThrowArgs} args - Arguments to find a PartyRoleEntry
+     * @example
+     * // Get one PartyRoleEntry
+     * const partyRoleEntry = await prisma.partyRoleEntry.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PartyRoleEntryFindFirstOrThrowArgs>(args?: SelectSubset<T, PartyRoleEntryFindFirstOrThrowArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PartyRoleEntries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartyRoleEntryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PartyRoleEntries
+     * const partyRoleEntries = await prisma.partyRoleEntry.findMany()
+     * 
+     * // Get first 10 PartyRoleEntries
+     * const partyRoleEntries = await prisma.partyRoleEntry.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const partyRoleEntryWithIdOnly = await prisma.partyRoleEntry.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PartyRoleEntryFindManyArgs>(args?: SelectSubset<T, PartyRoleEntryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PartyRoleEntry.
+     * @param {PartyRoleEntryCreateArgs} args - Arguments to create a PartyRoleEntry.
+     * @example
+     * // Create one PartyRoleEntry
+     * const PartyRoleEntry = await prisma.partyRoleEntry.create({
+     *   data: {
+     *     // ... data to create a PartyRoleEntry
+     *   }
+     * })
+     * 
+     */
+    create<T extends PartyRoleEntryCreateArgs>(args: SelectSubset<T, PartyRoleEntryCreateArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PartyRoleEntries.
+     * @param {PartyRoleEntryCreateManyArgs} args - Arguments to create many PartyRoleEntries.
+     * @example
+     * // Create many PartyRoleEntries
+     * const partyRoleEntry = await prisma.partyRoleEntry.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PartyRoleEntryCreateManyArgs>(args?: SelectSubset<T, PartyRoleEntryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PartyRoleEntries and returns the data saved in the database.
+     * @param {PartyRoleEntryCreateManyAndReturnArgs} args - Arguments to create many PartyRoleEntries.
+     * @example
+     * // Create many PartyRoleEntries
+     * const partyRoleEntry = await prisma.partyRoleEntry.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PartyRoleEntries and only return the `id`
+     * const partyRoleEntryWithIdOnly = await prisma.partyRoleEntry.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PartyRoleEntryCreateManyAndReturnArgs>(args?: SelectSubset<T, PartyRoleEntryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PartyRoleEntry.
+     * @param {PartyRoleEntryDeleteArgs} args - Arguments to delete one PartyRoleEntry.
+     * @example
+     * // Delete one PartyRoleEntry
+     * const PartyRoleEntry = await prisma.partyRoleEntry.delete({
+     *   where: {
+     *     // ... filter to delete one PartyRoleEntry
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PartyRoleEntryDeleteArgs>(args: SelectSubset<T, PartyRoleEntryDeleteArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PartyRoleEntry.
+     * @param {PartyRoleEntryUpdateArgs} args - Arguments to update one PartyRoleEntry.
+     * @example
+     * // Update one PartyRoleEntry
+     * const partyRoleEntry = await prisma.partyRoleEntry.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PartyRoleEntryUpdateArgs>(args: SelectSubset<T, PartyRoleEntryUpdateArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PartyRoleEntries.
+     * @param {PartyRoleEntryDeleteManyArgs} args - Arguments to filter PartyRoleEntries to delete.
+     * @example
+     * // Delete a few PartyRoleEntries
+     * const { count } = await prisma.partyRoleEntry.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PartyRoleEntryDeleteManyArgs>(args?: SelectSubset<T, PartyRoleEntryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PartyRoleEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartyRoleEntryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PartyRoleEntries
+     * const partyRoleEntry = await prisma.partyRoleEntry.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PartyRoleEntryUpdateManyArgs>(args: SelectSubset<T, PartyRoleEntryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PartyRoleEntries and returns the data updated in the database.
+     * @param {PartyRoleEntryUpdateManyAndReturnArgs} args - Arguments to update many PartyRoleEntries.
+     * @example
+     * // Update many PartyRoleEntries
+     * const partyRoleEntry = await prisma.partyRoleEntry.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PartyRoleEntries and only return the `id`
+     * const partyRoleEntryWithIdOnly = await prisma.partyRoleEntry.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PartyRoleEntryUpdateManyAndReturnArgs>(args: SelectSubset<T, PartyRoleEntryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PartyRoleEntry.
+     * @param {PartyRoleEntryUpsertArgs} args - Arguments to update or create a PartyRoleEntry.
+     * @example
+     * // Update or create a PartyRoleEntry
+     * const partyRoleEntry = await prisma.partyRoleEntry.upsert({
+     *   create: {
+     *     // ... data to create a PartyRoleEntry
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PartyRoleEntry we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PartyRoleEntryUpsertArgs>(args: SelectSubset<T, PartyRoleEntryUpsertArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PartyRoleEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartyRoleEntryCountArgs} args - Arguments to filter PartyRoleEntries to count.
+     * @example
+     * // Count the number of PartyRoleEntries
+     * const count = await prisma.partyRoleEntry.count({
+     *   where: {
+     *     // ... the filter for the PartyRoleEntries we want to count
+     *   }
+     * })
+    **/
+    count<T extends PartyRoleEntryCountArgs>(
+      args?: Subset<T, PartyRoleEntryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PartyRoleEntryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PartyRoleEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartyRoleEntryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PartyRoleEntryAggregateArgs>(args: Subset<T, PartyRoleEntryAggregateArgs>): Prisma.PrismaPromise<GetPartyRoleEntryAggregateType<T>>
+
+    /**
+     * Group by PartyRoleEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartyRoleEntryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PartyRoleEntryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PartyRoleEntryGroupByArgs['orderBy'] }
+        : { orderBy?: PartyRoleEntryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PartyRoleEntryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPartyRoleEntryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PartyRoleEntry model
+   */
+  readonly fields: PartyRoleEntryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PartyRoleEntry.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PartyRoleEntryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    supervisingAgents<T extends PartyRoleEntry$supervisingAgentsArgs<ExtArgs> = {}>(args?: Subset<T, PartyRoleEntry$supervisingAgentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PartyRoleEntry model
+   */
+  interface PartyRoleEntryFieldRefs {
+    readonly id: FieldRef<"PartyRoleEntry", 'String'>
+    readonly organizationId: FieldRef<"PartyRoleEntry", 'String'>
+    readonly fullName: FieldRef<"PartyRoleEntry", 'String'>
+    readonly email: FieldRef<"PartyRoleEntry", 'String'>
+    readonly phoneNumber: FieldRef<"PartyRoleEntry", 'String'>
+    readonly avatarUrl: FieldRef<"PartyRoleEntry", 'String'>
+    readonly organizationSide: FieldRef<"PartyRoleEntry", 'OrganizationSide'>
+    readonly roleType: FieldRef<"PartyRoleEntry", 'PartyRoleType'>
+    readonly roleTitle: FieldRef<"PartyRoleEntry", 'String'>
+    readonly mandateNotes: FieldRef<"PartyRoleEntry", 'String'>
+    readonly isActive: FieldRef<"PartyRoleEntry", 'Boolean'>
+    readonly createdAt: FieldRef<"PartyRoleEntry", 'DateTime'>
+    readonly updatedAt: FieldRef<"PartyRoleEntry", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PartyRoleEntry findUnique
+   */
+  export type PartyRoleEntryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which PartyRoleEntry to fetch.
+     */
+    where: PartyRoleEntryWhereUniqueInput
+  }
+
+  /**
+   * PartyRoleEntry findUniqueOrThrow
+   */
+  export type PartyRoleEntryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which PartyRoleEntry to fetch.
+     */
+    where: PartyRoleEntryWhereUniqueInput
+  }
+
+  /**
+   * PartyRoleEntry findFirst
+   */
+  export type PartyRoleEntryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which PartyRoleEntry to fetch.
+     */
+    where?: PartyRoleEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartyRoleEntries to fetch.
+     */
+    orderBy?: PartyRoleEntryOrderByWithRelationInput | PartyRoleEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PartyRoleEntries.
+     */
+    cursor?: PartyRoleEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartyRoleEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartyRoleEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PartyRoleEntries.
+     */
+    distinct?: PartyRoleEntryScalarFieldEnum | PartyRoleEntryScalarFieldEnum[]
+  }
+
+  /**
+   * PartyRoleEntry findFirstOrThrow
+   */
+  export type PartyRoleEntryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which PartyRoleEntry to fetch.
+     */
+    where?: PartyRoleEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartyRoleEntries to fetch.
+     */
+    orderBy?: PartyRoleEntryOrderByWithRelationInput | PartyRoleEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PartyRoleEntries.
+     */
+    cursor?: PartyRoleEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartyRoleEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartyRoleEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PartyRoleEntries.
+     */
+    distinct?: PartyRoleEntryScalarFieldEnum | PartyRoleEntryScalarFieldEnum[]
+  }
+
+  /**
+   * PartyRoleEntry findMany
+   */
+  export type PartyRoleEntryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which PartyRoleEntries to fetch.
+     */
+    where?: PartyRoleEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartyRoleEntries to fetch.
+     */
+    orderBy?: PartyRoleEntryOrderByWithRelationInput | PartyRoleEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PartyRoleEntries.
+     */
+    cursor?: PartyRoleEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartyRoleEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartyRoleEntries.
+     */
+    skip?: number
+    distinct?: PartyRoleEntryScalarFieldEnum | PartyRoleEntryScalarFieldEnum[]
+  }
+
+  /**
+   * PartyRoleEntry create
+   */
+  export type PartyRoleEntryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PartyRoleEntry.
+     */
+    data: XOR<PartyRoleEntryCreateInput, PartyRoleEntryUncheckedCreateInput>
+  }
+
+  /**
+   * PartyRoleEntry createMany
+   */
+  export type PartyRoleEntryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PartyRoleEntries.
+     */
+    data: PartyRoleEntryCreateManyInput | PartyRoleEntryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PartyRoleEntry createManyAndReturn
+   */
+  export type PartyRoleEntryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * The data used to create many PartyRoleEntries.
+     */
+    data: PartyRoleEntryCreateManyInput | PartyRoleEntryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PartyRoleEntry update
+   */
+  export type PartyRoleEntryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PartyRoleEntry.
+     */
+    data: XOR<PartyRoleEntryUpdateInput, PartyRoleEntryUncheckedUpdateInput>
+    /**
+     * Choose, which PartyRoleEntry to update.
+     */
+    where: PartyRoleEntryWhereUniqueInput
+  }
+
+  /**
+   * PartyRoleEntry updateMany
+   */
+  export type PartyRoleEntryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PartyRoleEntries.
+     */
+    data: XOR<PartyRoleEntryUpdateManyMutationInput, PartyRoleEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which PartyRoleEntries to update
+     */
+    where?: PartyRoleEntryWhereInput
+    /**
+     * Limit how many PartyRoleEntries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PartyRoleEntry updateManyAndReturn
+   */
+  export type PartyRoleEntryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * The data used to update PartyRoleEntries.
+     */
+    data: XOR<PartyRoleEntryUpdateManyMutationInput, PartyRoleEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which PartyRoleEntries to update
+     */
+    where?: PartyRoleEntryWhereInput
+    /**
+     * Limit how many PartyRoleEntries to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PartyRoleEntry upsert
+   */
+  export type PartyRoleEntryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PartyRoleEntry to update in case it exists.
+     */
+    where: PartyRoleEntryWhereUniqueInput
+    /**
+     * In case the PartyRoleEntry found by the `where` argument doesn't exist, create a new PartyRoleEntry with this data.
+     */
+    create: XOR<PartyRoleEntryCreateInput, PartyRoleEntryUncheckedCreateInput>
+    /**
+     * In case the PartyRoleEntry was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PartyRoleEntryUpdateInput, PartyRoleEntryUncheckedUpdateInput>
+  }
+
+  /**
+   * PartyRoleEntry delete
+   */
+  export type PartyRoleEntryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+    /**
+     * Filter which PartyRoleEntry to delete.
+     */
+    where: PartyRoleEntryWhereUniqueInput
+  }
+
+  /**
+   * PartyRoleEntry deleteMany
+   */
+  export type PartyRoleEntryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PartyRoleEntries to delete
+     */
+    where?: PartyRoleEntryWhereInput
+    /**
+     * Limit how many PartyRoleEntries to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PartyRoleEntry.supervisingAgents
+   */
+  export type PartyRoleEntry$supervisingAgentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    where?: AgentRegistryEntryWhereInput
+    orderBy?: AgentRegistryEntryOrderByWithRelationInput | AgentRegistryEntryOrderByWithRelationInput[]
+    cursor?: AgentRegistryEntryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentRegistryEntryScalarFieldEnum | AgentRegistryEntryScalarFieldEnum[]
+  }
+
+  /**
+   * PartyRoleEntry without action
+   */
+  export type PartyRoleEntryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartyRoleEntry
+     */
+    select?: PartyRoleEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartyRoleEntry
+     */
+    omit?: PartyRoleEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartyRoleEntryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AgentRegistryEntry
+   */
+
+  export type AggregateAgentRegistryEntry = {
+    _count: AgentRegistryEntryCountAggregateOutputType | null
+    _min: AgentRegistryEntryMinAggregateOutputType | null
+    _max: AgentRegistryEntryMaxAggregateOutputType | null
+  }
+
+  export type AgentRegistryEntryMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    agentName: string | null
+    agentType: $Enums.AgentType | null
+    purpose: string | null
+    scopeOfWork: string | null
+    supervisingPartyRoleId: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgentRegistryEntryMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    agentName: string | null
+    agentType: $Enums.AgentType | null
+    purpose: string | null
+    scopeOfWork: string | null
+    supervisingPartyRoleId: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgentRegistryEntryCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    agentName: number
+    agentType: number
+    purpose: number
+    scopeOfWork: number
+    allowedArtifactTypes: number
+    allowedActions: number
+    supervisingPartyRoleId: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AgentRegistryEntryMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    agentName?: true
+    agentType?: true
+    purpose?: true
+    scopeOfWork?: true
+    supervisingPartyRoleId?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgentRegistryEntryMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    agentName?: true
+    agentType?: true
+    purpose?: true
+    scopeOfWork?: true
+    supervisingPartyRoleId?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgentRegistryEntryCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    agentName?: true
+    agentType?: true
+    purpose?: true
+    scopeOfWork?: true
+    allowedArtifactTypes?: true
+    allowedActions?: true
+    supervisingPartyRoleId?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AgentRegistryEntryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentRegistryEntry to aggregate.
+     */
+    where?: AgentRegistryEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRegistryEntries to fetch.
+     */
+    orderBy?: AgentRegistryEntryOrderByWithRelationInput | AgentRegistryEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AgentRegistryEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRegistryEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRegistryEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AgentRegistryEntries
+    **/
+    _count?: true | AgentRegistryEntryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AgentRegistryEntryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AgentRegistryEntryMaxAggregateInputType
+  }
+
+  export type GetAgentRegistryEntryAggregateType<T extends AgentRegistryEntryAggregateArgs> = {
+        [P in keyof T & keyof AggregateAgentRegistryEntry]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAgentRegistryEntry[P]>
+      : GetScalarType<T[P], AggregateAgentRegistryEntry[P]>
+  }
+
+
+
+
+  export type AgentRegistryEntryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentRegistryEntryWhereInput
+    orderBy?: AgentRegistryEntryOrderByWithAggregationInput | AgentRegistryEntryOrderByWithAggregationInput[]
+    by: AgentRegistryEntryScalarFieldEnum[] | AgentRegistryEntryScalarFieldEnum
+    having?: AgentRegistryEntryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AgentRegistryEntryCountAggregateInputType | true
+    _min?: AgentRegistryEntryMinAggregateInputType
+    _max?: AgentRegistryEntryMaxAggregateInputType
+  }
+
+  export type AgentRegistryEntryGroupByOutputType = {
+    id: string
+    organizationId: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes: string[]
+    allowedActions: string[]
+    supervisingPartyRoleId: string
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: AgentRegistryEntryCountAggregateOutputType | null
+    _min: AgentRegistryEntryMinAggregateOutputType | null
+    _max: AgentRegistryEntryMaxAggregateOutputType | null
+  }
+
+  type GetAgentRegistryEntryGroupByPayload<T extends AgentRegistryEntryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AgentRegistryEntryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AgentRegistryEntryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AgentRegistryEntryGroupByOutputType[P]>
+            : GetScalarType<T[P], AgentRegistryEntryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AgentRegistryEntrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    agentName?: boolean
+    agentType?: boolean
+    purpose?: boolean
+    scopeOfWork?: boolean
+    allowedArtifactTypes?: boolean
+    allowedActions?: boolean
+    supervisingPartyRoleId?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingPartyRole?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agentRegistryEntry"]>
+
+  export type AgentRegistryEntrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    agentName?: boolean
+    agentType?: boolean
+    purpose?: boolean
+    scopeOfWork?: boolean
+    allowedArtifactTypes?: boolean
+    allowedActions?: boolean
+    supervisingPartyRoleId?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingPartyRole?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agentRegistryEntry"]>
+
+  export type AgentRegistryEntrySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    agentName?: boolean
+    agentType?: boolean
+    purpose?: boolean
+    scopeOfWork?: boolean
+    allowedArtifactTypes?: boolean
+    allowedActions?: boolean
+    supervisingPartyRoleId?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingPartyRole?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agentRegistryEntry"]>
+
+  export type AgentRegistryEntrySelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    agentName?: boolean
+    agentType?: boolean
+    purpose?: boolean
+    scopeOfWork?: boolean
+    allowedArtifactTypes?: boolean
+    allowedActions?: boolean
+    supervisingPartyRoleId?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AgentRegistryEntryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "agentName" | "agentType" | "purpose" | "scopeOfWork" | "allowedArtifactTypes" | "allowedActions" | "supervisingPartyRoleId" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["agentRegistryEntry"]>
+  export type AgentRegistryEntryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingPartyRole?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+  }
+  export type AgentRegistryEntryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingPartyRole?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+  }
+  export type AgentRegistryEntryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    supervisingPartyRole?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+  }
+
+  export type $AgentRegistryEntryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AgentRegistryEntry"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      supervisingPartyRole: Prisma.$PartyRoleEntryPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      agentName: string
+      agentType: $Enums.AgentType
+      purpose: string
+      scopeOfWork: string
+      allowedArtifactTypes: string[]
+      allowedActions: string[]
+      supervisingPartyRoleId: string
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["agentRegistryEntry"]>
+    composites: {}
+  }
+
+  type AgentRegistryEntryGetPayload<S extends boolean | null | undefined | AgentRegistryEntryDefaultArgs> = $Result.GetResult<Prisma.$AgentRegistryEntryPayload, S>
+
+  type AgentRegistryEntryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AgentRegistryEntryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AgentRegistryEntryCountAggregateInputType | true
+    }
+
+  export interface AgentRegistryEntryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AgentRegistryEntry'], meta: { name: 'AgentRegistryEntry' } }
+    /**
+     * Find zero or one AgentRegistryEntry that matches the filter.
+     * @param {AgentRegistryEntryFindUniqueArgs} args - Arguments to find a AgentRegistryEntry
+     * @example
+     * // Get one AgentRegistryEntry
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AgentRegistryEntryFindUniqueArgs>(args: SelectSubset<T, AgentRegistryEntryFindUniqueArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AgentRegistryEntry that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AgentRegistryEntryFindUniqueOrThrowArgs} args - Arguments to find a AgentRegistryEntry
+     * @example
+     * // Get one AgentRegistryEntry
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AgentRegistryEntryFindUniqueOrThrowArgs>(args: SelectSubset<T, AgentRegistryEntryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentRegistryEntry that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRegistryEntryFindFirstArgs} args - Arguments to find a AgentRegistryEntry
+     * @example
+     * // Get one AgentRegistryEntry
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AgentRegistryEntryFindFirstArgs>(args?: SelectSubset<T, AgentRegistryEntryFindFirstArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentRegistryEntry that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRegistryEntryFindFirstOrThrowArgs} args - Arguments to find a AgentRegistryEntry
+     * @example
+     * // Get one AgentRegistryEntry
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AgentRegistryEntryFindFirstOrThrowArgs>(args?: SelectSubset<T, AgentRegistryEntryFindFirstOrThrowArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AgentRegistryEntries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRegistryEntryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AgentRegistryEntries
+     * const agentRegistryEntries = await prisma.agentRegistryEntry.findMany()
+     * 
+     * // Get first 10 AgentRegistryEntries
+     * const agentRegistryEntries = await prisma.agentRegistryEntry.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const agentRegistryEntryWithIdOnly = await prisma.agentRegistryEntry.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AgentRegistryEntryFindManyArgs>(args?: SelectSubset<T, AgentRegistryEntryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AgentRegistryEntry.
+     * @param {AgentRegistryEntryCreateArgs} args - Arguments to create a AgentRegistryEntry.
+     * @example
+     * // Create one AgentRegistryEntry
+     * const AgentRegistryEntry = await prisma.agentRegistryEntry.create({
+     *   data: {
+     *     // ... data to create a AgentRegistryEntry
+     *   }
+     * })
+     * 
+     */
+    create<T extends AgentRegistryEntryCreateArgs>(args: SelectSubset<T, AgentRegistryEntryCreateArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AgentRegistryEntries.
+     * @param {AgentRegistryEntryCreateManyArgs} args - Arguments to create many AgentRegistryEntries.
+     * @example
+     * // Create many AgentRegistryEntries
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AgentRegistryEntryCreateManyArgs>(args?: SelectSubset<T, AgentRegistryEntryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AgentRegistryEntries and returns the data saved in the database.
+     * @param {AgentRegistryEntryCreateManyAndReturnArgs} args - Arguments to create many AgentRegistryEntries.
+     * @example
+     * // Create many AgentRegistryEntries
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AgentRegistryEntries and only return the `id`
+     * const agentRegistryEntryWithIdOnly = await prisma.agentRegistryEntry.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AgentRegistryEntryCreateManyAndReturnArgs>(args?: SelectSubset<T, AgentRegistryEntryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AgentRegistryEntry.
+     * @param {AgentRegistryEntryDeleteArgs} args - Arguments to delete one AgentRegistryEntry.
+     * @example
+     * // Delete one AgentRegistryEntry
+     * const AgentRegistryEntry = await prisma.agentRegistryEntry.delete({
+     *   where: {
+     *     // ... filter to delete one AgentRegistryEntry
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AgentRegistryEntryDeleteArgs>(args: SelectSubset<T, AgentRegistryEntryDeleteArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AgentRegistryEntry.
+     * @param {AgentRegistryEntryUpdateArgs} args - Arguments to update one AgentRegistryEntry.
+     * @example
+     * // Update one AgentRegistryEntry
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AgentRegistryEntryUpdateArgs>(args: SelectSubset<T, AgentRegistryEntryUpdateArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AgentRegistryEntries.
+     * @param {AgentRegistryEntryDeleteManyArgs} args - Arguments to filter AgentRegistryEntries to delete.
+     * @example
+     * // Delete a few AgentRegistryEntries
+     * const { count } = await prisma.agentRegistryEntry.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AgentRegistryEntryDeleteManyArgs>(args?: SelectSubset<T, AgentRegistryEntryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentRegistryEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRegistryEntryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AgentRegistryEntries
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AgentRegistryEntryUpdateManyArgs>(args: SelectSubset<T, AgentRegistryEntryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentRegistryEntries and returns the data updated in the database.
+     * @param {AgentRegistryEntryUpdateManyAndReturnArgs} args - Arguments to update many AgentRegistryEntries.
+     * @example
+     * // Update many AgentRegistryEntries
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AgentRegistryEntries and only return the `id`
+     * const agentRegistryEntryWithIdOnly = await prisma.agentRegistryEntry.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AgentRegistryEntryUpdateManyAndReturnArgs>(args: SelectSubset<T, AgentRegistryEntryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AgentRegistryEntry.
+     * @param {AgentRegistryEntryUpsertArgs} args - Arguments to update or create a AgentRegistryEntry.
+     * @example
+     * // Update or create a AgentRegistryEntry
+     * const agentRegistryEntry = await prisma.agentRegistryEntry.upsert({
+     *   create: {
+     *     // ... data to create a AgentRegistryEntry
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AgentRegistryEntry we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AgentRegistryEntryUpsertArgs>(args: SelectSubset<T, AgentRegistryEntryUpsertArgs<ExtArgs>>): Prisma__AgentRegistryEntryClient<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AgentRegistryEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRegistryEntryCountArgs} args - Arguments to filter AgentRegistryEntries to count.
+     * @example
+     * // Count the number of AgentRegistryEntries
+     * const count = await prisma.agentRegistryEntry.count({
+     *   where: {
+     *     // ... the filter for the AgentRegistryEntries we want to count
+     *   }
+     * })
+    **/
+    count<T extends AgentRegistryEntryCountArgs>(
+      args?: Subset<T, AgentRegistryEntryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AgentRegistryEntryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AgentRegistryEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRegistryEntryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AgentRegistryEntryAggregateArgs>(args: Subset<T, AgentRegistryEntryAggregateArgs>): Prisma.PrismaPromise<GetAgentRegistryEntryAggregateType<T>>
+
+    /**
+     * Group by AgentRegistryEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRegistryEntryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AgentRegistryEntryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AgentRegistryEntryGroupByArgs['orderBy'] }
+        : { orderBy?: AgentRegistryEntryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AgentRegistryEntryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAgentRegistryEntryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AgentRegistryEntry model
+   */
+  readonly fields: AgentRegistryEntryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AgentRegistryEntry.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AgentRegistryEntryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    supervisingPartyRole<T extends PartyRoleEntryDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PartyRoleEntryDefaultArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AgentRegistryEntry model
+   */
+  interface AgentRegistryEntryFieldRefs {
+    readonly id: FieldRef<"AgentRegistryEntry", 'String'>
+    readonly organizationId: FieldRef<"AgentRegistryEntry", 'String'>
+    readonly agentName: FieldRef<"AgentRegistryEntry", 'String'>
+    readonly agentType: FieldRef<"AgentRegistryEntry", 'AgentType'>
+    readonly purpose: FieldRef<"AgentRegistryEntry", 'String'>
+    readonly scopeOfWork: FieldRef<"AgentRegistryEntry", 'String'>
+    readonly allowedArtifactTypes: FieldRef<"AgentRegistryEntry", 'String[]'>
+    readonly allowedActions: FieldRef<"AgentRegistryEntry", 'String[]'>
+    readonly supervisingPartyRoleId: FieldRef<"AgentRegistryEntry", 'String'>
+    readonly isActive: FieldRef<"AgentRegistryEntry", 'Boolean'>
+    readonly createdAt: FieldRef<"AgentRegistryEntry", 'DateTime'>
+    readonly updatedAt: FieldRef<"AgentRegistryEntry", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AgentRegistryEntry findUnique
+   */
+  export type AgentRegistryEntryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRegistryEntry to fetch.
+     */
+    where: AgentRegistryEntryWhereUniqueInput
+  }
+
+  /**
+   * AgentRegistryEntry findUniqueOrThrow
+   */
+  export type AgentRegistryEntryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRegistryEntry to fetch.
+     */
+    where: AgentRegistryEntryWhereUniqueInput
+  }
+
+  /**
+   * AgentRegistryEntry findFirst
+   */
+  export type AgentRegistryEntryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRegistryEntry to fetch.
+     */
+    where?: AgentRegistryEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRegistryEntries to fetch.
+     */
+    orderBy?: AgentRegistryEntryOrderByWithRelationInput | AgentRegistryEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentRegistryEntries.
+     */
+    cursor?: AgentRegistryEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRegistryEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRegistryEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentRegistryEntries.
+     */
+    distinct?: AgentRegistryEntryScalarFieldEnum | AgentRegistryEntryScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRegistryEntry findFirstOrThrow
+   */
+  export type AgentRegistryEntryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRegistryEntry to fetch.
+     */
+    where?: AgentRegistryEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRegistryEntries to fetch.
+     */
+    orderBy?: AgentRegistryEntryOrderByWithRelationInput | AgentRegistryEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentRegistryEntries.
+     */
+    cursor?: AgentRegistryEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRegistryEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRegistryEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentRegistryEntries.
+     */
+    distinct?: AgentRegistryEntryScalarFieldEnum | AgentRegistryEntryScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRegistryEntry findMany
+   */
+  export type AgentRegistryEntryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRegistryEntries to fetch.
+     */
+    where?: AgentRegistryEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRegistryEntries to fetch.
+     */
+    orderBy?: AgentRegistryEntryOrderByWithRelationInput | AgentRegistryEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AgentRegistryEntries.
+     */
+    cursor?: AgentRegistryEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRegistryEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRegistryEntries.
+     */
+    skip?: number
+    distinct?: AgentRegistryEntryScalarFieldEnum | AgentRegistryEntryScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRegistryEntry create
+   */
+  export type AgentRegistryEntryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AgentRegistryEntry.
+     */
+    data: XOR<AgentRegistryEntryCreateInput, AgentRegistryEntryUncheckedCreateInput>
+  }
+
+  /**
+   * AgentRegistryEntry createMany
+   */
+  export type AgentRegistryEntryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AgentRegistryEntries.
+     */
+    data: AgentRegistryEntryCreateManyInput | AgentRegistryEntryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgentRegistryEntry createManyAndReturn
+   */
+  export type AgentRegistryEntryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * The data used to create many AgentRegistryEntries.
+     */
+    data: AgentRegistryEntryCreateManyInput | AgentRegistryEntryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AgentRegistryEntry update
+   */
+  export type AgentRegistryEntryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AgentRegistryEntry.
+     */
+    data: XOR<AgentRegistryEntryUpdateInput, AgentRegistryEntryUncheckedUpdateInput>
+    /**
+     * Choose, which AgentRegistryEntry to update.
+     */
+    where: AgentRegistryEntryWhereUniqueInput
+  }
+
+  /**
+   * AgentRegistryEntry updateMany
+   */
+  export type AgentRegistryEntryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AgentRegistryEntries.
+     */
+    data: XOR<AgentRegistryEntryUpdateManyMutationInput, AgentRegistryEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentRegistryEntries to update
+     */
+    where?: AgentRegistryEntryWhereInput
+    /**
+     * Limit how many AgentRegistryEntries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentRegistryEntry updateManyAndReturn
+   */
+  export type AgentRegistryEntryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * The data used to update AgentRegistryEntries.
+     */
+    data: XOR<AgentRegistryEntryUpdateManyMutationInput, AgentRegistryEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentRegistryEntries to update
+     */
+    where?: AgentRegistryEntryWhereInput
+    /**
+     * Limit how many AgentRegistryEntries to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AgentRegistryEntry upsert
+   */
+  export type AgentRegistryEntryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AgentRegistryEntry to update in case it exists.
+     */
+    where: AgentRegistryEntryWhereUniqueInput
+    /**
+     * In case the AgentRegistryEntry found by the `where` argument doesn't exist, create a new AgentRegistryEntry with this data.
+     */
+    create: XOR<AgentRegistryEntryCreateInput, AgentRegistryEntryUncheckedCreateInput>
+    /**
+     * In case the AgentRegistryEntry was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AgentRegistryEntryUpdateInput, AgentRegistryEntryUncheckedUpdateInput>
+  }
+
+  /**
+   * AgentRegistryEntry delete
+   */
+  export type AgentRegistryEntryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+    /**
+     * Filter which AgentRegistryEntry to delete.
+     */
+    where: AgentRegistryEntryWhereUniqueInput
+  }
+
+  /**
+   * AgentRegistryEntry deleteMany
+   */
+  export type AgentRegistryEntryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentRegistryEntries to delete
+     */
+    where?: AgentRegistryEntryWhereInput
+    /**
+     * Limit how many AgentRegistryEntries to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentRegistryEntry without action
+   */
+  export type AgentRegistryEntryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRegistryEntry
+     */
+    select?: AgentRegistryEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRegistryEntry
+     */
+    omit?: AgentRegistryEntryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRegistryEntryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model GovernanceRoleRequirement
+   */
+
+  export type AggregateGovernanceRoleRequirement = {
+    _count: GovernanceRoleRequirementCountAggregateOutputType | null
+    _avg: GovernanceRoleRequirementAvgAggregateOutputType | null
+    _sum: GovernanceRoleRequirementSumAggregateOutputType | null
+    _min: GovernanceRoleRequirementMinAggregateOutputType | null
+    _max: GovernanceRoleRequirementMaxAggregateOutputType | null
+  }
+
+  export type GovernanceRoleRequirementAvgAggregateOutputType = {
+    minimumCount: number | null
+  }
+
+  export type GovernanceRoleRequirementSumAggregateOutputType = {
+    minimumCount: number | null
+  }
+
+  export type GovernanceRoleRequirementMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    aiAccelerationLevel: $Enums.AiAccelerationLevel | null
+    organizationSide: $Enums.OrganizationSide | null
+    roleType: $Enums.PartyRoleType | null
+    minimumCount: number | null
+    rationale: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type GovernanceRoleRequirementMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    aiAccelerationLevel: $Enums.AiAccelerationLevel | null
+    organizationSide: $Enums.OrganizationSide | null
+    roleType: $Enums.PartyRoleType | null
+    minimumCount: number | null
+    rationale: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type GovernanceRoleRequirementCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    aiAccelerationLevel: number
+    organizationSide: number
+    roleType: number
+    minimumCount: number
+    rationale: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type GovernanceRoleRequirementAvgAggregateInputType = {
+    minimumCount?: true
+  }
+
+  export type GovernanceRoleRequirementSumAggregateInputType = {
+    minimumCount?: true
+  }
+
+  export type GovernanceRoleRequirementMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    aiAccelerationLevel?: true
+    organizationSide?: true
+    roleType?: true
+    minimumCount?: true
+    rationale?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type GovernanceRoleRequirementMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    aiAccelerationLevel?: true
+    organizationSide?: true
+    roleType?: true
+    minimumCount?: true
+    rationale?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type GovernanceRoleRequirementCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    aiAccelerationLevel?: true
+    organizationSide?: true
+    roleType?: true
+    minimumCount?: true
+    rationale?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type GovernanceRoleRequirementAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which GovernanceRoleRequirement to aggregate.
+     */
+    where?: GovernanceRoleRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRoleRequirements to fetch.
+     */
+    orderBy?: GovernanceRoleRequirementOrderByWithRelationInput | GovernanceRoleRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: GovernanceRoleRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRoleRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRoleRequirements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned GovernanceRoleRequirements
+    **/
+    _count?: true | GovernanceRoleRequirementCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: GovernanceRoleRequirementAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: GovernanceRoleRequirementSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: GovernanceRoleRequirementMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: GovernanceRoleRequirementMaxAggregateInputType
+  }
+
+  export type GetGovernanceRoleRequirementAggregateType<T extends GovernanceRoleRequirementAggregateArgs> = {
+        [P in keyof T & keyof AggregateGovernanceRoleRequirement]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateGovernanceRoleRequirement[P]>
+      : GetScalarType<T[P], AggregateGovernanceRoleRequirement[P]>
+  }
+
+
+
+
+  export type GovernanceRoleRequirementGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: GovernanceRoleRequirementWhereInput
+    orderBy?: GovernanceRoleRequirementOrderByWithAggregationInput | GovernanceRoleRequirementOrderByWithAggregationInput[]
+    by: GovernanceRoleRequirementScalarFieldEnum[] | GovernanceRoleRequirementScalarFieldEnum
+    having?: GovernanceRoleRequirementScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: GovernanceRoleRequirementCountAggregateInputType | true
+    _avg?: GovernanceRoleRequirementAvgAggregateInputType
+    _sum?: GovernanceRoleRequirementSumAggregateInputType
+    _min?: GovernanceRoleRequirementMinAggregateInputType
+    _max?: GovernanceRoleRequirementMaxAggregateInputType
+  }
+
+  export type GovernanceRoleRequirementGroupByOutputType = {
+    id: string
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    minimumCount: number
+    rationale: string
+    createdAt: Date
+    updatedAt: Date
+    _count: GovernanceRoleRequirementCountAggregateOutputType | null
+    _avg: GovernanceRoleRequirementAvgAggregateOutputType | null
+    _sum: GovernanceRoleRequirementSumAggregateOutputType | null
+    _min: GovernanceRoleRequirementMinAggregateOutputType | null
+    _max: GovernanceRoleRequirementMaxAggregateOutputType | null
+  }
+
+  type GetGovernanceRoleRequirementGroupByPayload<T extends GovernanceRoleRequirementGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<GovernanceRoleRequirementGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof GovernanceRoleRequirementGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], GovernanceRoleRequirementGroupByOutputType[P]>
+            : GetScalarType<T[P], GovernanceRoleRequirementGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type GovernanceRoleRequirementSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    minimumCount?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["governanceRoleRequirement"]>
+
+  export type GovernanceRoleRequirementSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    minimumCount?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["governanceRoleRequirement"]>
+
+  export type GovernanceRoleRequirementSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    minimumCount?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["governanceRoleRequirement"]>
+
+  export type GovernanceRoleRequirementSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    organizationSide?: boolean
+    roleType?: boolean
+    minimumCount?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type GovernanceRoleRequirementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "aiAccelerationLevel" | "organizationSide" | "roleType" | "minimumCount" | "rationale" | "createdAt" | "updatedAt", ExtArgs["result"]["governanceRoleRequirement"]>
+  export type GovernanceRoleRequirementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type GovernanceRoleRequirementIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type GovernanceRoleRequirementIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $GovernanceRoleRequirementPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "GovernanceRoleRequirement"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      aiAccelerationLevel: $Enums.AiAccelerationLevel
+      organizationSide: $Enums.OrganizationSide
+      roleType: $Enums.PartyRoleType
+      minimumCount: number
+      rationale: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["governanceRoleRequirement"]>
+    composites: {}
+  }
+
+  type GovernanceRoleRequirementGetPayload<S extends boolean | null | undefined | GovernanceRoleRequirementDefaultArgs> = $Result.GetResult<Prisma.$GovernanceRoleRequirementPayload, S>
+
+  type GovernanceRoleRequirementCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<GovernanceRoleRequirementFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: GovernanceRoleRequirementCountAggregateInputType | true
+    }
+
+  export interface GovernanceRoleRequirementDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['GovernanceRoleRequirement'], meta: { name: 'GovernanceRoleRequirement' } }
+    /**
+     * Find zero or one GovernanceRoleRequirement that matches the filter.
+     * @param {GovernanceRoleRequirementFindUniqueArgs} args - Arguments to find a GovernanceRoleRequirement
+     * @example
+     * // Get one GovernanceRoleRequirement
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends GovernanceRoleRequirementFindUniqueArgs>(args: SelectSubset<T, GovernanceRoleRequirementFindUniqueArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one GovernanceRoleRequirement that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {GovernanceRoleRequirementFindUniqueOrThrowArgs} args - Arguments to find a GovernanceRoleRequirement
+     * @example
+     * // Get one GovernanceRoleRequirement
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends GovernanceRoleRequirementFindUniqueOrThrowArgs>(args: SelectSubset<T, GovernanceRoleRequirementFindUniqueOrThrowArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first GovernanceRoleRequirement that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRoleRequirementFindFirstArgs} args - Arguments to find a GovernanceRoleRequirement
+     * @example
+     * // Get one GovernanceRoleRequirement
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends GovernanceRoleRequirementFindFirstArgs>(args?: SelectSubset<T, GovernanceRoleRequirementFindFirstArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first GovernanceRoleRequirement that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRoleRequirementFindFirstOrThrowArgs} args - Arguments to find a GovernanceRoleRequirement
+     * @example
+     * // Get one GovernanceRoleRequirement
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends GovernanceRoleRequirementFindFirstOrThrowArgs>(args?: SelectSubset<T, GovernanceRoleRequirementFindFirstOrThrowArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more GovernanceRoleRequirements that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRoleRequirementFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all GovernanceRoleRequirements
+     * const governanceRoleRequirements = await prisma.governanceRoleRequirement.findMany()
+     * 
+     * // Get first 10 GovernanceRoleRequirements
+     * const governanceRoleRequirements = await prisma.governanceRoleRequirement.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const governanceRoleRequirementWithIdOnly = await prisma.governanceRoleRequirement.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends GovernanceRoleRequirementFindManyArgs>(args?: SelectSubset<T, GovernanceRoleRequirementFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a GovernanceRoleRequirement.
+     * @param {GovernanceRoleRequirementCreateArgs} args - Arguments to create a GovernanceRoleRequirement.
+     * @example
+     * // Create one GovernanceRoleRequirement
+     * const GovernanceRoleRequirement = await prisma.governanceRoleRequirement.create({
+     *   data: {
+     *     // ... data to create a GovernanceRoleRequirement
+     *   }
+     * })
+     * 
+     */
+    create<T extends GovernanceRoleRequirementCreateArgs>(args: SelectSubset<T, GovernanceRoleRequirementCreateArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many GovernanceRoleRequirements.
+     * @param {GovernanceRoleRequirementCreateManyArgs} args - Arguments to create many GovernanceRoleRequirements.
+     * @example
+     * // Create many GovernanceRoleRequirements
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends GovernanceRoleRequirementCreateManyArgs>(args?: SelectSubset<T, GovernanceRoleRequirementCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many GovernanceRoleRequirements and returns the data saved in the database.
+     * @param {GovernanceRoleRequirementCreateManyAndReturnArgs} args - Arguments to create many GovernanceRoleRequirements.
+     * @example
+     * // Create many GovernanceRoleRequirements
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many GovernanceRoleRequirements and only return the `id`
+     * const governanceRoleRequirementWithIdOnly = await prisma.governanceRoleRequirement.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends GovernanceRoleRequirementCreateManyAndReturnArgs>(args?: SelectSubset<T, GovernanceRoleRequirementCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a GovernanceRoleRequirement.
+     * @param {GovernanceRoleRequirementDeleteArgs} args - Arguments to delete one GovernanceRoleRequirement.
+     * @example
+     * // Delete one GovernanceRoleRequirement
+     * const GovernanceRoleRequirement = await prisma.governanceRoleRequirement.delete({
+     *   where: {
+     *     // ... filter to delete one GovernanceRoleRequirement
+     *   }
+     * })
+     * 
+     */
+    delete<T extends GovernanceRoleRequirementDeleteArgs>(args: SelectSubset<T, GovernanceRoleRequirementDeleteArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one GovernanceRoleRequirement.
+     * @param {GovernanceRoleRequirementUpdateArgs} args - Arguments to update one GovernanceRoleRequirement.
+     * @example
+     * // Update one GovernanceRoleRequirement
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends GovernanceRoleRequirementUpdateArgs>(args: SelectSubset<T, GovernanceRoleRequirementUpdateArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more GovernanceRoleRequirements.
+     * @param {GovernanceRoleRequirementDeleteManyArgs} args - Arguments to filter GovernanceRoleRequirements to delete.
+     * @example
+     * // Delete a few GovernanceRoleRequirements
+     * const { count } = await prisma.governanceRoleRequirement.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends GovernanceRoleRequirementDeleteManyArgs>(args?: SelectSubset<T, GovernanceRoleRequirementDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more GovernanceRoleRequirements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRoleRequirementUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many GovernanceRoleRequirements
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends GovernanceRoleRequirementUpdateManyArgs>(args: SelectSubset<T, GovernanceRoleRequirementUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more GovernanceRoleRequirements and returns the data updated in the database.
+     * @param {GovernanceRoleRequirementUpdateManyAndReturnArgs} args - Arguments to update many GovernanceRoleRequirements.
+     * @example
+     * // Update many GovernanceRoleRequirements
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more GovernanceRoleRequirements and only return the `id`
+     * const governanceRoleRequirementWithIdOnly = await prisma.governanceRoleRequirement.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends GovernanceRoleRequirementUpdateManyAndReturnArgs>(args: SelectSubset<T, GovernanceRoleRequirementUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one GovernanceRoleRequirement.
+     * @param {GovernanceRoleRequirementUpsertArgs} args - Arguments to update or create a GovernanceRoleRequirement.
+     * @example
+     * // Update or create a GovernanceRoleRequirement
+     * const governanceRoleRequirement = await prisma.governanceRoleRequirement.upsert({
+     *   create: {
+     *     // ... data to create a GovernanceRoleRequirement
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the GovernanceRoleRequirement we want to update
+     *   }
+     * })
+     */
+    upsert<T extends GovernanceRoleRequirementUpsertArgs>(args: SelectSubset<T, GovernanceRoleRequirementUpsertArgs<ExtArgs>>): Prisma__GovernanceRoleRequirementClient<$Result.GetResult<Prisma.$GovernanceRoleRequirementPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of GovernanceRoleRequirements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRoleRequirementCountArgs} args - Arguments to filter GovernanceRoleRequirements to count.
+     * @example
+     * // Count the number of GovernanceRoleRequirements
+     * const count = await prisma.governanceRoleRequirement.count({
+     *   where: {
+     *     // ... the filter for the GovernanceRoleRequirements we want to count
+     *   }
+     * })
+    **/
+    count<T extends GovernanceRoleRequirementCountArgs>(
+      args?: Subset<T, GovernanceRoleRequirementCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], GovernanceRoleRequirementCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a GovernanceRoleRequirement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRoleRequirementAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends GovernanceRoleRequirementAggregateArgs>(args: Subset<T, GovernanceRoleRequirementAggregateArgs>): Prisma.PrismaPromise<GetGovernanceRoleRequirementAggregateType<T>>
+
+    /**
+     * Group by GovernanceRoleRequirement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRoleRequirementGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends GovernanceRoleRequirementGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: GovernanceRoleRequirementGroupByArgs['orderBy'] }
+        : { orderBy?: GovernanceRoleRequirementGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, GovernanceRoleRequirementGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetGovernanceRoleRequirementGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the GovernanceRoleRequirement model
+   */
+  readonly fields: GovernanceRoleRequirementFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for GovernanceRoleRequirement.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__GovernanceRoleRequirementClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the GovernanceRoleRequirement model
+   */
+  interface GovernanceRoleRequirementFieldRefs {
+    readonly id: FieldRef<"GovernanceRoleRequirement", 'String'>
+    readonly organizationId: FieldRef<"GovernanceRoleRequirement", 'String'>
+    readonly aiAccelerationLevel: FieldRef<"GovernanceRoleRequirement", 'AiAccelerationLevel'>
+    readonly organizationSide: FieldRef<"GovernanceRoleRequirement", 'OrganizationSide'>
+    readonly roleType: FieldRef<"GovernanceRoleRequirement", 'PartyRoleType'>
+    readonly minimumCount: FieldRef<"GovernanceRoleRequirement", 'Int'>
+    readonly rationale: FieldRef<"GovernanceRoleRequirement", 'String'>
+    readonly createdAt: FieldRef<"GovernanceRoleRequirement", 'DateTime'>
+    readonly updatedAt: FieldRef<"GovernanceRoleRequirement", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * GovernanceRoleRequirement findUnique
+   */
+  export type GovernanceRoleRequirementFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRoleRequirement to fetch.
+     */
+    where: GovernanceRoleRequirementWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRoleRequirement findUniqueOrThrow
+   */
+  export type GovernanceRoleRequirementFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRoleRequirement to fetch.
+     */
+    where: GovernanceRoleRequirementWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRoleRequirement findFirst
+   */
+  export type GovernanceRoleRequirementFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRoleRequirement to fetch.
+     */
+    where?: GovernanceRoleRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRoleRequirements to fetch.
+     */
+    orderBy?: GovernanceRoleRequirementOrderByWithRelationInput | GovernanceRoleRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for GovernanceRoleRequirements.
+     */
+    cursor?: GovernanceRoleRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRoleRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRoleRequirements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of GovernanceRoleRequirements.
+     */
+    distinct?: GovernanceRoleRequirementScalarFieldEnum | GovernanceRoleRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * GovernanceRoleRequirement findFirstOrThrow
+   */
+  export type GovernanceRoleRequirementFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRoleRequirement to fetch.
+     */
+    where?: GovernanceRoleRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRoleRequirements to fetch.
+     */
+    orderBy?: GovernanceRoleRequirementOrderByWithRelationInput | GovernanceRoleRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for GovernanceRoleRequirements.
+     */
+    cursor?: GovernanceRoleRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRoleRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRoleRequirements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of GovernanceRoleRequirements.
+     */
+    distinct?: GovernanceRoleRequirementScalarFieldEnum | GovernanceRoleRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * GovernanceRoleRequirement findMany
+   */
+  export type GovernanceRoleRequirementFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRoleRequirements to fetch.
+     */
+    where?: GovernanceRoleRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRoleRequirements to fetch.
+     */
+    orderBy?: GovernanceRoleRequirementOrderByWithRelationInput | GovernanceRoleRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing GovernanceRoleRequirements.
+     */
+    cursor?: GovernanceRoleRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRoleRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRoleRequirements.
+     */
+    skip?: number
+    distinct?: GovernanceRoleRequirementScalarFieldEnum | GovernanceRoleRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * GovernanceRoleRequirement create
+   */
+  export type GovernanceRoleRequirementCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * The data needed to create a GovernanceRoleRequirement.
+     */
+    data: XOR<GovernanceRoleRequirementCreateInput, GovernanceRoleRequirementUncheckedCreateInput>
+  }
+
+  /**
+   * GovernanceRoleRequirement createMany
+   */
+  export type GovernanceRoleRequirementCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many GovernanceRoleRequirements.
+     */
+    data: GovernanceRoleRequirementCreateManyInput | GovernanceRoleRequirementCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * GovernanceRoleRequirement createManyAndReturn
+   */
+  export type GovernanceRoleRequirementCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * The data used to create many GovernanceRoleRequirements.
+     */
+    data: GovernanceRoleRequirementCreateManyInput | GovernanceRoleRequirementCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * GovernanceRoleRequirement update
+   */
+  export type GovernanceRoleRequirementUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * The data needed to update a GovernanceRoleRequirement.
+     */
+    data: XOR<GovernanceRoleRequirementUpdateInput, GovernanceRoleRequirementUncheckedUpdateInput>
+    /**
+     * Choose, which GovernanceRoleRequirement to update.
+     */
+    where: GovernanceRoleRequirementWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRoleRequirement updateMany
+   */
+  export type GovernanceRoleRequirementUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update GovernanceRoleRequirements.
+     */
+    data: XOR<GovernanceRoleRequirementUpdateManyMutationInput, GovernanceRoleRequirementUncheckedUpdateManyInput>
+    /**
+     * Filter which GovernanceRoleRequirements to update
+     */
+    where?: GovernanceRoleRequirementWhereInput
+    /**
+     * Limit how many GovernanceRoleRequirements to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * GovernanceRoleRequirement updateManyAndReturn
+   */
+  export type GovernanceRoleRequirementUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * The data used to update GovernanceRoleRequirements.
+     */
+    data: XOR<GovernanceRoleRequirementUpdateManyMutationInput, GovernanceRoleRequirementUncheckedUpdateManyInput>
+    /**
+     * Filter which GovernanceRoleRequirements to update
+     */
+    where?: GovernanceRoleRequirementWhereInput
+    /**
+     * Limit how many GovernanceRoleRequirements to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * GovernanceRoleRequirement upsert
+   */
+  export type GovernanceRoleRequirementUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * The filter to search for the GovernanceRoleRequirement to update in case it exists.
+     */
+    where: GovernanceRoleRequirementWhereUniqueInput
+    /**
+     * In case the GovernanceRoleRequirement found by the `where` argument doesn't exist, create a new GovernanceRoleRequirement with this data.
+     */
+    create: XOR<GovernanceRoleRequirementCreateInput, GovernanceRoleRequirementUncheckedCreateInput>
+    /**
+     * In case the GovernanceRoleRequirement was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<GovernanceRoleRequirementUpdateInput, GovernanceRoleRequirementUncheckedUpdateInput>
+  }
+
+  /**
+   * GovernanceRoleRequirement delete
+   */
+  export type GovernanceRoleRequirementDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+    /**
+     * Filter which GovernanceRoleRequirement to delete.
+     */
+    where: GovernanceRoleRequirementWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRoleRequirement deleteMany
+   */
+  export type GovernanceRoleRequirementDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which GovernanceRoleRequirements to delete
+     */
+    where?: GovernanceRoleRequirementWhereInput
+    /**
+     * Limit how many GovernanceRoleRequirements to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * GovernanceRoleRequirement without action
+   */
+  export type GovernanceRoleRequirementDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRoleRequirement
+     */
+    select?: GovernanceRoleRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRoleRequirement
+     */
+    omit?: GovernanceRoleRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRoleRequirementInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model GovernanceRiskCombinationRule
+   */
+
+  export type AggregateGovernanceRiskCombinationRule = {
+    _count: GovernanceRiskCombinationRuleCountAggregateOutputType | null
+    _min: GovernanceRiskCombinationRuleMinAggregateOutputType | null
+    _max: GovernanceRiskCombinationRuleMaxAggregateOutputType | null
+  }
+
+  export type GovernanceRiskCombinationRuleMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    aiAccelerationLevel: $Enums.AiAccelerationLevel | null
+    primaryRoleType: $Enums.PartyRoleType | null
+    conflictingRoleType: $Enums.PartyRoleType | null
+    rationale: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type GovernanceRiskCombinationRuleMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    aiAccelerationLevel: $Enums.AiAccelerationLevel | null
+    primaryRoleType: $Enums.PartyRoleType | null
+    conflictingRoleType: $Enums.PartyRoleType | null
+    rationale: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type GovernanceRiskCombinationRuleCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    aiAccelerationLevel: number
+    primaryRoleType: number
+    conflictingRoleType: number
+    rationale: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type GovernanceRiskCombinationRuleMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    aiAccelerationLevel?: true
+    primaryRoleType?: true
+    conflictingRoleType?: true
+    rationale?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type GovernanceRiskCombinationRuleMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    aiAccelerationLevel?: true
+    primaryRoleType?: true
+    conflictingRoleType?: true
+    rationale?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type GovernanceRiskCombinationRuleCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    aiAccelerationLevel?: true
+    primaryRoleType?: true
+    conflictingRoleType?: true
+    rationale?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type GovernanceRiskCombinationRuleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which GovernanceRiskCombinationRule to aggregate.
+     */
+    where?: GovernanceRiskCombinationRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRiskCombinationRules to fetch.
+     */
+    orderBy?: GovernanceRiskCombinationRuleOrderByWithRelationInput | GovernanceRiskCombinationRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: GovernanceRiskCombinationRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRiskCombinationRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRiskCombinationRules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned GovernanceRiskCombinationRules
+    **/
+    _count?: true | GovernanceRiskCombinationRuleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: GovernanceRiskCombinationRuleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: GovernanceRiskCombinationRuleMaxAggregateInputType
+  }
+
+  export type GetGovernanceRiskCombinationRuleAggregateType<T extends GovernanceRiskCombinationRuleAggregateArgs> = {
+        [P in keyof T & keyof AggregateGovernanceRiskCombinationRule]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateGovernanceRiskCombinationRule[P]>
+      : GetScalarType<T[P], AggregateGovernanceRiskCombinationRule[P]>
+  }
+
+
+
+
+  export type GovernanceRiskCombinationRuleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: GovernanceRiskCombinationRuleWhereInput
+    orderBy?: GovernanceRiskCombinationRuleOrderByWithAggregationInput | GovernanceRiskCombinationRuleOrderByWithAggregationInput[]
+    by: GovernanceRiskCombinationRuleScalarFieldEnum[] | GovernanceRiskCombinationRuleScalarFieldEnum
+    having?: GovernanceRiskCombinationRuleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: GovernanceRiskCombinationRuleCountAggregateInputType | true
+    _min?: GovernanceRiskCombinationRuleMinAggregateInputType
+    _max?: GovernanceRiskCombinationRuleMaxAggregateInputType
+  }
+
+  export type GovernanceRiskCombinationRuleGroupByOutputType = {
+    id: string
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+    rationale: string
+    createdAt: Date
+    updatedAt: Date
+    _count: GovernanceRiskCombinationRuleCountAggregateOutputType | null
+    _min: GovernanceRiskCombinationRuleMinAggregateOutputType | null
+    _max: GovernanceRiskCombinationRuleMaxAggregateOutputType | null
+  }
+
+  type GetGovernanceRiskCombinationRuleGroupByPayload<T extends GovernanceRiskCombinationRuleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<GovernanceRiskCombinationRuleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof GovernanceRiskCombinationRuleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], GovernanceRiskCombinationRuleGroupByOutputType[P]>
+            : GetScalarType<T[P], GovernanceRiskCombinationRuleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type GovernanceRiskCombinationRuleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    primaryRoleType?: boolean
+    conflictingRoleType?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["governanceRiskCombinationRule"]>
+
+  export type GovernanceRiskCombinationRuleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    primaryRoleType?: boolean
+    conflictingRoleType?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["governanceRiskCombinationRule"]>
+
+  export type GovernanceRiskCombinationRuleSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    primaryRoleType?: boolean
+    conflictingRoleType?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["governanceRiskCombinationRule"]>
+
+  export type GovernanceRiskCombinationRuleSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    aiAccelerationLevel?: boolean
+    primaryRoleType?: boolean
+    conflictingRoleType?: boolean
+    rationale?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type GovernanceRiskCombinationRuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "aiAccelerationLevel" | "primaryRoleType" | "conflictingRoleType" | "rationale" | "createdAt" | "updatedAt", ExtArgs["result"]["governanceRiskCombinationRule"]>
+  export type GovernanceRiskCombinationRuleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type GovernanceRiskCombinationRuleIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type GovernanceRiskCombinationRuleIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $GovernanceRiskCombinationRulePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "GovernanceRiskCombinationRule"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      aiAccelerationLevel: $Enums.AiAccelerationLevel
+      primaryRoleType: $Enums.PartyRoleType
+      conflictingRoleType: $Enums.PartyRoleType
+      rationale: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["governanceRiskCombinationRule"]>
+    composites: {}
+  }
+
+  type GovernanceRiskCombinationRuleGetPayload<S extends boolean | null | undefined | GovernanceRiskCombinationRuleDefaultArgs> = $Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload, S>
+
+  type GovernanceRiskCombinationRuleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<GovernanceRiskCombinationRuleFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: GovernanceRiskCombinationRuleCountAggregateInputType | true
+    }
+
+  export interface GovernanceRiskCombinationRuleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['GovernanceRiskCombinationRule'], meta: { name: 'GovernanceRiskCombinationRule' } }
+    /**
+     * Find zero or one GovernanceRiskCombinationRule that matches the filter.
+     * @param {GovernanceRiskCombinationRuleFindUniqueArgs} args - Arguments to find a GovernanceRiskCombinationRule
+     * @example
+     * // Get one GovernanceRiskCombinationRule
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends GovernanceRiskCombinationRuleFindUniqueArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleFindUniqueArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one GovernanceRiskCombinationRule that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {GovernanceRiskCombinationRuleFindUniqueOrThrowArgs} args - Arguments to find a GovernanceRiskCombinationRule
+     * @example
+     * // Get one GovernanceRiskCombinationRule
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends GovernanceRiskCombinationRuleFindUniqueOrThrowArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first GovernanceRiskCombinationRule that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRiskCombinationRuleFindFirstArgs} args - Arguments to find a GovernanceRiskCombinationRule
+     * @example
+     * // Get one GovernanceRiskCombinationRule
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends GovernanceRiskCombinationRuleFindFirstArgs>(args?: SelectSubset<T, GovernanceRiskCombinationRuleFindFirstArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first GovernanceRiskCombinationRule that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRiskCombinationRuleFindFirstOrThrowArgs} args - Arguments to find a GovernanceRiskCombinationRule
+     * @example
+     * // Get one GovernanceRiskCombinationRule
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends GovernanceRiskCombinationRuleFindFirstOrThrowArgs>(args?: SelectSubset<T, GovernanceRiskCombinationRuleFindFirstOrThrowArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more GovernanceRiskCombinationRules that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRiskCombinationRuleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all GovernanceRiskCombinationRules
+     * const governanceRiskCombinationRules = await prisma.governanceRiskCombinationRule.findMany()
+     * 
+     * // Get first 10 GovernanceRiskCombinationRules
+     * const governanceRiskCombinationRules = await prisma.governanceRiskCombinationRule.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const governanceRiskCombinationRuleWithIdOnly = await prisma.governanceRiskCombinationRule.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends GovernanceRiskCombinationRuleFindManyArgs>(args?: SelectSubset<T, GovernanceRiskCombinationRuleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a GovernanceRiskCombinationRule.
+     * @param {GovernanceRiskCombinationRuleCreateArgs} args - Arguments to create a GovernanceRiskCombinationRule.
+     * @example
+     * // Create one GovernanceRiskCombinationRule
+     * const GovernanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.create({
+     *   data: {
+     *     // ... data to create a GovernanceRiskCombinationRule
+     *   }
+     * })
+     * 
+     */
+    create<T extends GovernanceRiskCombinationRuleCreateArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleCreateArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many GovernanceRiskCombinationRules.
+     * @param {GovernanceRiskCombinationRuleCreateManyArgs} args - Arguments to create many GovernanceRiskCombinationRules.
+     * @example
+     * // Create many GovernanceRiskCombinationRules
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends GovernanceRiskCombinationRuleCreateManyArgs>(args?: SelectSubset<T, GovernanceRiskCombinationRuleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many GovernanceRiskCombinationRules and returns the data saved in the database.
+     * @param {GovernanceRiskCombinationRuleCreateManyAndReturnArgs} args - Arguments to create many GovernanceRiskCombinationRules.
+     * @example
+     * // Create many GovernanceRiskCombinationRules
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many GovernanceRiskCombinationRules and only return the `id`
+     * const governanceRiskCombinationRuleWithIdOnly = await prisma.governanceRiskCombinationRule.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends GovernanceRiskCombinationRuleCreateManyAndReturnArgs>(args?: SelectSubset<T, GovernanceRiskCombinationRuleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a GovernanceRiskCombinationRule.
+     * @param {GovernanceRiskCombinationRuleDeleteArgs} args - Arguments to delete one GovernanceRiskCombinationRule.
+     * @example
+     * // Delete one GovernanceRiskCombinationRule
+     * const GovernanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.delete({
+     *   where: {
+     *     // ... filter to delete one GovernanceRiskCombinationRule
+     *   }
+     * })
+     * 
+     */
+    delete<T extends GovernanceRiskCombinationRuleDeleteArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleDeleteArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one GovernanceRiskCombinationRule.
+     * @param {GovernanceRiskCombinationRuleUpdateArgs} args - Arguments to update one GovernanceRiskCombinationRule.
+     * @example
+     * // Update one GovernanceRiskCombinationRule
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends GovernanceRiskCombinationRuleUpdateArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleUpdateArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more GovernanceRiskCombinationRules.
+     * @param {GovernanceRiskCombinationRuleDeleteManyArgs} args - Arguments to filter GovernanceRiskCombinationRules to delete.
+     * @example
+     * // Delete a few GovernanceRiskCombinationRules
+     * const { count } = await prisma.governanceRiskCombinationRule.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends GovernanceRiskCombinationRuleDeleteManyArgs>(args?: SelectSubset<T, GovernanceRiskCombinationRuleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more GovernanceRiskCombinationRules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRiskCombinationRuleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many GovernanceRiskCombinationRules
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends GovernanceRiskCombinationRuleUpdateManyArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more GovernanceRiskCombinationRules and returns the data updated in the database.
+     * @param {GovernanceRiskCombinationRuleUpdateManyAndReturnArgs} args - Arguments to update many GovernanceRiskCombinationRules.
+     * @example
+     * // Update many GovernanceRiskCombinationRules
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more GovernanceRiskCombinationRules and only return the `id`
+     * const governanceRiskCombinationRuleWithIdOnly = await prisma.governanceRiskCombinationRule.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends GovernanceRiskCombinationRuleUpdateManyAndReturnArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one GovernanceRiskCombinationRule.
+     * @param {GovernanceRiskCombinationRuleUpsertArgs} args - Arguments to update or create a GovernanceRiskCombinationRule.
+     * @example
+     * // Update or create a GovernanceRiskCombinationRule
+     * const governanceRiskCombinationRule = await prisma.governanceRiskCombinationRule.upsert({
+     *   create: {
+     *     // ... data to create a GovernanceRiskCombinationRule
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the GovernanceRiskCombinationRule we want to update
+     *   }
+     * })
+     */
+    upsert<T extends GovernanceRiskCombinationRuleUpsertArgs>(args: SelectSubset<T, GovernanceRiskCombinationRuleUpsertArgs<ExtArgs>>): Prisma__GovernanceRiskCombinationRuleClient<$Result.GetResult<Prisma.$GovernanceRiskCombinationRulePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of GovernanceRiskCombinationRules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRiskCombinationRuleCountArgs} args - Arguments to filter GovernanceRiskCombinationRules to count.
+     * @example
+     * // Count the number of GovernanceRiskCombinationRules
+     * const count = await prisma.governanceRiskCombinationRule.count({
+     *   where: {
+     *     // ... the filter for the GovernanceRiskCombinationRules we want to count
+     *   }
+     * })
+    **/
+    count<T extends GovernanceRiskCombinationRuleCountArgs>(
+      args?: Subset<T, GovernanceRiskCombinationRuleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], GovernanceRiskCombinationRuleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a GovernanceRiskCombinationRule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRiskCombinationRuleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends GovernanceRiskCombinationRuleAggregateArgs>(args: Subset<T, GovernanceRiskCombinationRuleAggregateArgs>): Prisma.PrismaPromise<GetGovernanceRiskCombinationRuleAggregateType<T>>
+
+    /**
+     * Group by GovernanceRiskCombinationRule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GovernanceRiskCombinationRuleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends GovernanceRiskCombinationRuleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: GovernanceRiskCombinationRuleGroupByArgs['orderBy'] }
+        : { orderBy?: GovernanceRiskCombinationRuleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, GovernanceRiskCombinationRuleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetGovernanceRiskCombinationRuleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the GovernanceRiskCombinationRule model
+   */
+  readonly fields: GovernanceRiskCombinationRuleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for GovernanceRiskCombinationRule.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__GovernanceRiskCombinationRuleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the GovernanceRiskCombinationRule model
+   */
+  interface GovernanceRiskCombinationRuleFieldRefs {
+    readonly id: FieldRef<"GovernanceRiskCombinationRule", 'String'>
+    readonly organizationId: FieldRef<"GovernanceRiskCombinationRule", 'String'>
+    readonly aiAccelerationLevel: FieldRef<"GovernanceRiskCombinationRule", 'AiAccelerationLevel'>
+    readonly primaryRoleType: FieldRef<"GovernanceRiskCombinationRule", 'PartyRoleType'>
+    readonly conflictingRoleType: FieldRef<"GovernanceRiskCombinationRule", 'PartyRoleType'>
+    readonly rationale: FieldRef<"GovernanceRiskCombinationRule", 'String'>
+    readonly createdAt: FieldRef<"GovernanceRiskCombinationRule", 'DateTime'>
+    readonly updatedAt: FieldRef<"GovernanceRiskCombinationRule", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * GovernanceRiskCombinationRule findUnique
+   */
+  export type GovernanceRiskCombinationRuleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRiskCombinationRule to fetch.
+     */
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRiskCombinationRule findUniqueOrThrow
+   */
+  export type GovernanceRiskCombinationRuleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRiskCombinationRule to fetch.
+     */
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRiskCombinationRule findFirst
+   */
+  export type GovernanceRiskCombinationRuleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRiskCombinationRule to fetch.
+     */
+    where?: GovernanceRiskCombinationRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRiskCombinationRules to fetch.
+     */
+    orderBy?: GovernanceRiskCombinationRuleOrderByWithRelationInput | GovernanceRiskCombinationRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for GovernanceRiskCombinationRules.
+     */
+    cursor?: GovernanceRiskCombinationRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRiskCombinationRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRiskCombinationRules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of GovernanceRiskCombinationRules.
+     */
+    distinct?: GovernanceRiskCombinationRuleScalarFieldEnum | GovernanceRiskCombinationRuleScalarFieldEnum[]
+  }
+
+  /**
+   * GovernanceRiskCombinationRule findFirstOrThrow
+   */
+  export type GovernanceRiskCombinationRuleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRiskCombinationRule to fetch.
+     */
+    where?: GovernanceRiskCombinationRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRiskCombinationRules to fetch.
+     */
+    orderBy?: GovernanceRiskCombinationRuleOrderByWithRelationInput | GovernanceRiskCombinationRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for GovernanceRiskCombinationRules.
+     */
+    cursor?: GovernanceRiskCombinationRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRiskCombinationRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRiskCombinationRules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of GovernanceRiskCombinationRules.
+     */
+    distinct?: GovernanceRiskCombinationRuleScalarFieldEnum | GovernanceRiskCombinationRuleScalarFieldEnum[]
+  }
+
+  /**
+   * GovernanceRiskCombinationRule findMany
+   */
+  export type GovernanceRiskCombinationRuleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * Filter, which GovernanceRiskCombinationRules to fetch.
+     */
+    where?: GovernanceRiskCombinationRuleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GovernanceRiskCombinationRules to fetch.
+     */
+    orderBy?: GovernanceRiskCombinationRuleOrderByWithRelationInput | GovernanceRiskCombinationRuleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing GovernanceRiskCombinationRules.
+     */
+    cursor?: GovernanceRiskCombinationRuleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GovernanceRiskCombinationRules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GovernanceRiskCombinationRules.
+     */
+    skip?: number
+    distinct?: GovernanceRiskCombinationRuleScalarFieldEnum | GovernanceRiskCombinationRuleScalarFieldEnum[]
+  }
+
+  /**
+   * GovernanceRiskCombinationRule create
+   */
+  export type GovernanceRiskCombinationRuleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * The data needed to create a GovernanceRiskCombinationRule.
+     */
+    data: XOR<GovernanceRiskCombinationRuleCreateInput, GovernanceRiskCombinationRuleUncheckedCreateInput>
+  }
+
+  /**
+   * GovernanceRiskCombinationRule createMany
+   */
+  export type GovernanceRiskCombinationRuleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many GovernanceRiskCombinationRules.
+     */
+    data: GovernanceRiskCombinationRuleCreateManyInput | GovernanceRiskCombinationRuleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * GovernanceRiskCombinationRule createManyAndReturn
+   */
+  export type GovernanceRiskCombinationRuleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * The data used to create many GovernanceRiskCombinationRules.
+     */
+    data: GovernanceRiskCombinationRuleCreateManyInput | GovernanceRiskCombinationRuleCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * GovernanceRiskCombinationRule update
+   */
+  export type GovernanceRiskCombinationRuleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * The data needed to update a GovernanceRiskCombinationRule.
+     */
+    data: XOR<GovernanceRiskCombinationRuleUpdateInput, GovernanceRiskCombinationRuleUncheckedUpdateInput>
+    /**
+     * Choose, which GovernanceRiskCombinationRule to update.
+     */
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRiskCombinationRule updateMany
+   */
+  export type GovernanceRiskCombinationRuleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update GovernanceRiskCombinationRules.
+     */
+    data: XOR<GovernanceRiskCombinationRuleUpdateManyMutationInput, GovernanceRiskCombinationRuleUncheckedUpdateManyInput>
+    /**
+     * Filter which GovernanceRiskCombinationRules to update
+     */
+    where?: GovernanceRiskCombinationRuleWhereInput
+    /**
+     * Limit how many GovernanceRiskCombinationRules to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * GovernanceRiskCombinationRule updateManyAndReturn
+   */
+  export type GovernanceRiskCombinationRuleUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * The data used to update GovernanceRiskCombinationRules.
+     */
+    data: XOR<GovernanceRiskCombinationRuleUpdateManyMutationInput, GovernanceRiskCombinationRuleUncheckedUpdateManyInput>
+    /**
+     * Filter which GovernanceRiskCombinationRules to update
+     */
+    where?: GovernanceRiskCombinationRuleWhereInput
+    /**
+     * Limit how many GovernanceRiskCombinationRules to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * GovernanceRiskCombinationRule upsert
+   */
+  export type GovernanceRiskCombinationRuleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * The filter to search for the GovernanceRiskCombinationRule to update in case it exists.
+     */
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+    /**
+     * In case the GovernanceRiskCombinationRule found by the `where` argument doesn't exist, create a new GovernanceRiskCombinationRule with this data.
+     */
+    create: XOR<GovernanceRiskCombinationRuleCreateInput, GovernanceRiskCombinationRuleUncheckedCreateInput>
+    /**
+     * In case the GovernanceRiskCombinationRule was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<GovernanceRiskCombinationRuleUpdateInput, GovernanceRiskCombinationRuleUncheckedUpdateInput>
+  }
+
+  /**
+   * GovernanceRiskCombinationRule delete
+   */
+  export type GovernanceRiskCombinationRuleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
+    /**
+     * Filter which GovernanceRiskCombinationRule to delete.
+     */
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+  }
+
+  /**
+   * GovernanceRiskCombinationRule deleteMany
+   */
+  export type GovernanceRiskCombinationRuleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which GovernanceRiskCombinationRules to delete
+     */
+    where?: GovernanceRiskCombinationRuleWhereInput
+    /**
+     * Limit how many GovernanceRiskCombinationRules to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * GovernanceRiskCombinationRule without action
+   */
+  export type GovernanceRiskCombinationRuleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GovernanceRiskCombinationRule
+     */
+    select?: GovernanceRiskCombinationRuleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GovernanceRiskCombinationRule
+     */
+    omit?: GovernanceRiskCombinationRuleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GovernanceRiskCombinationRuleInclude<ExtArgs> | null
   }
 
 
@@ -16262,6 +21442,72 @@ export namespace Prisma {
   export type MembershipScalarFieldEnum = (typeof MembershipScalarFieldEnum)[keyof typeof MembershipScalarFieldEnum]
 
 
+  export const PartyRoleEntryScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    fullName: 'fullName',
+    email: 'email',
+    phoneNumber: 'phoneNumber',
+    avatarUrl: 'avatarUrl',
+    organizationSide: 'organizationSide',
+    roleType: 'roleType',
+    roleTitle: 'roleTitle',
+    mandateNotes: 'mandateNotes',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PartyRoleEntryScalarFieldEnum = (typeof PartyRoleEntryScalarFieldEnum)[keyof typeof PartyRoleEntryScalarFieldEnum]
+
+
+  export const AgentRegistryEntryScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    agentName: 'agentName',
+    agentType: 'agentType',
+    purpose: 'purpose',
+    scopeOfWork: 'scopeOfWork',
+    allowedArtifactTypes: 'allowedArtifactTypes',
+    allowedActions: 'allowedActions',
+    supervisingPartyRoleId: 'supervisingPartyRoleId',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AgentRegistryEntryScalarFieldEnum = (typeof AgentRegistryEntryScalarFieldEnum)[keyof typeof AgentRegistryEntryScalarFieldEnum]
+
+
+  export const GovernanceRoleRequirementScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    aiAccelerationLevel: 'aiAccelerationLevel',
+    organizationSide: 'organizationSide',
+    roleType: 'roleType',
+    minimumCount: 'minimumCount',
+    rationale: 'rationale',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type GovernanceRoleRequirementScalarFieldEnum = (typeof GovernanceRoleRequirementScalarFieldEnum)[keyof typeof GovernanceRoleRequirementScalarFieldEnum]
+
+
+  export const GovernanceRiskCombinationRuleScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    aiAccelerationLevel: 'aiAccelerationLevel',
+    primaryRoleType: 'primaryRoleType',
+    conflictingRoleType: 'conflictingRoleType',
+    rationale: 'rationale',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type GovernanceRiskCombinationRuleScalarFieldEnum = (typeof GovernanceRiskCombinationRuleScalarFieldEnum)[keyof typeof GovernanceRiskCombinationRuleScalarFieldEnum]
+
+
   export const OutcomeScalarFieldEnum: {
     id: 'id',
     organizationId: 'organizationId',
@@ -16551,16 +21797,51 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'RiskProfile'
+   * Reference to a field of type 'OrganizationSide'
    */
-  export type EnumRiskProfileFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskProfile'>
+  export type EnumOrganizationSideFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationSide'>
     
 
 
   /**
-   * Reference to a field of type 'RiskProfile[]'
+   * Reference to a field of type 'OrganizationSide[]'
    */
-  export type ListEnumRiskProfileFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskProfile[]'>
+  export type ListEnumOrganizationSideFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrganizationSide[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PartyRoleType'
+   */
+  export type EnumPartyRoleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PartyRoleType'>
+    
+
+
+  /**
+   * Reference to a field of type 'PartyRoleType[]'
+   */
+  export type ListEnumPartyRoleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PartyRoleType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'AgentType'
+   */
+  export type EnumAgentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AgentType'>
+    
+
+
+  /**
+   * Reference to a field of type 'AgentType[]'
+   */
+  export type ListEnumAgentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AgentType[]'>
     
 
 
@@ -16575,6 +21856,34 @@ export namespace Prisma {
    * Reference to a field of type 'AiAccelerationLevel[]'
    */
   export type ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AiAccelerationLevel[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int[]'
+   */
+  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'RiskProfile'
+   */
+  export type EnumRiskProfileFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskProfile'>
+    
+
+
+  /**
+   * Reference to a field of type 'RiskProfile[]'
+   */
+  export type ListEnumRiskProfileFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RiskProfile[]'>
     
 
 
@@ -16803,20 +22112,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
-   */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-  /**
-   * Reference to a field of type 'Int[]'
-   */
-  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-  /**
    * Reference to a field of type 'ArtifactSourceTypeStatus'
    */
   export type EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ArtifactSourceTypeStatus'>
@@ -16901,13 +22196,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -16942,6 +22230,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
     artifactAasCandidates?: ArtifactAasCandidateListRelationFilter
+    partyRoleEntries?: PartyRoleEntryListRelationFilter
+    agentRegistryEntries?: AgentRegistryEntryListRelationFilter
+    governanceRoleRequirements?: GovernanceRoleRequirementListRelationFilter
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleListRelationFilter
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -16959,6 +22251,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionOrderByRelationAggregateInput
     artifactIntakeFiles?: ArtifactIntakeFileOrderByRelationAggregateInput
     artifactAasCandidates?: ArtifactAasCandidateOrderByRelationAggregateInput
+    partyRoleEntries?: PartyRoleEntryOrderByRelationAggregateInput
+    agentRegistryEntries?: AgentRegistryEntryOrderByRelationAggregateInput
+    governanceRoleRequirements?: GovernanceRoleRequirementOrderByRelationAggregateInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleOrderByRelationAggregateInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -16979,6 +22275,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
     artifactAasCandidates?: ArtifactAasCandidateListRelationFilter
+    partyRoleEntries?: PartyRoleEntryListRelationFilter
+    agentRegistryEntries?: AgentRegistryEntryListRelationFilter
+    governanceRoleRequirements?: GovernanceRoleRequirementListRelationFilter
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleListRelationFilter
   }, "id" | "slug">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -17135,6 +22435,346 @@ export namespace Prisma {
     role?: EnumMembershipRoleWithAggregatesFilter<"Membership"> | $Enums.MembershipRole
     createdAt?: DateTimeWithAggregatesFilter<"Membership"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Membership"> | Date | string
+  }
+
+  export type PartyRoleEntryWhereInput = {
+    AND?: PartyRoleEntryWhereInput | PartyRoleEntryWhereInput[]
+    OR?: PartyRoleEntryWhereInput[]
+    NOT?: PartyRoleEntryWhereInput | PartyRoleEntryWhereInput[]
+    id?: StringFilter<"PartyRoleEntry"> | string
+    organizationId?: StringFilter<"PartyRoleEntry"> | string
+    fullName?: StringFilter<"PartyRoleEntry"> | string
+    email?: StringFilter<"PartyRoleEntry"> | string
+    phoneNumber?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    avatarUrl?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    organizationSide?: EnumOrganizationSideFilter<"PartyRoleEntry"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFilter<"PartyRoleEntry"> | $Enums.PartyRoleType
+    roleTitle?: StringFilter<"PartyRoleEntry"> | string
+    mandateNotes?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    isActive?: BoolFilter<"PartyRoleEntry"> | boolean
+    createdAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
+    updatedAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    supervisingAgents?: AgentRegistryEntryListRelationFilter
+  }
+
+  export type PartyRoleEntryOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    fullName?: SortOrder
+    email?: SortOrder
+    phoneNumber?: SortOrderInput | SortOrder
+    avatarUrl?: SortOrderInput | SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    roleTitle?: SortOrder
+    mandateNotes?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    supervisingAgents?: AgentRegistryEntryOrderByRelationAggregateInput
+  }
+
+  export type PartyRoleEntryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PartyRoleEntryWhereInput | PartyRoleEntryWhereInput[]
+    OR?: PartyRoleEntryWhereInput[]
+    NOT?: PartyRoleEntryWhereInput | PartyRoleEntryWhereInput[]
+    organizationId?: StringFilter<"PartyRoleEntry"> | string
+    fullName?: StringFilter<"PartyRoleEntry"> | string
+    email?: StringFilter<"PartyRoleEntry"> | string
+    phoneNumber?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    avatarUrl?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    organizationSide?: EnumOrganizationSideFilter<"PartyRoleEntry"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFilter<"PartyRoleEntry"> | $Enums.PartyRoleType
+    roleTitle?: StringFilter<"PartyRoleEntry"> | string
+    mandateNotes?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    isActive?: BoolFilter<"PartyRoleEntry"> | boolean
+    createdAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
+    updatedAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    supervisingAgents?: AgentRegistryEntryListRelationFilter
+  }, "id">
+
+  export type PartyRoleEntryOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    fullName?: SortOrder
+    email?: SortOrder
+    phoneNumber?: SortOrderInput | SortOrder
+    avatarUrl?: SortOrderInput | SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    roleTitle?: SortOrder
+    mandateNotes?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PartyRoleEntryCountOrderByAggregateInput
+    _max?: PartyRoleEntryMaxOrderByAggregateInput
+    _min?: PartyRoleEntryMinOrderByAggregateInput
+  }
+
+  export type PartyRoleEntryScalarWhereWithAggregatesInput = {
+    AND?: PartyRoleEntryScalarWhereWithAggregatesInput | PartyRoleEntryScalarWhereWithAggregatesInput[]
+    OR?: PartyRoleEntryScalarWhereWithAggregatesInput[]
+    NOT?: PartyRoleEntryScalarWhereWithAggregatesInput | PartyRoleEntryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PartyRoleEntry"> | string
+    organizationId?: StringWithAggregatesFilter<"PartyRoleEntry"> | string
+    fullName?: StringWithAggregatesFilter<"PartyRoleEntry"> | string
+    email?: StringWithAggregatesFilter<"PartyRoleEntry"> | string
+    phoneNumber?: StringNullableWithAggregatesFilter<"PartyRoleEntry"> | string | null
+    avatarUrl?: StringNullableWithAggregatesFilter<"PartyRoleEntry"> | string | null
+    organizationSide?: EnumOrganizationSideWithAggregatesFilter<"PartyRoleEntry"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeWithAggregatesFilter<"PartyRoleEntry"> | $Enums.PartyRoleType
+    roleTitle?: StringWithAggregatesFilter<"PartyRoleEntry"> | string
+    mandateNotes?: StringNullableWithAggregatesFilter<"PartyRoleEntry"> | string | null
+    isActive?: BoolWithAggregatesFilter<"PartyRoleEntry"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"PartyRoleEntry"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PartyRoleEntry"> | Date | string
+  }
+
+  export type AgentRegistryEntryWhereInput = {
+    AND?: AgentRegistryEntryWhereInput | AgentRegistryEntryWhereInput[]
+    OR?: AgentRegistryEntryWhereInput[]
+    NOT?: AgentRegistryEntryWhereInput | AgentRegistryEntryWhereInput[]
+    id?: StringFilter<"AgentRegistryEntry"> | string
+    organizationId?: StringFilter<"AgentRegistryEntry"> | string
+    agentName?: StringFilter<"AgentRegistryEntry"> | string
+    agentType?: EnumAgentTypeFilter<"AgentRegistryEntry"> | $Enums.AgentType
+    purpose?: StringFilter<"AgentRegistryEntry"> | string
+    scopeOfWork?: StringFilter<"AgentRegistryEntry"> | string
+    allowedArtifactTypes?: StringNullableListFilter<"AgentRegistryEntry">
+    allowedActions?: StringNullableListFilter<"AgentRegistryEntry">
+    supervisingPartyRoleId?: StringFilter<"AgentRegistryEntry"> | string
+    isActive?: BoolFilter<"AgentRegistryEntry"> | boolean
+    createdAt?: DateTimeFilter<"AgentRegistryEntry"> | Date | string
+    updatedAt?: DateTimeFilter<"AgentRegistryEntry"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    supervisingPartyRole?: XOR<PartyRoleEntryScalarRelationFilter, PartyRoleEntryWhereInput>
+  }
+
+  export type AgentRegistryEntryOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    agentName?: SortOrder
+    agentType?: SortOrder
+    purpose?: SortOrder
+    scopeOfWork?: SortOrder
+    allowedArtifactTypes?: SortOrder
+    allowedActions?: SortOrder
+    supervisingPartyRoleId?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    supervisingPartyRole?: PartyRoleEntryOrderByWithRelationInput
+  }
+
+  export type AgentRegistryEntryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: AgentRegistryEntryWhereInput | AgentRegistryEntryWhereInput[]
+    OR?: AgentRegistryEntryWhereInput[]
+    NOT?: AgentRegistryEntryWhereInput | AgentRegistryEntryWhereInput[]
+    organizationId?: StringFilter<"AgentRegistryEntry"> | string
+    agentName?: StringFilter<"AgentRegistryEntry"> | string
+    agentType?: EnumAgentTypeFilter<"AgentRegistryEntry"> | $Enums.AgentType
+    purpose?: StringFilter<"AgentRegistryEntry"> | string
+    scopeOfWork?: StringFilter<"AgentRegistryEntry"> | string
+    allowedArtifactTypes?: StringNullableListFilter<"AgentRegistryEntry">
+    allowedActions?: StringNullableListFilter<"AgentRegistryEntry">
+    supervisingPartyRoleId?: StringFilter<"AgentRegistryEntry"> | string
+    isActive?: BoolFilter<"AgentRegistryEntry"> | boolean
+    createdAt?: DateTimeFilter<"AgentRegistryEntry"> | Date | string
+    updatedAt?: DateTimeFilter<"AgentRegistryEntry"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    supervisingPartyRole?: XOR<PartyRoleEntryScalarRelationFilter, PartyRoleEntryWhereInput>
+  }, "id">
+
+  export type AgentRegistryEntryOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    agentName?: SortOrder
+    agentType?: SortOrder
+    purpose?: SortOrder
+    scopeOfWork?: SortOrder
+    allowedArtifactTypes?: SortOrder
+    allowedActions?: SortOrder
+    supervisingPartyRoleId?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AgentRegistryEntryCountOrderByAggregateInput
+    _max?: AgentRegistryEntryMaxOrderByAggregateInput
+    _min?: AgentRegistryEntryMinOrderByAggregateInput
+  }
+
+  export type AgentRegistryEntryScalarWhereWithAggregatesInput = {
+    AND?: AgentRegistryEntryScalarWhereWithAggregatesInput | AgentRegistryEntryScalarWhereWithAggregatesInput[]
+    OR?: AgentRegistryEntryScalarWhereWithAggregatesInput[]
+    NOT?: AgentRegistryEntryScalarWhereWithAggregatesInput | AgentRegistryEntryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AgentRegistryEntry"> | string
+    organizationId?: StringWithAggregatesFilter<"AgentRegistryEntry"> | string
+    agentName?: StringWithAggregatesFilter<"AgentRegistryEntry"> | string
+    agentType?: EnumAgentTypeWithAggregatesFilter<"AgentRegistryEntry"> | $Enums.AgentType
+    purpose?: StringWithAggregatesFilter<"AgentRegistryEntry"> | string
+    scopeOfWork?: StringWithAggregatesFilter<"AgentRegistryEntry"> | string
+    allowedArtifactTypes?: StringNullableListFilter<"AgentRegistryEntry">
+    allowedActions?: StringNullableListFilter<"AgentRegistryEntry">
+    supervisingPartyRoleId?: StringWithAggregatesFilter<"AgentRegistryEntry"> | string
+    isActive?: BoolWithAggregatesFilter<"AgentRegistryEntry"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"AgentRegistryEntry"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AgentRegistryEntry"> | Date | string
+  }
+
+  export type GovernanceRoleRequirementWhereInput = {
+    AND?: GovernanceRoleRequirementWhereInput | GovernanceRoleRequirementWhereInput[]
+    OR?: GovernanceRoleRequirementWhereInput[]
+    NOT?: GovernanceRoleRequirementWhereInput | GovernanceRoleRequirementWhereInput[]
+    id?: StringFilter<"GovernanceRoleRequirement"> | string
+    organizationId?: StringFilter<"GovernanceRoleRequirement"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"GovernanceRoleRequirement"> | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFilter<"GovernanceRoleRequirement"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFilter<"GovernanceRoleRequirement"> | $Enums.PartyRoleType
+    minimumCount?: IntFilter<"GovernanceRoleRequirement"> | number
+    rationale?: StringFilter<"GovernanceRoleRequirement"> | string
+    createdAt?: DateTimeFilter<"GovernanceRoleRequirement"> | Date | string
+    updatedAt?: DateTimeFilter<"GovernanceRoleRequirement"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type GovernanceRoleRequirementOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    minimumCount?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type GovernanceRoleRequirementWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_aiAccelerationLevel_organizationSide_roleType?: GovernanceRoleRequirementOrganizationIdAiAccelerationLevelOrganizationSideRoleTypeCompoundUniqueInput
+    AND?: GovernanceRoleRequirementWhereInput | GovernanceRoleRequirementWhereInput[]
+    OR?: GovernanceRoleRequirementWhereInput[]
+    NOT?: GovernanceRoleRequirementWhereInput | GovernanceRoleRequirementWhereInput[]
+    organizationId?: StringFilter<"GovernanceRoleRequirement"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"GovernanceRoleRequirement"> | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFilter<"GovernanceRoleRequirement"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFilter<"GovernanceRoleRequirement"> | $Enums.PartyRoleType
+    minimumCount?: IntFilter<"GovernanceRoleRequirement"> | number
+    rationale?: StringFilter<"GovernanceRoleRequirement"> | string
+    createdAt?: DateTimeFilter<"GovernanceRoleRequirement"> | Date | string
+    updatedAt?: DateTimeFilter<"GovernanceRoleRequirement"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "organizationId_aiAccelerationLevel_organizationSide_roleType">
+
+  export type GovernanceRoleRequirementOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    minimumCount?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: GovernanceRoleRequirementCountOrderByAggregateInput
+    _avg?: GovernanceRoleRequirementAvgOrderByAggregateInput
+    _max?: GovernanceRoleRequirementMaxOrderByAggregateInput
+    _min?: GovernanceRoleRequirementMinOrderByAggregateInput
+    _sum?: GovernanceRoleRequirementSumOrderByAggregateInput
+  }
+
+  export type GovernanceRoleRequirementScalarWhereWithAggregatesInput = {
+    AND?: GovernanceRoleRequirementScalarWhereWithAggregatesInput | GovernanceRoleRequirementScalarWhereWithAggregatesInput[]
+    OR?: GovernanceRoleRequirementScalarWhereWithAggregatesInput[]
+    NOT?: GovernanceRoleRequirementScalarWhereWithAggregatesInput | GovernanceRoleRequirementScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"GovernanceRoleRequirement"> | string
+    organizationId?: StringWithAggregatesFilter<"GovernanceRoleRequirement"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelWithAggregatesFilter<"GovernanceRoleRequirement"> | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideWithAggregatesFilter<"GovernanceRoleRequirement"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeWithAggregatesFilter<"GovernanceRoleRequirement"> | $Enums.PartyRoleType
+    minimumCount?: IntWithAggregatesFilter<"GovernanceRoleRequirement"> | number
+    rationale?: StringWithAggregatesFilter<"GovernanceRoleRequirement"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"GovernanceRoleRequirement"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"GovernanceRoleRequirement"> | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleWhereInput = {
+    AND?: GovernanceRiskCombinationRuleWhereInput | GovernanceRiskCombinationRuleWhereInput[]
+    OR?: GovernanceRiskCombinationRuleWhereInput[]
+    NOT?: GovernanceRiskCombinationRuleWhereInput | GovernanceRiskCombinationRuleWhereInput[]
+    id?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    organizationId?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"GovernanceRiskCombinationRule"> | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    rationale?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    createdAt?: DateTimeFilter<"GovernanceRiskCombinationRule"> | Date | string
+    updatedAt?: DateTimeFilter<"GovernanceRiskCombinationRule"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type GovernanceRiskCombinationRuleOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    primaryRoleType?: SortOrder
+    conflictingRoleType?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type GovernanceRiskCombinationRuleWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_aiAccelerationLevel_primaryRoleType_conflictingRoleType?: GovernanceRiskCombinationRuleOrganizationIdAiAccelerationLevelPrimaryRoleTypeConflictingRoleTypeCompoundUniqueInput
+    AND?: GovernanceRiskCombinationRuleWhereInput | GovernanceRiskCombinationRuleWhereInput[]
+    OR?: GovernanceRiskCombinationRuleWhereInput[]
+    NOT?: GovernanceRiskCombinationRuleWhereInput | GovernanceRiskCombinationRuleWhereInput[]
+    organizationId?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"GovernanceRiskCombinationRule"> | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    rationale?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    createdAt?: DateTimeFilter<"GovernanceRiskCombinationRule"> | Date | string
+    updatedAt?: DateTimeFilter<"GovernanceRiskCombinationRule"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "organizationId_aiAccelerationLevel_primaryRoleType_conflictingRoleType">
+
+  export type GovernanceRiskCombinationRuleOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    primaryRoleType?: SortOrder
+    conflictingRoleType?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: GovernanceRiskCombinationRuleCountOrderByAggregateInput
+    _max?: GovernanceRiskCombinationRuleMaxOrderByAggregateInput
+    _min?: GovernanceRiskCombinationRuleMinOrderByAggregateInput
+  }
+
+  export type GovernanceRiskCombinationRuleScalarWhereWithAggregatesInput = {
+    AND?: GovernanceRiskCombinationRuleScalarWhereWithAggregatesInput | GovernanceRiskCombinationRuleScalarWhereWithAggregatesInput[]
+    OR?: GovernanceRiskCombinationRuleScalarWhereWithAggregatesInput[]
+    NOT?: GovernanceRiskCombinationRuleScalarWhereWithAggregatesInput | GovernanceRiskCombinationRuleScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"GovernanceRiskCombinationRule"> | string
+    organizationId?: StringWithAggregatesFilter<"GovernanceRiskCombinationRule"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelWithAggregatesFilter<"GovernanceRiskCombinationRule"> | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeWithAggregatesFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeWithAggregatesFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    rationale?: StringWithAggregatesFilter<"GovernanceRiskCombinationRule"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"GovernanceRiskCombinationRule"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"GovernanceRiskCombinationRule"> | Date | string
   }
 
   export type OutcomeWhereInput = {
@@ -18174,6 +23814,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -18191,6 +23835,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
@@ -18208,6 +23856,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -18225,6 +23877,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -18388,6 +24044,383 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     role?: EnumMembershipRoleFieldUpdateOperationsInput | $Enums.MembershipRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PartyRoleEntryCreateInput = {
+    id: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPartyRoleEntriesInput
+    supervisingAgents?: AgentRegistryEntryCreateNestedManyWithoutSupervisingPartyRoleInput
+  }
+
+  export type PartyRoleEntryUncheckedCreateInput = {
+    id: string
+    organizationId: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supervisingAgents?: AgentRegistryEntryUncheckedCreateNestedManyWithoutSupervisingPartyRoleInput
+  }
+
+  export type PartyRoleEntryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPartyRoleEntriesNestedInput
+    supervisingAgents?: AgentRegistryEntryUpdateManyWithoutSupervisingPartyRoleNestedInput
+  }
+
+  export type PartyRoleEntryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisingAgents?: AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleNestedInput
+  }
+
+  export type PartyRoleEntryCreateManyInput = {
+    id: string
+    organizationId: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PartyRoleEntryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PartyRoleEntryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRegistryEntryCreateInput = {
+    id: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutAgentRegistryEntriesInput
+    supervisingPartyRole: PartyRoleEntryCreateNestedOneWithoutSupervisingAgentsInput
+  }
+
+  export type AgentRegistryEntryUncheckedCreateInput = {
+    id: string
+    organizationId: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    supervisingPartyRoleId: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentRegistryEntryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutAgentRegistryEntriesNestedInput
+    supervisingPartyRole?: PartyRoleEntryUpdateOneRequiredWithoutSupervisingAgentsNestedInput
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    supervisingPartyRoleId?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRegistryEntryCreateManyInput = {
+    id: string
+    organizationId: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    supervisingPartyRoleId: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentRegistryEntryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    supervisingPartyRoleId?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRoleRequirementCreateInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    minimumCount: number
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutGovernanceRoleRequirementsInput
+  }
+
+  export type GovernanceRoleRequirementUncheckedCreateInput = {
+    id: string
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    minimumCount: number
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRoleRequirementUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    minimumCount?: IntFieldUpdateOperationsInput | number
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutGovernanceRoleRequirementsNestedInput
+  }
+
+  export type GovernanceRoleRequirementUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    minimumCount?: IntFieldUpdateOperationsInput | number
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRoleRequirementCreateManyInput = {
+    id: string
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    minimumCount: number
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRoleRequirementUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    minimumCount?: IntFieldUpdateOperationsInput | number
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRoleRequirementUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    minimumCount?: IntFieldUpdateOperationsInput | number
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleCreateInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutGovernanceRiskCombinationRulesInput
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedCreateInput = {
+    id: string
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutGovernanceRiskCombinationRulesNestedInput
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleCreateManyInput = {
+    id: string
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    rationale?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -19660,6 +25693,30 @@ export namespace Prisma {
     none?: ArtifactAasCandidateWhereInput
   }
 
+  export type PartyRoleEntryListRelationFilter = {
+    every?: PartyRoleEntryWhereInput
+    some?: PartyRoleEntryWhereInput
+    none?: PartyRoleEntryWhereInput
+  }
+
+  export type AgentRegistryEntryListRelationFilter = {
+    every?: AgentRegistryEntryWhereInput
+    some?: AgentRegistryEntryWhereInput
+    none?: AgentRegistryEntryWhereInput
+  }
+
+  export type GovernanceRoleRequirementListRelationFilter = {
+    every?: GovernanceRoleRequirementWhereInput
+    some?: GovernanceRoleRequirementWhereInput
+    none?: GovernanceRoleRequirementWhereInput
+  }
+
+  export type GovernanceRiskCombinationRuleListRelationFilter = {
+    every?: GovernanceRiskCombinationRuleWhereInput
+    some?: GovernanceRiskCombinationRuleWhereInput
+    none?: GovernanceRiskCombinationRuleWhereInput
+  }
+
   export type MembershipOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -19693,6 +25750,22 @@ export namespace Prisma {
   }
 
   export type ArtifactAasCandidateOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PartyRoleEntryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AgentRegistryEntryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type GovernanceRoleRequirementOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type GovernanceRiskCombinationRuleOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -19873,11 +25946,170 @@ export namespace Prisma {
     _max?: NestedEnumMembershipRoleFilter<$PrismaModel>
   }
 
-  export type EnumRiskProfileFilter<$PrismaModel = never> = {
-    equals?: $Enums.RiskProfile | EnumRiskProfileFieldRefInput<$PrismaModel>
-    in?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
-    notIn?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
-    not?: NestedEnumRiskProfileFilter<$PrismaModel> | $Enums.RiskProfile
+  export type EnumOrganizationSideFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrganizationSide | EnumOrganizationSideFieldRefInput<$PrismaModel>
+    in?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrganizationSideFilter<$PrismaModel> | $Enums.OrganizationSide
+  }
+
+  export type EnumPartyRoleTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.PartyRoleType | EnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPartyRoleTypeFilter<$PrismaModel> | $Enums.PartyRoleType
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type PartyRoleEntryCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    fullName?: SortOrder
+    email?: SortOrder
+    phoneNumber?: SortOrder
+    avatarUrl?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    roleTitle?: SortOrder
+    mandateNotes?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PartyRoleEntryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    fullName?: SortOrder
+    email?: SortOrder
+    phoneNumber?: SortOrder
+    avatarUrl?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    roleTitle?: SortOrder
+    mandateNotes?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PartyRoleEntryMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    fullName?: SortOrder
+    email?: SortOrder
+    phoneNumber?: SortOrder
+    avatarUrl?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    roleTitle?: SortOrder
+    mandateNotes?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumOrganizationSideWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrganizationSide | EnumOrganizationSideFieldRefInput<$PrismaModel>
+    in?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrganizationSideWithAggregatesFilter<$PrismaModel> | $Enums.OrganizationSide
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrganizationSideFilter<$PrismaModel>
+    _max?: NestedEnumOrganizationSideFilter<$PrismaModel>
+  }
+
+  export type EnumPartyRoleTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PartyRoleType | EnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPartyRoleTypeWithAggregatesFilter<$PrismaModel> | $Enums.PartyRoleType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPartyRoleTypeFilter<$PrismaModel>
+    _max?: NestedEnumPartyRoleTypeFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type EnumAgentTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentType | EnumAgentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentTypeFilter<$PrismaModel> | $Enums.AgentType
+  }
+
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type PartyRoleEntryScalarRelationFilter = {
+    is?: PartyRoleEntryWhereInput
+    isNot?: PartyRoleEntryWhereInput
+  }
+
+  export type AgentRegistryEntryCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    agentName?: SortOrder
+    agentType?: SortOrder
+    purpose?: SortOrder
+    scopeOfWork?: SortOrder
+    allowedArtifactTypes?: SortOrder
+    allowedActions?: SortOrder
+    supervisingPartyRoleId?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgentRegistryEntryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    agentName?: SortOrder
+    agentType?: SortOrder
+    purpose?: SortOrder
+    scopeOfWork?: SortOrder
+    supervisingPartyRoleId?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgentRegistryEntryMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    agentName?: SortOrder
+    agentType?: SortOrder
+    purpose?: SortOrder
+    scopeOfWork?: SortOrder
+    supervisingPartyRoleId?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumAgentTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentType | EnumAgentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentTypeWithAggregatesFilter<$PrismaModel> | $Enums.AgentType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAgentTypeFilter<$PrismaModel>
+    _max?: NestedEnumAgentTypeFilter<$PrismaModel>
   }
 
   export type EnumAiAccelerationLevelFilter<$PrismaModel = never> = {
@@ -19885,6 +26117,141 @@ export namespace Prisma {
     in?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
     notIn?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
     not?: NestedEnumAiAccelerationLevelFilter<$PrismaModel> | $Enums.AiAccelerationLevel
+  }
+
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type GovernanceRoleRequirementOrganizationIdAiAccelerationLevelOrganizationSideRoleTypeCompoundUniqueInput = {
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+  }
+
+  export type GovernanceRoleRequirementCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    minimumCount?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type GovernanceRoleRequirementAvgOrderByAggregateInput = {
+    minimumCount?: SortOrder
+  }
+
+  export type GovernanceRoleRequirementMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    minimumCount?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type GovernanceRoleRequirementMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    organizationSide?: SortOrder
+    roleType?: SortOrder
+    minimumCount?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type GovernanceRoleRequirementSumOrderByAggregateInput = {
+    minimumCount?: SortOrder
+  }
+
+  export type EnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AiAccelerationLevel | EnumAiAccelerationLevelFieldRefInput<$PrismaModel>
+    in?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
+    not?: NestedEnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel> | $Enums.AiAccelerationLevel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
+    _max?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type GovernanceRiskCombinationRuleOrganizationIdAiAccelerationLevelPrimaryRoleTypeConflictingRoleTypeCompoundUniqueInput = {
+    organizationId: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+  }
+
+  export type GovernanceRiskCombinationRuleCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    primaryRoleType?: SortOrder
+    conflictingRoleType?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type GovernanceRiskCombinationRuleMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    primaryRoleType?: SortOrder
+    conflictingRoleType?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type GovernanceRiskCombinationRuleMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    aiAccelerationLevel?: SortOrder
+    primaryRoleType?: SortOrder
+    conflictingRoleType?: SortOrder
+    rationale?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumRiskProfileFilter<$PrismaModel = never> = {
+    equals?: $Enums.RiskProfile | EnumRiskProfileFieldRefInput<$PrismaModel>
+    in?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
+    not?: NestedEnumRiskProfileFilter<$PrismaModel> | $Enums.RiskProfile
   }
 
   export type EnumOutcomeStatusFilter<$PrismaModel = never> = {
@@ -20039,16 +26406,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumRiskProfileFilter<$PrismaModel>
     _max?: NestedEnumRiskProfileFilter<$PrismaModel>
-  }
-
-  export type EnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.AiAccelerationLevel | EnumAiAccelerationLevelFieldRefInput<$PrismaModel>
-    in?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
-    notIn?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
-    not?: NestedEnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel> | $Enums.AiAccelerationLevel
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
-    _max?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
   }
 
   export type EnumOutcomeStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -20223,14 +26580,6 @@ export namespace Prisma {
     in?: $Enums.StoryType[] | ListEnumStoryTypeFieldRefInput<$PrismaModel>
     notIn?: $Enums.StoryType[] | ListEnumStoryTypeFieldRefInput<$PrismaModel>
     not?: NestedEnumStoryTypeFilter<$PrismaModel> | $Enums.StoryType
-  }
-
-  export type StringNullableListFilter<$PrismaModel = never> = {
-    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    has?: string | StringFieldRefInput<$PrismaModel> | null
-    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
-    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
-    isEmpty?: boolean
   }
 
   export type EnumStoryStatusFilter<$PrismaModel = never> = {
@@ -20623,17 +26972,6 @@ export namespace Prisma {
     _max?: NestedEnumArtifactIntakeSessionStatusFilter<$PrismaModel>
   }
 
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
-  }
-
   export type EnumArtifactSourceTypeStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.ArtifactSourceTypeStatus | EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
     in?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
@@ -20723,22 +27061,6 @@ export namespace Prisma {
     sizeBytes?: SortOrder
   }
 
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
   export type EnumArtifactSourceTypeStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ArtifactSourceTypeStatus | EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
     in?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
@@ -20825,11 +27147,6 @@ export namespace Prisma {
     in?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel> | $Enums.ArtifactCandidateReviewStatus
-  }
-
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type EnumArtifactAasCandidateTypeNullableFilter<$PrismaModel = never> = {
@@ -21012,14 +27329,6 @@ export namespace Prisma {
     _max?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel>
   }
 
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
   export type EnumArtifactAasCandidateTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ArtifactAasCandidateType | EnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.ArtifactAasCandidateType[] | ListEnumArtifactAasCandidateTypeFieldRefInput<$PrismaModel> | null
@@ -21093,6 +27402,34 @@ export namespace Prisma {
     connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
   }
 
+  export type PartyRoleEntryCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutOrganizationInput, PartyRoleEntryUncheckedCreateWithoutOrganizationInput> | PartyRoleEntryCreateWithoutOrganizationInput[] | PartyRoleEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutOrganizationInput | PartyRoleEntryCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PartyRoleEntryCreateManyOrganizationInputEnvelope
+    connect?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+  }
+
+  export type AgentRegistryEntryCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutOrganizationInput, AgentRegistryEntryUncheckedCreateWithoutOrganizationInput> | AgentRegistryEntryCreateWithoutOrganizationInput[] | AgentRegistryEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutOrganizationInput | AgentRegistryEntryCreateOrConnectWithoutOrganizationInput[]
+    createMany?: AgentRegistryEntryCreateManyOrganizationInputEnvelope
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+  }
+
+  export type GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<GovernanceRoleRequirementCreateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput> | GovernanceRoleRequirementCreateWithoutOrganizationInput[] | GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput | GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput[]
+    createMany?: GovernanceRoleRequirementCreateManyOrganizationInputEnvelope
+    connect?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+  }
+
+  export type GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<GovernanceRiskCombinationRuleCreateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput> | GovernanceRiskCombinationRuleCreateWithoutOrganizationInput[] | GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput | GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput[]
+    createMany?: GovernanceRiskCombinationRuleCreateManyOrganizationInputEnvelope
+    connect?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+  }
+
   export type MembershipUncheckedCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -21154,6 +27491,34 @@ export namespace Prisma {
     connectOrCreate?: ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput | ArtifactAasCandidateCreateOrConnectWithoutOrganizationInput[]
     createMany?: ArtifactAasCandidateCreateManyOrganizationInputEnvelope
     connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
+  }
+
+  export type PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutOrganizationInput, PartyRoleEntryUncheckedCreateWithoutOrganizationInput> | PartyRoleEntryCreateWithoutOrganizationInput[] | PartyRoleEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutOrganizationInput | PartyRoleEntryCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PartyRoleEntryCreateManyOrganizationInputEnvelope
+    connect?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+  }
+
+  export type AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutOrganizationInput, AgentRegistryEntryUncheckedCreateWithoutOrganizationInput> | AgentRegistryEntryCreateWithoutOrganizationInput[] | AgentRegistryEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutOrganizationInput | AgentRegistryEntryCreateOrConnectWithoutOrganizationInput[]
+    createMany?: AgentRegistryEntryCreateManyOrganizationInputEnvelope
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+  }
+
+  export type GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<GovernanceRoleRequirementCreateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput> | GovernanceRoleRequirementCreateWithoutOrganizationInput[] | GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput | GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput[]
+    createMany?: GovernanceRoleRequirementCreateManyOrganizationInputEnvelope
+    connect?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<GovernanceRiskCombinationRuleCreateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput> | GovernanceRiskCombinationRuleCreateWithoutOrganizationInput[] | GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput | GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput[]
+    createMany?: GovernanceRiskCombinationRuleCreateManyOrganizationInputEnvelope
+    connect?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -21290,6 +27655,62 @@ export namespace Prisma {
     deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
   }
 
+  export type PartyRoleEntryUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutOrganizationInput, PartyRoleEntryUncheckedCreateWithoutOrganizationInput> | PartyRoleEntryCreateWithoutOrganizationInput[] | PartyRoleEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutOrganizationInput | PartyRoleEntryCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PartyRoleEntryUpsertWithWhereUniqueWithoutOrganizationInput | PartyRoleEntryUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PartyRoleEntryCreateManyOrganizationInputEnvelope
+    set?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    disconnect?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    delete?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    connect?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    update?: PartyRoleEntryUpdateWithWhereUniqueWithoutOrganizationInput | PartyRoleEntryUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PartyRoleEntryUpdateManyWithWhereWithoutOrganizationInput | PartyRoleEntryUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PartyRoleEntryScalarWhereInput | PartyRoleEntryScalarWhereInput[]
+  }
+
+  export type AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutOrganizationInput, AgentRegistryEntryUncheckedCreateWithoutOrganizationInput> | AgentRegistryEntryCreateWithoutOrganizationInput[] | AgentRegistryEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutOrganizationInput | AgentRegistryEntryCreateOrConnectWithoutOrganizationInput[]
+    upsert?: AgentRegistryEntryUpsertWithWhereUniqueWithoutOrganizationInput | AgentRegistryEntryUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: AgentRegistryEntryCreateManyOrganizationInputEnvelope
+    set?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    disconnect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    delete?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    update?: AgentRegistryEntryUpdateWithWhereUniqueWithoutOrganizationInput | AgentRegistryEntryUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: AgentRegistryEntryUpdateManyWithWhereWithoutOrganizationInput | AgentRegistryEntryUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
+  }
+
+  export type GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<GovernanceRoleRequirementCreateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput> | GovernanceRoleRequirementCreateWithoutOrganizationInput[] | GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput | GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput[]
+    upsert?: GovernanceRoleRequirementUpsertWithWhereUniqueWithoutOrganizationInput | GovernanceRoleRequirementUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: GovernanceRoleRequirementCreateManyOrganizationInputEnvelope
+    set?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    disconnect?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    delete?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    connect?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    update?: GovernanceRoleRequirementUpdateWithWhereUniqueWithoutOrganizationInput | GovernanceRoleRequirementUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: GovernanceRoleRequirementUpdateManyWithWhereWithoutOrganizationInput | GovernanceRoleRequirementUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: GovernanceRoleRequirementScalarWhereInput | GovernanceRoleRequirementScalarWhereInput[]
+  }
+
+  export type GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<GovernanceRiskCombinationRuleCreateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput> | GovernanceRiskCombinationRuleCreateWithoutOrganizationInput[] | GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput | GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput[]
+    upsert?: GovernanceRiskCombinationRuleUpsertWithWhereUniqueWithoutOrganizationInput | GovernanceRiskCombinationRuleUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: GovernanceRiskCombinationRuleCreateManyOrganizationInputEnvelope
+    set?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    disconnect?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    delete?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    connect?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    update?: GovernanceRiskCombinationRuleUpdateWithWhereUniqueWithoutOrganizationInput | GovernanceRiskCombinationRuleUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: GovernanceRiskCombinationRuleUpdateManyWithWhereWithoutOrganizationInput | GovernanceRiskCombinationRuleUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: GovernanceRiskCombinationRuleScalarWhereInput | GovernanceRiskCombinationRuleScalarWhereInput[]
+  }
+
   export type MembershipUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<MembershipCreateWithoutOrganizationInput, MembershipUncheckedCreateWithoutOrganizationInput> | MembershipCreateWithoutOrganizationInput[] | MembershipUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: MembershipCreateOrConnectWithoutOrganizationInput | MembershipCreateOrConnectWithoutOrganizationInput[]
@@ -21414,6 +27835,62 @@ export namespace Prisma {
     update?: ArtifactAasCandidateUpdateWithWhereUniqueWithoutOrganizationInput | ArtifactAasCandidateUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: ArtifactAasCandidateUpdateManyWithWhereWithoutOrganizationInput | ArtifactAasCandidateUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: ArtifactAasCandidateScalarWhereInput | ArtifactAasCandidateScalarWhereInput[]
+  }
+
+  export type PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutOrganizationInput, PartyRoleEntryUncheckedCreateWithoutOrganizationInput> | PartyRoleEntryCreateWithoutOrganizationInput[] | PartyRoleEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutOrganizationInput | PartyRoleEntryCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PartyRoleEntryUpsertWithWhereUniqueWithoutOrganizationInput | PartyRoleEntryUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PartyRoleEntryCreateManyOrganizationInputEnvelope
+    set?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    disconnect?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    delete?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    connect?: PartyRoleEntryWhereUniqueInput | PartyRoleEntryWhereUniqueInput[]
+    update?: PartyRoleEntryUpdateWithWhereUniqueWithoutOrganizationInput | PartyRoleEntryUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PartyRoleEntryUpdateManyWithWhereWithoutOrganizationInput | PartyRoleEntryUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PartyRoleEntryScalarWhereInput | PartyRoleEntryScalarWhereInput[]
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutOrganizationInput, AgentRegistryEntryUncheckedCreateWithoutOrganizationInput> | AgentRegistryEntryCreateWithoutOrganizationInput[] | AgentRegistryEntryUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutOrganizationInput | AgentRegistryEntryCreateOrConnectWithoutOrganizationInput[]
+    upsert?: AgentRegistryEntryUpsertWithWhereUniqueWithoutOrganizationInput | AgentRegistryEntryUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: AgentRegistryEntryCreateManyOrganizationInputEnvelope
+    set?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    disconnect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    delete?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    update?: AgentRegistryEntryUpdateWithWhereUniqueWithoutOrganizationInput | AgentRegistryEntryUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: AgentRegistryEntryUpdateManyWithWhereWithoutOrganizationInput | AgentRegistryEntryUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
+  }
+
+  export type GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<GovernanceRoleRequirementCreateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput> | GovernanceRoleRequirementCreateWithoutOrganizationInput[] | GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput | GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput[]
+    upsert?: GovernanceRoleRequirementUpsertWithWhereUniqueWithoutOrganizationInput | GovernanceRoleRequirementUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: GovernanceRoleRequirementCreateManyOrganizationInputEnvelope
+    set?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    disconnect?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    delete?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    connect?: GovernanceRoleRequirementWhereUniqueInput | GovernanceRoleRequirementWhereUniqueInput[]
+    update?: GovernanceRoleRequirementUpdateWithWhereUniqueWithoutOrganizationInput | GovernanceRoleRequirementUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: GovernanceRoleRequirementUpdateManyWithWhereWithoutOrganizationInput | GovernanceRoleRequirementUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: GovernanceRoleRequirementScalarWhereInput | GovernanceRoleRequirementScalarWhereInput[]
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<GovernanceRiskCombinationRuleCreateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput> | GovernanceRiskCombinationRuleCreateWithoutOrganizationInput[] | GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput | GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput[]
+    upsert?: GovernanceRiskCombinationRuleUpsertWithWhereUniqueWithoutOrganizationInput | GovernanceRiskCombinationRuleUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: GovernanceRiskCombinationRuleCreateManyOrganizationInputEnvelope
+    set?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    disconnect?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    delete?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    connect?: GovernanceRiskCombinationRuleWhereUniqueInput | GovernanceRiskCombinationRuleWhereUniqueInput[]
+    update?: GovernanceRiskCombinationRuleUpdateWithWhereUniqueWithoutOrganizationInput | GovernanceRiskCombinationRuleUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: GovernanceRiskCombinationRuleUpdateManyWithWhereWithoutOrganizationInput | GovernanceRiskCombinationRuleUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: GovernanceRiskCombinationRuleScalarWhereInput | GovernanceRiskCombinationRuleScalarWhereInput[]
   }
 
   export type MembershipCreateNestedManyWithoutUserInput = {
@@ -21704,6 +28181,164 @@ export namespace Prisma {
     update?: XOR<XOR<AppUserUpdateToOneWithWhereWithoutMembershipsInput, AppUserUpdateWithoutMembershipsInput>, AppUserUncheckedUpdateWithoutMembershipsInput>
   }
 
+  export type OrganizationCreateNestedOneWithoutPartyRoleEntriesInput = {
+    create?: XOR<OrganizationCreateWithoutPartyRoleEntriesInput, OrganizationUncheckedCreateWithoutPartyRoleEntriesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPartyRoleEntriesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type AgentRegistryEntryCreateNestedManyWithoutSupervisingPartyRoleInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput> | AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput[] | AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput | AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput[]
+    createMany?: AgentRegistryEntryCreateManySupervisingPartyRoleInputEnvelope
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+  }
+
+  export type AgentRegistryEntryUncheckedCreateNestedManyWithoutSupervisingPartyRoleInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput> | AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput[] | AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput | AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput[]
+    createMany?: AgentRegistryEntryCreateManySupervisingPartyRoleInputEnvelope
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+  }
+
+  export type EnumOrganizationSideFieldUpdateOperationsInput = {
+    set?: $Enums.OrganizationSide
+  }
+
+  export type EnumPartyRoleTypeFieldUpdateOperationsInput = {
+    set?: $Enums.PartyRoleType
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPartyRoleEntriesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPartyRoleEntriesInput, OrganizationUncheckedCreateWithoutPartyRoleEntriesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPartyRoleEntriesInput
+    upsert?: OrganizationUpsertWithoutPartyRoleEntriesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPartyRoleEntriesInput, OrganizationUpdateWithoutPartyRoleEntriesInput>, OrganizationUncheckedUpdateWithoutPartyRoleEntriesInput>
+  }
+
+  export type AgentRegistryEntryUpdateManyWithoutSupervisingPartyRoleNestedInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput> | AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput[] | AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput | AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput[]
+    upsert?: AgentRegistryEntryUpsertWithWhereUniqueWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpsertWithWhereUniqueWithoutSupervisingPartyRoleInput[]
+    createMany?: AgentRegistryEntryCreateManySupervisingPartyRoleInputEnvelope
+    set?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    disconnect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    delete?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    update?: AgentRegistryEntryUpdateWithWhereUniqueWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpdateWithWhereUniqueWithoutSupervisingPartyRoleInput[]
+    updateMany?: AgentRegistryEntryUpdateManyWithWhereWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpdateManyWithWhereWithoutSupervisingPartyRoleInput[]
+    deleteMany?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleNestedInput = {
+    create?: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput> | AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput[] | AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput[]
+    connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput | AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput[]
+    upsert?: AgentRegistryEntryUpsertWithWhereUniqueWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpsertWithWhereUniqueWithoutSupervisingPartyRoleInput[]
+    createMany?: AgentRegistryEntryCreateManySupervisingPartyRoleInputEnvelope
+    set?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    disconnect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    delete?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+    update?: AgentRegistryEntryUpdateWithWhereUniqueWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpdateWithWhereUniqueWithoutSupervisingPartyRoleInput[]
+    updateMany?: AgentRegistryEntryUpdateManyWithWhereWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpdateManyWithWhereWithoutSupervisingPartyRoleInput[]
+    deleteMany?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
+  }
+
+  export type AgentRegistryEntryCreateallowedArtifactTypesInput = {
+    set: string[]
+  }
+
+  export type AgentRegistryEntryCreateallowedActionsInput = {
+    set: string[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutAgentRegistryEntriesInput = {
+    create?: XOR<OrganizationCreateWithoutAgentRegistryEntriesInput, OrganizationUncheckedCreateWithoutAgentRegistryEntriesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutAgentRegistryEntriesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type PartyRoleEntryCreateNestedOneWithoutSupervisingAgentsInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutSupervisingAgentsInput, PartyRoleEntryUncheckedCreateWithoutSupervisingAgentsInput>
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutSupervisingAgentsInput
+    connect?: PartyRoleEntryWhereUniqueInput
+  }
+
+  export type EnumAgentTypeFieldUpdateOperationsInput = {
+    set?: $Enums.AgentType
+  }
+
+  export type AgentRegistryEntryUpdateallowedArtifactTypesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type AgentRegistryEntryUpdateallowedActionsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutAgentRegistryEntriesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutAgentRegistryEntriesInput, OrganizationUncheckedCreateWithoutAgentRegistryEntriesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutAgentRegistryEntriesInput
+    upsert?: OrganizationUpsertWithoutAgentRegistryEntriesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutAgentRegistryEntriesInput, OrganizationUpdateWithoutAgentRegistryEntriesInput>, OrganizationUncheckedUpdateWithoutAgentRegistryEntriesInput>
+  }
+
+  export type PartyRoleEntryUpdateOneRequiredWithoutSupervisingAgentsNestedInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutSupervisingAgentsInput, PartyRoleEntryUncheckedCreateWithoutSupervisingAgentsInput>
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutSupervisingAgentsInput
+    upsert?: PartyRoleEntryUpsertWithoutSupervisingAgentsInput
+    connect?: PartyRoleEntryWhereUniqueInput
+    update?: XOR<XOR<PartyRoleEntryUpdateToOneWithWhereWithoutSupervisingAgentsInput, PartyRoleEntryUpdateWithoutSupervisingAgentsInput>, PartyRoleEntryUncheckedUpdateWithoutSupervisingAgentsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutGovernanceRoleRequirementsInput = {
+    create?: XOR<OrganizationCreateWithoutGovernanceRoleRequirementsInput, OrganizationUncheckedCreateWithoutGovernanceRoleRequirementsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutGovernanceRoleRequirementsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type EnumAiAccelerationLevelFieldUpdateOperationsInput = {
+    set?: $Enums.AiAccelerationLevel
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutGovernanceRoleRequirementsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutGovernanceRoleRequirementsInput, OrganizationUncheckedCreateWithoutGovernanceRoleRequirementsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutGovernanceRoleRequirementsInput
+    upsert?: OrganizationUpsertWithoutGovernanceRoleRequirementsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutGovernanceRoleRequirementsInput, OrganizationUpdateWithoutGovernanceRoleRequirementsInput>, OrganizationUncheckedUpdateWithoutGovernanceRoleRequirementsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutGovernanceRiskCombinationRulesInput = {
+    create?: XOR<OrganizationCreateWithoutGovernanceRiskCombinationRulesInput, OrganizationUncheckedCreateWithoutGovernanceRiskCombinationRulesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutGovernanceRiskCombinationRulesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutGovernanceRiskCombinationRulesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutGovernanceRiskCombinationRulesInput, OrganizationUncheckedCreateWithoutGovernanceRiskCombinationRulesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutGovernanceRiskCombinationRulesInput
+    upsert?: OrganizationUpsertWithoutGovernanceRiskCombinationRulesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutGovernanceRiskCombinationRulesInput, OrganizationUpdateWithoutGovernanceRiskCombinationRulesInput>, OrganizationUncheckedUpdateWithoutGovernanceRiskCombinationRulesInput>
+  }
+
   export type OrganizationCreateNestedOneWithoutOutcomesInput = {
     create?: XOR<OrganizationCreateWithoutOutcomesInput, OrganizationUncheckedCreateWithoutOutcomesInput>
     connectOrCreate?: OrganizationCreateOrConnectWithoutOutcomesInput
@@ -21746,10 +28381,6 @@ export namespace Prisma {
 
   export type EnumRiskProfileFieldUpdateOperationsInput = {
     set?: $Enums.RiskProfile
-  }
-
-  export type EnumAiAccelerationLevelFieldUpdateOperationsInput = {
-    set?: $Enums.AiAccelerationLevel
   }
 
   export type EnumOutcomeStatusFieldUpdateOperationsInput = {
@@ -22253,14 +28884,6 @@ export namespace Prisma {
     connect?: ArtifactAasCandidateWhereUniqueInput | ArtifactAasCandidateWhereUniqueInput[]
   }
 
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
   export type EnumArtifactSourceTypeStatusFieldUpdateOperationsInput = {
     set?: $Enums.ArtifactSourceTypeStatus
   }
@@ -22381,10 +29004,6 @@ export namespace Prisma {
 
   export type EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput = {
     set?: $Enums.ArtifactCandidateReviewStatus
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type NullableEnumArtifactAasCandidateTypeFieldUpdateOperationsInput = {
@@ -22541,11 +29160,68 @@ export namespace Prisma {
     _max?: NestedEnumMembershipRoleFilter<$PrismaModel>
   }
 
-  export type NestedEnumRiskProfileFilter<$PrismaModel = never> = {
-    equals?: $Enums.RiskProfile | EnumRiskProfileFieldRefInput<$PrismaModel>
-    in?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
-    notIn?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
-    not?: NestedEnumRiskProfileFilter<$PrismaModel> | $Enums.RiskProfile
+  export type NestedEnumOrganizationSideFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrganizationSide | EnumOrganizationSideFieldRefInput<$PrismaModel>
+    in?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrganizationSideFilter<$PrismaModel> | $Enums.OrganizationSide
+  }
+
+  export type NestedEnumPartyRoleTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.PartyRoleType | EnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPartyRoleTypeFilter<$PrismaModel> | $Enums.PartyRoleType
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedEnumOrganizationSideWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrganizationSide | EnumOrganizationSideFieldRefInput<$PrismaModel>
+    in?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrganizationSide[] | ListEnumOrganizationSideFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrganizationSideWithAggregatesFilter<$PrismaModel> | $Enums.OrganizationSide
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrganizationSideFilter<$PrismaModel>
+    _max?: NestedEnumOrganizationSideFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPartyRoleTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PartyRoleType | EnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PartyRoleType[] | ListEnumPartyRoleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPartyRoleTypeWithAggregatesFilter<$PrismaModel> | $Enums.PartyRoleType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPartyRoleTypeFilter<$PrismaModel>
+    _max?: NestedEnumPartyRoleTypeFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAgentTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentType | EnumAgentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentTypeFilter<$PrismaModel> | $Enums.AgentType
+  }
+
+  export type NestedEnumAgentTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentType | EnumAgentTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentType[] | ListEnumAgentTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentTypeWithAggregatesFilter<$PrismaModel> | $Enums.AgentType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAgentTypeFilter<$PrismaModel>
+    _max?: NestedEnumAgentTypeFilter<$PrismaModel>
   }
 
   export type NestedEnumAiAccelerationLevelFilter<$PrismaModel = never> = {
@@ -22553,6 +29229,50 @@ export namespace Prisma {
     in?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
     notIn?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
     not?: NestedEnumAiAccelerationLevelFilter<$PrismaModel> | $Enums.AiAccelerationLevel
+  }
+
+  export type NestedEnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AiAccelerationLevel | EnumAiAccelerationLevelFieldRefInput<$PrismaModel>
+    in?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
+    not?: NestedEnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel> | $Enums.AiAccelerationLevel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
+    _max?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumRiskProfileFilter<$PrismaModel = never> = {
+    equals?: $Enums.RiskProfile | EnumRiskProfileFieldRefInput<$PrismaModel>
+    in?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RiskProfile[] | ListEnumRiskProfileFieldRefInput<$PrismaModel>
+    not?: NestedEnumRiskProfileFilter<$PrismaModel> | $Enums.RiskProfile
   }
 
   export type NestedEnumOutcomeStatusFilter<$PrismaModel = never> = {
@@ -22616,16 +29336,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumRiskProfileFilter<$PrismaModel>
     _max?: NestedEnumRiskProfileFilter<$PrismaModel>
-  }
-
-  export type NestedEnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.AiAccelerationLevel | EnumAiAccelerationLevelFieldRefInput<$PrismaModel>
-    in?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
-    notIn?: $Enums.AiAccelerationLevel[] | ListEnumAiAccelerationLevelFieldRefInput<$PrismaModel>
-    not?: NestedEnumAiAccelerationLevelWithAggregatesFilter<$PrismaModel> | $Enums.AiAccelerationLevel
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
-    _max?: NestedEnumAiAccelerationLevelFilter<$PrismaModel>
   }
 
   export type NestedEnumOutcomeStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -22899,33 +29609,6 @@ export namespace Prisma {
     not?: NestedEnumExtractionConfidenceNullableFilter<$PrismaModel> | $Enums.ExtractionConfidence | null
   }
 
-  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type NestedFloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
   export type NestedEnumArtifactSourceTypeStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.ArtifactSourceTypeStatus | EnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
     in?: $Enums.ArtifactSourceTypeStatus[] | ListEnumArtifactSourceTypeStatusFieldRefInput<$PrismaModel>
@@ -22989,11 +29672,6 @@ export namespace Prisma {
     in?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.ArtifactCandidateReviewStatus[] | ListEnumArtifactCandidateReviewStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel> | $Enums.ArtifactCandidateReviewStatus
-  }
-
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type NestedEnumArtifactAasCandidateTypeNullableFilter<$PrismaModel = never> = {
@@ -23074,14 +29752,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel>
     _max?: NestedEnumArtifactCandidateReviewStatusFilter<$PrismaModel>
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedEnumArtifactAasCandidateTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -23534,6 +30204,148 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PartyRoleEntryCreateWithoutOrganizationInput = {
+    id: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supervisingAgents?: AgentRegistryEntryCreateNestedManyWithoutSupervisingPartyRoleInput
+  }
+
+  export type PartyRoleEntryUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supervisingAgents?: AgentRegistryEntryUncheckedCreateNestedManyWithoutSupervisingPartyRoleInput
+  }
+
+  export type PartyRoleEntryCreateOrConnectWithoutOrganizationInput = {
+    where: PartyRoleEntryWhereUniqueInput
+    create: XOR<PartyRoleEntryCreateWithoutOrganizationInput, PartyRoleEntryUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PartyRoleEntryCreateManyOrganizationInputEnvelope = {
+    data: PartyRoleEntryCreateManyOrganizationInput | PartyRoleEntryCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AgentRegistryEntryCreateWithoutOrganizationInput = {
+    id: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supervisingPartyRole: PartyRoleEntryCreateNestedOneWithoutSupervisingAgentsInput
+  }
+
+  export type AgentRegistryEntryUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    supervisingPartyRoleId: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentRegistryEntryCreateOrConnectWithoutOrganizationInput = {
+    where: AgentRegistryEntryWhereUniqueInput
+    create: XOR<AgentRegistryEntryCreateWithoutOrganizationInput, AgentRegistryEntryUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type AgentRegistryEntryCreateManyOrganizationInputEnvelope = {
+    data: AgentRegistryEntryCreateManyOrganizationInput | AgentRegistryEntryCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type GovernanceRoleRequirementCreateWithoutOrganizationInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    minimumCount: number
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    minimumCount: number
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRoleRequirementCreateOrConnectWithoutOrganizationInput = {
+    where: GovernanceRoleRequirementWhereUniqueInput
+    create: XOR<GovernanceRoleRequirementCreateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type GovernanceRoleRequirementCreateManyOrganizationInputEnvelope = {
+    data: GovernanceRoleRequirementCreateManyOrganizationInput | GovernanceRoleRequirementCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type GovernanceRiskCombinationRuleCreateWithoutOrganizationInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleCreateOrConnectWithoutOrganizationInput = {
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+    create: XOR<GovernanceRiskCombinationRuleCreateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type GovernanceRiskCombinationRuleCreateManyOrganizationInputEnvelope = {
+    data: GovernanceRiskCombinationRuleCreateManyOrganizationInput | GovernanceRiskCombinationRuleCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type MembershipUpsertWithWhereUniqueWithoutOrganizationInput = {
     where: MembershipWhereUniqueInput
     update: XOR<MembershipUpdateWithoutOrganizationInput, MembershipUncheckedUpdateWithoutOrganizationInput>
@@ -23881,6 +30693,136 @@ export namespace Prisma {
     promotedAt?: DateTimeNullableFilter<"ArtifactAasCandidate"> | Date | string | null
     createdAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
     updatedAt?: DateTimeFilter<"ArtifactAasCandidate"> | Date | string
+  }
+
+  export type PartyRoleEntryUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PartyRoleEntryWhereUniqueInput
+    update: XOR<PartyRoleEntryUpdateWithoutOrganizationInput, PartyRoleEntryUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PartyRoleEntryCreateWithoutOrganizationInput, PartyRoleEntryUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PartyRoleEntryUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PartyRoleEntryWhereUniqueInput
+    data: XOR<PartyRoleEntryUpdateWithoutOrganizationInput, PartyRoleEntryUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PartyRoleEntryUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PartyRoleEntryScalarWhereInput
+    data: XOR<PartyRoleEntryUpdateManyMutationInput, PartyRoleEntryUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PartyRoleEntryScalarWhereInput = {
+    AND?: PartyRoleEntryScalarWhereInput | PartyRoleEntryScalarWhereInput[]
+    OR?: PartyRoleEntryScalarWhereInput[]
+    NOT?: PartyRoleEntryScalarWhereInput | PartyRoleEntryScalarWhereInput[]
+    id?: StringFilter<"PartyRoleEntry"> | string
+    organizationId?: StringFilter<"PartyRoleEntry"> | string
+    fullName?: StringFilter<"PartyRoleEntry"> | string
+    email?: StringFilter<"PartyRoleEntry"> | string
+    phoneNumber?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    avatarUrl?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    organizationSide?: EnumOrganizationSideFilter<"PartyRoleEntry"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFilter<"PartyRoleEntry"> | $Enums.PartyRoleType
+    roleTitle?: StringFilter<"PartyRoleEntry"> | string
+    mandateNotes?: StringNullableFilter<"PartyRoleEntry"> | string | null
+    isActive?: BoolFilter<"PartyRoleEntry"> | boolean
+    createdAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
+    updatedAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
+  }
+
+  export type AgentRegistryEntryUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: AgentRegistryEntryWhereUniqueInput
+    update: XOR<AgentRegistryEntryUpdateWithoutOrganizationInput, AgentRegistryEntryUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<AgentRegistryEntryCreateWithoutOrganizationInput, AgentRegistryEntryUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type AgentRegistryEntryUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: AgentRegistryEntryWhereUniqueInput
+    data: XOR<AgentRegistryEntryUpdateWithoutOrganizationInput, AgentRegistryEntryUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type AgentRegistryEntryUpdateManyWithWhereWithoutOrganizationInput = {
+    where: AgentRegistryEntryScalarWhereInput
+    data: XOR<AgentRegistryEntryUpdateManyMutationInput, AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type AgentRegistryEntryScalarWhereInput = {
+    AND?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
+    OR?: AgentRegistryEntryScalarWhereInput[]
+    NOT?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
+    id?: StringFilter<"AgentRegistryEntry"> | string
+    organizationId?: StringFilter<"AgentRegistryEntry"> | string
+    agentName?: StringFilter<"AgentRegistryEntry"> | string
+    agentType?: EnumAgentTypeFilter<"AgentRegistryEntry"> | $Enums.AgentType
+    purpose?: StringFilter<"AgentRegistryEntry"> | string
+    scopeOfWork?: StringFilter<"AgentRegistryEntry"> | string
+    allowedArtifactTypes?: StringNullableListFilter<"AgentRegistryEntry">
+    allowedActions?: StringNullableListFilter<"AgentRegistryEntry">
+    supervisingPartyRoleId?: StringFilter<"AgentRegistryEntry"> | string
+    isActive?: BoolFilter<"AgentRegistryEntry"> | boolean
+    createdAt?: DateTimeFilter<"AgentRegistryEntry"> | Date | string
+    updatedAt?: DateTimeFilter<"AgentRegistryEntry"> | Date | string
+  }
+
+  export type GovernanceRoleRequirementUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: GovernanceRoleRequirementWhereUniqueInput
+    update: XOR<GovernanceRoleRequirementUpdateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<GovernanceRoleRequirementCreateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type GovernanceRoleRequirementUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: GovernanceRoleRequirementWhereUniqueInput
+    data: XOR<GovernanceRoleRequirementUpdateWithoutOrganizationInput, GovernanceRoleRequirementUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type GovernanceRoleRequirementUpdateManyWithWhereWithoutOrganizationInput = {
+    where: GovernanceRoleRequirementScalarWhereInput
+    data: XOR<GovernanceRoleRequirementUpdateManyMutationInput, GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type GovernanceRoleRequirementScalarWhereInput = {
+    AND?: GovernanceRoleRequirementScalarWhereInput | GovernanceRoleRequirementScalarWhereInput[]
+    OR?: GovernanceRoleRequirementScalarWhereInput[]
+    NOT?: GovernanceRoleRequirementScalarWhereInput | GovernanceRoleRequirementScalarWhereInput[]
+    id?: StringFilter<"GovernanceRoleRequirement"> | string
+    organizationId?: StringFilter<"GovernanceRoleRequirement"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"GovernanceRoleRequirement"> | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFilter<"GovernanceRoleRequirement"> | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFilter<"GovernanceRoleRequirement"> | $Enums.PartyRoleType
+    minimumCount?: IntFilter<"GovernanceRoleRequirement"> | number
+    rationale?: StringFilter<"GovernanceRoleRequirement"> | string
+    createdAt?: DateTimeFilter<"GovernanceRoleRequirement"> | Date | string
+    updatedAt?: DateTimeFilter<"GovernanceRoleRequirement"> | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+    update: XOR<GovernanceRiskCombinationRuleUpdateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<GovernanceRiskCombinationRuleCreateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type GovernanceRiskCombinationRuleUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: GovernanceRiskCombinationRuleWhereUniqueInput
+    data: XOR<GovernanceRiskCombinationRuleUpdateWithoutOrganizationInput, GovernanceRiskCombinationRuleUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type GovernanceRiskCombinationRuleUpdateManyWithWhereWithoutOrganizationInput = {
+    where: GovernanceRiskCombinationRuleScalarWhereInput
+    data: XOR<GovernanceRiskCombinationRuleUpdateManyMutationInput, GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type GovernanceRiskCombinationRuleScalarWhereInput = {
+    AND?: GovernanceRiskCombinationRuleScalarWhereInput | GovernanceRiskCombinationRuleScalarWhereInput[]
+    OR?: GovernanceRiskCombinationRuleScalarWhereInput[]
+    NOT?: GovernanceRiskCombinationRuleScalarWhereInput | GovernanceRiskCombinationRuleScalarWhereInput[]
+    id?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    organizationId?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFilter<"GovernanceRiskCombinationRule"> | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFilter<"GovernanceRiskCombinationRule"> | $Enums.PartyRoleType
+    rationale?: StringFilter<"GovernanceRiskCombinationRule"> | string
+    createdAt?: DateTimeFilter<"GovernanceRiskCombinationRule"> | Date | string
+    updatedAt?: DateTimeFilter<"GovernanceRiskCombinationRule"> | Date | string
   }
 
   export type MembershipCreateWithoutUserInput = {
@@ -24239,6 +31181,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -24255,6 +31201,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -24318,6 +31268,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -24334,6 +31288,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutMembershipsInput = {
@@ -24373,6 +31331,524 @@ export namespace Prisma {
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
   }
 
+  export type OrganizationCreateWithoutPartyRoleEntriesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPartyRoleEntriesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPartyRoleEntriesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPartyRoleEntriesInput, OrganizationUncheckedCreateWithoutPartyRoleEntriesInput>
+  }
+
+  export type AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput = {
+    id: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutAgentRegistryEntriesInput
+  }
+
+  export type AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput = {
+    id: string
+    organizationId: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput = {
+    where: AgentRegistryEntryWhereUniqueInput
+    create: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput>
+  }
+
+  export type AgentRegistryEntryCreateManySupervisingPartyRoleInputEnvelope = {
+    data: AgentRegistryEntryCreateManySupervisingPartyRoleInput | AgentRegistryEntryCreateManySupervisingPartyRoleInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutPartyRoleEntriesInput = {
+    update: XOR<OrganizationUpdateWithoutPartyRoleEntriesInput, OrganizationUncheckedUpdateWithoutPartyRoleEntriesInput>
+    create: XOR<OrganizationCreateWithoutPartyRoleEntriesInput, OrganizationUncheckedCreateWithoutPartyRoleEntriesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPartyRoleEntriesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPartyRoleEntriesInput, OrganizationUncheckedUpdateWithoutPartyRoleEntriesInput>
+  }
+
+  export type OrganizationUpdateWithoutPartyRoleEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPartyRoleEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type AgentRegistryEntryUpsertWithWhereUniqueWithoutSupervisingPartyRoleInput = {
+    where: AgentRegistryEntryWhereUniqueInput
+    update: XOR<AgentRegistryEntryUpdateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedUpdateWithoutSupervisingPartyRoleInput>
+    create: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput>
+  }
+
+  export type AgentRegistryEntryUpdateWithWhereUniqueWithoutSupervisingPartyRoleInput = {
+    where: AgentRegistryEntryWhereUniqueInput
+    data: XOR<AgentRegistryEntryUpdateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedUpdateWithoutSupervisingPartyRoleInput>
+  }
+
+  export type AgentRegistryEntryUpdateManyWithWhereWithoutSupervisingPartyRoleInput = {
+    where: AgentRegistryEntryScalarWhereInput
+    data: XOR<AgentRegistryEntryUpdateManyMutationInput, AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleInput>
+  }
+
+  export type OrganizationCreateWithoutAgentRegistryEntriesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutAgentRegistryEntriesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutAgentRegistryEntriesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutAgentRegistryEntriesInput, OrganizationUncheckedCreateWithoutAgentRegistryEntriesInput>
+  }
+
+  export type PartyRoleEntryCreateWithoutSupervisingAgentsInput = {
+    id: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPartyRoleEntriesInput
+  }
+
+  export type PartyRoleEntryUncheckedCreateWithoutSupervisingAgentsInput = {
+    id: string
+    organizationId: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PartyRoleEntryCreateOrConnectWithoutSupervisingAgentsInput = {
+    where: PartyRoleEntryWhereUniqueInput
+    create: XOR<PartyRoleEntryCreateWithoutSupervisingAgentsInput, PartyRoleEntryUncheckedCreateWithoutSupervisingAgentsInput>
+  }
+
+  export type OrganizationUpsertWithoutAgentRegistryEntriesInput = {
+    update: XOR<OrganizationUpdateWithoutAgentRegistryEntriesInput, OrganizationUncheckedUpdateWithoutAgentRegistryEntriesInput>
+    create: XOR<OrganizationCreateWithoutAgentRegistryEntriesInput, OrganizationUncheckedCreateWithoutAgentRegistryEntriesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutAgentRegistryEntriesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutAgentRegistryEntriesInput, OrganizationUncheckedUpdateWithoutAgentRegistryEntriesInput>
+  }
+
+  export type OrganizationUpdateWithoutAgentRegistryEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutAgentRegistryEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type PartyRoleEntryUpsertWithoutSupervisingAgentsInput = {
+    update: XOR<PartyRoleEntryUpdateWithoutSupervisingAgentsInput, PartyRoleEntryUncheckedUpdateWithoutSupervisingAgentsInput>
+    create: XOR<PartyRoleEntryCreateWithoutSupervisingAgentsInput, PartyRoleEntryUncheckedCreateWithoutSupervisingAgentsInput>
+    where?: PartyRoleEntryWhereInput
+  }
+
+  export type PartyRoleEntryUpdateToOneWithWhereWithoutSupervisingAgentsInput = {
+    where?: PartyRoleEntryWhereInput
+    data: XOR<PartyRoleEntryUpdateWithoutSupervisingAgentsInput, PartyRoleEntryUncheckedUpdateWithoutSupervisingAgentsInput>
+  }
+
+  export type PartyRoleEntryUpdateWithoutSupervisingAgentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPartyRoleEntriesNestedInput
+  }
+
+  export type PartyRoleEntryUncheckedUpdateWithoutSupervisingAgentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationCreateWithoutGovernanceRoleRequirementsInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutGovernanceRoleRequirementsInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutGovernanceRoleRequirementsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutGovernanceRoleRequirementsInput, OrganizationUncheckedCreateWithoutGovernanceRoleRequirementsInput>
+  }
+
+  export type OrganizationUpsertWithoutGovernanceRoleRequirementsInput = {
+    update: XOR<OrganizationUpdateWithoutGovernanceRoleRequirementsInput, OrganizationUncheckedUpdateWithoutGovernanceRoleRequirementsInput>
+    create: XOR<OrganizationCreateWithoutGovernanceRoleRequirementsInput, OrganizationUncheckedCreateWithoutGovernanceRoleRequirementsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutGovernanceRoleRequirementsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutGovernanceRoleRequirementsInput, OrganizationUncheckedUpdateWithoutGovernanceRoleRequirementsInput>
+  }
+
+  export type OrganizationUpdateWithoutGovernanceRoleRequirementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutGovernanceRoleRequirementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutGovernanceRiskCombinationRulesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutGovernanceRiskCombinationRulesInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutGovernanceRiskCombinationRulesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutGovernanceRiskCombinationRulesInput, OrganizationUncheckedCreateWithoutGovernanceRiskCombinationRulesInput>
+  }
+
+  export type OrganizationUpsertWithoutGovernanceRiskCombinationRulesInput = {
+    update: XOR<OrganizationUpdateWithoutGovernanceRiskCombinationRulesInput, OrganizationUncheckedUpdateWithoutGovernanceRiskCombinationRulesInput>
+    create: XOR<OrganizationCreateWithoutGovernanceRiskCombinationRulesInput, OrganizationUncheckedCreateWithoutGovernanceRiskCombinationRulesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutGovernanceRiskCombinationRulesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutGovernanceRiskCombinationRulesInput, OrganizationUncheckedUpdateWithoutGovernanceRiskCombinationRulesInput>
+  }
+
+  export type OrganizationUpdateWithoutGovernanceRiskCombinationRulesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutGovernanceRiskCombinationRulesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
   export type OrganizationCreateWithoutOutcomesInput = {
     id: string
     slug: string
@@ -24387,6 +31863,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOutcomesInput = {
@@ -24403,6 +31883,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOutcomesInput = {
@@ -24584,6 +32068,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOutcomesInput = {
@@ -24600,6 +32088,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutOwnedOutcomesInput = {
@@ -24685,6 +32177,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutEpicsInput = {
@@ -24701,6 +32197,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEpicsInput = {
@@ -24858,6 +32358,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEpicsInput = {
@@ -24874,6 +32378,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OutcomeUpsertWithoutEpicsInput = {
@@ -24973,6 +32481,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutStoriesInput = {
@@ -24989,6 +32501,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutStoriesInput = {
@@ -25131,6 +32647,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutStoriesInput = {
@@ -25147,6 +32667,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OutcomeUpsertWithoutStoriesInput = {
@@ -25285,6 +32809,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutTollgatesInput = {
@@ -25301,6 +32829,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutTollgatesInput = {
@@ -25364,6 +32896,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutTollgatesInput = {
@@ -25380,6 +32916,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutTollgateDecisionsInput = {
@@ -25433,6 +32973,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutActivityEventsInput = {
@@ -25449,6 +32993,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutActivityEventsInput = {
@@ -25512,6 +33060,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutActivityEventsInput = {
@@ -25528,6 +33080,10 @@ export namespace Prisma {
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutActivityEventsInput = {
@@ -25581,6 +33137,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutArtifactIntakeSessionsInput = {
@@ -25597,6 +33157,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutArtifactIntakeSessionsInput = {
@@ -25784,6 +33348,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutArtifactIntakeSessionsInput = {
@@ -25800,6 +33368,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutCreatedIntakeSessionsInput = {
@@ -25916,6 +33488,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutArtifactIntakeFilesInput = {
@@ -25932,6 +33508,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutArtifactIntakeFilesInput = {
@@ -26108,6 +33688,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutArtifactIntakeFilesInput = {
@@ -26124,6 +33708,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type AppUserUpsertWithoutUploadedIntakeFilesInput = {
@@ -26193,6 +33781,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutArtifactAasCandidatesInput = {
@@ -26209,6 +33801,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutArtifactAasCandidatesInput = {
@@ -26315,6 +33911,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutArtifactAasCandidatesInput = {
@@ -26331,6 +33931,10 @@ export namespace Prisma {
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type ArtifactIntakeSessionUpsertWithoutCandidatesInput = {
@@ -26584,6 +34188,56 @@ export namespace Prisma {
     promotedEntityType?: $Enums.ArtifactAasCandidateType | null
     promotedEntityId?: string | null
     promotedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PartyRoleEntryCreateManyOrganizationInput = {
+    id: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentRegistryEntryCreateManyOrganizationInput = {
+    id: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    supervisingPartyRoleId: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRoleRequirementCreateManyOrganizationInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    minimumCount: number
+    rationale: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleCreateManyOrganizationInput = {
+    id: string
+    aiAccelerationLevel: $Enums.AiAccelerationLevel
+    primaryRoleType: $Enums.PartyRoleType
+    conflictingRoleType: $Enums.PartyRoleType
+    rationale: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27107,6 +34761,158 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PartyRoleEntryUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisingAgents?: AgentRegistryEntryUpdateManyWithoutSupervisingPartyRoleNestedInput
+  }
+
+  export type PartyRoleEntryUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisingAgents?: AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleNestedInput
+  }
+
+  export type PartyRoleEntryUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRegistryEntryUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisingPartyRole?: PartyRoleEntryUpdateOneRequiredWithoutSupervisingAgentsNestedInput
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    supervisingPartyRoleId?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    supervisingPartyRoleId?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRoleRequirementUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    minimumCount?: IntFieldUpdateOperationsInput | number
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRoleRequirementUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    minimumCount?: IntFieldUpdateOperationsInput | number
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    minimumCount?: IntFieldUpdateOperationsInput | number
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    aiAccelerationLevel?: EnumAiAccelerationLevelFieldUpdateOperationsInput | $Enums.AiAccelerationLevel
+    primaryRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    conflictingRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    rationale?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type MembershipCreateManyUserInput = {
     id: string
     organizationId: string
@@ -27467,6 +35273,62 @@ export namespace Prisma {
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRegistryEntryCreateManySupervisingPartyRoleInput = {
+    id: string
+    organizationId: string
+    agentName: string
+    agentType: $Enums.AgentType
+    purpose: string
+    scopeOfWork: string
+    allowedArtifactTypes?: AgentRegistryEntryCreateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryCreateallowedActionsInput | string[]
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentRegistryEntryUpdateWithoutSupervisingPartyRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutAgentRegistryEntriesNestedInput
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateWithoutSupervisingPartyRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    agentName?: StringFieldUpdateOperationsInput | string
+    agentType?: EnumAgentTypeFieldUpdateOperationsInput | $Enums.AgentType
+    purpose?: StringFieldUpdateOperationsInput | string
+    scopeOfWork?: StringFieldUpdateOperationsInput | string
+    allowedArtifactTypes?: AgentRegistryEntryUpdateallowedArtifactTypesInput | string[]
+    allowedActions?: AgentRegistryEntryUpdateallowedActionsInput | string[]
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type EpicCreateManyOutcomeInput = {

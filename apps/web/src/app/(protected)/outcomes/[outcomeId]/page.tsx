@@ -484,6 +484,20 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
+                <CardTitle>Governance coverage</CardTitle>
+                <CardDescription>Check named roles, authority and readiness for this Outcome's AI level.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className="gap-2" variant="secondary">
+                  <Link href={`/governance?view=readiness&sourceEntity=outcome&sourceId=${outcome.id}&level=${outcome.aiAccelerationLevel}`}>
+                    Open Governance readiness
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
                 <CardTitle>Tollgate 1 panel</CardTitle>
                 <CardDescription>Server-backed readiness check for baseline completeness.</CardDescription>
               </CardHeader>

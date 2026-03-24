@@ -1,10 +1,8 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Compass,
   FolderKanban,
   FolderOpen,
-  Layers3,
   LogOut,
   PlusCircle,
   Sparkles,
@@ -87,7 +85,6 @@ function deriveProjectStatus(input: {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const query = searchParams ? await searchParams : {};
   const {
-    session,
     dashboard,
     projects,
     activeProject,

@@ -30,6 +30,16 @@ export {
   type OrganizationMembershipContext
 } from "./repositories/organization-repository";
 export {
+  createAgentRegistryEntry,
+  createPartyRoleEntry,
+  listAgentRegistryEntries,
+  listGovernanceRiskCombinationRules,
+  listGovernanceRoleRequirements,
+  listPartyRoleEntries,
+  updateAgentRegistryEntry,
+  updatePartyRoleEntry
+} from "./repositories/governance-repository";
+export {
   createOutcome,
   getOutcomeById,
   getOutcomeWorkspaceSnapshot,
