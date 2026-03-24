@@ -1,4 +1,5 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -6,6 +7,19 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "..");
 const sourceDir = path.join(repoRoot, "packages", "db", "generated", "client");
 const targetDir = path.join(repoRoot, "apps", "web", ".prisma", "client");
+
+if (process.env.VERCEL === "1") {
+  const result = spawnSync("pnpm", ["--filter", "@aas-companion/db", "db:generate"], {
+    cwd: repoRoot,
+    stdio: "inherit",
+    shell: true,
+    env: process.env
+  });
+
+  if (result.status !== 0) {
+    throw new Error("Prisma client generation failed in the Vercel build environment.");
+  }
+}
 
 if (!existsSync(sourceDir)) {
   throw new Error(
