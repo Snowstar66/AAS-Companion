@@ -2,7 +2,8 @@ export { prisma } from "./client";
 export {
   appendArtifactFileRejections,
   createArtifactIntakeSession,
-  listArtifactIntakeSessions
+  listArtifactIntakeSessions,
+  reviewArtifactFileSectionDisposition
 } from "./repositories/artifact-intake-repository";
 export {
   getArtifactCandidateById,

@@ -1,6 +1,7 @@
 import {
   artifactCandidateDraftRecordSchema,
   artifactCandidateHumanDecisionSchema,
+  artifactIssueDispositionMapSchema,
   artifactComplianceResultSchema,
   artifactCandidateReviewStatusSchema,
   artifactMappingResultSchema,
@@ -34,6 +35,11 @@ function parseStoredCandidateHumanDecisions(value: unknown) {
 function parseStoredComplianceResult(value: unknown) {
   const parsed = artifactComplianceResultSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
+}
+
+function parseStoredIssueDispositions(value: unknown) {
+  const parsed = artifactIssueDispositionMapSchema.safeParse(value);
+  return parsed.success ? parsed.data : {};
 }
 
 function parseStoredReviewStatus(value: unknown) {
@@ -71,6 +77,7 @@ export async function loadArtifactIntakeWorkspace() {
         return {
           ...file,
           parsedArtifacts,
+          sectionDispositions: parseStoredIssueDispositions(file.sectionDispositions),
           parsedSectionCount: parsedArtifacts?.sections.length ?? 0,
           uncertainSectionCount:
             parsedArtifacts?.sections.filter((section) => section.isUncertain || section.confidence === "low").length ?? 0
@@ -92,6 +99,7 @@ export async function loadArtifactIntakeWorkspace() {
         draftRecord: parseStoredCandidateDraftRecord(candidate.draftRecord),
         humanDecisions: parseStoredCandidateHumanDecisions(candidate.humanDecisions),
         complianceResult: parseStoredComplianceResult(candidate.complianceResult),
+        issueDispositions: parseStoredIssueDispositions(candidate.issueDispositions),
         reviewStatus: parseStoredReviewStatus(candidate.reviewStatus)
       }));
       const displayCandidates =
@@ -102,6 +110,7 @@ export async function loadArtifactIntakeWorkspace() {
               draftRecord: null,
               humanDecisions: null,
               complianceResult: null,
+              issueDispositions: {},
               reviewStatus: "pending" as const
             }));
 

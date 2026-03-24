@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "../../generated/client";
 import {
+  artifactFileSectionDispositionActionInputSchema,
+  artifactIssueDispositionMapSchema,
   artifactIntakeUploadRequestSchema,
   classifyArtifactSource,
   getArtifactFileExtension,
@@ -55,6 +57,57 @@ export async function listArtifactIntakeSessions(organizationId: string) {
         orderBy: [{ updatedAt: "desc" }, { createdAt: "asc" }]
       }
     }
+  });
+}
+
+export async function reviewArtifactFileSectionDisposition(input: unknown) {
+  const parsed = artifactFileSectionDispositionActionInputSchema.parse(input);
+
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.artifactIntakeFile.findFirst({
+      where: {
+        organizationId: parsed.organizationId,
+        id: parsed.fileId
+      }
+    });
+
+    if (!existing) {
+      throw new Error("Artifact file was not found in organization scope.");
+    }
+
+    const sectionDispositions = artifactIssueDispositionMapSchema.parse({
+      ...(artifactIssueDispositionMapSchema.parse(existing.sectionDispositions ?? {})),
+      [parsed.sectionId]: {
+        issueId: parsed.sectionId,
+        action: parsed.action,
+        note: parsed.note ?? null
+      }
+    });
+
+    const updated = await tx.artifactIntakeFile.update({
+      where: { id: existing.id },
+      data: {
+        sectionDispositions: sectionDispositions as Prisma.InputJsonValue
+      }
+    });
+
+    await appendActivityEvent(
+      {
+        organizationId: parsed.organizationId,
+        entityType: "artifact_intake_file",
+        entityId: updated.id,
+        eventType: "artifact_file_section_disposition_recorded",
+        actorId: parsed.actorId ?? null,
+        metadata: {
+          sectionId: parsed.sectionId,
+          action: parsed.action,
+          note: parsed.note ?? null
+        }
+      },
+      tx
+    );
+
+    return updated;
   });
 }
 
@@ -230,6 +283,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
           sizeBytes: file.sizeBytes,
           content: file.content,
           sourceTypeStatus: "pending",
+          sectionDispositions: {} as Prisma.InputJsonValue,
           uploadedBy: parsed.actorId ?? null
         }
       });

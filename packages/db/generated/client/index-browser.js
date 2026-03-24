@@ -352,6 +352,7 @@ exports.Prisma.ArtifactIntakeFileScalarFieldEnum = {
   classifiedAt: 'classifiedAt',
   parsedAt: 'parsedAt',
   parsedArtifacts: 'parsedArtifacts',
+  sectionDispositions: 'sectionDispositions',
   uploadedBy: 'uploadedBy',
   uploadedAt: 'uploadedAt'
 };
@@ -379,6 +380,7 @@ exports.Prisma.ArtifactAasCandidateScalarFieldEnum = {
   draftRecord: 'draftRecord',
   humanDecisions: 'humanDecisions',
   complianceResult: 'complianceResult',
+  issueDispositions: 'issueDispositions',
   reviewStatus: 'reviewStatus',
   reviewComment: 'reviewComment',
   followUpNeeded: 'followUpNeeded',
@@ -500,7 +502,8 @@ exports.ImportedGovernedReadinessState = exports.$Enums.ImportedGovernedReadines
   imported_human_review_needed: 'imported_human_review_needed',
   imported_framing_ready: 'imported_framing_ready',
   imported_design_ready: 'imported_design_ready',
-  blocked: 'blocked'
+  blocked: 'blocked',
+  discarded: 'discarded'
 };
 
 exports.EpicStatus = exports.$Enums.EpicStatus = {
@@ -593,7 +596,9 @@ exports.ActivityEventType = exports.$Enums.ActivityEventType = {
   artifact_candidate_edited: 'artifact_candidate_edited',
   artifact_candidate_rejected: 'artifact_candidate_rejected',
   artifact_candidate_follow_up_marked: 'artifact_candidate_follow_up_marked',
+  artifact_candidate_issue_disposition_recorded: 'artifact_candidate_issue_disposition_recorded',
   artifact_candidate_promoted: 'artifact_candidate_promoted',
+  artifact_file_section_disposition_recorded: 'artifact_file_section_disposition_recorded',
   imported_progression_blocked: 'imported_progression_blocked',
   imported_progression_allowed: 'imported_progression_allowed'
 };

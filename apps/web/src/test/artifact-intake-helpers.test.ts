@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   analyzeArtifactCandidateCompliance,
   classifyArtifactSource,
+  getArtifactCandidateIssueProgress,
   getArtifactFileExtension,
   inferImportedReadinessState,
   isSupportedArtifactFile,
@@ -262,7 +263,94 @@ describe("artifact intake helpers", () => {
     expect(compliance.summary.missing).toBe(0);
     expect(compliance.summary.humanOnly).toBe(0);
     expect(compliance.promotionBlocked).toBe(false);
-    expect(inferImportedReadinessState({ type: "story", complianceResult: compliance })).toBe("imported_design_ready");
+    expect(
+      inferImportedReadinessState({
+        type: "story",
+        complianceResult: compliance,
+        reviewStatus: "confirmed"
+      })
+    ).toBe("imported_design_ready");
+  });
+
+  it("tracks explicit issue dispositions and progress for import readiness", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-story-4",
+        type: "story",
+        title: "Disposition Story",
+        summary: "As a builder I want import issues to be worked off explicitly.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-4",
+          fileName: "story-pack.md",
+          sectionId: "section-story",
+          sectionTitle: "Story",
+          sectionMarker: "## Story",
+          sourceType: "story_file",
+          confidence: "medium"
+        },
+        inferredOutcomeCandidateId: "candidate-outcome-4",
+        inferredEpicCandidateId: "candidate-epic-4",
+        relationshipState: "mapped",
+        relationshipNote: null,
+        acceptanceCriteria: ["Candidate keeps lineage"],
+        testNotes: []
+      },
+      reviewStatus: "edited",
+      draftRecord: {
+        key: "IMP-STORY-4",
+        title: "Disposition Story",
+        storyType: "outcome_delivery",
+        valueIntent: "Work issues off explicitly",
+        acceptanceCriteria: ["Candidate keeps lineage"],
+        aiUsageScope: ["Drafting"],
+        testDefinition: "Review captures issue state",
+        definitionOfDone: ["Dispositions persisted"],
+        outcomeCandidateId: "candidate-outcome-4",
+        epicCandidateId: "candidate-epic-4"
+      },
+      humanDecisions: {
+        aiAccelerationLevel: "level_2",
+        riskAcceptanceStatus: "accepted"
+      }
+    });
+
+    const progress = getArtifactCandidateIssueProgress({
+      complianceResult: compliance,
+      issueDispositions: {
+        source_confidence_below_high: {
+          issueId: "source_confidence_below_high",
+          action: "confirmed",
+          note: null
+        }
+      },
+      unmappedSectionCount: 1,
+      sectionDispositions: {
+        "section-raw": {
+          issueId: "section-raw",
+          action: "not_relevant",
+          note: null
+        }
+      }
+    });
+
+    expect(progress.resolved).toBe(1);
+    expect(progress.categories.uncertain).toBe(0);
+    expect(progress.categories.unmapped).toBe(0);
+    expect(
+      inferImportedReadinessState({
+        type: "story",
+        complianceResult: compliance,
+        issueDispositions: {
+          source_confidence_below_high: {
+            issueId: "source_confidence_below_high",
+            action: "confirmed",
+            note: null
+          }
+        },
+        reviewStatus: "rejected"
+      })
+    ).toBe("discarded");
   });
 
   it("uses ASCII linkage messages in compliance findings", () => {

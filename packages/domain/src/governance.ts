@@ -131,6 +131,47 @@ export const governanceRiskFlagSchema = z.object({
   )
 });
 
+export const governanceAgentSupervisionGapSchema = z.object({
+  agentId: z.string().min(1),
+  agentName: z.string().min(1),
+  supervisingPartyRoleId: z.string().min(1),
+  message: z.string().min(1)
+});
+
+export const governanceStaffingValidationStatusSchema = z.enum([
+  "supports_selected_level",
+  "needs_attention",
+  "does_not_support_selected_level"
+]);
+
+export const governanceRecommendationKindSchema = z.enum([
+  "assign_missing_role",
+  "separate_conflicting_roles",
+  "assign_supervising_human",
+  "keep_level_blocked",
+  "downgrade_ai_level"
+]);
+
+export const governanceRecommendationSchema = z.object({
+  kind: governanceRecommendationKindSchema,
+  priority: z.enum(["high", "medium"]),
+  title: z.string().min(1),
+  description: z.string().min(1)
+});
+
+export const governanceStaffingValidationSchema = z.object({
+  selectedAiLevel: aiAccelerationLevelSchema,
+  status: governanceStaffingValidationStatusSchema,
+  summaryTitle: z.string().min(1),
+  summaryMessage: z.string().min(1),
+  staffingSupportsSelectedLevel: z.boolean(),
+  missingRoleCount: z.number().int().nonnegative(),
+  riskyCombinationCount: z.number().int().nonnegative(),
+  supervisionGapCount: z.number().int().nonnegative(),
+  furtherGovernanceRequired: z.boolean(),
+  recommendations: z.array(governanceRecommendationSchema)
+});
+
 export const authorityMatrixRuleSchema = z.object({
   responsibilityArea: authorityResponsibilityAreaSchema,
   summaryLabel: z.string().min(1),
@@ -153,6 +194,10 @@ export type GovernanceRoleRequirementRecord = z.infer<typeof governanceRoleRequi
 export type GovernanceRiskCombinationRuleRecord = z.infer<typeof governanceRiskCombinationRuleRecordSchema>;
 export type GovernanceCoverageItem = z.infer<typeof governanceCoverageItemSchema>;
 export type GovernanceRiskFlag = z.infer<typeof governanceRiskFlagSchema>;
+export type GovernanceAgentSupervisionGap = z.infer<typeof governanceAgentSupervisionGapSchema>;
+export type GovernanceStaffingValidationStatus = z.infer<typeof governanceStaffingValidationStatusSchema>;
+export type GovernanceRecommendation = z.infer<typeof governanceRecommendationSchema>;
+export type GovernanceStaffingValidation = z.infer<typeof governanceStaffingValidationSchema>;
 export type AuthorityMatrixRule = z.infer<typeof authorityMatrixRuleSchema>;
 
 export const authorityMatrixRules = authorityMatrixRuleSchema.array().parse([
@@ -240,6 +285,15 @@ export function buildGovernanceCoverageAssessment(input: {
   requirements: GovernanceRoleRequirementRecord[];
   riskRules: GovernanceRiskCombinationRuleRecord[];
   people: PartyRoleEntryRecord[];
+  agents?: Array<{
+    id: string;
+    agentName: string;
+    isActive: boolean;
+    supervisingPartyRoleId: string;
+    supervisingPartyRole?: {
+      isActive: boolean;
+    } | null;
+  }>;
 }) {
   const activePeople = input.people.filter((person) => person.isActive);
   const relevantRequirements = input.requirements.filter((rule) => rule.aiAccelerationLevel === input.aiAccelerationLevel);
@@ -306,18 +360,129 @@ export function buildGovernanceCoverageAssessment(input: {
     ];
   });
 
+  const supervisionGaps = (input.agents ?? [])
+    .filter((agent) => agent.isActive)
+    .filter((agent) => !agent.supervisingPartyRole || agent.supervisingPartyRole.isActive !== true)
+    .map((agent) =>
+      governanceAgentSupervisionGapSchema.parse({
+        agentId: agent.id,
+        agentName: agent.agentName,
+        supervisingPartyRoleId: agent.supervisingPartyRoleId,
+        message: "Active agent lacks an active supervising human."
+      })
+    );
+
   const summaryStatus =
     coverage.some((item) => item.status === "missing")
       ? "missing"
-      : riskFlags.length > 0
+      : riskFlags.length > 0 || supervisionGaps.length > 0
         ? "risky_combination"
         : coverage.some((item) => item.status === "partially_covered")
           ? "partially_covered"
           : "satisfied";
 
+  const downgradeTarget =
+    input.aiAccelerationLevel === "level_3"
+      ? "level_2"
+      : input.aiAccelerationLevel === "level_2"
+        ? "level_1"
+        : null;
+  const recommendations: GovernanceRecommendation[] = [];
+
+  for (const item of coverage) {
+    if (item.status === "missing" || item.status === "partially_covered") {
+      recommendations.push(
+        governanceRecommendationSchema.parse({
+          kind: "assign_missing_role",
+          priority: item.status === "missing" ? "high" : "medium",
+          title: `Assign ${item.organizationSide} ${item.roleType.replaceAll("_", " ")}`,
+          description:
+            item.status === "missing"
+              ? `The selected AI level still needs a named ${item.organizationSide} ${item.roleType.replaceAll("_", " ")}.`
+              : `Add more explicit ${item.organizationSide} coverage for ${item.roleType.replaceAll("_", " ")} before trusting this AI level.`
+        })
+      );
+    }
+  }
+
+  for (const flag of riskFlags) {
+    recommendations.push(
+      governanceRecommendationSchema.parse({
+        kind: "separate_conflicting_roles",
+        priority: "high",
+        title: `Separate ${flag.primaryRoleType.replaceAll("_", " ")} and ${flag.conflictingRoleType.replaceAll("_", " ")}`,
+        description: flag.message
+      })
+    );
+  }
+
+  for (const gap of supervisionGaps) {
+    recommendations.push(
+      governanceRecommendationSchema.parse({
+        kind: "assign_supervising_human",
+        priority: "high",
+        title: `Assign a supervising human for ${gap.agentName}`,
+        description: gap.message
+      })
+    );
+  }
+
+  if (summaryStatus !== "satisfied") {
+    recommendations.push(
+      governanceRecommendationSchema.parse({
+        kind: "keep_level_blocked",
+        priority: "high",
+        title: `Keep ${input.aiAccelerationLevel.replaceAll("_", " ")} blocked for now`,
+        description: "Current staffing and separation do not yet justify a green light for this AI level."
+      })
+    );
+  }
+
+  if (downgradeTarget && (summaryStatus === "missing" || summaryStatus === "risky_combination")) {
+    recommendations.push(
+      governanceRecommendationSchema.parse({
+        kind: "downgrade_ai_level",
+        priority: "medium",
+        title: `Consider downgrading to ${downgradeTarget.replaceAll("_", " ")}`,
+        description: `Until the missing roles, risky combinations or supervision gaps are resolved, ${downgradeTarget.replaceAll("_", " ")} is the safer AAS-aligned fallback.`
+      })
+    );
+  }
+
+  const validationStatus =
+    summaryStatus === "satisfied"
+      ? "supports_selected_level"
+      : summaryStatus === "partially_covered"
+        ? "needs_attention"
+        : "does_not_support_selected_level";
+  const validation = governanceStaffingValidationSchema.parse({
+    selectedAiLevel: input.aiAccelerationLevel,
+    status: validationStatus,
+    summaryTitle:
+      validationStatus === "supports_selected_level"
+        ? "Staffing supports selected AI level"
+        : validationStatus === "needs_attention"
+          ? "Staffing still needs attention"
+          : "Staffing does not support selected AI level",
+    summaryMessage:
+      validationStatus === "supports_selected_level"
+        ? `Named staffing, role separation and agent supervision support ${input.aiAccelerationLevel.replaceAll("_", " ")}.`
+        : validationStatus === "needs_attention"
+          ? `The selected AI level has some coverage, but gaps still need to be closed before trusting the staffing picture.`
+          : `Missing roles, risky combinations or weak supervision mean the current staffing does not yet support ${input.aiAccelerationLevel.replaceAll("_", " ")}.`,
+    staffingSupportsSelectedLevel: validationStatus === "supports_selected_level",
+    missingRoleCount: coverage.filter((item) => item.status === "missing").length,
+    riskyCombinationCount: riskFlags.length,
+    supervisionGapCount: supervisionGaps.length,
+    furtherGovernanceRequired: true,
+    recommendations
+  });
+
   return {
     coverage,
     riskFlags,
-    summaryStatus: governanceCoverageStatusSchema.parse(summaryStatus)
+    supervisionGaps,
+    summaryStatus: governanceCoverageStatusSchema.parse(summaryStatus),
+    validation
   };
 }

@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/client"
+  provider      = "prisma-client-js"
+  output        = "../generated/client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -125,6 +126,7 @@ enum ImportedGovernedReadinessState {
   imported_framing_ready
   imported_design_ready
   blocked
+  discarded
 }
 
 enum TollgateEntityType {
@@ -198,7 +200,9 @@ enum ActivityEventType {
   artifact_candidate_edited
   artifact_candidate_rejected
   artifact_candidate_follow_up_marked
+  artifact_candidate_issue_disposition_recorded
   artifact_candidate_promoted
+  artifact_file_section_disposition_recorded
   imported_progression_blocked
   imported_progression_allowed
 }
@@ -569,6 +573,7 @@ model ArtifactIntakeFile {
   classifiedAt         DateTime?
   parsedAt             DateTime?
   parsedArtifacts      Json?
+  sectionDispositions  Json?
   uploadedBy           String?
   uploadedAt           DateTime                 @default(now())
   intakeSession        ArtifactIntakeSession    @relation(fields: [intakeSessionId], references: [id], onDelete: Cascade)
@@ -604,6 +609,7 @@ model ArtifactAasCandidate {
   draftRecord                Json
   humanDecisions             Json
   complianceResult           Json
+  issueDispositions          Json?
   reviewStatus               ArtifactCandidateReviewStatus   @default(pending)
   reviewComment              String?
   followUpNeeded             Boolean                         @default(false)

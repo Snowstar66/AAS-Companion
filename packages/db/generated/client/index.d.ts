@@ -262,7 +262,8 @@ export const ImportedGovernedReadinessState: {
   imported_human_review_needed: 'imported_human_review_needed',
   imported_framing_ready: 'imported_framing_ready',
   imported_design_ready: 'imported_design_ready',
-  blocked: 'blocked'
+  blocked: 'blocked',
+  discarded: 'discarded'
 };
 
 export type ImportedGovernedReadinessState = (typeof ImportedGovernedReadinessState)[keyof typeof ImportedGovernedReadinessState]
@@ -357,7 +358,9 @@ export const ActivityEventType: {
   artifact_candidate_edited: 'artifact_candidate_edited',
   artifact_candidate_rejected: 'artifact_candidate_rejected',
   artifact_candidate_follow_up_marked: 'artifact_candidate_follow_up_marked',
+  artifact_candidate_issue_disposition_recorded: 'artifact_candidate_issue_disposition_recorded',
   artifact_candidate_promoted: 'artifact_candidate_promoted',
+  artifact_file_section_disposition_recorded: 'artifact_file_section_disposition_recorded',
   imported_progression_blocked: 'imported_progression_blocked',
   imported_progression_allowed: 'imported_progression_allowed'
 };
@@ -20357,6 +20360,7 @@ export namespace Prisma {
     classifiedAt: number
     parsedAt: number
     parsedArtifacts: number
+    sectionDispositions: number
     uploadedBy: number
     uploadedAt: number
     _all: number
@@ -20422,6 +20426,7 @@ export namespace Prisma {
     classifiedAt?: true
     parsedAt?: true
     parsedArtifacts?: true
+    sectionDispositions?: true
     uploadedBy?: true
     uploadedAt?: true
     _all?: true
@@ -20528,6 +20533,7 @@ export namespace Prisma {
     classifiedAt: Date | null
     parsedAt: Date | null
     parsedArtifacts: JsonValue | null
+    sectionDispositions: JsonValue | null
     uploadedBy: string | null
     uploadedAt: Date
     _count: ArtifactIntakeFileCountAggregateOutputType | null
@@ -20566,6 +20572,7 @@ export namespace Prisma {
     classifiedAt?: boolean
     parsedAt?: boolean
     parsedArtifacts?: boolean
+    sectionDispositions?: boolean
     uploadedBy?: boolean
     uploadedAt?: boolean
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
@@ -20590,6 +20597,7 @@ export namespace Prisma {
     classifiedAt?: boolean
     parsedAt?: boolean
     parsedArtifacts?: boolean
+    sectionDispositions?: boolean
     uploadedBy?: boolean
     uploadedAt?: boolean
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
@@ -20612,6 +20620,7 @@ export namespace Prisma {
     classifiedAt?: boolean
     parsedAt?: boolean
     parsedArtifacts?: boolean
+    sectionDispositions?: boolean
     uploadedBy?: boolean
     uploadedAt?: boolean
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
@@ -20634,11 +20643,12 @@ export namespace Prisma {
     classifiedAt?: boolean
     parsedAt?: boolean
     parsedArtifacts?: boolean
+    sectionDispositions?: boolean
     uploadedBy?: boolean
     uploadedAt?: boolean
   }
 
-  export type ArtifactIntakeFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "intakeSessionId" | "organizationId" | "fileName" | "mimeType" | "extension" | "sizeBytes" | "content" | "sourceTypeStatus" | "sourceType" | "sourceTypeConfidence" | "classifiedAt" | "parsedAt" | "parsedArtifacts" | "uploadedBy" | "uploadedAt", ExtArgs["result"]["artifactIntakeFile"]>
+  export type ArtifactIntakeFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "intakeSessionId" | "organizationId" | "fileName" | "mimeType" | "extension" | "sizeBytes" | "content" | "sourceTypeStatus" | "sourceType" | "sourceTypeConfidence" | "classifiedAt" | "parsedAt" | "parsedArtifacts" | "sectionDispositions" | "uploadedBy" | "uploadedAt", ExtArgs["result"]["artifactIntakeFile"]>
   export type ArtifactIntakeFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -20680,6 +20690,7 @@ export namespace Prisma {
       classifiedAt: Date | null
       parsedAt: Date | null
       parsedArtifacts: Prisma.JsonValue | null
+      sectionDispositions: Prisma.JsonValue | null
       uploadedBy: string | null
       uploadedAt: Date
     }, ExtArgs["result"]["artifactIntakeFile"]>
@@ -21123,6 +21134,7 @@ export namespace Prisma {
     readonly classifiedAt: FieldRef<"ArtifactIntakeFile", 'DateTime'>
     readonly parsedAt: FieldRef<"ArtifactIntakeFile", 'DateTime'>
     readonly parsedArtifacts: FieldRef<"ArtifactIntakeFile", 'Json'>
+    readonly sectionDispositions: FieldRef<"ArtifactIntakeFile", 'Json'>
     readonly uploadedBy: FieldRef<"ArtifactIntakeFile", 'String'>
     readonly uploadedAt: FieldRef<"ArtifactIntakeFile", 'DateTime'>
   }
@@ -21673,6 +21685,7 @@ export namespace Prisma {
     draftRecord: number
     humanDecisions: number
     complianceResult: number
+    issueDispositions: number
     reviewStatus: number
     reviewComment: number
     followUpNeeded: number
@@ -21767,6 +21780,7 @@ export namespace Prisma {
     draftRecord?: true
     humanDecisions?: true
     complianceResult?: true
+    issueDispositions?: true
     reviewStatus?: true
     reviewComment?: true
     followUpNeeded?: true
@@ -21874,6 +21888,7 @@ export namespace Prisma {
     draftRecord: JsonValue
     humanDecisions: JsonValue
     complianceResult: JsonValue
+    issueDispositions: JsonValue | null
     reviewStatus: $Enums.ArtifactCandidateReviewStatus
     reviewComment: string | null
     followUpNeeded: boolean
@@ -21925,6 +21940,7 @@ export namespace Prisma {
     draftRecord?: boolean
     humanDecisions?: boolean
     complianceResult?: boolean
+    issueDispositions?: boolean
     reviewStatus?: boolean
     reviewComment?: boolean
     followUpNeeded?: boolean
@@ -21962,6 +21978,7 @@ export namespace Prisma {
     draftRecord?: boolean
     humanDecisions?: boolean
     complianceResult?: boolean
+    issueDispositions?: boolean
     reviewStatus?: boolean
     reviewComment?: boolean
     followUpNeeded?: boolean
@@ -21999,6 +22016,7 @@ export namespace Prisma {
     draftRecord?: boolean
     humanDecisions?: boolean
     complianceResult?: boolean
+    issueDispositions?: boolean
     reviewStatus?: boolean
     reviewComment?: boolean
     followUpNeeded?: boolean
@@ -22036,6 +22054,7 @@ export namespace Prisma {
     draftRecord?: boolean
     humanDecisions?: boolean
     complianceResult?: boolean
+    issueDispositions?: boolean
     reviewStatus?: boolean
     reviewComment?: boolean
     followUpNeeded?: boolean
@@ -22047,7 +22066,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ArtifactAasCandidateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "intakeSessionId" | "fileId" | "organizationId" | "type" | "title" | "summary" | "mappingState" | "sourceType" | "sourceConfidence" | "sourceSectionId" | "sourceSectionTitle" | "sourceSectionMarker" | "inferredOutcomeCandidateId" | "inferredEpicCandidateId" | "relationshipState" | "relationshipNote" | "acceptanceCriteria" | "testNotes" | "draftRecord" | "humanDecisions" | "complianceResult" | "reviewStatus" | "reviewComment" | "followUpNeeded" | "importedReadinessState" | "promotedEntityType" | "promotedEntityId" | "promotedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["artifactAasCandidate"]>
+  export type ArtifactAasCandidateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "intakeSessionId" | "fileId" | "organizationId" | "type" | "title" | "summary" | "mappingState" | "sourceType" | "sourceConfidence" | "sourceSectionId" | "sourceSectionTitle" | "sourceSectionMarker" | "inferredOutcomeCandidateId" | "inferredEpicCandidateId" | "relationshipState" | "relationshipNote" | "acceptanceCriteria" | "testNotes" | "draftRecord" | "humanDecisions" | "complianceResult" | "issueDispositions" | "reviewStatus" | "reviewComment" | "followUpNeeded" | "importedReadinessState" | "promotedEntityType" | "promotedEntityId" | "promotedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["artifactAasCandidate"]>
   export type ArtifactAasCandidateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     intakeSession?: boolean | ArtifactIntakeSessionDefaultArgs<ExtArgs>
@@ -22094,6 +22113,7 @@ export namespace Prisma {
       draftRecord: Prisma.JsonValue
       humanDecisions: Prisma.JsonValue
       complianceResult: Prisma.JsonValue
+      issueDispositions: Prisma.JsonValue | null
       reviewStatus: $Enums.ArtifactCandidateReviewStatus
       reviewComment: string | null
       followUpNeeded: boolean
@@ -22551,6 +22571,7 @@ export namespace Prisma {
     readonly draftRecord: FieldRef<"ArtifactAasCandidate", 'Json'>
     readonly humanDecisions: FieldRef<"ArtifactAasCandidate", 'Json'>
     readonly complianceResult: FieldRef<"ArtifactAasCandidate", 'Json'>
+    readonly issueDispositions: FieldRef<"ArtifactAasCandidate", 'Json'>
     readonly reviewStatus: FieldRef<"ArtifactAasCandidate", 'ArtifactCandidateReviewStatus'>
     readonly reviewComment: FieldRef<"ArtifactAasCandidate", 'String'>
     readonly followUpNeeded: FieldRef<"ArtifactAasCandidate", 'Boolean'>
@@ -23261,6 +23282,7 @@ export namespace Prisma {
     classifiedAt: 'classifiedAt',
     parsedAt: 'parsedAt',
     parsedArtifacts: 'parsedArtifacts',
+    sectionDispositions: 'sectionDispositions',
     uploadedBy: 'uploadedBy',
     uploadedAt: 'uploadedAt'
   };
@@ -23291,6 +23313,7 @@ export namespace Prisma {
     draftRecord: 'draftRecord',
     humanDecisions: 'humanDecisions',
     complianceResult: 'complianceResult',
+    issueDispositions: 'issueDispositions',
     reviewStatus: 'reviewStatus',
     reviewComment: 'reviewComment',
     followUpNeeded: 'followUpNeeded',
@@ -25278,6 +25301,7 @@ export namespace Prisma {
     classifiedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedArtifacts?: JsonNullableFilter<"ArtifactIntakeFile">
+    sectionDispositions?: JsonNullableFilter<"ArtifactIntakeFile">
     uploadedBy?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
     uploadedAt?: DateTimeFilter<"ArtifactIntakeFile"> | Date | string
     intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
@@ -25301,6 +25325,7 @@ export namespace Prisma {
     classifiedAt?: SortOrderInput | SortOrder
     parsedAt?: SortOrderInput | SortOrder
     parsedArtifacts?: SortOrderInput | SortOrder
+    sectionDispositions?: SortOrderInput | SortOrder
     uploadedBy?: SortOrderInput | SortOrder
     uploadedAt?: SortOrder
     intakeSession?: ArtifactIntakeSessionOrderByWithRelationInput
@@ -25327,6 +25352,7 @@ export namespace Prisma {
     classifiedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedArtifacts?: JsonNullableFilter<"ArtifactIntakeFile">
+    sectionDispositions?: JsonNullableFilter<"ArtifactIntakeFile">
     uploadedBy?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
     uploadedAt?: DateTimeFilter<"ArtifactIntakeFile"> | Date | string
     intakeSession?: XOR<ArtifactIntakeSessionScalarRelationFilter, ArtifactIntakeSessionWhereInput>
@@ -25350,6 +25376,7 @@ export namespace Prisma {
     classifiedAt?: SortOrderInput | SortOrder
     parsedAt?: SortOrderInput | SortOrder
     parsedArtifacts?: SortOrderInput | SortOrder
+    sectionDispositions?: SortOrderInput | SortOrder
     uploadedBy?: SortOrderInput | SortOrder
     uploadedAt?: SortOrder
     _count?: ArtifactIntakeFileCountOrderByAggregateInput
@@ -25377,6 +25404,7 @@ export namespace Prisma {
     classifiedAt?: DateTimeNullableWithAggregatesFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedAt?: DateTimeNullableWithAggregatesFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedArtifacts?: JsonNullableWithAggregatesFilter<"ArtifactIntakeFile">
+    sectionDispositions?: JsonNullableWithAggregatesFilter<"ArtifactIntakeFile">
     uploadedBy?: StringNullableWithAggregatesFilter<"ArtifactIntakeFile"> | string | null
     uploadedAt?: DateTimeWithAggregatesFilter<"ArtifactIntakeFile"> | Date | string
   }
@@ -25407,6 +25435,7 @@ export namespace Prisma {
     draftRecord?: JsonFilter<"ArtifactAasCandidate">
     humanDecisions?: JsonFilter<"ArtifactAasCandidate">
     complianceResult?: JsonFilter<"ArtifactAasCandidate">
+    issueDispositions?: JsonNullableFilter<"ArtifactAasCandidate">
     reviewStatus?: EnumArtifactCandidateReviewStatusFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
     followUpNeeded?: BoolFilter<"ArtifactAasCandidate"> | boolean
@@ -25444,6 +25473,7 @@ export namespace Prisma {
     draftRecord?: SortOrder
     humanDecisions?: SortOrder
     complianceResult?: SortOrder
+    issueDispositions?: SortOrderInput | SortOrder
     reviewStatus?: SortOrder
     reviewComment?: SortOrderInput | SortOrder
     followUpNeeded?: SortOrder
@@ -25484,6 +25514,7 @@ export namespace Prisma {
     draftRecord?: JsonFilter<"ArtifactAasCandidate">
     humanDecisions?: JsonFilter<"ArtifactAasCandidate">
     complianceResult?: JsonFilter<"ArtifactAasCandidate">
+    issueDispositions?: JsonNullableFilter<"ArtifactAasCandidate">
     reviewStatus?: EnumArtifactCandidateReviewStatusFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
     followUpNeeded?: BoolFilter<"ArtifactAasCandidate"> | boolean
@@ -25521,6 +25552,7 @@ export namespace Prisma {
     draftRecord?: SortOrder
     humanDecisions?: SortOrder
     complianceResult?: SortOrder
+    issueDispositions?: SortOrderInput | SortOrder
     reviewStatus?: SortOrder
     reviewComment?: SortOrderInput | SortOrder
     followUpNeeded?: SortOrder
@@ -25561,6 +25593,7 @@ export namespace Prisma {
     draftRecord?: JsonWithAggregatesFilter<"ArtifactAasCandidate">
     humanDecisions?: JsonWithAggregatesFilter<"ArtifactAasCandidate">
     complianceResult?: JsonWithAggregatesFilter<"ArtifactAasCandidate">
+    issueDispositions?: JsonNullableWithAggregatesFilter<"ArtifactAasCandidate">
     reviewStatus?: EnumArtifactCandidateReviewStatusWithAggregatesFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: StringNullableWithAggregatesFilter<"ArtifactAasCandidate"> | string | null
     followUpNeeded?: BoolWithAggregatesFilter<"ArtifactAasCandidate"> | boolean
@@ -27189,6 +27222,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
     intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
@@ -27211,6 +27245,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
     candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
@@ -27229,6 +27264,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
@@ -27251,6 +27287,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
@@ -27271,6 +27308,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
   }
@@ -27288,6 +27326,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -27306,6 +27345,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27330,6 +27370,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -27367,6 +27408,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -27398,6 +27440,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -27435,6 +27478,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -27469,6 +27513,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -27500,6 +27545,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -27534,6 +27580,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -29074,6 +29121,7 @@ export namespace Prisma {
     classifiedAt?: SortOrder
     parsedAt?: SortOrder
     parsedArtifacts?: SortOrder
+    sectionDispositions?: SortOrder
     uploadedBy?: SortOrder
     uploadedAt?: SortOrder
   }
@@ -29245,6 +29293,7 @@ export namespace Prisma {
     draftRecord?: SortOrder
     humanDecisions?: SortOrder
     complianceResult?: SortOrder
+    issueDispositions?: SortOrder
     reviewStatus?: SortOrder
     reviewComment?: SortOrder
     followUpNeeded?: SortOrder
@@ -32497,6 +32546,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
     intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
     uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
@@ -32517,6 +32567,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
     candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
@@ -32552,6 +32603,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -32587,6 +32639,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -33084,6 +33137,7 @@ export namespace Prisma {
     classifiedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedAt?: DateTimeNullableFilter<"ArtifactIntakeFile"> | Date | string | null
     parsedArtifacts?: JsonNullableFilter<"ArtifactIntakeFile">
+    sectionDispositions?: JsonNullableFilter<"ArtifactIntakeFile">
     uploadedBy?: StringNullableFilter<"ArtifactIntakeFile"> | string | null
     uploadedAt?: DateTimeFilter<"ArtifactIntakeFile"> | Date | string
   }
@@ -33130,6 +33184,7 @@ export namespace Prisma {
     draftRecord?: JsonFilter<"ArtifactAasCandidate">
     humanDecisions?: JsonFilter<"ArtifactAasCandidate">
     complianceResult?: JsonFilter<"ArtifactAasCandidate">
+    issueDispositions?: JsonNullableFilter<"ArtifactAasCandidate">
     reviewStatus?: EnumArtifactCandidateReviewStatusFilter<"ArtifactAasCandidate"> | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: StringNullableFilter<"ArtifactAasCandidate"> | string | null
     followUpNeeded?: BoolFilter<"ArtifactAasCandidate"> | boolean
@@ -33534,6 +33589,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
     intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
@@ -33555,6 +33611,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
     candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
   }
@@ -36258,6 +36315,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
     uploader?: AppUserCreateNestedOneWithoutUploadedIntakeFilesInput
@@ -36278,6 +36336,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
     candidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutFileInput
@@ -36313,6 +36372,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -36348,6 +36408,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -36624,6 +36685,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -36659,6 +36721,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -36916,6 +36979,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
     intakeSession: ArtifactIntakeSessionCreateNestedOneWithoutFilesInput
     organization: OrganizationCreateNestedOneWithoutArtifactIntakeFilesInput
@@ -36937,6 +37001,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
   }
@@ -37060,6 +37125,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
@@ -37081,6 +37147,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -37237,6 +37304,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
   }
@@ -37263,6 +37331,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -37763,6 +37832,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
     uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
@@ -37783,6 +37853,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
@@ -37802,6 +37873,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -37826,6 +37898,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -37861,6 +37934,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -37894,6 +37968,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -38164,6 +38239,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: Date | string
   }
 
@@ -38460,6 +38536,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     intakeSession?: ArtifactIntakeSessionUpdateOneRequiredWithoutFilesNestedInput
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
@@ -38481,6 +38558,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
   }
@@ -38500,6 +38578,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -39035,6 +39114,7 @@ export namespace Prisma {
     classifiedAt?: Date | string | null
     parsedAt?: Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: string | null
     uploadedAt?: Date | string
   }
@@ -39061,6 +39141,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -39085,6 +39166,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutArtifactIntakeFilesNestedInput
     uploader?: AppUserUpdateOneWithoutUploadedIntakeFilesNestedInput
@@ -39105,6 +39187,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     candidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutFileNestedInput
@@ -39124,6 +39207,7 @@ export namespace Prisma {
     classifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     parsedArtifacts?: NullableJsonNullValueInput | InputJsonValue
+    sectionDispositions?: NullableJsonNullValueInput | InputJsonValue
     uploadedBy?: NullableStringFieldUpdateOperationsInput | string | null
     uploadedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -39148,6 +39232,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -39183,6 +39268,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -39216,6 +39302,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -39249,6 +39336,7 @@ export namespace Prisma {
     draftRecord: JsonNullValueInput | InputJsonValue
     humanDecisions: JsonNullValueInput | InputJsonValue
     complianceResult: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: $Enums.ArtifactCandidateReviewStatus
     reviewComment?: string | null
     followUpNeeded?: boolean
@@ -39280,6 +39368,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -39315,6 +39404,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean
@@ -39348,6 +39438,7 @@ export namespace Prisma {
     draftRecord?: JsonNullValueInput | InputJsonValue
     humanDecisions?: JsonNullValueInput | InputJsonValue
     complianceResult?: JsonNullValueInput | InputJsonValue
+    issueDispositions?: NullableJsonNullValueInput | InputJsonValue
     reviewStatus?: EnumArtifactCandidateReviewStatusFieldUpdateOperationsInput | $Enums.ArtifactCandidateReviewStatus
     reviewComment?: NullableStringFieldUpdateOperationsInput | string | null
     followUpNeeded?: BoolFieldUpdateOperationsInput | boolean

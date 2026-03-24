@@ -4,8 +4,10 @@ import type {
   ArtifactCandidateDraftRecord,
   ArtifactCandidateHumanDecision,
   ArtifactComplianceResult,
+  ArtifactIssueDispositionMap,
   ArtifactParseResult
 } from "@aas-companion/domain";
+import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 
 type ParsedSection = ArtifactParseResult["sections"][number];
@@ -20,6 +22,7 @@ type IntakeArtifactFile = {
   sourceType: string | null;
   sourceTypeConfidence: "high" | "medium" | "low" | null;
   parsedArtifacts: ArtifactParseResult | null;
+  sectionDispositions: ArtifactIssueDispositionMap;
   parsedSectionCount: number;
   uncertainSectionCount: number;
 };
@@ -46,6 +49,7 @@ type IntakeArtifactCandidate = {
   draftRecord: ArtifactCandidateDraftRecord | null;
   humanDecisions: ArtifactCandidateHumanDecision | null;
   complianceResult: ArtifactComplianceResult | null;
+  issueDispositions: ArtifactIssueDispositionMap;
   reviewComment?: string | null;
   promotedEntityId?: string | null;
   promotedEntityType?: string | null;
@@ -65,6 +69,15 @@ type QueueItem = {
   context: string;
   status: "resolved" | "unresolved";
   href: string;
+  dispositionLabel?: string | null;
+  actionScope: "candidate" | "section";
+  candidateId?: string;
+  candidateType?: "outcome" | "epic" | "story";
+  issueId: string;
+  actions: Array<{
+    label: string;
+    value: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
+  }>;
 };
 
 type ArtifactIntakeReviewWorkspaceProps = {
@@ -73,6 +86,7 @@ type ArtifactIntakeReviewWorkspaceProps = {
   fileCandidates: IntakeArtifactCandidate[];
   selectedCandidate: IntakeArtifactCandidate | null;
   submitAction: (formData: FormData) => Promise<void>;
+  submitSectionAction: (formData: FormData) => Promise<void>;
 };
 
 function intakeHref(sessionId: string, fileId: string, candidateId?: string | null, hash?: string) {
@@ -183,6 +197,61 @@ function candidateFields(candidate: IntakeArtifactCandidate) {
   ] as const;
 }
 
+function dispositionLabel(action: string | null | undefined) {
+  if (!action) {
+    return null;
+  }
+
+  return label(action);
+}
+
+function findingResolved(input: {
+  category: "missing" | "uncertain" | "human_only" | "blocked";
+  action: string | null | undefined;
+}) {
+  if (!input.action || input.action === "pending" || input.action === "blocked") {
+    return false;
+  }
+
+  if (input.category === "human_only") {
+    return false;
+  }
+
+  if (input.category === "missing") {
+    return input.action === "not_relevant";
+  }
+
+  if (input.category === "blocked") {
+    return input.action === "not_relevant";
+  }
+
+  return input.action === "confirmed" || input.action === "not_relevant";
+}
+
+function issueActions(category: "missing" | "uncertain" | "human_only" | "blocked") {
+  if (category === "missing") {
+    return [
+      { label: "Not relevant", value: "not_relevant" as const },
+      { label: "Keep pending", value: "pending" as const },
+      { label: "Block", value: "blocked" as const }
+    ];
+  }
+
+  if (category === "human_only") {
+    return [
+      { label: "Keep pending", value: "pending" as const },
+      { label: "Block", value: "blocked" as const }
+    ];
+  }
+
+  return [
+    { label: "Confirm", value: "confirmed" as const },
+    { label: "Not relevant", value: "not_relevant" as const },
+    { label: "Keep pending", value: "pending" as const },
+    { label: "Block", value: "blocked" as const }
+  ];
+}
+
 function queueItems(session: IntakeArtifactSession, file: IntakeArtifactFile, candidates: IntakeArtifactCandidate[]) {
   const items: Array<{ key: string; title: string; description: string; items: QueueItem[] }> = [];
   const baseCandidateId = candidates[0]?.id ?? null;
@@ -198,161 +267,98 @@ function queueItems(session: IntakeArtifactSession, file: IntakeArtifactFile, ca
         title: section.title,
         description: section.text,
         context: `${section.sourceReference.sectionMarker} lines ${section.sourceReference.lineStart}-${section.sourceReference.lineEnd}`,
-        status: "unresolved" as const,
-        href: intakeHref(session.id, file.id, baseCandidateId, `source-section-${section.id}`)
+        status:
+          file.sectionDispositions[section.id]?.action &&
+          file.sectionDispositions[section.id]?.action !== "pending" &&
+          file.sectionDispositions[section.id]?.action !== "blocked"
+            ? ("resolved" as const)
+            : ("unresolved" as const),
+        href: intakeHref(session.id, file.id, baseCandidateId, `source-section-${section.id}`),
+        dispositionLabel: dispositionLabel(file.sectionDispositions[section.id]?.action),
+        actionScope: "section" as const,
+        issueId: section.id,
+        actions: [
+          { label: "Worked off", value: "corrected" as const },
+          { label: "Not relevant", value: "not_relevant" as const },
+          { label: "Keep pending", value: "pending" as const },
+          { label: "Block", value: "blocked" as const }
+        ]
       }))
   });
 
   items.push({
-    key: "confidence",
-    title: "Low-confidence interpretation checks",
-    description: "These items show where parser certainty is still low.",
-    items: candidates.flatMap((candidate) => [
-      {
-        id: `${candidate.id}-source`,
-        title: "Source confidence",
-        description: `Current source confidence is ${candidate.source.confidence}.`,
-        context: `${candidate.title} from ${candidate.source.sectionMarker}`,
-        status: candidate.source.confidence === "high" || reviewed(candidate.reviewStatus) ? "resolved" : "unresolved",
-        href: intakeHref(session.id, file.id, candidate.id, "candidate-panel")
-      },
-      {
-        id: `${candidate.id}-mapping`,
-        title: "Candidate interpretation",
-        description: `Mapping is currently ${candidate.mappingState}.`,
-        context: candidate.title,
-        status: candidate.mappingState === "mapped" || reviewed(candidate.reviewStatus) ? "resolved" : "unresolved",
-        href: intakeHref(session.id, file.id, candidate.id, "candidate-panel")
-      },
-      {
-        id: `${candidate.id}-relationship`,
-        title: "Value Spine relationship",
-        description: `Relationship is currently ${candidate.relationshipState}.`,
-        context: candidate.relationshipNote ?? candidate.title,
-        status: candidate.relationshipState === "mapped" || reviewed(candidate.reviewStatus) ? "resolved" : "unresolved",
-        href: intakeHref(session.id, file.id, candidate.id, "candidate-panel")
-      }
-    ])
-  });
-
-  items.push({
     key: "required",
-    title: "Required fields",
-    description: "These fields still need to be completed before promotion.",
+    title: "Candidate issues",
+    description: "Each remaining issue now has an explicit action path instead of staying as passive uncertainty.",
     items: candidates.flatMap((candidate) =>
-      candidateFields(candidate)
-        .filter(([, , tone]) => tone === "missing")
-        .map(([title]) => ({
-          id: `${candidate.id}-${title}`,
-          title,
-          description: `${title} is not complete yet.`,
-          context: candidate.title,
-          status: "unresolved" as const,
-          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor")
-        }))
-    )
-  });
+      (candidate.complianceResult?.findings ?? []).map((finding) => {
+        const action = candidate.issueDispositions[finding.code]?.action;
+        const resolved = findingResolved({
+          category: finding.category,
+          action
+        });
 
-  items.push({
-    key: "human-only",
-    title: "Human-only decisions",
-    description: "These decisions must remain explicit before promotion.",
-    items: candidates.flatMap((candidate) => {
-      const decisions = candidate.humanDecisions;
-      const human: QueueItem[] = [];
-      if (candidate.type === "outcome") {
-        human.push(
-          {
-            id: `${candidate.id}-value-owner`,
-            title: "Value Owner",
-            description: "A human must confirm ownership.",
-            context: candidate.title,
-            status: hasText(decisions?.valueOwnerId) ? "resolved" : "unresolved",
-            href: intakeHref(session.id, file.id, candidate.id, "candidate-editor")
-          },
-          {
-            id: `${candidate.id}-baseline-validity`,
-            title: "Baseline validity",
-            description: "A human must confirm baseline validity.",
-            context: candidate.title,
-            status: hasText(decisions?.baselineValidity) ? "resolved" : "unresolved",
-            href: intakeHref(session.id, file.id, candidate.id, "candidate-editor")
-          }
-        );
-      }
-      if (candidate.type !== "epic") {
-        human.push({
-          id: `${candidate.id}-ai-level`,
-          title: "AI level",
-          description: "A human must confirm the AI level.",
-          context: candidate.title,
-          status: hasText(decisions?.aiAccelerationLevel) ? "resolved" : "unresolved",
-          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor")
-        });
-      }
-      if (candidate.type === "outcome") {
-        human.push({
-          id: `${candidate.id}-risk-profile`,
-          title: "Risk profile",
-          description: "A human must confirm the risk profile.",
-          context: candidate.title,
-          status: hasText(decisions?.riskProfile) ? "resolved" : "unresolved",
-          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor")
-        });
-      }
-      if (candidate.type === "story") {
-        human.push({
-          id: `${candidate.id}-risk-acceptance`,
-          title: "Risk acceptance status",
-          description: "A human must confirm the risk acceptance status.",
-          context: candidate.title,
-          status: hasText(decisions?.riskAcceptanceStatus) ? "resolved" : "unresolved",
-          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor")
-        });
-      }
-      return human;
-    })
-  });
-
-  items.push({
-    key: "blocked",
-    title: "Blocked issues",
-    description: "These issues still block promotion.",
-    items: candidates.flatMap((candidate) =>
-      (candidate.complianceResult?.findings ?? [])
-        .filter((finding) => finding.category === "blocked")
-        .map((finding) => ({
+        return {
           id: `${candidate.id}-${finding.code}`,
-          title: finding.fieldLabel ?? "Blocked issue",
+          title: finding.fieldLabel ?? "Imported issue",
           description: finding.message,
           context: candidate.title,
-          status: "unresolved" as const,
-          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor")
-        }))
+          status: resolved ? ("resolved" as const) : ("unresolved" as const),
+          href: intakeHref(session.id, file.id, candidate.id, "candidate-editor"),
+          dispositionLabel: dispositionLabel(action),
+          actionScope: "candidate" as const,
+          candidateId: candidate.id,
+          candidateType: candidate.type,
+          issueId: finding.code,
+          actions: issueActions(finding.category)
+        };
+      })
     )
   });
 
   return items;
 }
 
-function readiness(candidate: IntakeArtifactCandidate) {
+function readiness(candidate: IntakeArtifactCandidate, file: IntakeArtifactFile, session: IntakeArtifactSession) {
   const compliance = candidate.complianceResult;
   if (!compliance) {
     return ["border-amber-200 bg-amber-50 text-amber-900", "Correction state unavailable", "Persisted compliance analysis is missing for this candidate."] as const;
   }
+  const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
+    (section) => section.sourceReference.fileId === file.id
+  ).length;
+  const progress = getArtifactCandidateIssueProgress({
+    complianceResult: compliance,
+    issueDispositions: candidate.issueDispositions,
+    unmappedSectionCount,
+    sectionDispositions: file.sectionDispositions
+  });
   if (candidate.reviewStatus === "promoted") {
     return ["border-emerald-200 bg-emerald-50 text-emerald-900", "Already promoted", `This candidate has already been promoted into governed ${candidate.promotedEntityType ?? candidate.type} work.`] as const;
   }
-  if (candidate.reviewStatus === "rejected") {
-    return ["border-rose-200 bg-rose-50 text-rose-900", "Candidate rejected", "This candidate cannot be promoted while rejected."] as const;
+  if (candidate.reviewStatus === "rejected" || candidate.importedReadinessState === "discarded") {
+    return ["border-rose-200 bg-rose-50 text-rose-900", "Discarded or rejected", "This imported candidate has been explicitly taken out of the active promotion path."] as const;
   }
-  if (compliance.summary.blocked > 0 || compliance.summary.humanOnly > 0) {
-    return ["border-rose-200 bg-rose-50 text-rose-900", "Promotion is still blocked", "Blocked findings or unresolved human-only decisions still need review."] as const;
+  if (candidate.importedReadinessState === "blocked" || progress.categories.blocked > 0) {
+    return ["border-rose-200 bg-rose-50 text-rose-900", "Blocked by human decision", "Blocking issues or blocked section dispositions still prevent promotion."] as const;
   }
-  if (compliance.summary.missing > 0 || compliance.summary.uncertain > 0) {
-    return ["border-amber-200 bg-amber-50 text-amber-900", "Correction work still remains", "Missing or uncertain fields should be reconciled before promotion."] as const;
+  if (
+    candidate.importedReadinessState === "imported_incomplete" ||
+    candidate.importedReadinessState === "imported_human_review_needed" ||
+    progress.unresolved > 0
+  ) {
+    return [
+      "border-amber-200 bg-amber-50 text-amber-900",
+      "Not ready for promotion",
+      `${progress.unresolved} unresolved item(s) still remain across missing fields, uncertainty, human-only confirmation, or unmapped source work.`
+    ] as const;
   }
-  if (candidate.reviewStatus === "confirmed" || candidate.reviewStatus === "edited") {
+  if (
+    candidate.importedReadinessState === "imported_framing_ready" ||
+    candidate.importedReadinessState === "imported_design_ready" ||
+    candidate.reviewStatus === "confirmed" ||
+    candidate.reviewStatus === "edited"
+  ) {
     return ["border-emerald-200 bg-emerald-50 text-emerald-900", "Ready for promotion", "Required correction work looks complete and the candidate is ready for explicit promotion."] as const;
   }
   return ["border-sky-200 bg-sky-50 text-sky-900", "Awaiting explicit human confirmation", "The candidate can now be reviewed directly against the source artifact."] as const;
@@ -363,10 +369,22 @@ export function ArtifactIntakeReviewWorkspace({
   selectedFile,
   fileCandidates,
   selectedCandidate,
-  submitAction
+  submitAction,
+  submitSectionAction
 }: ArtifactIntakeReviewWorkspaceProps) {
   const groups = queueItems(session, selectedFile, fileCandidates);
-  const ready = selectedCandidate ? readiness(selectedCandidate) : null;
+  const ready = selectedCandidate ? readiness(selectedCandidate, selectedFile, session) : null;
+  const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
+    (section) => section.sourceReference.fileId === selectedFile.id
+  ).length;
+  const progress = selectedCandidate?.complianceResult
+    ? getArtifactCandidateIssueProgress({
+        complianceResult: selectedCandidate.complianceResult,
+        issueDispositions: selectedCandidate.issueDispositions,
+        unmappedSectionCount,
+        sectionDispositions: selectedFile.sectionDispositions
+      })
+    : null;
 
   return (
     <div className="space-y-6">
@@ -531,7 +549,7 @@ export function ArtifactIntakeReviewWorkspace({
                         </span>
                         {selectedCandidate.importedReadinessState ? (
                           <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                            {label(selectedCandidate.importedReadinessState)}
+                            {ready?.[1] ?? label(selectedCandidate.importedReadinessState)}
                           </span>
                         ) : null}
                       </div>
@@ -562,18 +580,65 @@ export function ArtifactIntakeReviewWorkspace({
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>Correction queue</CardTitle>
-              <CardDescription>
-                Work through unmapped, uncertain, missing, human-only, and blocked issues one by one for the current
-                artifact.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {groups.map((group) => {
-                const unresolved = group.items.filter((item) => item.status === "unresolved").length;
-                const resolved = group.items.filter((item) => item.status === "resolved").length;
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>Correction queue</CardTitle>
+                <CardDescription>
+                  Work through unmapped, uncertain, missing, human-only, and blocked issues one by one for the current
+                  artifact.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {progress ? (
+                  <div className="space-y-3">
+                    <div className="grid gap-3 lg:grid-cols-4">
+                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Remaining</p>
+                        <p className="mt-2 text-2xl font-semibold text-foreground">{progress.unresolved}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Resolved</p>
+                        <p className="mt-2 text-2xl font-semibold text-foreground">{progress.resolved}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked</p>
+                        <p className="mt-2 text-2xl font-semibold text-foreground">{progress.categories.blocked}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Progress</p>
+                        <p className="mt-2 text-2xl font-semibold text-foreground">
+                          {progress.total > 0 ? Math.round((progress.resolved / progress.total) * 100) : 100}%
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Missing</p>
+                        <p className="mt-1 font-semibold text-foreground">{progress.categories.missing}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Uncertain</p>
+                        <p className="mt-1 font-semibold text-foreground">{progress.categories.uncertain}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Human-only</p>
+                        <p className="mt-1 font-semibold text-foreground">{progress.categories.humanOnly}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Unmapped</p>
+                        <p className="mt-1 font-semibold text-foreground">{progress.categories.unmapped}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total tracked</p>
+                        <p className="mt-1 font-semibold text-foreground">{progress.total}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {groups.map((group) => {
+                  const unresolved = group.items.filter((item) => item.status === "unresolved").length;
+                  const resolved = group.items.filter((item) => item.status === "resolved").length;
 
                 return (
                   <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={group.key}>
@@ -605,6 +670,11 @@ export function ArtifactIntakeReviewWorkspace({
                                 <p className="font-medium text-foreground">{item.title}</p>
                                 <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
                                 <p className="mt-2 text-xs text-muted-foreground">{item.context}</p>
+                                {item.dispositionLabel ? (
+                                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                                    Disposition: {item.dispositionLabel}
+                                  </p>
+                                ) : null}
                               </div>
                               <span
                                 className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusTone(item.status)}`}
@@ -618,6 +688,34 @@ export function ArtifactIntakeReviewWorkspace({
                                 <GitBranch className="h-4 w-4" />
                               </Link>
                             </Button>
+                            {item.actionScope === "candidate" && item.candidateId && item.candidateType ? (
+                              <form action={submitAction} className="mt-3 flex flex-wrap gap-2">
+                                <input name="sessionId" type="hidden" value={session.id} />
+                                <input name="fileId" type="hidden" value={selectedFile.id} />
+                                <input name="candidateId" type="hidden" value={item.candidateId} />
+                                <input name="candidateType" type="hidden" value={item.candidateType} />
+                                <input name="intent" type="hidden" value="edit" />
+                                <input name="issueId" type="hidden" value={item.issueId} />
+                                {item.actions.map((action) => (
+                                  <Button key={`${item.id}-${action.value}`} name="issueAction" size="sm" type="submit" value={action.value} variant={action.value === "blocked" ? "secondary" : "ghost"}>
+                                    {action.label}
+                                  </Button>
+                                ))}
+                              </form>
+                            ) : null}
+                            {item.actionScope === "section" ? (
+                              <form action={submitSectionAction} className="mt-3 flex flex-wrap gap-2">
+                                <input name="sessionId" type="hidden" value={session.id} />
+                                <input name="fileId" type="hidden" value={selectedFile.id} />
+                                <input name="candidateId" type="hidden" value={selectedCandidate?.id ?? ""} />
+                                <input name="sectionId" type="hidden" value={item.issueId} />
+                                {item.actions.map((action) => (
+                                  <Button key={`${item.id}-${action.value}`} name="action" size="sm" type="submit" value={action.value} variant={action.value === "blocked" ? "secondary" : "ghost"}>
+                                    {action.label}
+                                  </Button>
+                                ))}
+                              </form>
+                            ) : null}
                           </div>
                         ))}
                       </div>
@@ -849,7 +947,9 @@ export function ArtifactIntakeReviewWorkspace({
                           name="aiAccelerationLevel"
                         >
                           <option value="">Unresolved</option>
+                          <option value="level_1">Level 1</option>
                           <option value="level_2">Level 2</option>
+                          <option value="level_3">Level 3</option>
                         </select>
                       </label>
                       <label className="space-y-2">
@@ -903,7 +1003,7 @@ export function ArtifactIntakeReviewWorkspace({
                       Keep follow-up open
                     </Button>
                     <Button className="gap-2" name="intent" type="submit" value="reject" variant="secondary">
-                      Reject candidate
+                      Discard or reject candidate
                     </Button>
                     <Button className="gap-2" name="intent" type="submit" value="promote">
                       Promote into project records

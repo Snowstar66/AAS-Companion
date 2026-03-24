@@ -4,6 +4,7 @@ import {
   artifactAasCandidateTypeSchema,
   artifactCandidateReviewStatusSchema,
   artifactComplianceFindingCategorySchema,
+  artifactIssueDispositionActionSchema,
   artifactAasMappingStateSchema,
   artifactIntakeSessionStatusSchema,
   artifactParsedSectionKindSchema,
@@ -32,6 +33,7 @@ export const artifactIntakeFileRecordSchema = z.object({
   classifiedAt: z.date().nullish(),
   parsedAt: z.date().nullish(),
   parsedArtifacts: z.unknown().nullish(),
+  sectionDispositions: z.unknown().nullish(),
   uploadedBy: z.string().nullish(),
   uploadedAt: z.date()
 });
@@ -177,6 +179,27 @@ export const artifactComplianceResultSchema = z.object({
   humanReviewRequired: z.boolean()
 });
 
+export const artifactIssueDispositionSchema = z.object({
+  issueId: z.string().min(1),
+  action: artifactIssueDispositionActionSchema,
+  note: z.string().trim().max(500).nullish()
+});
+
+export const artifactIssueDispositionMapSchema = z.record(z.string(), artifactIssueDispositionSchema).default({});
+
+export const artifactIssueProgressSchema = z.object({
+  total: z.number().int().nonnegative(),
+  resolved: z.number().int().nonnegative(),
+  unresolved: z.number().int().nonnegative(),
+  categories: z.object({
+    missing: z.number().int().nonnegative(),
+    uncertain: z.number().int().nonnegative(),
+    humanOnly: z.number().int().nonnegative(),
+    blocked: z.number().int().nonnegative(),
+    unmapped: z.number().int().nonnegative()
+  })
+});
+
 export const artifactCandidateRecordSchema = z.object({
   id: z.string().min(1),
   intakeSessionId: z.string().min(1),
@@ -200,6 +223,7 @@ export const artifactCandidateRecordSchema = z.object({
   draftRecord: artifactCandidateDraftRecordSchema,
   humanDecisions: artifactCandidateHumanDecisionSchema,
   complianceResult: artifactComplianceResultSchema,
+  issueDispositions: artifactIssueDispositionMapSchema,
   reviewStatus: artifactCandidateReviewStatusSchema,
   reviewComment: z.string().nullish(),
   followUpNeeded: z.boolean(),
@@ -218,7 +242,17 @@ export const artifactCandidateReviewActionInputSchema = z.object({
   reviewStatus: artifactCandidateReviewStatusSchema,
   reviewComment: z.string().trim().max(1000).nullish(),
   draftRecord: artifactCandidateDraftRecordSchema.partial().optional(),
-  humanDecisions: artifactCandidateHumanDecisionSchema.partial().optional()
+  humanDecisions: artifactCandidateHumanDecisionSchema.partial().optional(),
+  issueDisposition: artifactIssueDispositionSchema.optional()
+});
+
+export const artifactFileSectionDispositionActionInputSchema = z.object({
+  organizationId: z.string().min(1),
+  actorId: z.string().nullish(),
+  fileId: z.string().min(1),
+  sectionId: z.string().min(1),
+  action: artifactIssueDispositionActionSchema,
+  note: z.string().trim().max(500).nullish()
 });
 
 export const artifactCandidatePromotionResultSchema = z.object({
@@ -241,8 +275,12 @@ export type ArtifactCandidateHumanDecision = z.infer<typeof artifactCandidateHum
 export type ArtifactCandidateDraftRecord = z.infer<typeof artifactCandidateDraftRecordSchema>;
 export type ArtifactComplianceFinding = z.infer<typeof artifactComplianceFindingSchema>;
 export type ArtifactComplianceResult = z.infer<typeof artifactComplianceResultSchema>;
+export type ArtifactIssueDisposition = z.infer<typeof artifactIssueDispositionSchema>;
+export type ArtifactIssueDispositionMap = z.infer<typeof artifactIssueDispositionMapSchema>;
+export type ArtifactIssueProgress = z.infer<typeof artifactIssueProgressSchema>;
 export type ArtifactCandidateRecord = z.infer<typeof artifactCandidateRecordSchema>;
 export type ArtifactCandidateReviewActionInput = z.infer<typeof artifactCandidateReviewActionInputSchema>;
+export type ArtifactFileSectionDispositionActionInput = z.infer<typeof artifactFileSectionDispositionActionInputSchema>;
 export type ArtifactCandidatePromotionResult = z.infer<typeof artifactCandidatePromotionResultSchema>;
 
 export function getArtifactFileExtension(fileName: string) {
@@ -895,20 +933,145 @@ export function analyzeArtifactCandidateCompliance(input: {
   };
 }
 
+function isFindingResolvedByDisposition(input: {
+  finding: ArtifactComplianceFinding;
+  disposition?: ArtifactIssueDisposition | undefined;
+}) {
+  const action = input.disposition?.action;
+
+  if (!action || action === "pending" || action === "blocked") {
+    return false;
+  }
+
+  if (input.finding.category === "human_only") {
+    return false;
+  }
+
+  if (input.finding.category === "missing") {
+    return action === "not_relevant";
+  }
+
+  if (input.finding.category === "blocked") {
+    return action === "not_relevant";
+  }
+
+  return action === "confirmed" || action === "not_relevant";
+}
+
+function getFindingEffectiveCategory(input: {
+  finding: ArtifactComplianceFinding;
+  disposition?: ArtifactIssueDisposition | undefined;
+}) {
+  if (input.disposition?.action === "blocked") {
+    return "blocked" as const;
+  }
+
+  return input.finding.category;
+}
+
+export function getArtifactCandidateIssueProgress(input: {
+  complianceResult: ArtifactComplianceResult;
+  issueDispositions?: ArtifactIssueDispositionMap | null | undefined;
+  unmappedSectionCount?: number | undefined;
+  sectionDispositions?: ArtifactIssueDispositionMap | null | undefined;
+}): ArtifactIssueProgress {
+  const issueDispositions = artifactIssueDispositionMapSchema.parse(input.issueDispositions ?? {});
+  const sectionDispositions = artifactIssueDispositionMapSchema.parse(input.sectionDispositions ?? {});
+  const categories = {
+    missing: 0,
+    uncertain: 0,
+    humanOnly: 0,
+    blocked: 0,
+    unmapped: 0
+  };
+  let resolved = 0;
+
+  for (const finding of input.complianceResult.findings) {
+    const disposition = issueDispositions[finding.code];
+
+    if (isFindingResolvedByDisposition({ finding, disposition })) {
+      resolved += 1;
+      continue;
+    }
+
+    const category = getFindingEffectiveCategory({ finding, disposition });
+
+    if (category === "missing") {
+      categories.missing += 1;
+    } else if (category === "uncertain") {
+      categories.uncertain += 1;
+    } else if (category === "human_only") {
+      categories.humanOnly += 1;
+    } else {
+      categories.blocked += 1;
+    }
+  }
+
+  for (const [issueId, disposition] of Object.entries(sectionDispositions)) {
+    if (!issueId || !disposition) {
+      continue;
+    }
+
+    if (disposition.action === "blocked") {
+      categories.blocked += 1;
+      continue;
+    }
+
+    if (disposition.action === "pending") {
+      categories.unmapped += 1;
+      continue;
+    }
+
+    resolved += 1;
+  }
+
+  const unmappedSectionCount = input.unmappedSectionCount ?? 0;
+  const untouchedUnmapped = Math.max(unmappedSectionCount - Object.keys(sectionDispositions).length, 0);
+  categories.unmapped += untouchedUnmapped;
+
+  const unresolved = categories.missing + categories.uncertain + categories.humanOnly + categories.blocked + categories.unmapped;
+
+  return {
+    total: input.complianceResult.findings.length + unmappedSectionCount,
+    resolved,
+    unresolved,
+    categories
+  };
+}
+
 export function inferImportedReadinessState(input: {
   type: ArtifactAasCandidate["type"];
   complianceResult: ArtifactComplianceResult;
+  issueDispositions?: ArtifactIssueDispositionMap | null | undefined;
+  reviewStatus?: z.infer<typeof artifactCandidateReviewStatusSchema> | null | undefined;
+  unmappedSectionCount?: number | undefined;
+  sectionDispositions?: ArtifactIssueDispositionMap | null | undefined;
 }): z.infer<typeof importedGovernedReadinessStateSchema> {
-  if (input.complianceResult.summary.blocked > 0) {
+  if (input.reviewStatus === "rejected") {
+    return "discarded";
+  }
+
+  const progress = getArtifactCandidateIssueProgress({
+    complianceResult: input.complianceResult,
+    issueDispositions: input.issueDispositions,
+    unmappedSectionCount: input.unmappedSectionCount,
+    sectionDispositions: input.sectionDispositions
+  });
+
+  if (progress.categories.blocked > 0) {
     return "blocked";
   }
 
-  if (input.complianceResult.summary.humanOnly > 0) {
+  if (progress.categories.humanOnly > 0) {
     return "imported_human_review_needed";
   }
 
-  if (input.complianceResult.summary.missing > 0 || input.complianceResult.summary.uncertain > 0) {
+  if (progress.categories.missing > 0 || progress.categories.uncertain > 0 || progress.categories.unmapped > 0) {
     return "imported_incomplete";
+  }
+
+  if (input.reviewStatus === "pending" || input.reviewStatus === "follow_up_needed") {
+    return "imported_human_review_needed";
   }
 
   return input.type === "story" ? "imported_design_ready" : "imported_framing_ready";

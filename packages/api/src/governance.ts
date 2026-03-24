@@ -107,7 +107,8 @@ export async function getGovernanceWorkspaceService(input: {
     aiAccelerationLevel: selectedAiLevel,
     requirements,
     riskRules,
-    people
+    people,
+    agents
   });
   const authorityMatrix = buildAuthorityAssignments({ people });
   const scopedSignoffRecords = sourceContext

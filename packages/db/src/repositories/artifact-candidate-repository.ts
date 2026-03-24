@@ -3,11 +3,14 @@ import type { Prisma } from "../../generated/client";
 import {
   analyzeArtifactCandidateCompliance,
   type ArtifactAasCandidate,
+  artifactMappingResultSchema,
   artifactCandidateDraftRecordSchema,
   artifactCandidateHumanDecisionSchema,
+  artifactIssueDispositionMapSchema,
   artifactCandidateRecordSchema,
   artifactCandidateReviewActionInputSchema,
   createArtifactCandidateDraftRecord,
+  getArtifactCandidateIssueProgress,
   inferImportedReadinessState,
   sanitizeArtifactPersistenceText,
   sanitizeArtifactPersistenceValue
@@ -19,6 +22,22 @@ import { createOutcome } from "./outcome-repository";
 import { createStory } from "./story-repository";
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
+
+function getUnmappedSectionContext(input: {
+  mappedArtifacts: unknown;
+  fileId: string;
+  sectionDispositions: unknown;
+}) {
+  const mapping = artifactMappingResultSchema.safeParse(input.mappedArtifacts);
+  const unmappedSectionCount = mapping.success
+    ? mapping.data.unmappedSections.filter((section) => section.sourceReference.fileId === input.fileId).length
+    : 0;
+
+  return {
+    unmappedSectionCount,
+    sectionDispositions: artifactIssueDispositionMapSchema.parse(input.sectionDispositions ?? {})
+  };
+}
 
 function parseCandidateRecord(candidate: {
   id: string;
@@ -43,6 +62,7 @@ function parseCandidateRecord(candidate: {
   draftRecord: unknown;
   humanDecisions: unknown;
   complianceResult: unknown;
+  issueDispositions: unknown;
   reviewStatus: "pending" | "confirmed" | "edited" | "rejected" | "follow_up_needed" | "promoted";
   reviewComment: string | null;
   followUpNeeded: boolean;
@@ -53,6 +73,7 @@ function parseCandidateRecord(candidate: {
     | "imported_framing_ready"
     | "imported_design_ready"
     | "blocked"
+    | "discarded"
     | null;
   promotedEntityType: "outcome" | "epic" | "story" | null;
   promotedEntityId: string | null;
@@ -64,7 +85,8 @@ function parseCandidateRecord(candidate: {
     ...candidate,
     draftRecord: artifactCandidateDraftRecordSchema.parse(candidate.draftRecord),
     humanDecisions: artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions),
-    complianceResult: candidate.complianceResult
+    complianceResult: candidate.complianceResult,
+    issueDispositions: artifactIssueDispositionMapSchema.parse(candidate.issueDispositions ?? {})
   });
 }
 
@@ -72,18 +94,17 @@ function deriveImportedReadinessState(input: {
   reviewStatus: "pending" | "confirmed" | "edited" | "rejected" | "follow_up_needed" | "promoted";
   complianceResult: ReturnType<typeof analyzeArtifactCandidateCompliance>;
   candidateType: "outcome" | "epic" | "story";
+  issueDispositions?: Record<string, unknown> | null;
+  unmappedSectionCount?: number | undefined;
+  sectionDispositions?: Record<string, unknown> | null;
 }) {
-  if (input.reviewStatus === "rejected") {
-    return "blocked" as const;
-  }
-
-  if (input.reviewStatus === "pending" || input.reviewStatus === "follow_up_needed") {
-    return "imported_human_review_needed" as const;
-  }
-
   return inferImportedReadinessState({
     type: input.candidateType,
-    complianceResult: input.complianceResult
+    complianceResult: input.complianceResult,
+    issueDispositions: artifactIssueDispositionMapSchema.parse(input.issueDispositions ?? {}),
+    reviewStatus: input.reviewStatus,
+    unmappedSectionCount: input.unmappedSectionCount,
+    sectionDispositions: artifactIssueDispositionMapSchema.parse(input.sectionDispositions ?? {})
   });
 }
 
@@ -104,6 +125,7 @@ export async function createPersistedArtifactCandidates(input: {
       riskProfile: null,
       riskAcceptanceStatus: null
     }));
+    const issueDispositions = artifactIssueDispositionMapSchema.parse({});
     const complianceResult = analyzeArtifactCandidateCompliance({
       candidate: sanitizedCandidate,
       draftRecord,
@@ -135,13 +157,15 @@ export async function createPersistedArtifactCandidates(input: {
         draftRecord: draftRecord as Prisma.InputJsonValue,
         humanDecisions: humanDecisions as Prisma.InputJsonValue,
         complianceResult: complianceResult as Prisma.InputJsonValue,
+        issueDispositions: issueDispositions as Prisma.InputJsonValue,
         reviewStatus: "pending",
         reviewComment: null,
         followUpNeeded: false,
         importedReadinessState: deriveImportedReadinessState({
           reviewStatus: "pending",
           complianceResult,
-          candidateType: candidate.type
+          candidateType: candidate.type,
+          issueDispositions
         })
       }
     });
@@ -207,6 +231,22 @@ export async function reviewArtifactCandidate(input: unknown) {
       throw new Error("Artifact candidate was not found in organization scope.");
     }
 
+    const file = await tx.artifactIntakeFile.findFirst({
+      where: {
+        organizationId: parsed.organizationId,
+        id: existing.fileId
+      },
+      select: {
+        id: true,
+        sectionDispositions: true,
+        intakeSession: {
+          select: {
+            mappedArtifacts: true
+          }
+        }
+      }
+    });
+
     const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse({
       ...artifactCandidateDraftRecordSchema.parse(existing.draftRecord),
       ...(parsed.draftRecord ?? {})
@@ -215,6 +255,14 @@ export async function reviewArtifactCandidate(input: unknown) {
       ...artifactCandidateHumanDecisionSchema.parse(existing.humanDecisions),
       ...(parsed.humanDecisions ?? {})
     }));
+    const issueDispositions = artifactIssueDispositionMapSchema.parse({
+      ...(artifactIssueDispositionMapSchema.parse(existing.issueDispositions ?? {})),
+      ...(parsed.issueDisposition
+        ? {
+            [parsed.issueDisposition.issueId]: sanitizeArtifactPersistenceValue(parsed.issueDisposition)
+          }
+        : {})
+    });
     const candidateShape = sanitizeArtifactPersistenceValue({
       id: existing.id,
       type: existing.type,
@@ -243,11 +291,25 @@ export async function reviewArtifactCandidate(input: unknown) {
       draftRecord,
       humanDecisions
     });
+    const unmappedSectionContext = getUnmappedSectionContext({
+      mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
+      fileId: existing.fileId,
+      sectionDispositions: file?.sectionDispositions ?? null
+    });
     const reviewComment = parsed.reviewComment ? sanitizeArtifactPersistenceText(parsed.reviewComment) : null;
     const importedReadinessState = deriveImportedReadinessState({
       reviewStatus: parsed.reviewStatus,
       complianceResult,
-      candidateType: existing.type
+      candidateType: existing.type,
+      issueDispositions,
+      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+      sectionDispositions: unmappedSectionContext.sectionDispositions
+    });
+    const issueProgress = getArtifactCandidateIssueProgress({
+      complianceResult,
+      issueDispositions,
+      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+      sectionDispositions: unmappedSectionContext.sectionDispositions
     });
 
     const updated = await tx.artifactAasCandidate.update({
@@ -256,6 +318,7 @@ export async function reviewArtifactCandidate(input: unknown) {
         draftRecord: draftRecord as Prisma.InputJsonValue,
         humanDecisions: humanDecisions as Prisma.InputJsonValue,
         complianceResult: complianceResult as Prisma.InputJsonValue,
+        issueDispositions: issueDispositions as Prisma.InputJsonValue,
         reviewStatus: parsed.reviewStatus,
         reviewComment,
         followUpNeeded: parsed.reviewStatus === "follow_up_needed",
@@ -282,11 +345,31 @@ export async function reviewArtifactCandidate(input: unknown) {
         metadata: {
           reviewStatus: updated.reviewStatus,
           complianceSummary: complianceResult.summary,
-          importedReadinessState
+          importedReadinessState,
+          issueProgress
         }
       },
       tx
     );
+
+    if (parsed.issueDisposition) {
+      await appendActivityEvent(
+        {
+          organizationId: parsed.organizationId,
+          entityType: "artifact_aas_candidate",
+          entityId: updated.id,
+          eventType: "artifact_candidate_issue_disposition_recorded",
+          actorId: parsed.actorId ?? null,
+          metadata: {
+            issueId: parsed.issueDisposition.issueId,
+            action: parsed.issueDisposition.action,
+            note: parsed.issueDisposition.note ?? null,
+            importedReadinessState
+          }
+        },
+        tx
+      );
+    }
 
     return parseCandidateRecord(updated);
   });
@@ -309,6 +392,22 @@ export async function promoteArtifactCandidate(input: {
       throw new Error("Artifact candidate was not found in organization scope.");
     }
 
+    const file = await tx.artifactIntakeFile.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        id: candidate.fileId
+      },
+      select: {
+        id: true,
+        sectionDispositions: true,
+        intakeSession: {
+          select: {
+            mappedArtifacts: true
+          }
+        }
+      }
+    });
+
     if (candidate.promotedEntityId) {
       return {
         candidateId: candidate.id,
@@ -320,6 +419,7 @@ export async function promoteArtifactCandidate(input: {
 
     const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse(candidate.draftRecord));
     const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions));
+    const issueDispositions = artifactIssueDispositionMapSchema.parse(candidate.issueDispositions ?? {});
     const complianceResult = analyzeArtifactCandidateCompliance({
       candidate: sanitizeArtifactPersistenceValue({
         id: candidate.id,
@@ -347,19 +447,60 @@ export async function promoteArtifactCandidate(input: {
       draftRecord,
       humanDecisions
     });
+    const unmappedSectionContext = getUnmappedSectionContext({
+      mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
+      fileId: candidate.fileId,
+      sectionDispositions: file?.sectionDispositions ?? null
+    });
+    const importedReadinessState = deriveImportedReadinessState({
+      reviewStatus: candidate.reviewStatus,
+      complianceResult,
+      candidateType: candidate.type,
+      issueDispositions,
+      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+      sectionDispositions: unmappedSectionContext.sectionDispositions
+    });
+    const issueProgress = getArtifactCandidateIssueProgress({
+      complianceResult,
+      issueDispositions,
+      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+      sectionDispositions: unmappedSectionContext.sectionDispositions
+    });
 
     if (candidate.reviewStatus !== "confirmed" && candidate.reviewStatus !== "edited") {
       throw new Error("Candidate must be confirmed or edited before promotion can continue.");
     }
 
-    if (complianceResult.summary.humanOnly > 0 || complianceResult.summary.blocked > 0) {
-      throw new Error("Promotion is blocked until required human confirmations and blocked findings are resolved.");
+    if (importedReadinessState === "discarded") {
+      throw new Error("Rejected or discarded candidates cannot be promoted.");
     }
 
-    const importedReadinessState = deriveImportedReadinessState({
+    if (importedReadinessState !== "imported_framing_ready" && importedReadinessState !== "imported_design_ready") {
+      await appendActivityEvent(
+        {
+          organizationId: candidate.organizationId,
+          entityType: "artifact_aas_candidate",
+          entityId: candidate.id,
+          eventType: "imported_progression_blocked",
+          actorId: input.actorId ?? null,
+          metadata: {
+            importedReadinessState,
+            issueProgress
+          }
+        },
+        tx
+      );
+
+      throw new Error("Promotion is blocked until import readiness is green and human confirmation work is complete.");
+    }
+
+    const promotedReadinessState = deriveImportedReadinessState({
       reviewStatus: "promoted",
       complianceResult,
-      candidateType: candidate.type
+      candidateType: candidate.type,
+      issueDispositions,
+      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+      sectionDispositions: unmappedSectionContext.sectionDispositions
     });
     const lineageReference = {
       sourceType: "artifact_aas_candidate" as const,
@@ -384,11 +525,11 @@ export async function promoteArtifactCandidate(input: {
         valueOwnerId: humanDecisions.valueOwnerId ?? null,
         riskProfile: humanDecisions.riskProfile ?? "medium",
         aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
-        status: importedReadinessState === "imported_framing_ready" ? "ready_for_tg1" : "baseline_in_progress",
+        status: promotedReadinessState === "imported_framing_ready" ? "ready_for_tg1" : "baseline_in_progress",
         originType: "imported",
         createdMode: "promotion",
         lineageReference,
-        importedReadinessState
+        importedReadinessState: promotedReadinessState
       }, tx);
       promotedEntityId = created.id;
     }
@@ -420,7 +561,7 @@ export async function promoteArtifactCandidate(input: {
         originType: "imported",
         createdMode: "promotion",
         lineageReference,
-        importedReadinessState
+        importedReadinessState: promotedReadinessState
       }, tx);
       promotedEntityId = created.id;
     }
@@ -461,11 +602,11 @@ export async function promoteArtifactCandidate(input: {
         aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
         testDefinition: draftRecord.testDefinition ?? null,
         definitionOfDone: draftRecord.definitionOfDone,
-        status: importedReadinessState === "imported_design_ready" ? "ready_for_handoff" : "definition_blocked",
+        status: promotedReadinessState === "imported_design_ready" ? "ready_for_handoff" : "definition_blocked",
         originType: "imported",
         createdMode: "promotion",
         lineageReference,
-        importedReadinessState
+        importedReadinessState: promotedReadinessState
       }, tx);
       promotedEntityId = created.id;
     }
@@ -478,7 +619,7 @@ export async function promoteArtifactCandidate(input: {
         promotedEntityType,
         promotedEntityId,
         promotedAt,
-        importedReadinessState
+        importedReadinessState: promotedReadinessState
       }
     });
 
@@ -492,7 +633,23 @@ export async function promoteArtifactCandidate(input: {
         metadata: {
           promotedEntityType,
           promotedEntityId,
-          importedReadinessState
+          importedReadinessState: promotedReadinessState
+        }
+      },
+      tx
+    );
+
+    await appendActivityEvent(
+      {
+        organizationId: candidate.organizationId,
+        entityType: "artifact_aas_candidate",
+        entityId: candidate.id,
+        eventType: "imported_progression_allowed",
+        actorId: input.actorId ?? null,
+        metadata: {
+          promotedEntityType,
+          promotedEntityId,
+          importedReadinessState: promotedReadinessState
         }
       },
       tx
@@ -502,7 +659,7 @@ export async function promoteArtifactCandidate(input: {
       candidateId: candidate.id,
       promotedEntityType,
       promotedEntityId,
-      importedReadinessState
+      importedReadinessState: promotedReadinessState
     };
   });
 }

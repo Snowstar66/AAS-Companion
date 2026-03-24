@@ -5,10 +5,12 @@ import {
   listArtifactCandidatesForOrganization,
   listArtifactIntakeSessions,
   promoteArtifactCandidate,
+  reviewArtifactFileSectionDisposition,
   reviewArtifactCandidate
 } from "@aas-companion/db";
 import {
   artifactCandidateReviewActionInputSchema,
+  artifactFileSectionDispositionActionInputSchema,
   artifactIntakeRejectedFileSchema,
   isSupportedArtifactFile,
   type ArtifactIntakeRejectedFile
@@ -133,6 +135,19 @@ export async function reviewArtifactCandidateService(input: unknown) {
   }
 
   return success(await reviewArtifactCandidate(parsed.data));
+}
+
+export async function reviewArtifactFileSectionDispositionService(input: unknown) {
+  const parsed = artifactFileSectionDispositionActionInputSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return failure({
+      code: "invalid_artifact_section_review",
+      message: parsed.error.issues[0]?.message ?? "Artifact section disposition input is invalid."
+    });
+  }
+
+  return success(await reviewArtifactFileSectionDisposition(parsed.data));
 }
 
 export async function promoteArtifactCandidateService(input: {

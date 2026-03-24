@@ -112,7 +112,39 @@ vi.mock("@aas-companion/api", async () => {
               matchedPeople: []
             }
           ],
-          riskFlags: []
+          riskFlags: [],
+          supervisionGaps: [],
+          validation: {
+            selectedAiLevel: "level_3",
+            status: "does_not_support_selected_level",
+            summaryTitle: "Staffing does not support selected AI level",
+            summaryMessage: "Missing roles, risky combinations or weak supervision mean the current staffing does not yet support level 3.",
+            staffingSupportsSelectedLevel: false,
+            missingRoleCount: 1,
+            riskyCombinationCount: 0,
+            supervisionGapCount: 0,
+            furtherGovernanceRequired: true,
+            recommendations: [
+              {
+                kind: "assign_missing_role",
+                priority: "high",
+                title: "Assign supplier ai governance lead",
+                description: "The selected AI level still needs a named supplier ai governance lead."
+              },
+              {
+                kind: "keep_level_blocked",
+                priority: "high",
+                title: "Keep level_3 blocked for now",
+                description: "Current staffing and separation do not yet justify a green light for this AI level."
+              },
+              {
+                kind: "downgrade_ai_level",
+                priority: "medium",
+                title: "Consider downgrading to level_2",
+                description: "Until the missing roles, risky combinations or supervision gaps are resolved, level 2 is the safer AAS-aligned fallback."
+              }
+            ]
+          }
         },
         authorityMatrix: [
           {
@@ -213,8 +245,11 @@ describe("Governance page", () => {
 
     expect(screen.getAllByRole("heading", { name: "Governance cockpit", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Context linked from story M3-STORY-007").length).toBeGreaterThan(0);
-    expect(screen.getByText("AI level readiness")).toBeDefined();
+    expect(screen.getByText("AI level staffing validation")).toBeDefined();
+    expect(screen.getByText("Staffing does not support selected AI level")).toBeDefined();
     expect(screen.getByText("ai governance lead is missing for supplier coverage.")).toBeDefined();
+    expect(screen.getByText("Assign supplier ai governance lead")).toBeDefined();
+    expect(screen.getByText("Staffing validation is distinct from final approval")).toBeDefined();
     expect(screen.getByText("No risky role combinations are currently detected for level 3.")).toBeDefined();
   });
 

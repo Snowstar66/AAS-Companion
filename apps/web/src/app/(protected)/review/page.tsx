@@ -436,7 +436,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                             <span className="text-sm font-medium text-foreground">AI level</span>
                             <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.humanDecisions?.aiAccelerationLevel ?? ""} name="aiAccelerationLevel">
                               <option value="">Unresolved</option>
+                              <option value="level_1">Level 1</option>
                               <option value="level_2">Level 2</option>
+                              <option value="level_3">Level 3</option>
                             </select>
                           </label>
                           <label className="space-y-2">
@@ -478,7 +480,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           Keep follow-up open
                         </Button>
                         <Button className="gap-2" name="intent" type="submit" value="reject" variant="secondary">
-                          Reject candidate
+                          Discard or reject candidate
                         </Button>
                         <Button className="gap-2" name="intent" type="submit" value="promote">
                           Promote into project records

@@ -403,26 +403,80 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                 <div className="flex items-start gap-3">
                   <Sparkles className="mt-0.5 h-5 w-5 text-primary" />
                   <div>
-                    <CardTitle>AI level readiness</CardTitle>
+                    <CardTitle>AI level staffing validation</CardTitle>
                     <CardDescription>
-                      Evaluate whether the current project is staffed and separated appropriately for {formatLabel(selectedLevel)}.
+                      Validate whether the current project's named staffing, separation and agent supervision support {formatLabel(selectedLevel)}.
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Selected level</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight">{formatLabel(selectedLevel)}</p>
+              <CardContent className="space-y-4">
+                <div
+                  className={`rounded-2xl border px-4 py-4 text-sm ${
+                    data.readiness.validation.status === "supports_selected_level"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                      : data.readiness.validation.status === "needs_attention"
+                        ? "border-amber-200 bg-amber-50 text-amber-900"
+                        : "border-rose-200 bg-rose-50 text-rose-900"
+                  }`}
+                >
+                  <p className="font-medium">{data.readiness.validation.summaryTitle}</p>
+                  <p className="mt-2">{data.readiness.validation.summaryMessage}</p>
                 </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Coverage items</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight">{data.readiness.coverage.length}</p>
+
+                <div className="grid gap-4 md:grid-cols-4">
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Selected level</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight">{formatLabel(selectedLevel)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Missing roles</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight">{data.readiness.validation.missingRoleCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Risky combinations</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight">{data.readiness.validation.riskyCombinationCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Supervision gaps</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight">{data.readiness.validation.supervisionGapCount}</p>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Risk flags</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-tight">{data.readiness.riskFlags.length}</p>
+
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                  <p className="font-medium">Staffing validation is distinct from final approval</p>
+                  <p className="mt-2">
+                    Even if staffing supports the selected AI level, final sign-off, tollgate approval and later delivery readiness still remain separate.
+                  </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>AAS recommendations</CardTitle>
+                <CardDescription>Action-oriented next steps when staffing or role separation does not yet support the selected AI level.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {data.readiness.validation.recommendations.length === 0 ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                    No immediate staffing recommendations are open for {formatLabel(selectedLevel)}.
+                  </div>
+                ) : (
+                  data.readiness.validation.recommendations.map((recommendation, index) => (
+                    <div
+                      className={`rounded-2xl border px-4 py-4 text-sm ${
+                        recommendation.priority === "high"
+                          ? "border-rose-200 bg-rose-50 text-rose-900"
+                          : "border-amber-200 bg-amber-50 text-amber-900"
+                      }`}
+                      key={`${recommendation.kind}-${index}`}
+                    >
+                      <p className="font-medium">{recommendation.title}</p>
+                      <p className="mt-2">{recommendation.description}</p>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -494,6 +548,27 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                       </p>
                       <p className="mt-2">{flag.message}</p>
                       <p className="mt-2">People involved: {flag.people.map((person) => person.fullName).join(", ")}</p>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>Agent supervision</CardTitle>
+                <CardDescription>Active agents must have an active supervising human before staffing can be trusted.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {data.readiness.supervisionGaps.length === 0 ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                    All active agents currently have an active supervising human.
+                  </div>
+                ) : (
+                  data.readiness.supervisionGaps.map((gap) => (
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-900" key={gap.agentId}>
+                      <p className="font-medium">{gap.agentName}</p>
+                      <p className="mt-2">{gap.message}</p>
                     </div>
                   ))
                 )}

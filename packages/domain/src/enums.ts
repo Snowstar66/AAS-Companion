@@ -70,6 +70,13 @@ export const artifactParsedSectionKinds = [
 export const artifactAasCandidateTypes = ["outcome", "epic", "story"] as const;
 export const artifactAasMappingStates = ["mapped", "uncertain", "missing"] as const;
 export const artifactComplianceFindingCategories = ["missing", "uncertain", "human_only", "blocked"] as const;
+export const artifactIssueDispositionActions = [
+  "corrected",
+  "confirmed",
+  "not_relevant",
+  "pending",
+  "blocked"
+] as const;
 export const artifactCandidateReviewStatuses = [
   "pending",
   "confirmed",
@@ -84,7 +91,8 @@ export const importedGovernedReadinessStates = [
   "imported_human_review_needed",
   "imported_framing_ready",
   "imported_design_ready",
-  "blocked"
+  "blocked",
+  "discarded"
 ] as const;
 export const activityEntityTypes = [
   "organization",
@@ -128,7 +136,9 @@ export const activityEventTypes = [
   "artifact_candidate_edited",
   "artifact_candidate_rejected",
   "artifact_candidate_follow_up_marked",
+  "artifact_candidate_issue_disposition_recorded",
   "artifact_candidate_promoted",
+  "artifact_file_section_disposition_recorded",
   "imported_progression_blocked",
   "imported_progression_allowed"
 ] as const;
@@ -167,6 +177,7 @@ export const artifactParsedSectionKindSchema = z.enum(artifactParsedSectionKinds
 export const artifactAasCandidateTypeSchema = z.enum(artifactAasCandidateTypes);
 export const artifactAasMappingStateSchema = z.enum(artifactAasMappingStates);
 export const artifactComplianceFindingCategorySchema = z.enum(artifactComplianceFindingCategories);
+export const artifactIssueDispositionActionSchema = z.enum(artifactIssueDispositionActions);
 export const artifactCandidateReviewStatusSchema = z.enum(artifactCandidateReviewStatuses);
 export const importedGovernedReadinessStateSchema = z.enum(importedGovernedReadinessStates);
 export const activityEntityTypeSchema = z.enum(activityEntityTypes);
@@ -206,6 +217,7 @@ export type ArtifactParsedSectionKind = z.infer<typeof artifactParsedSectionKind
 export type ArtifactAasCandidateType = z.infer<typeof artifactAasCandidateTypeSchema>;
 export type ArtifactAasMappingState = z.infer<typeof artifactAasMappingStateSchema>;
 export type ArtifactComplianceFindingCategory = z.infer<typeof artifactComplianceFindingCategorySchema>;
+export type ArtifactIssueDispositionAction = z.infer<typeof artifactIssueDispositionActionSchema>;
 export type ArtifactCandidateReviewStatus = z.infer<typeof artifactCandidateReviewStatusSchema>;
 export type ImportedGovernedReadinessState = z.infer<typeof importedGovernedReadinessStateSchema>;
 export type ActivityEntityType = z.infer<typeof activityEntityTypeSchema>;

@@ -40,6 +40,18 @@ export async function submitArtifactCandidateReviewAction(formData: FormData) {
   const candidateType = String(formData.get("candidateType") ?? "story");
   const intent = String(formData.get("intent") ?? "edit");
   const reviewComment = String(formData.get("reviewComment") ?? "") || null;
+  const issueId = String(formData.get("issueId") ?? "") || null;
+  const issueAction = String(formData.get("issueAction") ?? "") || null;
+
+  if (intent === "reject" && !reviewComment) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        candidateId,
+        message: "Add a short discard reason before rejecting the imported candidate."
+      })
+    );
+  }
 
   const reviewPayload = {
     organizationId: session.organization.organizationId,
@@ -81,11 +93,20 @@ export async function submitArtifactCandidateReviewAction(formData: FormData) {
       valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
       baselineValidity:
         ((String(formData.get("baselineValidity") ?? "") || null) as "confirmed" | "needs_follow_up" | null),
-      aiAccelerationLevel: ((String(formData.get("aiAccelerationLevel") ?? "") || null) as "level_2" | null),
+      aiAccelerationLevel:
+        ((String(formData.get("aiAccelerationLevel") ?? "") || null) as "level_1" | "level_2" | "level_3" | null),
       riskProfile: ((String(formData.get("riskProfile") ?? "") || null) as "low" | "medium" | "high" | null),
       riskAcceptanceStatus:
         ((String(formData.get("riskAcceptanceStatus") ?? "") || null) as "accepted" | "needs_review" | null)
-    }
+    },
+    issueDisposition:
+      issueId && issueAction
+        ? {
+            issueId,
+            action: issueAction as "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked",
+            note: reviewComment
+          }
+        : undefined
   } as const;
 
   const reviewResult = await reviewArtifactCandidateService(reviewPayload);
@@ -147,6 +168,8 @@ export async function submitArtifactCandidateReviewAction(formData: FormData) {
           ? "Candidate confirmed."
           : intent === "reject"
             ? "Candidate rejected."
+            : issueId && issueAction
+              ? "Issue disposition saved."
             : intent === "follow_up"
               ? "Candidate marked for follow-up."
               : "Candidate edits saved."

@@ -91,7 +91,9 @@ vi.mock("@/lib/intake/workspace", () => ({
               promotionBlocked: true,
               humanReviewRequired: true
             },
+            issueDispositions: {},
             reviewStatus: "pending",
+            importedReadinessState: "imported_incomplete",
             source: {
               fileId: "file-1",
               fileName: "story-pack.md",
@@ -139,6 +141,7 @@ vi.mock("@/lib/intake/workspace", () => ({
             sourceTypeStatus: "classified",
             sourceType: "story_file",
             sourceTypeConfidence: "medium",
+            sectionDispositions: {},
             sizeBytes: 1024,
             content: "# Imported artifact\n\n## Story\n\nAs a delivery lead I want candidate mapping so that ambiguity stays visible.\n\n## Architecture Notes\n\nLeave promotion outside this story.",
             parsedSectionCount: 2,

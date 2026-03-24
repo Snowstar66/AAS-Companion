@@ -8,6 +8,7 @@ import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import {
+  submitArtifactSectionDispositionAction,
   submitArtifactCandidateFromIntakeAction,
   uploadArtifactIntakeFilesAction
 } from "./actions";
@@ -346,6 +347,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 selectedCandidate={selectedCandidate}
                 selectedFile={selectedFile}
                 session={selectedSession}
+                submitSectionAction={submitArtifactSectionDispositionAction}
                 submitAction={submitArtifactCandidateFromIntakeAction}
               />
             ) : null}
