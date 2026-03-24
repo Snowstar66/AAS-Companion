@@ -6,7 +6,9 @@ import {
   inferImportedReadinessState,
   isSupportedArtifactFile,
   mapParsedArtifactsToAasCandidates,
-  parseMarkdownArtifact
+  parseMarkdownArtifact,
+  sanitizeArtifactPersistenceText,
+  sanitizeArtifactPersistenceValue
 } from "@aas-companion/domain";
 
 describe("artifact intake helpers", () => {
@@ -109,6 +111,26 @@ describe("artifact intake helpers", () => {
     expect(mapping.unmappedSections.some((section) => section.kind === "architecture_notes")).toBe(true);
   });
 
+  it("sanitizes persisted intake text into Windows-safe characters", () => {
+    expect(sanitizeArtifactPersistenceText("Outcome → Story… café")).toBe("Outcome -> Story... café");
+
+    expect(
+      sanitizeArtifactPersistenceValue({
+        title: "Roadmap → Delivery",
+        notes: ["Review…", "Keep café wording"],
+        nested: {
+          marker: "## Scope • Risks"
+        }
+      })
+    ).toEqual({
+      title: "Roadmap -> Delivery",
+      notes: ["Review...", "Keep café wording"],
+      nested: {
+        marker: "## Scope - Risks"
+      }
+    });
+  });
+
   it("keeps imported stories in human review until human-only decisions are resolved", () => {
     const compliance = analyzeArtifactCandidateCompliance({
       candidate: {
@@ -204,5 +226,52 @@ describe("artifact intake helpers", () => {
     expect(compliance.summary.humanOnly).toBe(0);
     expect(compliance.promotionBlocked).toBe(false);
     expect(inferImportedReadinessState({ type: "story", complianceResult: compliance })).toBe("imported_design_ready");
+  });
+
+  it("uses ASCII linkage messages in compliance findings", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-story-3",
+        type: "story",
+        title: "Imported Story",
+        summary: "Story imported from markdown.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-3",
+          fileName: "story-pack.md",
+          sectionId: "section-story",
+          sectionTitle: "Story",
+          sectionMarker: "## Story",
+          sourceType: "story_file",
+          confidence: "high"
+        },
+        inferredOutcomeCandidateId: null,
+        inferredEpicCandidateId: null,
+        relationshipState: "missing",
+        relationshipNote: "Missing upstream linkage.",
+        acceptanceCriteria: ["Candidate is traceable"],
+        testNotes: []
+      },
+      reviewStatus: "edited",
+      draftRecord: {
+        key: "IMP-STORY-3",
+        title: "Imported Story",
+        storyType: "outcome_delivery",
+        valueIntent: "Keep linkage explicit",
+        acceptanceCriteria: ["Candidate is traceable"],
+        aiUsageScope: ["Drafting"],
+        testDefinition: null,
+        definitionOfDone: [],
+        outcomeCandidateId: null,
+        epicCandidateId: null
+      },
+      humanDecisions: {
+        aiAccelerationLevel: "level_2",
+        riskAcceptanceStatus: "accepted"
+      }
+    });
+
+    expect(compliance.findings.some((finding) => finding.message.includes("->"))).toBe(true);
+    expect(compliance.findings.some((finding) => finding.message.includes("→"))).toBe(false);
   });
 });

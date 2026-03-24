@@ -8,7 +8,9 @@ import {
   artifactCandidateRecordSchema,
   artifactCandidateReviewActionInputSchema,
   createArtifactCandidateDraftRecord,
-  inferImportedReadinessState
+  inferImportedReadinessState,
+  sanitizeArtifactPersistenceText,
+  sanitizeArtifactPersistenceValue
 } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
@@ -93,16 +95,17 @@ export async function createPersistedArtifactCandidates(input: {
   const persisted = [];
 
   for (const candidate of input.candidates) {
-    const draftRecord = createArtifactCandidateDraftRecord(candidate);
-    const humanDecisions = artifactCandidateHumanDecisionSchema.parse({
+    const sanitizedCandidate = sanitizeArtifactPersistenceValue(candidate);
+    const draftRecord = sanitizeArtifactPersistenceValue(createArtifactCandidateDraftRecord(sanitizedCandidate));
+    const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse({
       valueOwnerId: null,
       baselineValidity: null,
       aiAccelerationLevel: null,
       riskProfile: null,
       riskAcceptanceStatus: null
-    });
+    }));
     const complianceResult = analyzeArtifactCandidateCompliance({
-      candidate,
+      candidate: sanitizedCandidate,
       draftRecord,
       humanDecisions,
       reviewStatus: "pending"
@@ -113,22 +116,22 @@ export async function createPersistedArtifactCandidates(input: {
         id: candidate.id,
         organizationId: input.organizationId,
         intakeSessionId: input.intakeSessionId,
-        fileId: candidate.source.fileId,
-        type: candidate.type,
-        title: candidate.title,
-        summary: candidate.summary,
-        mappingState: candidate.mappingState,
-        sourceType: candidate.source.sourceType,
-        sourceConfidence: candidate.source.confidence,
-        sourceSectionId: candidate.source.sectionId,
-        sourceSectionTitle: candidate.source.sectionTitle,
-        sourceSectionMarker: candidate.source.sectionMarker,
-        inferredOutcomeCandidateId: candidate.inferredOutcomeCandidateId ?? null,
-        inferredEpicCandidateId: candidate.inferredEpicCandidateId ?? null,
-        relationshipState: candidate.relationshipState,
-        relationshipNote: candidate.relationshipNote ?? null,
-        acceptanceCriteria: candidate.acceptanceCriteria,
-        testNotes: candidate.testNotes,
+        fileId: sanitizedCandidate.source.fileId,
+        type: sanitizedCandidate.type,
+        title: sanitizedCandidate.title,
+        summary: sanitizedCandidate.summary,
+        mappingState: sanitizedCandidate.mappingState,
+        sourceType: sanitizedCandidate.source.sourceType,
+        sourceConfidence: sanitizedCandidate.source.confidence,
+        sourceSectionId: sanitizedCandidate.source.sectionId,
+        sourceSectionTitle: sanitizedCandidate.source.sectionTitle,
+        sourceSectionMarker: sanitizedCandidate.source.sectionMarker,
+        inferredOutcomeCandidateId: sanitizedCandidate.inferredOutcomeCandidateId ?? null,
+        inferredEpicCandidateId: sanitizedCandidate.inferredEpicCandidateId ?? null,
+        relationshipState: sanitizedCandidate.relationshipState,
+        relationshipNote: sanitizedCandidate.relationshipNote ?? null,
+        acceptanceCriteria: sanitizedCandidate.acceptanceCriteria,
+        testNotes: sanitizedCandidate.testNotes,
         draftRecord: draftRecord as Prisma.InputJsonValue,
         humanDecisions: humanDecisions as Prisma.InputJsonValue,
         complianceResult: complianceResult as Prisma.InputJsonValue,
@@ -151,8 +154,8 @@ export async function createPersistedArtifactCandidates(input: {
         eventType: "artifact_candidate_compliance_analyzed",
         metadata: {
           intakeSessionId: input.intakeSessionId,
-          fileId: candidate.source.fileId,
-          type: candidate.type,
+          fileId: sanitizedCandidate.source.fileId,
+          type: sanitizedCandidate.type,
           summary: complianceResult.summary
         }
       },
@@ -204,15 +207,15 @@ export async function reviewArtifactCandidate(input: unknown) {
       throw new Error("Artifact candidate was not found in organization scope.");
     }
 
-    const draftRecord = artifactCandidateDraftRecordSchema.parse({
+    const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse({
       ...artifactCandidateDraftRecordSchema.parse(existing.draftRecord),
       ...(parsed.draftRecord ?? {})
-    });
-    const humanDecisions = artifactCandidateHumanDecisionSchema.parse({
+    }));
+    const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse({
       ...artifactCandidateHumanDecisionSchema.parse(existing.humanDecisions),
       ...(parsed.humanDecisions ?? {})
-    });
-    const candidateShape = {
+    }));
+    const candidateShape = sanitizeArtifactPersistenceValue({
       id: existing.id,
       type: existing.type,
       title: existing.title,
@@ -233,13 +236,14 @@ export async function reviewArtifactCandidate(input: unknown) {
       relationshipNote: existing.relationshipNote,
       acceptanceCriteria: existing.acceptanceCriteria,
       testNotes: existing.testNotes
-    } as const;
+    } as const);
     const complianceResult = analyzeArtifactCandidateCompliance({
       candidate: candidateShape,
       reviewStatus: parsed.reviewStatus,
       draftRecord,
       humanDecisions
     });
+    const reviewComment = parsed.reviewComment ? sanitizeArtifactPersistenceText(parsed.reviewComment) : null;
     const importedReadinessState = deriveImportedReadinessState({
       reviewStatus: parsed.reviewStatus,
       complianceResult,
@@ -253,7 +257,7 @@ export async function reviewArtifactCandidate(input: unknown) {
         humanDecisions: humanDecisions as Prisma.InputJsonValue,
         complianceResult: complianceResult as Prisma.InputJsonValue,
         reviewStatus: parsed.reviewStatus,
-        reviewComment: parsed.reviewComment ?? null,
+        reviewComment,
         followUpNeeded: parsed.reviewStatus === "follow_up_needed",
         importedReadinessState
       }
@@ -314,10 +318,10 @@ export async function promoteArtifactCandidate(input: {
       };
     }
 
-    const draftRecord = artifactCandidateDraftRecordSchema.parse(candidate.draftRecord);
-    const humanDecisions = artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions);
+    const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse(candidate.draftRecord));
+    const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions));
     const complianceResult = analyzeArtifactCandidateCompliance({
-      candidate: {
+      candidate: sanitizeArtifactPersistenceValue({
         id: candidate.id,
         type: candidate.type,
         title: candidate.title,
@@ -338,7 +342,7 @@ export async function promoteArtifactCandidate(input: {
         relationshipNote: candidate.relationshipNote,
         acceptanceCriteria: candidate.acceptanceCriteria,
         testNotes: candidate.testNotes
-      },
+      }),
       reviewStatus: candidate.reviewStatus,
       draftRecord,
       humanDecisions
@@ -371,9 +375,9 @@ export async function promoteArtifactCandidate(input: {
         organizationId: candidate.organizationId,
         actorId: input.actorId ?? null,
         key: draftRecord.key ?? `IMP-OUT-${candidate.id.slice(0, 8).toUpperCase()}`,
-        title: draftRecord.title ?? candidate.title,
+        title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
         problemStatement: draftRecord.problemStatement ?? null,
-        outcomeStatement: draftRecord.outcomeStatement ?? candidate.summary,
+        outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
         baselineDefinition: draftRecord.baselineDefinition ?? null,
         baselineSource: draftRecord.baselineSource ?? null,
         timeframe: draftRecord.timeframe ?? null,
@@ -408,8 +412,8 @@ export async function promoteArtifactCandidate(input: {
         actorId: input.actorId ?? null,
         outcomeId: promotedOutcome.promotedEntityId,
         key: draftRecord.key ?? `IMP-EPC-${candidate.id.slice(0, 8).toUpperCase()}`,
-        title: draftRecord.title ?? candidate.title,
-        purpose: draftRecord.purpose ?? candidate.summary,
+        title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+        purpose: draftRecord.purpose ?? sanitizeArtifactPersistenceText(candidate.summary),
         status: "draft",
         originType: "imported",
         createdMode: "promotion",
@@ -447,9 +451,9 @@ export async function promoteArtifactCandidate(input: {
         outcomeId: promotedOutcome.promotedEntityId,
         epicId: promotedEpic.promotedEntityId,
         key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
-        title: draftRecord.title ?? candidate.title,
+        title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
         storyType: draftRecord.storyType ?? "outcome_delivery",
-        valueIntent: draftRecord.valueIntent ?? candidate.summary,
+        valueIntent: draftRecord.valueIntent ?? sanitizeArtifactPersistenceText(candidate.summary),
         acceptanceCriteria: draftRecord.acceptanceCriteria,
         aiUsageScope: draftRecord.aiUsageScope,
         aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",

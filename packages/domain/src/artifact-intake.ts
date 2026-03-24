@@ -344,9 +344,55 @@ function confidenceFromSignals(strongSignals: number, mediumSignals: number) {
   return "low" as const;
 }
 
+const artifactPersistenceReplacements: Array<[RegExp, string]> = [
+  [/[→⇒➜➔➝]/g, "->"],
+  [/[←⇐]/g, "<-"],
+  [/[“”„‟]/g, "\""],
+  [/[‘’‚‛]/g, "'"],
+  [/[–—−]/g, "-"],
+  [/…/g, "..."],
+  [/[•◦▪]/g, "-"],
+  [/\u00A0/g, " "]
+];
+
+export function sanitizeArtifactPersistenceText(value: string) {
+  const normalized = value.normalize("NFKC");
+  const replaced = artifactPersistenceReplacements.reduce(
+    (current, [pattern, replacement]) => current.replace(pattern, replacement),
+    normalized
+  );
+
+  return Array.from(replaced, (character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return codePoint <= 0xff ? character : "?";
+  }).join("");
+}
+
+export function sanitizeArtifactPersistenceValue<T>(value: T): T {
+  if (typeof value === "string") {
+    return sanitizeArtifactPersistenceText(value) as T;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeArtifactPersistenceValue(entry)) as T;
+  }
+
+  if (value instanceof Date || value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, sanitizeArtifactPersistenceValue(entry)])
+    ) as T;
+  }
+
+  return value;
+}
+
 function summarizeText(text: string, maxLength = 180) {
   const normalized = text.replace(/\s+/g, " ").trim();
-  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1)}…` : normalized;
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
 }
 
 export function classifyArtifactSource(fileName: string, content: string): ArtifactSourceClassification {
@@ -725,7 +771,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       findings.push({
         code: "epic_outcome_link_missing",
         category: "blocked",
-        message: "Outcome → Epic linkage is missing.",
+        message: "Outcome -> Epic linkage is missing.",
         fieldLabel: "Outcome linkage"
       });
     }
@@ -760,7 +806,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       findings.push({
         code: "story_test_link_missing",
         category: "blocked",
-        message: "Story → Test-related definition linkage is missing.",
+        message: "Story -> Test-related definition linkage is missing.",
         fieldLabel: "Test linkage"
       });
     }
@@ -778,7 +824,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       findings.push({
         code: "story_outcome_link_missing",
         category: "blocked",
-        message: "Outcome → Epic → Story linkage is incomplete because the Outcome is missing.",
+        message: "Outcome -> Epic -> Story linkage is incomplete because the Outcome is missing.",
         fieldLabel: "Outcome linkage"
       });
     }
@@ -787,7 +833,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       findings.push({
         code: "story_epic_link_missing",
         category: "blocked",
-        message: "Epic → Story linkage is missing.",
+        message: "Epic -> Story linkage is missing.",
         fieldLabel: "Epic linkage"
       });
     }
