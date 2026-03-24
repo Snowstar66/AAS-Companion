@@ -10,9 +10,9 @@
     "typecheck": "pnpm --filter \"@aas-companion/*\" -r --if-present typecheck",
     "test": "pnpm --filter @aas-companion/web test",
     "test:e2e": "pnpm --filter @aas-companion/web test:e2e",
-    "db:generate": "node --env-file=.env.local ./packages/db/node_modules/prisma/build/index.js generate --schema packages/db/prisma/schema.prisma",
-    "db:push": "node --env-file=.env.local ./packages/db/node_modules/prisma/build/index.js db push --schema packages/db/prisma/schema.prisma",
-    "db:seed": "node --env-file=.env.local packages/db/prisma/seed.mjs"
+    "db:generate": "node ./scripts/run-prisma-with-optional-env.mjs generate",
+    "db:push": "node ./scripts/run-prisma-with-optional-env.mjs db push",
+    "db:seed": "node ./scripts/run-node-with-optional-env.mjs packages/db/prisma/seed.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",

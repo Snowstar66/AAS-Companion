@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CircleAlert, CircleCheckBig, FileJson2, ShieldCheck } from "lucide-react";
+import { ArrowRight, FileJson2, ShieldCheck } from "lucide-react";
 import { getStoryReadinessBlockers } from "@aas-companion/domain";
 import { getStoryWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
