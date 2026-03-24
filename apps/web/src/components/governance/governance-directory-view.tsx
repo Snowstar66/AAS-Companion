@@ -8,6 +8,7 @@ type ReturnParams = {
   level: string;
   sourceEntity?: string | undefined;
   sourceId?: string | undefined;
+  side?: string | undefined;
 };
 
 type PartyRoleEntryView = {
@@ -42,6 +43,7 @@ function ReturnInputs({ params }: { params: ReturnParams }) {
       <input name="returnLevel" type="hidden" value={params.level} />
       <input name="returnSourceEntity" type="hidden" value={params.sourceEntity ?? ""} />
       <input name="returnSourceId" type="hidden" value={params.sourceId ?? ""} />
+      <input name="returnSide" type="hidden" value={params.side ?? ""} />
     </>
   );
 }

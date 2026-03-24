@@ -6,8 +6,19 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 
-export default async function StoriesPage() {
+type StoriesPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function getParamValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function StoriesPage({ searchParams }: StoriesPageProps) {
   const organization = await requireOrganizationContext();
+  const query = searchParams ? await searchParams : {};
+  const readinessFilter = getParamValue(query.state) ?? "all";
+  const missingTestsOnly = getParamValue(query.missingTests) === "1";
   const storiesResult = await listStoriesService(organization.organizationId);
 
   return (
@@ -39,7 +50,26 @@ export default async function StoriesPage() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {storiesResult.data.map((story) => {
+            {storiesResult.data
+              .filter((story) => {
+                const blockers = getStoryReadinessBlockers(story);
+                const ready = blockers.length === 0;
+
+                if (readinessFilter === "ready" && !ready) {
+                  return false;
+                }
+
+                if (readinessFilter === "blocked" && ready) {
+                  return false;
+                }
+
+                if (missingTestsOnly && story.testDefinition) {
+                  return false;
+                }
+
+                return true;
+              })
+              .map((story) => {
               const blockers = getStoryReadinessBlockers(story);
               const ready = blockers.length === 0;
               const imported = story.originType === "imported";

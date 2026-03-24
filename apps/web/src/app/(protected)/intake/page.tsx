@@ -4,6 +4,8 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { AppShell } from "@/components/layout/app-shell";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
 import { ArtifactIntakeRightRail } from "@/components/intake/artifact-intake-right-rail";
+import { ContextHelp } from "@/components/shared/context-help";
+import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import {
   submitArtifactCandidateFromIntakeAction,
@@ -55,10 +57,13 @@ function flashTone(status: string | undefined) {
   return "border-emerald-200 bg-emerald-50 text-emerald-700";
 }
 
-function buildIntakeHref(sessionId: string, fileId: string, candidateId?: string | null) {
+function buildIntakeHref(sessionId: string, fileId: string, candidateId?: string | null, queueFilter?: string) {
   const params = new URLSearchParams({ sessionId, fileId });
   if (candidateId) {
     params.set("candidateId", candidateId);
+  }
+  if (queueFilter && queueFilter !== "all") {
+    params.set("queue", queueFilter);
   }
   return `/intake?${params.toString()}`;
 }
@@ -72,10 +77,25 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const sessionId = getParamValue(query.sessionId);
   const fileId = getParamValue(query.fileId);
   const candidateId = getParamValue(query.candidateId);
+  const queueFilter = getParamValue(query.queue) ?? "all";
+  const visibleSessions =
+    workspace.state === "ready"
+      ? workspace.sessions.filter((artifactSession) => {
+          if (queueFilter === "pending_classification") {
+            return artifactSession.files.some((file) => file.sourceTypeStatus === "pending");
+          }
+
+          if (queueFilter === "review_required") {
+            return artifactSession.pendingReviewCount > 0 || artifactSession.status === "human_review_required";
+          }
+
+          return true;
+        })
+      : [];
 
   const selectedSession =
     workspace.state === "ready"
-      ? workspace.sessions.find((artifactSession) => artifactSession.id === sessionId) ?? workspace.sessions[0] ?? null
+      ? visibleSessions.find((artifactSession) => artifactSession.id === sessionId) ?? visibleSessions[0] ?? null
       : null;
   const selectedFile =
     selectedSession?.files.find((artifactFile) => artifactFile.id === fileId) ?? selectedSession?.files[0] ?? null;
@@ -92,6 +112,10 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     : [];
   const selectedCandidate =
     selectedFileCandidates.find((candidate) => candidate.id === candidateId) ?? selectedFileCandidates[0] ?? null;
+  const importHelp = getHelpPattern(
+    "import.workspace",
+    selectedCandidate?.humanDecisions?.aiAccelerationLevel ?? null
+  );
 
   return (
     <AppShell
@@ -113,6 +137,9 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
             Upload markdown delivery artifacts, inspect the full imported source, review structured candidates, and
             correct them before promotion.
           </p>
+          <div className="mt-5 max-w-4xl">
+            <ContextHelp pattern={importHelp} summaryLabel="Open import help" />
+          </div>
         </div>
 
         {error ? (
@@ -181,7 +208,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {workspace.sessions.map((artifactSession) => (
+                  {visibleSessions.map((artifactSession) => (
                     <div
                       className={`rounded-2xl border p-4 ${selectedSession?.id === artifactSession.id ? "border-primary/50 bg-primary/5" : "border-border/70 bg-background/80"}`}
                       key={artifactSession.id}
@@ -244,7 +271,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                                   : "secondary"
                               }
                             >
-                              <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, firstCandidate?.id ?? null)}>
+                              <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, firstCandidate?.id ?? null, queueFilter)}>
                                 {artifactFile.fileName}
                               </Link>
                             </Button>
@@ -253,6 +280,11 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                       </div>
                     </div>
                   ))}
+                  {visibleSessions.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
+                      No import sessions match the current action filter.
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
 

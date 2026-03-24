@@ -6,11 +6,13 @@ import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
+import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+import { formatAiLevelLabel, getHelpPattern, getInlineGuidance } from "@/lib/help/aas-help";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
@@ -74,6 +76,8 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
       ? tollgate.status.replaceAll("_", " ")
       : "not started";
   const isArchived = outcome.lifecycleState === "archived";
+  const framingHelp = getHelpPattern("outcome.authoring", outcome.aiAccelerationLevel);
+  const aiLevelHelp = getHelpPattern("framing.ai_level", outcome.aiAccelerationLevel);
 
   return (
     <AppShell hideRightRail topbarProps={{ eyebrow: "AAS Companion", projectName: organization.organizationName, sectionLabel: "Outcome", badge: outcome.key }}>
@@ -127,6 +131,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
           </Card>
 
           <div className="space-y-6">
+            <ContextHelp defaultOpen pattern={framingHelp} summaryLabel="Open framing authoring help" />
             <Card className="border-border/70 shadow-sm">
               <CardHeader><CardTitle>Readiness blockers</CardTitle><CardDescription>What still blocks Tollgate 1 for this outcome.</CardDescription></CardHeader>
               <CardContent className="space-y-3">
@@ -163,40 +168,49 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
             <form action={saveOutcomeWorkspaceAction} className="space-y-6">
               <input name="outcomeId" type="hidden" value={outcome.id} />
               <Card className="border-border/70 shadow-sm">
-                <CardHeader><CardTitle>Outcome framing</CardTitle><CardDescription>Keep this form focused on business effect, baseline and ownership.</CardDescription></CardHeader>
+                <CardHeader>
+                  <CardTitle>Customer handshake</CardTitle>
+                  <CardDescription>Keep this form focused on business effect, baseline, ownership, intended AI level and early direction.</CardDescription>
+                </CardHeader>
                 <CardContent className="grid gap-5 xl:grid-cols-2">
-                  <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Title</span><input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.title} disabled={isArchived} name="title" type="text" /></label>
-                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Timeframe</span><input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.timeframe ?? ""} disabled={isArchived} name="timeframe" type="text" /></label>
-                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Value owner</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.valueOwnerId ?? ""} disabled={isArchived} name="valueOwnerId"><option value="">Unassigned</option>{availableOwners.map((owner) => <option key={owner.userId} value={owner.userId}>{owner.fullName ?? owner.email}</option>)}</select></label>
-                  <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Problem statement</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.problemStatement ?? ""} disabled={isArchived} name="problemStatement" /></label>
-                  <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Outcome statement</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.outcomeStatement ?? ""} disabled={isArchived} name="outcomeStatement" /></label>
+                  <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Title</span><input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.title} disabled={isArchived} name="title" type="text" /><InlineFieldGuidance guidance="Use a short business-facing case name that the customer and delivery team can both recognize." /></label>
+                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Timeframe</span><input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.timeframe ?? ""} disabled={isArchived} name="timeframe" type="text" /><InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe")} /></label>
+                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Value owner</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.valueOwnerId ?? ""} disabled={isArchived} name="valueOwnerId"><option value="">Unassigned</option>{availableOwners.map((owner) => <option key={owner.userId} value={owner.userId}>{owner.fullName ?? owner.email}</option>)}</select><InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} /></label>
+                  <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Problem statement</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.problemStatement ?? ""} disabled={isArchived} name="problemStatement" /><InlineFieldGuidance guidance={getInlineGuidance("framing.problem")} /></label>
+                  <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Outcome statement</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.outcomeStatement ?? ""} disabled={isArchived} name="outcomeStatement" /><InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} /></label>
                 </CardContent>
               </Card>
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader><CardTitle>Baseline</CardTitle><CardDescription>These fields must be present before Tollgate 1 can move to review.</CardDescription></CardHeader>
                 <CardContent className="grid gap-5 xl:grid-cols-2">
-                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline definition</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineDefinition ?? ""} disabled={isArchived} name="baselineDefinition" /></label>
-                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline source</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineSource ?? ""} disabled={isArchived} name="baselineSource" /></label>
+                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline definition</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineDefinition ?? ""} disabled={isArchived} name="baselineDefinition" /><InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} /></label>
+                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline source</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineSource ?? ""} disabled={isArchived} name="baselineSource" /><InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source")} /></label>
                 </CardContent>
               </Card>
 
               <div className="grid gap-6 xl:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
                 <Card className="border-border/70 shadow-sm">
-                  <CardHeader><CardTitle>Risks</CardTitle><CardDescription>Keep the risk posture explicit as part of framing discipline.</CardDescription></CardHeader>
+                  <CardHeader><CardTitle>AI and risk posture</CardTitle><CardDescription>Keep the intended AI level and risk posture explicit during the customer handshake.</CardDescription></CardHeader>
                   <CardContent className="space-y-4">
+                    <label className="space-y-2"><span className="text-sm font-medium text-foreground">AI level</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.aiAccelerationLevel} disabled={isArchived} name="aiAccelerationLevel"><option value="level_1">Level 1</option><option value="level_2">Level 2</option><option value="level_3">Level 3</option></select><InlineFieldGuidance guidance={getInlineGuidance("framing.ai_level")} /></label>
                     <label className="space-y-2"><span className="text-sm font-medium text-foreground">Risk profile</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.riskProfile} disabled={isArchived} name="riskProfile"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label>
+                    <ContextHelp pattern={aiLevelHelp} summaryLabel={`Open ${formatAiLevelLabel(outcome.aiAccelerationLevel)} guidance`} />
                   </CardContent>
                 </Card>
 
                 <Card className="border-border/70 shadow-sm">
                   <CardHeader>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div><CardTitle>Epics in this case</CardTitle><CardDescription>Create native Epics directly from this Outcome without using import.</CardDescription></div>
+                      <div><CardTitle>Design direction seeds</CardTitle><CardDescription>Capture the rough functional direction as Epics before detailed Story decomposition begins.</CardDescription></div>
                       {!isArchived ? <Button className="gap-2" formAction={createEpicFromOutcomeAction} type="submit">Create Epic<ArrowRight className="h-4 w-4" /></Button> : null}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <p className="font-medium text-foreground">How to use Epic seeds</p>
+                      <p className="mt-2 leading-6">{getHelpPattern("framing.design_direction").summary}</p>
+                    </div>
                     {outcome.epics.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
                         <p className="font-medium text-foreground">No Epics exist for this case yet.</p>

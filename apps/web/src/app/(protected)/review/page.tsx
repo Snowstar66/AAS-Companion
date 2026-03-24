@@ -2,6 +2,9 @@ import Link from "next/link";
 import { CircleAlert, CircleCheckBig, FileSearch, GitBranch, ShieldCheck } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
+import { ActionSummaryCard } from "@/components/shared/action-summary-card";
+import { ContextHelp } from "@/components/shared/context-help";
+import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactReviewQueue } from "@/lib/intake/review-queue";
 import { submitArtifactCandidateReviewAction } from "./actions";
 
@@ -69,15 +72,55 @@ function getActionVerb(category: "missing" | "uncertain" | "human_only" | "block
   return "Resolve dependency";
 }
 
+function buildReviewHref(input: {
+  candidateId?: string | undefined;
+  reviewStatusFilter?: string | undefined;
+  findingFilter?: string | undefined;
+}) {
+  const params = new URLSearchParams();
+
+  if (input.candidateId) {
+    params.set("candidateId", input.candidateId);
+  }
+
+  if (input.reviewStatusFilter && input.reviewStatusFilter !== "all") {
+    params.set("reviewStatusFilter", input.reviewStatusFilter);
+  }
+
+  if (input.findingFilter && input.findingFilter !== "all") {
+    params.set("findingFilter", input.findingFilter);
+  }
+
+  const query = params.toString();
+  return query ? `/review?${query}` : "/review";
+}
+
 export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const query = searchParams ? await searchParams : {};
   const queue = await loadArtifactReviewQueue();
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
   const candidateId = getParamValue(query.candidateId);
-  const selectedCandidate = queue.items.find((candidate) => candidate.id === candidateId) ?? queue.items[0] ?? null;
+  const reviewStatusFilter = getParamValue(query.reviewStatusFilter) ?? "all";
+  const findingFilter = getParamValue(query.findingFilter) ?? "all";
+  const visibleItems = queue.items.filter((candidate) => {
+    if (reviewStatusFilter === "all") {
+      return true;
+    }
+
+    return candidate.reviewStatus === reviewStatusFilter;
+  });
+  const selectedCandidate = visibleItems.find((candidate) => candidate.id === candidateId) ?? visibleItems[0] ?? null;
   const totalFindings = selectedCandidate?.complianceResult?.findings.length ?? 0;
-  const actionItems = selectedCandidate?.complianceResult?.findings ?? [];
+  const actionItems =
+    selectedCandidate?.complianceResult?.findings.filter((finding) => {
+      if (findingFilter === "all") {
+        return true;
+      }
+
+      return finding.category === findingFilter;
+    }) ?? [];
+  const reviewHelp = getHelpPattern("review.workspace", selectedCandidate?.humanDecisions?.aiAccelerationLevel ?? null);
 
   return (
     <AppShell
@@ -98,6 +141,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             Review stays scoped to the current project and one imported candidate at a time. The page tells you what is
             still missing, uncertain, blocked, or waiting for explicit human confirmation before approval readiness.
           </p>
+          <div className="mt-5 max-w-4xl">
+            <ContextHelp pattern={reviewHelp} summaryLabel="Open human review help" />
+          </div>
         </div>
 
         {message ? (
@@ -113,36 +159,11 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{queue.summary.total}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pending</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{queue.summary.pending}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Follow-up</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{queue.summary.followUpNeeded}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Rejected</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{queue.summary.rejected}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Promoted</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{queue.summary.promoted}</p>
-            </CardContent>
-          </Card>
+          <ActionSummaryCard actionHref={buildReviewHref({ reviewStatusFilter: "all" })} actionLabel="Open all candidates" className="border-border/70 shadow-sm" label="Total" value={queue.summary.total} />
+          <ActionSummaryCard actionHref={queue.summary.pending > 0 ? buildReviewHref({ reviewStatusFilter: "pending" }) : undefined} actionLabel="Open pending candidates" className="border-border/70 shadow-sm" label="Pending" value={queue.summary.pending} />
+          <ActionSummaryCard actionHref={queue.summary.followUpNeeded > 0 ? buildReviewHref({ reviewStatusFilter: "follow_up_needed" }) : undefined} actionLabel="Open follow-up list" className="border-border/70 shadow-sm" label="Follow-up" value={queue.summary.followUpNeeded} />
+          <ActionSummaryCard actionHref={queue.summary.rejected > 0 ? buildReviewHref({ reviewStatusFilter: "rejected" }) : undefined} actionLabel="Open rejected candidates" className="border-border/70 shadow-sm" label="Rejected" value={queue.summary.rejected} />
+          <ActionSummaryCard actionHref={queue.summary.promoted > 0 ? buildReviewHref({ reviewStatusFilter: "promoted" }) : undefined} actionLabel="Open promoted records" className="border-border/70 shadow-sm" label="Promoted" value={queue.summary.promoted} />
         </div>
 
         {queue.state === "unavailable" ? (
@@ -152,11 +173,11 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardDescription>{queue.message}</CardDescription>
             </CardHeader>
           </Card>
-        ) : queue.items.length === 0 ? (
+        ) : visibleItems.length === 0 ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>No candidates are waiting for review</CardTitle>
-              <CardDescription>{queue.message}</CardDescription>
+              <CardTitle>No candidates match the current filter</CardTitle>
+              <CardDescription>Try another review-status filter to continue work.</CardDescription>
             </CardHeader>
           </Card>
         ) : (
@@ -171,14 +192,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardContent className="space-y-4">
                 <div className="-mx-1 overflow-x-auto pb-1">
                   <div className="flex min-w-max gap-2 px-1">
-                    {queue.items.map((candidate) => (
+                    {visibleItems.map((candidate) => (
                       <Button
                         asChild
                         key={candidate.id}
                         size="sm"
                         variant={selectedCandidate?.id === candidate.id ? "default" : "secondary"}
                       >
-                        <Link href={`/review?candidateId=${candidate.id}`}>
+                        <Link href={buildReviewHref({ candidateId: candidate.id, reviewStatusFilter, findingFilter })}>
                           {candidate.type}: {candidate.title}
                         </Link>
                       </Button>
@@ -233,22 +254,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                       </div>
                     </CardHeader>
                     <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Remaining</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight">{totalFindings}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Missing</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight">{selectedCandidate.complianceResult?.summary.missing ?? 0}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Human-only</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight">{selectedCandidate.complianceResult?.summary.humanOnly ?? 0}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight">{selectedCandidate.complianceResult?.summary.blocked ?? 0}</p>
-                      </div>
+                      <ActionSummaryCard actionHref={buildReviewHref({ candidateId: selectedCandidate.id, reviewStatusFilter, findingFilter: "all" })} actionLabel="Open all findings" className="border-border/70 bg-muted/20" label="Remaining" value={totalFindings} />
+                      <ActionSummaryCard actionHref={(selectedCandidate.complianceResult?.summary.missing ?? 0) > 0 ? buildReviewHref({ candidateId: selectedCandidate.id, reviewStatusFilter, findingFilter: "missing" }) : undefined} actionLabel="Open missing fields" className="border-border/70 bg-muted/20" label="Missing" value={selectedCandidate.complianceResult?.summary.missing ?? 0} />
+                      <ActionSummaryCard actionHref={(selectedCandidate.complianceResult?.summary.humanOnly ?? 0) > 0 ? buildReviewHref({ candidateId: selectedCandidate.id, reviewStatusFilter, findingFilter: "human_only" }) : undefined} actionLabel="Open human-only items" className="border-border/70 bg-muted/20" label="Human-only" value={selectedCandidate.complianceResult?.summary.humanOnly ?? 0} />
+                      <ActionSummaryCard actionHref={(selectedCandidate.complianceResult?.summary.blocked ?? 0) > 0 ? buildReviewHref({ candidateId: selectedCandidate.id, reviewStatusFilter, findingFilter: "blocked" }) : undefined} actionLabel="Open blocked findings" className="border-border/70 bg-muted/20" label="Blocked" value={selectedCandidate.complianceResult?.summary.blocked ?? 0} />
                     </CardContent>
                   </Card>
 

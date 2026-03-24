@@ -82,7 +82,7 @@ describe("Home dashboard", () => {
 
     expect(screen.getByRole("heading", { name: "Project Home", level: 1 })).toBeDefined();
     expect(screen.getByText("Project overview")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Open Framing" })).toBeDefined();
+    expect(screen.getAllByRole("link", { name: "Open Framing" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("heading", { name: "Open project" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Create project" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Open demo project" })).toBeDefined();

@@ -15,6 +15,7 @@ function buildRedirect(params: {
   level?: string | undefined;
   sourceEntity?: string | undefined;
   sourceId?: string | undefined;
+  side?: string | undefined;
   status?: string | undefined;
   message?: string | undefined;
 }) {
@@ -44,7 +45,8 @@ function getReturnParams(formData: FormData) {
     view: String(formData.get("returnView") ?? "") || undefined,
     level: String(formData.get("returnLevel") ?? "") || undefined,
     sourceEntity: String(formData.get("returnSourceEntity") ?? "") || undefined,
-    sourceId: String(formData.get("returnSourceId") ?? "") || undefined
+    sourceId: String(formData.get("returnSourceId") ?? "") || undefined,
+    side: String(formData.get("returnSide") ?? "") || undefined
   };
 }
 

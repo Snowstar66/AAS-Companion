@@ -82,9 +82,11 @@ describe("Framing cockpit", () => {
   });
 
   it("renders native-first entry actions and defaults to native work", async () => {
-    render(await FramingPage());
+    render(await FramingPage({}));
 
     expect(screen.getByRole("heading", { name: "Framing Cockpit", level: 1 })).toBeDefined();
+    expect(screen.getByText("Customer handshake inside project")).toBeDefined();
+    expect(screen.getByText("Handshake in this project")).toBeDefined();
     expect(screen.getByRole("link", { name: "Open active framing" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Create project for new case" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open demo case" })).toBeDefined();
@@ -94,7 +96,7 @@ describe("Framing cockpit", () => {
   });
 
   it("supports switching to demo cases intentionally", async () => {
-    render(await FramingPage());
+    render(await FramingPage({}));
 
     fireEvent.click(screen.getByRole("button", { name: "Demo (1)" }));
 

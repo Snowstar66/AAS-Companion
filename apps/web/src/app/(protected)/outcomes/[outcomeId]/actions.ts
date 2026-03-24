@@ -57,7 +57,9 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     baselineSource: String(formData.get("baselineSource") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
     valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
-    riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium"
+    riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",
+    aiAccelerationLevel:
+      (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
   });
 
   revalidatePath(`/outcomes/${outcomeId}`);

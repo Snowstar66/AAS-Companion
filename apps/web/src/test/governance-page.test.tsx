@@ -171,7 +171,7 @@ describe("Governance page", () => {
     expect(screen.getByText("Supplier")).toBeDefined();
     expect(screen.getByText("Demo Value Owner")).toBeDefined();
     expect(screen.getByText("Demo Architect")).toBeDefined();
-    expect(screen.getByText("Add role")).toBeDefined();
+    expect(screen.getAllByText("Add role").length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByText("Demo Value Owner"));
     expect(screen.getByDisplayValue("Demo Value Owner")).toBeDefined();
@@ -211,8 +211,8 @@ describe("Governance page", () => {
       })
     );
 
-    expect(screen.getByRole("heading", { name: "Governance cockpit", level: 1 })).toBeDefined();
-    expect(screen.getByText("Context linked from story M3-STORY-007")).toBeDefined();
+    expect(screen.getAllByRole("heading", { name: "Governance cockpit", level: 1 }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Context linked from story M3-STORY-007").length).toBeGreaterThan(0);
     expect(screen.getByText("AI level readiness")).toBeDefined();
     expect(screen.getByText("ai governance lead is missing for supplier coverage.")).toBeDefined();
     expect(screen.getByText("No risky role combinations are currently detected for level 3.")).toBeDefined();

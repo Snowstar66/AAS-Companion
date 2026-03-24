@@ -206,6 +206,7 @@ describe("Import page", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Project Import", level: 1 })).toBeDefined();
+    expect(screen.getByText("Open import help")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getByText("# Imported artifact", { exact: false })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Structured candidate view" })).toBeDefined();

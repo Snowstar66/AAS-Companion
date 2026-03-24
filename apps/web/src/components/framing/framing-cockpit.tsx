@@ -6,6 +6,8 @@ import { AlertTriangle, ArrowRight, CircleCheckBig, Layers3, Search, Sparkles } 
 import type { FramingOutcomeItem } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { createDraftOutcomeAction } from "@/app/(protected)/framing/actions";
+import { ContextHelp } from "@/components/shared/context-help";
+import { getHelpPattern } from "@/lib/help/aas-help";
 import {
   initialCreateOutcomeActionState,
   type CreateOutcomeActionState
@@ -16,9 +18,12 @@ type FramingCockpitProps = {
   message: string;
   state: "live" | "empty";
   createAction: typeof createDraftOutcomeAction;
+  initialOriginFilter?: OriginFilterKey | string;
+  initialReadinessFilter?: "all" | "blocked" | "ready" | string;
 };
 
 type OriginFilterKey = "all" | "native" | "demo";
+type ReadinessFilterKey = "all" | "blocked" | "ready";
 
 function getReadinessClasses(item: FramingOutcomeItem) {
   if (item.readinessTone === "blocked") {
@@ -77,6 +82,18 @@ function matchesSearch(item: FramingOutcomeItem, search: string) {
   return haystack.includes(search.toLowerCase());
 }
 
+function matchesReadinessFilter(item: FramingOutcomeItem, filter: ReadinessFilterKey) {
+  if (filter === "all") {
+    return true;
+  }
+
+  if (filter === "blocked") {
+    return item.isBlocked;
+  }
+
+  return item.readinessTone === "ready";
+}
+
 function buildOriginFilters(items: FramingOutcomeItem[]) {
   const baseFilters = [
     {
@@ -112,9 +129,20 @@ function SubmitButton({ pending }: { pending: boolean }) {
   );
 }
 
-export function FramingCockpit({ items, message, state, createAction }: FramingCockpitProps) {
+export function FramingCockpit({
+  items,
+  message,
+  state,
+  createAction,
+  initialOriginFilter = "native",
+  initialReadinessFilter = "all"
+}: FramingCockpitProps) {
   const filters = buildOriginFilters(items);
-  const [activeFilter, setActiveFilter] = useState<OriginFilterKey>("native");
+  const normalizedOriginFilter = filters.some((filter) => filter.key === initialOriginFilter) ? (initialOriginFilter as OriginFilterKey) : "native";
+  const normalizedReadinessFilter =
+    initialReadinessFilter === "blocked" || initialReadinessFilter === "ready" ? initialReadinessFilter : "all";
+  const [activeFilter, setActiveFilter] = useState<OriginFilterKey>(normalizedOriginFilter);
+  const [activeReadinessFilter, setActiveReadinessFilter] = useState<ReadinessFilterKey>(normalizedReadinessFilter);
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [actionState, formAction, pending] = useActionState<CreateOutcomeActionState, FormData>(
@@ -132,12 +160,19 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
   const readyCount = items.filter((item) => item.readinessTone === "ready").length;
 
   const filteredItems = items.filter(
-    (item) => matchesOriginFilter(item, activeFilter) && matchesSearch(item, deferredSearch.trim())
+    (item) =>
+      matchesOriginFilter(item, activeFilter) &&
+      matchesReadinessFilter(item, activeReadinessFilter) &&
+      matchesSearch(item, deferredSearch.trim())
   );
 
   const emptyFilterState = items.length > 0 && filteredItems.length === 0;
   const showNativeEmptyState = activeFilter === "native" && nativeItemCount === 0 && emptyFilterState;
   const activeFilterLabel = filters.find((filter) => filter.key === activeFilter)?.label ?? "All";
+  const activeReadinessLabel =
+    activeReadinessFilter === "blocked" ? "Blocked" : activeReadinessFilter === "ready" ? "Ready" : "All readiness";
+  const handshakeHelp = getHelpPattern("framing.handshake");
+  const directionHelp = getHelpPattern("framing.design_direction");
 
   return (
     <section className="space-y-6">
@@ -146,7 +181,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               <Layers3 className="h-3.5 w-3.5 text-primary" />
-              Native-first framing
+              Customer handshake inside project
             </div>
             <div className="space-y-3">
               <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">Framing Cockpit</h1>
@@ -154,14 +189,52 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <div className="rounded-full border border-border/70 bg-background/92 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+              <Link
+                className="rounded-full border border-border/70 bg-background/92 px-4 py-2 text-sm text-muted-foreground shadow-sm transition hover:border-primary/40 hover:text-foreground"
+                href="/framing?origin=all&readiness=all"
+              >
                 <span className="font-semibold text-foreground">{items.length}</span> visible outcome{items.length === 1 ? "" : "s"}
+              </Link>
+              {blockedCount > 0 ? (
+                <Link
+                  className="rounded-full border border-amber-200 bg-amber-50/85 px-4 py-2 text-sm text-amber-900 shadow-sm transition hover:border-amber-300"
+                  href="/framing?origin=all&readiness=blocked"
+                >
+                  <span className="font-semibold">{blockedCount}</span> blocked
+                </Link>
+              ) : (
+                <div className="rounded-full border border-amber-200 bg-amber-50/85 px-4 py-2 text-sm text-amber-900 shadow-sm">
+                  <span className="font-semibold">{blockedCount}</span> blocked
+                </div>
+              )}
+              {readyCount > 0 ? (
+                <Link
+                  className="rounded-full border border-emerald-200 bg-emerald-50/85 px-4 py-2 text-sm text-emerald-900 shadow-sm transition hover:border-emerald-300"
+                  href="/framing?origin=all&readiness=ready"
+                >
+                  <span className="font-semibold">{readyCount}</span> ready to move forward
+                </Link>
+              ) : (
+                <div className="rounded-full border border-emerald-200 bg-emerald-50/85 px-4 py-2 text-sm text-emerald-900 shadow-sm">
+                  <span className="font-semibold">{readyCount}</span> ready to move forward
+                </div>
+              )}
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Handshake in this project</p>
+                <p className="mt-3 text-sm leading-6 text-foreground">
+                  Agree the problem, target outcome, baseline, owner, rough direction and intended AI level here before
+                  going deeper into Design.
+                </p>
               </div>
-              <div className="rounded-full border border-amber-200 bg-amber-50/85 px-4 py-2 text-sm text-amber-900 shadow-sm">
-                <span className="font-semibold">{blockedCount}</span> blocked
-              </div>
-              <div className="rounded-full border border-emerald-200 bg-emerald-50/85 px-4 py-2 text-sm text-emerald-900 shadow-sm">
-                <span className="font-semibold">{readyCount}</span> ready for TG1
+              <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">What comes later</p>
+                <p className="mt-3 text-sm leading-6 text-foreground">
+                  Detailed Epic and Story breakdown belongs later. Use this cockpit to pick the right case and move
+                  into design only when the handshake is stable.
+                </p>
               </div>
             </div>
           </div>
@@ -235,6 +308,8 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                 </Card>
               ) : null}
             </div>
+
+            <ContextHelp className="bg-background/90" pattern={handshakeHelp} summaryLabel="Open framing handshake help" />
           </div>
         </div>
 
@@ -272,7 +347,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin filters</p>
                 <div className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {activeFilterLabel} · {filteredItems.length} visible
+                  {activeFilterLabel} · {activeReadinessLabel} · {filteredItems.length} visible
                 </div>
               </div>
               <div className="-mx-1 overflow-x-auto pb-1">
@@ -289,6 +364,28 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                       type="button"
                     >
                       {filter.label} ({filter.count})
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="-mx-1 overflow-x-auto pb-1">
+                <div className="flex min-w-max flex-wrap gap-2 px-1">
+                  {[
+                    { key: "all", label: "All readiness" },
+                    { key: "blocked", label: "Blocked" },
+                    { key: "ready", label: "Ready" }
+                  ].map((filter) => (
+                    <button
+                      className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+                        activeReadinessFilter === filter.key
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border/70 bg-background text-muted-foreground hover:text-foreground"
+                      }`}
+                      key={filter.key}
+                      onClick={() => setActiveReadinessFilter(filter.key as ReadinessFilterKey)}
+                      type="button"
+                    >
+                      {filter.label}
                     </button>
                   ))}
                 </div>
@@ -445,10 +542,10 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
                           <div className="flex items-center gap-2 font-medium">
                             <CircleCheckBig className="h-4 w-4" />
-                            Ready for deeper framing
+                            Ready to move into design
                           </div>
                           <p className="mt-2 leading-6">
-                            This outcome can move further into the project without baseline blockers.
+                            This outcome can move from customer handshake into deeper design without visible baseline blockers.
                           </p>
                         </div>
                       ) : (
@@ -461,14 +558,8 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                       )}
 
                       <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-4 text-sm text-muted-foreground">
-                        <p className="font-medium text-foreground">Case posture</p>
-                        <p className="mt-2 leading-6">
-                          {item.originType === "native"
-                            ? "This is a native project outcome and should remain the main working path."
-                            : item.originType === "seeded"
-                              ? "This is demo reference content. Use it intentionally, not as default project work."
-                              : "This outcome came from imported source material and keeps its lineage into review."}
-                        </p>
+                        <p className="font-medium text-foreground">{directionHelp.title}</p>
+                        <p className="mt-2 leading-6">{directionHelp.summary}</p>
                       </div>
                     </div>
                   </div>

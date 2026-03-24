@@ -6,6 +6,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { GovernanceAgentRegistryView } from "@/components/governance/governance-agent-registry-view";
 import { GovernanceDirectoryView } from "@/components/governance/governance-directory-view";
 import { AppShell } from "@/components/layout/app-shell";
+import { ActionSummaryCard } from "@/components/shared/action-summary-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
   createAgentRegistryEntryAction,
@@ -31,6 +32,7 @@ function buildGovernanceHref(input: {
   level?: string | undefined;
   sourceEntity?: string | undefined;
   sourceId?: string | undefined;
+  side?: string | undefined;
 }) {
   const query = new URLSearchParams();
 
@@ -53,6 +55,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
   const level = getParamValue(query.level) ?? undefined;
   const sourceEntity = getParamValue(query.sourceEntity) as "outcome" | "story" | undefined;
   const sourceId = getParamValue(query.sourceId) ?? undefined;
+  const directorySide = getParamValue(query.side) ?? undefined;
   const status = getParamValue(query.status);
   const message = getParamValue(query.message);
   const request: {
@@ -87,12 +90,15 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
   const activePeople = data.people.filter((person) => person.isActive);
   const customerPeople = data.people.filter((person) => person.organizationSide === "customer");
   const supplierPeople = data.people.filter((person) => person.organizationSide === "supplier");
+  const visibleCustomerPeople = directorySide === "supplier" ? [] : customerPeople;
+  const visibleSupplierPeople = directorySide === "customer" ? [] : supplierPeople;
   const activeSupervisors = activePeople;
   const returnParams = {
     view,
     level: selectedLevel,
     sourceEntity,
-    sourceId
+    sourceId,
+    side: directorySide
   };
   const sourceHref =
     data.sourceContext?.entityType === "outcome"
@@ -154,38 +160,46 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Active people</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{data.summaries.activePeople}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Customer roles</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{data.summaries.customerPeople}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Supplier roles</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{data.summaries.supplierPeople}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Active agents</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{data.summaries.activeAgents}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-border/70 shadow-sm">
-            <CardContent className="p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Readiness state</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight capitalize">
-                {formatLabel(data.readiness.summaryStatus)}
-              </p>
-            </CardContent>
-          </Card>
+          <ActionSummaryCard
+            actionHref={data.summaries.activePeople > 0 ? buildGovernanceHref({ view: "directory", level: selectedLevel, sourceEntity, sourceId }) : undefined}
+            actionLabel="Open directory"
+            className="border-border/70 shadow-sm"
+            description="Named active people in the current project."
+            label="Active people"
+            value={data.summaries.activePeople}
+          />
+          <ActionSummaryCard
+            actionHref={data.summaries.customerPeople > 0 ? buildGovernanceHref({ view: "directory", level: selectedLevel, sourceEntity, sourceId, side: "customer" }) : undefined}
+            actionLabel="Open customer roles"
+            className="border-border/70 shadow-sm"
+            description="Customer-side roles with active assignments."
+            label="Customer roles"
+            value={data.summaries.customerPeople}
+          />
+          <ActionSummaryCard
+            actionHref={data.summaries.supplierPeople > 0 ? buildGovernanceHref({ view: "directory", level: selectedLevel, sourceEntity, sourceId, side: "supplier" }) : undefined}
+            actionLabel="Open supplier roles"
+            className="border-border/70 shadow-sm"
+            description="Supplier-side roles with active assignments."
+            label="Supplier roles"
+            value={data.summaries.supplierPeople}
+          />
+          <ActionSummaryCard
+            actionHref={data.summaries.activeAgents > 0 ? buildGovernanceHref({ view: "agents", level: selectedLevel, sourceEntity, sourceId }) : undefined}
+            actionLabel="Open agent registry"
+            className="border-border/70 shadow-sm"
+            description="Active governed agents in the project."
+            label="Active agents"
+            value={data.summaries.activeAgents}
+          />
+          <ActionSummaryCard
+            actionHref={buildGovernanceHref({ view: "readiness", level: selectedLevel, sourceEntity, sourceId })}
+            actionLabel="Open readiness"
+            className="border-border/70 shadow-sm"
+            description="Coverage and risk checks for the selected AI level."
+            label="Readiness state"
+            value={formatLabel(data.readiness.summaryStatus)}
+          />
         </div>
 
         <Card className="border-border/70 shadow-sm">
@@ -209,7 +223,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                         view: item.key,
                         level: selectedLevel,
                         sourceEntity,
-                        sourceId
+                        sourceId,
+                        side: item.key === "directory" ? directorySide : undefined
                       })}
                     >
                       {item.label}
@@ -233,7 +248,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                         view,
                         level: candidateLevel,
                         sourceEntity,
-                        sourceId
+                        sourceId,
+                        side: view === "directory" ? directorySide : undefined
                       })}
                     >
                       {formatLabel(candidateLevel)}
@@ -246,13 +262,40 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
         </Card>
 
         {view === "directory" ? (
-          <GovernanceDirectoryView
-            createAction={createPartyRoleEntryAction}
-            customerPeople={customerPeople}
-            returnParams={returnParams}
-            supplierPeople={supplierPeople}
-            updateAction={updatePartyRoleEntryAction}
-          />
+          <div className="space-y-4">
+            {directorySide ? (
+              <Card className="border-border/70 shadow-sm">
+                <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">Directory filtered to {formatLabel(directorySide)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Use this drill-down to inspect one side quickly while staying inside the active project.
+                    </p>
+                  </div>
+                  <Button asChild size="sm" variant="secondary">
+                    <Link
+                      href={buildGovernanceHref({
+                        view: "directory",
+                        level: selectedLevel,
+                        sourceEntity,
+                        sourceId
+                      })}
+                    >
+                      Show both sides
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            <GovernanceDirectoryView
+              createAction={createPartyRoleEntryAction}
+              customerPeople={visibleCustomerPeople}
+              returnParams={returnParams}
+              supplierPeople={visibleSupplierPeople}
+              updateAction={updatePartyRoleEntryAction}
+            />
+          </div>
         ) : null}
 
         {view === "agents" ? (

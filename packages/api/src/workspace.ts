@@ -106,6 +106,7 @@ export async function saveOutcomeWorkspaceService(input: {
   timeframe?: string | null;
   valueOwnerId?: string | null;
   riskProfile?: "low" | "medium" | "high";
+  aiAccelerationLevel?: "level_1" | "level_2" | "level_3";
 }) {
   const result = await updateOutcome({
     organizationId: input.organizationId,
@@ -118,7 +119,8 @@ export async function saveOutcomeWorkspaceService(input: {
     baselineSource: input.baselineSource,
     timeframe: input.timeframe,
     valueOwnerId: input.valueOwnerId,
-    riskProfile: input.riskProfile
+    riskProfile: input.riskProfile,
+    aiAccelerationLevel: input.aiAccelerationLevel
   });
 
   return success(result);

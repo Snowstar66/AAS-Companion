@@ -7,8 +7,19 @@ import { FramingRightRail } from "@/components/framing/framing-right-rail";
 import { loadFramingCockpit } from "@/lib/framing/cockpit";
 import { createDraftOutcomeAction } from "./actions";
 
-export default async function FramingPage() {
+type FramingPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function getParamValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function FramingPage({ searchParams }: FramingPageProps) {
+  const query = searchParams ? await searchParams : {};
   const { cockpit } = await loadFramingCockpit();
+  const originFilter = getParamValue(query.origin) ?? "native";
+  const readinessFilter = getParamValue(query.readiness) ?? "all";
 
   return (
     <AppShell
@@ -42,6 +53,8 @@ export default async function FramingPage() {
       ) : (
         <FramingCockpit
           createAction={createDraftOutcomeAction}
+          initialOriginFilter={originFilter}
+          initialReadinessFilter={readinessFilter}
           items={cockpit.items}
           message={cockpit.message}
           state={cockpit.state}

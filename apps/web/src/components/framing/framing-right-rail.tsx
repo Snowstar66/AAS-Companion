@@ -1,6 +1,9 @@
-import { AlertTriangle, CircleCheckBig, Compass, Plus } from "lucide-react";
+import { AlertTriangle, Compass, Plus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { FramingSummary } from "@aas-companion/api";
+import { ActionSummaryCard } from "@/components/shared/action-summary-card";
+import { ContextHelp } from "@/components/shared/context-help";
+import { getHelpPattern } from "@/lib/help/aas-help";
 
 type FramingRightRailProps = {
   summary: FramingSummary;
@@ -25,6 +28,8 @@ const notes = [
 ];
 
 export function FramingRightRail({ summary }: FramingRightRailProps) {
+  const framingHelp = getHelpPattern("framing.handshake");
+
   return (
     <aside className="space-y-4">
       <Card className="border-border/70 bg-background/90 shadow-sm">
@@ -32,29 +37,38 @@ export function FramingRightRail({ summary }: FramingRightRailProps) {
           <CardTitle>Active framing posture</CardTitle>
           <CardDescription>Compact readout for the current project's cockpit state.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm leading-6 text-muted-foreground">
-            {summary.total} outcome{summary.total === 1 ? "" : "s"} are currently visible in this project. {summary.blocked} still need framing cleanup and {summary.ready} are already ready for TG1.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground">
-              Total {summary.total}
-            </span>
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
-              Blocked {summary.blocked}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
-              <CircleCheckBig className="h-3.5 w-3.5" />
-              Ready {summary.ready}
-            </span>
-          </div>
+        <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
+          <ActionSummaryCard
+            actionHref={summary.total > 0 ? "/framing?origin=all&readiness=all" : undefined}
+            actionLabel="Open all outcomes"
+            className="border-border/70 bg-muted/30"
+            description="All visible outcomes in the active project."
+            label="Total"
+            value={summary.total}
+          />
+          <ActionSummaryCard
+            actionHref={summary.blocked > 0 ? "/framing?origin=all&readiness=blocked" : undefined}
+            actionLabel="Open blocked outcomes"
+            className="border-amber-200 bg-amber-50"
+            description="Outcomes that still need framing cleanup."
+            label="Blocked"
+            value={summary.blocked}
+          />
+          <ActionSummaryCard
+            actionHref={summary.ready > 0 ? "/framing?origin=all&readiness=ready" : undefined}
+            actionLabel="Open ready outcomes"
+            className="border-emerald-200 bg-emerald-50"
+            description="Outcomes already ready for TG1."
+            label="Ready"
+            value={summary.ready}
+          />
         </CardContent>
       </Card>
 
       <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.9))] shadow-sm">
         <CardHeader>
-          <CardTitle>Working posture</CardTitle>
-          <CardDescription>Use the cockpit to choose the right case before going deeper into outcome detail.</CardDescription>
+          <CardTitle>Handshake posture</CardTitle>
+          <CardDescription>Use Framing to align the customer case before detailed design work begins.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {notes.map((note) => {
@@ -72,6 +86,8 @@ export function FramingRightRail({ summary }: FramingRightRailProps) {
           })}
         </CardContent>
       </Card>
+
+      <ContextHelp pattern={framingHelp} summaryLabel="Open AAS-aligned framing help" />
     </aside>
   );
 }

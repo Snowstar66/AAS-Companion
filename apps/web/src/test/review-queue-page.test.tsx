@@ -109,6 +109,7 @@ describe("Review queue page", () => {
     render(await ReviewPage({ searchParams: Promise.resolve({ candidateId: "candidate-story-1" }) }));
 
     expect(screen.getByRole("heading", { name: "Human Review action list", level: 1 })).toBeDefined();
+    expect(screen.getByText("Open human review help")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Current review context" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Approval-readiness action list" })).toBeDefined();
     expect(screen.getAllByText("Imported reviewable story").length).toBeGreaterThan(0);

@@ -20,6 +20,7 @@ import {
   openProjectAction
 } from "@/app/project-actions";
 import { AppShell } from "@/components/layout/app-shell";
+import { ActionSummaryCard } from "@/components/shared/action-summary-card";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
 
 type HomePageProps = {
@@ -83,6 +84,33 @@ function deriveProjectStatus(input: {
     label: "In progress",
     detail: "Work is active inside the current project."
   };
+}
+
+function getSummaryAction(input: { label: string; value: string }) {
+  const numericValue = Number.parseInt(input.value, 10) || 0;
+
+  if (input.label === "Outcomes" && numericValue > 0) {
+    return {
+      href: "/framing?origin=all",
+      label: "Open Framing"
+    };
+  }
+
+  if (input.label === "Stories Ready" && numericValue > 0) {
+    return {
+      href: "/stories?state=ready",
+      label: "Open ready stories"
+    };
+  }
+
+  if (input.label === "Blocked Items" && numericValue > 0) {
+    return {
+      href: "/stories?state=blocked",
+      label: "Open blocked stories"
+    };
+  }
+
+  return null;
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
@@ -180,13 +208,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <CardContent className="space-y-5">
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {dashboard.summary.length > 0 ? (
-                      dashboard.summary.map((item) => (
-                        <div className="rounded-2xl border border-border/70 bg-background/90 p-4" key={item.label}>
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
-                          <p className="mt-2 text-2xl font-semibold text-foreground">{item.value}</p>
-                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
-                        </div>
-                      ))
+                      dashboard.summary.map((item) => {
+                        const action = getSummaryAction({ label: item.label, value: item.value });
+
+                        return (
+                          <ActionSummaryCard
+                            actionHref={action?.href}
+                            actionLabel={action?.label}
+                            className="border-border/70 bg-background/90"
+                            description={item.description}
+                            key={item.label}
+                            label={item.label}
+                            value={item.value}
+                          />
+                        );
+                      })
                     ) : (
                       <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground sm:col-span-2 xl:col-span-4">
                         {dashboard.state === "unavailable"

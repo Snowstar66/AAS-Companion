@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { ActionSummaryCard } from "@/components/shared/action-summary-card";
 
 type ArtifactIntakeRightRailProps = {
   summary: {
@@ -20,30 +21,48 @@ export function ArtifactIntakeRightRail({ summary }: ArtifactIntakeRightRailProp
           <CardDescription>M2-STORY-002 and M2-STORY-003 turn raw markdown into reviewable candidate objects.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Sessions</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.sessions}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Uploaded files</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.files}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Pending classification</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.pendingClassification}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Parsed sections</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.parsedSections}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Candidate objects</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.candidateObjects}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Human review queues</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.humanReviewRequired}</p>
-          </div>
+          <ActionSummaryCard
+            className="border-border/70 bg-muted/30"
+            description="Persisted import sessions in the active project."
+            label="Sessions"
+            value={summary.sessions}
+          />
+          <ActionSummaryCard
+            className="border-border/70 bg-muted/30"
+            description="Markdown files uploaded into project-scoped intake."
+            label="Uploaded files"
+            value={summary.files}
+          />
+          <ActionSummaryCard
+            actionHref={summary.pendingClassification > 0 ? "/intake?queue=pending_classification" : undefined}
+            actionLabel="Open pending sessions"
+            className="border-border/70 bg-muted/30"
+            description="Files still waiting for classification."
+            label="Pending classification"
+            value={summary.pendingClassification}
+          />
+          <ActionSummaryCard
+            className="border-border/70 bg-muted/30"
+            description="Parsed sections currently available for mapping."
+            label="Parsed sections"
+            value={summary.parsedSections}
+          />
+          <ActionSummaryCard
+            actionHref={summary.candidateObjects > 0 ? "/review" : undefined}
+            actionLabel="Open candidate review"
+            className="border-border/70 bg-muted/30"
+            description="Candidate objects that can continue into human review."
+            label="Candidate objects"
+            value={summary.candidateObjects}
+          />
+          <ActionSummaryCard
+            actionHref={summary.humanReviewRequired > 0 ? "/review?reviewStatusFilter=pending" : undefined}
+            actionLabel="Open Human Review"
+            className="border-border/70 bg-muted/30"
+            description="Sessions currently waiting on explicit human review."
+            label="Human review queues"
+            value={summary.humanReviewRequired}
+          />
         </CardContent>
       </Card>
 

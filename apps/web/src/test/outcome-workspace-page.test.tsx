@@ -222,6 +222,10 @@ describe("Outcome page", () => {
     expect(screen.getAllByText("Project mode: Clean").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Status: draft").length).toBeGreaterThan(0);
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
+    expect(screen.getByText("Customer handshake")).toBeDefined();
+    expect(screen.getByText("AI and risk posture")).toBeDefined();
+    expect(screen.getByDisplayValue("level_2")).toBeDefined();
+    expect(screen.getByText("Design direction seeds")).toBeDefined();
     expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
     expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
