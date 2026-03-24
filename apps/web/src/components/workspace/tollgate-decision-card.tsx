@@ -117,6 +117,11 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
       organizationSide: props.availablePeople[0]?.organizationSide ?? "customer"
     }
   ];
+  const pendingCount = props.pendingActions.length;
+  const blockedCount = props.blockedActions.length;
+  const signoffCount = props.signoffRecords.length;
+  const reviewCount = props.reviewActions.length;
+  const approvalCount = props.approvalActions.length;
 
   return (
     <Card className="border-border/70 shadow-sm">
@@ -146,75 +151,98 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
           {props.comments ? <p className="mt-3 text-sm">Current note: {props.comments}</p> : null}
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-2">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <div className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4 text-primary" />
-                <p className="font-medium text-foreground">Required review roles</p>
-              </div>
-              <div className="mt-4 space-y-4">
-                {props.reviewActions.map((action) => (
-                  <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm text-muted-foreground" key={`${action.decisionKind}:${action.roleType}`}>
-                    <p className="font-medium text-foreground">{action.label}</p>
-                    <p className="mt-2">
-                      Assigned:{" "}
-                      {action.assignedPeople.length > 0
-                        ? action.assignedPeople.map((person) => `${person.fullName} (${person.roleTitle})`).join(", ")
-                        : "No assigned human"}
-                    </p>
-                    <p className="mt-2">
-                      Completed:{" "}
-                      {action.completedRecords.length > 0
-                        ? action.completedRecords.map((record) => record.actualPersonName).join(", ")
-                        : "No completed review"}
-                    </p>
-                    {action.blockedReasons.length > 0 ? (
-                      <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-900">
-                        {action.blockedReasons.join(" ")}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Review lanes</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">{reviewCount}</p>
+          </div>
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Approval lanes</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">{approvalCount}</p>
+          </div>
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pending actions</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">{pendingCount}</p>
+          </div>
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked actions</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">{blockedCount}</p>
+          </div>
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recorded sign-offs</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">{signoffCount}</p>
+          </div>
+        </div>
 
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <p className="font-medium text-foreground">Required approval roles</p>
-              </div>
-              <div className="mt-4 space-y-4">
-                {props.approvalActions.map((action) => (
-                  <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm text-muted-foreground" key={`${action.decisionKind}:${action.roleType}`}>
-                    <p className="font-medium text-foreground">{action.label}</p>
-                    <p className="mt-2">
-                      Assigned:{" "}
-                      {action.assignedPeople.length > 0
-                        ? action.assignedPeople.map((person) => `${person.fullName} (${person.roleTitle})`).join(", ")
-                        : "No assigned human"}
-                    </p>
-                    <p className="mt-2">
-                      Completed:{" "}
-                      {action.completedRecords.length > 0
-                        ? action.completedRecords.map((record) => record.actualPersonName).join(", ")
-                        : "No completed approval"}
-                    </p>
-                    {action.blockedReasons.length > 0 ? (
-                      <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-900">
-                        {action.blockedReasons.join(" ")}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
+        <div className="grid gap-6 2xl:grid-cols-2">
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <div className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4 text-primary" />
+              <p className="font-medium text-foreground">Required review roles</p>
+            </div>
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              {props.reviewActions.map((action) => (
+                <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm text-muted-foreground" key={`${action.decisionKind}:${action.roleType}`}>
+                  <p className="font-medium text-foreground">{action.label}</p>
+                  <p className="mt-2">
+                    Assigned:{" "}
+                    {action.assignedPeople.length > 0
+                      ? action.assignedPeople.map((person) => `${person.fullName} (${person.roleTitle})`).join(", ")
+                      : "No assigned human"}
+                  </p>
+                  <p className="mt-2">
+                    Completed:{" "}
+                    {action.completedRecords.length > 0
+                      ? action.completedRecords.map((record) => record.actualPersonName).join(", ")
+                      : "No completed review"}
+                  </p>
+                  {action.blockedReasons.length > 0 ? (
+                    <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-900">
+                      {action.blockedReasons.join(" ")}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
           </div>
 
+          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <p className="font-medium text-foreground">Required approval roles</p>
+            </div>
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              {props.approvalActions.map((action) => (
+                <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm text-muted-foreground" key={`${action.decisionKind}:${action.roleType}`}>
+                  <p className="font-medium text-foreground">{action.label}</p>
+                  <p className="mt-2">
+                    Assigned:{" "}
+                    {action.assignedPeople.length > 0
+                      ? action.assignedPeople.map((person) => `${person.fullName} (${person.roleTitle})`).join(", ")
+                      : "No assigned human"}
+                  </p>
+                  <p className="mt-2">
+                    Completed:{" "}
+                    {action.completedRecords.length > 0
+                      ? action.completedRecords.map((record) => record.actualPersonName).join(", ")
+                      : "No completed approval"}
+                  </p>
+                  {action.blockedReasons.length > 0 ? (
+                    <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-900">
+                      {action.blockedReasons.join(" ")}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
           <div className="space-y-4">
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
               <p className="font-medium text-foreground">Pending actions</p>
-              <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+              <div className="mt-3 grid gap-3 text-sm text-muted-foreground">
                 {props.pendingActions.length === 0 ? (
                   <p>No pending review or approval actions remain.</p>
                 ) : (
@@ -232,7 +260,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                 <ShieldAlert className="h-4 w-4 text-primary" />
                 <p className="font-medium text-foreground">Blocked actions</p>
               </div>
-              <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+              <div className="mt-3 grid gap-3 text-sm text-muted-foreground">
                 {props.blockedActions.length === 0 ? (
                   <p>No blocked sign-off actions are currently visible.</p>
                 ) : (
@@ -245,13 +273,21 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                 )}
               </div>
             </div>
+          </div>
 
-            <form action={props.formAction} className="space-y-4 rounded-2xl border border-border/70 bg-background p-4">
-              {props.hiddenFields ? <HiddenFields fields={props.hiddenFields} /> : null}
-              <input name="entityId" type="hidden" value={props.entityId} />
-              <input name="entityType" type="hidden" value={props.entityType} />
-              <input name="tollgateType" type="hidden" value={props.tollgateType} />
-              <input name="aiAccelerationLevel" type="hidden" value={props.aiAccelerationLevel} />
+          <form action={props.formAction} className="space-y-4 rounded-2xl border border-border/70 bg-background p-5">
+            {props.hiddenFields ? <HiddenFields fields={props.hiddenFields} /> : null}
+            <input name="entityId" type="hidden" value={props.entityId} />
+            <input name="entityType" type="hidden" value={props.entityType} />
+            <input name="tollgateType" type="hidden" value={props.tollgateType} />
+            <input name="aiAccelerationLevel" type="hidden" value={props.aiAccelerationLevel} />
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-foreground">Record sign-off</p>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Capture one review, approval or escalation decision with the human signer and evidence trail.
+              </p>
+            </div>
+            <div className="grid gap-4 xl:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm font-medium text-foreground">Decision lane</span>
                 <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={recordOptions[0]?.key} name="decisionKey">
@@ -281,18 +317,18 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                 </select>
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Note</span>
-                <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="note" />
-              </label>
-              <label className="space-y-2">
                 <span className="text-sm font-medium text-foreground">Evidence reference</span>
                 <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="evidenceReference" type="text" />
               </label>
-              <Button className="gap-2" type="submit">
-                Record sign-off
-              </Button>
-            </form>
-          </div>
+            </div>
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Note</span>
+              <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="note" />
+            </label>
+            <Button className="gap-2 whitespace-nowrap" type="submit">
+              Record sign-off
+            </Button>
+          </form>
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">

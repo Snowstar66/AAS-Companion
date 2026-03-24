@@ -10,9 +10,10 @@ import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-he
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
+import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
-import { formatAiLevelLabel, getHelpPattern, getInlineGuidance } from "@/lib/help/aas-help";
+import { getHelpPattern, getInlineGuidance } from "@/lib/help/aas-help";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
@@ -77,7 +78,6 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
       : "not started";
   const isArchived = outcome.lifecycleState === "archived";
   const framingHelp = getHelpPattern("outcome.authoring", outcome.aiAccelerationLevel);
-  const aiLevelHelp = getHelpPattern("framing.ai_level", outcome.aiAccelerationLevel);
 
   return (
     <AppShell hideRightRail topbarProps={{ eyebrow: "AAS Companion", projectName: organization.organizationName, sectionLabel: "Outcome", badge: outcome.key }}>
@@ -94,57 +94,47 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
         {lifecycleState === "error" && saveMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{saveMessage}</div> : null}
         {isArchived ? <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">This Outcome is archived and currently read-only. Restore it to continue active framing work.</div> : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.85fr)]">
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">{outcome.key}</span>
-                    <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">Origin: {originLabel}</span>
-                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">Project mode: {workspaceLabel}</span>
-                    <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">Status: {statusLabel}</span>
-                  </div>
-                  <div className="space-y-2">
-                    <CardTitle className="text-2xl sm:text-3xl">{outcome.title}</CardTitle>
-                    <CardDescription className="max-w-3xl text-sm leading-7 sm:text-base">{getOriginSummary(outcome.originType)}</CardDescription>
-                  </div>
-                </div>
-                <div className="grid min-w-[220px] gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tollgate</p>
-                    <p className="mt-2 text-lg font-semibold capitalize">{tollgateStatusLabel}</p>
-                  </div>
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Lifecycle</p>
-                    <p className="mt-2 text-lg font-semibold capitalize">{outcome.lifecycleState}</p>
-                  </div>
-                </div>
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">{outcome.key}</span>
+                <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">Origin: {originLabel}</span>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">Project mode: {workspaceLabel}</span>
+                <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">Status: {statusLabel}</span>
               </div>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value owner</p><p className="mt-2 text-base font-semibold">{outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? "Unassigned"}</p></div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p><p className="mt-2 text-base font-semibold capitalize">{outcome.aiAccelerationLevel.replaceAll("_", " ")}</p></div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Risk profile</p><p className="mt-2 text-base font-semibold capitalize">{outcome.riskProfile}</p></div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Baseline readiness</p><p className="mt-2 text-base font-semibold">{baselineComplete ? "Baseline fields present" : "Baseline incomplete"}</p></div>
+              <div className="space-y-2">
+                <CardTitle className="text-2xl sm:text-3xl">{outcome.title}</CardTitle>
+                <CardDescription className="max-w-4xl text-sm leading-7 sm:text-base">{getOriginSummary(outcome.originType)}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2 2xl:grid-cols-6">
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 2xl:col-span-2"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value owner</p><p className="mt-2 text-base font-semibold">{outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? "Unassigned"}</p></div>
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p><p className="mt-2 text-base font-semibold capitalize">{outcome.aiAccelerationLevel.replaceAll("_", " ")}</p></div>
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Risk profile</p><p className="mt-2 text-base font-semibold capitalize">{outcome.riskProfile}</p></div>
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tollgate</p><p className="mt-2 text-base font-semibold capitalize">{tollgateStatusLabel}</p></div>
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Baseline readiness</p><p className="mt-2 text-base font-semibold">{baselineComplete ? "Baseline fields present" : "Baseline incomplete"}</p></div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader><CardTitle>Readiness blockers</CardTitle><CardDescription>What still blocks Tollgate 1 for this outcome.</CardDescription></CardHeader>
+            <CardContent className="space-y-3">
+              {blockers.length === 0 ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">No baseline blockers are currently visible.</div> : blockers.map((blocker) => <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm leading-6 text-amber-900" key={blocker}>{blocker}</div>)}
             </CardContent>
           </Card>
 
           <div className="space-y-6">
-            <ContextHelp defaultOpen pattern={framingHelp} summaryLabel="Open framing authoring help" />
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader><CardTitle>Readiness blockers</CardTitle><CardDescription>What still blocks Tollgate 1 for this outcome.</CardDescription></CardHeader>
-              <CardContent className="space-y-3">
-                {blockers.length === 0 ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">No baseline blockers are currently visible.</div> : blockers.map((blocker) => <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm leading-6 text-amber-900" key={blocker}>{blocker}</div>)}
-              </CardContent>
-            </Card>
             <Card className="border-border/70 shadow-sm">
               <CardHeader><CardTitle>Tollgate posture</CardTitle><CardDescription>Current TG1 stance for the active outcome.</CardDescription></CardHeader>
-              <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-1">
+              <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="font-medium text-foreground">Outcome status</p><p className="mt-2 leading-6 capitalize">{statusLabel}</p></div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4"><p className="font-medium text-foreground">Approvers</p><p className="mt-2 leading-6">{(tollgate?.approverRoles ?? ["value_owner", "architect"]).join(", ")}</p></div>
               </CardContent>
             </Card>
+            <ContextHelp pattern={framingHelp} summaryLabel="Open framing authoring help" />
           </div>
         </div>
 
@@ -189,21 +179,17 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 </CardContent>
               </Card>
 
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
-                <Card className="border-border/70 shadow-sm">
-                  <CardHeader><CardTitle>AI and risk posture</CardTitle><CardDescription>Keep the intended AI level and risk posture explicit during the customer handshake.</CardDescription></CardHeader>
-                  <CardContent className="space-y-4">
-                    <label className="space-y-2"><span className="text-sm font-medium text-foreground">AI level</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.aiAccelerationLevel} disabled={isArchived} name="aiAccelerationLevel"><option value="level_1">Level 1</option><option value="level_2">Level 2</option><option value="level_3">Level 3</option></select><InlineFieldGuidance guidance={getInlineGuidance("framing.ai_level")} /></label>
-                    <label className="space-y-2"><span className="text-sm font-medium text-foreground">Risk profile</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.riskProfile} disabled={isArchived} name="riskProfile"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label>
-                    <ContextHelp pattern={aiLevelHelp} summaryLabel={`Open ${formatAiLevelLabel(outcome.aiAccelerationLevel)} guidance`} />
-                  </CardContent>
-                </Card>
-
+              <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.05fr)]">
+                <OutcomeAiRiskPostureCard
+                  defaultAiLevel={outcome.aiAccelerationLevel}
+                  defaultRiskProfile={outcome.riskProfile}
+                  disabled={isArchived}
+                />
                 <Card className="border-border/70 shadow-sm">
                   <CardHeader>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div><CardTitle>Design direction seeds</CardTitle><CardDescription>Capture the rough functional direction as Epics before detailed Story decomposition begins.</CardDescription></div>
-                      {!isArchived ? <Button className="gap-2" formAction={createEpicFromOutcomeAction} type="submit">Create Epic<ArrowRight className="h-4 w-4" /></Button> : null}
+                      {!isArchived ? <Button className="w-full gap-2 self-start whitespace-nowrap sm:w-auto sm:shrink-0" formAction={createEpicFromOutcomeAction} type="submit">Create Epic<ArrowRight className="h-4 w-4" /></Button> : null}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-muted-foreground">
