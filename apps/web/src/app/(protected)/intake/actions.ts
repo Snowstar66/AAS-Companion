@@ -7,7 +7,7 @@ import {
   promoteArtifactCandidateService,
   reviewArtifactCandidateService
 } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildRedirect(pathname: string, params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
@@ -39,7 +39,7 @@ function readCsv(formData: FormData, name: string) {
 }
 
 export async function uploadArtifactIntakeFilesAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const files = formData
     .getAll("files")
     .filter((value): value is File => value instanceof File && value.size > 0);
@@ -93,7 +93,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
 }
 
 export async function submitArtifactCandidateFromIntakeAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const sessionId = String(formData.get("sessionId") ?? "");
   const fileId = String(formData.get("fileId") ?? "");
   const candidateId = String(formData.get("candidateId") ?? "");

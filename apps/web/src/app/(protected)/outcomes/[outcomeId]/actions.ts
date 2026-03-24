@@ -10,7 +10,7 @@ import {
   saveOutcomeWorkspaceService,
   submitOutcomeTollgateService
 } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildOutcomeRedirect(outcomeId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -24,7 +24,7 @@ function requireExplicitConfirmation(formData: FormData) {
 }
 
 export async function saveOutcomeWorkspaceAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
 
   const result = await saveOutcomeWorkspaceService({
@@ -61,7 +61,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
 }
 
 export async function submitOutcomeTollgateAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
   const comments = String(formData.get("comments") ?? "") || null;
   const result = await submitOutcomeTollgateService({
@@ -101,7 +101,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
 }
 
 export async function createEpicFromOutcomeAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
   const result = await createNativeEpicFromOutcomeService({
     organizationId: session.organization.organizationId,
@@ -127,7 +127,7 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
 }
 
 export async function hardDeleteOutcomeAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
 
   if (!requireExplicitConfirmation(formData)) {
@@ -164,7 +164,7 @@ export async function hardDeleteOutcomeAction(formData: FormData) {
 }
 
 export async function archiveOutcomeAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
   const reason = String(formData.get("archiveReason") ?? "");
 
@@ -208,7 +208,7 @@ export async function archiveOutcomeAction(formData: FormData) {
 }
 
 export async function restoreOutcomeAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
 
   if (!requireExplicitConfirmation(formData)) {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { organizationContextSchema } from "./organization";
 
-export const authModeSchema = z.enum(["demo", "supabase"]);
+export const authModeSchema = z.enum(["demo", "local", "supabase"]);
 
 export const appSessionSchema = z.object({
   mode: authModeSchema,

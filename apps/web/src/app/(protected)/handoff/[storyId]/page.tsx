@@ -6,7 +6,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import { ExecutionContractPreview } from "@/components/handoff/execution-contract-preview";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 type HandoffPageProps = {
   params: Promise<{
@@ -15,7 +15,7 @@ type HandoffPageProps = {
 };
 
 export default async function HandoffPage({ params }: HandoffPageProps) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const { storyId } = await params;
   const storyResult = await getStoryWorkspaceService(session.organization.organizationId, storyId);
 

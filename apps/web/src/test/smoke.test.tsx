@@ -5,9 +5,13 @@ import HomePage from "@/app/page";
 vi.mock("@/lib/home/dashboard", () => ({
   loadHomeDashboard: vi.fn(async () => ({
     session: null,
+    projects: [],
+    activeProject: null,
+    hasAuthenticatedUser: false,
+    isDemoSession: false,
     dashboard: {
       state: "unavailable",
-      organizationName: "AAS Demo Organization",
+      organizationName: "No project selected",
       message: "Dashboard data is unavailable right now.",
       summary: [],
       outcomesByStatus: [],
@@ -28,14 +32,14 @@ describe("HomePage", () => {
   });
 
   it("renders the degraded dashboard state", async () => {
-    render(await HomePage());
+    render(await HomePage({}));
 
     expect(
       screen.getByRole("heading", {
-        name: "Choose or resume work",
+        name: "Choose how to enter work",
         level: 1
       })
     ).toBeDefined();
-    expect(screen.getAllByText("Dashboard data is unavailable right now.").length).toBeGreaterThan(0);
+    expect(screen.getByText("Choose or create a project before any operational data is shown.")).toBeDefined();
   });
 });

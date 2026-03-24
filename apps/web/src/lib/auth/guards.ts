@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAppSession } from "./server";
+import { getAppSession, getSignedInAccountIdentity } from "./server";
 
 export async function requireProtectedSession() {
   const session = await getAppSession();
@@ -11,12 +11,29 @@ export async function requireProtectedSession() {
   return session;
 }
 
-export async function requireOrganizationContext() {
+export async function requireActiveProjectSession() {
   const session = await requireProtectedSession();
 
-  if (!session.organization.organizationId) {
-    redirect("/login?error=Missing%20organization%20context.");
+  if (!session.organization?.organizationId) {
+    redirect("/?error=Select%20or%20create%20a%20project%20before%20entering%20work.");
   }
 
+  return session as typeof session & {
+    organization: NonNullable<typeof session.organization>;
+  };
+}
+
+export async function requireOrganizationContext() {
+  const session = await requireActiveProjectSession();
   return session.organization;
+}
+
+export async function requireProjectAccountIdentity() {
+  const account = await getSignedInAccountIdentity();
+
+  if (!account) {
+    redirect("/login?redirectTo=%2F");
+  }
+
+  return account;
 }

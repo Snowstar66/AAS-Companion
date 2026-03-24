@@ -30,7 +30,7 @@ export function FramingRightRail({ summary }: FramingRightRailProps) {
       <Card className="border-border/70 bg-background/90 shadow-sm">
         <CardHeader>
           <CardTitle>Framing summary</CardTitle>
-          <CardDescription>Current outcome posture for the active organization context.</CardDescription>
+          <CardDescription>Current outcome posture for the active project context.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
           <div className="rounded-3xl border border-border/70 bg-muted/30 p-4">
@@ -51,10 +51,10 @@ export function FramingRightRail({ summary }: FramingRightRailProps) {
         </CardContent>
       </Card>
 
-      <Card className="border-border/70 bg-background/90 shadow-sm">
+      <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.9))] shadow-sm">
         <CardHeader>
-          <CardTitle>Cockpit notes</CardTitle>
-          <CardDescription>M1-STORY-005 keeps the framing entry point clear and narrow.</CardDescription>
+          <CardTitle>Working posture</CardTitle>
+          <CardDescription>Use the cockpit to choose the right case before going deeper into outcome detail.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {notes.map((note) => {

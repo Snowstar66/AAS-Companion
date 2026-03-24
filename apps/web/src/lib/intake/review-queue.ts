@@ -5,7 +5,7 @@ import {
   artifactParseResultSchema
 } from "@aas-companion/domain";
 import { listArtifactCandidateQueueService } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireOrganizationContext } from "@/lib/auth/guards";
 
 function parseDraftRecord(value: unknown) {
   const parsed = artifactCandidateDraftRecordSchema.safeParse(value);
@@ -28,13 +28,13 @@ function parseParsedArtifacts(value: unknown) {
 }
 
 export async function loadArtifactReviewQueue() {
-  const session = await requireProtectedSession();
-  const result = await listArtifactCandidateQueueService(session.organization.organizationId);
+  const organization = await requireOrganizationContext();
+  const result = await listArtifactCandidateQueueService(organization.organizationId);
 
   if (!result.ok) {
     return {
       state: "unavailable" as const,
-      organizationName: session.organization.organizationName,
+      organizationName: organization.organizationName,
       items: [],
       summary: {
         total: 0,
@@ -60,7 +60,7 @@ export async function loadArtifactReviewQueue() {
 
   return {
     state: "ready" as const,
-    organizationName: session.organization.organizationName,
+    organizationName: organization.organizationName,
     items,
     summary: {
       total: items.length,

@@ -78,7 +78,7 @@ function matchesSearch(item: FramingOutcomeItem, search: string) {
 }
 
 function buildOriginFilters(items: FramingOutcomeItem[]) {
-  return [
+  const baseFilters = [
     {
       key: "all",
       label: "All",
@@ -88,13 +88,19 @@ function buildOriginFilters(items: FramingOutcomeItem[]) {
       key: "native",
       label: "Native",
       count: items.filter((item) => item.originType === "native").length
-    },
-    {
-      key: "demo",
-      label: "Demo",
-      count: items.filter((item) => item.originType === "seeded").length
     }
   ];
+  const demoCount = items.filter((item) => item.originType === "seeded").length;
+
+  if (demoCount > 0) {
+    baseFilters.push({
+      key: "demo",
+      label: "Demo",
+      count: demoCount
+    });
+  }
+
+  return baseFilters;
 }
 
 function SubmitButton({ pending }: { pending: boolean }) {
@@ -116,6 +122,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
     initialCreateOutcomeActionState
   );
   const demoEntryHref = items.find((item) => item.originType === "seeded")?.detailHref ?? null;
+  const hasDemoItems = items.some((item) => item.originType === "seeded");
   const nativeItemCount = items.filter((item) => item.originType === "native").length;
   const blockedCount = items.filter((item) => item.isBlocked).length;
   const readyCount = items.filter((item) => item.readinessTone === "ready").length;
@@ -130,80 +137,111 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
 
   return (
     <section className="space-y-6">
-      <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.18),_transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(242,247,252,0.92))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.95fr)]">
-          <div className="max-w-3xl space-y-4">
+      <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.2),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(242,247,252,0.94))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.95fr)]">
+          <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               <Layers3 className="h-3.5 w-3.5 text-primary" />
               Native-first framing
             </div>
             <div className="space-y-3">
               <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">Framing Cockpit</h1>
-              <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">{message}</p>
+              <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">{message}</p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total outcomes</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{items.length}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Every active outcome visible inside this project context.</p>
+              </div>
+              <div className="rounded-3xl border border-amber-200 bg-amber-50/85 p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Blocked outcomes</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-amber-950">{blockedCount}</p>
+                <p className="mt-2 text-sm leading-6 text-amber-900/80">These still need baseline or framing cleanup.</p>
+              </div>
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50/85 p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Ready outcomes</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-950">{readyCount}</p>
+                <p className="mt-2 text-sm leading-6 text-emerald-900/80">Can move forward without framing blockers.</p>
+              </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
-              <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total</p>
-                <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{items.length}</p>
-                <p className="mt-2 text-sm text-muted-foreground">Outcomes available in this project.</p>
-              </div>
-              <div className="rounded-3xl border border-amber-200 bg-amber-50/85 p-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Blocked</p>
-                <p className="mt-3 text-3xl font-semibold tracking-tight text-amber-950">{blockedCount}</p>
-                <p className="mt-2 text-sm text-amber-900/80">Need baseline or readiness attention.</p>
-              </div>
-              <div className="rounded-3xl border border-emerald-200 bg-emerald-50/85 p-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Ready</p>
-                <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-950">{readyCount}</p>
-                <p className="mt-2 text-sm text-emerald-900/80">Can move deeper into framing work.</p>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-1">
               <Card className="border-sky-200 bg-sky-50/70 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sky-950">
-                  <Sparkles className="h-4 w-4" />
-                  Start a clean case
-                </CardTitle>
-                <CardDescription className="text-sky-900/80">
-                  Create a fresh native draft Outcome and continue directly inside the project.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <form action={formAction}>
-                  <SubmitButton pending={pending} />
-                </form>
-                <p className="text-sm text-sky-900/80">This is the default path for real customer work.</p>
-              </CardContent>
-              </Card>
-
-              <Card className="border-border/70 bg-background/92 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Open demo case</CardTitle>
-                  <CardDescription>Explore Demo reference content intentionally without changing native case behavior.</CardDescription>
+                  <CardTitle className="flex items-center gap-2 text-sky-950">
+                    <Sparkles className="h-4 w-4" />
+                    Start a clean case
+                  </CardTitle>
+                  <CardDescription className="text-sky-900/80">
+                    Create a fresh native draft Outcome and continue directly inside the project.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {demoEntryHref ? (
-                    <Button asChild className="gap-2" variant="secondary">
-                      <Link href={demoEntryHref}>
-                        Open demo case
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button className="gap-2" onClick={() => setActiveFilter("demo")} type="button" variant="secondary">
-                      Open demo case
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <p className="text-sm text-muted-foreground">Demo stays available, but it is secondary to clean case creation.</p>
+                  <form action={formAction}>
+                    <SubmitButton pending={pending} />
+                  </form>
+                  <p className="text-sm leading-6 text-sky-900/80">
+                    Use this for real customer work. It opens a new native branch without pulling in demo state.
+                  </p>
                 </CardContent>
               </Card>
+
+              {hasDemoItems ? (
+                <Card className="border-border/70 bg-background/92 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Open demo case</CardTitle>
+                    <CardDescription>
+                      Explore Demo reference content intentionally without changing native case behavior.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {demoEntryHref ? (
+                      <Button asChild className="gap-2" variant="secondary">
+                        <Link href={demoEntryHref}>
+                          Open demo case
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button className="gap-2" onClick={() => setActiveFilter("demo")} type="button" variant="secondary">
+                        Open demo case
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      Demo stays available, but it is intentionally secondary to clean case creation.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
+
+            <Card className="border-border/70 bg-background/92 shadow-sm">
+              <CardHeader>
+                <CardTitle>Control view</CardTitle>
+                <CardDescription>
+                  Keep the cockpit focused on the right outcomes before you dive into detail pages.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
+                <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current view</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{activeFilterLabel}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Visible now</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{filteredItems.length}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Native focus</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{nativeItemCount}</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -212,70 +250,47 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
             {actionState.message}
           </div>
         ) : null}
-      </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Find the right outcome</CardTitle>
-            <CardDescription>Filter by origin or search by key, title, owner, or readiness signal.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input
-                aria-label="Search outcomes"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search outcomes"
-                type="search"
-                value={search}
-              />
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {filters.map((filter) => (
-                <button
-                  className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
-                    activeFilter === filter.key
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border/70 bg-background text-muted-foreground hover:text-foreground"
-                  }`}
-                  key={filter.key}
-                  onClick={() => setActiveFilter(filter.key as OriginFilterKey)}
-                  type="button"
-                >
-                  {filter.label} ({filter.count})
-                </button>
-              ))}
+        <div className="mt-6 rounded-3xl border border-border/70 bg-background/75 p-4 shadow-sm sm:p-5">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] 2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Search outcomes</p>
+              <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input
+                  aria-label="Search outcomes"
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search by key, title, owner, or readiness"
+                  type="search"
+                  value={search}
+                />
+              </label>
             </div>
-            <div className="grid gap-3 rounded-3xl border border-border/70 bg-muted/15 p-4 sm:grid-cols-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current view</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{activeFilterLabel}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Visible now</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{filteredItems.length}</p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Native focus</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{nativeItemCount}</p>
+
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin filters</p>
+              <div className="-mx-1 overflow-x-auto pb-1">
+                <div className="flex min-w-max flex-wrap gap-2 px-1">
+                  {filters.map((filter) => (
+                    <button
+                      className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
+                        activeFilter === filter.key
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border/70 bg-background text-muted-foreground hover:text-foreground"
+                      }`}
+                      key={filter.key}
+                      onClick={() => setActiveFilter(filter.key as OriginFilterKey)}
+                      type="button"
+                    >
+                      {filter.label} ({filter.count})
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.9))] shadow-sm">
-          <CardHeader>
-            <CardTitle>Working posture</CardTitle>
-            <CardDescription>Keep the cockpit focused on live framing choices rather than broad dashboard browsing.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Use Start new case for clean customer work that begins with a draft native Outcome.</p>
-            <p>Switch to Demo only when you want reference material.</p>
-            <p>Readiness and Tollgate behavior stay the same once a case is opened inside the project.</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {state === "empty" ? (
@@ -303,7 +318,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
             <form action={formAction}>
               <SubmitButton pending={pending} />
             </form>
-            {demoEntryHref ? (
+            {hasDemoItems && demoEntryHref ? (
               <Button asChild className="gap-2" variant="secondary">
                 <Link href={demoEntryHref}>Open demo case</Link>
               </Button>
@@ -320,7 +335,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
       ) : null}
 
       {filteredItems.length > 0 ? (
-        <div className="grid gap-4 2xl:grid-cols-2">
+        <div className="space-y-5">
           {filteredItems.map((item) => (
             <Card
               className={`h-full border shadow-sm ${
@@ -331,102 +346,126 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
               key={item.id}
             >
               <CardContent className="flex h-full flex-col p-6">
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        {item.key}
-                      </span>
-                      <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getReadinessClasses(item)}`}>
-                        {item.readinessLabel}
-                      </span>
-                      <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                        {item.statusLabel}
-                      </span>
-                      <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getOriginClasses(item.originType)}`}>
-                        {getOriginLabel(item.originType)}
-                      </span>
-                      {item.importedReadinessState ? (
-                        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                          {item.importedReadinessState.replaceAll("_", " ")}
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-5 2xl:flex-row 2xl:items-start 2xl:justify-between">
+                    <div className="min-w-0 space-y-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          {item.key}
                         </span>
-                      ) : null}
-                      {item.isBlocked ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
-                          <AlertTriangle className="h-3.5 w-3.5" />
-                          Blocked
+                        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getReadinessClasses(item)}`}>
+                          {item.readinessLabel}
                         </span>
+                        <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                          {item.statusLabel}
+                        </span>
+                        <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getOriginClasses(item.originType)}`}>
+                          {getOriginLabel(item.originType)}
+                        </span>
+                        {item.importedReadinessState ? (
+                          <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+                            {item.importedReadinessState.replaceAll("_", " ")}
+                          </span>
+                        ) : null}
+                        {item.isBlocked ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            Blocked
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="space-y-2">
+                        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{item.title}</h2>
+                        <p className="max-w-4xl text-sm leading-7 text-muted-foreground sm:text-base">{item.readinessDetail}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 2xl:w-auto 2xl:shrink-0">
+                      <Button asChild className="gap-2">
+                        <Link href={item.detailHref}>
+                          Open Outcome
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      {item.lineageHref ? (
+                        <Button asChild className="gap-2" variant="secondary">
+                          <Link href={item.lineageHref}>Open Import Lineage</Link>
+                        </Button>
                       ) : null}
                     </div>
-
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-semibold tracking-tight">{item.title}</h2>
-                      <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{item.readinessDetail}</p>
-                    </div>
-
-                    <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 2xl:grid-cols-4">
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Owner</p>
-                        <p className="mt-2 text-foreground">{item.ownerLabel}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Baseline</p>
-                        <p className="mt-2 text-foreground">{item.baselineComplete ? "Complete" : "Missing required fields"}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Linked work</p>
-                        <p className="mt-2 text-foreground">
-                          {item.epicCount} epic{item.epicCount === 1 ? "" : "s"} / {item.storyCount} story
-                          {item.storyCount === 1 ? "" : "ies"}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Updated</p>
-                        <p className="mt-2 text-foreground">{item.updatedAtLabel}</p>
-                      </div>
-                    </div>
-
-                    {item.blockers.length > 0 ? (
-                      <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
-                        <p className="font-medium">Current blockers</p>
-                        <ul className="mt-2 space-y-2">
-                          {item.blockers.map((blocker) => (
-                            <li className="flex items-start gap-2" key={`${item.id}-${blocker}`}>
-                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                              <span>{blocker}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
                   </div>
 
-                  <div className="flex shrink-0 flex-col gap-3 xl:w-[220px]">
-                    <Button asChild className="gap-2">
-                      <Link href={item.detailHref}>
-                        Open Outcome
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    {item.lineageHref ? (
-                      <Button asChild className="gap-2" variant="secondary">
-                        <Link href={item.lineageHref}>Open Import Lineage</Link>
-                      </Button>
-                    ) : null}
-                    {item.readinessTone === "ready" ? (
-                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
-                        <div className="flex items-center gap-2 font-medium">
-                          <CircleCheckBig className="h-4 w-4" />
-                          Ready for deeper framing
+                  <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                    <div className="space-y-4">
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-2">
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Owner</p>
+                          <p className="mt-2 text-foreground">{item.ownerLabel}</p>
                         </div>
-                        <p className="mt-2 leading-6">This outcome can move further into the project without baseline blockers.</p>
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Baseline</p>
+                          <p className="mt-2 text-foreground">{item.baselineComplete ? "Complete" : "Missing required fields"}</p>
+                        </div>
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Linked work</p>
+                          <p className="mt-2 text-foreground">
+                            {item.epicCount} epic{item.epicCount === 1 ? "" : "s"} / {item.storyCount} story
+                            {item.storyCount === 1 ? "" : "ies"}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Updated</p>
+                          <p className="mt-2 text-foreground">{item.updatedAtLabel}</p>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                        <p className="font-medium text-foreground">Needs review</p>
-                        <p className="mt-2 leading-6">Inspect the outcome detail to continue framing and clear blockers.</p>
+
+                      {item.blockers.length > 0 ? (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
+                          <p className="font-medium">Current blockers</p>
+                          <ul className="mt-2 space-y-2">
+                            {item.blockers.map((blocker) => (
+                              <li className="flex items-start gap-2" key={`${item.id}-${blocker}`}>
+                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                                <span>{blocker}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-4">
+                      {item.readinessTone === "ready" ? (
+                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
+                          <div className="flex items-center gap-2 font-medium">
+                            <CircleCheckBig className="h-4 w-4" />
+                            Ready for deeper framing
+                          </div>
+                          <p className="mt-2 leading-6">
+                            This outcome can move further into the project without baseline blockers.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-4 text-sm text-muted-foreground">
+                          <p className="font-medium text-foreground">Needs review</p>
+                          <p className="mt-2 leading-6">
+                            Inspect the outcome detail to continue framing and clear blockers.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-4 text-sm text-muted-foreground">
+                        <p className="font-medium text-foreground">Case posture</p>
+                        <p className="mt-2 leading-6">
+                          {item.originType === "native"
+                            ? "This is a native project outcome and should remain the main working path."
+                            : item.originType === "seeded"
+                              ? "This is demo reference content. Use it intentionally, not as default project work."
+                              : "This outcome came from imported source material and keeps its lineage into review."}
+                        </p>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

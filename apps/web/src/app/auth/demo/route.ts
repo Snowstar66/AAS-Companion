@@ -4,7 +4,7 @@ import { createDemoSession } from "@/lib/auth/demo";
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
-  const redirectTo = normalizeRedirectPath(String(formData.get("redirectTo") ?? "/workspace"));
+  const redirectTo = normalizeRedirectPath(String(formData.get("redirectTo") ?? "/"));
 
   await createDemoSession();
 

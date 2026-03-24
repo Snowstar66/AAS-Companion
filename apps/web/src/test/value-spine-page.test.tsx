@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import WorkspacePage from "@/app/(protected)/workspace/page";
 
 vi.mock("@/lib/auth/guards", () => ({
-  requireProtectedSession: vi.fn(async () => ({
+  requireActiveProjectSession: vi.fn(async () => ({
     organization: {
       organizationId: "org-demo",
       organizationName: "AAS Demo Organization"

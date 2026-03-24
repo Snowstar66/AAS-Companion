@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const parsed = signInSchema.safeParse({
     email: formData.get("email")
   });
-  const redirectTo = normalizeRedirectPath(String(formData.get("redirectTo") ?? "/workspace"));
+  const redirectTo = normalizeRedirectPath(String(formData.get("redirectTo") ?? "/"));
 
   if (!parsed.success) {
     return redirectWithSearch(request, "/login", {

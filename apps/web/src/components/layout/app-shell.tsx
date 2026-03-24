@@ -7,11 +7,14 @@ type AppShellProps = {
   children: ReactNode;
   rightRail?: ReactNode;
   topbarProps?: TopbarProps;
+  activeProjectName?: string;
 };
 
-export function AppShell({ children, rightRail, topbarProps }: AppShellProps) {
+export function AppShell({ children, rightRail, topbarProps, activeProjectName }: AppShellProps) {
   const sidebarProps = {
-    ...(topbarProps?.projectName ? { activeProjectName: topbarProps.projectName } : {}),
+    ...(activeProjectName || topbarProps?.projectName
+      ? { activeProjectName: activeProjectName ?? topbarProps?.projectName ?? "" }
+      : {}),
     ...(topbarProps?.sectionLabel ?? topbarProps?.title
       ? { activeSectionLabel: topbarProps?.sectionLabel ?? topbarProps?.title }
       : {})

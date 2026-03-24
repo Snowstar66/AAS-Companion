@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createCleanDraftOutcomeFromFramingService } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { type CreateOutcomeActionState } from "@/lib/framing/create-outcome";
 
 export async function createDraftOutcomeAction(
@@ -12,7 +12,7 @@ export async function createDraftOutcomeAction(
 ): Promise<CreateOutcomeActionState> {
   void previousState;
   void formData;
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const result = await createCleanDraftOutcomeFromFramingService({
     organizationId: session.organization.organizationId,
     actorId: session.userId

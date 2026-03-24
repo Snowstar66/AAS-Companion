@@ -9,7 +9,7 @@ import {
   type ArtifactParseResult
 } from "@aas-companion/domain";
 import { listArtifactIntakeSessionsService } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireOrganizationContext } from "@/lib/auth/guards";
 
 function parseStoredParseResult(value: unknown): ArtifactParseResult | null {
   const parsed = artifactParseResultSchema.safeParse(value);
@@ -42,15 +42,15 @@ function parseStoredReviewStatus(value: unknown) {
 }
 
 export async function loadArtifactIntakeWorkspace() {
-  const session = await requireProtectedSession();
+  const organization = await requireOrganizationContext();
 
   try {
-    const result = await listArtifactIntakeSessionsService(session.organization.organizationId);
+    const result = await listArtifactIntakeSessionsService(organization.organizationId);
 
     if (!result.ok) {
       return {
         state: "unavailable" as const,
-        organizationName: session.organization.organizationName,
+        organizationName: organization.organizationName,
         summary: {
           sessions: 0,
           files: 0,
@@ -136,7 +136,7 @@ export async function loadArtifactIntakeWorkspace() {
 
     return {
       state: "ready" as const,
-      organizationName: session.organization.organizationName,
+      organizationName: organization.organizationName,
       summary: {
         sessions: sessions.length,
         files: sessions.reduce((count, artifactSession) => count + artifactSession.files.length, 0),
@@ -154,7 +154,7 @@ export async function loadArtifactIntakeWorkspace() {
   } catch (error) {
     return {
       state: "unavailable" as const,
-      organizationName: session.organization.organizationName,
+      organizationName: organization.organizationName,
       summary: {
         sessions: 0,
         files: 0,

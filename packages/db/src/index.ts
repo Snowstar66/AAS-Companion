@@ -18,8 +18,15 @@ export {
   restoreGovernedObject
 } from "./repositories/governed-lifecycle-repository";
 export {
+  createOrganizationContextForUser,
+  deleteOrganizationContextForUser,
+  ensureAppUser,
+  getAppUserById,
   getOrganizationContextForUser,
+  listAppUsers,
   listOrganizationContextsForUser,
+  upsertAppUserByEmail,
+  type AppUserIdentity,
   type OrganizationMembershipContext
 } from "./repositories/organization-repository";
 export {

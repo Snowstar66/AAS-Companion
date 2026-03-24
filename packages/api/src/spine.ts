@@ -1,8 +1,7 @@
-import { DEMO_ORGANIZATION } from "@aas-companion/domain";
 import { getWorkspaceSnapshot } from "@aas-companion/db";
 import { failure, success } from "./shared";
 
-export async function getValueSpineService(organizationId: string = DEMO_ORGANIZATION.organizationId) {
+export async function getValueSpineService(organizationId: string) {
   try {
     const snapshot = await getWorkspaceSnapshot(organizationId);
 

@@ -1,4 +1,4 @@
-import { DEMO_ORGANIZATION, getOutcomeBaselineReadiness } from "@aas-companion/domain";
+import { getOutcomeBaselineReadiness } from "@aas-companion/domain";
 import { createOutcome, listOutcomeCockpitEntries, listOutcomes } from "@aas-companion/db";
 import { success, type ApiResult } from "./shared";
 
@@ -112,7 +112,8 @@ export async function createCleanDraftOutcomeFromFramingService(input: {
 }
 
 export async function getFramingCockpitData(
-  organizationId: string = DEMO_ORGANIZATION.organizationId
+  organizationId: string,
+  organizationName: string
 ): Promise<FramingCockpitData> {
   try {
     const entries = await listOutcomeCockpitEntries(organizationId);
@@ -172,8 +173,8 @@ export async function getFramingCockpitData(
     if (items.length === 0) {
       return {
         state: "empty",
-        organizationName: DEMO_ORGANIZATION.organizationName,
-        message: "Start a clean native case from Framing, or open demo content only when you want an example.",
+        organizationName,
+        message: "Start a clean native case from Framing to begin work in this project.",
         items,
         summary: createSummary(items)
       };
@@ -181,15 +182,15 @@ export async function getFramingCockpitData(
 
     return {
       state: "live",
-      organizationName: DEMO_ORGANIZATION.organizationName,
-      message: "Native work is prioritized here, while demo outcomes remain available intentionally when you want reference material.",
+      organizationName,
+      message: "Framing stays isolated to the active project and only shows work that belongs here.",
       items,
       summary: createSummary(items)
     };
   } catch (error) {
     return {
       state: "unavailable",
-      organizationName: DEMO_ORGANIZATION.organizationName,
+      organizationName,
       message:
         error instanceof Error
           ? `Framing data is unavailable right now: ${error.message}`

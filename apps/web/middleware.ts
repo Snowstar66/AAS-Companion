@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { DEMO_SESSION_COOKIE_NAME } from "@aas-companion/domain";
+import { DEMO_SESSION_COOKIE_NAME, LOCAL_SESSION_COOKIE_NAME } from "@aas-companion/domain";
 
 function hasSupabaseCookies(request: NextRequest) {
   return request.cookies.getAll().some((cookie) => cookie.name.startsWith("sb-"));
@@ -28,8 +28,9 @@ export function middleware(request: NextRequest) {
   }
 
   const hasDemoAccess = request.cookies.get(DEMO_SESSION_COOKIE_NAME)?.value === "demo";
+  const hasLocalAccess = Boolean(request.cookies.get(LOCAL_SESSION_COOKIE_NAME)?.value);
 
-  if (hasDemoAccess || hasSupabaseCookies(request)) {
+  if (hasDemoAccess || hasLocalAccess || hasSupabaseCookies(request)) {
     const response = NextResponse.next({
       request: {
         headers: requestHeaders

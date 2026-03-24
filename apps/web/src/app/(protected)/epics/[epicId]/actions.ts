@@ -9,7 +9,7 @@ import {
   restoreGovernedObjectService,
   saveEpicWorkspaceService
 } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildEpicRedirect(epicId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -23,7 +23,7 @@ function requireExplicitConfirmation(formData: FormData) {
 }
 
 export async function saveEpicWorkspaceAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
   const result = await saveEpicWorkspaceService({
@@ -61,7 +61,7 @@ export async function saveEpicWorkspaceAction(formData: FormData) {
 }
 
 export async function createStoryFromEpicAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
   const result = await createNativeStoryFromEpicService({
@@ -91,7 +91,7 @@ export async function createStoryFromEpicAction(formData: FormData) {
 }
 
 export async function hardDeleteEpicAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
 
@@ -129,7 +129,7 @@ export async function hardDeleteEpicAction(formData: FormData) {
 }
 
 export async function archiveEpicAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
   const reason = String(formData.get("archiveReason") ?? "");
@@ -177,7 +177,7 @@ export async function archiveEpicAction(formData: FormData) {
 }
 
 export async function restoreEpicAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
 

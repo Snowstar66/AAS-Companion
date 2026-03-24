@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 export function normalizeRedirectPath(candidate: string | null | undefined) {
   if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) {
-    return "/workspace";
+    return "/";
   }
 
   return candidate;

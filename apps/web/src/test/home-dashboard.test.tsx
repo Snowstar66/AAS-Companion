@@ -5,10 +5,26 @@ import HomePage from "@/app/page";
 vi.mock("@/lib/home/dashboard", () => ({
   loadHomeDashboard: vi.fn(async () => ({
     session: {
+      mode: "demo",
+      userId: "user-demo",
+      email: "value.owner@aas-companion.local",
+      displayName: "Demo Value Owner",
       organization: {
-        organizationId: "org_demo_control_plane"
+        organizationId: "org_demo_control_plane",
+        organizationName: "AAS Demo Organization",
+        organizationSlug: "aas-demo-org",
+        role: "value_owner"
       }
     },
+    projects: [],
+    activeProject: {
+      organizationId: "org_demo_control_plane",
+      organizationName: "AAS Demo Organization",
+      organizationSlug: "aas-demo-org",
+      role: "value_owner"
+    },
+    hasAuthenticatedUser: true,
+    isDemoSession: true,
     dashboard: {
       state: "live",
       organizationName: "AAS Demo Organization",
@@ -62,12 +78,12 @@ vi.mock("@/lib/home/dashboard", () => ({
 
 describe("Home dashboard", () => {
   it("renders Home as a project selector and return point", async () => {
-    render(await HomePage());
+    render(await HomePage({}));
 
-    expect(screen.getByRole("heading", { name: "Choose or resume work", level: 1 })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Resume current project" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Start a new project" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Open Demo explicitly" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Choose how to enter work", level: 1 })).toBeDefined();
+    expect(screen.getAllByRole("heading", { name: "Open project" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Create project" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Open demo project" })).toBeDefined();
     expect(screen.getByText("Project status at a glance")).toBeDefined();
   });
 });

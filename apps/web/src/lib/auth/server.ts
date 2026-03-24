@@ -1,4 +1,8 @@
-export { getAppSession, requireAppSession as requireProtectedAppSession } from "./session";
+export {
+  getAppSession,
+  getSignedInAccountIdentity,
+  requireAppSession as requireProtectedAppSession
+} from "./session";
 export {
   createRouteHandlerSupabaseClient,
   createServerSupabaseClient

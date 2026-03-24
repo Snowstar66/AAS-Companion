@@ -15,7 +15,7 @@ export function HomeActivityCard({ items }: HomeActivityCardProps) {
       <CardContent className="space-y-3">
         {items.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-5 text-sm text-muted-foreground">
-            No activity has been recorded for this organization yet.
+            No activity has been recorded for this project yet.
           </div>
         ) : null}
         {items.map((item) => (

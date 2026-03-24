@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, KeyRound, LockKeyhole, Sparkles } from "lucide-react";
-import { isDemoAuthEnabled, isSupabaseConfigured } from "@aas-companion/config";
+import { ArrowRight, KeyRound, LockKeyhole, Sparkles, UserCircle2 } from "lucide-react";
+import { isDemoAuthEnabled, isLocalAuthEnabled, isSupabaseConfigured } from "@aas-companion/config";
+import { listAppUsers } from "@aas-companion/db";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
-import { getAppSession } from "@/lib/auth/server";
+import { getAppSession, getSignedInAccountIdentity } from "@/lib/auth/server";
 
 type LoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -16,9 +17,10 @@ function getParamValue(value: string | string[] | undefined) {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getAppSession();
+  const account = await getSignedInAccountIdentity();
 
-  if (session) {
-    redirect("/workspace");
+  if (session && (session.mode !== "demo" || account)) {
+    redirect("/");
   }
 
   const params = searchParams ? await searchParams : {};
@@ -26,9 +28,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const email = getParamValue(params.email);
   const sent = getParamValue(params.sent) === "1";
   const signedOut = getParamValue(params.signedOut) === "1";
-  const redirectTo = getParamValue(params.redirectTo) ?? "/workspace";
+  const redirectTo = getParamValue(params.redirectTo) ?? "/";
   const demoEnabled = isDemoAuthEnabled(process.env);
+  const localAuthEnabled = isLocalAuthEnabled(process.env);
   const supabaseEnabled = isSupabaseConfigured(process.env);
+  const knownUsers = localAuthEnabled
+    ? (await listAppUsers()).filter((user) => !user.userId.startsWith("user_demo_") && !user.email.endsWith("@aas-companion.local"))
+    : [];
 
   return (
     <AppShell>
@@ -53,6 +59,74 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                 Magic link requested for <strong>{email}</strong>. Check your inbox to continue.
               </div>
+            ) : null}
+
+            {localAuthEnabled ? (
+              <Card className="border-border/70 bg-muted/25">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <UserCircle2 className="h-4 w-4 text-primary" />
+                    Local dev sign-in
+                  </CardTitle>
+                  <CardDescription>
+                    Fast local login for development. Use an existing app user or create one with just an email.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <form action="/auth/local" className="space-y-4" method="post">
+                    <input name="redirectTo" type="hidden" value={redirectTo} />
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-foreground">Email</span>
+                      <input
+                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                        defaultValue={email}
+                        name="email"
+                        placeholder="you@company.com"
+                        type="email"
+                      />
+                    </label>
+                    <label className="block space-y-2">
+                      <span className="text-sm font-medium text-foreground">Name (optional)</span>
+                      <input
+                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                        name="fullName"
+                        placeholder="Pat Hellgren"
+                        type="text"
+                      />
+                    </label>
+                    <Button className="gap-2" type="submit">
+                      Continue with local user
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </form>
+
+                  {knownUsers.length > 0 ? (
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">Known local users</p>
+                      <div className="grid gap-3">
+                        {knownUsers.map((user) => (
+                          <form action="/auth/local" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3" key={user.userId} method="post">
+                            <input name="redirectTo" type="hidden" value={redirectTo} />
+                            <input name="email" type="hidden" value={user.email} />
+                            <input name="fullName" type="hidden" value={user.fullName ?? ""} />
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{user.fullName ?? user.email}</p>
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                            </div>
+                            <Button type="submit" variant="secondary">
+                              Sign in as this user
+                            </Button>
+                          </form>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No local users exist yet. The first email you enter above will create one automatically.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             ) : null}
 
             <Card className="border-border/70 bg-muted/25">
@@ -85,7 +159,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   </Button>
                   {!supabaseEnabled ? (
                     <p className="text-sm text-muted-foreground">
-                      Supabase environment variables are not configured yet, so only demo access is currently available.
+                      Supabase environment variables are not configured yet, so use local dev sign-in or Demo for now.
                     </p>
                   ) : null}
                 </form>

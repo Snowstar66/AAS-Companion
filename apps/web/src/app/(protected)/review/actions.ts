@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { promoteArtifactCandidateService, reviewArtifactCandidateService } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildRedirect(params: Record<string, string | undefined>) {
   const search = new URLSearchParams();
@@ -35,7 +35,7 @@ function readCsv(formData: FormData, name: string) {
 }
 
 export async function submitArtifactCandidateReviewAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const candidateId = String(formData.get("candidateId") ?? "");
   const candidateType = String(formData.get("candidateType") ?? "story");
   const intent = String(formData.get("intent") ?? "edit");

@@ -1,9 +1,12 @@
 import { getFramingCockpitData } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 export async function loadFramingCockpit() {
-  const session = await requireProtectedSession();
-  const cockpit = await getFramingCockpitData(session.organization.organizationId);
+  const session = await requireActiveProjectSession();
+  const cockpit = await getFramingCockpitData(
+    session.organization.organizationId,
+    session.organization.organizationName
+  );
 
   return {
     session,

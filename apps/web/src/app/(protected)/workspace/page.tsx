@@ -4,7 +4,7 @@ import { getStoryHandoffReadiness } from "@aas-companion/domain";
 import { getValueSpineService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 type WorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -31,7 +31,7 @@ function getOriginLabel(originType: string) {
 }
 
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const query = searchParams ? await searchParams : {};
   const viewFilter = getParamValue(query.view) ?? "active";
   const framingId = getParamValue(query.framing);

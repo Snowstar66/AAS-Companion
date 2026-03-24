@@ -9,7 +9,7 @@ import {
   saveStoryWorkspaceService,
   submitStoryReadinessService
 } from "@aas-companion/api";
-import { requireProtectedSession } from "@/lib/auth/guards";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildStoryRedirect(storyId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -37,7 +37,7 @@ function readCommaValues(formData: FormData, fieldName: string) {
 }
 
 export async function saveStoryWorkspaceAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const storyId = String(formData.get("storyId") ?? "");
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
@@ -83,7 +83,7 @@ export async function saveStoryWorkspaceAction(formData: FormData) {
 }
 
 export async function submitStoryReadinessAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const storyId = String(formData.get("storyId") ?? "");
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
@@ -133,7 +133,7 @@ export async function submitStoryReadinessAction(formData: FormData) {
 }
 
 export async function hardDeleteStoryAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const storyId = String(formData.get("storyId") ?? "");
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
@@ -178,7 +178,7 @@ export async function hardDeleteStoryAction(formData: FormData) {
 }
 
 export async function archiveStoryAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const storyId = String(formData.get("storyId") ?? "");
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
@@ -230,7 +230,7 @@ export async function archiveStoryAction(formData: FormData) {
 }
 
 export async function restoreStoryAction(formData: FormData) {
-  const session = await requireProtectedSession();
+  const session = await requireActiveProjectSession();
   const storyId = String(formData.get("storyId") ?? "");
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");

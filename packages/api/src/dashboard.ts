@@ -1,4 +1,4 @@
-import { DEMO_ORGANIZATION, getStoryHandoffReadiness } from "@aas-companion/domain";
+import { getStoryHandoffReadiness } from "@aas-companion/domain";
 import { getWorkspaceSnapshot } from "@aas-companion/db";
 
 export type HomeSummaryMetric = {
@@ -116,7 +116,7 @@ function createFallbackDashboard(
 }
 
 export async function getHomeDashboardData(
-  organizationId: string = DEMO_ORGANIZATION.organizationId
+  organizationId: string
 ): Promise<HomeDashboardData> {
   try {
     const snapshot = await getWorkspaceSnapshot(organizationId);
@@ -124,7 +124,7 @@ export async function getHomeDashboardData(
     if (!snapshot) {
       return createFallbackDashboard(
         "empty",
-        DEMO_ORGANIZATION.organizationName,
+        "Unknown project",
         "No project data was found for this organization yet."
       );
     }
@@ -196,7 +196,7 @@ export async function getHomeDashboardData(
         label: "Outcomes",
         value: String(counts.outcomes),
         tone: counts.outcomes > 0 ? "default" : "warning",
-        description: "Tracked outcomes in the current organization scope."
+        description: "Tracked outcomes in the current project scope."
       },
       {
         label: "Stories Ready",
@@ -245,7 +245,7 @@ export async function getHomeDashboardData(
   } catch (error) {
     return createFallbackDashboard(
       "unavailable",
-      DEMO_ORGANIZATION.organizationName,
+      "Unknown project",
       error instanceof Error
         ? `Dashboard data is unavailable right now: ${error.message}`
         : "Dashboard data is unavailable right now."
