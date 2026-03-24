@@ -47,7 +47,7 @@ vi.mock("@/lib/home/dashboard", () => ({
       recentActivity: [
         {
           id: "activity-1",
-          title: "Demo workspace seeded",
+          title: "Demo project prepared",
           detail: "organization org_demo_control_plane",
           timestamp: "Mar 23, 10:00"
         }
@@ -61,13 +61,13 @@ vi.mock("@/lib/home/dashboard", () => ({
 }));
 
 describe("Home dashboard", () => {
-  it("renders live dashboard widgets", async () => {
+  it("renders Home as a project selector and return point", async () => {
     render(await HomePage());
 
-    expect(screen.getByRole("heading", { name: "Home Dashboard", level: 1 })).toBeDefined();
-    expect(screen.getAllByText("Top blockers").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Pending actions", level: 3 })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Recent activity", level: 3 })).toBeDefined();
-    expect(screen.getByText("Baseline definition is missing.")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Choose or resume work", level: 1 })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Resume current project" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Start a new project" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Open Demo explicitly" })).toBeDefined();
+    expect(screen.getByText("Project status at a glance")).toBeDefined();
   });
 });

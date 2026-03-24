@@ -9,7 +9,7 @@ const checkpoints = [
   {
     title: "M1-STORY-002",
     status: "Approved",
-    description: "Auth, organization context, and seeded demo access are available."
+    description: "Auth, organization context, and explicit Demo access are available."
   },
   {
     title: "M1-STORY-003",
@@ -29,7 +29,7 @@ const checkpoints = [
   {
     title: "M1-STORY-006 to 010",
     status: "In progress",
-    description: "Outcome Workspace, Story Workspace, handoff preview, telemetry, and end-to-end verification."
+    description: "Outcome and Story pages, handoff preview, telemetry, and end-to-end verification."
   }
 ];
 
@@ -41,7 +41,7 @@ export function RightRail() {
           <CardTitle>Delivery checkpoints</CardTitle>
           <CardDescription>Stories 001-005 are approved. The remaining M1 implementation slice is 006-010.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
           {checkpoints.map((item) => (
             <div className="rounded-2xl border border-border/70 bg-muted/30 p-4" key={item.title}>
               <div className="flex items-center justify-between gap-3">

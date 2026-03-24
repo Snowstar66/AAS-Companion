@@ -117,6 +117,8 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
   );
   const demoEntryHref = items.find((item) => item.originType === "seeded")?.detailHref ?? null;
   const nativeItemCount = items.filter((item) => item.originType === "native").length;
+  const blockedCount = items.filter((item) => item.isBlocked).length;
+  const readyCount = items.filter((item) => item.readinessTone === "ready").length;
 
   const filteredItems = items.filter(
     (item) => matchesOriginFilter(item, activeFilter) && matchesSearch(item, deferredSearch.trim())
@@ -124,11 +126,12 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
 
   const emptyFilterState = items.length > 0 && filteredItems.length === 0;
   const showNativeEmptyState = activeFilter === "native" && nativeItemCount === 0 && emptyFilterState;
+  const activeFilterLabel = filters.find((filter) => filter.key === activeFilter)?.label ?? "All";
 
   return (
     <section className="space-y-6">
-      <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,420px)]">
+      <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.18),_transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(242,247,252,0.92))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.95fr)]">
           <div className="max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               <Layers3 className="h-3.5 w-3.5 text-primary" />
@@ -139,15 +142,35 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
               <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">{message}</p>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <Card className="border-sky-200 bg-sky-50/70 shadow-sm">
+
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+              <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{items.length}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Outcomes available in this project.</p>
+              </div>
+              <div className="rounded-3xl border border-amber-200 bg-amber-50/85 p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Blocked</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-amber-950">{blockedCount}</p>
+                <p className="mt-2 text-sm text-amber-900/80">Need baseline or readiness attention.</p>
+              </div>
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50/85 p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Ready</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-950">{readyCount}</p>
+                <p className="mt-2 text-sm text-emerald-900/80">Can move deeper into framing work.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Card className="border-sky-200 bg-sky-50/70 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sky-950">
                   <Sparkles className="h-4 w-4" />
                   Start a clean case
                 </CardTitle>
                 <CardDescription className="text-sky-900/80">
-                  Create a fresh native draft Outcome and continue directly in Outcome Workspace.
+                  Create a fresh native draft Outcome and continue directly inside the project.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -156,30 +179,31 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                 </form>
                 <p className="text-sm text-sky-900/80">This is the default path for real customer work.</p>
               </CardContent>
-            </Card>
+              </Card>
 
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Open demo case</CardTitle>
-                <CardDescription>Explore seeded example content intentionally without changing native case behavior.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {demoEntryHref ? (
-                  <Button asChild className="gap-2" variant="secondary">
-                    <Link href={demoEntryHref}>
+              <Card className="border-border/70 bg-background/92 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Open demo case</CardTitle>
+                  <CardDescription>Explore Demo reference content intentionally without changing native case behavior.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {demoEntryHref ? (
+                    <Button asChild className="gap-2" variant="secondary">
+                      <Link href={demoEntryHref}>
+                        Open demo case
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button className="gap-2" onClick={() => setActiveFilter("demo")} type="button" variant="secondary">
                       Open demo case
                       <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button className="gap-2" onClick={() => setActiveFilter("demo")} type="button" variant="secondary">
-                    Open demo case
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                )}
-                <p className="text-sm text-muted-foreground">Demo stays available, but it is secondary to clean case creation.</p>
-              </CardContent>
-            </Card>
+                    </Button>
+                  )}
+                  <p className="text-sm text-muted-foreground">Demo stays available, but it is secondary to clean case creation.</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
 
@@ -190,7 +214,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
         ) : null}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>Find the right outcome</CardTitle>
@@ -224,18 +248,32 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                 </button>
               ))}
             </div>
+            <div className="grid gap-3 rounded-3xl border border-border/70 bg-muted/15 p-4 sm:grid-cols-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current view</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{activeFilterLabel}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Visible now</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{filteredItems.length}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Native focus</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{nativeItemCount}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/70 shadow-sm">
+        <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.9))] shadow-sm">
           <CardHeader>
             <CardTitle>Working posture</CardTitle>
-            <CardDescription>Native is the default working view so real customer cases stay in focus.</CardDescription>
+            <CardDescription>Keep the cockpit focused on live framing choices rather than broad dashboard browsing.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>Use Start new case for clean customer work that begins with a draft native Outcome.</p>
-            <p>Switch to Demo only when you want seeded reference material.</p>
-            <p>Readiness and Tollgate behavior stay the same once a case is opened in Outcome Workspace.</p>
+            <p>Switch to Demo only when you want reference material.</p>
+            <p>Readiness and Tollgate behavior stay the same once a case is opened inside the project.</p>
           </CardContent>
         </Card>
       </div>
@@ -282,17 +320,17 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
       ) : null}
 
       {filteredItems.length > 0 ? (
-        <div className="grid gap-4">
+        <div className="grid gap-4 2xl:grid-cols-2">
           {filteredItems.map((item) => (
             <Card
-              className={`border shadow-sm ${
+              className={`h-full border shadow-sm ${
                 item.isBlocked
                   ? "border-amber-200 bg-[linear-gradient(135deg,rgba(255,251,235,0.9),rgba(255,255,255,0.98))]"
-                  : "border-border/70"
+                  : "border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,252,0.92))]"
               }`}
               key={item.id}
             >
-              <CardContent className="p-6">
+              <CardContent className="flex h-full flex-col p-6">
                 <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                   <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-3">
@@ -326,7 +364,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                       <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{item.readinessDetail}</p>
                     </div>
 
-                    <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 2xl:grid-cols-4">
                       <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em]">Owner</p>
                         <p className="mt-2 text-foreground">{item.ownerLabel}</p>
@@ -366,7 +404,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                   <div className="flex shrink-0 flex-col gap-3 xl:w-[220px]">
                     <Button asChild className="gap-2">
                       <Link href={item.detailHref}>
-                        Open Outcome Workspace
+                        Open Outcome
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -381,7 +419,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                           <CircleCheckBig className="h-4 w-4" />
                           Ready for deeper framing
                         </div>
-                        <p className="mt-2 leading-6">This outcome can move into the workspace without baseline blockers.</p>
+                        <p className="mt-2 leading-6">This outcome can move further into the project without baseline blockers.</p>
                       </div>
                     ) : (
                       <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">

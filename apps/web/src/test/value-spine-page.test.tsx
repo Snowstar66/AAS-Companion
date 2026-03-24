@@ -82,14 +82,15 @@ vi.mock("@aas-companion/api", async () => {
 });
 
 describe("Value Spine page", () => {
-  it("renders imported objects and lineage links when filtered to imported origin", async () => {
-    render(await WorkspacePage({ searchParams: Promise.resolve({ origin: "imported" }) }));
+  it("renders the current project through one selected Framing branch", async () => {
+    render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
-    expect(screen.getByRole("heading", { name: "Value Spine and readiness view", level: 1 })).toBeDefined();
-    expect(screen.getByText("Imported Outcome")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Project Value Spine", level: 1 })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Project context" })).toBeDefined();
+    expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
-    expect(screen.getAllByText("imported design ready").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "Open lineage" })).toBeDefined();
+    expect(screen.getAllByRole("link", { name: "Open Outcome" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Open review lineage/i }).length).toBeGreaterThan(0);
     expect(screen.getByText("Missing Test Definition")).toBeDefined();
   });
 });

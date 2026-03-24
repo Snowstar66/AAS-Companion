@@ -89,7 +89,7 @@ describe("Framing cockpit", () => {
     expect(screen.getByRole("link", { name: "Open demo case" })).toBeDefined();
     expect(screen.getByText("New customer case")).toBeDefined();
     expect(screen.queryByText("Close the governance readiness gap")).toBeNull();
-    expect(screen.getByText("Native")).toBeDefined();
+    expect(screen.getAllByText("Native").length).toBeGreaterThan(0);
   });
 
   it("supports switching to demo cases intentionally", async () => {
@@ -99,6 +99,6 @@ describe("Framing cockpit", () => {
 
     expect(screen.getByText("Close the governance readiness gap")).toBeDefined();
     expect(screen.queryByText("New customer case")).toBeNull();
-    expect(screen.getByText("Demo")).toBeDefined();
+    expect(screen.getAllByText("Demo").length).toBeGreaterThan(0);
   });
 });

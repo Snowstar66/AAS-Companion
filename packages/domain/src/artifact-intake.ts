@@ -556,6 +556,14 @@ function extractListItems(text: string) {
     .filter(Boolean);
 }
 
+function buildArtifactCandidateId(input: {
+  fileId: string;
+  sectionId: string;
+  candidateType: ArtifactAasCandidate["type"];
+}) {
+  return `mapped-${input.fileId}-${input.sectionId}-${input.candidateType}`;
+}
+
 export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandidate | ArtifactCandidateRecord): ArtifactCandidateDraftRecord {
   if (candidate.type === "outcome") {
     return {
@@ -967,6 +975,11 @@ export function mapParsedArtifactsToAasCandidates(input: {
 
       const candidateType =
         section.kind === "outcome_candidate" ? "outcome" : section.kind === "epic_candidate" ? "epic" : "story";
+      const candidateId = buildArtifactCandidateId({
+        fileId: file.id,
+        sectionId: section.id,
+        candidateType
+      });
 
       let relationshipState: ArtifactAasCandidate["relationshipState"] = "mapped";
       let relationshipNote: string | undefined;
@@ -974,7 +987,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
       let inferredEpicCandidateId: string | undefined;
 
       if (candidateType === "outcome") {
-        lastOutcomeCandidateId = `mapped-${section.id}`;
+        lastOutcomeCandidateId = candidateId;
         lastEpicCandidateId = null;
         lastStoryCandidateIndex = null;
       }
@@ -991,7 +1004,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
               ? "Epic relationship was inferred from nearby Outcome context."
               : "Epic likely belongs to the nearest Outcome candidate, but the relationship remains uncertain.";
         }
-        lastEpicCandidateId = `mapped-${section.id}`;
+        lastEpicCandidateId = candidateId;
         lastStoryCandidateIndex = null;
       }
 
@@ -1017,7 +1030,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
         candidateType === "story" && /test|verification|qa/i.test(section.text) ? [summarizeText(section.text, 120)] : [];
 
       candidates.push({
-        id: `mapped-${section.id}`,
+        id: candidateId,
         type: candidateType,
         title: summarizeText(section.title, 80),
         summary: summarizeText(section.text),

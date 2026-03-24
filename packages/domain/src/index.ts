@@ -83,48 +83,38 @@ export const primaryNavigation: NavigationItem[] = [
   {
     label: "Home",
     href: "/",
-    description: "System overview and milestone status."
-  },
-  {
-    label: "Artifact Intake",
-    href: "/intake",
-    description: "Upload source artifacts before interpretation and mapping."
-  },
-  {
-    label: "Human Review",
-    href: "/review",
-    description: "Confirm imported candidates before promotion into governed work."
+    description: "Choose, resume, or create a project."
   },
   {
     label: "Framing",
     href: "/framing",
-    description: "Outcome framing and baseline readiness."
-  },
-  {
-    label: "Outcomes",
-    href: "/outcomes",
-    description: "Outcome workspace and tollgate progress."
-  },
-  {
-    label: "Stories",
-    href: "/stories",
-    description: "Story workspace and validation checkpoints."
+    description: "Define the business case and baseline for the active project."
   },
   {
     label: "Value Spine",
     href: "/workspace",
-    description: "Compare native and imported governed objects in one shared spine view."
+    description: "Inspect the active project's Framing, Epics, and Stories in one spine."
+  },
+  {
+    label: "Import",
+    href: "/intake",
+    description: "Import external source artifacts into the active project."
+  },
+  {
+    label: "Human Review",
+    href: "/review",
+    description: "Clear approval-readiness actions before promotion into the active project."
   },
   {
     label: "Governance",
     href: "/governance",
-    description: "AI level, risk posture, and review traceability."
+    description: "See AI level, risk posture, and traceability for the active project."
   }
 ];
 
 export const dashboardHighlights: DashboardHighlight[] = [
   {
-    title: "Workspace packages",
+    title: "Project packages",
     value: "6",
     description: "Dedicated packages for UI, domain, DB, API, telemetry, and config."
   },
@@ -141,6 +131,6 @@ export const dashboardHighlights: DashboardHighlight[] = [
   {
     title: "Demo roles",
     value: "6",
-    description: "Value owner, AIDA, AQA, architect, delivery lead, and builder are seeded."
+    description: "Value owner, AIDA, AQA, architect, delivery lead, and builder are available in Demo."
   }
 ];

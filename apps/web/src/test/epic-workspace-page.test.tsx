@@ -125,8 +125,8 @@ vi.mock("@/app/(protected)/epics/[epicId]/actions", () => ({
   saveEpicWorkspaceAction: vi.fn()
 }));
 
-describe("Epic Workspace page", () => {
-  it("shows a clean epic workspace with native story creation", async () => {
+describe("Epic page", () => {
+  it("shows a clean epic page with native story creation", async () => {
     render(
       await EpicWorkspacePage({
         params: Promise.resolve({ epicId: "epic-native-1" }),
@@ -144,6 +144,6 @@ describe("Epic Workspace page", () => {
     expect(screen.getByRole("button", { name: "Create Story" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Back to current Framing" })).toBeDefined();
     expect(screen.getByText("epic created")).toBeDefined();
-    expect(screen.getByText("Removal and recovery")).toBeDefined();
+    expect(screen.getByText("Remove or archive in this project")).toBeDefined();
   });
 });

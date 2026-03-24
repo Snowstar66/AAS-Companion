@@ -43,9 +43,9 @@ export function GovernedLifecycleCard({
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
-        <CardTitle>Removal and recovery</CardTitle>
+        <CardTitle>Remove or archive in this project</CardTitle>
         <CardDescription>
-          Shared policy preview for hard delete, archive, and restore in the governed Value Spine.
+          Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

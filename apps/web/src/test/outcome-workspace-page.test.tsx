@@ -144,7 +144,7 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   submitOutcomeTollgateAction: vi.fn()
 }));
 
-describe("Outcome Workspace page", () => {
+describe("Outcome page", () => {
   it("shows native provenance and blocked TG1 posture for a clean draft case", async () => {
     render(
       await OutcomeWorkspacePage({
@@ -158,13 +158,13 @@ describe("Outcome Workspace page", () => {
     expect(screen.getByText("Active Framing context")).toBeDefined();
     expect(screen.getByText("Current native working scope")).toBeDefined();
     expect(screen.getByText("Origin: Native")).toBeDefined();
-    expect(screen.getByText("Workspace: Clean")).toBeDefined();
+    expect(screen.getByText("Project mode: Clean")).toBeDefined();
     expect(screen.getByText("Status: draft")).toBeDefined();
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
     expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
     expect(screen.getByText("Baseline definition is missing.")).toBeDefined();
-    expect(screen.getByText("Removal and recovery")).toBeDefined();
+    expect(screen.getByText("Remove or archive in this project")).toBeDefined();
   });
 });

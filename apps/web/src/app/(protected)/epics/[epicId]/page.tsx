@@ -67,8 +67,9 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
     <AppShell
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Epic Workspace",
-        badge: "Patch M1-024 to M1-027"
+        projectName: organization.organizationName,
+        sectionLabel: "Epic",
+        badge: epic.key
       }}
     >
       <section className="space-y-6">
@@ -112,7 +113,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
               <p className="mt-2 text-lg font-semibold">{originLabel}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Workspace</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Project mode</p>
               <p className="mt-2 text-lg font-semibold">{workspaceLabel}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
@@ -143,10 +144,10 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
             title: epic.outcome.title,
             href: `/outcomes/${epic.outcomeId}`
           }}
-          summary="This Epic remains inside one active Framing. Only Stories linked to this Epic and its parent Outcome are shown in this workspace."
+          summary="This Epic remains inside one active Framing. Only Stories linked to this Epic and its parent Outcome are shown in this project."
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
             <FramingValueSpineTree
               emptyEpicMessage="This view is already scoped to one Epic, so no sibling Framing branches are shown here."
@@ -299,11 +300,11 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
           <div className="space-y-6">
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>Clean workspace scope</CardTitle>
+                <CardTitle>Clean project scope</CardTitle>
                 <CardDescription>Only the current Outcome, this Epic, and its Stories are surfaced here.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>No demo-seeded Epics or Stories are shown in this context.</p>
+                <p>No Demo Epics or Stories are shown in this context unless you opened Demo explicitly.</p>
                 <p>{isArchived ? "Restore the Epic to continue native work from here." : "Use Create Story to continue design work natively from this Epic."}</p>
               </CardContent>
             </Card>

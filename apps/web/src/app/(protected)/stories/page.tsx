@@ -22,7 +22,7 @@ export default async function StoriesPage() {
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <LibraryBig className="h-3.5 w-3.5 text-primary" />
-            Story workspace index
+            Story page index
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Story readiness overview</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
@@ -34,7 +34,7 @@ export default async function StoriesPage() {
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>No stories available</CardTitle>
-              <CardDescription>Seed or create stories before using the Story Workspace.</CardDescription>
+              <CardDescription>Seed or create stories before using the Story pages.</CardDescription>
             </CardHeader>
           </Card>
         ) : (

@@ -73,7 +73,7 @@ const outcomeStatusLabels: Record<string, string> = {
 };
 
 const activityLabels: Record<string, string> = {
-  demo_seeded: "Demo workspace seeded",
+  demo_seeded: "Demo project prepared",
   outcome_created: "Outcome created",
   outcome_updated: "Outcome updated",
   epic_created: "Epic created",
@@ -125,7 +125,7 @@ export async function getHomeDashboardData(
       return createFallbackDashboard(
         "empty",
         DEMO_ORGANIZATION.organizationName,
-        "No seeded dashboard data was found for this organization yet."
+        "No project data was found for this organization yet."
       );
     }
 

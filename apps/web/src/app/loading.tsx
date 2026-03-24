@@ -5,8 +5,8 @@ export default function Loading() {
     <AppShell
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Home Dashboard",
-        badge: "Story M1-004"
+        title: "Home",
+        badge: "Project selector"
       }}
     >
       <section className="space-y-6">

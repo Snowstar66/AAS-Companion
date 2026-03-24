@@ -44,7 +44,7 @@ function getOriginLabel(originType: string) {
 
 function getOriginSummary(originType: string) {
   if (originType === "seeded") {
-    return "This case comes from seeded demo content for guided exploration.";
+    return "This case comes from the Demo project for guided exploration.";
   }
 
   if (originType === "native") {
@@ -132,8 +132,9 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
       }
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Outcome Workspace",
-        badge: "Patch M1-024 to M1-027"
+        projectName: organization.organizationName,
+        sectionLabel: "Outcome",
+        badge: outcome.key
       }}
     >
       <PageViewAnalytics
@@ -189,7 +190,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>Case provenance</CardTitle>
-            <CardDescription>Use this lightweight summary to distinguish demo examples from native customer work.</CardDescription>
+            <CardDescription>Use this lightweight summary to distinguish Demo reference work from native customer work.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-2">
@@ -197,7 +198,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 Origin: {originLabel}
               </span>
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                Workspace: {workspaceLabel}
+                Project mode: {workspaceLabel}
               </span>
               <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Status: {statusLabel}
@@ -221,7 +222,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
           summary="Opening this Outcome establishes the active Framing context. Only Epics and Stories attached to this case are shown by default."
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
@@ -383,7 +384,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                         <p className="mt-2">
                           {isArchived
                             ? "Restore the Outcome if you want to continue breaking it down."
-                            : "Create the first native Epic here. No demo-seeded Epics will be attached as fallback."}
+                            : "Create the first native Epic here. No Demo Epics will be attached as fallback."}
                         </p>
                       </div>
                     ) : (

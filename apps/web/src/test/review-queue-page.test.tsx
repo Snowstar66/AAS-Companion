@@ -105,13 +105,15 @@ vi.mock("@/app/(protected)/review/actions", () => ({
 }));
 
 describe("Review queue page", () => {
-  it("renders imported candidate review details and actions", async () => {
+  it("renders Human Review as an action list for the selected imported candidate", async () => {
     render(await ReviewPage({ searchParams: Promise.resolve({ candidateId: "candidate-story-1" }) }));
 
-    expect(screen.getByRole("heading", { name: "Human Review queue", level: 1 })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Human Review action list", level: 1 })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Current review context" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Approval-readiness action list" })).toBeDefined();
     expect(screen.getAllByText("Imported reviewable story").length).toBeGreaterThan(0);
     expect(screen.getByText(/Risk acceptance status must be confirmed by a human reviewer\./)).toBeDefined();
-    expect(screen.getByRole("button", { name: "Promote into governed workspace" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Promote into project records" })).toBeDefined();
     expect(screen.getByDisplayValue("IMP-STORY-1")).toBeDefined();
   });
 });

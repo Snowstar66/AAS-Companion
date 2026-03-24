@@ -111,6 +111,43 @@ describe("artifact intake helpers", () => {
     expect(mapping.unmappedSections.some((section) => section.kind === "architecture_notes")).toBe(true);
   });
 
+  it("creates unique candidate ids across different files with the same section structure", () => {
+    const outcomeA = parseMarkdownArtifact(
+      "file-a",
+      "outcome-a.md",
+      ["# Outcome", "Outcome statement: improve first workflow."].join("\n")
+    );
+    const outcomeB = parseMarkdownArtifact(
+      "file-b",
+      "outcome-b.md",
+      ["# Outcome", "Outcome statement: improve second workflow."].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-a",
+          fileName: "outcome-a.md",
+          sourceType: outcomeA.classification.sourceType,
+          parsedArtifacts: outcomeA
+        },
+        {
+          id: "file-b",
+          fileName: "outcome-b.md",
+          sourceType: outcomeB.classification.sourceType,
+          parsedArtifacts: outcomeB
+        }
+      ]
+    });
+
+    const ids = mapping.candidates.map((candidate) => candidate.id);
+
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+    expect(ids[0]).toContain("file-a");
+    expect(ids[1]).toContain("file-b");
+  });
+
   it("sanitizes persisted intake text into Windows-safe characters", () => {
     expect(sanitizeArtifactPersistenceText("Outcome → Story… café")).toBe("Outcome -> Story... café");
 

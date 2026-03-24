@@ -9,7 +9,7 @@ type FramingRightRailProps = {
 const notes = [
   {
     title: "Find the right outcome",
-    detail: "Search and status filters keep seeded and newly created outcomes manageable.",
+    detail: "Search and status filters keep Demo and newly created outcomes manageable.",
     icon: Compass
   },
   {
@@ -19,7 +19,7 @@ const notes = [
   },
   {
     title: "Start new framing",
-    detail: "Create a draft outcome from the cockpit without widening into later workspace stories.",
+    detail: "Create a draft outcome from the cockpit without widening into later project detail work.",
     icon: Plus
   }
 ];
@@ -32,23 +32,21 @@ export function FramingRightRail({ summary }: FramingRightRailProps) {
           <CardTitle>Framing summary</CardTitle>
           <CardDescription>Current outcome posture for the active organization context.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
+        <CardContent className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
+          <div className="rounded-3xl border border-border/70 bg-muted/30 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Total outcomes</p>
             <p className="mt-3 text-3xl font-semibold">{summary.total}</p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-amber-900">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Blocked</p>
-              <p className="mt-3 text-2xl font-semibold">{summary.blocked}</p>
-            </div>
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-900">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">Ready for TG1</p>
-              <p className="mt-3 flex items-center gap-2 text-2xl font-semibold">
-                <CircleCheckBig className="h-5 w-5" />
-                {summary.ready}
-              </p>
-            </div>
+          <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-4 text-amber-900">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Blocked</p>
+            <p className="mt-3 text-2xl font-semibold">{summary.blocked}</p>
+          </div>
+          <div className="rounded-3xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-900">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">Ready for TG1</p>
+            <p className="mt-3 flex items-center gap-2 text-2xl font-semibold">
+              <CircleCheckBig className="h-5 w-5" />
+              {summary.ready}
+            </p>
           </div>
         </CardContent>
       </Card>

@@ -9,7 +9,7 @@ export async function getValueSpineService(organizationId: string = DEMO_ORGANIZ
     if (!snapshot) {
       return failure({
         code: "workspace_not_found",
-        message: "No governed workspace snapshot was found for this organization."
+        message: "No governed project snapshot was found for this organization."
       });
     }
 
@@ -17,7 +17,7 @@ export async function getValueSpineService(organizationId: string = DEMO_ORGANIZ
   } catch (error) {
     return failure({
       code: "workspace_unavailable",
-      message: error instanceof Error ? error.message : "Workspace snapshot is unavailable."
+      message: error instanceof Error ? error.message : "Project snapshot is unavailable."
     });
   }
 }

@@ -16,10 +16,10 @@ export function ArtifactIntakeRightRail({ summary }: ArtifactIntakeRightRailProp
     <aside className="space-y-4">
       <Card className="border-border/70 bg-background/90 shadow-sm">
         <CardHeader>
-          <CardTitle>Intake summary</CardTitle>
+          <CardTitle>Import summary</CardTitle>
           <CardDescription>M2-STORY-002 and M2-STORY-003 turn raw markdown into reviewable candidate objects.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
           <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Sessions</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.sessions}</p>

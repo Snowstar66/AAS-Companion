@@ -14,9 +14,9 @@ export default async function FramingPage() {
     <AppShell
       rightRail={<FramingRightRail summary={cockpit.summary} />}
       topbarProps={{
-        eyebrow: "AAS Companion",
-        title: "Framing Cockpit",
-        badge: "Story M1-005"
+        projectName: cockpit.organizationName,
+        sectionLabel: "Framing",
+        badge: cockpit.state === "live" ? "Project section" : "Unavailable"
       }}
     >
       <PageViewAnalytics

@@ -32,7 +32,7 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
         artifactIntakeRejectedFileSchema.parse({
           fileName: file.fileName,
           mimeType: file.mimeType ?? null,
-          reason: "Only markdown files (.md, .mdx, .markdown) are supported in Artifact Intake."
+          reason: "Only markdown files (.md, .mdx, .markdown) are supported in Import."
         })
       );
       continue;

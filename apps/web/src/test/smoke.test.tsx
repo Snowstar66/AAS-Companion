@@ -32,7 +32,7 @@ describe("HomePage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Home Dashboard",
+        name: "Choose or resume work",
         level: 1
       })
     ).toBeDefined();

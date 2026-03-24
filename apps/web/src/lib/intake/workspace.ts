@@ -60,7 +60,7 @@ export async function loadArtifactIntakeWorkspace() {
           humanReviewRequired: 0
         },
         sessions: [],
-        message: result.errors[0]?.message ?? "Artifact Intake could not be loaded."
+        message: result.errors[0]?.message ?? "Import data could not be loaded."
       };
     }
 
@@ -148,8 +148,8 @@ export async function loadArtifactIntakeWorkspace() {
       sessions,
       message:
         sessions.length > 0
-          ? "Uploaded markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates."
-          : "No intake sessions exist yet. Upload markdown artifacts to start the governed import path."
+          ? "Imported markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates."
+          : "No import sessions exist yet. Upload markdown artifacts to start the governed import path."
     };
   } catch (error) {
     return {
@@ -164,7 +164,7 @@ export async function loadArtifactIntakeWorkspace() {
         humanReviewRequired: 0
       },
       sessions: [],
-      message: error instanceof Error ? error.message : "Artifact Intake could not be loaded."
+      message: error instanceof Error ? error.message : "Import data could not be loaded."
     };
   }
 }

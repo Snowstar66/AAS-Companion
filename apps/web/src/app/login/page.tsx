@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <CardHeader>
             <CardTitle>Sign in to the control plane</CardTitle>
             <CardDescription>
-              M1-STORY-002 establishes auth wiring, explicit organization context, and a seeded demo workspace.
+              Sign in to your current project, or explicitly choose Demo when you want reference content.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -96,17 +96,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  Demo workspace access
+                  Demo project access
                 </CardTitle>
                 <CardDescription>
-                  The seeded demo workspace includes all six BMAD-aligned delivery roles and M1-ready seeded records.
+                  The Demo project includes all six BMAD-aligned delivery roles and reference records for guided exploration.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form action="/auth/demo" className="space-y-4" method="post">
                   <input name="redirectTo" type="hidden" value={redirectTo} />
                   <Button className="gap-2" disabled={!demoEnabled} type="submit">
-                    Enter demo workspace
+                    Enter demo project
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                   <p className="text-sm text-muted-foreground">
@@ -123,27 +123,27 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>What this story adds</CardTitle>
-              <CardDescription>Auth and tenancy foundations without jumping into later milestone UI.</CardDescription>
+              <CardDescription>Auth and tenancy foundations without leaking Demo into normal project work.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>Protected routes with server-side session checks and a protected layout group.</p>
-              <p>Explicit organization context for all seeded demo data.</p>
-              <p>Six seeded demo roles for governance-aware exploration before wider UI work begins.</p>
+              <p>Explicit organization context for the current project and for Demo access.</p>
+              <p>Six demo roles for governance-aware exploration before wider UI work begins.</p>
             </CardContent>
           </Card>
 
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Governance guardrails</CardTitle>
-              <CardDescription>These remain unchanged.</CardDescription>
-            </CardHeader>
+                <CardTitle>Governance guardrails</CardTitle>
+                <CardDescription>These remain unchanged.</CardDescription>
+              </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>No business approvals live only in the UI.</p>
               <p>Tenant context stays explicit and cookie-backed.</p>
               <p>Execution still stops after M1-STORY-003 for human review.</p>
               <Button asChild className="w-full gap-2" variant="secondary">
                 <Link href="/">
-                  Back to scaffold home
+                  Back to Home
                   <LockKeyhole className="h-4 w-4" />
                 </Link>
               </Button>

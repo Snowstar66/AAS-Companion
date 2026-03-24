@@ -98,8 +98,9 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
       }
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Story Workspace",
-        badge: "Patch M1-024 to M1-027"
+        projectName: organization.organizationName,
+        sectionLabel: "Story",
+        badge: story.key
       }}
     >
       <PageViewAnalytics
@@ -174,7 +175,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
           summary="This Story stays inside one Epic and one Framing. Related panels and navigation remain scoped to this branch instead of falling back to unrelated native or demo work."
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
             <FramingValueSpineTree
               emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."

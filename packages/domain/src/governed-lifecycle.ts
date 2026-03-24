@@ -95,7 +95,7 @@ function getHardDeleteBlockers(input: GovernedRemovalContext) {
   const blockers: string[] = [];
 
   if (input.lifecycleState === "archived") {
-    blockers.push("Archived objects cannot be hard deleted through the normal workspace flow.");
+    blockers.push("Archived objects cannot be hard deleted through the normal project flow.");
   }
 
   if (input.originType !== "native") {
@@ -167,7 +167,7 @@ export function buildGovernedRemovalDecision(input: GovernedRemovalContext): Gov
       recommendedAction: restoreBlockers.length === 0 ? "restore" : "blocked",
       hardDelete: buildBlockedPreview(
         "hard_delete",
-        `${label} is archived, so hard delete is not available from the governed workspace flow.`,
+        `${label} is archived, so hard delete is not available from the governed project flow.`,
         input,
         ["Restore or retain the archived object instead of hard deleting it here."],
         false,

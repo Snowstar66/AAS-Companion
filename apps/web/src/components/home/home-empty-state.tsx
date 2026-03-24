@@ -19,13 +19,13 @@ export function HomeEmptyState({ title, description }: HomeEmptyStateProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm leading-6 text-muted-foreground">
-          The Home dashboard is wired up, but it needs seeded M1 records in the current organization before the widgets
-          can populate.
+          Home is wired up, but it still needs real or Demo records in the current project before status indicators can
+          populate.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button asChild className="gap-2" variant="secondary">
             <Link href="/login">
-              Review login and demo access
+              Review project and Demo access
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

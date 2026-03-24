@@ -33,8 +33,9 @@ export default async function HandoffPage({ params }: HandoffPageProps) {
     <AppShell
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Build Handoff",
-        badge: "Story M1-008"
+        projectName: session.organization.organizationName,
+        sectionLabel: "Build Handoff",
+        badge: storyResult.data.story.key
       }}
     >
       <PageViewAnalytics
@@ -86,7 +87,7 @@ export default async function HandoffPage({ params }: HandoffPageProps) {
                 </Button>
               ) : null}
               <Button asChild className="gap-2" variant="secondary">
-                <Link href={`/stories/${storyId}`}>Open Story Workspace</Link>
+                <Link href={`/stories/${storyId}`}>Open Story</Link>
               </Button>
             </CardContent>
           </Card>
