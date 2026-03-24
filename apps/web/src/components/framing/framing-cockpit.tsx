@@ -123,6 +123,10 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
   );
   const demoEntryHref = items.find((item) => item.originType === "seeded")?.detailHref ?? null;
   const hasDemoItems = items.some((item) => item.originType === "seeded");
+  const operationalItems = items.filter((item) => item.originType !== "seeded");
+  const activeFraming = operationalItems.find((item) => item.originType === "native") ?? operationalItems[0] ?? null;
+  const hasActiveFraming = Boolean(activeFraming);
+  const hasParallelOperationalFramings = operationalItems.length > 1;
   const nativeItemCount = items.filter((item) => item.originType === "native").length;
   const blockedCount = items.filter((item) => item.isBlocked).length;
   const readyCount = items.filter((item) => item.readinessTone === "ready").length;
@@ -168,18 +172,36 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-sky-950">
                     <Sparkles className="h-4 w-4" />
-                    Start a clean case
+                    {hasActiveFraming ? "Active framing" : "Start a clean case"}
                   </CardTitle>
                   <CardDescription className="text-sky-900/80">
-                    Create a fresh native draft Outcome and continue directly inside the project.
+                    {hasActiveFraming
+                      ? "Each project should keep one active framing. Continue inside the current case or create a new project for a new business case."
+                      : "Create a fresh native draft Outcome and continue directly inside the project."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <form action={formAction}>
-                    <SubmitButton pending={pending} />
-                  </form>
+                  {activeFraming ? (
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <Button asChild className="gap-2">
+                        <Link href={activeFraming.detailHref}>
+                          Open active framing
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild className="gap-2" variant="secondary">
+                        <Link href="/">Create project for new case</Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <form action={formAction}>
+                      <SubmitButton pending={pending} />
+                    </form>
+                  )}
                   <p className="text-sm leading-6 text-sky-900/80">
-                    Use this for real customer work. It opens a new native branch without pulling in demo state.
+                    {activeFraming
+                      ? `Current active case: ${activeFraming.key} ${activeFraming.title}. Use the existing framing path unless you are intentionally starting a separate project.`
+                      : "Use this for real customer work. It opens a new native branch without pulling in demo state."}
                   </p>
                 </CardContent>
               </Card>
@@ -215,6 +237,13 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
             </div>
           </div>
         </div>
+
+        {hasParallelOperationalFramings ? (
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+            This project has multiple operational framings from earlier data. Normal workflow is one active framing per
+            project, so use the current active case and archive or replace older branches intentionally.
+          </div>
+        ) : null}
 
         {actionState.status === "error" && actionState.message ? (
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

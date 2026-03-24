@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import GovernancePage from "@/app/(protected)/governance/page";
 
@@ -155,6 +155,50 @@ vi.mock("@/app/(protected)/governance/actions", () => ({
 }));
 
 describe("Governance page", () => {
+  it("shows compact grouped directory rows with progressive editing and identity markers", async () => {
+    render(
+      await GovernancePage({
+        searchParams: Promise.resolve({
+          view: "directory",
+          sourceEntity: "story",
+          sourceId: "story-1",
+          level: "level_3"
+        })
+      })
+    );
+
+    expect(screen.getByText("Customer")).toBeDefined();
+    expect(screen.getByText("Supplier")).toBeDefined();
+    expect(screen.getByText("Demo Value Owner")).toBeDefined();
+    expect(screen.getByText("Demo Architect")).toBeDefined();
+    expect(screen.getByText("Add role")).toBeDefined();
+
+    fireEvent.click(screen.getByText("Demo Value Owner"));
+    expect(screen.getByDisplayValue("Demo Value Owner")).toBeDefined();
+    expect(screen.getByDisplayValue("Value Owner")).toBeDefined();
+  });
+
+  it("shows compact agent registry rows with expandable editing", async () => {
+    render(
+      await GovernancePage({
+        searchParams: Promise.resolve({
+          view: "agents",
+          sourceEntity: "story",
+          sourceId: "story-1",
+          level: "level_3"
+        })
+      })
+    );
+
+    expect(screen.getByText("Agent registry")).toBeDefined();
+    expect(screen.getByText("Governance Review Agent")).toBeDefined();
+    expect(screen.getByText("Supervisor: Demo Architect")).toBeDefined();
+
+    fireEvent.click(screen.getByText("Governance Review Agent"));
+    expect(screen.getByDisplayValue("Governance Review Agent")).toBeDefined();
+    expect(screen.getByDisplayValue("Flags governance gaps.")).toBeDefined();
+  });
+
   it("shows readiness gaps and linked source context for the active project", async () => {
     render(
       await GovernancePage({

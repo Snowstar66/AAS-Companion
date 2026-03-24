@@ -85,7 +85,8 @@ describe("Framing cockpit", () => {
     render(await FramingPage());
 
     expect(screen.getByRole("heading", { name: "Framing Cockpit", level: 1 })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Start new case" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open active framing" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Create project for new case" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open demo case" })).toBeDefined();
     expect(screen.getByText("New customer case")).toBeDefined();
     expect(screen.queryByText("Close the governance readiness gap")).toBeNull();

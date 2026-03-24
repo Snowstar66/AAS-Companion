@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { Bot, BriefcaseBusiness, Shield, ShieldAlert, Sparkles, UsersRound } from "lucide-react";
+import { BriefcaseBusiness, Shield, ShieldAlert, Sparkles } from "lucide-react";
 import { getGovernanceWorkspaceService } from "@aas-companion/api";
-import { agentTypes, aiAccelerationLevels, organizationSides, partyRoleTypes } from "@aas-companion/domain";
+import { aiAccelerationLevels } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { GovernanceAgentRegistryView } from "@/components/governance/governance-agent-registry-view";
+import { GovernanceDirectoryView } from "@/components/governance/governance-directory-view";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
@@ -42,22 +44,6 @@ function buildGovernanceHref(input: {
 
   const queryString = query.toString();
   return queryString ? `/governance?${queryString}` : "/governance";
-}
-
-function ReturnInputs(props: {
-  view: string;
-  level: string;
-  sourceEntity?: string | undefined;
-  sourceId?: string | undefined;
-}) {
-  return (
-    <>
-      <input name="returnView" type="hidden" value={props.view} />
-      <input name="returnLevel" type="hidden" value={props.level} />
-      <input name="returnSourceEntity" type="hidden" value={props.sourceEntity ?? ""} />
-      <input name="returnSourceId" type="hidden" value={props.sourceId ?? ""} />
-    </>
-  );
 }
 
 export default async function GovernancePage({ searchParams }: GovernancePageProps) {
@@ -102,6 +88,12 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
   const customerPeople = data.people.filter((person) => person.organizationSide === "customer");
   const supplierPeople = data.people.filter((person) => person.organizationSide === "supplier");
   const activeSupervisors = activePeople;
+  const returnParams = {
+    view,
+    level: selectedLevel,
+    sourceEntity,
+    sourceId
+  };
   const sourceHref =
     data.sourceContext?.entityType === "outcome"
       ? `/outcomes/${data.sourceContext.entityId}`
@@ -111,6 +103,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
 
   return (
     <AppShell
+      hideRightRail
       topbarProps={{
         eyebrow: "AAS Companion",
         projectName: organization.organizationName,
@@ -188,7 +181,9 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
           <Card className="border-border/70 shadow-sm">
             <CardContent className="p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Readiness state</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight capitalize">{formatLabel(data.readiness.summaryStatus)}</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight capitalize">
+                {formatLabel(data.readiness.summaryStatus)}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -251,302 +246,23 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
         </Card>
 
         {view === "directory" ? (
-          <div className="space-y-6">
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  <UsersRound className="mt-0.5 h-5 w-5 text-primary" />
-                  <div>
-                    <CardTitle>Party and role directory</CardTitle>
-                    <CardDescription>
-                      Create named customer and supplier roles so readiness and authority can point to real people.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <form action={createPartyRoleEntryAction} className="grid gap-4 lg:grid-cols-2">
-                  <ReturnInputs level={selectedLevel} sourceEntity={sourceEntity} sourceId={sourceId} view={view} />
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Full name</span>
-                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="fullName" type="text" />
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Email</span>
-                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="email" type="email" />
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Organization side</span>
-                    <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue="customer" name="organizationSide">
-                      {organizationSides.map((side) => (
-                        <option key={side} value={side}>
-                          {formatLabel(side)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Role type</span>
-                    <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue="value_owner" name="roleType">
-                      {partyRoleTypes.map((roleType) => (
-                        <option key={roleType} value={roleType}>
-                          {formatLabel(roleType)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Role title</span>
-                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="roleTitle" type="text" />
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Phone number</span>
-                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="phoneNumber" type="text" />
-                  </label>
-                  <label className="space-y-2 lg:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Mandate notes</span>
-                    <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="mandateNotes" />
-                  </label>
-                  <div className="lg:col-span-2">
-                    <Button className="gap-2" type="submit">
-                      <UsersRound className="h-4 w-4" />
-                      Add party role
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-6 2xl:grid-cols-2">
-              {[
-                { label: "Customer side", people: customerPeople, tone: "border-sky-200 bg-sky-50/60" },
-                { label: "Supplier side", people: supplierPeople, tone: "border-emerald-200 bg-emerald-50/60" }
-              ].map((section) => (
-                <Card className="border-border/70 shadow-sm" key={section.label}>
-                  <CardHeader>
-                    <CardTitle>{section.label}</CardTitle>
-                    <CardDescription>Keep named owners, reviewers and approvers explicit for this project.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {section.people.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
-                        No roles have been added for this side yet.
-                      </div>
-                    ) : (
-                      section.people.map((person) => (
-                        <form action={updatePartyRoleEntryAction} className={`space-y-4 rounded-2xl border p-4 ${section.tone}`} key={person.id}>
-                          <ReturnInputs level={selectedLevel} sourceEntity={sourceEntity} sourceId={sourceId} view={view} />
-                          <input name="id" type="hidden" value={person.id} />
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <label className="space-y-2">
-                              <span className="text-sm font-medium text-foreground">Full name</span>
-                              <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.fullName} name="fullName" type="text" />
-                            </label>
-                            <label className="space-y-2">
-                              <span className="text-sm font-medium text-foreground">Email</span>
-                              <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.email} name="email" type="email" />
-                            </label>
-                            <label className="space-y-2">
-                              <span className="text-sm font-medium text-foreground">Role title</span>
-                              <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.roleTitle} name="roleTitle" type="text" />
-                            </label>
-                            <label className="space-y-2">
-                              <span className="text-sm font-medium text-foreground">Role type</span>
-                              <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.roleType} name="roleType">
-                                {partyRoleTypes.map((roleType) => (
-                                  <option key={roleType} value={roleType}>
-                                    {formatLabel(roleType)}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label className="space-y-2">
-                              <span className="text-sm font-medium text-foreground">Organization side</span>
-                              <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.organizationSide} name="organizationSide">
-                                {organizationSides.map((side) => (
-                                  <option key={side} value={side}>
-                                    {formatLabel(side)}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label className="space-y-2">
-                              <span className="text-sm font-medium text-foreground">Status</span>
-                              <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={String(person.isActive)} name="isActive">
-                                <option value="true">Active</option>
-                                <option value="false">Inactive</option>
-                              </select>
-                            </label>
-                          </div>
-                          <label className="space-y-2">
-                            <span className="text-sm font-medium text-foreground">Mandate notes</span>
-                            <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={person.mandateNotes ?? ""} name="mandateNotes" />
-                          </label>
-                          <div className="flex items-center gap-3">
-                            <Button size="sm" type="submit">
-                              Save role
-                            </Button>
-                            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                              {person.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        </form>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <GovernanceDirectoryView
+            createAction={createPartyRoleEntryAction}
+            customerPeople={customerPeople}
+            returnParams={returnParams}
+            supplierPeople={supplierPeople}
+            updateAction={updatePartyRoleEntryAction}
+          />
         ) : null}
 
         {view === "agents" ? (
-          <div className="space-y-6">
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  <Bot className="mt-0.5 h-5 w-5 text-primary" />
-                  <div>
-                    <CardTitle>Agent registry</CardTitle>
-                    <CardDescription>
-                      Every active agent must have a named human supervisor and a visible scope of work.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <form action={createAgentRegistryEntryAction} className="grid gap-4 lg:grid-cols-2">
-                  <ReturnInputs level={selectedLevel} sourceEntity={sourceEntity} sourceId={sourceId} view={view} />
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Agent name</span>
-                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="agentName" type="text" />
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Agent type</span>
-                    <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue="bmad_agent" name="agentType">
-                      {agentTypes.map((agentType) => (
-                        <option key={agentType} value={agentType}>
-                          {formatLabel(agentType)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="space-y-2 lg:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Purpose</span>
-                    <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="purpose" />
-                  </label>
-                  <label className="space-y-2 lg:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Scope of work</span>
-                    <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="scopeOfWork" />
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Allowed artifact types</span>
-                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="allowedArtifactTypes" type="text" />
-                  </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Allowed actions</span>
-                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="allowedActions" type="text" />
-                  </label>
-                  <label className="space-y-2 lg:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Supervising party role</span>
-                    <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="supervisingPartyRoleId">
-                      {activeSupervisors.map((person) => (
-                        <option key={person.id} value={person.id}>
-                          {person.fullName} - {formatLabel(person.roleType)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="lg:col-span-2">
-                    <Button className="gap-2" type="submit">
-                      <Bot className="h-4 w-4" />
-                      Add agent
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-6 xl:grid-cols-2">
-              {data.agents.map((agent) => (
-                <Card className="border-border/70 shadow-sm" key={agent.id}>
-                  <CardHeader>
-                    <CardTitle>{agent.agentName}</CardTitle>
-                    <CardDescription>
-                      {formatLabel(agent.agentType)} supervised by {agent.supervisingPartyRole.fullName}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form action={updateAgentRegistryEntryAction} className="space-y-4">
-                      <ReturnInputs level={selectedLevel} sourceEntity={sourceEntity} sourceId={sourceId} view={view} />
-                      <input name="id" type="hidden" value={agent.id} />
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Agent name</span>
-                          <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.agentName} name="agentName" type="text" />
-                        </label>
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Agent type</span>
-                          <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.agentType} name="agentType">
-                            {agentTypes.map((agentType) => (
-                              <option key={agentType} value={agentType}>
-                                {formatLabel(agentType)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Purpose</span>
-                        <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={agent.purpose} name="purpose" />
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Scope of work</span>
-                        <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={agent.scopeOfWork} name="scopeOfWork" />
-                      </label>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Allowed artifact types</span>
-                          <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.allowedArtifactTypes.join(", ")} name="allowedArtifactTypes" type="text" />
-                        </label>
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Allowed actions</span>
-                          <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.allowedActions.join(", ")} name="allowedActions" type="text" />
-                        </label>
-                      </div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Supervising party role</span>
-                          <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.supervisingPartyRoleId} name="supervisingPartyRoleId">
-                            {activeSupervisors.map((person) => (
-                              <option key={person.id} value={person.id}>
-                                {person.fullName} - {formatLabel(person.roleType)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Status</span>
-                          <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={String(agent.isActive)} name="isActive">
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                          </select>
-                        </label>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button size="sm" type="submit">
-                          Save agent
-                        </Button>
-                        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                          {agent.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <GovernanceAgentRegistryView
+            activeSupervisors={activeSupervisors}
+            agents={data.agents}
+            createAction={createAgentRegistryEntryAction}
+            returnParams={returnParams}
+            updateAction={updateAgentRegistryEntryAction}
+          />
         ) : null}
 
         {view === "authority" ? (
@@ -577,7 +293,10 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                       <p className="font-medium text-foreground">Customer: {formatLabel(rule.customerAssignment)}</p>
                       <p className="mt-2">
-                        Expected roles: {rule.customerRoleTypes.length > 0 ? rule.customerRoleTypes.map(formatLabel).join(", ") : "None"}
+                        Expected roles:{" "}
+                        {rule.customerRoleTypes.length > 0
+                          ? rule.customerRoleTypes.map(formatLabel).join(", ")
+                          : "None"}
                       </p>
                       <p className="mt-2">
                         Assigned people:{" "}
@@ -589,7 +308,10 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                       <p className="font-medium text-foreground">Supplier: {formatLabel(rule.supplierAssignment)}</p>
                       <p className="mt-2">
-                        Expected roles: {rule.supplierRoleTypes.length > 0 ? rule.supplierRoleTypes.map(formatLabel).join(", ") : "None"}
+                        Expected roles:{" "}
+                        {rule.supplierRoleTypes.length > 0
+                          ? rule.supplierRoleTypes.map(formatLabel).join(", ")
+                          : "None"}
                       </p>
                       <p className="mt-2">
                         Assigned people:{" "}
@@ -620,7 +342,9 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                           : "border-amber-200 bg-amber-50 text-amber-800"
                       }`}
                     >
-                      {rule.isCovered ? "Authority coverage is present." : "At least one required authority assignment is still missing."}
+                      {rule.isCovered
+                        ? "Authority coverage is present."
+                        : "At least one required authority assignment is still missing."}
                     </div>
                   </CardContent>
                 </Card>
@@ -718,14 +442,15 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                   </div>
                 ) : (
                   data.readiness.riskFlags.map((flag) => (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900" key={`${flag.primaryRoleType}-${flag.conflictingRoleType}`}>
+                    <div
+                      className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900"
+                      key={`${flag.primaryRoleType}-${flag.conflictingRoleType}`}
+                    >
                       <p className="font-medium">
                         {formatLabel(flag.primaryRoleType)} conflicts with {formatLabel(flag.conflictingRoleType)}
                       </p>
                       <p className="mt-2">{flag.message}</p>
-                      <p className="mt-2">
-                        People involved: {flag.people.map((person) => person.fullName).join(", ")}
-                      </p>
+                      <p className="mt-2">People involved: {flag.people.map((person) => person.fullName).join(", ")}</p>
                     </div>
                   ))
                 )}
@@ -766,7 +491,10 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                   </div>
                 ) : (
                   data.signoffRecords.map((record) => (
-                    <div className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm text-muted-foreground" key={record.id}>
+                    <div
+                      className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm text-muted-foreground"
+                      key={record.id}
+                    >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="font-medium text-foreground">
