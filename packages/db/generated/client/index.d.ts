@@ -69,6 +69,11 @@ export type Story = $Result.DefaultSelection<Prisma.$StoryPayload>
  */
 export type Tollgate = $Result.DefaultSelection<Prisma.$TollgatePayload>
 /**
+ * Model SignoffRecord
+ * 
+ */
+export type SignoffRecord = $Result.DefaultSelection<Prisma.$SignoffRecordPayload>
+/**
  * Model ActivityEvent
  * 
  */
@@ -288,12 +293,31 @@ export const TollgateStatus: {
 export type TollgateStatus = (typeof TollgateStatus)[keyof typeof TollgateStatus]
 
 
+export const SignoffDecisionKind: {
+  review: 'review',
+  approval: 'approval',
+  escalation: 'escalation'
+};
+
+export type SignoffDecisionKind = (typeof SignoffDecisionKind)[keyof typeof SignoffDecisionKind]
+
+
+export const SignoffDecisionStatus: {
+  approved: 'approved',
+  rejected: 'rejected',
+  changes_requested: 'changes_requested'
+};
+
+export type SignoffDecisionStatus = (typeof SignoffDecisionStatus)[keyof typeof SignoffDecisionStatus]
+
+
 export const ActivityEntityType: {
   organization: 'organization',
   outcome: 'outcome',
   epic: 'epic',
   story: 'story',
   tollgate: 'tollgate',
+  signoff_record: 'signoff_record',
   party_role_entry: 'party_role_entry',
   agent_registry_entry: 'agent_registry_entry',
   artifact_intake_session: 'artifact_intake_session',
@@ -313,6 +337,7 @@ export const ActivityEventType: {
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
+  signoff_recorded: 'signoff_recorded',
   execution_contract_generated: 'execution_contract_generated',
   governed_removal_requested: 'governed_removal_requested',
   governed_hard_deleted: 'governed_hard_deleted',
@@ -481,6 +506,14 @@ export const TollgateType: typeof $Enums.TollgateType
 export type TollgateStatus = $Enums.TollgateStatus
 
 export const TollgateStatus: typeof $Enums.TollgateStatus
+
+export type SignoffDecisionKind = $Enums.SignoffDecisionKind
+
+export const SignoffDecisionKind: typeof $Enums.SignoffDecisionKind
+
+export type SignoffDecisionStatus = $Enums.SignoffDecisionStatus
+
+export const SignoffDecisionStatus: typeof $Enums.SignoffDecisionStatus
 
 export type ActivityEntityType = $Enums.ActivityEntityType
 
@@ -741,6 +774,16 @@ export class PrismaClient<
     * ```
     */
   get tollgate(): Prisma.TollgateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.signoffRecord`: Exposes CRUD operations for the **SignoffRecord** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SignoffRecords
+    * const signoffRecords = await prisma.signoffRecord.findMany()
+    * ```
+    */
+  get signoffRecord(): Prisma.SignoffRecordDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.activityEvent`: Exposes CRUD operations for the **ActivityEvent** model.
@@ -1233,6 +1276,7 @@ export namespace Prisma {
     Epic: 'Epic',
     Story: 'Story',
     Tollgate: 'Tollgate',
+    SignoffRecord: 'SignoffRecord',
     ActivityEvent: 'ActivityEvent',
     ArtifactIntakeSession: 'ArtifactIntakeSession',
     ArtifactIntakeFile: 'ArtifactIntakeFile',
@@ -1255,7 +1299,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "organization" | "appUser" | "membership" | "partyRoleEntry" | "agentRegistryEntry" | "governanceRoleRequirement" | "governanceRiskCombinationRule" | "outcome" | "epic" | "story" | "tollgate" | "activityEvent" | "artifactIntakeSession" | "artifactIntakeFile" | "artifactAasCandidate"
+      modelProps: "organization" | "appUser" | "membership" | "partyRoleEntry" | "agentRegistryEntry" | "governanceRoleRequirement" | "governanceRiskCombinationRule" | "outcome" | "epic" | "story" | "tollgate" | "signoffRecord" | "activityEvent" | "artifactIntakeSession" | "artifactIntakeFile" | "artifactAasCandidate"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2073,6 +2117,80 @@ export namespace Prisma {
           }
         }
       }
+      SignoffRecord: {
+        payload: Prisma.$SignoffRecordPayload<ExtArgs>
+        fields: Prisma.SignoffRecordFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SignoffRecordFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SignoffRecordFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>
+          }
+          findFirst: {
+            args: Prisma.SignoffRecordFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SignoffRecordFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>
+          }
+          findMany: {
+            args: Prisma.SignoffRecordFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>[]
+          }
+          create: {
+            args: Prisma.SignoffRecordCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>
+          }
+          createMany: {
+            args: Prisma.SignoffRecordCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SignoffRecordCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>[]
+          }
+          delete: {
+            args: Prisma.SignoffRecordDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>
+          }
+          update: {
+            args: Prisma.SignoffRecordUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>
+          }
+          deleteMany: {
+            args: Prisma.SignoffRecordDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SignoffRecordUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SignoffRecordUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>[]
+          }
+          upsert: {
+            args: Prisma.SignoffRecordUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SignoffRecordPayload>
+          }
+          aggregate: {
+            args: Prisma.SignoffRecordAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSignoffRecord>
+          }
+          groupBy: {
+            args: Prisma.SignoffRecordGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SignoffRecordGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SignoffRecordCountArgs<ExtArgs>
+            result: $Utils.Optional<SignoffRecordCountAggregateOutputType> | number
+          }
+        }
+      }
       ActivityEvent: {
         payload: Prisma.$ActivityEventPayload<ExtArgs>
         fields: Prisma.ActivityEventFieldRefs
@@ -2476,6 +2594,7 @@ export namespace Prisma {
     epic?: EpicOmit
     story?: StoryOmit
     tollgate?: TollgateOmit
+    signoffRecord?: SignoffRecordOmit
     activityEvent?: ActivityEventOmit
     artifactIntakeSession?: ArtifactIntakeSessionOmit
     artifactIntakeFile?: ArtifactIntakeFileOmit
@@ -2565,6 +2684,7 @@ export namespace Prisma {
     epics: number
     stories: number
     tollgates: number
+    signoffRecords: number
     activityEvents: number
     artifactIntakeSessions: number
     artifactIntakeFiles: number
@@ -2581,6 +2701,7 @@ export namespace Prisma {
     epics?: boolean | OrganizationCountOutputTypeCountEpicsArgs
     stories?: boolean | OrganizationCountOutputTypeCountStoriesArgs
     tollgates?: boolean | OrganizationCountOutputTypeCountTollgatesArgs
+    signoffRecords?: boolean | OrganizationCountOutputTypeCountSignoffRecordsArgs
     activityEvents?: boolean | OrganizationCountOutputTypeCountActivityEventsArgs
     artifactIntakeSessions?: boolean | OrganizationCountOutputTypeCountArtifactIntakeSessionsArgs
     artifactIntakeFiles?: boolean | OrganizationCountOutputTypeCountArtifactIntakeFilesArgs
@@ -2635,6 +2756,13 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountTollgatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: TollgateWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountSignoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SignoffRecordWhereInput
   }
 
   /**
@@ -2702,6 +2830,7 @@ export namespace Prisma {
     memberships: number
     ownedOutcomes: number
     tollgateDecisions: number
+    createdSignoffRecords: number
     activityEvents: number
     createdIntakeSessions: number
     uploadedIntakeFiles: number
@@ -2711,6 +2840,7 @@ export namespace Prisma {
     memberships?: boolean | AppUserCountOutputTypeCountMembershipsArgs
     ownedOutcomes?: boolean | AppUserCountOutputTypeCountOwnedOutcomesArgs
     tollgateDecisions?: boolean | AppUserCountOutputTypeCountTollgateDecisionsArgs
+    createdSignoffRecords?: boolean | AppUserCountOutputTypeCountCreatedSignoffRecordsArgs
     activityEvents?: boolean | AppUserCountOutputTypeCountActivityEventsArgs
     createdIntakeSessions?: boolean | AppUserCountOutputTypeCountCreatedIntakeSessionsArgs
     uploadedIntakeFiles?: boolean | AppUserCountOutputTypeCountUploadedIntakeFilesArgs
@@ -2751,6 +2881,13 @@ export namespace Prisma {
   /**
    * AppUserCountOutputType without action
    */
+  export type AppUserCountOutputTypeCountCreatedSignoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SignoffRecordWhereInput
+  }
+
+  /**
+   * AppUserCountOutputType without action
+   */
   export type AppUserCountOutputTypeCountActivityEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ActivityEventWhereInput
   }
@@ -2776,10 +2913,12 @@ export namespace Prisma {
 
   export type PartyRoleEntryCountOutputType = {
     supervisingAgents: number
+    signoffRecords: number
   }
 
   export type PartyRoleEntryCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     supervisingAgents?: boolean | PartyRoleEntryCountOutputTypeCountSupervisingAgentsArgs
+    signoffRecords?: boolean | PartyRoleEntryCountOutputTypeCountSignoffRecordsArgs
   }
 
   // Custom InputTypes
@@ -2798,6 +2937,13 @@ export namespace Prisma {
    */
   export type PartyRoleEntryCountOutputTypeCountSupervisingAgentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AgentRegistryEntryWhereInput
+  }
+
+  /**
+   * PartyRoleEntryCountOutputType without action
+   */
+  export type PartyRoleEntryCountOutputTypeCountSignoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SignoffRecordWhereInput
   }
 
 
@@ -2869,6 +3015,37 @@ export namespace Prisma {
    */
   export type EpicCountOutputTypeCountStoriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: StoryWhereInput
+  }
+
+
+  /**
+   * Count Type TollgateCountOutputType
+   */
+
+  export type TollgateCountOutputType = {
+    signoffRecords: number
+  }
+
+  export type TollgateCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    signoffRecords?: boolean | TollgateCountOutputTypeCountSignoffRecordsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TollgateCountOutputType without action
+   */
+  export type TollgateCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TollgateCountOutputType
+     */
+    select?: TollgateCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TollgateCountOutputType without action
+   */
+  export type TollgateCountOutputTypeCountSignoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SignoffRecordWhereInput
   }
 
 
@@ -3116,6 +3293,7 @@ export namespace Prisma {
     epics?: boolean | Organization$epicsArgs<ExtArgs>
     stories?: boolean | Organization$storiesArgs<ExtArgs>
     tollgates?: boolean | Organization$tollgatesArgs<ExtArgs>
+    signoffRecords?: boolean | Organization$signoffRecordsArgs<ExtArgs>
     activityEvents?: boolean | Organization$activityEventsArgs<ExtArgs>
     artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
     artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
@@ -3158,6 +3336,7 @@ export namespace Prisma {
     epics?: boolean | Organization$epicsArgs<ExtArgs>
     stories?: boolean | Organization$storiesArgs<ExtArgs>
     tollgates?: boolean | Organization$tollgatesArgs<ExtArgs>
+    signoffRecords?: boolean | Organization$signoffRecordsArgs<ExtArgs>
     activityEvents?: boolean | Organization$activityEventsArgs<ExtArgs>
     artifactIntakeSessions?: boolean | Organization$artifactIntakeSessionsArgs<ExtArgs>
     artifactIntakeFiles?: boolean | Organization$artifactIntakeFilesArgs<ExtArgs>
@@ -3179,6 +3358,7 @@ export namespace Prisma {
       epics: Prisma.$EpicPayload<ExtArgs>[]
       stories: Prisma.$StoryPayload<ExtArgs>[]
       tollgates: Prisma.$TollgatePayload<ExtArgs>[]
+      signoffRecords: Prisma.$SignoffRecordPayload<ExtArgs>[]
       activityEvents: Prisma.$ActivityEventPayload<ExtArgs>[]
       artifactIntakeSessions: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>[]
       artifactIntakeFiles: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
@@ -3593,6 +3773,7 @@ export namespace Prisma {
     epics<T extends Organization$epicsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$epicsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EpicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     stories<T extends Organization$storiesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$storiesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tollgates<T extends Organization$tollgatesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$tollgatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TollgatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    signoffRecords<T extends Organization$signoffRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$signoffRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     activityEvents<T extends Organization$activityEventsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$activityEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ActivityEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     artifactIntakeSessions<T extends Organization$artifactIntakeSessionsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     artifactIntakeFiles<T extends Organization$artifactIntakeFilesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$artifactIntakeFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -4143,6 +4324,30 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.signoffRecords
+   */
+  export type Organization$signoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    where?: SignoffRecordWhereInput
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    cursor?: SignoffRecordWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SignoffRecordScalarFieldEnum | SignoffRecordScalarFieldEnum[]
+  }
+
+  /**
    * Organization.activityEvents
    */
   export type Organization$activityEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4520,6 +4725,7 @@ export namespace Prisma {
     memberships?: boolean | AppUser$membershipsArgs<ExtArgs>
     ownedOutcomes?: boolean | AppUser$ownedOutcomesArgs<ExtArgs>
     tollgateDecisions?: boolean | AppUser$tollgateDecisionsArgs<ExtArgs>
+    createdSignoffRecords?: boolean | AppUser$createdSignoffRecordsArgs<ExtArgs>
     activityEvents?: boolean | AppUser$activityEventsArgs<ExtArgs>
     createdIntakeSessions?: boolean | AppUser$createdIntakeSessionsArgs<ExtArgs>
     uploadedIntakeFiles?: boolean | AppUser$uploadedIntakeFilesArgs<ExtArgs>
@@ -4555,6 +4761,7 @@ export namespace Prisma {
     memberships?: boolean | AppUser$membershipsArgs<ExtArgs>
     ownedOutcomes?: boolean | AppUser$ownedOutcomesArgs<ExtArgs>
     tollgateDecisions?: boolean | AppUser$tollgateDecisionsArgs<ExtArgs>
+    createdSignoffRecords?: boolean | AppUser$createdSignoffRecordsArgs<ExtArgs>
     activityEvents?: boolean | AppUser$activityEventsArgs<ExtArgs>
     createdIntakeSessions?: boolean | AppUser$createdIntakeSessionsArgs<ExtArgs>
     uploadedIntakeFiles?: boolean | AppUser$uploadedIntakeFilesArgs<ExtArgs>
@@ -4569,6 +4776,7 @@ export namespace Prisma {
       memberships: Prisma.$MembershipPayload<ExtArgs>[]
       ownedOutcomes: Prisma.$OutcomePayload<ExtArgs>[]
       tollgateDecisions: Prisma.$TollgatePayload<ExtArgs>[]
+      createdSignoffRecords: Prisma.$SignoffRecordPayload<ExtArgs>[]
       activityEvents: Prisma.$ActivityEventPayload<ExtArgs>[]
       createdIntakeSessions: Prisma.$ArtifactIntakeSessionPayload<ExtArgs>[]
       uploadedIntakeFiles: Prisma.$ArtifactIntakeFilePayload<ExtArgs>[]
@@ -4976,6 +5184,7 @@ export namespace Prisma {
     memberships<T extends AppUser$membershipsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ownedOutcomes<T extends AppUser$ownedOutcomesArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$ownedOutcomesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutcomePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tollgateDecisions<T extends AppUser$tollgateDecisionsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$tollgateDecisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TollgatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    createdSignoffRecords<T extends AppUser$createdSignoffRecordsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$createdSignoffRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     activityEvents<T extends AppUser$activityEventsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$activityEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ActivityEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     createdIntakeSessions<T extends AppUser$createdIntakeSessionsArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$createdIntakeSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     uploadedIntakeFiles<T extends AppUser$uploadedIntakeFilesArgs<ExtArgs> = {}>(args?: Subset<T, AppUser$uploadedIntakeFilesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ArtifactIntakeFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -5470,6 +5679,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: TollgateScalarFieldEnum | TollgateScalarFieldEnum[]
+  }
+
+  /**
+   * AppUser.createdSignoffRecords
+   */
+  export type AppUser$createdSignoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    where?: SignoffRecordWhereInput
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    cursor?: SignoffRecordWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SignoffRecordScalarFieldEnum | SignoffRecordScalarFieldEnum[]
   }
 
   /**
@@ -6872,6 +7105,7 @@ export namespace Prisma {
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     supervisingAgents?: boolean | PartyRoleEntry$supervisingAgentsArgs<ExtArgs>
+    signoffRecords?: boolean | PartyRoleEntry$signoffRecordsArgs<ExtArgs>
     _count?: boolean | PartyRoleEntryCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["partyRoleEntry"]>
 
@@ -6929,6 +7163,7 @@ export namespace Prisma {
   export type PartyRoleEntryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     supervisingAgents?: boolean | PartyRoleEntry$supervisingAgentsArgs<ExtArgs>
+    signoffRecords?: boolean | PartyRoleEntry$signoffRecordsArgs<ExtArgs>
     _count?: boolean | PartyRoleEntryCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PartyRoleEntryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6943,6 +7178,7 @@ export namespace Prisma {
     objects: {
       organization: Prisma.$OrganizationPayload<ExtArgs>
       supervisingAgents: Prisma.$AgentRegistryEntryPayload<ExtArgs>[]
+      signoffRecords: Prisma.$SignoffRecordPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -7354,6 +7590,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     supervisingAgents<T extends PartyRoleEntry$supervisingAgentsArgs<ExtArgs> = {}>(args?: Subset<T, PartyRoleEntry$supervisingAgentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRegistryEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    signoffRecords<T extends PartyRoleEntry$signoffRecordsArgs<ExtArgs> = {}>(args?: Subset<T, PartyRoleEntry$signoffRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7813,6 +8050,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AgentRegistryEntryScalarFieldEnum | AgentRegistryEntryScalarFieldEnum[]
+  }
+
+  /**
+   * PartyRoleEntry.signoffRecords
+   */
+  export type PartyRoleEntry$signoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    where?: SignoffRecordWhereInput
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    cursor?: SignoffRecordWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SignoffRecordScalarFieldEnum | SignoffRecordScalarFieldEnum[]
   }
 
   /**
@@ -15436,6 +15697,8 @@ export namespace Prisma {
     updatedAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     decisionActor?: boolean | Tollgate$decisionActorArgs<ExtArgs>
+    signoffRecords?: boolean | Tollgate$signoffRecordsArgs<ExtArgs>
+    _count?: boolean | TollgateCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["tollgate"]>
 
   export type TollgateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -15494,6 +15757,8 @@ export namespace Prisma {
   export type TollgateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     decisionActor?: boolean | Tollgate$decisionActorArgs<ExtArgs>
+    signoffRecords?: boolean | Tollgate$signoffRecordsArgs<ExtArgs>
+    _count?: boolean | TollgateCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type TollgateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -15509,6 +15774,7 @@ export namespace Prisma {
     objects: {
       organization: Prisma.$OrganizationPayload<ExtArgs>
       decisionActor: Prisma.$AppUserPayload<ExtArgs> | null
+      signoffRecords: Prisma.$SignoffRecordPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -15920,6 +16186,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     decisionActor<T extends Tollgate$decisionActorArgs<ExtArgs> = {}>(args?: Subset<T, Tollgate$decisionActorArgs<ExtArgs>>): Prisma__AppUserClient<$Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    signoffRecords<T extends Tollgate$signoffRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Tollgate$signoffRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -16377,6 +16644,30 @@ export namespace Prisma {
   }
 
   /**
+   * Tollgate.signoffRecords
+   */
+  export type Tollgate$signoffRecordsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    where?: SignoffRecordWhereInput
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    cursor?: SignoffRecordWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SignoffRecordScalarFieldEnum | SignoffRecordScalarFieldEnum[]
+  }
+
+  /**
    * Tollgate without action
    */
   export type TollgateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -16392,6 +16683,1295 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: TollgateInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SignoffRecord
+   */
+
+  export type AggregateSignoffRecord = {
+    _count: SignoffRecordCountAggregateOutputType | null
+    _min: SignoffRecordMinAggregateOutputType | null
+    _max: SignoffRecordMaxAggregateOutputType | null
+  }
+
+  export type SignoffRecordMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    entityType: $Enums.TollgateEntityType | null
+    entityId: string | null
+    tollgateId: string | null
+    tollgateType: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind | null
+    requiredRoleType: $Enums.PartyRoleType | null
+    actualPartyRoleEntryId: string | null
+    actualPersonName: string | null
+    actualPersonEmail: string | null
+    actualRoleTitle: string | null
+    organizationSide: $Enums.OrganizationSide | null
+    decisionStatus: $Enums.SignoffDecisionStatus | null
+    note: string | null
+    evidenceReference: string | null
+    createdBy: string | null
+    createdAt: Date | null
+  }
+
+  export type SignoffRecordMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    entityType: $Enums.TollgateEntityType | null
+    entityId: string | null
+    tollgateId: string | null
+    tollgateType: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind | null
+    requiredRoleType: $Enums.PartyRoleType | null
+    actualPartyRoleEntryId: string | null
+    actualPersonName: string | null
+    actualPersonEmail: string | null
+    actualRoleTitle: string | null
+    organizationSide: $Enums.OrganizationSide | null
+    decisionStatus: $Enums.SignoffDecisionStatus | null
+    note: string | null
+    evidenceReference: string | null
+    createdBy: string | null
+    createdAt: Date | null
+  }
+
+  export type SignoffRecordCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    entityType: number
+    entityId: number
+    tollgateId: number
+    tollgateType: number
+    decisionKind: number
+    requiredRoleType: number
+    actualPartyRoleEntryId: number
+    actualPersonName: number
+    actualPersonEmail: number
+    actualRoleTitle: number
+    organizationSide: number
+    decisionStatus: number
+    note: number
+    evidenceReference: number
+    createdBy: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type SignoffRecordMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    entityType?: true
+    entityId?: true
+    tollgateId?: true
+    tollgateType?: true
+    decisionKind?: true
+    requiredRoleType?: true
+    actualPartyRoleEntryId?: true
+    actualPersonName?: true
+    actualPersonEmail?: true
+    actualRoleTitle?: true
+    organizationSide?: true
+    decisionStatus?: true
+    note?: true
+    evidenceReference?: true
+    createdBy?: true
+    createdAt?: true
+  }
+
+  export type SignoffRecordMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    entityType?: true
+    entityId?: true
+    tollgateId?: true
+    tollgateType?: true
+    decisionKind?: true
+    requiredRoleType?: true
+    actualPartyRoleEntryId?: true
+    actualPersonName?: true
+    actualPersonEmail?: true
+    actualRoleTitle?: true
+    organizationSide?: true
+    decisionStatus?: true
+    note?: true
+    evidenceReference?: true
+    createdBy?: true
+    createdAt?: true
+  }
+
+  export type SignoffRecordCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    entityType?: true
+    entityId?: true
+    tollgateId?: true
+    tollgateType?: true
+    decisionKind?: true
+    requiredRoleType?: true
+    actualPartyRoleEntryId?: true
+    actualPersonName?: true
+    actualPersonEmail?: true
+    actualRoleTitle?: true
+    organizationSide?: true
+    decisionStatus?: true
+    note?: true
+    evidenceReference?: true
+    createdBy?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type SignoffRecordAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SignoffRecord to aggregate.
+     */
+    where?: SignoffRecordWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignoffRecords to fetch.
+     */
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SignoffRecordWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignoffRecords from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignoffRecords.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SignoffRecords
+    **/
+    _count?: true | SignoffRecordCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SignoffRecordMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SignoffRecordMaxAggregateInputType
+  }
+
+  export type GetSignoffRecordAggregateType<T extends SignoffRecordAggregateArgs> = {
+        [P in keyof T & keyof AggregateSignoffRecord]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSignoffRecord[P]>
+      : GetScalarType<T[P], AggregateSignoffRecord[P]>
+  }
+
+
+
+
+  export type SignoffRecordGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SignoffRecordWhereInput
+    orderBy?: SignoffRecordOrderByWithAggregationInput | SignoffRecordOrderByWithAggregationInput[]
+    by: SignoffRecordScalarFieldEnum[] | SignoffRecordScalarFieldEnum
+    having?: SignoffRecordScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SignoffRecordCountAggregateInputType | true
+    _min?: SignoffRecordMinAggregateInputType
+    _max?: SignoffRecordMaxAggregateInputType
+  }
+
+  export type SignoffRecordGroupByOutputType = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId: string | null
+    tollgateType: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note: string | null
+    evidenceReference: string | null
+    createdBy: string | null
+    createdAt: Date
+    _count: SignoffRecordCountAggregateOutputType | null
+    _min: SignoffRecordMinAggregateOutputType | null
+    _max: SignoffRecordMaxAggregateOutputType | null
+  }
+
+  type GetSignoffRecordGroupByPayload<T extends SignoffRecordGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SignoffRecordGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SignoffRecordGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SignoffRecordGroupByOutputType[P]>
+            : GetScalarType<T[P], SignoffRecordGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SignoffRecordSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    tollgateId?: boolean
+    tollgateType?: boolean
+    decisionKind?: boolean
+    requiredRoleType?: boolean
+    actualPartyRoleEntryId?: boolean
+    actualPersonName?: boolean
+    actualPersonEmail?: boolean
+    actualRoleTitle?: boolean
+    organizationSide?: boolean
+    decisionStatus?: boolean
+    note?: boolean
+    evidenceReference?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    tollgate?: boolean | SignoffRecord$tollgateArgs<ExtArgs>
+    actualPartyRoleEntry?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+    creator?: boolean | SignoffRecord$creatorArgs<ExtArgs>
+  }, ExtArgs["result"]["signoffRecord"]>
+
+  export type SignoffRecordSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    tollgateId?: boolean
+    tollgateType?: boolean
+    decisionKind?: boolean
+    requiredRoleType?: boolean
+    actualPartyRoleEntryId?: boolean
+    actualPersonName?: boolean
+    actualPersonEmail?: boolean
+    actualRoleTitle?: boolean
+    organizationSide?: boolean
+    decisionStatus?: boolean
+    note?: boolean
+    evidenceReference?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    tollgate?: boolean | SignoffRecord$tollgateArgs<ExtArgs>
+    actualPartyRoleEntry?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+    creator?: boolean | SignoffRecord$creatorArgs<ExtArgs>
+  }, ExtArgs["result"]["signoffRecord"]>
+
+  export type SignoffRecordSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    tollgateId?: boolean
+    tollgateType?: boolean
+    decisionKind?: boolean
+    requiredRoleType?: boolean
+    actualPartyRoleEntryId?: boolean
+    actualPersonName?: boolean
+    actualPersonEmail?: boolean
+    actualRoleTitle?: boolean
+    organizationSide?: boolean
+    decisionStatus?: boolean
+    note?: boolean
+    evidenceReference?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    tollgate?: boolean | SignoffRecord$tollgateArgs<ExtArgs>
+    actualPartyRoleEntry?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+    creator?: boolean | SignoffRecord$creatorArgs<ExtArgs>
+  }, ExtArgs["result"]["signoffRecord"]>
+
+  export type SignoffRecordSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    tollgateId?: boolean
+    tollgateType?: boolean
+    decisionKind?: boolean
+    requiredRoleType?: boolean
+    actualPartyRoleEntryId?: boolean
+    actualPersonName?: boolean
+    actualPersonEmail?: boolean
+    actualRoleTitle?: boolean
+    organizationSide?: boolean
+    decisionStatus?: boolean
+    note?: boolean
+    evidenceReference?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+  }
+
+  export type SignoffRecordOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "entityType" | "entityId" | "tollgateId" | "tollgateType" | "decisionKind" | "requiredRoleType" | "actualPartyRoleEntryId" | "actualPersonName" | "actualPersonEmail" | "actualRoleTitle" | "organizationSide" | "decisionStatus" | "note" | "evidenceReference" | "createdBy" | "createdAt", ExtArgs["result"]["signoffRecord"]>
+  export type SignoffRecordInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    tollgate?: boolean | SignoffRecord$tollgateArgs<ExtArgs>
+    actualPartyRoleEntry?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+    creator?: boolean | SignoffRecord$creatorArgs<ExtArgs>
+  }
+  export type SignoffRecordIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    tollgate?: boolean | SignoffRecord$tollgateArgs<ExtArgs>
+    actualPartyRoleEntry?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+    creator?: boolean | SignoffRecord$creatorArgs<ExtArgs>
+  }
+  export type SignoffRecordIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    tollgate?: boolean | SignoffRecord$tollgateArgs<ExtArgs>
+    actualPartyRoleEntry?: boolean | PartyRoleEntryDefaultArgs<ExtArgs>
+    creator?: boolean | SignoffRecord$creatorArgs<ExtArgs>
+  }
+
+  export type $SignoffRecordPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SignoffRecord"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      tollgate: Prisma.$TollgatePayload<ExtArgs> | null
+      actualPartyRoleEntry: Prisma.$PartyRoleEntryPayload<ExtArgs>
+      creator: Prisma.$AppUserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      entityType: $Enums.TollgateEntityType
+      entityId: string
+      tollgateId: string | null
+      tollgateType: $Enums.TollgateType | null
+      decisionKind: $Enums.SignoffDecisionKind
+      requiredRoleType: $Enums.PartyRoleType
+      actualPartyRoleEntryId: string
+      actualPersonName: string
+      actualPersonEmail: string
+      actualRoleTitle: string
+      organizationSide: $Enums.OrganizationSide
+      decisionStatus: $Enums.SignoffDecisionStatus
+      note: string | null
+      evidenceReference: string | null
+      createdBy: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["signoffRecord"]>
+    composites: {}
+  }
+
+  type SignoffRecordGetPayload<S extends boolean | null | undefined | SignoffRecordDefaultArgs> = $Result.GetResult<Prisma.$SignoffRecordPayload, S>
+
+  type SignoffRecordCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SignoffRecordFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SignoffRecordCountAggregateInputType | true
+    }
+
+  export interface SignoffRecordDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SignoffRecord'], meta: { name: 'SignoffRecord' } }
+    /**
+     * Find zero or one SignoffRecord that matches the filter.
+     * @param {SignoffRecordFindUniqueArgs} args - Arguments to find a SignoffRecord
+     * @example
+     * // Get one SignoffRecord
+     * const signoffRecord = await prisma.signoffRecord.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SignoffRecordFindUniqueArgs>(args: SelectSubset<T, SignoffRecordFindUniqueArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SignoffRecord that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SignoffRecordFindUniqueOrThrowArgs} args - Arguments to find a SignoffRecord
+     * @example
+     * // Get one SignoffRecord
+     * const signoffRecord = await prisma.signoffRecord.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SignoffRecordFindUniqueOrThrowArgs>(args: SelectSubset<T, SignoffRecordFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SignoffRecord that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignoffRecordFindFirstArgs} args - Arguments to find a SignoffRecord
+     * @example
+     * // Get one SignoffRecord
+     * const signoffRecord = await prisma.signoffRecord.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SignoffRecordFindFirstArgs>(args?: SelectSubset<T, SignoffRecordFindFirstArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SignoffRecord that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignoffRecordFindFirstOrThrowArgs} args - Arguments to find a SignoffRecord
+     * @example
+     * // Get one SignoffRecord
+     * const signoffRecord = await prisma.signoffRecord.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SignoffRecordFindFirstOrThrowArgs>(args?: SelectSubset<T, SignoffRecordFindFirstOrThrowArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SignoffRecords that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignoffRecordFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SignoffRecords
+     * const signoffRecords = await prisma.signoffRecord.findMany()
+     * 
+     * // Get first 10 SignoffRecords
+     * const signoffRecords = await prisma.signoffRecord.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const signoffRecordWithIdOnly = await prisma.signoffRecord.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SignoffRecordFindManyArgs>(args?: SelectSubset<T, SignoffRecordFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SignoffRecord.
+     * @param {SignoffRecordCreateArgs} args - Arguments to create a SignoffRecord.
+     * @example
+     * // Create one SignoffRecord
+     * const SignoffRecord = await prisma.signoffRecord.create({
+     *   data: {
+     *     // ... data to create a SignoffRecord
+     *   }
+     * })
+     * 
+     */
+    create<T extends SignoffRecordCreateArgs>(args: SelectSubset<T, SignoffRecordCreateArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SignoffRecords.
+     * @param {SignoffRecordCreateManyArgs} args - Arguments to create many SignoffRecords.
+     * @example
+     * // Create many SignoffRecords
+     * const signoffRecord = await prisma.signoffRecord.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SignoffRecordCreateManyArgs>(args?: SelectSubset<T, SignoffRecordCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SignoffRecords and returns the data saved in the database.
+     * @param {SignoffRecordCreateManyAndReturnArgs} args - Arguments to create many SignoffRecords.
+     * @example
+     * // Create many SignoffRecords
+     * const signoffRecord = await prisma.signoffRecord.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SignoffRecords and only return the `id`
+     * const signoffRecordWithIdOnly = await prisma.signoffRecord.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SignoffRecordCreateManyAndReturnArgs>(args?: SelectSubset<T, SignoffRecordCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SignoffRecord.
+     * @param {SignoffRecordDeleteArgs} args - Arguments to delete one SignoffRecord.
+     * @example
+     * // Delete one SignoffRecord
+     * const SignoffRecord = await prisma.signoffRecord.delete({
+     *   where: {
+     *     // ... filter to delete one SignoffRecord
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SignoffRecordDeleteArgs>(args: SelectSubset<T, SignoffRecordDeleteArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SignoffRecord.
+     * @param {SignoffRecordUpdateArgs} args - Arguments to update one SignoffRecord.
+     * @example
+     * // Update one SignoffRecord
+     * const signoffRecord = await prisma.signoffRecord.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SignoffRecordUpdateArgs>(args: SelectSubset<T, SignoffRecordUpdateArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SignoffRecords.
+     * @param {SignoffRecordDeleteManyArgs} args - Arguments to filter SignoffRecords to delete.
+     * @example
+     * // Delete a few SignoffRecords
+     * const { count } = await prisma.signoffRecord.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SignoffRecordDeleteManyArgs>(args?: SelectSubset<T, SignoffRecordDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SignoffRecords.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignoffRecordUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SignoffRecords
+     * const signoffRecord = await prisma.signoffRecord.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SignoffRecordUpdateManyArgs>(args: SelectSubset<T, SignoffRecordUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SignoffRecords and returns the data updated in the database.
+     * @param {SignoffRecordUpdateManyAndReturnArgs} args - Arguments to update many SignoffRecords.
+     * @example
+     * // Update many SignoffRecords
+     * const signoffRecord = await prisma.signoffRecord.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SignoffRecords and only return the `id`
+     * const signoffRecordWithIdOnly = await prisma.signoffRecord.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SignoffRecordUpdateManyAndReturnArgs>(args: SelectSubset<T, SignoffRecordUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SignoffRecord.
+     * @param {SignoffRecordUpsertArgs} args - Arguments to update or create a SignoffRecord.
+     * @example
+     * // Update or create a SignoffRecord
+     * const signoffRecord = await prisma.signoffRecord.upsert({
+     *   create: {
+     *     // ... data to create a SignoffRecord
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SignoffRecord we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SignoffRecordUpsertArgs>(args: SelectSubset<T, SignoffRecordUpsertArgs<ExtArgs>>): Prisma__SignoffRecordClient<$Result.GetResult<Prisma.$SignoffRecordPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SignoffRecords.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignoffRecordCountArgs} args - Arguments to filter SignoffRecords to count.
+     * @example
+     * // Count the number of SignoffRecords
+     * const count = await prisma.signoffRecord.count({
+     *   where: {
+     *     // ... the filter for the SignoffRecords we want to count
+     *   }
+     * })
+    **/
+    count<T extends SignoffRecordCountArgs>(
+      args?: Subset<T, SignoffRecordCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SignoffRecordCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SignoffRecord.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignoffRecordAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SignoffRecordAggregateArgs>(args: Subset<T, SignoffRecordAggregateArgs>): Prisma.PrismaPromise<GetSignoffRecordAggregateType<T>>
+
+    /**
+     * Group by SignoffRecord.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SignoffRecordGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SignoffRecordGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SignoffRecordGroupByArgs['orderBy'] }
+        : { orderBy?: SignoffRecordGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SignoffRecordGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSignoffRecordGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SignoffRecord model
+   */
+  readonly fields: SignoffRecordFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SignoffRecord.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SignoffRecordClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    tollgate<T extends SignoffRecord$tollgateArgs<ExtArgs> = {}>(args?: Subset<T, SignoffRecord$tollgateArgs<ExtArgs>>): Prisma__TollgateClient<$Result.GetResult<Prisma.$TollgatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    actualPartyRoleEntry<T extends PartyRoleEntryDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PartyRoleEntryDefaultArgs<ExtArgs>>): Prisma__PartyRoleEntryClient<$Result.GetResult<Prisma.$PartyRoleEntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    creator<T extends SignoffRecord$creatorArgs<ExtArgs> = {}>(args?: Subset<T, SignoffRecord$creatorArgs<ExtArgs>>): Prisma__AppUserClient<$Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SignoffRecord model
+   */
+  interface SignoffRecordFieldRefs {
+    readonly id: FieldRef<"SignoffRecord", 'String'>
+    readonly organizationId: FieldRef<"SignoffRecord", 'String'>
+    readonly entityType: FieldRef<"SignoffRecord", 'TollgateEntityType'>
+    readonly entityId: FieldRef<"SignoffRecord", 'String'>
+    readonly tollgateId: FieldRef<"SignoffRecord", 'String'>
+    readonly tollgateType: FieldRef<"SignoffRecord", 'TollgateType'>
+    readonly decisionKind: FieldRef<"SignoffRecord", 'SignoffDecisionKind'>
+    readonly requiredRoleType: FieldRef<"SignoffRecord", 'PartyRoleType'>
+    readonly actualPartyRoleEntryId: FieldRef<"SignoffRecord", 'String'>
+    readonly actualPersonName: FieldRef<"SignoffRecord", 'String'>
+    readonly actualPersonEmail: FieldRef<"SignoffRecord", 'String'>
+    readonly actualRoleTitle: FieldRef<"SignoffRecord", 'String'>
+    readonly organizationSide: FieldRef<"SignoffRecord", 'OrganizationSide'>
+    readonly decisionStatus: FieldRef<"SignoffRecord", 'SignoffDecisionStatus'>
+    readonly note: FieldRef<"SignoffRecord", 'String'>
+    readonly evidenceReference: FieldRef<"SignoffRecord", 'String'>
+    readonly createdBy: FieldRef<"SignoffRecord", 'String'>
+    readonly createdAt: FieldRef<"SignoffRecord", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SignoffRecord findUnique
+   */
+  export type SignoffRecordFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * Filter, which SignoffRecord to fetch.
+     */
+    where: SignoffRecordWhereUniqueInput
+  }
+
+  /**
+   * SignoffRecord findUniqueOrThrow
+   */
+  export type SignoffRecordFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * Filter, which SignoffRecord to fetch.
+     */
+    where: SignoffRecordWhereUniqueInput
+  }
+
+  /**
+   * SignoffRecord findFirst
+   */
+  export type SignoffRecordFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * Filter, which SignoffRecord to fetch.
+     */
+    where?: SignoffRecordWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignoffRecords to fetch.
+     */
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SignoffRecords.
+     */
+    cursor?: SignoffRecordWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignoffRecords from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignoffRecords.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SignoffRecords.
+     */
+    distinct?: SignoffRecordScalarFieldEnum | SignoffRecordScalarFieldEnum[]
+  }
+
+  /**
+   * SignoffRecord findFirstOrThrow
+   */
+  export type SignoffRecordFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * Filter, which SignoffRecord to fetch.
+     */
+    where?: SignoffRecordWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignoffRecords to fetch.
+     */
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SignoffRecords.
+     */
+    cursor?: SignoffRecordWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignoffRecords from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignoffRecords.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SignoffRecords.
+     */
+    distinct?: SignoffRecordScalarFieldEnum | SignoffRecordScalarFieldEnum[]
+  }
+
+  /**
+   * SignoffRecord findMany
+   */
+  export type SignoffRecordFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * Filter, which SignoffRecords to fetch.
+     */
+    where?: SignoffRecordWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SignoffRecords to fetch.
+     */
+    orderBy?: SignoffRecordOrderByWithRelationInput | SignoffRecordOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SignoffRecords.
+     */
+    cursor?: SignoffRecordWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SignoffRecords from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SignoffRecords.
+     */
+    skip?: number
+    distinct?: SignoffRecordScalarFieldEnum | SignoffRecordScalarFieldEnum[]
+  }
+
+  /**
+   * SignoffRecord create
+   */
+  export type SignoffRecordCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SignoffRecord.
+     */
+    data: XOR<SignoffRecordCreateInput, SignoffRecordUncheckedCreateInput>
+  }
+
+  /**
+   * SignoffRecord createMany
+   */
+  export type SignoffRecordCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SignoffRecords.
+     */
+    data: SignoffRecordCreateManyInput | SignoffRecordCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SignoffRecord createManyAndReturn
+   */
+  export type SignoffRecordCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * The data used to create many SignoffRecords.
+     */
+    data: SignoffRecordCreateManyInput | SignoffRecordCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SignoffRecord update
+   */
+  export type SignoffRecordUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SignoffRecord.
+     */
+    data: XOR<SignoffRecordUpdateInput, SignoffRecordUncheckedUpdateInput>
+    /**
+     * Choose, which SignoffRecord to update.
+     */
+    where: SignoffRecordWhereUniqueInput
+  }
+
+  /**
+   * SignoffRecord updateMany
+   */
+  export type SignoffRecordUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SignoffRecords.
+     */
+    data: XOR<SignoffRecordUpdateManyMutationInput, SignoffRecordUncheckedUpdateManyInput>
+    /**
+     * Filter which SignoffRecords to update
+     */
+    where?: SignoffRecordWhereInput
+    /**
+     * Limit how many SignoffRecords to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SignoffRecord updateManyAndReturn
+   */
+  export type SignoffRecordUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * The data used to update SignoffRecords.
+     */
+    data: XOR<SignoffRecordUpdateManyMutationInput, SignoffRecordUncheckedUpdateManyInput>
+    /**
+     * Filter which SignoffRecords to update
+     */
+    where?: SignoffRecordWhereInput
+    /**
+     * Limit how many SignoffRecords to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SignoffRecord upsert
+   */
+  export type SignoffRecordUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SignoffRecord to update in case it exists.
+     */
+    where: SignoffRecordWhereUniqueInput
+    /**
+     * In case the SignoffRecord found by the `where` argument doesn't exist, create a new SignoffRecord with this data.
+     */
+    create: XOR<SignoffRecordCreateInput, SignoffRecordUncheckedCreateInput>
+    /**
+     * In case the SignoffRecord was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SignoffRecordUpdateInput, SignoffRecordUncheckedUpdateInput>
+  }
+
+  /**
+   * SignoffRecord delete
+   */
+  export type SignoffRecordDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
+    /**
+     * Filter which SignoffRecord to delete.
+     */
+    where: SignoffRecordWhereUniqueInput
+  }
+
+  /**
+   * SignoffRecord deleteMany
+   */
+  export type SignoffRecordDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SignoffRecords to delete
+     */
+    where?: SignoffRecordWhereInput
+    /**
+     * Limit how many SignoffRecords to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SignoffRecord.tollgate
+   */
+  export type SignoffRecord$tollgateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tollgate
+     */
+    select?: TollgateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tollgate
+     */
+    omit?: TollgateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TollgateInclude<ExtArgs> | null
+    where?: TollgateWhereInput
+  }
+
+  /**
+   * SignoffRecord.creator
+   */
+  export type SignoffRecord$creatorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppUser
+     */
+    select?: AppUserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppUser
+     */
+    omit?: AppUserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AppUserInclude<ExtArgs> | null
+    where?: AppUserWhereInput
+  }
+
+  /**
+   * SignoffRecord without action
+   */
+  export type SignoffRecordDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SignoffRecord
+     */
+    select?: SignoffRecordSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SignoffRecord
+     */
+    omit?: SignoffRecordOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SignoffRecordInclude<ExtArgs> | null
   }
 
 
@@ -21613,6 +23193,30 @@ export namespace Prisma {
   export type TollgateScalarFieldEnum = (typeof TollgateScalarFieldEnum)[keyof typeof TollgateScalarFieldEnum]
 
 
+  export const SignoffRecordScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    entityType: 'entityType',
+    entityId: 'entityId',
+    tollgateId: 'tollgateId',
+    tollgateType: 'tollgateType',
+    decisionKind: 'decisionKind',
+    requiredRoleType: 'requiredRoleType',
+    actualPartyRoleEntryId: 'actualPartyRoleEntryId',
+    actualPersonName: 'actualPersonName',
+    actualPersonEmail: 'actualPersonEmail',
+    actualRoleTitle: 'actualRoleTitle',
+    organizationSide: 'organizationSide',
+    decisionStatus: 'decisionStatus',
+    note: 'note',
+    evidenceReference: 'evidenceReference',
+    createdBy: 'createdBy',
+    createdAt: 'createdAt'
+  };
+
+  export type SignoffRecordScalarFieldEnum = (typeof SignoffRecordScalarFieldEnum)[keyof typeof SignoffRecordScalarFieldEnum]
+
+
   export const ActivityEventScalarFieldEnum: {
     id: 'id',
     organizationId: 'organizationId',
@@ -22056,6 +23660,34 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'SignoffDecisionKind'
+   */
+  export type EnumSignoffDecisionKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SignoffDecisionKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'SignoffDecisionKind[]'
+   */
+  export type ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SignoffDecisionKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SignoffDecisionStatus'
+   */
+  export type EnumSignoffDecisionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SignoffDecisionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'SignoffDecisionStatus[]'
+   */
+  export type ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SignoffDecisionStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'ActivityEntityType'
    */
   export type EnumActivityEntityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityEntityType'>
@@ -22226,6 +23858,7 @@ export namespace Prisma {
     epics?: EpicListRelationFilter
     stories?: StoryListRelationFilter
     tollgates?: TollgateListRelationFilter
+    signoffRecords?: SignoffRecordListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
     artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
@@ -22247,6 +23880,7 @@ export namespace Prisma {
     epics?: EpicOrderByRelationAggregateInput
     stories?: StoryOrderByRelationAggregateInput
     tollgates?: TollgateOrderByRelationAggregateInput
+    signoffRecords?: SignoffRecordOrderByRelationAggregateInput
     activityEvents?: ActivityEventOrderByRelationAggregateInput
     artifactIntakeSessions?: ArtifactIntakeSessionOrderByRelationAggregateInput
     artifactIntakeFiles?: ArtifactIntakeFileOrderByRelationAggregateInput
@@ -22271,6 +23905,7 @@ export namespace Prisma {
     epics?: EpicListRelationFilter
     stories?: StoryListRelationFilter
     tollgates?: TollgateListRelationFilter
+    signoffRecords?: SignoffRecordListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
     artifactIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     artifactIntakeFiles?: ArtifactIntakeFileListRelationFilter
@@ -22315,6 +23950,7 @@ export namespace Prisma {
     memberships?: MembershipListRelationFilter
     ownedOutcomes?: OutcomeListRelationFilter
     tollgateDecisions?: TollgateListRelationFilter
+    createdSignoffRecords?: SignoffRecordListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
     createdIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     uploadedIntakeFiles?: ArtifactIntakeFileListRelationFilter
@@ -22329,6 +23965,7 @@ export namespace Prisma {
     memberships?: MembershipOrderByRelationAggregateInput
     ownedOutcomes?: OutcomeOrderByRelationAggregateInput
     tollgateDecisions?: TollgateOrderByRelationAggregateInput
+    createdSignoffRecords?: SignoffRecordOrderByRelationAggregateInput
     activityEvents?: ActivityEventOrderByRelationAggregateInput
     createdIntakeSessions?: ArtifactIntakeSessionOrderByRelationAggregateInput
     uploadedIntakeFiles?: ArtifactIntakeFileOrderByRelationAggregateInput
@@ -22346,6 +23983,7 @@ export namespace Prisma {
     memberships?: MembershipListRelationFilter
     ownedOutcomes?: OutcomeListRelationFilter
     tollgateDecisions?: TollgateListRelationFilter
+    createdSignoffRecords?: SignoffRecordListRelationFilter
     activityEvents?: ActivityEventListRelationFilter
     createdIntakeSessions?: ArtifactIntakeSessionListRelationFilter
     uploadedIntakeFiles?: ArtifactIntakeFileListRelationFilter
@@ -22456,6 +24094,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     supervisingAgents?: AgentRegistryEntryListRelationFilter
+    signoffRecords?: SignoffRecordListRelationFilter
   }
 
   export type PartyRoleEntryOrderByWithRelationInput = {
@@ -22474,6 +24113,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
     supervisingAgents?: AgentRegistryEntryOrderByRelationAggregateInput
+    signoffRecords?: SignoffRecordOrderByRelationAggregateInput
   }
 
   export type PartyRoleEntryWhereUniqueInput = Prisma.AtLeast<{
@@ -22495,6 +24135,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PartyRoleEntry"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     supervisingAgents?: AgentRegistryEntryListRelationFilter
+    signoffRecords?: SignoffRecordListRelationFilter
   }, "id">
 
   export type PartyRoleEntryOrderByWithAggregationInput = {
@@ -23250,6 +24891,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Tollgate"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     decisionActor?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+    signoffRecords?: SignoffRecordListRelationFilter
   }
 
   export type TollgateOrderByWithRelationInput = {
@@ -23268,6 +24910,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     organization?: OrganizationOrderByWithRelationInput
     decisionActor?: AppUserOrderByWithRelationInput
+    signoffRecords?: SignoffRecordOrderByRelationAggregateInput
   }
 
   export type TollgateWhereUniqueInput = Prisma.AtLeast<{
@@ -23290,6 +24933,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Tollgate"> | Date | string
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     decisionActor?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+    signoffRecords?: SignoffRecordListRelationFilter
   }, "id" | "organizationId_entityType_entityId_tollgateType">
 
   export type TollgateOrderByWithAggregationInput = {
@@ -23328,6 +24972,135 @@ export namespace Prisma {
     comments?: StringNullableWithAggregatesFilter<"Tollgate"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Tollgate"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Tollgate"> | Date | string
+  }
+
+  export type SignoffRecordWhereInput = {
+    AND?: SignoffRecordWhereInput | SignoffRecordWhereInput[]
+    OR?: SignoffRecordWhereInput[]
+    NOT?: SignoffRecordWhereInput | SignoffRecordWhereInput[]
+    id?: StringFilter<"SignoffRecord"> | string
+    organizationId?: StringFilter<"SignoffRecord"> | string
+    entityType?: EnumTollgateEntityTypeFilter<"SignoffRecord"> | $Enums.TollgateEntityType
+    entityId?: StringFilter<"SignoffRecord"> | string
+    tollgateId?: StringNullableFilter<"SignoffRecord"> | string | null
+    tollgateType?: EnumTollgateTypeNullableFilter<"SignoffRecord"> | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFilter<"SignoffRecord"> | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFilter<"SignoffRecord"> | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFilter<"SignoffRecord"> | string
+    actualPersonName?: StringFilter<"SignoffRecord"> | string
+    actualPersonEmail?: StringFilter<"SignoffRecord"> | string
+    actualRoleTitle?: StringFilter<"SignoffRecord"> | string
+    organizationSide?: EnumOrganizationSideFilter<"SignoffRecord"> | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFilter<"SignoffRecord"> | $Enums.SignoffDecisionStatus
+    note?: StringNullableFilter<"SignoffRecord"> | string | null
+    evidenceReference?: StringNullableFilter<"SignoffRecord"> | string | null
+    createdBy?: StringNullableFilter<"SignoffRecord"> | string | null
+    createdAt?: DateTimeFilter<"SignoffRecord"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    tollgate?: XOR<TollgateNullableScalarRelationFilter, TollgateWhereInput> | null
+    actualPartyRoleEntry?: XOR<PartyRoleEntryScalarRelationFilter, PartyRoleEntryWhereInput>
+    creator?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+  }
+
+  export type SignoffRecordOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    tollgateId?: SortOrderInput | SortOrder
+    tollgateType?: SortOrderInput | SortOrder
+    decisionKind?: SortOrder
+    requiredRoleType?: SortOrder
+    actualPartyRoleEntryId?: SortOrder
+    actualPersonName?: SortOrder
+    actualPersonEmail?: SortOrder
+    actualRoleTitle?: SortOrder
+    organizationSide?: SortOrder
+    decisionStatus?: SortOrder
+    note?: SortOrderInput | SortOrder
+    evidenceReference?: SortOrderInput | SortOrder
+    createdBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    tollgate?: TollgateOrderByWithRelationInput
+    actualPartyRoleEntry?: PartyRoleEntryOrderByWithRelationInput
+    creator?: AppUserOrderByWithRelationInput
+  }
+
+  export type SignoffRecordWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: SignoffRecordWhereInput | SignoffRecordWhereInput[]
+    OR?: SignoffRecordWhereInput[]
+    NOT?: SignoffRecordWhereInput | SignoffRecordWhereInput[]
+    organizationId?: StringFilter<"SignoffRecord"> | string
+    entityType?: EnumTollgateEntityTypeFilter<"SignoffRecord"> | $Enums.TollgateEntityType
+    entityId?: StringFilter<"SignoffRecord"> | string
+    tollgateId?: StringNullableFilter<"SignoffRecord"> | string | null
+    tollgateType?: EnumTollgateTypeNullableFilter<"SignoffRecord"> | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFilter<"SignoffRecord"> | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFilter<"SignoffRecord"> | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFilter<"SignoffRecord"> | string
+    actualPersonName?: StringFilter<"SignoffRecord"> | string
+    actualPersonEmail?: StringFilter<"SignoffRecord"> | string
+    actualRoleTitle?: StringFilter<"SignoffRecord"> | string
+    organizationSide?: EnumOrganizationSideFilter<"SignoffRecord"> | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFilter<"SignoffRecord"> | $Enums.SignoffDecisionStatus
+    note?: StringNullableFilter<"SignoffRecord"> | string | null
+    evidenceReference?: StringNullableFilter<"SignoffRecord"> | string | null
+    createdBy?: StringNullableFilter<"SignoffRecord"> | string | null
+    createdAt?: DateTimeFilter<"SignoffRecord"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    tollgate?: XOR<TollgateNullableScalarRelationFilter, TollgateWhereInput> | null
+    actualPartyRoleEntry?: XOR<PartyRoleEntryScalarRelationFilter, PartyRoleEntryWhereInput>
+    creator?: XOR<AppUserNullableScalarRelationFilter, AppUserWhereInput> | null
+  }, "id">
+
+  export type SignoffRecordOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    tollgateId?: SortOrderInput | SortOrder
+    tollgateType?: SortOrderInput | SortOrder
+    decisionKind?: SortOrder
+    requiredRoleType?: SortOrder
+    actualPartyRoleEntryId?: SortOrder
+    actualPersonName?: SortOrder
+    actualPersonEmail?: SortOrder
+    actualRoleTitle?: SortOrder
+    organizationSide?: SortOrder
+    decisionStatus?: SortOrder
+    note?: SortOrderInput | SortOrder
+    evidenceReference?: SortOrderInput | SortOrder
+    createdBy?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: SignoffRecordCountOrderByAggregateInput
+    _max?: SignoffRecordMaxOrderByAggregateInput
+    _min?: SignoffRecordMinOrderByAggregateInput
+  }
+
+  export type SignoffRecordScalarWhereWithAggregatesInput = {
+    AND?: SignoffRecordScalarWhereWithAggregatesInput | SignoffRecordScalarWhereWithAggregatesInput[]
+    OR?: SignoffRecordScalarWhereWithAggregatesInput[]
+    NOT?: SignoffRecordScalarWhereWithAggregatesInput | SignoffRecordScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SignoffRecord"> | string
+    organizationId?: StringWithAggregatesFilter<"SignoffRecord"> | string
+    entityType?: EnumTollgateEntityTypeWithAggregatesFilter<"SignoffRecord"> | $Enums.TollgateEntityType
+    entityId?: StringWithAggregatesFilter<"SignoffRecord"> | string
+    tollgateId?: StringNullableWithAggregatesFilter<"SignoffRecord"> | string | null
+    tollgateType?: EnumTollgateTypeNullableWithAggregatesFilter<"SignoffRecord"> | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindWithAggregatesFilter<"SignoffRecord"> | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeWithAggregatesFilter<"SignoffRecord"> | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringWithAggregatesFilter<"SignoffRecord"> | string
+    actualPersonName?: StringWithAggregatesFilter<"SignoffRecord"> | string
+    actualPersonEmail?: StringWithAggregatesFilter<"SignoffRecord"> | string
+    actualRoleTitle?: StringWithAggregatesFilter<"SignoffRecord"> | string
+    organizationSide?: EnumOrganizationSideWithAggregatesFilter<"SignoffRecord"> | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusWithAggregatesFilter<"SignoffRecord"> | $Enums.SignoffDecisionStatus
+    note?: StringNullableWithAggregatesFilter<"SignoffRecord"> | string | null
+    evidenceReference?: StringNullableWithAggregatesFilter<"SignoffRecord"> | string | null
+    createdBy?: StringNullableWithAggregatesFilter<"SignoffRecord"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SignoffRecord"> | Date | string
   }
 
   export type ActivityEventWhereInput = {
@@ -23810,6 +25583,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -23831,6 +25605,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -23852,6 +25627,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -23873,6 +25649,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -23916,6 +25693,7 @@ export namespace Prisma {
     memberships?: MembershipCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
@@ -23930,6 +25708,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
@@ -23944,6 +25723,7 @@ export namespace Prisma {
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
@@ -23958,6 +25738,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
@@ -24063,6 +25844,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutPartyRoleEntriesInput
     supervisingAgents?: AgentRegistryEntryCreateNestedManyWithoutSupervisingPartyRoleInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutActualPartyRoleEntryInput
   }
 
   export type PartyRoleEntryUncheckedCreateInput = {
@@ -24080,6 +25862,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisingAgents?: AgentRegistryEntryUncheckedCreateNestedManyWithoutSupervisingPartyRoleInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutActualPartyRoleEntryInput
   }
 
   export type PartyRoleEntryUpdateInput = {
@@ -24097,6 +25880,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutPartyRoleEntriesNestedInput
     supervisingAgents?: AgentRegistryEntryUpdateManyWithoutSupervisingPartyRoleNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutActualPartyRoleEntryNestedInput
   }
 
   export type PartyRoleEntryUncheckedUpdateInput = {
@@ -24114,6 +25898,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisingAgents?: AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutActualPartyRoleEntryNestedInput
   }
 
   export type PartyRoleEntryCreateManyInput = {
@@ -24983,6 +26768,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutTollgatesInput
     decisionActor?: AppUserCreateNestedOneWithoutTollgateDecisionsInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutTollgateInput
   }
 
   export type TollgateUncheckedCreateInput = {
@@ -24999,6 +26785,7 @@ export namespace Prisma {
     comments?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutTollgateInput
   }
 
   export type TollgateUpdateInput = {
@@ -25015,6 +26802,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutTollgatesNestedInput
     decisionActor?: AppUserUpdateOneWithoutTollgateDecisionsNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutTollgateNestedInput
   }
 
   export type TollgateUncheckedUpdateInput = {
@@ -25031,6 +26819,7 @@ export namespace Prisma {
     comments?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutTollgateNestedInput
   }
 
   export type TollgateCreateManyInput = {
@@ -25077,6 +26866,149 @@ export namespace Prisma {
     comments?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordCreateInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutSignoffRecordsInput
+    tollgate?: TollgateCreateNestedOneWithoutSignoffRecordsInput
+    actualPartyRoleEntry: PartyRoleEntryCreateNestedOneWithoutSignoffRecordsInput
+    creator?: AppUserCreateNestedOneWithoutCreatedSignoffRecordsInput
+  }
+
+  export type SignoffRecordUncheckedCreateInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignoffRecordUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutSignoffRecordsNestedInput
+    tollgate?: TollgateUpdateOneWithoutSignoffRecordsNestedInput
+    actualPartyRoleEntry?: PartyRoleEntryUpdateOneRequiredWithoutSignoffRecordsNestedInput
+    creator?: AppUserUpdateOneWithoutCreatedSignoffRecordsNestedInput
+  }
+
+  export type SignoffRecordUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordCreateManyInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignoffRecordUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ActivityEventCreateInput = {
@@ -25669,6 +27601,12 @@ export namespace Prisma {
     none?: TollgateWhereInput
   }
 
+  export type SignoffRecordListRelationFilter = {
+    every?: SignoffRecordWhereInput
+    some?: SignoffRecordWhereInput
+    none?: SignoffRecordWhereInput
+  }
+
   export type ActivityEventListRelationFilter = {
     every?: ActivityEventWhereInput
     some?: ActivityEventWhereInput
@@ -25734,6 +27672,10 @@ export namespace Prisma {
   }
 
   export type TollgateOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SignoffRecordOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -26807,6 +28749,125 @@ export namespace Prisma {
     _max?: NestedEnumTollgateStatusFilter<$PrismaModel>
   }
 
+  export type EnumTollgateTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.TollgateType | EnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumTollgateTypeNullableFilter<$PrismaModel> | $Enums.TollgateType | null
+  }
+
+  export type EnumSignoffDecisionKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionKind | EnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionKindFilter<$PrismaModel> | $Enums.SignoffDecisionKind
+  }
+
+  export type EnumSignoffDecisionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionStatus | EnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionStatusFilter<$PrismaModel> | $Enums.SignoffDecisionStatus
+  }
+
+  export type TollgateNullableScalarRelationFilter = {
+    is?: TollgateWhereInput | null
+    isNot?: TollgateWhereInput | null
+  }
+
+  export type SignoffRecordCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    tollgateId?: SortOrder
+    tollgateType?: SortOrder
+    decisionKind?: SortOrder
+    requiredRoleType?: SortOrder
+    actualPartyRoleEntryId?: SortOrder
+    actualPersonName?: SortOrder
+    actualPersonEmail?: SortOrder
+    actualRoleTitle?: SortOrder
+    organizationSide?: SortOrder
+    decisionStatus?: SortOrder
+    note?: SortOrder
+    evidenceReference?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SignoffRecordMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    tollgateId?: SortOrder
+    tollgateType?: SortOrder
+    decisionKind?: SortOrder
+    requiredRoleType?: SortOrder
+    actualPartyRoleEntryId?: SortOrder
+    actualPersonName?: SortOrder
+    actualPersonEmail?: SortOrder
+    actualRoleTitle?: SortOrder
+    organizationSide?: SortOrder
+    decisionStatus?: SortOrder
+    note?: SortOrder
+    evidenceReference?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SignoffRecordMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    tollgateId?: SortOrder
+    tollgateType?: SortOrder
+    decisionKind?: SortOrder
+    requiredRoleType?: SortOrder
+    actualPartyRoleEntryId?: SortOrder
+    actualPersonName?: SortOrder
+    actualPersonEmail?: SortOrder
+    actualRoleTitle?: SortOrder
+    organizationSide?: SortOrder
+    decisionStatus?: SortOrder
+    note?: SortOrder
+    evidenceReference?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumTollgateTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TollgateType | EnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumTollgateTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.TollgateType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumTollgateTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumTollgateTypeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumSignoffDecisionKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionKind | EnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionKindWithAggregatesFilter<$PrismaModel> | $Enums.SignoffDecisionKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSignoffDecisionKindFilter<$PrismaModel>
+    _max?: NestedEnumSignoffDecisionKindFilter<$PrismaModel>
+  }
+
+  export type EnumSignoffDecisionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionStatus | EnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionStatusWithAggregatesFilter<$PrismaModel> | $Enums.SignoffDecisionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSignoffDecisionStatusFilter<$PrismaModel>
+    _max?: NestedEnumSignoffDecisionStatusFilter<$PrismaModel>
+  }
+
   export type EnumActivityEntityTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.ActivityEntityType | EnumActivityEntityTypeFieldRefInput<$PrismaModel>
     in?: $Enums.ActivityEntityType[] | ListEnumActivityEntityTypeFieldRefInput<$PrismaModel>
@@ -27374,6 +29435,13 @@ export namespace Prisma {
     connect?: TollgateWhereUniqueInput | TollgateWhereUniqueInput[]
   }
 
+  export type SignoffRecordCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<SignoffRecordCreateWithoutOrganizationInput, SignoffRecordUncheckedCreateWithoutOrganizationInput> | SignoffRecordCreateWithoutOrganizationInput[] | SignoffRecordUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutOrganizationInput | SignoffRecordCreateOrConnectWithoutOrganizationInput[]
+    createMany?: SignoffRecordCreateManyOrganizationInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+  }
+
   export type ActivityEventCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<ActivityEventCreateWithoutOrganizationInput, ActivityEventUncheckedCreateWithoutOrganizationInput> | ActivityEventCreateWithoutOrganizationInput[] | ActivityEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: ActivityEventCreateOrConnectWithoutOrganizationInput | ActivityEventCreateOrConnectWithoutOrganizationInput[]
@@ -27463,6 +29531,13 @@ export namespace Prisma {
     connectOrCreate?: TollgateCreateOrConnectWithoutOrganizationInput | TollgateCreateOrConnectWithoutOrganizationInput[]
     createMany?: TollgateCreateManyOrganizationInputEnvelope
     connect?: TollgateWhereUniqueInput | TollgateWhereUniqueInput[]
+  }
+
+  export type SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<SignoffRecordCreateWithoutOrganizationInput, SignoffRecordUncheckedCreateWithoutOrganizationInput> | SignoffRecordCreateWithoutOrganizationInput[] | SignoffRecordUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutOrganizationInput | SignoffRecordCreateOrConnectWithoutOrganizationInput[]
+    createMany?: SignoffRecordCreateManyOrganizationInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
   }
 
   export type ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -27597,6 +29672,20 @@ export namespace Prisma {
     update?: TollgateUpdateWithWhereUniqueWithoutOrganizationInput | TollgateUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: TollgateUpdateManyWithWhereWithoutOrganizationInput | TollgateUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: TollgateScalarWhereInput | TollgateScalarWhereInput[]
+  }
+
+  export type SignoffRecordUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutOrganizationInput, SignoffRecordUncheckedCreateWithoutOrganizationInput> | SignoffRecordCreateWithoutOrganizationInput[] | SignoffRecordUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutOrganizationInput | SignoffRecordCreateOrConnectWithoutOrganizationInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutOrganizationInput | SignoffRecordUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: SignoffRecordCreateManyOrganizationInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutOrganizationInput | SignoffRecordUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutOrganizationInput | SignoffRecordUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
   }
 
   export type ActivityEventUpdateManyWithoutOrganizationNestedInput = {
@@ -27781,6 +29870,20 @@ export namespace Prisma {
     deleteMany?: TollgateScalarWhereInput | TollgateScalarWhereInput[]
   }
 
+  export type SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutOrganizationInput, SignoffRecordUncheckedCreateWithoutOrganizationInput> | SignoffRecordCreateWithoutOrganizationInput[] | SignoffRecordUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutOrganizationInput | SignoffRecordCreateOrConnectWithoutOrganizationInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutOrganizationInput | SignoffRecordUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: SignoffRecordCreateManyOrganizationInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutOrganizationInput | SignoffRecordUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutOrganizationInput | SignoffRecordUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
+  }
+
   export type ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<ActivityEventCreateWithoutOrganizationInput, ActivityEventUncheckedCreateWithoutOrganizationInput> | ActivityEventCreateWithoutOrganizationInput[] | ActivityEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: ActivityEventCreateOrConnectWithoutOrganizationInput | ActivityEventCreateOrConnectWithoutOrganizationInput[]
@@ -27914,6 +30017,13 @@ export namespace Prisma {
     connect?: TollgateWhereUniqueInput | TollgateWhereUniqueInput[]
   }
 
+  export type SignoffRecordCreateNestedManyWithoutCreatorInput = {
+    create?: XOR<SignoffRecordCreateWithoutCreatorInput, SignoffRecordUncheckedCreateWithoutCreatorInput> | SignoffRecordCreateWithoutCreatorInput[] | SignoffRecordUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutCreatorInput | SignoffRecordCreateOrConnectWithoutCreatorInput[]
+    createMany?: SignoffRecordCreateManyCreatorInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+  }
+
   export type ActivityEventCreateNestedManyWithoutActorInput = {
     create?: XOR<ActivityEventCreateWithoutActorInput, ActivityEventUncheckedCreateWithoutActorInput> | ActivityEventCreateWithoutActorInput[] | ActivityEventUncheckedCreateWithoutActorInput[]
     connectOrCreate?: ActivityEventCreateOrConnectWithoutActorInput | ActivityEventCreateOrConnectWithoutActorInput[]
@@ -27954,6 +30064,13 @@ export namespace Prisma {
     connectOrCreate?: TollgateCreateOrConnectWithoutDecisionActorInput | TollgateCreateOrConnectWithoutDecisionActorInput[]
     createMany?: TollgateCreateManyDecisionActorInputEnvelope
     connect?: TollgateWhereUniqueInput | TollgateWhereUniqueInput[]
+  }
+
+  export type SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput = {
+    create?: XOR<SignoffRecordCreateWithoutCreatorInput, SignoffRecordUncheckedCreateWithoutCreatorInput> | SignoffRecordCreateWithoutCreatorInput[] | SignoffRecordUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutCreatorInput | SignoffRecordCreateOrConnectWithoutCreatorInput[]
+    createMany?: SignoffRecordCreateManyCreatorInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
   }
 
   export type ActivityEventUncheckedCreateNestedManyWithoutActorInput = {
@@ -28021,6 +30138,20 @@ export namespace Prisma {
     update?: TollgateUpdateWithWhereUniqueWithoutDecisionActorInput | TollgateUpdateWithWhereUniqueWithoutDecisionActorInput[]
     updateMany?: TollgateUpdateManyWithWhereWithoutDecisionActorInput | TollgateUpdateManyWithWhereWithoutDecisionActorInput[]
     deleteMany?: TollgateScalarWhereInput | TollgateScalarWhereInput[]
+  }
+
+  export type SignoffRecordUpdateManyWithoutCreatorNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutCreatorInput, SignoffRecordUncheckedCreateWithoutCreatorInput> | SignoffRecordCreateWithoutCreatorInput[] | SignoffRecordUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutCreatorInput | SignoffRecordCreateOrConnectWithoutCreatorInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutCreatorInput | SignoffRecordUpsertWithWhereUniqueWithoutCreatorInput[]
+    createMany?: SignoffRecordCreateManyCreatorInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutCreatorInput | SignoffRecordUpdateWithWhereUniqueWithoutCreatorInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutCreatorInput | SignoffRecordUpdateManyWithWhereWithoutCreatorInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
   }
 
   export type ActivityEventUpdateManyWithoutActorNestedInput = {
@@ -28105,6 +30236,20 @@ export namespace Prisma {
     update?: TollgateUpdateWithWhereUniqueWithoutDecisionActorInput | TollgateUpdateWithWhereUniqueWithoutDecisionActorInput[]
     updateMany?: TollgateUpdateManyWithWhereWithoutDecisionActorInput | TollgateUpdateManyWithWhereWithoutDecisionActorInput[]
     deleteMany?: TollgateScalarWhereInput | TollgateScalarWhereInput[]
+  }
+
+  export type SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutCreatorInput, SignoffRecordUncheckedCreateWithoutCreatorInput> | SignoffRecordCreateWithoutCreatorInput[] | SignoffRecordUncheckedCreateWithoutCreatorInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutCreatorInput | SignoffRecordCreateOrConnectWithoutCreatorInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutCreatorInput | SignoffRecordUpsertWithWhereUniqueWithoutCreatorInput[]
+    createMany?: SignoffRecordCreateManyCreatorInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutCreatorInput | SignoffRecordUpdateWithWhereUniqueWithoutCreatorInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutCreatorInput | SignoffRecordUpdateManyWithWhereWithoutCreatorInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
   }
 
   export type ActivityEventUncheckedUpdateManyWithoutActorNestedInput = {
@@ -28194,11 +30339,25 @@ export namespace Prisma {
     connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
   }
 
+  export type SignoffRecordCreateNestedManyWithoutActualPartyRoleEntryInput = {
+    create?: XOR<SignoffRecordCreateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput> | SignoffRecordCreateWithoutActualPartyRoleEntryInput[] | SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput | SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput[]
+    createMany?: SignoffRecordCreateManyActualPartyRoleEntryInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+  }
+
   export type AgentRegistryEntryUncheckedCreateNestedManyWithoutSupervisingPartyRoleInput = {
     create?: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput> | AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput[] | AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput[]
     connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput | AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput[]
     createMany?: AgentRegistryEntryCreateManySupervisingPartyRoleInputEnvelope
     connect?: AgentRegistryEntryWhereUniqueInput | AgentRegistryEntryWhereUniqueInput[]
+  }
+
+  export type SignoffRecordUncheckedCreateNestedManyWithoutActualPartyRoleEntryInput = {
+    create?: XOR<SignoffRecordCreateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput> | SignoffRecordCreateWithoutActualPartyRoleEntryInput[] | SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput | SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput[]
+    createMany?: SignoffRecordCreateManyActualPartyRoleEntryInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
   }
 
   export type EnumOrganizationSideFieldUpdateOperationsInput = {
@@ -28235,6 +30394,20 @@ export namespace Prisma {
     deleteMany?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
   }
 
+  export type SignoffRecordUpdateManyWithoutActualPartyRoleEntryNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput> | SignoffRecordCreateWithoutActualPartyRoleEntryInput[] | SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput | SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutActualPartyRoleEntryInput | SignoffRecordUpsertWithWhereUniqueWithoutActualPartyRoleEntryInput[]
+    createMany?: SignoffRecordCreateManyActualPartyRoleEntryInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutActualPartyRoleEntryInput | SignoffRecordUpdateWithWhereUniqueWithoutActualPartyRoleEntryInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutActualPartyRoleEntryInput | SignoffRecordUpdateManyWithWhereWithoutActualPartyRoleEntryInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
+  }
+
   export type AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleNestedInput = {
     create?: XOR<AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput, AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput> | AgentRegistryEntryCreateWithoutSupervisingPartyRoleInput[] | AgentRegistryEntryUncheckedCreateWithoutSupervisingPartyRoleInput[]
     connectOrCreate?: AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput | AgentRegistryEntryCreateOrConnectWithoutSupervisingPartyRoleInput[]
@@ -28247,6 +30420,20 @@ export namespace Prisma {
     update?: AgentRegistryEntryUpdateWithWhereUniqueWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpdateWithWhereUniqueWithoutSupervisingPartyRoleInput[]
     updateMany?: AgentRegistryEntryUpdateManyWithWhereWithoutSupervisingPartyRoleInput | AgentRegistryEntryUpdateManyWithWhereWithoutSupervisingPartyRoleInput[]
     deleteMany?: AgentRegistryEntryScalarWhereInput | AgentRegistryEntryScalarWhereInput[]
+  }
+
+  export type SignoffRecordUncheckedUpdateManyWithoutActualPartyRoleEntryNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput> | SignoffRecordCreateWithoutActualPartyRoleEntryInput[] | SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput | SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutActualPartyRoleEntryInput | SignoffRecordUpsertWithWhereUniqueWithoutActualPartyRoleEntryInput[]
+    createMany?: SignoffRecordCreateManyActualPartyRoleEntryInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutActualPartyRoleEntryInput | SignoffRecordUpdateWithWhereUniqueWithoutActualPartyRoleEntryInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutActualPartyRoleEntryInput | SignoffRecordUpdateManyWithWhereWithoutActualPartyRoleEntryInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
   }
 
   export type AgentRegistryEntryCreateallowedArtifactTypesInput = {
@@ -28656,6 +30843,20 @@ export namespace Prisma {
     connect?: AppUserWhereUniqueInput
   }
 
+  export type SignoffRecordCreateNestedManyWithoutTollgateInput = {
+    create?: XOR<SignoffRecordCreateWithoutTollgateInput, SignoffRecordUncheckedCreateWithoutTollgateInput> | SignoffRecordCreateWithoutTollgateInput[] | SignoffRecordUncheckedCreateWithoutTollgateInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutTollgateInput | SignoffRecordCreateOrConnectWithoutTollgateInput[]
+    createMany?: SignoffRecordCreateManyTollgateInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+  }
+
+  export type SignoffRecordUncheckedCreateNestedManyWithoutTollgateInput = {
+    create?: XOR<SignoffRecordCreateWithoutTollgateInput, SignoffRecordUncheckedCreateWithoutTollgateInput> | SignoffRecordCreateWithoutTollgateInput[] | SignoffRecordUncheckedCreateWithoutTollgateInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutTollgateInput | SignoffRecordCreateOrConnectWithoutTollgateInput[]
+    createMany?: SignoffRecordCreateManyTollgateInputEnvelope
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+  }
+
   export type EnumTollgateEntityTypeFieldUpdateOperationsInput = {
     set?: $Enums.TollgateEntityType
   }
@@ -28694,6 +30895,106 @@ export namespace Prisma {
     delete?: AppUserWhereInput | boolean
     connect?: AppUserWhereUniqueInput
     update?: XOR<XOR<AppUserUpdateToOneWithWhereWithoutTollgateDecisionsInput, AppUserUpdateWithoutTollgateDecisionsInput>, AppUserUncheckedUpdateWithoutTollgateDecisionsInput>
+  }
+
+  export type SignoffRecordUpdateManyWithoutTollgateNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutTollgateInput, SignoffRecordUncheckedCreateWithoutTollgateInput> | SignoffRecordCreateWithoutTollgateInput[] | SignoffRecordUncheckedCreateWithoutTollgateInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutTollgateInput | SignoffRecordCreateOrConnectWithoutTollgateInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutTollgateInput | SignoffRecordUpsertWithWhereUniqueWithoutTollgateInput[]
+    createMany?: SignoffRecordCreateManyTollgateInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutTollgateInput | SignoffRecordUpdateWithWhereUniqueWithoutTollgateInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutTollgateInput | SignoffRecordUpdateManyWithWhereWithoutTollgateInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
+  }
+
+  export type SignoffRecordUncheckedUpdateManyWithoutTollgateNestedInput = {
+    create?: XOR<SignoffRecordCreateWithoutTollgateInput, SignoffRecordUncheckedCreateWithoutTollgateInput> | SignoffRecordCreateWithoutTollgateInput[] | SignoffRecordUncheckedCreateWithoutTollgateInput[]
+    connectOrCreate?: SignoffRecordCreateOrConnectWithoutTollgateInput | SignoffRecordCreateOrConnectWithoutTollgateInput[]
+    upsert?: SignoffRecordUpsertWithWhereUniqueWithoutTollgateInput | SignoffRecordUpsertWithWhereUniqueWithoutTollgateInput[]
+    createMany?: SignoffRecordCreateManyTollgateInputEnvelope
+    set?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    disconnect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    delete?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    connect?: SignoffRecordWhereUniqueInput | SignoffRecordWhereUniqueInput[]
+    update?: SignoffRecordUpdateWithWhereUniqueWithoutTollgateInput | SignoffRecordUpdateWithWhereUniqueWithoutTollgateInput[]
+    updateMany?: SignoffRecordUpdateManyWithWhereWithoutTollgateInput | SignoffRecordUpdateManyWithWhereWithoutTollgateInput[]
+    deleteMany?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutSignoffRecordsInput = {
+    create?: XOR<OrganizationCreateWithoutSignoffRecordsInput, OrganizationUncheckedCreateWithoutSignoffRecordsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSignoffRecordsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type TollgateCreateNestedOneWithoutSignoffRecordsInput = {
+    create?: XOR<TollgateCreateWithoutSignoffRecordsInput, TollgateUncheckedCreateWithoutSignoffRecordsInput>
+    connectOrCreate?: TollgateCreateOrConnectWithoutSignoffRecordsInput
+    connect?: TollgateWhereUniqueInput
+  }
+
+  export type PartyRoleEntryCreateNestedOneWithoutSignoffRecordsInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutSignoffRecordsInput, PartyRoleEntryUncheckedCreateWithoutSignoffRecordsInput>
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutSignoffRecordsInput
+    connect?: PartyRoleEntryWhereUniqueInput
+  }
+
+  export type AppUserCreateNestedOneWithoutCreatedSignoffRecordsInput = {
+    create?: XOR<AppUserCreateWithoutCreatedSignoffRecordsInput, AppUserUncheckedCreateWithoutCreatedSignoffRecordsInput>
+    connectOrCreate?: AppUserCreateOrConnectWithoutCreatedSignoffRecordsInput
+    connect?: AppUserWhereUniqueInput
+  }
+
+  export type NullableEnumTollgateTypeFieldUpdateOperationsInput = {
+    set?: $Enums.TollgateType | null
+  }
+
+  export type EnumSignoffDecisionKindFieldUpdateOperationsInput = {
+    set?: $Enums.SignoffDecisionKind
+  }
+
+  export type EnumSignoffDecisionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.SignoffDecisionStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutSignoffRecordsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutSignoffRecordsInput, OrganizationUncheckedCreateWithoutSignoffRecordsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSignoffRecordsInput
+    upsert?: OrganizationUpsertWithoutSignoffRecordsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutSignoffRecordsInput, OrganizationUpdateWithoutSignoffRecordsInput>, OrganizationUncheckedUpdateWithoutSignoffRecordsInput>
+  }
+
+  export type TollgateUpdateOneWithoutSignoffRecordsNestedInput = {
+    create?: XOR<TollgateCreateWithoutSignoffRecordsInput, TollgateUncheckedCreateWithoutSignoffRecordsInput>
+    connectOrCreate?: TollgateCreateOrConnectWithoutSignoffRecordsInput
+    upsert?: TollgateUpsertWithoutSignoffRecordsInput
+    disconnect?: TollgateWhereInput | boolean
+    delete?: TollgateWhereInput | boolean
+    connect?: TollgateWhereUniqueInput
+    update?: XOR<XOR<TollgateUpdateToOneWithWhereWithoutSignoffRecordsInput, TollgateUpdateWithoutSignoffRecordsInput>, TollgateUncheckedUpdateWithoutSignoffRecordsInput>
+  }
+
+  export type PartyRoleEntryUpdateOneRequiredWithoutSignoffRecordsNestedInput = {
+    create?: XOR<PartyRoleEntryCreateWithoutSignoffRecordsInput, PartyRoleEntryUncheckedCreateWithoutSignoffRecordsInput>
+    connectOrCreate?: PartyRoleEntryCreateOrConnectWithoutSignoffRecordsInput
+    upsert?: PartyRoleEntryUpsertWithoutSignoffRecordsInput
+    connect?: PartyRoleEntryWhereUniqueInput
+    update?: XOR<XOR<PartyRoleEntryUpdateToOneWithWhereWithoutSignoffRecordsInput, PartyRoleEntryUpdateWithoutSignoffRecordsInput>, PartyRoleEntryUncheckedUpdateWithoutSignoffRecordsInput>
+  }
+
+  export type AppUserUpdateOneWithoutCreatedSignoffRecordsNestedInput = {
+    create?: XOR<AppUserCreateWithoutCreatedSignoffRecordsInput, AppUserUncheckedCreateWithoutCreatedSignoffRecordsInput>
+    connectOrCreate?: AppUserCreateOrConnectWithoutCreatedSignoffRecordsInput
+    upsert?: AppUserUpsertWithoutCreatedSignoffRecordsInput
+    disconnect?: AppUserWhereInput | boolean
+    delete?: AppUserWhereInput | boolean
+    connect?: AppUserWhereUniqueInput
+    update?: XOR<XOR<AppUserUpdateToOneWithWhereWithoutCreatedSignoffRecordsInput, AppUserUpdateWithoutCreatedSignoffRecordsInput>, AppUserUncheckedUpdateWithoutCreatedSignoffRecordsInput>
   }
 
   export type OrganizationCreateNestedOneWithoutActivityEventsInput = {
@@ -29514,6 +31815,57 @@ export namespace Prisma {
     _max?: NestedEnumTollgateStatusFilter<$PrismaModel>
   }
 
+  export type NestedEnumTollgateTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.TollgateType | EnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumTollgateTypeNullableFilter<$PrismaModel> | $Enums.TollgateType | null
+  }
+
+  export type NestedEnumSignoffDecisionKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionKind | EnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionKindFilter<$PrismaModel> | $Enums.SignoffDecisionKind
+  }
+
+  export type NestedEnumSignoffDecisionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionStatus | EnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionStatusFilter<$PrismaModel> | $Enums.SignoffDecisionStatus
+  }
+
+  export type NestedEnumTollgateTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TollgateType | EnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.TollgateType[] | ListEnumTollgateTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumTollgateTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.TollgateType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumTollgateTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumTollgateTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSignoffDecisionKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionKind | EnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionKind[] | ListEnumSignoffDecisionKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionKindWithAggregatesFilter<$PrismaModel> | $Enums.SignoffDecisionKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSignoffDecisionKindFilter<$PrismaModel>
+    _max?: NestedEnumSignoffDecisionKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSignoffDecisionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SignoffDecisionStatus | EnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SignoffDecisionStatus[] | ListEnumSignoffDecisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSignoffDecisionStatusWithAggregatesFilter<$PrismaModel> | $Enums.SignoffDecisionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSignoffDecisionStatusFilter<$PrismaModel>
+    _max?: NestedEnumSignoffDecisionStatusFilter<$PrismaModel>
+  }
+
   export type NestedEnumActivityEntityTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.ActivityEntityType | EnumActivityEntityTypeFieldRefInput<$PrismaModel>
     in?: $Enums.ActivityEntityType[] | ListEnumActivityEntityTypeFieldRefInput<$PrismaModel>
@@ -29987,6 +32339,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     decisionActor?: AppUserCreateNestedOneWithoutTollgateDecisionsInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutTollgateInput
   }
 
   export type TollgateUncheckedCreateWithoutOrganizationInput = {
@@ -30002,6 +32355,7 @@ export namespace Prisma {
     comments?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutTollgateInput
   }
 
   export type TollgateCreateOrConnectWithoutOrganizationInput = {
@@ -30011,6 +32365,56 @@ export namespace Prisma {
 
   export type TollgateCreateManyOrganizationInputEnvelope = {
     data: TollgateCreateManyOrganizationInput | TollgateCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SignoffRecordCreateWithoutOrganizationInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdAt?: Date | string
+    tollgate?: TollgateCreateNestedOneWithoutSignoffRecordsInput
+    actualPartyRoleEntry: PartyRoleEntryCreateNestedOneWithoutSignoffRecordsInput
+    creator?: AppUserCreateNestedOneWithoutCreatedSignoffRecordsInput
+  }
+
+  export type SignoffRecordUncheckedCreateWithoutOrganizationInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignoffRecordCreateOrConnectWithoutOrganizationInput = {
+    where: SignoffRecordWhereUniqueInput
+    create: XOR<SignoffRecordCreateWithoutOrganizationInput, SignoffRecordUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type SignoffRecordCreateManyOrganizationInputEnvelope = {
+    data: SignoffRecordCreateManyOrganizationInput | SignoffRecordCreateManyOrganizationInput[]
     skipDuplicates?: boolean
   }
 
@@ -30218,6 +32622,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisingAgents?: AgentRegistryEntryCreateNestedManyWithoutSupervisingPartyRoleInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutActualPartyRoleEntryInput
   }
 
   export type PartyRoleEntryUncheckedCreateWithoutOrganizationInput = {
@@ -30234,6 +32639,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisingAgents?: AgentRegistryEntryUncheckedCreateNestedManyWithoutSupervisingPartyRoleInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutActualPartyRoleEntryInput
   }
 
   export type PartyRoleEntryCreateOrConnectWithoutOrganizationInput = {
@@ -30541,6 +32947,46 @@ export namespace Prisma {
     comments?: StringNullableFilter<"Tollgate"> | string | null
     createdAt?: DateTimeFilter<"Tollgate"> | Date | string
     updatedAt?: DateTimeFilter<"Tollgate"> | Date | string
+  }
+
+  export type SignoffRecordUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: SignoffRecordWhereUniqueInput
+    update: XOR<SignoffRecordUpdateWithoutOrganizationInput, SignoffRecordUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<SignoffRecordCreateWithoutOrganizationInput, SignoffRecordUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type SignoffRecordUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: SignoffRecordWhereUniqueInput
+    data: XOR<SignoffRecordUpdateWithoutOrganizationInput, SignoffRecordUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type SignoffRecordUpdateManyWithWhereWithoutOrganizationInput = {
+    where: SignoffRecordScalarWhereInput
+    data: XOR<SignoffRecordUpdateManyMutationInput, SignoffRecordUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type SignoffRecordScalarWhereInput = {
+    AND?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
+    OR?: SignoffRecordScalarWhereInput[]
+    NOT?: SignoffRecordScalarWhereInput | SignoffRecordScalarWhereInput[]
+    id?: StringFilter<"SignoffRecord"> | string
+    organizationId?: StringFilter<"SignoffRecord"> | string
+    entityType?: EnumTollgateEntityTypeFilter<"SignoffRecord"> | $Enums.TollgateEntityType
+    entityId?: StringFilter<"SignoffRecord"> | string
+    tollgateId?: StringNullableFilter<"SignoffRecord"> | string | null
+    tollgateType?: EnumTollgateTypeNullableFilter<"SignoffRecord"> | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFilter<"SignoffRecord"> | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFilter<"SignoffRecord"> | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFilter<"SignoffRecord"> | string
+    actualPersonName?: StringFilter<"SignoffRecord"> | string
+    actualPersonEmail?: StringFilter<"SignoffRecord"> | string
+    actualRoleTitle?: StringFilter<"SignoffRecord"> | string
+    organizationSide?: EnumOrganizationSideFilter<"SignoffRecord"> | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFilter<"SignoffRecord"> | $Enums.SignoffDecisionStatus
+    note?: StringNullableFilter<"SignoffRecord"> | string | null
+    evidenceReference?: StringNullableFilter<"SignoffRecord"> | string | null
+    createdBy?: StringNullableFilter<"SignoffRecord"> | string | null
+    createdAt?: DateTimeFilter<"SignoffRecord"> | Date | string
   }
 
   export type ActivityEventUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -30930,6 +33376,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutTollgatesInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutTollgateInput
   }
 
   export type TollgateUncheckedCreateWithoutDecisionActorInput = {
@@ -30945,6 +33392,7 @@ export namespace Prisma {
     comments?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutTollgateInput
   }
 
   export type TollgateCreateOrConnectWithoutDecisionActorInput = {
@@ -30954,6 +33402,56 @@ export namespace Prisma {
 
   export type TollgateCreateManyDecisionActorInputEnvelope = {
     data: TollgateCreateManyDecisionActorInput | TollgateCreateManyDecisionActorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SignoffRecordCreateWithoutCreatorInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutSignoffRecordsInput
+    tollgate?: TollgateCreateNestedOneWithoutSignoffRecordsInput
+    actualPartyRoleEntry: PartyRoleEntryCreateNestedOneWithoutSignoffRecordsInput
+  }
+
+  export type SignoffRecordUncheckedCreateWithoutCreatorInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignoffRecordCreateOrConnectWithoutCreatorInput = {
+    where: SignoffRecordWhereUniqueInput
+    create: XOR<SignoffRecordCreateWithoutCreatorInput, SignoffRecordUncheckedCreateWithoutCreatorInput>
+  }
+
+  export type SignoffRecordCreateManyCreatorInputEnvelope = {
+    data: SignoffRecordCreateManyCreatorInput | SignoffRecordCreateManyCreatorInput[]
     skipDuplicates?: boolean
   }
 
@@ -31119,6 +33617,22 @@ export namespace Prisma {
     data: XOR<TollgateUpdateManyMutationInput, TollgateUncheckedUpdateManyWithoutDecisionActorInput>
   }
 
+  export type SignoffRecordUpsertWithWhereUniqueWithoutCreatorInput = {
+    where: SignoffRecordWhereUniqueInput
+    update: XOR<SignoffRecordUpdateWithoutCreatorInput, SignoffRecordUncheckedUpdateWithoutCreatorInput>
+    create: XOR<SignoffRecordCreateWithoutCreatorInput, SignoffRecordUncheckedCreateWithoutCreatorInput>
+  }
+
+  export type SignoffRecordUpdateWithWhereUniqueWithoutCreatorInput = {
+    where: SignoffRecordWhereUniqueInput
+    data: XOR<SignoffRecordUpdateWithoutCreatorInput, SignoffRecordUncheckedUpdateWithoutCreatorInput>
+  }
+
+  export type SignoffRecordUpdateManyWithWhereWithoutCreatorInput = {
+    where: SignoffRecordScalarWhereInput
+    data: XOR<SignoffRecordUpdateManyMutationInput, SignoffRecordUncheckedUpdateManyWithoutCreatorInput>
+  }
+
   export type ActivityEventUpsertWithWhereUniqueWithoutActorInput = {
     where: ActivityEventWhereUniqueInput
     update: XOR<ActivityEventUpdateWithoutActorInput, ActivityEventUncheckedUpdateWithoutActorInput>
@@ -31177,6 +33691,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -31197,6 +33712,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -31220,6 +33736,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
@@ -31233,6 +33750,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
@@ -31264,6 +33782,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -31284,6 +33803,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -31313,6 +33833,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
@@ -31326,6 +33847,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
@@ -31342,6 +33864,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -31362,6 +33885,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -31414,6 +33938,56 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SignoffRecordCreateWithoutActualPartyRoleEntryInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutSignoffRecordsInput
+    tollgate?: TollgateCreateNestedOneWithoutSignoffRecordsInput
+    creator?: AppUserCreateNestedOneWithoutCreatedSignoffRecordsInput
+  }
+
+  export type SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignoffRecordCreateOrConnectWithoutActualPartyRoleEntryInput = {
+    where: SignoffRecordWhereUniqueInput
+    create: XOR<SignoffRecordCreateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput>
+  }
+
+  export type SignoffRecordCreateManyActualPartyRoleEntryInputEnvelope = {
+    data: SignoffRecordCreateManyActualPartyRoleEntryInput | SignoffRecordCreateManyActualPartyRoleEntryInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrganizationUpsertWithoutPartyRoleEntriesInput = {
     update: XOR<OrganizationUpdateWithoutPartyRoleEntriesInput, OrganizationUncheckedUpdateWithoutPartyRoleEntriesInput>
     create: XOR<OrganizationCreateWithoutPartyRoleEntriesInput, OrganizationUncheckedCreateWithoutPartyRoleEntriesInput>
@@ -31436,6 +34010,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -31456,6 +34031,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -31481,6 +34057,22 @@ export namespace Prisma {
     data: XOR<AgentRegistryEntryUpdateManyMutationInput, AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleInput>
   }
 
+  export type SignoffRecordUpsertWithWhereUniqueWithoutActualPartyRoleEntryInput = {
+    where: SignoffRecordWhereUniqueInput
+    update: XOR<SignoffRecordUpdateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedUpdateWithoutActualPartyRoleEntryInput>
+    create: XOR<SignoffRecordCreateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedCreateWithoutActualPartyRoleEntryInput>
+  }
+
+  export type SignoffRecordUpdateWithWhereUniqueWithoutActualPartyRoleEntryInput = {
+    where: SignoffRecordWhereUniqueInput
+    data: XOR<SignoffRecordUpdateWithoutActualPartyRoleEntryInput, SignoffRecordUncheckedUpdateWithoutActualPartyRoleEntryInput>
+  }
+
+  export type SignoffRecordUpdateManyWithWhereWithoutActualPartyRoleEntryInput = {
+    where: SignoffRecordScalarWhereInput
+    data: XOR<SignoffRecordUpdateManyMutationInput, SignoffRecordUncheckedUpdateManyWithoutActualPartyRoleEntryInput>
+  }
+
   export type OrganizationCreateWithoutAgentRegistryEntriesInput = {
     id: string
     slug: string
@@ -31492,6 +34084,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -31512,6 +34105,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -31540,6 +34134,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     organization: OrganizationCreateNestedOneWithoutPartyRoleEntriesInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutActualPartyRoleEntryInput
   }
 
   export type PartyRoleEntryUncheckedCreateWithoutSupervisingAgentsInput = {
@@ -31556,6 +34151,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutActualPartyRoleEntryInput
   }
 
   export type PartyRoleEntryCreateOrConnectWithoutSupervisingAgentsInput = {
@@ -31585,6 +34181,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -31605,6 +34202,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -31639,6 +34237,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutPartyRoleEntriesNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutActualPartyRoleEntryNestedInput
   }
 
   export type PartyRoleEntryUncheckedUpdateWithoutSupervisingAgentsInput = {
@@ -31655,6 +34254,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutActualPartyRoleEntryNestedInput
   }
 
   export type OrganizationCreateWithoutGovernanceRoleRequirementsInput = {
@@ -31668,6 +34268,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -31688,6 +34289,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -31724,6 +34326,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -31744,6 +34347,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -31764,6 +34368,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -31784,6 +34389,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -31820,6 +34426,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -31840,6 +34447,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -31859,6 +34467,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -31879,6 +34488,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -31902,6 +34512,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     memberships?: MembershipCreateNestedManyWithoutUserInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
@@ -31915,6 +34526,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
@@ -32064,6 +34676,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -32084,6 +34697,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -32113,6 +34727,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
@@ -32126,6 +34741,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
@@ -32173,6 +34789,7 @@ export namespace Prisma {
     outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -32193,6 +34810,7 @@ export namespace Prisma {
     outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -32354,6 +34972,7 @@ export namespace Prisma {
     outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -32374,6 +34993,7 @@ export namespace Prisma {
     outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -32477,6 +35097,7 @@ export namespace Prisma {
     outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -32497,6 +35118,7 @@ export namespace Prisma {
     outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -32643,6 +35265,7 @@ export namespace Prisma {
     outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -32663,6 +35286,7 @@ export namespace Prisma {
     outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -32805,6 +35429,7 @@ export namespace Prisma {
     outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -32825,6 +35450,7 @@ export namespace Prisma {
     outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -32848,6 +35474,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     memberships?: MembershipCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
+    createdSignoffRecords?: SignoffRecordCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
@@ -32861,6 +35488,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
+    createdSignoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
@@ -32869,6 +35497,56 @@ export namespace Prisma {
   export type AppUserCreateOrConnectWithoutTollgateDecisionsInput = {
     where: AppUserWhereUniqueInput
     create: XOR<AppUserCreateWithoutTollgateDecisionsInput, AppUserUncheckedCreateWithoutTollgateDecisionsInput>
+  }
+
+  export type SignoffRecordCreateWithoutTollgateInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutSignoffRecordsInput
+    actualPartyRoleEntry: PartyRoleEntryCreateNestedOneWithoutSignoffRecordsInput
+    creator?: AppUserCreateNestedOneWithoutCreatedSignoffRecordsInput
+  }
+
+  export type SignoffRecordUncheckedCreateWithoutTollgateInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignoffRecordCreateOrConnectWithoutTollgateInput = {
+    where: SignoffRecordWhereUniqueInput
+    create: XOR<SignoffRecordCreateWithoutTollgateInput, SignoffRecordUncheckedCreateWithoutTollgateInput>
+  }
+
+  export type SignoffRecordCreateManyTollgateInputEnvelope = {
+    data: SignoffRecordCreateManyTollgateInput | SignoffRecordCreateManyTollgateInput[]
+    skipDuplicates?: boolean
   }
 
   export type OrganizationUpsertWithoutTollgatesInput = {
@@ -32892,6 +35570,7 @@ export namespace Prisma {
     outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -32912,6 +35591,7 @@ export namespace Prisma {
     outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -32941,6 +35621,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
+    createdSignoffRecords?: SignoffRecordUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
@@ -32954,6 +35635,359 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
+    createdSignoffRecords?: SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
+  }
+
+  export type SignoffRecordUpsertWithWhereUniqueWithoutTollgateInput = {
+    where: SignoffRecordWhereUniqueInput
+    update: XOR<SignoffRecordUpdateWithoutTollgateInput, SignoffRecordUncheckedUpdateWithoutTollgateInput>
+    create: XOR<SignoffRecordCreateWithoutTollgateInput, SignoffRecordUncheckedCreateWithoutTollgateInput>
+  }
+
+  export type SignoffRecordUpdateWithWhereUniqueWithoutTollgateInput = {
+    where: SignoffRecordWhereUniqueInput
+    data: XOR<SignoffRecordUpdateWithoutTollgateInput, SignoffRecordUncheckedUpdateWithoutTollgateInput>
+  }
+
+  export type SignoffRecordUpdateManyWithWhereWithoutTollgateInput = {
+    where: SignoffRecordScalarWhereInput
+    data: XOR<SignoffRecordUpdateManyMutationInput, SignoffRecordUncheckedUpdateManyWithoutTollgateInput>
+  }
+
+  export type OrganizationCreateWithoutSignoffRecordsInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeCreateNestedManyWithoutOrganizationInput
+    epics?: EpicCreateNestedManyWithoutOrganizationInput
+    stories?: StoryCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutSignoffRecordsInput = {
+    id: string
+    slug: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    outcomes?: OutcomeUncheckedCreateNestedManyWithoutOrganizationInput
+    epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
+    stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
+    tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
+    partyRoleEntries?: PartyRoleEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedCreateNestedManyWithoutOrganizationInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutSignoffRecordsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutSignoffRecordsInput, OrganizationUncheckedCreateWithoutSignoffRecordsInput>
+  }
+
+  export type TollgateCreateWithoutSignoffRecordsInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType: $Enums.TollgateType
+    status?: $Enums.TollgateStatus
+    blockers?: TollgateCreateblockersInput | string[]
+    approverRoles?: TollgateCreateapproverRolesInput | $Enums.MembershipRole[]
+    decidedAt?: Date | string | null
+    comments?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutTollgatesInput
+    decisionActor?: AppUserCreateNestedOneWithoutTollgateDecisionsInput
+  }
+
+  export type TollgateUncheckedCreateWithoutSignoffRecordsInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType: $Enums.TollgateType
+    status?: $Enums.TollgateStatus
+    blockers?: TollgateCreateblockersInput | string[]
+    approverRoles?: TollgateCreateapproverRolesInput | $Enums.MembershipRole[]
+    decidedBy?: string | null
+    decidedAt?: Date | string | null
+    comments?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TollgateCreateOrConnectWithoutSignoffRecordsInput = {
+    where: TollgateWhereUniqueInput
+    create: XOR<TollgateCreateWithoutSignoffRecordsInput, TollgateUncheckedCreateWithoutSignoffRecordsInput>
+  }
+
+  export type PartyRoleEntryCreateWithoutSignoffRecordsInput = {
+    id: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPartyRoleEntriesInput
+    supervisingAgents?: AgentRegistryEntryCreateNestedManyWithoutSupervisingPartyRoleInput
+  }
+
+  export type PartyRoleEntryUncheckedCreateWithoutSignoffRecordsInput = {
+    id: string
+    organizationId: string
+    fullName: string
+    email: string
+    phoneNumber?: string | null
+    avatarUrl?: string | null
+    organizationSide: $Enums.OrganizationSide
+    roleType: $Enums.PartyRoleType
+    roleTitle: string
+    mandateNotes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supervisingAgents?: AgentRegistryEntryUncheckedCreateNestedManyWithoutSupervisingPartyRoleInput
+  }
+
+  export type PartyRoleEntryCreateOrConnectWithoutSignoffRecordsInput = {
+    where: PartyRoleEntryWhereUniqueInput
+    create: XOR<PartyRoleEntryCreateWithoutSignoffRecordsInput, PartyRoleEntryUncheckedCreateWithoutSignoffRecordsInput>
+  }
+
+  export type AppUserCreateWithoutCreatedSignoffRecordsInput = {
+    id: string
+    email: string
+    fullName?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipCreateNestedManyWithoutUserInput
+    ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
+    tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
+  }
+
+  export type AppUserUncheckedCreateWithoutCreatedSignoffRecordsInput = {
+    id: string
+    email: string
+    fullName?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
+    ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
+    tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
+    createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
+  }
+
+  export type AppUserCreateOrConnectWithoutCreatedSignoffRecordsInput = {
+    where: AppUserWhereUniqueInput
+    create: XOR<AppUserCreateWithoutCreatedSignoffRecordsInput, AppUserUncheckedCreateWithoutCreatedSignoffRecordsInput>
+  }
+
+  export type OrganizationUpsertWithoutSignoffRecordsInput = {
+    update: XOR<OrganizationUpdateWithoutSignoffRecordsInput, OrganizationUncheckedUpdateWithoutSignoffRecordsInput>
+    create: XOR<OrganizationCreateWithoutSignoffRecordsInput, OrganizationUncheckedCreateWithoutSignoffRecordsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutSignoffRecordsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutSignoffRecordsInput, OrganizationUncheckedUpdateWithoutSignoffRecordsInput>
+  }
+
+  export type OrganizationUpdateWithoutSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    outcomes?: OutcomeUncheckedUpdateManyWithoutOrganizationNestedInput
+    epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
+    stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
+    tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
+    artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
+    partyRoleEntries?: PartyRoleEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    agentRegistryEntries?: AgentRegistryEntryUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRoleRequirements?: GovernanceRoleRequirementUncheckedUpdateManyWithoutOrganizationNestedInput
+    governanceRiskCombinationRules?: GovernanceRiskCombinationRuleUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type TollgateUpsertWithoutSignoffRecordsInput = {
+    update: XOR<TollgateUpdateWithoutSignoffRecordsInput, TollgateUncheckedUpdateWithoutSignoffRecordsInput>
+    create: XOR<TollgateCreateWithoutSignoffRecordsInput, TollgateUncheckedCreateWithoutSignoffRecordsInput>
+    where?: TollgateWhereInput
+  }
+
+  export type TollgateUpdateToOneWithWhereWithoutSignoffRecordsInput = {
+    where?: TollgateWhereInput
+    data: XOR<TollgateUpdateWithoutSignoffRecordsInput, TollgateUncheckedUpdateWithoutSignoffRecordsInput>
+  }
+
+  export type TollgateUpdateWithoutSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: EnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType
+    status?: EnumTollgateStatusFieldUpdateOperationsInput | $Enums.TollgateStatus
+    blockers?: TollgateUpdateblockersInput | string[]
+    approverRoles?: TollgateUpdateapproverRolesInput | $Enums.MembershipRole[]
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comments?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutTollgatesNestedInput
+    decisionActor?: AppUserUpdateOneWithoutTollgateDecisionsNestedInput
+  }
+
+  export type TollgateUncheckedUpdateWithoutSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: EnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType
+    status?: EnumTollgateStatusFieldUpdateOperationsInput | $Enums.TollgateStatus
+    blockers?: TollgateUpdateblockersInput | string[]
+    approverRoles?: TollgateUpdateapproverRolesInput | $Enums.MembershipRole[]
+    decidedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    decidedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    comments?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PartyRoleEntryUpsertWithoutSignoffRecordsInput = {
+    update: XOR<PartyRoleEntryUpdateWithoutSignoffRecordsInput, PartyRoleEntryUncheckedUpdateWithoutSignoffRecordsInput>
+    create: XOR<PartyRoleEntryCreateWithoutSignoffRecordsInput, PartyRoleEntryUncheckedCreateWithoutSignoffRecordsInput>
+    where?: PartyRoleEntryWhereInput
+  }
+
+  export type PartyRoleEntryUpdateToOneWithWhereWithoutSignoffRecordsInput = {
+    where?: PartyRoleEntryWhereInput
+    data: XOR<PartyRoleEntryUpdateWithoutSignoffRecordsInput, PartyRoleEntryUncheckedUpdateWithoutSignoffRecordsInput>
+  }
+
+  export type PartyRoleEntryUpdateWithoutSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPartyRoleEntriesNestedInput
+    supervisingAgents?: AgentRegistryEntryUpdateManyWithoutSupervisingPartyRoleNestedInput
+  }
+
+  export type PartyRoleEntryUncheckedUpdateWithoutSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    roleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    roleTitle?: StringFieldUpdateOperationsInput | string
+    mandateNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisingAgents?: AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleNestedInput
+  }
+
+  export type AppUserUpsertWithoutCreatedSignoffRecordsInput = {
+    update: XOR<AppUserUpdateWithoutCreatedSignoffRecordsInput, AppUserUncheckedUpdateWithoutCreatedSignoffRecordsInput>
+    create: XOR<AppUserCreateWithoutCreatedSignoffRecordsInput, AppUserUncheckedCreateWithoutCreatedSignoffRecordsInput>
+    where?: AppUserWhereInput
+  }
+
+  export type AppUserUpdateToOneWithWhereWithoutCreatedSignoffRecordsInput = {
+    where?: AppUserWhereInput
+    data: XOR<AppUserUpdateWithoutCreatedSignoffRecordsInput, AppUserUncheckedUpdateWithoutCreatedSignoffRecordsInput>
+  }
+
+  export type AppUserUpdateWithoutCreatedSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUpdateManyWithoutUserNestedInput
+    ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
+    tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
+    createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
+    uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
+  }
+
+  export type AppUserUncheckedUpdateWithoutCreatedSignoffRecordsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    fullName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
+    ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
+    tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
@@ -32970,6 +36004,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
@@ -32990,6 +36025,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
@@ -33013,6 +36049,7 @@ export namespace Prisma {
     memberships?: MembershipCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordCreateNestedManyWithoutCreatorInput
     createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
   }
@@ -33026,6 +36063,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
   }
@@ -33057,6 +36095,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
@@ -33077,6 +36116,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -33106,6 +36146,7 @@ export namespace Prisma {
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUpdateManyWithoutCreatorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
   }
@@ -33119,6 +36160,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
   }
@@ -33134,6 +36176,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
@@ -33154,6 +36197,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
@@ -33177,6 +36221,7 @@ export namespace Prisma {
     memberships?: MembershipCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
     uploadedIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutUploaderInput
   }
@@ -33190,6 +36235,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutUploaderInput
   }
@@ -33345,6 +36391,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
@@ -33365,6 +36412,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -33394,6 +36442,7 @@ export namespace Prisma {
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutUploaderNestedInput
   }
@@ -33407,6 +36456,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
     uploadedIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutUploaderNestedInput
   }
@@ -33485,6 +36535,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateCreateNestedManyWithoutOrganizationInput
@@ -33505,6 +36556,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedCreateNestedManyWithoutOrganizationInput
@@ -33528,6 +36580,7 @@ export namespace Prisma {
     memberships?: MembershipCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutCreatorInput
   }
@@ -33541,6 +36594,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedCreateNestedManyWithoutUserInput
     ownedOutcomes?: OutcomeUncheckedCreateNestedManyWithoutValueOwnerInput
     tollgateDecisions?: TollgateUncheckedCreateNestedManyWithoutDecisionActorInput
+    createdSignoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutCreatorInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutActorInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutCreatorInput
   }
@@ -33685,6 +36739,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUpdateManyWithoutOrganizationNestedInput
@@ -33705,6 +36760,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactAasCandidates?: ArtifactAasCandidateUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -33734,6 +36790,7 @@ export namespace Prisma {
     memberships?: MembershipUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutCreatorNestedInput
   }
@@ -33747,6 +36804,7 @@ export namespace Prisma {
     memberships?: MembershipUncheckedUpdateManyWithoutUserNestedInput
     ownedOutcomes?: OutcomeUncheckedUpdateManyWithoutValueOwnerNestedInput
     tollgateDecisions?: TollgateUncheckedUpdateManyWithoutDecisionActorNestedInput
+    createdSignoffRecords?: SignoffRecordUncheckedUpdateManyWithoutCreatorNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutActorNestedInput
     createdIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutCreatorNestedInput
   }
@@ -33778,6 +36836,7 @@ export namespace Prisma {
     epics?: EpicCreateNestedManyWithoutOrganizationInput
     stories?: StoryCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileCreateNestedManyWithoutOrganizationInput
@@ -33798,6 +36857,7 @@ export namespace Prisma {
     epics?: EpicUncheckedCreateNestedManyWithoutOrganizationInput
     stories?: StoryUncheckedCreateNestedManyWithoutOrganizationInput
     tollgates?: TollgateUncheckedCreateNestedManyWithoutOrganizationInput
+    signoffRecords?: SignoffRecordUncheckedCreateNestedManyWithoutOrganizationInput
     activityEvents?: ActivityEventUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedCreateNestedManyWithoutOrganizationInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedCreateNestedManyWithoutOrganizationInput
@@ -33908,6 +36968,7 @@ export namespace Prisma {
     epics?: EpicUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUpdateManyWithoutOrganizationNestedInput
@@ -33928,6 +36989,7 @@ export namespace Prisma {
     epics?: EpicUncheckedUpdateManyWithoutOrganizationNestedInput
     stories?: StoryUncheckedUpdateManyWithoutOrganizationNestedInput
     tollgates?: TollgateUncheckedUpdateManyWithoutOrganizationNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     activityEvents?: ActivityEventUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeSessions?: ArtifactIntakeSessionUncheckedUpdateManyWithoutOrganizationNestedInput
     artifactIntakeFiles?: ArtifactIntakeFileUncheckedUpdateManyWithoutOrganizationNestedInput
@@ -34118,6 +37180,26 @@ export namespace Prisma {
     comments?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type SignoffRecordCreateManyOrganizationInput = {
+    id: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
   }
 
   export type ActivityEventCreateManyOrganizationInput = {
@@ -34507,6 +37589,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     decisionActor?: AppUserUpdateOneWithoutTollgateDecisionsNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutTollgateNestedInput
   }
 
   export type TollgateUncheckedUpdateWithoutOrganizationInput = {
@@ -34522,6 +37605,7 @@ export namespace Prisma {
     comments?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutTollgateNestedInput
   }
 
   export type TollgateUncheckedUpdateManyWithoutOrganizationInput = {
@@ -34537,6 +37621,66 @@ export namespace Prisma {
     comments?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tollgate?: TollgateUpdateOneWithoutSignoffRecordsNestedInput
+    actualPartyRoleEntry?: PartyRoleEntryUpdateOneRequiredWithoutSignoffRecordsNestedInput
+    creator?: AppUserUpdateOneWithoutCreatedSignoffRecordsNestedInput
+  }
+
+  export type SignoffRecordUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ActivityEventUpdateWithoutOrganizationInput = {
@@ -34775,6 +37919,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisingAgents?: AgentRegistryEntryUpdateManyWithoutSupervisingPartyRoleNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutActualPartyRoleEntryNestedInput
   }
 
   export type PartyRoleEntryUncheckedUpdateWithoutOrganizationInput = {
@@ -34791,6 +37936,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisingAgents?: AgentRegistryEntryUncheckedUpdateManyWithoutSupervisingPartyRoleNestedInput
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutActualPartyRoleEntryNestedInput
   }
 
   export type PartyRoleEntryUncheckedUpdateManyWithoutOrganizationInput = {
@@ -34962,6 +38108,26 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type SignoffRecordCreateManyCreatorInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdAt?: Date | string
+  }
+
   export type ActivityEventCreateManyActorInput = {
     id: string
     organizationId: string
@@ -35120,6 +38286,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     organization?: OrganizationUpdateOneRequiredWithoutTollgatesNestedInput
+    signoffRecords?: SignoffRecordUpdateManyWithoutTollgateNestedInput
   }
 
   export type TollgateUncheckedUpdateWithoutDecisionActorInput = {
@@ -35135,6 +38302,7 @@ export namespace Prisma {
     comments?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signoffRecords?: SignoffRecordUncheckedUpdateManyWithoutTollgateNestedInput
   }
 
   export type TollgateUncheckedUpdateManyWithoutDecisionActorInput = {
@@ -35150,6 +38318,66 @@ export namespace Prisma {
     comments?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUpdateWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutSignoffRecordsNestedInput
+    tollgate?: TollgateUpdateOneWithoutSignoffRecordsNestedInput
+    actualPartyRoleEntry?: PartyRoleEntryUpdateOneRequiredWithoutSignoffRecordsNestedInput
+  }
+
+  export type SignoffRecordUncheckedUpdateWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUncheckedUpdateManyWithoutCreatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ActivityEventUpdateWithoutActorInput = {
@@ -35289,6 +38517,26 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type SignoffRecordCreateManyActualPartyRoleEntryInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateId?: string | null
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+  }
+
   export type AgentRegistryEntryUpdateWithoutSupervisingPartyRoleInput = {
     id?: StringFieldUpdateOperationsInput | string
     agentName?: StringFieldUpdateOperationsInput | string
@@ -35329,6 +38577,66 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUpdateWithoutActualPartyRoleEntryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutSignoffRecordsNestedInput
+    tollgate?: TollgateUpdateOneWithoutSignoffRecordsNestedInput
+    creator?: AppUserUpdateOneWithoutCreatedSignoffRecordsNestedInput
+  }
+
+  export type SignoffRecordUncheckedUpdateWithoutActualPartyRoleEntryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUncheckedUpdateManyWithoutActualPartyRoleEntryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateId?: NullableStringFieldUpdateOperationsInput | string | null
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type EpicCreateManyOutcomeInput = {
@@ -35631,6 +38939,86 @@ export namespace Prisma {
     importedReadinessState?: NullableEnumImportedGovernedReadinessStateFieldUpdateOperationsInput | $Enums.ImportedGovernedReadinessState | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordCreateManyTollgateInput = {
+    id: string
+    organizationId: string
+    entityType: $Enums.TollgateEntityType
+    entityId: string
+    tollgateType?: $Enums.TollgateType | null
+    decisionKind: $Enums.SignoffDecisionKind
+    requiredRoleType: $Enums.PartyRoleType
+    actualPartyRoleEntryId: string
+    actualPersonName: string
+    actualPersonEmail: string
+    actualRoleTitle: string
+    organizationSide: $Enums.OrganizationSide
+    decisionStatus: $Enums.SignoffDecisionStatus
+    note?: string | null
+    evidenceReference?: string | null
+    createdBy?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SignoffRecordUpdateWithoutTollgateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutSignoffRecordsNestedInput
+    actualPartyRoleEntry?: PartyRoleEntryUpdateOneRequiredWithoutSignoffRecordsNestedInput
+    creator?: AppUserUpdateOneWithoutCreatedSignoffRecordsNestedInput
+  }
+
+  export type SignoffRecordUncheckedUpdateWithoutTollgateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SignoffRecordUncheckedUpdateManyWithoutTollgateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    entityType?: EnumTollgateEntityTypeFieldUpdateOperationsInput | $Enums.TollgateEntityType
+    entityId?: StringFieldUpdateOperationsInput | string
+    tollgateType?: NullableEnumTollgateTypeFieldUpdateOperationsInput | $Enums.TollgateType | null
+    decisionKind?: EnumSignoffDecisionKindFieldUpdateOperationsInput | $Enums.SignoffDecisionKind
+    requiredRoleType?: EnumPartyRoleTypeFieldUpdateOperationsInput | $Enums.PartyRoleType
+    actualPartyRoleEntryId?: StringFieldUpdateOperationsInput | string
+    actualPersonName?: StringFieldUpdateOperationsInput | string
+    actualPersonEmail?: StringFieldUpdateOperationsInput | string
+    actualRoleTitle?: StringFieldUpdateOperationsInput | string
+    organizationSide?: EnumOrganizationSideFieldUpdateOperationsInput | $Enums.OrganizationSide
+    decisionStatus?: EnumSignoffDecisionStatusFieldUpdateOperationsInput | $Enums.SignoffDecisionStatus
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReference?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ArtifactIntakeFileCreateManyIntakeSessionInput = {

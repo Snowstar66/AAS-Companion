@@ -16,6 +16,8 @@ export const partyRoleTypes = [
 ] as const;
 export const agentTypes = ["bmad_agent", "governance_agent", "automation_agent"] as const;
 export const governanceCoverageStatuses = ["satisfied", "missing", "partially_covered", "risky_combination"] as const;
+export const signoffDecisionKinds = ["review", "approval", "escalation"] as const;
+export const signoffDecisionStatuses = ["approved", "rejected", "changes_requested"] as const;
 export const authorityResponsibilityAreas = [
   "outcome_ownership",
   "architecture_review",
@@ -90,6 +92,7 @@ export const activityEntityTypes = [
   "epic",
   "story",
   "tollgate",
+  "signoff_record",
   "party_role_entry",
   "agent_registry_entry",
   "artifact_intake_session",
@@ -105,6 +108,7 @@ export const activityEventTypes = [
   "story_created",
   "story_updated",
   "tollgate_recorded",
+  "signoff_recorded",
   "execution_contract_generated",
   "governed_removal_requested",
   "governed_hard_deleted",
@@ -136,6 +140,8 @@ export const organizationSideSchema = z.enum(organizationSides);
 export const partyRoleTypeSchema = z.enum(partyRoleTypes);
 export const agentTypeSchema = z.enum(agentTypes);
 export const governanceCoverageStatusSchema = z.enum(governanceCoverageStatuses);
+export const signoffDecisionKindSchema = z.enum(signoffDecisionKinds);
+export const signoffDecisionStatusSchema = z.enum(signoffDecisionStatuses);
 export const authorityResponsibilityAreaSchema = z.enum(authorityResponsibilityAreas);
 export const authorityAssignmentKindSchema = z.enum(authorityAssignmentKinds);
 export const outcomeStatusSchema = z.enum(outcomeStatuses);
@@ -173,6 +179,8 @@ export type OrganizationSide = z.infer<typeof organizationSideSchema>;
 export type PartyRoleType = z.infer<typeof partyRoleTypeSchema>;
 export type AgentType = z.infer<typeof agentTypeSchema>;
 export type GovernanceCoverageStatus = z.infer<typeof governanceCoverageStatusSchema>;
+export type SignoffDecisionKind = z.infer<typeof signoffDecisionKindSchema>;
+export type SignoffDecisionStatus = z.infer<typeof signoffDecisionStatusSchema>;
 export type AuthorityResponsibilityArea = z.infer<typeof authorityResponsibilityAreaSchema>;
 export type AuthorityAssignmentKind = z.infer<typeof authorityAssignmentKindSchema>;
 export type OutcomeStatus = z.infer<typeof outcomeStatusSchema>;

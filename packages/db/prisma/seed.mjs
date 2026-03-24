@@ -35,6 +35,10 @@ const ids = {
     framing: "agent_demo_framing",
     governance: "agent_demo_governance"
   },
+  signoffs: {
+    outcomeReview: "signoff_demo_outcome_review",
+    storyReview: "signoff_demo_story_review"
+  },
   outcomes: {
     draft: "outcome_demo_governance_gap",
     almostReady: "outcome_demo_outcome_readiness"
@@ -718,6 +722,81 @@ async function main() {
     }
   });
 
+  await prisma.signoffRecord.upsert({
+    where: {
+      id: ids.signoffs.outcomeReview
+    },
+    update: {
+      decisionKind: "review",
+      requiredRoleType: "architect",
+      actualPartyRoleEntryId: ids.partyRoles.architect,
+      actualPersonName: "Demo Architect",
+      actualPersonEmail: "architect@aas-companion.local",
+      actualRoleTitle: "Solution Architect",
+      organizationSide: "supplier",
+      decisionStatus: "changes_requested",
+      note: "Baseline source still needs explicit evidence before approval can proceed.",
+      evidenceReference: "demo://baseline-gap/outcome-001",
+      createdBy: ids.users.architect
+    },
+    create: {
+      id: ids.signoffs.outcomeReview,
+      organizationId: ids.organizationId,
+      entityType: "outcome",
+      entityId: ids.outcomes.draft,
+      tollgateId: ids.tollgateId,
+      tollgateType: "tg1_baseline",
+      decisionKind: "review",
+      requiredRoleType: "architect",
+      actualPartyRoleEntryId: ids.partyRoles.architect,
+      actualPersonName: "Demo Architect",
+      actualPersonEmail: "architect@aas-companion.local",
+      actualRoleTitle: "Solution Architect",
+      organizationSide: "supplier",
+      decisionStatus: "changes_requested",
+      note: "Baseline source still needs explicit evidence before approval can proceed.",
+      evidenceReference: "demo://baseline-gap/outcome-001",
+      createdBy: ids.users.architect
+    }
+  });
+
+  await prisma.signoffRecord.upsert({
+    where: {
+      id: ids.signoffs.storyReview
+    },
+    update: {
+      decisionKind: "review",
+      requiredRoleType: "aqa",
+      actualPartyRoleEntryId: ids.partyRoles.aqa,
+      actualPersonName: "Demo AQA",
+      actualPersonEmail: "aqa@aas-companion.local",
+      actualRoleTitle: "AI Quality Assurance",
+      organizationSide: "supplier",
+      decisionStatus: "approved",
+      note: "Quality review completed for the ready story.",
+      evidenceReference: "demo://handoff/quality-review/story-ready",
+      createdBy: ids.users.aqa
+    },
+    create: {
+      id: ids.signoffs.storyReview,
+      organizationId: ids.organizationId,
+      entityType: "story",
+      entityId: ids.stories.ready,
+      tollgateType: "story_readiness",
+      decisionKind: "review",
+      requiredRoleType: "aqa",
+      actualPartyRoleEntryId: ids.partyRoles.aqa,
+      actualPersonName: "Demo AQA",
+      actualPersonEmail: "aqa@aas-companion.local",
+      actualRoleTitle: "AI Quality Assurance",
+      organizationSide: "supplier",
+      decisionStatus: "approved",
+      note: "Quality review completed for the ready story.",
+      evidenceReference: "demo://handoff/quality-review/story-ready",
+      createdBy: ids.users.aqa
+    }
+  });
+
   await prisma.activityEvent.upsert({
     where: { id: ids.activityEventId },
     update: {
@@ -727,6 +806,7 @@ async function main() {
         epics: 1,
         stories: 3,
         tollgates: 1,
+        signoffRecords: 2,
         partyRoleEntries: partyRoles.length,
         governanceRoleRequirements: governanceRoleRequirements.length,
         governanceRiskCombinationRules: governanceRiskCombinationRules.length,
@@ -751,6 +831,7 @@ async function main() {
         epics: 1,
         stories: 3,
         tollgates: 1,
+        signoffRecords: 2,
         partyRoleEntries: partyRoles.length,
         governanceRoleRequirements: governanceRoleRequirements.length,
         governanceRiskCombinationRules: governanceRiskCombinationRules.length,

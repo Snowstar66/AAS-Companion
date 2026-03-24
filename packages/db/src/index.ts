@@ -65,6 +65,12 @@ export {
   getTollgate,
   upsertTollgate
 } from "./repositories/tollgate-repository";
+export {
+  createSignoffRecord,
+  listSignoffRecordsForEntity,
+  listSignoffRecordsForOrganization,
+  listSignoffRecordsForTollgate
+} from "./repositories/signoff-repository";
 export { getWorkspaceSnapshot } from "./repositories/workspace-repository";
 export { expectedSeedShape, seedRuntimeEntry } from "./seed";
 

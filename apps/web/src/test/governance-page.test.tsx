@@ -72,6 +72,22 @@ vi.mock("@aas-companion/api", async () => {
         ],
         requirements: [],
         riskRules: [],
+        signoffRecords: [
+          {
+            id: "signoff-1",
+            entityType: "story",
+            entityId: "story-1",
+            decisionKind: "approval",
+            requiredRoleType: "delivery_lead",
+            actualPersonName: "Demo Delivery Lead",
+            actualRoleTitle: "Delivery Lead",
+            organizationSide: "supplier",
+            decisionStatus: "approved",
+            note: "Ready to proceed.",
+            evidenceReference: "demo://story-1/approval",
+            createdAt: new Date("2026-03-24T12:00:00.000Z")
+          }
+        ],
         sourceContext: {
           entityType: "story",
           entityId: "story-1",
@@ -156,5 +172,23 @@ describe("Governance page", () => {
     expect(screen.getByText("AI level readiness")).toBeDefined();
     expect(screen.getByText("ai governance lead is missing for supplier coverage.")).toBeDefined();
     expect(screen.getByText("No risky role combinations are currently detected for level 3.")).toBeDefined();
+  });
+
+  it("shows sign-off traceability with evidence references", async () => {
+    render(
+      await GovernancePage({
+        searchParams: Promise.resolve({
+          view: "signoffs",
+          sourceEntity: "story",
+          sourceId: "story-1",
+          level: "level_3"
+        })
+      })
+    );
+
+    expect(screen.getByText("Sign-off traceability")).toBeDefined();
+    expect(screen.getByText("Approval and review history")).toBeDefined();
+    expect(screen.getByText("Signed by: Demo Delivery Lead (Delivery Lead)")).toBeDefined();
+    expect(screen.getByText("Evidence: demo://story-1/approval")).toBeDefined();
   });
 });

@@ -293,6 +293,27 @@ exports.Prisma.TollgateScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SignoffRecordScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  tollgateId: 'tollgateId',
+  tollgateType: 'tollgateType',
+  decisionKind: 'decisionKind',
+  requiredRoleType: 'requiredRoleType',
+  actualPartyRoleEntryId: 'actualPartyRoleEntryId',
+  actualPersonName: 'actualPersonName',
+  actualPersonEmail: 'actualPersonEmail',
+  actualRoleTitle: 'actualRoleTitle',
+  organizationSide: 'organizationSide',
+  decisionStatus: 'decisionStatus',
+  note: 'note',
+  evidenceReference: 'evidenceReference',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.ActivityEventScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -517,12 +538,25 @@ exports.TollgateStatus = exports.$Enums.TollgateStatus = {
   approved: 'approved'
 };
 
+exports.SignoffDecisionKind = exports.$Enums.SignoffDecisionKind = {
+  review: 'review',
+  approval: 'approval',
+  escalation: 'escalation'
+};
+
+exports.SignoffDecisionStatus = exports.$Enums.SignoffDecisionStatus = {
+  approved: 'approved',
+  rejected: 'rejected',
+  changes_requested: 'changes_requested'
+};
+
 exports.ActivityEntityType = exports.$Enums.ActivityEntityType = {
   organization: 'organization',
   outcome: 'outcome',
   epic: 'epic',
   story: 'story',
   tollgate: 'tollgate',
+  signoff_record: 'signoff_record',
   party_role_entry: 'party_role_entry',
   agent_registry_entry: 'agent_registry_entry',
   artifact_intake_session: 'artifact_intake_session',
@@ -539,6 +573,7 @@ exports.ActivityEventType = exports.$Enums.ActivityEventType = {
   story_created: 'story_created',
   story_updated: 'story_updated',
   tollgate_recorded: 'tollgate_recorded',
+  signoff_recorded: 'signoff_recorded',
   execution_contract_generated: 'execution_contract_generated',
   governed_removal_requested: 'governed_removal_requested',
   governed_hard_deleted: 'governed_hard_deleted',
@@ -627,6 +662,7 @@ exports.Prisma.ModelName = {
   Epic: 'Epic',
   Story: 'Story',
   Tollgate: 'Tollgate',
+  SignoffRecord: 'SignoffRecord',
   ActivityEvent: 'ActivityEvent',
   ArtifactIntakeSession: 'ArtifactIntakeSession',
   ArtifactIntakeFile: 'ArtifactIntakeFile',

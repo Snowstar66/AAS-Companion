@@ -9,11 +9,13 @@ import { AppShell } from "@/components/layout/app-shell";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
+import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
   hardDeleteOutcomeAction,
+  recordOutcomeTollgateDecisionAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
   submitOutcomeTollgateAction
@@ -75,13 +77,17 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   }
 
   const { outcome, tollgate, activities, removal } = outcomeResult.data;
+  const tollgateReview = outcomeResult.data.tollgateReview;
   const computedBlockers = getOutcomeBaselineBlockers(outcome);
-  const blockers = blockersFromQuery.length > 0 ? blockersFromQuery : tollgate?.blockers ?? computedBlockers;
+  const blockers =
+    blockersFromQuery.length > 0
+      ? blockersFromQuery
+      : tollgateReview?.blockers ?? tollgate?.blockers ?? computedBlockers;
   const baselineComplete = computedBlockers.length === 0;
   const statusLabel = outcome.status.replaceAll("_", " ");
   const originLabel = getOriginLabel(outcome.originType);
   const workspaceLabel = getWorkspaceLabel(outcome);
-  const tollgateStatusLabel = tollgate?.status ? tollgate.status.replaceAll("_", " ") : "not started";
+  const tollgateStatusLabel = tollgateReview?.status ? tollgateReview.status.replaceAll("_", " ") : tollgate?.status ? tollgate.status.replaceAll("_", " ") : "not started";
   const isArchived = outcome.lifecycleState === "archived";
 
   return (
@@ -166,6 +172,11 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
         {submitState === "ready" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             Tollgate 1 submission recorded. This outcome is now ready for review.
+          </div>
+        ) : null}
+        {submitState === "approved" ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Required sign-offs are complete. Tollgate 1 is now approved.
           </div>
         ) : null}
         {lifecycleState === "archived" ? (
@@ -468,22 +479,6 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
           <div className="space-y-6">
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>Approvals</CardTitle>
-                <CardDescription>Current approval posture for the first framing tollgate.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  <strong className="text-foreground">Required approvers:</strong>{" "}
-                  {(tollgate?.approverRoles ?? ["value_owner", "architect"]).join(", ")}
-                </p>
-                <p>
-                  <strong className="text-foreground">Comments:</strong> {tollgate?.comments ?? "No comments recorded yet."}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
                 <CardTitle>Governance coverage</CardTitle>
                 <CardDescription>Check named roles, authority and readiness for this Outcome's AI level.</CardDescription>
               </CardHeader>
@@ -496,35 +491,46 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
               </CardContent>
             </Card>
 
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Tollgate 1 panel</CardTitle>
-                <CardDescription>Server-backed readiness check for baseline completeness.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div
-                  className={`rounded-2xl border px-4 py-4 text-sm ${
-                    blockers.length === 0
-                      ? "border-emerald-200 bg-emerald-50/80 text-emerald-900"
-                      : "border-amber-200 bg-amber-50/80 text-amber-900"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-medium">
-                    {blockers.length === 0 ? (
-                      <CircleCheckBig className="h-4 w-4" />
-                    ) : (
-                      <CircleAlert className="h-4 w-4" />
-                    )}
-                    {blockers.length === 0 ? "Ready for TG1 review" : "Blocked"}
-                  </div>
-                  <p className="mt-2 leading-6">
-                    {blockers.length === 0
-                      ? "Required baseline fields are present. You can submit this outcome for Tollgate 1 review."
-                      : blockers.join(" ")}
-                  </p>
-                </div>
+            <TollgateDecisionCard
+              aiAccelerationLevel={outcome.aiAccelerationLevel}
+              approvalActions={tollgateReview?.approvalActions ?? []}
+              availablePeople={tollgateReview?.availablePeople ?? []}
+              blockers={blockers}
+              blockedActions={tollgateReview?.blockedActions ?? []}
+              comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
+              description="Server-backed readiness, review, approval and escalation trail for Tollgate 1."
+              entityId={outcome.id}
+              entityType="outcome"
+              formAction={recordOutcomeTollgateDecisionAction}
+              hiddenFields={[{ name: "outcomeId", value: outcome.id }]}
+              pendingActions={tollgateReview?.pendingActions ?? []}
+              reviewActions={tollgateReview?.reviewActions ?? []}
+              signoffRecords={
+                tollgateReview?.signoffRecords.map((record) => ({
+                  id: record.id,
+                  decisionKind: record.decisionKind,
+                  requiredRoleType: record.requiredRoleType,
+                  actualPersonName: record.actualPersonName,
+                  actualRoleTitle: record.actualRoleTitle,
+                  organizationSide: record.organizationSide,
+                  decisionStatus: record.decisionStatus,
+                  note: record.note,
+                  evidenceReference: record.evidenceReference,
+                  createdAt: record.createdAt
+                })) ?? []
+              }
+              status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
+              title="Tollgate 1 review and approval"
+              tollgateType="tg1_baseline"
+            />
 
-                {!isArchived ? (
+            {!isArchived ? (
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Submit into Tollgate 1</CardTitle>
+                  <CardDescription>Readiness submission keeps missing baseline blockers explicit before human sign-off begins.</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <form action={submitOutcomeTollgateAction} className="space-y-4">
                     <input name="outcomeId" type="hidden" value={outcome.id} />
                     <label className="space-y-2">
@@ -540,11 +546,9 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                       Submit to Tollgate 1
                     </Button>
                   </form>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Restore the Outcome before resuming Tollgate progression.</p>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : null}
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>

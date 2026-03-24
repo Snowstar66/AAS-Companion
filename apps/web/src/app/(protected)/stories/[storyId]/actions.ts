@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   archiveGovernedObjectService,
   hardDeleteGovernedObjectService,
+  recordTollgateDecisionService,
   restoreGovernedObjectService,
   saveStoryWorkspaceService,
   submitStoryReadinessService
@@ -20,6 +21,24 @@ function buildStoryRedirect(storyId: string, search: Record<string, string>) {
 
 function requireExplicitConfirmation(formData: FormData) {
   return String(formData.get("confirmAction") ?? "") === "yes";
+}
+
+function parseDecisionKey(value: string) {
+  if (value === "escalation") {
+    return {
+      decisionKind: "escalation" as const,
+      requiredRoleType: String("delivery_lead"),
+      organizationSide: String("supplier")
+    };
+  }
+
+  const [decisionKind, requiredRoleType, organizationSide] = value.split("|");
+
+  return {
+    decisionKind: (decisionKind || "review") as "review" | "approval" | "escalation",
+    requiredRoleType: requiredRoleType || "delivery_lead",
+    organizationSide: organizationSide || "supplier"
+  };
 }
 
 function readMultilineValues(formData: FormData, fieldName: string) {
@@ -128,6 +147,57 @@ export async function submitStoryReadinessAction(formData: FormData) {
   redirect(
     buildStoryRedirect(storyId, {
       ready: "success"
+    })
+  );
+}
+
+export async function recordStoryTollgateDecisionAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const storyId = String(formData.get("entityId") ?? formData.get("storyId") ?? "");
+  const epicId = String(formData.get("epicId") ?? "");
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const parsedDecision = parseDecisionKey(String(formData.get("decisionKey") ?? "review|aqa|supplier"));
+  const result = await recordTollgateDecisionService({
+    organizationId: session.organization.organizationId,
+    entityType: "story",
+    entityId: storyId,
+    tollgateType: "story_readiness",
+    aiAccelerationLevel: String(formData.get("aiAccelerationLevel") ?? "level_2"),
+    actorId: session.userId,
+    actualPartyRoleEntryId: String(formData.get("actualPartyRoleEntryId") ?? ""),
+    decisionKind: parsedDecision.decisionKind,
+    requiredRoleType: parsedDecision.decisionKind === "escalation" ? String(formData.get("escalationRoleType") ?? parsedDecision.requiredRoleType) : parsedDecision.requiredRoleType,
+    organizationSide: parsedDecision.decisionKind === "escalation" ? String(formData.get("escalationOrganizationSide") ?? parsedDecision.organizationSide) : parsedDecision.organizationSide,
+    decisionStatus: String(formData.get("decisionStatus") ?? "approved"),
+    note: String(formData.get("note") ?? "") || null,
+    evidenceReference: String(formData.get("evidenceReference") ?? "") || null,
+    createdBy: session.userId
+  });
+
+  revalidatePath(`/stories/${storyId}`);
+  if (epicId) {
+    revalidatePath(`/epics/${epicId}`);
+  }
+  if (outcomeId) {
+    revalidatePath(`/outcomes/${outcomeId}`);
+    revalidatePath("/framing");
+  }
+  revalidatePath("/stories");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildStoryRedirect(storyId, {
+        ready: "error",
+        message: result.errors[0]?.message ?? "Tollgate decision could not be recorded."
+      })
+    );
+  }
+
+  redirect(
+    buildStoryRedirect(storyId, {
+      ready: result.data.status === "approved" ? "approved" : result.data.status === "blocked" ? "blocked" : "success"
     })
   );
 }

@@ -205,7 +205,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                   { key: "directory", label: "Party Directory" },
                   { key: "agents", label: "Agent Registry" },
                   { key: "authority", label: "Authority Matrix" },
-                  { key: "readiness", label: "Readiness Gaps" }
+                  { key: "readiness", label: "Readiness Gaps" },
+                  { key: "signoffs", label: "Sign-off Traceability" }
                 ].map((item) => (
                   <Button asChild key={item.key} size="sm" variant={view === item.key ? "default" : "secondary"}>
                     <Link
@@ -725,6 +726,68 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                       <p className="mt-2">
                         People involved: {flag.people.map((person) => person.fullName).join(", ")}
                       </p>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+
+        {view === "signoffs" ? (
+          <div className="space-y-6">
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <div className="flex items-start gap-3">
+                  <Shield className="mt-0.5 h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Sign-off traceability</CardTitle>
+                    <CardDescription>
+                      Review who signed off, when, on what entity and with which evidence reference.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>Approval and review history</CardTitle>
+                <CardDescription>
+                  {data.sourceContext
+                    ? `Showing sign-off history scoped to ${formatLabel(data.sourceContext.entityType)} ${data.sourceContext.key}.`
+                    : "Showing sign-off history for the active project."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {data.signoffRecords.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
+                    No sign-off records are available yet for this context.
+                  </div>
+                ) : (
+                  data.signoffRecords.map((record) => (
+                    <div className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm text-muted-foreground" key={record.id}>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {formatLabel(record.decisionKind)} for {formatLabel(record.entityType)} {record.entityId}
+                          </p>
+                          <p className="mt-2">
+                            Required role: {formatLabel(record.requiredRoleType)} / {record.organizationSide}
+                          </p>
+                          <p className="mt-2">
+                            Signed by: {record.actualPersonName} ({record.actualRoleTitle})
+                          </p>
+                        </div>
+                        <div className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          {formatLabel(record.decisionStatus)}
+                        </div>
+                      </div>
+                      {record.note ? <p className="mt-3">{record.note}</p> : null}
+                      <p className="mt-3">
+                        Evidence: {record.evidenceReference ? record.evidenceReference : "No evidence reference recorded."}
+                      </p>
+                      <p className="mt-2">{new Date(record.createdAt).toLocaleString("en-US")}</p>
                     </div>
                   ))
                 )}

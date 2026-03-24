@@ -53,6 +53,65 @@ vi.mock("@aas-companion/api", async () => {
           comments: null,
           status: "blocked"
         },
+        tollgateReview: {
+          status: "blocked",
+          blockers: ["Baseline definition is missing.", "Baseline source is missing."],
+          comments: null,
+          availablePeople: [
+            {
+              id: "party-vo",
+              fullName: "Demo Value Owner",
+              roleType: "value_owner",
+              organizationSide: "customer",
+              roleTitle: "Value Owner"
+            }
+          ],
+          reviewActions: [
+            {
+              decisionKind: "review",
+              roleType: "architect",
+              organizationSide: "supplier",
+              label: "Architecture review",
+              assignedPeople: [],
+              completedRecords: [],
+              pending: true,
+              blockedReasons: ["No active architect is currently assigned on the supplier side."]
+            }
+          ],
+          approvalActions: [
+            {
+              decisionKind: "approval",
+              roleType: "value_owner",
+              organizationSide: "customer",
+              label: "Business value approval",
+              assignedPeople: [
+                {
+                  partyRoleEntryId: "party-vo",
+                  fullName: "Demo Value Owner",
+                  email: "value.owner@aas-companion.local",
+                  roleTitle: "Value Owner"
+                }
+              ],
+              completedRecords: [],
+              pending: true,
+              blockedReasons: []
+            }
+          ],
+          pendingActions: [
+            {
+              label: "Architecture review",
+              roleType: "architect",
+              organizationSide: "supplier"
+            }
+          ],
+          blockedActions: [
+            {
+              label: "Architecture review",
+              blockedReasons: ["No active architect is currently assigned on the supplier side."]
+            }
+          ],
+          signoffRecords: []
+        },
         activities: [
           {
             id: "activity-1",
@@ -139,6 +198,7 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   archiveOutcomeAction: vi.fn(),
   createEpicFromOutcomeAction: vi.fn(),
   hardDeleteOutcomeAction: vi.fn(),
+  recordOutcomeTollgateDecisionAction: vi.fn(),
   restoreOutcomeAction: vi.fn(),
   saveOutcomeWorkspaceAction: vi.fn(),
   submitOutcomeTollgateAction: vi.fn()
@@ -165,6 +225,8 @@ describe("Outcome page", () => {
     expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
+    expect(screen.getByText("Tollgate 1 review and approval")).toBeDefined();
+    expect(screen.getByText("Architecture review still needs architect on the supplier side.")).toBeDefined();
     expect(screen.getByText("Baseline definition is missing.")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
   });

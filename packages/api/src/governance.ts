@@ -7,6 +7,7 @@ import {
   listGovernanceRiskCombinationRules,
   listGovernanceRoleRequirements,
   listPartyRoleEntries,
+  listSignoffRecordsForOrganization,
   updateAgentRegistryEntry,
   updatePartyRoleEntry
 } from "@aas-companion/db";
@@ -92,11 +93,12 @@ export async function getGovernanceWorkspaceService(input: {
   sourceEntity?: GovernanceSourceEntity;
   sourceId?: string;
 }) {
-  const [people, agents, requirements, riskRules, sourceContext] = await Promise.all([
+  const [people, agents, requirements, riskRules, signoffRecords, sourceContext] = await Promise.all([
     listPartyRoleEntries(input.organizationId, { includeInactive: true }),
     listAgentRegistryEntries(input.organizationId, { includeInactive: true }),
     listGovernanceRoleRequirements(input.organizationId),
     listGovernanceRiskCombinationRules(input.organizationId),
+    listSignoffRecordsForOrganization(input.organizationId),
     getGovernanceSourceContext(input)
   ]);
 
@@ -108,12 +110,18 @@ export async function getGovernanceWorkspaceService(input: {
     people
   });
   const authorityMatrix = buildAuthorityAssignments({ people });
+  const scopedSignoffRecords = sourceContext
+    ? signoffRecords.filter(
+        (record) => record.entityType === sourceContext.entityType && record.entityId === sourceContext.entityId
+      )
+    : signoffRecords;
 
   return success({
     people,
     agents,
     requirements,
     riskRules,
+    signoffRecords: scopedSignoffRecords,
     sourceContext,
     selectedAiLevel,
     readiness,

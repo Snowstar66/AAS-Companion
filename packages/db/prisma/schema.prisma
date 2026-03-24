@@ -143,12 +143,25 @@ enum TollgateStatus {
   approved
 }
 
+enum SignoffDecisionKind {
+  review
+  approval
+  escalation
+}
+
+enum SignoffDecisionStatus {
+  approved
+  rejected
+  changes_requested
+}
+
 enum ActivityEntityType {
   organization
   outcome
   epic
   story
   tollgate
+  signoff_record
   party_role_entry
   agent_registry_entry
   artifact_intake_session
@@ -165,6 +178,7 @@ enum ActivityEventType {
   story_created
   story_updated
   tollgate_recorded
+  signoff_recorded
   execution_contract_generated
   governed_removal_requested
   governed_hard_deleted
@@ -243,6 +257,7 @@ model Organization {
   epics                        Epic[]
   stories                      Story[]
   tollgates                    Tollgate[]
+  signoffRecords               SignoffRecord[]
   activityEvents               ActivityEvent[]
   artifactIntakeSessions       ArtifactIntakeSession[]
   artifactIntakeFiles          ArtifactIntakeFile[]
@@ -262,6 +277,7 @@ model AppUser {
   memberships          Membership[]
   ownedOutcomes        Outcome[]             @relation("OutcomeValueOwner")
   tollgateDecisions    Tollgate[]            @relation("TollgateDecisionActor")
+  createdSignoffRecords SignoffRecord[]      @relation("SignoffCreator")
   activityEvents       ActivityEvent[]       @relation("ActivityActor")
   createdIntakeSessions ArtifactIntakeSession[] @relation("ArtifactIntakeSessionCreator")
   uploadedIntakeFiles  ArtifactIntakeFile[]  @relation("ArtifactIntakeFileUploader")
@@ -296,6 +312,7 @@ model PartyRoleEntry {
   updatedAt        DateTime         @updatedAt
   organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   supervisingAgents AgentRegistryEntry[] @relation("PartyRoleSupervisor")
+  signoffRecords   SignoffRecord[]  @relation("ActualSignoffPerson")
 
   @@index([organizationId, isActive, organizationSide])
   @@index([organizationId, roleType, isActive])
@@ -467,9 +484,39 @@ model Tollgate {
   updatedAt      DateTime           @updatedAt
   organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   decisionActor  AppUser?           @relation("TollgateDecisionActor", fields: [decidedBy], references: [id], onDelete: SetNull)
+  signoffRecords SignoffRecord[]
 
   @@unique([organizationId, entityType, entityId, tollgateType])
   @@index([organizationId, entityType, entityId])
+}
+
+model SignoffRecord {
+  id                   String               @id
+  organizationId       String
+  entityType           TollgateEntityType
+  entityId             String
+  tollgateId           String?
+  tollgateType         TollgateType?
+  decisionKind         SignoffDecisionKind
+  requiredRoleType     PartyRoleType
+  actualPartyRoleEntryId String
+  actualPersonName     String
+  actualPersonEmail    String
+  actualRoleTitle      String
+  organizationSide     OrganizationSide
+  decisionStatus       SignoffDecisionStatus
+  note                 String?
+  evidenceReference    String?
+  createdBy            String?
+  createdAt            DateTime             @default(now())
+  organization         Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tollgate             Tollgate?            @relation(fields: [tollgateId], references: [id], onDelete: SetNull)
+  actualPartyRoleEntry PartyRoleEntry       @relation("ActualSignoffPerson", fields: [actualPartyRoleEntryId], references: [id], onDelete: Restrict)
+  creator              AppUser?             @relation("SignoffCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, entityType, entityId, createdAt])
+  @@index([organizationId, tollgateId, createdAt])
+  @@index([organizationId, decisionKind, decisionStatus])
 }
 
 model ActivityEvent {

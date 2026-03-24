@@ -63,6 +63,65 @@ vi.mock("@aas-companion/api", async () => {
           comments: null,
           status: "blocked"
         },
+        tollgateReview: {
+          status: "blocked",
+          blockers: ["Test Definition is required before handoff."],
+          comments: null,
+          availablePeople: [
+            {
+              id: "party-dl",
+              fullName: "Demo Delivery Lead",
+              roleType: "delivery_lead",
+              organizationSide: "supplier",
+              roleTitle: "Delivery Lead"
+            }
+          ],
+          reviewActions: [
+            {
+              decisionKind: "review",
+              roleType: "aqa",
+              organizationSide: "supplier",
+              label: "Quality review",
+              assignedPeople: [],
+              completedRecords: [],
+              pending: true,
+              blockedReasons: ["No active aqa is currently assigned on the supplier side."]
+            }
+          ],
+          approvalActions: [
+            {
+              decisionKind: "approval",
+              roleType: "delivery_lead",
+              organizationSide: "supplier",
+              label: "Delivery approval",
+              assignedPeople: [
+                {
+                  partyRoleEntryId: "party-dl",
+                  fullName: "Demo Delivery Lead",
+                  email: "delivery.lead@aas-companion.local",
+                  roleTitle: "Delivery Lead"
+                }
+              ],
+              completedRecords: [],
+              pending: true,
+              blockedReasons: []
+            }
+          ],
+          pendingActions: [
+            {
+              label: "Quality review",
+              roleType: "aqa",
+              organizationSide: "supplier"
+            }
+          ],
+          blockedActions: [
+            {
+              label: "Quality review",
+              blockedReasons: ["No active aqa is currently assigned on the supplier side."]
+            }
+          ],
+          signoffRecords: []
+        },
         activities: [
           {
             id: "activity-story-created",
@@ -149,6 +208,7 @@ vi.mock("@aas-companion/api", async () => {
 vi.mock("@/app/(protected)/stories/[storyId]/actions", () => ({
   archiveStoryAction: vi.fn(),
   hardDeleteStoryAction: vi.fn(),
+  recordStoryTollgateDecisionAction: vi.fn(),
   restoreStoryAction: vi.fn(),
   saveStoryWorkspaceAction: vi.fn(),
   submitStoryReadinessAction: vi.fn()
@@ -173,6 +233,8 @@ describe("Story Workspace page", () => {
     expect(screen.getByRole("link", { name: "Back to current Epic" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open current Framing" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
+    expect(screen.getByText("Story readiness review and approval")).toBeDefined();
+    expect(screen.getByText("Quality review still needs aqa on the supplier side.")).toBeDefined();
     expect(screen.getAllByText("Test Definition is required before handoff.").length).toBeGreaterThan(0);
   });
 });

@@ -9,10 +9,12 @@ import { AppShell } from "@/components/layout/app-shell";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
+import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
   archiveStoryAction,
   hardDeleteStoryAction,
+  recordStoryTollgateDecisionAction,
   restoreStoryAction,
   saveStoryWorkspaceAction,
   submitStoryReadinessAction
@@ -46,10 +48,13 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   }
 
   const { story, tollgate, activities, removal } = storyResult.data;
+  const tollgateReview = storyResult.data.tollgateReview;
   const computedBlockers = getStoryReadinessBlockers(story);
   const importedBuildBlockers = storyResult.data.importedBuildBlockers ?? [];
   const blockers =
-    blockersFromQuery.length > 0 ? blockersFromQuery : [...new Set([...(tollgate?.blockers ?? computedBlockers), ...importedBuildBlockers])];
+    blockersFromQuery.length > 0
+      ? blockersFromQuery
+      : tollgateReview?.blockers ?? [...new Set([...(tollgate?.blockers ?? computedBlockers), ...importedBuildBlockers])];
   const isArchived = story.lifecycleState === "archived";
 
   return (
@@ -132,6 +137,11 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
         {readyState === "success" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             Story readiness recorded. This Story is ready for handoff preview.
+          </div>
+        ) : null}
+        {readyState === "approved" ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Required sign-offs are complete. Story readiness is now approved.
           </div>
         ) : null}
         {lifecycleState === "archived" ? (
@@ -366,35 +376,50 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
           </div>
 
           <div className="space-y-6">
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Readiness panel</CardTitle>
-                <CardDescription>Server-backed readiness calculation for build handoff.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div
-                  className={`rounded-2xl border px-4 py-4 text-sm ${
-                    blockers.length === 0
-                      ? "border-emerald-200 bg-emerald-50/80 text-emerald-900"
-                      : "border-amber-200 bg-amber-50/80 text-amber-900"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-medium">
-                    {blockers.length === 0 ? (
-                      <CircleCheckBig className="h-4 w-4" />
-                    ) : (
-                      <CircleAlert className="h-4 w-4" />
-                    )}
-                    {blockers.length === 0 ? "Ready for build handoff" : "Definition blocked"}
-                  </div>
-                  <p className="mt-2 leading-6">
-                    {blockers.length === 0
-                      ? "Required Story fields are present. Execution Contract preview can be generated."
-                      : blockers.join(" ")}
-                  </p>
-                </div>
+            <TollgateDecisionCard
+              aiAccelerationLevel={story.aiAccelerationLevel}
+              approvalActions={tollgateReview?.approvalActions ?? []}
+              availablePeople={tollgateReview?.availablePeople ?? []}
+              blockers={blockers}
+              blockedActions={tollgateReview?.blockedActions ?? []}
+              comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
+              description="Server-backed readiness, review, approval and escalation trail for Story handoff."
+              entityId={story.id}
+              entityType="story"
+              formAction={recordStoryTollgateDecisionAction}
+              hiddenFields={[
+                { name: "storyId", value: story.id },
+                { name: "epicId", value: story.epicId },
+                { name: "outcomeId", value: story.outcomeId }
+              ]}
+              pendingActions={tollgateReview?.pendingActions ?? []}
+              reviewActions={tollgateReview?.reviewActions ?? []}
+              signoffRecords={
+                tollgateReview?.signoffRecords.map((record) => ({
+                  id: record.id,
+                  decisionKind: record.decisionKind,
+                  requiredRoleType: record.requiredRoleType,
+                  actualPersonName: record.actualPersonName,
+                  actualRoleTitle: record.actualRoleTitle,
+                  organizationSide: record.organizationSide,
+                  decisionStatus: record.decisionStatus,
+                  note: record.note,
+                  evidenceReference: record.evidenceReference,
+                  createdAt: record.createdAt
+                })) ?? []
+              }
+              status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
+              title="Story readiness review and approval"
+              tollgateType="story_readiness"
+            />
 
-                {!isArchived ? (
+            {!isArchived ? (
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Submit Story readiness</CardTitle>
+                  <CardDescription>Readiness submission freezes the current blockers before human sign-off continues.</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <form action={submitStoryReadinessAction} className="space-y-4">
                     <input name="storyId" type="hidden" value={story.id} />
                     <input name="epicId" type="hidden" value={story.epicId} />
@@ -412,11 +437,9 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       Record readiness
                     </Button>
                   </form>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Restore the Story before resuming readiness progression.</p>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : null}
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>

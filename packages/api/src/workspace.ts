@@ -16,6 +16,7 @@ import {
 } from "@aas-companion/domain";
 import { getArtifactCandidateById } from "@aas-companion/db";
 import { failure, success, type ApiResult } from "./shared";
+import { getTollgateReviewWorkspaceService } from "./tollgates";
 
 async function getImportedStoryBuildBlockers(input: {
   organizationId: string;
@@ -68,9 +69,20 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
     });
   }
 
+  const tollgateReview = await getTollgateReviewWorkspaceService({
+    organizationId,
+    entityType: "outcome",
+    entityId: outcomeId,
+    tollgateType: "tg1_baseline",
+    aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+    fallbackBlockers: snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
+    fallbackComments: snapshot.tollgate?.comments ?? null
+  });
+
   return success({
     ...snapshot,
     readiness: getOutcomeBaselineReadiness(snapshot.outcome),
+    tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
     removal: await getGovernedRemovalState({
       organizationId,
       entityType: "outcome",
@@ -167,11 +179,22 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
     lineageSourceType: snapshot.story.lineageSourceType,
     lineageSourceId: snapshot.story.lineageSourceId
   });
+  const baseReadinessBlockers = getStoryHandoffReadiness(snapshot.story).reasons.map((reason) => reason.message);
+  const tollgateReview = await getTollgateReviewWorkspaceService({
+    organizationId,
+    entityType: "story",
+    entityId: storyId,
+    tollgateType: "story_readiness",
+    aiAccelerationLevel: snapshot.story.aiAccelerationLevel,
+    fallbackBlockers: [...new Set([...(snapshot.tollgate?.blockers ?? baseReadinessBlockers), ...importedBuildBlockers])],
+    fallbackComments: snapshot.tollgate?.comments ?? null
+  });
 
   return success({
     ...snapshot,
     readiness: getStoryHandoffReadiness(snapshot.story),
     importedBuildBlockers,
+    tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
     removal: await getGovernedRemovalState({
       organizationId,
       entityType: "story",
