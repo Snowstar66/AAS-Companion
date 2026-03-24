@@ -29,24 +29,24 @@ export function FramingRightRail({ summary }: FramingRightRailProps) {
     <aside className="space-y-4">
       <Card className="border-border/70 bg-background/90 shadow-sm">
         <CardHeader>
-          <CardTitle>Framing summary</CardTitle>
-          <CardDescription>Current outcome posture for the active project context.</CardDescription>
+          <CardTitle>Active framing posture</CardTitle>
+          <CardDescription>Compact readout for the current project's cockpit state.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
-          <div className="rounded-3xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">Total outcomes</p>
-            <p className="mt-3 text-3xl font-semibold">{summary.total}</p>
-          </div>
-          <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-4 text-amber-900">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">Blocked</p>
-            <p className="mt-3 text-2xl font-semibold">{summary.blocked}</p>
-          </div>
-          <div className="rounded-3xl border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-900">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">Ready for TG1</p>
-            <p className="mt-3 flex items-center gap-2 text-2xl font-semibold">
-              <CircleCheckBig className="h-5 w-5" />
-              {summary.ready}
-            </p>
+        <CardContent className="space-y-4">
+          <p className="text-sm leading-6 text-muted-foreground">
+            {summary.total} outcome{summary.total === 1 ? "" : "s"} are currently visible in this project. {summary.blocked} still need framing cleanup and {summary.ready} are already ready for TG1.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground">
+              Total {summary.total}
+            </span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
+              Blocked {summary.blocked}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+              <CircleCheckBig className="h-3.5 w-3.5" />
+              Ready {summary.ready}
+            </span>
           </div>
         </CardContent>
       </Card>

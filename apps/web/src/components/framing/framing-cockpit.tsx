@@ -149,21 +149,15 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
               <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">{message}</p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total outcomes</p>
-                <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{items.length}</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">Every active outcome visible inside this project context.</p>
+            <div className="flex flex-wrap gap-3">
+              <div className="rounded-full border border-border/70 bg-background/92 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                <span className="font-semibold text-foreground">{items.length}</span> visible outcome{items.length === 1 ? "" : "s"}
               </div>
-              <div className="rounded-3xl border border-amber-200 bg-amber-50/85 p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">Blocked outcomes</p>
-                <p className="mt-3 text-3xl font-semibold tracking-tight text-amber-950">{blockedCount}</p>
-                <p className="mt-2 text-sm leading-6 text-amber-900/80">These still need baseline or framing cleanup.</p>
+              <div className="rounded-full border border-amber-200 bg-amber-50/85 px-4 py-2 text-sm text-amber-900 shadow-sm">
+                <span className="font-semibold">{blockedCount}</span> blocked
               </div>
-              <div className="rounded-3xl border border-emerald-200 bg-emerald-50/85 p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Ready outcomes</p>
-                <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-950">{readyCount}</p>
-                <p className="mt-2 text-sm leading-6 text-emerald-900/80">Can move forward without framing blockers.</p>
+              <div className="rounded-full border border-emerald-200 bg-emerald-50/85 px-4 py-2 text-sm text-emerald-900 shadow-sm">
+                <span className="font-semibold">{readyCount}</span> ready for TG1
               </div>
             </div>
           </div>
@@ -219,29 +213,6 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                 </Card>
               ) : null}
             </div>
-
-            <Card className="border-border/70 bg-background/92 shadow-sm">
-              <CardHeader>
-                <CardTitle>Control view</CardTitle>
-                <CardDescription>
-                  Keep the cockpit focused on the right outcomes before you dive into detail pages.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
-                <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current view</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{activeFilterLabel}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Visible now</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{filteredItems.length}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Native focus</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{nativeItemCount}</p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
@@ -252,7 +223,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
         ) : null}
 
         <div className="mt-6 rounded-3xl border border-border/70 bg-background/75 p-4 shadow-sm sm:p-5">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] 2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] 2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Search outcomes</p>
               <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
@@ -269,7 +240,12 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin filters</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin filters</p>
+                <div className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {activeFilterLabel} · {filteredItems.length} visible
+                </div>
+              </div>
               <div className="-mx-1 overflow-x-auto pb-1">
                 <div className="flex min-w-max flex-wrap gap-2 px-1">
                   {filters.map((filter) => (

@@ -1,4 +1,4 @@
-import { BellDot, Search, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
 export type TopbarProps = {
@@ -52,21 +52,10 @@ export function Topbar({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="hidden items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-3 py-2 text-sm text-muted-foreground 2xl:flex">
-            <Search className="h-4 w-4" />
-            Search project artifacts, stories, or sections
-          </div>
           <Button className="gap-2" variant="secondary">
             <Sparkles className="h-4 w-4" />
-            BMAD ready
+            AI-assisted
           </Button>
-          <button
-            aria-label="Notifications"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground transition hover:text-foreground"
-            type="button"
-          >
-            <BellDot className="h-4 w-4" />
-          </button>
         </div>
       </div>
     </header>
