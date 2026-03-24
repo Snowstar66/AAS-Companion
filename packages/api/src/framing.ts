@@ -1,5 +1,6 @@
 import { DEMO_ORGANIZATION, getOutcomeBaselineReadiness } from "@aas-companion/domain";
-import { listOutcomeCockpitEntries } from "@aas-companion/db";
+import { createOutcome, listOutcomeCockpitEntries, listOutcomes } from "@aas-companion/db";
+import { success, type ApiResult } from "./shared";
 
 export type FramingReadinessTone = "blocked" | "progress" | "ready";
 
@@ -77,6 +78,39 @@ function createSummary(items: FramingOutcomeItem[]): FramingSummary {
   };
 }
 
+function buildNextOutcomeKey(existingKeys: string[]) {
+  const numericKeys = existingKeys
+    .map((key) => /^OUT-(\d+)$/.exec(key)?.[1])
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => Number.isFinite(value));
+
+  const nextNumber = (numericKeys.length > 0 ? Math.max(...numericKeys) : 0) + 1;
+  return `OUT-${String(nextNumber).padStart(3, "0")}`;
+}
+
+export async function createCleanDraftOutcomeFromFramingService(input: {
+  organizationId: string;
+  actorId?: string | null;
+}): Promise<ApiResult<Awaited<ReturnType<typeof createOutcome>>>> {
+  const existingOutcomes = await listOutcomes(input.organizationId);
+  const key = buildNextOutcomeKey(existingOutcomes.map((outcome) => outcome.key));
+
+  return success(
+    await createOutcome({
+      organizationId: input.organizationId,
+      key,
+      title: "New customer case",
+      riskProfile: "medium",
+      aiAccelerationLevel: "level_2",
+      status: "draft",
+      originType: "native",
+      createdMode: "clean",
+      actorId: input.actorId ?? null
+    })
+  );
+}
+
 export async function getFramingCockpitData(
   organizationId: string = DEMO_ORGANIZATION.organizationId
 ): Promise<FramingCockpitData> {
@@ -139,7 +173,7 @@ export async function getFramingCockpitData(
       return {
         state: "empty",
         organizationName: DEMO_ORGANIZATION.organizationName,
-        message: "No outcomes exist yet. Create the first framing record to start the cockpit.",
+        message: "Start a clean native case from Framing, or open demo content only when you want an example.",
         items,
         summary: createSummary(items)
       };
@@ -148,7 +182,7 @@ export async function getFramingCockpitData(
     return {
       state: "live",
       organizationName: DEMO_ORGANIZATION.organizationName,
-      message: "Outcome framing data is available and filterable.",
+      message: "Native work is prioritized here, while demo outcomes remain available intentionally when you want reference material.",
       items,
       summary: createSummary(items)
     };

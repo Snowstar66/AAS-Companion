@@ -54,3 +54,60 @@ export async function createEpic(input: unknown, db: Prisma.TransactionClient | 
 
   return persist(db);
 }
+
+export async function listEpics(organizationId: string) {
+  return prisma.epic.findMany({
+    where: { organizationId },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+}
+
+export async function getEpicById(organizationId: string, id: string) {
+  return prisma.epic.findFirst({
+    where: {
+      organizationId,
+      id
+    }
+  });
+}
+
+export async function getEpicWorkspaceSnapshot(organizationId: string, id: string) {
+  const [epic, activities] = await prisma.$transaction([
+    prisma.epic.findFirst({
+      where: {
+        organizationId,
+        id
+      },
+      include: {
+        outcome: true,
+        stories: {
+          orderBy: {
+            createdAt: "asc"
+          }
+        }
+      }
+    }),
+    prisma.activityEvent.findMany({
+      where: {
+        organizationId,
+        entityType: "epic",
+        entityId: id
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 10
+    })
+  ]);
+
+  if (!epic) {
+    return null;
+  }
+
+  return {
+    epic,
+    activities
+  };
+}

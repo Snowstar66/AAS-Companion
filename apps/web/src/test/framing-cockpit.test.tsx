@@ -22,7 +22,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
         {
           id: "outcome-1",
           key: "OUT-001",
-          title: "Close the governance readiness gap",
+          title: "New customer case",
           status: "draft",
           statusLabel: "Draft",
           readinessLabel: "Blocked",
@@ -44,7 +44,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
         {
           id: "outcome-2",
           key: "OUT-002",
-          title: "Make outcome delivery reviewable",
+          title: "Close the governance readiness gap",
           status: "ready_for_tg1",
           statusLabel: "Ready For TG1",
           readinessLabel: "Ready for framing review",
@@ -54,9 +54,9 @@ vi.mock("@/lib/framing/cockpit", () => ({
           blockers: [],
           baselineComplete: true,
           ownerLabel: "Demo Value Owner",
-          originType: "imported",
-          importedReadinessState: "imported_framing_ready",
-          lineageHref: "/review?candidateId=candidate-outcome-2",
+          originType: "seeded",
+          importedReadinessState: null,
+          lineageHref: null,
           timeframe: "Q2 2026",
           epicCount: 1,
           storyCount: 3,
@@ -81,29 +81,24 @@ describe("Framing cockpit", () => {
     cleanup();
   });
 
-  it("renders outcomes and filters blocked items", async () => {
+  it("renders native-first entry actions and defaults to native work", async () => {
     render(await FramingPage());
 
     expect(screen.getByRole("heading", { name: "Framing Cockpit", level: 1 })).toBeDefined();
-    expect(screen.getByText("Close the governance readiness gap")).toBeDefined();
-    expect(screen.getByText("Make outcome delivery reviewable")).toBeDefined();
-
-    fireEvent.click(screen.getByRole("button", { name: "Blocked (1)" }));
-
-    expect(screen.getByText("Close the governance readiness gap")).toBeDefined();
-    expect(screen.queryByText("Make outcome delivery reviewable")).toBeNull();
+    expect(screen.getByRole("button", { name: "Start new case" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open demo case" })).toBeDefined();
+    expect(screen.getByText("New customer case")).toBeDefined();
+    expect(screen.queryByText("Close the governance readiness gap")).toBeNull();
+    expect(screen.getByText("Native")).toBeDefined();
   });
 
-  it("supports search within the cockpit list", async () => {
+  it("supports switching to demo cases intentionally", async () => {
     render(await FramingPage());
 
-    fireEvent.change(screen.getByLabelText("Search outcomes"), {
-      target: {
-        value: "reviewable"
-      }
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Demo (1)" }));
 
-    expect(screen.getByText("Make outcome delivery reviewable")).toBeDefined();
-    expect(screen.queryByText("Close the governance readiness gap")).toBeNull();
+    expect(screen.getByText("Close the governance readiness gap")).toBeDefined();
+    expect(screen.queryByText("New customer case")).toBeNull();
+    expect(screen.getByText("Demo")).toBeDefined();
   });
 });

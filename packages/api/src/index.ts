@@ -1,4 +1,5 @@
 export * from "./dashboard";
+export * from "./epics";
 export * from "./framing";
 export * from "./intake";
 export * from "./outcomes";

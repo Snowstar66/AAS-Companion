@@ -24,7 +24,12 @@ export {
   listOutcomes,
   updateOutcome
 } from "./repositories/outcome-repository";
-export { createEpic } from "./repositories/epic-repository";
+export {
+  createEpic,
+  getEpicById,
+  getEpicWorkspaceSnapshot,
+  listEpics
+} from "./repositories/epic-repository";
 export {
   createStory,
   getStoryById,

@@ -54,3 +54,45 @@ test("M1 happy path covers outcome readiness, story readiness, and execution con
   await expect(page.getByRole("button", { name: "Copy JSON" })).toBeVisible();
   await expect(page.getByText("Test Definition")).toBeVisible();
 });
+
+test("M1 clean case flow covers native creation, blocked TG1, and demo path access", async ({ page }) => {
+  await loginToDemoWorkspace(page);
+
+  await page.goto("/framing");
+  await expect(page.getByRole("button", { name: "Start new case" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open demo case" }).first()).toBeVisible();
+  await expect(page.getByText("No native cases yet")).toBeVisible();
+
+  await page.getByRole("button", { name: "Start new case" }).first().click();
+
+  await expect(page).toHaveURL(/\/outcomes\//);
+  await expect(page.getByText("Clean native case created and ready for framing work.")).toBeVisible();
+  await expect(page.getByText("Case provenance")).toBeVisible();
+  await expect(page.getByText("Origin: Native")).toBeVisible();
+  await expect(page.getByText("Status: draft")).toBeVisible();
+  await expect(page.getByText("No epics have been attached to this outcome yet.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Submit to Tollgate 1" }).click();
+  await expect(page.getByText("Tollgate 1 is still blocked.")).toBeVisible();
+  await expect(page.getByText("Baseline definition is missing.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create Epic" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Create Epic" }).click();
+  await expect(page).toHaveURL(/\/epics\//);
+  await expect(page.getByText("Native Epic created and ready for Story breakdown.")).toBeVisible();
+  await expect(page.getByText("No Stories exist for this Epic yet.")).toBeVisible();
+  await page.getByRole("button", { name: "Create Story" }).click();
+
+  await expect(page).toHaveURL(/\/stories\//);
+  await expect(page.getByText("Native Story created and ready for design work.")).toBeVisible();
+  await expect(page.getByText("Story readiness is blocked.")).not.toBeVisible();
+  await expect(page.getByText("Definition blocked")).toBeVisible();
+
+  await page.goto("/framing");
+  await expect(page.getByRole("button", { name: /Native \(\d+\)/ })).toBeVisible();
+  await expect(page.getByText("New customer case")).toBeVisible();
+
+  await page.getByRole("link", { name: "Open demo case" }).first().click();
+  await expect(page).toHaveURL(/\/outcomes\//);
+  await expect(page.getByText("Origin: Demo")).toBeVisible();
+});

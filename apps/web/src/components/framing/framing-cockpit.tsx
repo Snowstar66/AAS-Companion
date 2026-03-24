@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useDeferredValue, useState } from "react";
-import { AlertTriangle, ArrowRight, CircleCheckBig, Layers3, Plus, Search } from "lucide-react";
+import { AlertTriangle, ArrowRight, CircleCheckBig, Layers3, Search, Sparkles } from "lucide-react";
 import type { FramingOutcomeItem } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { createDraftOutcomeAction } from "@/app/(protected)/framing/actions";
@@ -18,7 +18,7 @@ type FramingCockpitProps = {
   createAction: typeof createDraftOutcomeAction;
 };
 
-type FilterKey = "all" | "blocked" | string;
+type OriginFilterKey = "all" | "native" | "demo";
 
 function getReadinessClasses(item: FramingOutcomeItem) {
   if (item.readinessTone === "blocked") {
@@ -32,16 +32,40 @@ function getReadinessClasses(item: FramingOutcomeItem) {
   return "border-sky-200 bg-sky-50 text-sky-900";
 }
 
-function matchesFilter(item: FramingOutcomeItem, filter: FilterKey) {
+function getOriginLabel(originType: string) {
+  if (originType === "seeded") {
+    return "Demo";
+  }
+
+  if (originType === "native") {
+    return "Native";
+  }
+
+  return "Imported";
+}
+
+function getOriginClasses(originType: string) {
+  if (originType === "seeded") {
+    return "border-violet-200 bg-violet-50 text-violet-800";
+  }
+
+  if (originType === "native") {
+    return "border-sky-200 bg-sky-50 text-sky-800";
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-800";
+}
+
+function matchesOriginFilter(item: FramingOutcomeItem, filter: OriginFilterKey) {
   if (filter === "all") {
     return true;
   }
 
-  if (filter === "blocked") {
-    return item.isBlocked;
+  if (filter === "native") {
+    return item.originType === "native";
   }
 
-  return item.status === filter;
+  return item.originType === "seeded";
 }
 
 function matchesSearch(item: FramingOutcomeItem, search: string) {
@@ -53,13 +77,7 @@ function matchesSearch(item: FramingOutcomeItem, search: string) {
   return haystack.includes(search.toLowerCase());
 }
 
-function buildFilters(items: FramingOutcomeItem[]) {
-  const statusEntries = Array.from(new Set(items.map((item) => item.status))).map((status) => ({
-    key: status,
-    label: items.find((item) => item.status === status)?.statusLabel ?? status,
-    count: items.filter((item) => item.status === status).length
-  }));
-
+function buildOriginFilters(items: FramingOutcomeItem[]) {
   return [
     {
       key: "all",
@@ -67,68 +85,116 @@ function buildFilters(items: FramingOutcomeItem[]) {
       count: items.length
     },
     {
-      key: "blocked",
-      label: "Blocked",
-      count: items.filter((item) => item.isBlocked).length
+      key: "native",
+      label: "Native",
+      count: items.filter((item) => item.originType === "native").length
     },
-    ...statusEntries
+    {
+      key: "demo",
+      label: "Demo",
+      count: items.filter((item) => item.originType === "seeded").length
+    }
   ];
 }
 
 function SubmitButton({ pending }: { pending: boolean }) {
   return (
     <Button className="gap-2" disabled={pending} type="submit">
-      {pending ? "Creating outcome..." : "Create draft outcome"}
+      {pending ? "Creating case..." : "Start new case"}
       <ArrowRight className="h-4 w-4" />
     </Button>
   );
 }
 
 export function FramingCockpit({ items, message, state, createAction }: FramingCockpitProps) {
-  const filters = buildFilters(items);
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const filters = buildOriginFilters(items);
+  const [activeFilter, setActiveFilter] = useState<OriginFilterKey>("native");
   const [search, setSearch] = useState("");
-  const [composerOpen, setComposerOpen] = useState(state === "empty");
   const deferredSearch = useDeferredValue(search);
   const [actionState, formAction, pending] = useActionState<CreateOutcomeActionState, FormData>(
     createAction,
     initialCreateOutcomeActionState
   );
+  const demoEntryHref = items.find((item) => item.originType === "seeded")?.detailHref ?? null;
+  const nativeItemCount = items.filter((item) => item.originType === "native").length;
 
   const filteredItems = items.filter(
-    (item) => matchesFilter(item, activeFilter) && matchesSearch(item, deferredSearch.trim())
+    (item) => matchesOriginFilter(item, activeFilter) && matchesSearch(item, deferredSearch.trim())
   );
 
   const emptyFilterState = items.length > 0 && filteredItems.length === 0;
+  const showNativeEmptyState = activeFilter === "native" && nativeItemCount === 0 && emptyFilterState;
 
   return (
     <section className="space-y-6">
       <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,420px)]">
           <div className="max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               <Layers3 className="h-3.5 w-3.5 text-primary" />
-              Story M1-005
+              Native-first framing
             </div>
             <div className="space-y-3">
               <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">Framing Cockpit</h1>
               <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">{message}</p>
             </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button className="gap-2" onClick={() => setComposerOpen((value) => !value)} type="button">
-              <Plus className="h-4 w-4" />
-              {composerOpen ? "Hide new outcome" : "Start new outcome"}
-            </Button>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            <Card className="border-sky-200 bg-sky-50/70 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sky-950">
+                  <Sparkles className="h-4 w-4" />
+                  Start a clean case
+                </CardTitle>
+                <CardDescription className="text-sky-900/80">
+                  Create a fresh native draft Outcome and continue directly in Outcome Workspace.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <form action={formAction}>
+                  <SubmitButton pending={pending} />
+                </form>
+                <p className="text-sm text-sky-900/80">This is the default path for real customer work.</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>Open demo case</CardTitle>
+                <CardDescription>Explore seeded example content intentionally without changing native case behavior.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {demoEntryHref ? (
+                  <Button asChild className="gap-2" variant="secondary">
+                    <Link href={demoEntryHref}>
+                      Open demo case
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button className="gap-2" onClick={() => setActiveFilter("demo")} type="button" variant="secondary">
+                    Open demo case
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+                <p className="text-sm text-muted-foreground">Demo stays available, but it is secondary to clean case creation.</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
+
+        {actionState.status === "error" && actionState.message ? (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {actionState.message}
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>Find the right outcome</CardTitle>
-            <CardDescription>Filter by posture or search by key, title, owner, or readiness signal.</CardDescription>
+            <CardDescription>Filter by origin or search by key, title, owner, or readiness signal.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
@@ -151,7 +217,7 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                       : "border-border/70 bg-background text-muted-foreground hover:text-foreground"
                   }`}
                   key={filter.key}
-                  onClick={() => setActiveFilter(filter.key)}
+                  onClick={() => setActiveFilter(filter.key as OriginFilterKey)}
                   type="button"
                 >
                   {filter.label} ({filter.count})
@@ -163,74 +229,54 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Quick framing notes</CardTitle>
-            <CardDescription>Use blocked markers first when triaging which outcome to inspect next.</CardDescription>
+            <CardTitle>Working posture</CardTitle>
+            <CardDescription>Native is the default working view so real customer cases stay in focus.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Blocked outcomes surface missing baseline evidence or a blocked Tollgate 1 record.</p>
-            <p>Ready outcomes can move directly into the Outcome Workspace for deeper framing work.</p>
-            <p>Creation here stays intentionally small: a draft record and a handoff into the workspace route.</p>
+            <p>Use Start new case for clean customer work that begins with a draft native Outcome.</p>
+            <p>Switch to Demo only when you want seeded reference material.</p>
+            <p>Readiness and Tollgate behavior stay the same once a case is opened in Outcome Workspace.</p>
           </CardContent>
         </Card>
       </div>
 
-      {composerOpen ? (
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Create a draft outcome</CardTitle>
-            <CardDescription>Start a new framing record without widening into the full workspace flow yet.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <form action={formAction} className="grid gap-4 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Outcome key</span>
-                <input
-                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                  defaultValue={actionState.values.key}
-                  name="key"
-                  placeholder="OUT-003"
-                  type="text"
-                />
-              </label>
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Outcome title</span>
-                <input
-                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                  defaultValue={actionState.values.title}
-                  name="title"
-                  placeholder="Describe the framing goal"
-                  type="text"
-                />
-              </label>
-              <SubmitButton pending={pending} />
-            </form>
-
-            {actionState.status === "error" && actionState.message ? (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {actionState.message}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
-
       {state === "empty" ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>No outcomes yet</CardTitle>
-            <CardDescription>The cockpit is ready. Create the first outcome to start framing work.</CardDescription>
+            <CardTitle>No cases yet</CardTitle>
+            <CardDescription>The cockpit is ready. Start a clean native case to begin framing work.</CardDescription>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            No seeded or manually created outcomes are currently available for this organization.
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
+            <p>No native or demo outcomes are currently available for this organization.</p>
+            <form action={formAction}>
+              <SubmitButton pending={pending} />
+            </form>
           </CardContent>
         </Card>
       ) : null}
 
-      {emptyFilterState ? (
+      {showNativeEmptyState ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>No outcomes match the current filters</CardTitle>
-            <CardDescription>Try another status filter or clear the current search query.</CardDescription>
+            <CardTitle>No native cases yet</CardTitle>
+            <CardDescription>Start a clean case now, or intentionally open demo content when you need an example.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 sm:flex-row">
+            <form action={formAction}>
+              <SubmitButton pending={pending} />
+            </form>
+            {demoEntryHref ? (
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href={demoEntryHref}>Open demo case</Link>
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : emptyFilterState ? (
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>No cases match the current filters</CardTitle>
+            <CardDescription>Try another origin filter or clear the current search query.</CardDescription>
           </CardHeader>
         </Card>
       ) : null}
@@ -259,8 +305,8 @@ export function FramingCockpit({ items, message, state, createAction }: FramingC
                       <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                         {item.statusLabel}
                       </span>
-                      <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                        {item.originType.replaceAll("_", " ")}
+                      <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getOriginClasses(item.originType)}`}>
+                        {getOriginLabel(item.originType)}
                       </span>
                       {item.importedReadinessState ? (
                         <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">

@@ -7,7 +7,11 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrganizationContext } from "@/lib/auth/guards";
-import { saveOutcomeWorkspaceAction, submitOutcomeTollgateAction } from "./actions";
+import {
+  createEpicFromOutcomeAction,
+  saveOutcomeWorkspaceAction,
+  submitOutcomeTollgateAction
+} from "./actions";
 
 type OutcomeWorkspacePageProps = {
   params: Promise<{
@@ -18,6 +22,34 @@ type OutcomeWorkspacePageProps = {
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function getOriginLabel(originType: string) {
+  if (originType === "seeded") {
+    return "Demo";
+  }
+
+  if (originType === "native") {
+    return "Native";
+  }
+
+  return "Imported";
+}
+
+function getOriginSummary(originType: string) {
+  if (originType === "seeded") {
+    return "This case comes from seeded demo content for guided exploration.";
+  }
+
+  if (originType === "native") {
+    return "This case was authored natively and represents clean customer work.";
+  }
+
+  return "This case was promoted from imported source material.";
+}
+
+function getWorkspaceLabel(outcome: { originType: string; createdMode: string }) {
+  return outcome.originType === "native" && outcome.createdMode === "clean" ? "Clean" : "Shared";
 }
 
 export default async function OutcomeWorkspacePage({ params, searchParams }: OutcomeWorkspacePageProps) {
@@ -40,6 +72,8 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   const blockers = blockersFromQuery.length > 0 ? blockersFromQuery : tollgate?.blockers ?? computedBlockers;
   const baselineComplete = computedBlockers.length === 0;
   const statusLabel = outcome.status.replaceAll("_", " ");
+  const originLabel = getOriginLabel(outcome.originType);
+  const workspaceLabel = getWorkspaceLabel(outcome);
   const tollgateStatusLabel = tollgate?.status ? tollgate.status.replaceAll("_", " ") : "not started";
 
   return (
@@ -101,7 +135,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
       <section className="space-y-6">
         {created ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Outcome created and ready for framing work.
+            Clean native case created and ready for framing work.
           </div>
         ) : null}
         {saveState === "success" ? (
@@ -122,6 +156,27 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
             Tollgate 1 submission recorded. This outcome is now ready for review.
           </div>
         ) : null}
+
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>Case provenance</CardTitle>
+            <CardDescription>Use this lightweight summary to distinguish demo examples from native customer work.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+                Origin: {originLabel}
+              </span>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                Workspace: {workspaceLabel}
+              </span>
+              <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                Status: {statusLabel}
+              </span>
+            </div>
+            <p className="max-w-2xl text-sm text-muted-foreground">{getOriginSummary(outcome.originType)}</p>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
@@ -147,7 +202,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin</p>
-                  <p className="mt-2 text-lg font-semibold capitalize">{outcome.originType.replaceAll("_", " ")}</p>
+                  <p className="mt-2 text-lg font-semibold">{originLabel}</p>
                 </div>
                 {outcome.importedReadinessState ? (
                   <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
@@ -254,23 +309,76 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
 
                 <Card className="border-border/70 shadow-sm">
                   <CardHeader>
-                    <CardTitle>Epic seeds</CardTitle>
-                    <CardDescription>Epics already connected to this outcome.</CardDescription>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <CardTitle>Epics in this case</CardTitle>
+                        <CardDescription>Create native Epics directly from this Outcome without using import.</CardDescription>
+                      </div>
+                      <Button className="gap-2" formAction={createEpicFromOutcomeAction} type="submit">
+                        Create Epic
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-muted-foreground">
                     {outcome.epics.length === 0 ? (
-                      <p>No epics have been attached to this outcome yet.</p>
+                      <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
+                        <p className="font-medium text-foreground">No Epics exist for this case yet.</p>
+                        <p className="mt-2">Create the first native Epic here. No demo-seeded Epics will be attached as fallback.</p>
+                      </div>
                     ) : (
                       outcome.epics.map((epic) => (
                         <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={epic.id}>
-                          <p className="font-medium text-foreground">{epic.key}</p>
-                          <p className="mt-1">{epic.title}</p>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="font-medium text-foreground">{epic.key}</p>
+                              <p className="mt-1">{epic.title}</p>
+                            </div>
+                            <Button asChild className="gap-2" variant="secondary">
+                              <Link href={`/epics/${epic.id}`}>
+                                Open Epic Workspace
+                                <ArrowRight className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
                       ))
                     )}
                   </CardContent>
                 </Card>
               </div>
+
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Stories in this case</CardTitle>
+                  <CardDescription>Only Stories linked to the current Outcome are visible in clean workspace mode.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  {outcome.stories.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
+                      <p className="font-medium text-foreground">No Stories exist for this case yet.</p>
+                      <p className="mt-2">Create an Epic first, then break it down into native Stories from Epic context.</p>
+                    </div>
+                  ) : (
+                    outcome.stories.map((story) => (
+                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={story.id}>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="font-medium text-foreground">{story.key}</p>
+                            <p className="mt-1">{story.title}</p>
+                          </div>
+                          <Button asChild className="gap-2" variant="secondary">
+                            <Link href={`/stories/${story.id}`}>
+                              Open Story Workspace
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button className="gap-2" type="submit">

@@ -10,7 +10,8 @@ export default defineConfig({
     video: "retain-on-failure"
   },
   webServer: {
-    command: "pnpm --filter @aas-companion/web dev -- --port 3001",
+    command:
+      "node ../../scripts/sync-prisma-client.mjs && node --env-file=../../.env.local ./node_modules/next/dist/bin/next dev --port 3001",
     url: "http://127.0.0.1:3001",
     reuseExistingServer: !process.env.CI
   },

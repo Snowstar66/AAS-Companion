@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { saveOutcomeWorkspaceService, submitOutcomeTollgateService } from "@aas-companion/api";
+import {
+  createNativeEpicFromOutcomeService,
+  saveOutcomeWorkspaceService,
+  submitOutcomeTollgateService
+} from "@aas-companion/api";
 import { requireProtectedSession } from "@/lib/auth/guards";
 
 function buildOutcomeRedirect(outcomeId: string, search: Record<string, string>) {
@@ -87,4 +91,30 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
       submit: "ready"
     })
   );
+}
+
+export async function createEpicFromOutcomeAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const result = await createNativeEpicFromOutcomeService({
+    organizationId: session.organization.organizationId,
+    outcomeId,
+    actorId: session.userId
+  });
+
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildOutcomeRedirect(outcomeId, {
+        save: "error",
+        message: result.errors[0]?.message ?? "Epic could not be created."
+      })
+    );
+  }
+
+  redirect(`/epics/${result.data.id}?created=1`);
 }

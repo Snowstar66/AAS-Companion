@@ -24,6 +24,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   const organization = await requireOrganizationContext();
   const { storyId } = await params;
   const query = searchParams ? await searchParams : {};
+  const created = getParamValue(query.created) === "1";
   const saveState = getParamValue(query.save);
   const readyState = getParamValue(query.ready);
   const saveMessage = getParamValue(query.message);
@@ -94,6 +95,11 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
         }}
       />
       <section className="space-y-6">
+        {created ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Native Story created and ready for design work.
+          </div>
+        ) : null}
         {saveState === "success" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             Story changes were saved successfully.
