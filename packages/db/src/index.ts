@@ -22,6 +22,7 @@ export {
 export {
   createOrganizationContextForUser,
   deleteOrganizationContextForUser,
+  getAppUserByEmail,
   ensureAppUser,
   getAppUserById,
   getOrganizationContextForUser,

@@ -39,15 +39,23 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/12 to-white/4 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Active project</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Current location</p>
           <p className="mt-3 text-base font-semibold text-white">
             {activeProjectName ?? "No project selected"}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            {activeSectionLabel
-              ? `Current section: ${activeSectionLabel}`
-              : "Choose a project in Home, then continue through its sections here."}
-          </p>
+          <div className="mt-3 space-y-2">
+            <div className="rounded-2xl border border-white/10 bg-white/6 px-3 py-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Section</p>
+              <p className="mt-1 text-sm font-medium text-white">
+                {activeSectionLabel ?? "Choose a project in Home first"}
+              </p>
+            </div>
+            <p className="text-sm leading-6 text-slate-300">
+              {activeSectionLabel
+                ? "The highlighted navigation item below matches the workspace you are in now."
+                : "Choose a project in Home, then continue through its sections here."}
+            </p>
+          </div>
         </div>
 
         <nav className="space-y-2">
@@ -65,7 +73,7 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
             return (
               <Link
                 className={`flex items-start gap-3 rounded-2xl px-3 py-3 transition ${
-                  active ? "bg-white text-slate-950" : "bg-white/5 text-slate-100 hover:bg-white/10"
+                  active ? "border border-white/20 bg-white text-slate-950 shadow-sm" : "bg-white/5 text-slate-100 hover:bg-white/10"
                 }`}
                 key={item.href}
                 href={href}

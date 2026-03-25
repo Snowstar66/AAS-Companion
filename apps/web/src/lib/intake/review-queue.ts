@@ -6,6 +6,7 @@ import {
   artifactParseResultSchema,
   getArtifactCandidateIssueProgress
 } from "@aas-companion/domain/artifact-intake";
+import { unstable_rethrow } from "next/navigation";
 import { listArtifactCandidateQueueService } from "@aas-companion/api/intake";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 
@@ -35,13 +36,82 @@ function parseParsedArtifacts(value: unknown) {
 }
 
 export async function loadArtifactReviewQueue() {
-  const organization = await requireOrganizationContext();
-  const result = await listArtifactCandidateQueueService(organization.organizationId);
+  try {
+    const organization = await requireOrganizationContext();
+    const result = await listArtifactCandidateQueueService(organization.organizationId);
 
-  if (!result.ok) {
+    if (!result.ok) {
+      return {
+        state: "unavailable" as const,
+        organizationName: organization.organizationName,
+        items: [],
+        summary: {
+          total: 0,
+          pending: 0,
+          followUpNeeded: 0,
+          rejected: 0,
+          promoted: 0
+        },
+        message: result.errors[0]?.message ?? "Review queue could not be loaded."
+      };
+    }
+
+    const items = result.data.map((candidate) => {
+      const complianceResult = parseComplianceResult(candidate.complianceResult);
+      const issueDispositions = parseIssueDispositions(candidate.issueDispositions);
+
+      return {
+        ...candidate,
+        draftRecord: parseDraftRecord(candidate.draftRecord),
+        humanDecisions: parseHumanDecisions(candidate.humanDecisions),
+        complianceResult,
+        issueDispositions,
+        issueProgress: complianceResult
+          ? getArtifactCandidateIssueProgress({
+              complianceResult,
+              issueDispositions
+            })
+          : {
+              total: 0,
+              resolved: 0,
+              unresolved: 0,
+              categories: {
+                missing: 0,
+                uncertain: 0,
+                humanOnly: 0,
+                blocked: 0,
+                unmapped: 0
+              }
+            },
+        file: {
+          ...candidate.file,
+          parsedArtifacts: parseParsedArtifacts(candidate.file.parsedArtifacts)
+        }
+      };
+    });
+
+    return {
+      state: "ready" as const,
+      organizationName: organization.organizationName,
+      items,
+      summary: {
+        total: items.length,
+        pending: items.filter((item) => item.reviewStatus === "pending").length,
+        followUpNeeded: items.filter((item) => item.reviewStatus === "follow_up_needed").length,
+        rejected: items.filter((item) => item.reviewStatus === "rejected").length,
+        promoted: items.filter((item) => item.reviewStatus === "promoted").length
+      },
+      message:
+        items.length > 0
+          ? "Imported candidate objects are ready for deterministic compliance review, human confirmation, and promotion."
+          : "No imported candidates are waiting for human review."
+    };
+  } catch (error) {
+    unstable_rethrow(error);
+
     return {
       state: "unavailable" as const,
-      organizationName: organization.organizationName,
+      organizationName: "Unknown project",
       items: [],
       summary: {
         total: 0,
@@ -50,58 +120,7 @@ export async function loadArtifactReviewQueue() {
         rejected: 0,
         promoted: 0
       },
-      message: result.errors[0]?.message ?? "Review queue could not be loaded."
+      message: error instanceof Error ? `Human Review is unavailable right now: ${error.message}` : "Human Review is unavailable right now."
     };
   }
-
-  const items = result.data.map((candidate) => {
-    const complianceResult = parseComplianceResult(candidate.complianceResult);
-    const issueDispositions = parseIssueDispositions(candidate.issueDispositions);
-
-    return {
-      ...candidate,
-      draftRecord: parseDraftRecord(candidate.draftRecord),
-      humanDecisions: parseHumanDecisions(candidate.humanDecisions),
-      complianceResult,
-      issueDispositions,
-      issueProgress: complianceResult
-        ? getArtifactCandidateIssueProgress({
-            complianceResult,
-            issueDispositions
-          })
-        : {
-            total: 0,
-            resolved: 0,
-            unresolved: 0,
-            categories: {
-              missing: 0,
-              uncertain: 0,
-              humanOnly: 0,
-              blocked: 0,
-              unmapped: 0
-            }
-          },
-      file: {
-        ...candidate.file,
-        parsedArtifacts: parseParsedArtifacts(candidate.file.parsedArtifacts)
-      }
-    };
-  });
-
-  return {
-    state: "ready" as const,
-    organizationName: organization.organizationName,
-    items,
-    summary: {
-      total: items.length,
-      pending: items.filter((item) => item.reviewStatus === "pending").length,
-      followUpNeeded: items.filter((item) => item.reviewStatus === "follow_up_needed").length,
-      rejected: items.filter((item) => item.reviewStatus === "rejected").length,
-      promoted: items.filter((item) => item.reviewStatus === "promoted").length
-    },
-    message:
-      items.length > 0
-        ? "Imported candidate objects are ready for deterministic compliance review, human confirmation, and promotion."
-        : "No imported candidates are waiting for human review."
-  };
 }

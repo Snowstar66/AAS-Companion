@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { isSupabaseConfigured } from "@aas-companion/config";
+import { isLocalAuthEnabled, isSupabaseConfigured } from "@aas-companion/config";
+import { getAppUserByEmail } from "@aas-companion/db";
+import { clearDemoSession } from "@/lib/auth/demo";
+import { createLocalSession } from "@/lib/auth/local";
+import { clearOrganizationContextCookie } from "@/lib/org-context";
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase/server";
 import { normalizeRedirectPath, redirectWithSearch } from "@/lib/auth/route-helpers";
 import { resolveAuthCallbackUrl } from "@/lib/auth/public-site-url";
@@ -10,12 +14,6 @@ const signInSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  if (!isSupabaseConfigured(process.env)) {
-    return redirectWithSearch(request, "/login", {
-      error: "Supabase auth is not configured for this environment."
-    });
-  }
-
   const formData = await request.formData();
   const parsed = signInSchema.safeParse({
     email: formData.get("email")
@@ -28,9 +26,32 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  const localAuthEnabled = isLocalAuthEnabled(process.env);
+  const normalizedEmail = parsed.data.email.trim().toLowerCase();
+
+  if (localAuthEnabled) {
+    const existingUser = await getAppUserByEmail(normalizedEmail);
+
+    if (existingUser) {
+      await clearDemoSession();
+      await clearOrganizationContextCookie();
+      await createLocalSession(existingUser.userId);
+
+      return redirectWithSearch(request, redirectTo);
+    }
+  }
+
+  if (!isSupabaseConfigured(process.env)) {
+    return redirectWithSearch(request, "/login", {
+      error: localAuthEnabled
+        ? "No matching internal user was found, and magic link sign-in is not configured in this environment."
+        : "Supabase auth is not configured for this environment."
+    });
+  }
+
   const response = redirectWithSearch(request, "/login", {
     sent: "1",
-    email: parsed.data.email
+    email: normalizedEmail
   });
   const supabase = createRouteHandlerSupabaseClient(request, response);
 
@@ -41,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { error } = await supabase.auth.signInWithOtp({
-    email: parsed.data.email,
+    email: normalizedEmail,
     options: {
       emailRedirectTo: resolveAuthCallbackUrl({
         requestUrl: request.url,

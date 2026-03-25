@@ -198,6 +198,30 @@ export async function getAppUserById(userId: string): Promise<AppUserIdentity | 
   };
 }
 
+export async function getAppUserByEmail(email: string): Promise<AppUserIdentity | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await prisma.appUser.findUnique({
+    where: {
+      email: normalizedEmail
+    },
+    select: {
+      id: true,
+      email: true,
+      fullName: true
+    }
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  return {
+    userId: user.id,
+    email: user.email,
+    fullName: user.fullName
+  };
+}
+
 export async function listAppUsers(): Promise<AppUserIdentity[]> {
   const users = await prisma.appUser.findMany({
     orderBy: [
