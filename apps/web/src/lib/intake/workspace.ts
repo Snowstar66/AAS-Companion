@@ -9,6 +9,7 @@ import {
   type ArtifactParseResult
 } from "@aas-companion/domain/artifact-intake";
 import { artifactCandidateReviewStatusSchema } from "@aas-companion/domain/enums";
+import { unstable_rethrow } from "next/navigation";
 import { getArtifactIntakeFileService, listArtifactIntakeSessionsService } from "@aas-companion/api/intake";
 import { listEpicsService } from "@aas-companion/api/epics";
 import { listOutcomesService } from "@aas-companion/api/outcomes";
@@ -85,9 +86,8 @@ function isActiveImportCandidate(candidate: {
 }
 
 export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorkspaceSelection = {}) {
-  const organization = await requireOrganizationContext();
-
   try {
+    const organization = await requireOrganizationContext();
     const [result, outcomesResult, epicsResult] = await Promise.all([
       listArtifactIntakeSessionsService(organization.organizationId),
       listOutcomesService(organization.organizationId),
@@ -275,11 +275,13 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
         sessions.length > 0
           ? "Imported markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates."
           : "No import sessions exist yet. Upload markdown artifacts to start the governed import path."
-    };
+      };
   } catch (error) {
+    unstable_rethrow(error);
+
     return {
       state: "unavailable" as const,
-      organizationName: organization.organizationName,
+      organizationName: "Unknown project",
       projectOutcomes: [],
       projectEpics: [],
       summary: {
@@ -291,7 +293,7 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
         humanReviewRequired: 0
       },
       sessions: [],
-      message: error instanceof Error ? error.message : "Import data could not be loaded."
+      message: error instanceof Error ? `Import is unavailable right now: ${error.message}` : "Import data could not be loaded."
     };
   }
 }
