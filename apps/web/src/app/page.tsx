@@ -20,6 +20,7 @@ import {
   openProjectAction
 } from "@/app/project-actions";
 import { HomeActivityCard } from "@/components/home/home-activity-card";
+import { ViewerSessionProvider } from "@/components/auth/viewer-session-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { ActionSummaryCard } from "@/components/shared/action-summary-card";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
@@ -141,6 +142,7 @@ function attentionTone(kind: "blocker" | "pending") {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const query = searchParams ? await searchParams : {};
   const {
+    session,
     dashboard,
     projects,
     activeProject,
@@ -177,16 +179,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   ];
 
   return (
-    <AppShell
-      {...(activeProject?.organizationName ? { activeProjectName: activeProject.organizationName } : {})}
-      hideRightRail
-      topbarProps={{
-        eyebrow: "AAS Companion",
-        title: "Home",
-        badge: "Project selector"
-      }}
-    >
-      <section className="space-y-8">
+    <ViewerSessionProvider session={session}>
+      <AppShell
+        {...(activeProject?.organizationName ? { activeProjectName: activeProject.organizationName } : {})}
+        hideRightRail
+        topbarProps={{
+          eyebrow: "AAS Companion",
+          title: "Home",
+          badge: "Project selector"
+        }}
+      >
+        <section className="space-y-8">
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.18),_transparent_40%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl space-y-4">
@@ -618,7 +621,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </CardContent>
           </Card>
         )}
-      </section>
-    </AppShell>
+        </section>
+      </AppShell>
+    </ViewerSessionProvider>
   );
 }

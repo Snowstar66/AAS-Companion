@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { LogOut, UserCircle2 } from "lucide-react";
 import { Button } from "@aas-companion/ui";
+import { useViewerSession } from "@/components/auth/viewer-session-provider";
 
-type SessionSummary = {
-  authenticated: boolean;
-  user: {
-    displayName: string;
-    email: string;
-    mode: "demo" | "local" | "supabase";
-  } | null;
-};
-
-function getModeLabel(mode: NonNullable<SessionSummary["user"]>["mode"]) {
+function getModeLabel(mode: "demo" | "local" | "supabase") {
   if (mode === "local") {
     return "Direct sign-in";
   }
@@ -26,42 +17,9 @@ function getModeLabel(mode: NonNullable<SessionSummary["user"]>["mode"]) {
 }
 
 export function UserSessionStatus() {
-  const [session, setSession] = useState<SessionSummary | null>(null);
+  const session = useViewerSession();
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadSession() {
-      try {
-        const response = await fetch("/auth/session", {
-          method: "GET",
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data = (await response.json()) as SessionSummary;
-
-        if (!cancelled) {
-          setSession(data);
-        }
-      } catch {
-        if (!cancelled) {
-          setSession(null);
-        }
-      }
-    }
-
-    void loadSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!session?.authenticated || !session.user) {
+  if (!session) {
     return null;
   }
 
@@ -72,9 +30,9 @@ export function UserSessionStatus() {
           <UserCircle2 className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold tracking-tight text-foreground">{session.user.displayName}</p>
-          <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>
-          <p className="truncate text-[11px] text-muted-foreground">{getModeLabel(session.user.mode)}</p>
+          <p className="truncate text-sm font-semibold tracking-tight text-foreground">{session.displayName}</p>
+          <p className="truncate text-xs text-muted-foreground">{session.email}</p>
+          <p className="truncate text-[11px] text-muted-foreground">{getModeLabel(session.mode)}</p>
         </div>
       </div>
 

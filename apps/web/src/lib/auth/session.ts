@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { AppSession } from "@aas-companion/domain/auth";
 import type { OrganizationContext } from "@aas-companion/domain/organization";
@@ -19,7 +20,7 @@ export type ViewerSession = Omit<AppSession, "organization"> & {
   organization: OrganizationContext | null;
 };
 
-export async function getSignedInAccountIdentity(): Promise<AccountIdentity | null> {
+export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentity | null> => {
   const localUserId = await getLocalSessionUserId();
 
   if (localUserId) {
@@ -61,9 +62,9 @@ export async function getSignedInAccountIdentity(): Promise<AccountIdentity | nu
     email: user.email ?? "unknown@supabase.local",
     displayName: user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "Operator"
   };
-}
+});
 
-export async function getAppSession(): Promise<ViewerSession | null> {
+export const getAppSession = cache(async (): Promise<ViewerSession | null> => {
   const organizationId = await getOrganizationContextCookie();
   const account = await getSignedInAccountIdentity();
 
@@ -98,7 +99,7 @@ export async function getAppSession(): Promise<ViewerSession | null> {
     displayName: account.displayName,
     organization
   };
-}
+});
 
 export async function requireAppSession() {
   const session = await getAppSession();

@@ -1,4 +1,4 @@
-import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
+import { DEMO_ORGANIZATION, DEMO_SESSION } from "@aas-companion/domain/demo";
 import type { OrganizationContext } from "@aas-companion/domain/organization";
 import { getHomeDashboardData, type HomeDashboardData } from "@aas-companion/api/dashboard";
 import { listOrganizationProjectSummariesForUser } from "@aas-companion/db/organization-repository";
@@ -30,46 +30,39 @@ export type HomeDashboardLoadResult = {
 
 export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
   try {
-    const session = await getAppSession();
-    const account = await getSignedInAccountIdentity();
-    let dashboard: HomeDashboardData;
-    let projects: HomeProjectSummary[] = [];
+    const [session, account] = await Promise.all([getAppSession(), getSignedInAccountIdentity()]);
 
     if (!session) {
-      dashboard = {
-        state: "empty",
-        organizationName: "No project selected",
-        message: "Choose a project or Demo explicitly before operational data is shown.",
-        summary: [],
-        outcomesByStatus: [],
-        topBlockers: [],
-        pendingActions: [],
-        recentActivity: [],
-        rightRail: {
-          blockers: [],
-          nextActions: []
-        }
+      return {
+        session,
+        dashboard: {
+          state: "empty",
+          organizationName: "No project selected",
+          message: "Choose a project or Demo explicitly before operational data is shown.",
+          summary: [],
+          outcomesByStatus: [],
+          topBlockers: [],
+          pendingActions: [],
+          recentActivity: [],
+          rightRail: {
+            blockers: [],
+            nextActions: []
+          }
+        },
+        projects: [],
+        activeProject: null,
+        hasAuthenticatedUser: false,
+        canManageProjects: false,
+        isDemoSession: false
       };
-    } else {
-      if (account) {
-        const availableProjects = (await listOrganizationProjectSummariesForUser(account.userId)).filter(
-          (project) => project.organizationId !== DEMO_ORGANIZATION.organizationId
-        );
+    }
 
-        projects = availableProjects.map((project) => ({
-          organizationId: project.organizationId,
-          organizationName: project.organizationName,
-          organizationSlug: project.organizationSlug,
-          role: project.role,
-          counts: project.counts,
-          isActive: session.organization?.organizationId === project.organizationId
-        } satisfies HomeProjectSummary));
-      }
-
-      if (session.organization?.organizationId) {
-        dashboard = await getHomeDashboardData(session.organization.organizationId);
-      } else {
-        dashboard = {
+    const shouldLoadProjects = Boolean(
+      account || (session.mode === "demo" && session.userId !== DEMO_SESSION.userId)
+    );
+    const dashboardPromise = session.organization?.organizationId
+      ? getHomeDashboardData(session.organization.organizationId)
+      : Promise.resolve({
           state: "empty",
           organizationName: "No project selected",
           message: "Choose an existing project, create a new one, or open Demo explicitly before entering operational work.",
@@ -82,9 +75,21 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
             blockers: [],
             nextActions: []
           }
-        };
-      }
-    }
+        } satisfies HomeDashboardData);
+    const projectsPromise = shouldLoadProjects
+      ? listOrganizationProjectSummariesForUser(session.userId)
+      : Promise.resolve([]);
+    const [dashboard, availableProjects] = await Promise.all([dashboardPromise, projectsPromise]);
+    const projects = availableProjects
+      .filter((project) => project.organizationId !== DEMO_ORGANIZATION.organizationId)
+      .map((project) => ({
+        organizationId: project.organizationId,
+        organizationName: project.organizationName,
+        organizationSlug: project.organizationSlug,
+        role: project.role,
+        counts: project.counts,
+        isActive: session.organization?.organizationId === project.organizationId
+      } satisfies HomeProjectSummary));
 
     return {
       session,
@@ -92,7 +97,7 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
       projects,
       activeProject: session?.organization ?? null,
       hasAuthenticatedUser: Boolean(session),
-      canManageProjects: Boolean(account),
+      canManageProjects: shouldLoadProjects,
       isDemoSession: session?.mode === "demo"
     };
   } catch (error) {

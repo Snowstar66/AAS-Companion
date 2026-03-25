@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ViewerSessionProvider } from "@/components/auth/viewer-session-provider";
 import { requireProtectedSession } from "@/lib/auth/guards";
 
 type ProtectedLayoutProps = {
@@ -6,7 +7,7 @@ type ProtectedLayoutProps = {
 };
 
 export default async function ProtectedLayout({ children }: ProtectedLayoutProps) {
-  await requireProtectedSession();
+  const session = await requireProtectedSession();
 
-  return children;
+  return <ViewerSessionProvider session={session}>{children}</ViewerSessionProvider>;
 }
