@@ -422,6 +422,35 @@ function readiness(candidate: IntakeArtifactCandidate, file: IntakeArtifactFile,
 }
 
 function candidateLinkageState(candidate: IntakeArtifactCandidate) {
+  const relationshipDisposition = candidate.issueDispositions["candidate_relationship_uncertain"]?.action;
+  const hasExplicitOutcomeLink = Boolean(candidate.draftRecord?.outcomeCandidateId?.trim());
+  const hasExplicitEpicLink = Boolean(candidate.draftRecord?.epicCandidateId?.trim());
+  const hasExplicitProjectLinkage =
+    candidate.type === "story"
+      ? hasExplicitOutcomeLink && hasExplicitEpicLink
+      : candidate.type === "epic"
+        ? hasExplicitOutcomeLink
+        : true;
+
+  if (
+    hasExplicitProjectLinkage &&
+    (relationshipDisposition === "confirmed" || relationshipDisposition === "corrected" || relationshipDisposition === "not_relevant")
+  ) {
+    return {
+      label: "Linkage confirmed in review",
+      tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+      description: "This candidate has explicit project linkage recorded in review and no longer depends on inferred file context."
+    } as const;
+  }
+
+  if (hasExplicitProjectLinkage && candidate.relationshipState !== "mapped") {
+    return {
+      label: "Explicitly linked in workspace",
+      tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+      description: "Outcome/Epic links are filled explicitly in the review workspace even if the original file inference stayed incomplete."
+    } as const;
+  }
+
   if (candidate.relationshipState === "missing") {
     return {
       label: "Unlinked import candidate",

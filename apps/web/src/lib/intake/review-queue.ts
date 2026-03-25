@@ -1,8 +1,10 @@
 import {
   artifactCandidateDraftRecordSchema,
   artifactCandidateHumanDecisionSchema,
+  artifactIssueDispositionMapSchema,
   artifactComplianceResultSchema,
-  artifactParseResultSchema
+  artifactParseResultSchema,
+  getArtifactCandidateIssueProgress
 } from "@aas-companion/domain/artifact-intake";
 import { listArtifactCandidateQueueService } from "@aas-companion/api/intake";
 import { requireOrganizationContext } from "@/lib/auth/guards";
@@ -20,6 +22,11 @@ function parseHumanDecisions(value: unknown) {
 function parseComplianceResult(value: unknown) {
   const parsed = artifactComplianceResultSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
+}
+
+function parseIssueDispositions(value: unknown) {
+  const parsed = artifactIssueDispositionMapSchema.safeParse(value);
+  return parsed.success ? parsed.data : {};
 }
 
 function parseParsedArtifacts(value: unknown) {
@@ -47,16 +54,39 @@ export async function loadArtifactReviewQueue() {
     };
   }
 
-  const items = result.data.map((candidate) => ({
-    ...candidate,
-    draftRecord: parseDraftRecord(candidate.draftRecord),
-    humanDecisions: parseHumanDecisions(candidate.humanDecisions),
-    complianceResult: parseComplianceResult(candidate.complianceResult),
-    file: {
-      ...candidate.file,
-      parsedArtifacts: parseParsedArtifacts(candidate.file.parsedArtifacts)
-    }
-  }));
+  const items = result.data.map((candidate) => {
+    const complianceResult = parseComplianceResult(candidate.complianceResult);
+    const issueDispositions = parseIssueDispositions(candidate.issueDispositions);
+
+    return {
+      ...candidate,
+      draftRecord: parseDraftRecord(candidate.draftRecord),
+      humanDecisions: parseHumanDecisions(candidate.humanDecisions),
+      complianceResult,
+      issueDispositions,
+      issueProgress: complianceResult
+        ? getArtifactCandidateIssueProgress({
+            complianceResult,
+            issueDispositions
+          })
+        : {
+            total: 0,
+            resolved: 0,
+            unresolved: 0,
+            categories: {
+              missing: 0,
+              uncertain: 0,
+              humanOnly: 0,
+              blocked: 0,
+              unmapped: 0
+            }
+          },
+      file: {
+        ...candidate.file,
+        parsedArtifacts: parseParsedArtifacts(candidate.file.parsedArtifacts)
+      }
+    };
+  });
 
   return {
     state: "ready" as const,

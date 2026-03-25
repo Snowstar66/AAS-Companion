@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import ReviewPage from "@/app/(protected)/review/page";
 
 vi.mock("@/lib/intake/review-queue", () => ({
@@ -60,6 +60,19 @@ vi.mock("@/lib/intake/review-queue", () => ({
           promotionBlocked: true,
           humanReviewRequired: true
         },
+        issueDispositions: {},
+        issueProgress: {
+          total: 1,
+          resolved: 0,
+          unresolved: 1,
+          categories: {
+            missing: 0,
+            uncertain: 0,
+            humanOnly: 1,
+            blocked: 0,
+            unmapped: 0
+          }
+        },
         intakeSession: {
           id: "session-1",
           label: "Artifact intake 2026-03-23 21:00"
@@ -105,16 +118,32 @@ vi.mock("@/app/(protected)/review/actions", () => ({
 }));
 
 describe("Review queue page", () => {
-  it("renders Human Review as an action list for the selected imported candidate", async () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("opens as a backlog instead of a default full form", async () => {
+    render(await ReviewPage({}));
+
+    expect(screen.getByRole("heading", { name: "Human Review backlog", level: 1 })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Review backlog" })).toBeDefined();
+    expect(screen.getAllByText("Needs confirmation").length).toBeGreaterThan(0);
+    expect(screen.getByText("Choose one item to start")).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
+  });
+
+  it("opens a focused correction workspace for the selected imported candidate", async () => {
     render(await ReviewPage({ searchParams: Promise.resolve({ candidateId: "candidate-story-1" }) }));
 
-    expect(screen.getByRole("heading", { name: "Human Review action list", level: 1 })).toBeDefined();
+    expect(screen.getAllByRole("heading", { name: "Human Review backlog", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getByText("Open human review help")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Current review context" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Approval-readiness action list" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Parsed candidate" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Focused correction workspace" })).toBeDefined();
     expect(screen.getAllByText("Imported reviewable story").length).toBeGreaterThan(0);
     expect(screen.getByText(/Risk acceptance status must be confirmed by a human reviewer\./)).toBeDefined();
-    expect(screen.getByRole("button", { name: "Promote into project records" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Approve into project records" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Mark not relevant" })).toBeDefined();
     expect(screen.getByDisplayValue("IMP-STORY-1")).toBeDefined();
   });
 });
