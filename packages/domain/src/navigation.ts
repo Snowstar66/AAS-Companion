@@ -40,6 +40,11 @@ export const primaryNavigation: NavigationItem[] = [
     label: "Governance",
     href: "/governance",
     description: "See AI level, risk posture, and traceability for the active project."
+  },
+  {
+    label: "Help",
+    href: "/help",
+    description: "Understand what the tool is for and how Framing, Design and AI Build fit together."
   }
 ];
 

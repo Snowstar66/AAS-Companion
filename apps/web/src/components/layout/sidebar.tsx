@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
+import { CircleHelp, Compass, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain/navigation";
 
 const icons = {
@@ -13,7 +13,8 @@ const icons = {
   "/outcomes": Workflow,
   "/stories": LibraryBig,
   "/workspace": Workflow,
-  "/governance": Shield
+  "/governance": Shield,
+  "/help": CircleHelp
 } as const;
 
 type SidebarProps = {
@@ -23,6 +24,7 @@ type SidebarProps = {
 
 export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps) {
   const pathname = usePathname() ?? "/";
+  const returnTo = pathname === "/help" ? "/" : pathname;
 
   return (
     <aside className="rounded-[28px] border border-border/70 bg-[#102033] px-4 py-5 text-slate-50 shadow-[0_18px_65px_rgba(15,23,42,0.18)] xl:max-h-[calc(100vh-2.5rem)] xl:overflow-auto">
@@ -52,6 +54,13 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
           {primaryNavigation.map((item) => {
             const Icon = icons[item.href as keyof typeof icons] ?? LayoutDashboard;
             const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const href =
+              item.href === "/help"
+                ? {
+                    pathname: item.href,
+                    query: { returnTo }
+                  }
+                : item.href;
 
             return (
               <Link
@@ -59,7 +68,7 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                   active ? "bg-white text-slate-950" : "bg-white/5 text-slate-100 hover:bg-white/10"
                 }`}
                 key={item.href}
-                href={item.href}
+                href={href}
               >
                 <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${active ? "text-primary" : "text-slate-300"}`} />
                 <div>

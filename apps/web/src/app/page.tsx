@@ -19,6 +19,7 @@ import {
   openDemoProjectAction,
   openProjectAction
 } from "@/app/project-actions";
+import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { AppShell } from "@/components/layout/app-shell";
 import { ActionSummaryCard } from "@/components/shared/action-summary-card";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
@@ -314,27 +315,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   </CardContent>
                 </Card>
 
-                <Card className="border-border/70 shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Recent activity</CardTitle>
-                    <CardDescription>Latest append-only project events.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {dashboard.recentActivity.length > 0 ? (
-                      dashboard.recentActivity.slice(0, 4).map((item) => (
-                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={item.id}>
-                          <p className="font-medium text-foreground">{item.title}</p>
-                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-                          <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{item.timestamp}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
-                        No recent project activity is available yet.
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <HomeActivityCard
+                  defaultOpen={false}
+                  description="Latest append-only project events."
+                  emptyMessage="No recent project activity is available yet."
+                  items={dashboard.recentActivity.slice(0, 4)}
+                />
               </div>
             </div>
 

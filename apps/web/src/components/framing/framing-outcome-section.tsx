@@ -3,6 +3,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
@@ -559,24 +560,16 @@ export function FramingOutcomeSection({
               </CardContent>
             </Card>
           ) : null}
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>Latest activity</CardTitle>
-              <CardDescription>Recent outcome-specific audit entries.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              {activities.length === 0 ? (
-                <p>No activity has been recorded yet for this outcome.</p>
-              ) : (
-                activities.map((activity) => (
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={activity.id}>
-                    <p className="font-medium text-foreground">{activity.eventType.replaceAll("_", " ")}</p>
-                    <p className="mt-1">{new Date(activity.createdAt).toLocaleString("en-US")}</p>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
+          <HomeActivityCard
+            defaultOpen={false}
+            description="Recent outcome-specific audit entries."
+            emptyMessage="No activity has been recorded yet for this outcome."
+            items={activities.map((activity) => ({
+              id: activity.id,
+              title: activity.eventType.replaceAll("_", " "),
+              timestamp: new Date(activity.createdAt).toLocaleString("en-US")
+            }))}
+          />
           <GovernedLifecycleCard
             archiveAction={archiveAction}
             decision={removal?.decision ?? null}
