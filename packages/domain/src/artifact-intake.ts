@@ -308,12 +308,21 @@ type MarkdownSection = {
   text: string;
 };
 
+function normalizeMarkdownForParsing(value: string) {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/&#x20;/gi, " ")
+    .split("\n")
+    .map((line) => line.replace(/^(\s*)\\(?=(#{1,6}\s|[-*]\s|>\s|\d+\.\s))/, "$1"))
+    .join("\n");
+}
+
 function normalizeText(value: string) {
-  return value.replace(/\r\n/g, "\n").trim();
+  return normalizeMarkdownForParsing(value).trim();
 }
 
 function splitMarkdownSections(content: string) {
-  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const lines = normalizeMarkdownForParsing(content).split("\n");
   const sections: MarkdownSection[] = [];
   let currentTitle = "Document introduction";
   let currentMarker = "intro";

@@ -181,6 +181,69 @@ describe("artifact intake helpers", () => {
     expect(mapping.candidates[0]?.testNotes).toEqual(["unit", "integration", "e2e"]);
   });
 
+  it("maps escaped structured story spec markdown into one story candidate", () => {
+    const content = [
+      "\\# M2-STORY-005",
+      "",
+      "\\## Title",
+      "Create Human Review and Confirmation queue for imported artifacts",
+      "",
+      "\\## Story Type",
+      "Feature",
+      "",
+      "\\## Value Intent",
+      "Ensure imported and interpreted content is confirmed by the right humans before it becomes governed AAS work.",
+      "",
+      "\\## Summary",
+      "Create a review queue where humans can inspect imported candidate objects, confirm or edit interpretations, and explicitly resolve human-only decisions without yet promoting them into governed workspaces.",
+      "",
+      "\\## Acceptance Criteria",
+      "\\- a dedicated Human Review queue exists for imported candidate objects",
+      "\\- reviewer can inspect:",
+      "&#x20; - source artifact",
+      "&#x20; - parsed sections",
+      "\\- review actions are persisted",
+      "",
+      "\\## AI Usage Scope",
+      "\\- CODE",
+      "\\- TEST",
+      "",
+      "\\## Test Definition",
+      "\\- unit",
+      "\\- integration",
+      "\\- e2e",
+      "",
+      "\\## Definition of Done",
+      "\\- human review queue is usable in end-to-end flow",
+      "\\- confirmed and rejected paths are both demonstrable"
+    ].join("\n");
+
+    const parsed = parseMarkdownArtifact("file-story-escaped", "M2-STORY-005.md", content);
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-story-escaped",
+          fileName: "M2-STORY-005.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ]
+    });
+
+    expect(parsed.classification.sourceType).toBe("story_file");
+    expect(mapping.candidates).toHaveLength(1);
+    expect(mapping.candidates[0]?.type).toBe("story");
+    expect(mapping.candidates[0]?.title).toContain("Human Review and Confirmation");
+    expect(mapping.candidates[0]?.acceptanceCriteria).toEqual([
+      "a dedicated Human Review queue exists for imported candidate objects",
+      "reviewer can inspect:",
+      "source artifact",
+      "parsed sections",
+      "review actions are persisted"
+    ]);
+    expect(mapping.candidates[0]?.testNotes).toEqual(["unit", "integration", "e2e"]);
+  });
+
   it("creates unique candidate ids across different files with the same section structure", () => {
     const outcomeA = parseMarkdownArtifact(
       "file-a",
