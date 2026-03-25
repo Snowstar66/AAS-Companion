@@ -19,6 +19,77 @@ type GovernancePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type GovernanceViewKey = "directory" | "agents" | "authority" | "readiness" | "signoffs";
+type GovernanceLevelKey = "level_1" | "level_2" | "level_3";
+
+const governanceViewOptions: Array<{ key: GovernanceViewKey; label: string }> = [
+  { key: "directory", label: "Party Directory" },
+  { key: "agents", label: "Agent Registry" },
+  { key: "authority", label: "Authority Matrix" },
+  { key: "readiness", label: "Readiness Gaps" },
+  { key: "signoffs", label: "Sign-off Traceability" }
+];
+
+const governanceViewCopy: Record<
+  GovernanceViewKey,
+  {
+    title: string;
+    description: string;
+    focusQuestion: string;
+  }
+> = {
+  directory: {
+    title: "Who is named in the human role model?",
+    description: "Use the directory to see which real people are currently carrying customer and supplier responsibilities.",
+    focusQuestion: "Which named people are carrying the required roles on the customer and supplier sides?"
+  },
+  agents: {
+    title: "Which agents are active and who is supervising them?",
+    description: "Use the agent registry to verify active agents, their permitted scope and the named human supervisor behind each one.",
+    focusQuestion: "Does every active agent have a clear human owner who can intervene?"
+  },
+  authority: {
+    title: "Who is expected to own, review or approve each responsibility area?",
+    description: "Use the authority matrix to compare the intended authority model with the people that are actually assigned today.",
+    focusQuestion: "Are the right people attached to the right authority decisions?"
+  },
+  readiness: {
+    title: "What currently blocks this AI level from being governance-ready?",
+    description: "Use readiness to inspect staffing gaps, separation-of-duties conflicts and missing supervision before you trust the selected AI level.",
+    focusQuestion: "Which staffing gaps or risk flags stop this AI level from being credible right now?"
+  },
+  signoffs: {
+    title: "What human review and approval evidence already exists?",
+    description: "Use sign-off traceability to inspect who approved what, when they did it and what evidence was attached.",
+    focusQuestion: "Can we prove the right human sign-offs happened for this project or linked artifact?"
+  }
+};
+
+const governanceLevelCopy: Record<
+  GovernanceLevelKey,
+  {
+    title: string;
+    description: string;
+    governanceShift: string;
+  }
+> = {
+  level_1: {
+    title: "Level 1",
+    description: "Human-led delivery with lighter AI assistance.",
+    governanceShift: "The bar is lighter: fewer named roles are required and supervision is usually straightforward."
+  },
+  level_2: {
+    title: "Level 2",
+    description: "Shared execution between humans and AI.",
+    governanceShift: "The bar rises: clearer reviewers, stronger handoffs and more explicit responsibility coverage are expected."
+  },
+  level_3: {
+    title: "Level 3",
+    description: "High AI acceleration with the strongest governance expectations.",
+    governanceShift: "The bar is highest: named staffing, separation of duties and agent supervision all need to hold up clearly."
+  }
+};
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -86,7 +157,10 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
   }
 
   const data = governance.data;
-  const selectedLevel = data.selectedAiLevel;
+  const selectedLevel = data.selectedAiLevel as GovernanceLevelKey;
+  const selectedView = (view in governanceViewCopy ? view : "directory") as GovernanceViewKey;
+  const selectedViewCopy = governanceViewCopy[selectedView];
+  const selectedLevelCopy = governanceLevelCopy[selectedLevel];
   const activePeople = data.people.filter((person) => person.isActive);
   const customerPeople = data.people.filter((person) => person.organizationSide === "customer");
   const supplierPeople = data.people.filter((person) => person.organizationSide === "supplier");
@@ -125,8 +199,9 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Governance cockpit</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-            Governance is reduced to three core checks at the top level: roles assigned, separation valid, and human
-            oversight present. The detailed directory, agent, readiness and sign-off views remain available below.
+            Governance is reduced to three plain-language checks at the top level: do we have the right named people,
+            are conflicting duties separated, and does every active agent have human supervision? The detailed views
+            below answer those questions from different angles.
           </p>
           {data.sourceContext ? (
             <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50/90 p-4 text-sm text-sky-950">
@@ -161,52 +236,52 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <ActionSummaryCard
-            actionHref={buildGovernanceHref({ view: "readiness", level: selectedLevel, sourceEntity, sourceId })}
-            actionLabel="Open readiness details"
+            actionHref={buildGovernanceHref({ view: "directory", level: selectedLevel, sourceEntity, sourceId })}
+            actionLabel="Open party directory"
             className={
               data.readiness.validation.missingRoleCount === 0
-                ? "border-emerald-200 bg-emerald-50 shadow-sm"
-                : "border-rose-200 bg-rose-50 shadow-sm"
+                ? "border-emerald-200 bg-emerald-50/80 shadow-sm"
+                : "border-rose-200 bg-rose-50/80 shadow-sm"
             }
             description={
               data.readiness.validation.missingRoleCount === 0
-                ? "Required named roles are in place for the selected AI level."
-                : `${data.readiness.validation.missingRoleCount} role requirement(s) still need assignment.`
+                ? `Every human role required for ${formatLabel(selectedLevel)} has a named active person assigned.`
+                : `${data.readiness.validation.missingRoleCount} required role assignment(s) are still missing for ${formatLabel(selectedLevel)}.`
             }
-            label="Roles assigned"
-            value={data.readiness.validation.missingRoleCount === 0 ? "OK" : "Not OK"}
+            label="Named people for required roles"
+            value={data.readiness.validation.missingRoleCount === 0 ? "Ready" : `${data.readiness.validation.missingRoleCount} gap`}
           />
           <ActionSummaryCard
             actionHref={buildGovernanceHref({ view: "readiness", level: selectedLevel, sourceEntity, sourceId })}
-            actionLabel="Open separation details"
+            actionLabel="Open separation risks"
             className={
               data.readiness.validation.riskyCombinationCount === 0
-                ? "border-emerald-200 bg-emerald-50 shadow-sm"
-                : "border-amber-200 bg-amber-50 shadow-sm"
+                ? "border-emerald-200 bg-emerald-50/80 shadow-sm"
+                : "border-amber-200 bg-amber-50/80 shadow-sm"
             }
             description={
               data.readiness.validation.riskyCombinationCount === 0
-                ? "No risky role combinations are currently detected."
-                : `${data.readiness.validation.riskyCombinationCount} risky combination(s) need separation.`
+                ? "No active person currently holds a conflicting mix of duties that should stay separated."
+                : `${data.readiness.validation.riskyCombinationCount} conflict pair(s) need to be split across different people.`
             }
-            label="Separation valid"
-            value={data.readiness.validation.riskyCombinationCount === 0 ? "OK" : "Not OK"}
+            label="Separation of duties"
+            value={data.readiness.validation.riskyCombinationCount === 0 ? "Clear" : `${data.readiness.validation.riskyCombinationCount} conflict`}
           />
           <ActionSummaryCard
-            actionHref={buildGovernanceHref({ view: "readiness", level: selectedLevel, sourceEntity, sourceId })}
-            actionLabel="Open oversight details"
+            actionHref={buildGovernanceHref({ view: "agents", level: selectedLevel, sourceEntity, sourceId })}
+            actionLabel="Open agent registry"
             className={
               data.readiness.validation.supervisionGapCount === 0
-                ? "border-emerald-200 bg-emerald-50 shadow-sm"
-                : "border-rose-200 bg-rose-50 shadow-sm"
+                ? "border-emerald-200 bg-emerald-50/80 shadow-sm"
+                : "border-rose-200 bg-rose-50/80 shadow-sm"
             }
             description={
               data.readiness.validation.supervisionGapCount === 0
-                ? "Every active agent currently has active human supervision."
-                : `${data.readiness.validation.supervisionGapCount} agent supervision gap(s) remain open.`
+                ? "Every active agent has a named active human supervisor who can review and intervene."
+                : `${data.readiness.validation.supervisionGapCount} active agent(s) are still missing a valid human supervisor.`
             }
-            label="Human oversight"
-            value={data.readiness.validation.supervisionGapCount === 0 ? "OK" : "Not OK"}
+            label="Human supervision of agents"
+            value={data.readiness.validation.supervisionGapCount === 0 ? "Covered" : `${data.readiness.validation.supervisionGapCount} gap`}
           />
         </div>
 
@@ -238,19 +313,15 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Governance views</CardTitle>
-            <CardDescription>Switch between the human directory, agent registry, authority model and readiness gaps.</CardDescription>
+            <CardTitle>Governance views and AI levels</CardTitle>
+            <CardDescription>
+              Each view answers a different governance question, and each AI level raises the staffing and oversight bar.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="-mx-1 overflow-x-auto pb-1">
               <div className="flex min-w-max gap-2 px-1">
-                {[
-                  { key: "directory", label: "Party Directory" },
-                  { key: "agents", label: "Agent Registry" },
-                  { key: "authority", label: "Authority Matrix" },
-                  { key: "readiness", label: "Readiness Gaps" },
-                  { key: "signoffs", label: "Sign-off Traceability" }
-                ].map((item) => (
+                {governanceViewOptions.map((item) => (
                   <Button asChild key={item.key} size="sm" variant={view === item.key ? "default" : "secondary"}>
                     <Link
                       href={buildGovernanceHref({
@@ -266,6 +337,13 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                   </Button>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/75 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Current governance focus</p>
+              <p className="mt-2 text-lg font-semibold tracking-tight text-sky-950">{selectedViewCopy.title}</p>
+              <p className="mt-2 text-sm leading-6 text-sky-900">{selectedViewCopy.description}</p>
+              <p className="mt-3 text-sm font-medium text-sky-950">This view answers: {selectedViewCopy.focusQuestion}</p>
             </div>
 
             <div className="-mx-1 overflow-x-auto pb-1">
@@ -290,6 +368,45 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                     </Link>
                   </Button>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium text-foreground">What changes between level 1, 2 and 3?</p>
+                <p className="text-sm text-muted-foreground">
+                  Higher AI acceleration raises the governance bar, even when the rest of the screen looks familiar.
+                </p>
+              </div>
+              <div className="grid gap-3 lg:grid-cols-3">
+                {aiAccelerationLevels.map((candidateLevel) => {
+                  const levelCopy = governanceLevelCopy[candidateLevel as GovernanceLevelKey];
+                  const isSelected = candidateLevel === selectedLevel;
+
+                  return (
+                    <div
+                      className={`rounded-2xl border p-4 ${
+                        isSelected
+                          ? "border-emerald-200 bg-emerald-50/80"
+                          : "border-border/70 bg-muted/20"
+                      }`}
+                      key={candidateLevel}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {levelCopy.title}
+                      </p>
+                      <p className="mt-2 font-medium text-foreground">{levelCopy.description}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{levelCopy.governanceShift}</p>
+                      {isSelected ? (
+                        <p className="mt-3 text-sm font-medium text-emerald-800">Current selection</p>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Selected now: {selectedLevelCopy.title}</p>
+                <p className="mt-2">{selectedLevelCopy.governanceShift}</p>
               </div>
             </div>
           </CardContent>

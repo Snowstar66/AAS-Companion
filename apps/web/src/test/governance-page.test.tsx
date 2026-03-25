@@ -201,6 +201,10 @@ describe("Governance page", () => {
 
     expect(screen.getByText("Customer")).toBeDefined();
     expect(screen.getByText("Supplier")).toBeDefined();
+    expect(screen.getByText("Who is named in the human role model?")).toBeDefined();
+    expect(
+      screen.getByText(/Which named people are carrying the required roles on the customer and supplier sides\?/)
+    ).toBeDefined();
     expect(screen.getByText("Demo Value Owner")).toBeDefined();
     expect(screen.getByText("Demo Architect")).toBeDefined();
     expect(screen.getAllByText("Add role").length).toBeGreaterThan(0);
@@ -245,6 +249,16 @@ describe("Governance page", () => {
 
     expect(screen.getAllByRole("heading", { name: "Governance cockpit", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Context linked from story M3-STORY-007").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Named people for required roles").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Separation of duties").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Human supervision of agents").length).toBeGreaterThan(0);
+    expect(screen.getByText("What currently blocks this AI level from being governance-ready?")).toBeDefined();
+    expect(
+      screen.getAllByText("Higher AI acceleration raises the governance bar, even when the rest of the screen looks familiar.").length
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Level 1").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Level 2").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Level 3").length).toBeGreaterThan(0);
     expect(screen.getByText("AI level staffing validation")).toBeDefined();
     expect(screen.getByText("Staffing does not support selected AI level")).toBeDefined();
     expect(screen.getByText("ai governance lead is missing for supplier coverage.")).toBeDefined();
