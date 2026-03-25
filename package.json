@@ -5,6 +5,7 @@
   "packageManager": "pnpm@10.6.1",
   "scripts": {
     "build:web-runtime-packages": "node ./scripts/build-web-runtime-packages.mjs",
+    "build:vercel": "pnpm db:push && pnpm build",
     "dev": "pnpm --filter @aas-companion/web dev",
     "build": "pnpm --filter @aas-companion/web build",
     "lint": "pnpm --filter \"@aas-companion/*\" -r --if-present lint",
