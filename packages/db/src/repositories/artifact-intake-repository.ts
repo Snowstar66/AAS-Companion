@@ -26,6 +26,26 @@ type ArtifactProcessingContext = {
   sessionId: string;
 };
 
+async function resolveExistingActorId(
+  actorId: string | null | undefined,
+  db: Prisma.TransactionClient | typeof prisma = prisma
+) {
+  if (!actorId) {
+    return null;
+  }
+
+  const existingActor = await db.appUser.findUnique({
+    where: {
+      id: actorId
+    },
+    select: {
+      id: true
+    }
+  });
+
+  return existingActor?.id ?? null;
+}
+
 export async function listArtifactIntakeSessions(organizationId: string) {
   return prisma.artifactIntakeSession.findMany({
     where: { organizationId },
@@ -301,13 +321,14 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
   const parsed = artifactIntakeUploadRequestSchema.parse(input);
 
   return prisma.$transaction(async (tx) => {
+    const actorId = await resolveExistingActorId(parsed.actorId ?? null, tx);
     const session = await tx.artifactIntakeSession.create({
       data: {
         id: randomUUID(),
         organizationId: parsed.organizationId,
         label: parsed.label ?? `Artifact intake ${new Date().toISOString().slice(0, 16).replace("T", " ")}`,
         status: "uploaded",
-        createdBy: parsed.actorId ?? null
+        createdBy: actorId
       }
     });
 
@@ -317,7 +338,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
         entityType: "artifact_intake_session",
         entityId: session.id,
         eventType: "artifact_intake_session_created",
-        actorId: parsed.actorId ?? null,
+        actorId,
         metadata: {
           label: session.label,
           fileCount: parsed.files.length
@@ -341,7 +362,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
           content: file.content,
           sourceTypeStatus: "pending",
           sectionDispositions: {} as Prisma.InputJsonValue,
-          uploadedBy: parsed.actorId ?? null
+          uploadedBy: actorId
         }
       });
 
@@ -351,7 +372,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
           entityType: "artifact_intake_file",
           entityId: artifactFile.id,
           eventType: "artifact_file_uploaded",
-          actorId: parsed.actorId ?? null,
+          actorId,
           metadata: {
             intakeSessionId: session.id,
             fileName: artifactFile.fileName,
@@ -369,7 +390,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
       await appendArtifactFileRejections(
         {
           organizationId: parsed.organizationId,
-          actorId: parsed.actorId ?? null,
+          actorId,
           sessionId: session.id,
           rejectedFiles
         },

@@ -5,18 +5,39 @@ import { prisma } from "../client";
 
 type DbClient = Prisma.TransactionClient | PrismaClient;
 
+async function resolveExistingActorId(
+  actorId: string | null | undefined,
+  db: DbClient
+) {
+  if (!actorId) {
+    return null;
+  }
+
+  const existingActor = await db.appUser.findUnique({
+    where: {
+      id: actorId
+    },
+    select: {
+      id: true
+    }
+  });
+
+  return existingActor?.id ?? null;
+}
+
 export async function appendActivityEvent(
   input: unknown,
   db: DbClient = prisma
 ) {
   const parsed = activityEventCreateInputSchema.parse(input);
+  const actorId = await resolveExistingActorId(parsed.actorId ?? null, db);
   const data: Prisma.ActivityEventUncheckedCreateInput = {
     id: randomUUID(),
     organizationId: parsed.organizationId,
     entityType: parsed.entityType,
     entityId: parsed.entityId,
     eventType: parsed.eventType as never,
-    actorId: parsed.actorId ?? null
+    actorId
   };
 
   if (parsed.metadata) {
