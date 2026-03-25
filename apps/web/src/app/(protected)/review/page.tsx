@@ -235,14 +235,16 @@ function getCandidatePreviewRows(candidate: ReviewCandidate) {
   }
 
   if (candidate.type === "story") {
+    const acceptanceCriteria = candidate.draftRecord?.acceptanceCriteria ?? [];
+
     if (candidate.draftRecord?.storyType) {
       rows.push({ label: "Story type", value: formatLabel(candidate.draftRecord.storyType) });
     }
     if (candidate.draftRecord?.valueIntent) {
       rows.push({ label: "Value intent", value: candidate.draftRecord.valueIntent });
     }
-    if ((candidate.draftRecord?.acceptanceCriteria ?? []).length > 0) {
-      rows.push({ label: "Acceptance criteria", value: candidate.draftRecord?.acceptanceCriteria.join(" | ") });
+    if (acceptanceCriteria.length > 0) {
+      rows.push({ label: "Acceptance criteria", value: acceptanceCriteria.join(" | ") });
     }
   }
 

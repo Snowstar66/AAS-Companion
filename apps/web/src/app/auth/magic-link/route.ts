@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { isSupabaseConfigured } from "@aas-companion/config";
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase/server";
-import { getAppEnv } from "@/lib/env";
 import { normalizeRedirectPath, redirectWithSearch } from "@/lib/auth/route-helpers";
+import { resolveAuthCallbackUrl } from "@/lib/auth/public-site-url";
 import type { NextRequest } from "next/server";
 
 const signInSchema = z.object({
@@ -40,11 +40,14 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const env = getAppEnv();
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
-      emailRedirectTo: new URL("/auth/callback", env.NEXT_PUBLIC_SITE_URL).toString()
+      emailRedirectTo: resolveAuthCallbackUrl({
+        requestUrl: request.url,
+        configuredSiteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+        nodeEnv: process.env.NODE_ENV
+      })
     }
   });
 

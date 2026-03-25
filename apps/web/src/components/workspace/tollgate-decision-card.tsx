@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronDown, CircleAlert, CircleCheckBig, GitBranch, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ChevronDown, CircleAlert, CircleCheckBig, GitBranch, ShieldCheck } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 
 type TollgateAction = {
@@ -71,6 +71,18 @@ type TollgateDecisionCardProps = {
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function getPendingToneClasses(hasItems: boolean) {
+  return hasItems
+    ? "border-amber-200/70 bg-[linear-gradient(135deg,rgba(245,158,11,0.08),rgba(255,255,255,0.92))] text-amber-950"
+    : "border-border/70 bg-muted/10 text-muted-foreground";
+}
+
+function getBlockedToneClasses(hasItems: boolean) {
+  return hasItems
+    ? "border-rose-200/70 bg-[linear-gradient(135deg,rgba(244,63,94,0.08),rgba(255,255,255,0.92))] text-rose-950"
+    : "border-border/70 bg-muted/10 text-muted-foreground";
 }
 
 function HiddenFields({ fields }: { fields: Array<{ name: string; value: string }> }) {
@@ -230,7 +242,9 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                       </span>
                       <span
                         className={`rounded-full border px-2.5 py-1 ${
-                          action.pending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                          action.pending
+                            ? "border-amber-200/80 bg-amber-50/70 text-amber-950"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-900"
                         }`}
                       >
                         {action.pending ? "Pending" : "Complete"}
@@ -243,7 +257,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                     </p>
                   ) : null}
                   {action.blockedReasons.length > 0 ? (
-                    <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-900">
+                    <div className="mt-3 rounded-2xl border border-amber-200/80 bg-amber-50/70 px-3 py-3 text-amber-950">
                       {action.blockedReasons.join(" ")}
                     </div>
                   ) : null}
@@ -280,7 +294,9 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                       </span>
                       <span
                         className={`rounded-full border px-2.5 py-1 ${
-                          action.pending ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                          action.pending
+                            ? "border-amber-200/80 bg-amber-50/70 text-amber-950"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-900"
                         }`}
                       >
                         {action.pending ? "Pending" : "Complete"}
@@ -293,7 +309,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                     </p>
                   ) : null}
                   {action.blockedReasons.length > 0 ? (
-                    <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-900">
+                    <div className="mt-3 rounded-2xl border border-amber-200/80 bg-amber-50/70 px-3 py-3 text-amber-950">
                       {action.blockedReasons.join(" ")}
                     </div>
                   ) : null}
@@ -314,7 +330,10 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                   <p>No pending review or approval actions remain.</p>
                 ) : (
                   props.pendingActions.map((action) => (
-                    <div className="rounded-2xl border border-border/70 bg-background px-3 py-3" key={`${action.label}:${action.roleType}`}>
+                    <div
+                      className={`rounded-2xl border px-3 py-3 ${getPendingToneClasses(true)}`}
+                      key={`${action.label}:${action.roleType}`}
+                    >
                       {action.label} still needs {formatLabel(action.roleType)} on the {action.organizationSide} side.
                     </div>
                   ))
@@ -333,7 +352,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                   <p>No blocked sign-off actions are currently visible.</p>
                 ) : (
                   props.blockedActions.map((action) => (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-900" key={action.label}>
+                    <div className={`rounded-2xl border px-3 py-3 ${getBlockedToneClasses(true)}`} key={action.label}>
                       <p className="font-medium">{action.label}</p>
                       <p className="mt-2">{action.blockedReasons.join(" ")}</p>
                     </div>

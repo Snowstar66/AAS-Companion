@@ -97,10 +97,10 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
               search={{
                 blockersFromQuery: getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [],
                 created: getParamValue(query.created) === "1",
-                lifecycleState: getParamValue(query.lifecycle),
-                saveMessage: getParamValue(query.message),
-                saveState: getParamValue(query.save),
-                submitState: getParamValue(query.submit)
+                lifecycleState: getParamValue(query.lifecycle) ?? null,
+                saveMessage: getParamValue(query.message) ?? null,
+                saveState: getParamValue(query.save) ?? null,
+                submitState: getParamValue(query.submit) ?? null
               }}
               submitTollgateAction={submitOutcomeTollgateAction}
             />

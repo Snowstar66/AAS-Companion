@@ -12,9 +12,9 @@ type GovernedLifecycleCardProps = {
   entityLabel: string;
   decision: GovernedRemovalDecision | null;
   hiddenFields?: HiddenField[];
-  hardDeleteAction?: (formData: FormData) => Promise<void>;
-  archiveAction?: (formData: FormData) => Promise<void>;
-  restoreAction?: (formData: FormData) => Promise<void>;
+  hardDeleteAction?: (formData: FormData) => void | Promise<void>;
+  archiveAction?: (formData: FormData) => void | Promise<void>;
+  restoreAction?: (formData: FormData) => void | Promise<void>;
 };
 
 function renderHiddenFields(fields: HiddenField[] = []) {
