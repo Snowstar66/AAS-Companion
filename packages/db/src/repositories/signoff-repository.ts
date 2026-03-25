@@ -59,6 +59,34 @@ export async function createSignoffRecord(input: unknown, db: DbClient = prisma)
   const parsed = signoffRecordCreateInputSchema.parse(input);
 
   const persist = async (tx: Prisma.TransactionClient) => {
+    if (parsed.decisionKind !== "escalation") {
+      const existingApproved = await tx.signoffRecord.findFirst({
+        where: {
+          organizationId: parsed.organizationId,
+          entityType: parsed.entityType,
+          entityId: parsed.entityId,
+          tollgateId: parsed.tollgateId ?? null,
+          decisionKind: parsed.decisionKind,
+          requiredRoleType: parsed.requiredRoleType,
+          organizationSide: parsed.organizationSide,
+          decisionStatus: "approved"
+        },
+        select: {
+          id: true,
+          actualPersonName: true,
+          requiredRoleType: true,
+          organizationSide: true,
+          decisionKind: true
+        }
+      });
+
+      if (existingApproved) {
+        throw new Error(
+          `${existingApproved.actualPersonName} has already recorded approved ${existingApproved.decisionKind} for ${existingApproved.requiredRoleType} on the ${existingApproved.organizationSide} side.`
+        );
+      }
+    }
+
     const actualPerson = await tx.partyRoleEntry.findFirst({
       where: {
         organizationId: parsed.organizationId,

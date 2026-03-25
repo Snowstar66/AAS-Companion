@@ -1,9 +1,11 @@
 import {
   createSignoffRecord,
+  getStoryById,
   getTollgate,
   listPartyRoleEntries,
   listSignoffRecordsForEntity,
   listSignoffRecordsForTollgate,
+  updateStory,
   upsertTollgate
 } from "@aas-companion/db";
 import {
@@ -217,14 +219,24 @@ export async function recordTollgateDecisionService(input: unknown) {
     });
   }
 
-  const record = await createSignoffRecord({
-    ...parsed.data,
-    tollgateType,
-    requiredRoleType: parsed.data.decisionKind === "escalation" ? selectedPerson.roleType : parsed.data.requiredRoleType,
-    organizationSide: parsed.data.decisionKind === "escalation" ? selectedPerson.organizationSide : parsed.data.organizationSide,
-    tollgateId: tollgate.id,
-    createdBy: parsed.data.actorId ?? null
-  });
+  let record;
+
+  try {
+    record = await createSignoffRecord({
+      ...parsed.data,
+      tollgateType,
+      requiredRoleType: parsed.data.decisionKind === "escalation" ? selectedPerson.roleType : parsed.data.requiredRoleType,
+      organizationSide: parsed.data.decisionKind === "escalation" ? selectedPerson.organizationSide : parsed.data.organizationSide,
+      tollgateId: tollgate.id,
+      createdBy: parsed.data.actorId ?? null
+    });
+  } catch (error) {
+    return failure({
+      code: "duplicate_signoff",
+      message: error instanceof Error ? error.message : "A sign-off for this tollgate lane has already been recorded."
+    });
+  }
+
   const signoffRecords = await listSignoffRecordsForTollgate(parsed.data.organizationId, tollgate.id);
   const summary = summarizeTollgateFromSignoffs({
     blockers: tollgate.blockers,
@@ -259,6 +271,28 @@ export async function recordTollgateDecisionService(input: unknown) {
     decidedBy: summary.status === "approved" ? parsed.data.actorId ?? null : tollgate.decidedBy,
     decidedAt: summary.status === "approved" ? new Date() : tollgate.decidedAt
   });
+
+  if (parsed.data.entityType === "story") {
+    const story = await getStoryById(parsed.data.organizationId, parsed.data.entityId);
+
+    if (story && story.status !== "in_progress") {
+      const nextStatus =
+        summary.status === "blocked"
+          ? "definition_blocked"
+          : summary.status === "ready" || summary.status === "approved"
+            ? "ready_for_handoff"
+            : story.status;
+
+      if (nextStatus !== story.status) {
+        await updateStory({
+          organizationId: parsed.data.organizationId,
+          id: story.id,
+          actorId: parsed.data.actorId ?? null,
+          status: nextStatus
+        });
+      }
+    }
+  }
 
   return success({
     record,

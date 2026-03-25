@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import WorkspacePage from "@/app/(protected)/workspace/page";
 
-vi.mock("@/lib/auth/guards", () => ({
-  requireActiveProjectSession: vi.fn(async () => ({
+const { getValueSpineServiceMock, requireActiveProjectSessionMock } = vi.hoisted(() => ({
+  getValueSpineServiceMock: vi.fn(),
+  requireActiveProjectSessionMock: vi.fn(async () => ({
     organization: {
       organizationId: "org-demo",
       organizationName: "AAS Demo Organization"
@@ -11,8 +12,20 @@ vi.mock("@/lib/auth/guards", () => ({
   }))
 }));
 
+vi.mock("@/lib/auth/guards", () => ({
+  requireActiveProjectSession: requireActiveProjectSessionMock
+}));
+
 vi.mock("@aas-companion/api/spine", () => ({
-  getValueSpineService: vi.fn(async () => ({
+  getValueSpineService: getValueSpineServiceMock
+}));
+
+afterEach(() => {
+  cleanup();
+});
+
+function createWorkspaceSnapshot(storyStatus: "definition_blocked" | "ready_for_handoff") {
+  return {
     ok: true,
     data: {
       organization: {
@@ -45,14 +58,14 @@ vi.mock("@aas-companion/api/spine", () => ({
                     id: "story-imported",
                     key: "IMP-STORY-1",
                     title: "Imported Story",
-                    status: "definition_blocked",
+                    status: storyStatus,
                     originType: "imported",
                     lifecycleState: "active",
                     importedReadinessState: "imported_design_ready",
                     lineageSourceType: "artifact_aas_candidate",
                     lineageSourceId: "candidate-story-1",
-                    acceptanceCriteria: [],
-                    testDefinition: null,
+                    acceptanceCriteria: storyStatus === "ready_for_handoff" ? ["Accepted"] : [],
+                    testDefinition: storyStatus === "ready_for_handoff" ? "Regression test" : null,
                     definitionOfDone: ["Human review complete"]
                   }
                 ]
@@ -74,19 +87,31 @@ vi.mock("@aas-companion/api/spine", () => ({
         ]
       }
     }
-  }))
-}));
+  };
+}
 
 describe("Value Spine page", () => {
   it("renders the current project through one selected Framing branch", async () => {
+    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot("definition_blocked"));
+
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
     expect(screen.getByRole("heading", { name: "Project Value Spine", level: 1 })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Project context" })).toBeDefined();
     expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
-    expect(screen.getAllByRole("link", { name: "Open Outcome" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Open Framing/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /Open review lineage/i }).length).toBeGreaterThan(0);
     expect(screen.getByText("Missing Test Definition")).toBeDefined();
+  });
+
+  it("shows approved handoff stories as ready in the Value Spine summary and story card", async () => {
+    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot("ready_for_handoff"));
+
+    render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
+
+    expect(screen.getByText("Ready for build")).toBeDefined();
+    expect(screen.getAllByText("Ready stories")[0]?.parentElement?.textContent).toContain("1");
+    expect(screen.queryByText("Missing Test Definition")).toBeNull();
   });
 });
