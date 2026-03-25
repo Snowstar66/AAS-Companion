@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
 type DispositionAction = "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
@@ -139,7 +140,12 @@ export function ArtifactIntakeDispositionButtons(props: ArtifactIntakeDispositio
           {optimisticStatus}
         </span>
         {selectedAction ? <span className="text-muted-foreground">Selected: {selectedAction.replaceAll("_", " ")}</span> : null}
-        {isPending ? <span className="text-muted-foreground">Saving...</span> : null}
+        {isPending ? (
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            Saving...
+          </span>
+        ) : null}
       </div>
       {error ? <p className="text-xs text-rose-700">{error}</p> : null}
     </div>

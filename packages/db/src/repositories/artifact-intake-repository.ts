@@ -321,7 +321,7 @@ async function processArtifactIntakeSession(
 export async function createArtifactIntakeSession(input: unknown, rejectedFiles: ArtifactIntakeRejectedFile[] = []) {
   const parsed = artifactIntakeUploadRequestSchema.parse(input);
 
-  return prisma.$transaction(async (tx) => {
+  const { session, files } = await prisma.$transaction(async (tx) => {
     const organization = await tx.organization.findUnique({
       where: {
         id: parsed.organizationId
@@ -416,20 +416,35 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
       );
     }
 
-    const mappingResult = await processArtifactIntakeSession(
-      {
-        organizationId: parsed.organizationId,
-        sessionId: session.id
-      },
-      tx
-    );
+    return {
+      session,
+      files
+    };
+  });
+
+  try {
+    const mappingResult = await processArtifactIntakeSession({
+      organizationId: parsed.organizationId,
+      sessionId: session.id
+    });
 
     return {
       session,
       files,
       mappingResult
     };
-  });
+  } catch (error) {
+    await prisma.artifactIntakeSession
+      .update({
+        where: { id: session.id },
+        data: {
+          status: "blocked"
+        }
+      })
+      .catch(() => undefined);
+
+    throw error;
+  }
 }
 
 export async function appendArtifactFileRejections(

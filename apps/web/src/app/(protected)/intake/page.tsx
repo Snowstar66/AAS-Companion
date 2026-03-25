@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Inbox, Upload } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
+import { ArtifactIntakeUploadSubmitButton } from "@/components/intake/artifact-intake-pending-actions";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
 import { ArtifactIntakeRightRail } from "@/components/intake/artifact-intake-right-rail";
 import { ContextHelp } from "@/components/shared/context-help";
@@ -188,10 +189,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 />
               </label>
               <div className="flex flex-wrap gap-3">
-                <Button className="gap-2" disabled={isDemoSession} type="submit">
-                  <Upload className="h-4 w-4" />
-                  Create import session
-                </Button>
+                <ArtifactIntakeUploadSubmitButton disabled={isDemoSession} />
                 {isDemoSession ? (
                   <Button asChild className="gap-2" variant="secondary">
                     <Link href="/">Leave Demo and choose project</Link>

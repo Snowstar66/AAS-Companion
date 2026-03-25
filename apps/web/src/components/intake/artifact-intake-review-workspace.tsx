@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleAlert, CircleCheckBig, GitBranch, ShieldCheck } from "lucide-react";
+import { GitBranch, ShieldCheck } from "lucide-react";
 import type {
   ArtifactCandidateDraftRecord,
   ArtifactCandidateHumanDecision,
@@ -10,6 +10,7 @@ import type {
 import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { ArtifactIntakeDispositionButtons } from "@/components/intake/artifact-intake-disposition-buttons";
+import { ArtifactIntakeReviewSubmitButtons } from "@/components/intake/artifact-intake-pending-actions";
 
 type ParsedSection = ArtifactParseResult["sections"][number];
 
@@ -1182,26 +1183,7 @@ export function ArtifactIntakeReviewWorkspace({
                     />
                   </label>
 
-                  <div className="grid gap-3">
-                    <Button className="gap-2" name="intent" type="submit" value="edit" variant="secondary">
-                      <GitBranch className="h-4 w-4" />
-                      Save corrections
-                    </Button>
-                    <Button className="gap-2" name="intent" type="submit" value="confirm">
-                      <CircleCheckBig className="h-4 w-4" />
-                      Confirm readiness for promotion
-                    </Button>
-                    <Button className="gap-2" name="intent" type="submit" value="follow_up" variant="secondary">
-                      <CircleAlert className="h-4 w-4" />
-                      Keep follow-up open
-                    </Button>
-                    <Button className="gap-2" name="intent" type="submit" value="reject" variant="secondary">
-                      Discard or reject candidate
-                    </Button>
-                    <Button className="gap-2" name="intent" type="submit" value="promote">
-                      Promote into project records
-                    </Button>
-                  </div>
+                  <ArtifactIntakeReviewSubmitButtons />
 
                   {selectedCandidate.promotedEntityId ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
