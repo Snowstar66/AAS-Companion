@@ -111,15 +111,24 @@ export async function createArtifactIntakeSessionService(input: {
     });
   }
 
-  const result = await createArtifactIntakeSession(
-    {
-      organizationId: input.organizationId,
-      actorId: input.actorId ?? null,
-      label: input.label,
-      files: accepted
-    },
-    rejected
-  );
+  let result;
+
+  try {
+    result = await createArtifactIntakeSession(
+      {
+        organizationId: input.organizationId,
+        actorId: input.actorId ?? null,
+        label: input.label,
+        files: accepted
+      },
+      rejected
+    );
+  } catch (error) {
+    return failure({
+      code: "artifact_intake_create_failed",
+      message: error instanceof Error ? error.message : "Import upload failed."
+    });
+  }
 
   return success({
     sessionId: result.session.id,

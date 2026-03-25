@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Inbox, Upload } from "lucide-react";
+import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
 import { ArtifactIntakeRightRail } from "@/components/intake/artifact-intake-right-rail";
 import { ContextHelp } from "@/components/shared/context-help";
+import { requireProtectedSession } from "@/lib/auth/guards";
 import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import {
@@ -72,9 +74,11 @@ function buildIntakeHref(sessionId: string, fileId: string, candidateId?: string
 
 export default async function ArtifactIntakePage({ searchParams }: ArtifactIntakePageProps) {
   const query = searchParams ? await searchParams : {};
+  const session = await requireProtectedSession();
   const sessionId = getParamValue(query.sessionId);
   const fileId = getParamValue(query.fileId);
   const workspace = await loadArtifactIntakeWorkspace({ sessionId, fileId });
+  const isDemoSession = session.mode === "demo" || session.organization?.organizationId === DEMO_ORGANIZATION.organizationId;
   const error = getParamValue(query.error);
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
@@ -166,6 +170,12 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {isDemoSession ? (
+              <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                Import writes persisted intake sessions and is therefore disabled in Demo. Leave Demo, then open or create a
+                normal project before uploading markdown artifacts.
+              </div>
+            ) : null}
             <form action={uploadArtifactIntakeFilesAction} className="space-y-4">
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-foreground">Artifact files</span>
@@ -178,13 +188,19 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 />
               </label>
               <div className="flex flex-wrap gap-3">
-                <Button className="gap-2" type="submit">
+                <Button className="gap-2" disabled={isDemoSession} type="submit">
                   <Upload className="h-4 w-4" />
                   Create import session
                 </Button>
-                <Button asChild className="gap-2" variant="secondary">
-                  <Link href="/review">Open Human Review</Link>
-                </Button>
+                {isDemoSession ? (
+                  <Button asChild className="gap-2" variant="secondary">
+                    <Link href="/">Leave Demo and choose project</Link>
+                  </Button>
+                ) : (
+                  <Button asChild className="gap-2" variant="secondary">
+                    <Link href="/review">Open Human Review</Link>
+                  </Button>
+                )}
               </div>
             </form>
           </CardContent>

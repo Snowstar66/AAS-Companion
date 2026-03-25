@@ -2,6 +2,25 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import ArtifactIntakePage from "@/app/(protected)/intake/page";
 
+const { requireProtectedSessionMock } = vi.hoisted(() => ({
+  requireProtectedSessionMock: vi.fn(async () => ({
+    mode: "local" as const,
+    userId: "user-1",
+    email: "pontus@example.com",
+    displayName: "Pontus",
+    organization: {
+      organizationId: "org-1",
+      organizationName: "Customer Project",
+      organizationSlug: "customer-project",
+      role: "value_owner" as const
+    }
+  }))
+}));
+
+vi.mock("@/lib/auth/guards", () => ({
+  requireProtectedSession: requireProtectedSessionMock
+}));
+
 vi.mock("@/lib/intake/workspace", () => ({
   loadArtifactIntakeWorkspace: vi.fn(async () => ({
     state: "ready",
@@ -420,5 +439,26 @@ describe("Import page", () => {
     expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
     expect(screen.getAllByText("Leave promotion outside this story.").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Correction and confirmation" })).toBeDefined();
+  });
+
+  it("shows Demo as read-only and disables new uploads", async () => {
+    requireProtectedSessionMock.mockResolvedValueOnce({
+      mode: "demo",
+      userId: "user-demo",
+      email: "value.owner@aas-companion.local",
+      displayName: "Demo Value Owner",
+      organization: {
+        organizationId: "org_demo_control_plane",
+        organizationName: "AAS Demo Organization",
+        organizationSlug: "aas-demo-org",
+        role: "value_owner"
+      }
+    });
+
+    render(await ArtifactIntakePage({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByText(/Import writes persisted intake sessions and is therefore disabled in Demo/i)).toBeDefined();
+    expect(screen.getAllByRole("button", { name: /Create import session/i }).at(-1)?.hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("link", { name: /Leave Demo and choose project/i })).toBeDefined();
   });
 });

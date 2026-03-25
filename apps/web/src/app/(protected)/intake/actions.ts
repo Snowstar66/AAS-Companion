@@ -8,6 +8,7 @@ import {
   reviewArtifactFileSectionDispositionService,
   reviewArtifactCandidateService
 } from "@aas-companion/api";
+import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildRedirect(pathname: string, params: Record<string, string | number | undefined>) {
@@ -39,8 +40,22 @@ function readCsv(formData: FormData, name: string) {
     .filter(Boolean);
 }
 
+function redirectDemoIntakeBlocked() {
+  redirect(
+    buildRedirect("/intake", {
+      status: "blocked",
+      message: "Import is read-only in Demo. Leave Demo and open a normal project before uploading, reviewing, or promoting artifacts."
+    })
+  );
+}
+
 export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    redirectDemoIntakeBlocked();
+  }
+
   const files = formData
     .getAll("files")
     .filter((value): value is File => value instanceof File && value.size > 0);
@@ -95,6 +110,11 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
 
 export async function submitArtifactCandidateFromIntakeAction(formData: FormData) {
   const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    redirectDemoIntakeBlocked();
+  }
+
   const sessionId = String(formData.get("sessionId") ?? "");
   const fileId = String(formData.get("fileId") ?? "");
   const candidateId = String(formData.get("candidateId") ?? "");
@@ -246,6 +266,11 @@ export async function submitArtifactCandidateFromIntakeAction(formData: FormData
 
 export async function submitArtifactSectionDispositionAction(formData: FormData) {
   const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    redirectDemoIntakeBlocked();
+  }
+
   const sessionId = String(formData.get("sessionId") ?? "");
   const fileId = String(formData.get("fileId") ?? "");
   const candidateId = String(formData.get("candidateId") ?? "") || undefined;
@@ -297,6 +322,13 @@ export async function submitArtifactCandidateIssueDispositionInlineAction(input:
 }) {
   const session = await requireActiveProjectSession();
 
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    return {
+      ok: false as const,
+      message: "Import is read-only in Demo. Leave Demo and open a normal project before changing review state."
+    };
+  }
+
   const reviewResult = await reviewArtifactCandidateService({
     organizationId: session.organization.organizationId,
     actorId: session.userId,
@@ -333,6 +365,13 @@ export async function submitArtifactSectionDispositionInlineAction(input: {
   action: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
 }) {
   const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    return {
+      ok: false as const,
+      message: "Import is read-only in Demo. Leave Demo and open a normal project before changing review state."
+    };
+  }
 
   const result = await reviewArtifactFileSectionDispositionService({
     organizationId: session.organization.organizationId,

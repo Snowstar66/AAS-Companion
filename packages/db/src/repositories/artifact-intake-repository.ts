@@ -10,6 +10,7 @@ import {
   parseMarkdownArtifact,
   type ArtifactIntakeRejectedFile
 } from "@aas-companion/domain";
+import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
 import { createPersistedArtifactCandidates } from "./artifact-candidate-repository";
@@ -321,6 +322,23 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
   const parsed = artifactIntakeUploadRequestSchema.parse(input);
 
   return prisma.$transaction(async (tx) => {
+    const organization = await tx.organization.findUnique({
+      where: {
+        id: parsed.organizationId
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!organization) {
+      if (parsed.organizationId === DEMO_ORGANIZATION.organizationId) {
+        throw new Error("Import is read-only in Demo. Leave Demo and open a normal project before uploading files.");
+      }
+
+      throw new Error("The selected project is no longer available. Open or create a normal project and try again.");
+    }
+
     const actorId = await resolveExistingActorId(parsed.actorId ?? null, tx);
     const session = await tx.artifactIntakeSession.create({
       data: {
