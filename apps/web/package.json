@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "predev": "pnpm -C ../.. build:web-runtime-packages && node ../../scripts/sync-prisma-client.mjs",
+    "build:vercel": "pnpm -C ../.. db:push && pnpm build",
     "dev": "node ../../scripts/run-next-with-optional-env.mjs dev",
     "prebuild": "pnpm -C ../.. build:web-runtime-packages && node ../../scripts/sync-prisma-client.mjs",
     "build": "node -e \"const fs=require('fs'); fs.rmSync('.next',{ recursive:true, force:true });\" && node ../../scripts/run-next-with-optional-env.mjs build",
