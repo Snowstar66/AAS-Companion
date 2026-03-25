@@ -486,7 +486,7 @@ export function FramingCockpit({
                     <div className="flex flex-wrap gap-3 2xl:w-auto 2xl:shrink-0">
                       <Button asChild className="gap-2">
                         <Link href={item.detailHref}>
-                          Open Outcome
+                          Open Framing
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>

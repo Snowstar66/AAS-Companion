@@ -1,12 +1,101 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FramingPage from "@/app/(protected)/framing/page";
+
+vi.mock("@aas-companion/api", async () => {
+  const actual = await vi.importActual<object>("@aas-companion/api");
+
+  return {
+    ...actual,
+    getOutcomeWorkspaceService: vi.fn(async () => ({
+      ok: true,
+      data: {
+        outcome: {
+          id: "outcome-1",
+          organizationId: "org_demo_control_plane",
+          key: "OUT-001",
+          title: "New customer case",
+          problemStatement: null,
+          outcomeStatement: null,
+          baselineDefinition: null,
+          baselineSource: null,
+          timeframe: null,
+          valueOwnerId: null,
+          valueOwner: null,
+          riskProfile: "medium",
+          aiAccelerationLevel: "level_2",
+          status: "draft",
+          originType: "native",
+          createdMode: "clean",
+          lifecycleState: "active",
+          archivedAt: null,
+          archiveReason: null,
+          lineageSourceType: null,
+          lineageSourceId: null,
+          lineageNote: null,
+          importedReadinessState: null,
+          createdAt: new Date("2026-03-23T20:00:00.000Z"),
+          updatedAt: new Date("2026-03-23T20:00:00.000Z"),
+          epics: [],
+          stories: []
+        },
+        tollgate: {
+          id: "tg-1",
+          blockers: ["Baseline definition is missing."],
+          approverRoles: ["value_owner", "architect"],
+          comments: null,
+          status: "blocked"
+        },
+        tollgateReview: {
+          status: "blocked",
+          blockers: ["Baseline definition is missing."],
+          comments: null,
+          availablePeople: [
+            {
+              id: "party-vo",
+              fullName: "Demo Value Owner",
+              roleType: "value_owner",
+              organizationSide: "customer",
+              roleTitle: "Value Owner"
+            }
+          ],
+          reviewActions: [],
+          approvalActions: [],
+          pendingActions: [],
+          blockedActions: [],
+          signoffRecords: []
+        },
+        activities: [],
+        availableOwners: [],
+        readiness: {
+          state: "blocked",
+          reasons: [
+            {
+              code: "baseline_definition_missing",
+              message: "Baseline definition is missing.",
+              severity: "high"
+            }
+          ]
+        },
+        removal: {
+          entityType: "outcome",
+          entityId: "outcome-1",
+          key: "OUT-001",
+          title: "New customer case",
+          activeChildren: [],
+          decision: null
+        }
+      }
+    }))
+  };
+});
 
 vi.mock("@/lib/framing/cockpit", () => ({
   loadFramingCockpit: vi.fn(async () => ({
     session: {
       organization: {
-        organizationId: "org_demo_control_plane"
+        organizationId: "org_demo_control_plane",
+        organizationName: "AAS Demo Organization"
       }
     },
     cockpit: {
@@ -39,7 +128,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
           epicCount: 0,
           storyCount: 0,
           updatedAtLabel: "Mar 23",
-          detailHref: "/outcomes/outcome-1"
+          detailHref: "/framing?outcomeId=outcome-1"
         },
         {
           id: "outcome-2",
@@ -61,7 +150,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
           epicCount: 1,
           storyCount: 3,
           updatedAtLabel: "Mar 23",
-          detailHref: "/outcomes/outcome-2"
+          detailHref: "/framing?outcomeId=outcome-2"
         }
       ]
     }
@@ -72,7 +161,17 @@ vi.mock("@/app/(protected)/framing/actions", () => ({
   createDraftOutcomeAction: vi.fn()
 }));
 
-describe("Framing cockpit", () => {
+vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
+  archiveOutcomeAction: vi.fn(),
+  createEpicFromOutcomeAction: vi.fn(),
+  hardDeleteOutcomeAction: vi.fn(),
+  recordOutcomeTollgateDecisionAction: vi.fn(),
+  restoreOutcomeAction: vi.fn(),
+  saveOutcomeWorkspaceAction: vi.fn(),
+  submitOutcomeTollgateAction: vi.fn()
+}));
+
+describe("Framing page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -81,27 +180,22 @@ describe("Framing cockpit", () => {
     cleanup();
   });
 
-  it("renders native-first entry actions and defaults to native work", async () => {
+  it("opens the active framing directly instead of requiring a separate open step", async () => {
     render(await FramingPage({}));
 
-    expect(screen.getByRole("heading", { name: "Framing Cockpit", level: 1 })).toBeDefined();
-    expect(screen.getByText("Customer handshake inside project")).toBeDefined();
-    expect(screen.getByText("Handshake in this project")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Open active framing" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "Create project for new case" })).toBeDefined();
-    expect(screen.getByRole("link", { name: "Open demo case" })).toBeDefined();
-    expect(screen.getByText("New customer case")).toBeDefined();
-    expect(screen.queryByText("Close the governance readiness gap")).toBeNull();
-    expect(screen.getAllByText("Native").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Tollgate 1 review and approval" })).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
+    expect(screen.queryByText("Framing Cockpit")).toBeNull();
   });
 
-  it("supports switching to demo cases intentionally", async () => {
+  it("shows a compact switcher instead of a full duplicate cockpit when demo content exists", async () => {
     render(await FramingPage({}));
 
-    fireEvent.click(screen.getByRole("button", { name: "Demo (1)" }));
-
-    expect(screen.getByText("Close the governance readiness gap")).toBeDefined();
-    expect(screen.queryByText("New customer case")).toBeNull();
-    expect(screen.getAllByText("Demo").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Switch Framing" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open Demo Framing" })).toBeDefined();
+    expect(screen.queryByRole("link", { name: "OUT-001: New customer case" })).toBeNull();
+    expect(screen.getByText("The active framing is already open. Use this only when you intentionally want to switch branch or open Demo.")).toBeDefined();
   });
 });

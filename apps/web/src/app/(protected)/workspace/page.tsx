@@ -194,8 +194,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 </div>
 
                 <Button asChild variant="secondary">
-                  <Link href={`/outcomes/${selectedOutcome.id}`}>
-                    Open Outcome
+                  <Link href={`/framing?outcomeId=${selectedOutcome.id}`}>
+                    Open Framing
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -242,8 +242,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                   </CardDescription>
                 </div>
                 <Button asChild variant="secondary">
-                  <Link href={`/outcomes/${selectedOutcome.id}`}>
-                    Open Outcome
+                  <Link href={`/framing?outcomeId=${selectedOutcome.id}`}>
+                    Open Framing
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

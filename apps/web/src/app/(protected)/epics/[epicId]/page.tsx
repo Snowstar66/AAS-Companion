@@ -142,7 +142,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
             id: epic.outcome.id,
             key: epic.outcome.key,
             title: epic.outcome.title,
-            href: `/outcomes/${epic.outcomeId}`
+            href: `/framing?outcomeId=${epic.outcomeId}`
           }}
           summary="This Epic remains inside one active Framing. Only Stories linked to this Epic and its parent Outcome are shown in this project."
         />
@@ -178,7 +178,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                 id: epic.outcome.id,
                 key: epic.outcome.key,
                 title: epic.outcome.title,
-                href: `/outcomes/${epic.outcomeId}`,
+                href: `/framing?outcomeId=${epic.outcomeId}`,
                 isCurrent: false
               }}
             />
@@ -239,7 +239,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                   <Button asChild className="gap-2" variant="secondary">
-                    <Link href={`/outcomes/${epic.outcomeId}`}>
+                    <Link href={`/framing?outcomeId=${epic.outcomeId}`}>
                       Back to current Framing
                       <ArrowRight className="h-4 w-4" />
                     </Link>
@@ -247,7 +247,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                 </div>
               ) : (
                 <Button asChild className="gap-2" variant="secondary">
-                  <Link href={`/outcomes/${epic.outcomeId}`}>
+                  <Link href={`/framing?outcomeId=${epic.outcomeId}`}>
                     Back to current Framing
                     <ArrowRight className="h-4 w-4" />
                   </Link>

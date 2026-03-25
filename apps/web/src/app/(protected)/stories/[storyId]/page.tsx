@@ -174,7 +174,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
             id: story.outcome.id,
             key: story.outcome.key,
             title: story.outcome.title,
-            href: `/outcomes/${story.outcomeId}`
+            href: `/framing?outcomeId=${story.outcomeId}`
           }}
           story={{
             id: story.id,
@@ -214,7 +214,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                 id: story.outcome.id,
                 key: story.outcome.key,
                 title: story.outcome.title,
-                href: `/outcomes/${story.outcomeId}`,
+                href: `/framing?outcomeId=${story.outcomeId}`,
                 isCurrent: false
               }}
             />
@@ -360,7 +360,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                     <Link href={`/epics/${story.epicId}`}>Back to current Epic</Link>
                   </Button>
                   <Button asChild className="gap-2" variant="secondary">
-                    <Link href={`/outcomes/${story.outcomeId}`}>Open current Framing</Link>
+                    <Link href={`/framing?outcomeId=${story.outcomeId}`}>Open current Framing</Link>
                   </Button>
                 </div>
               ) : (
@@ -369,7 +369,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                     <Link href={`/epics/${story.epicId}`}>Back to current Epic</Link>
                   </Button>
                   <Button asChild className="gap-2" variant="secondary">
-                    <Link href={`/outcomes/${story.outcomeId}`}>Open current Framing</Link>
+                    <Link href={`/framing?outcomeId=${story.outcomeId}`}>Open current Framing</Link>
                   </Button>
                 </div>
               )}

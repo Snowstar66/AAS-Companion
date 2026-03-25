@@ -125,8 +125,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Governance cockpit</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-            Manage who is accountable, which agents are allowed to operate, how authority is distributed and whether
-            the active project is staffed strongly enough for the current AI acceleration level.
+            Governance is reduced to three core checks at the top level: roles assigned, separation valid, and human
+            oversight present. The detailed directory, agent, readiness and sign-off views remain available below.
           </p>
           {data.sourceContext ? (
             <div className="mt-5 rounded-2xl border border-sky-200 bg-sky-50/90 p-4 text-sm text-sky-950">
@@ -159,48 +159,82 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
           </div>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <ActionSummaryCard
-            actionHref={data.summaries.activePeople > 0 ? buildGovernanceHref({ view: "directory", level: selectedLevel, sourceEntity, sourceId }) : undefined}
-            actionLabel="Open directory"
-            className="border-border/70 shadow-sm"
-            description="Named active people in the current project."
-            label="Active people"
-            value={data.summaries.activePeople}
-          />
-          <ActionSummaryCard
-            actionHref={data.summaries.customerPeople > 0 ? buildGovernanceHref({ view: "directory", level: selectedLevel, sourceEntity, sourceId, side: "customer" }) : undefined}
-            actionLabel="Open customer roles"
-            className="border-border/70 shadow-sm"
-            description="Customer-side roles with active assignments."
-            label="Customer roles"
-            value={data.summaries.customerPeople}
-          />
-          <ActionSummaryCard
-            actionHref={data.summaries.supplierPeople > 0 ? buildGovernanceHref({ view: "directory", level: selectedLevel, sourceEntity, sourceId, side: "supplier" }) : undefined}
-            actionLabel="Open supplier roles"
-            className="border-border/70 shadow-sm"
-            description="Supplier-side roles with active assignments."
-            label="Supplier roles"
-            value={data.summaries.supplierPeople}
-          />
-          <ActionSummaryCard
-            actionHref={data.summaries.activeAgents > 0 ? buildGovernanceHref({ view: "agents", level: selectedLevel, sourceEntity, sourceId }) : undefined}
-            actionLabel="Open agent registry"
-            className="border-border/70 shadow-sm"
-            description="Active governed agents in the project."
-            label="Active agents"
-            value={data.summaries.activeAgents}
+            actionHref={buildGovernanceHref({ view: "readiness", level: selectedLevel, sourceEntity, sourceId })}
+            actionLabel="Open readiness details"
+            className={
+              data.readiness.validation.missingRoleCount === 0
+                ? "border-emerald-200 bg-emerald-50 shadow-sm"
+                : "border-rose-200 bg-rose-50 shadow-sm"
+            }
+            description={
+              data.readiness.validation.missingRoleCount === 0
+                ? "Required named roles are in place for the selected AI level."
+                : `${data.readiness.validation.missingRoleCount} role requirement(s) still need assignment.`
+            }
+            label="Roles assigned"
+            value={data.readiness.validation.missingRoleCount === 0 ? "OK" : "Not OK"}
           />
           <ActionSummaryCard
             actionHref={buildGovernanceHref({ view: "readiness", level: selectedLevel, sourceEntity, sourceId })}
-            actionLabel="Open readiness"
-            className="border-border/70 shadow-sm"
-            description="Coverage and risk checks for the selected AI level."
-            label="Readiness state"
-            value={formatLabel(data.readiness.summaryStatus)}
+            actionLabel="Open separation details"
+            className={
+              data.readiness.validation.riskyCombinationCount === 0
+                ? "border-emerald-200 bg-emerald-50 shadow-sm"
+                : "border-amber-200 bg-amber-50 shadow-sm"
+            }
+            description={
+              data.readiness.validation.riskyCombinationCount === 0
+                ? "No risky role combinations are currently detected."
+                : `${data.readiness.validation.riskyCombinationCount} risky combination(s) need separation.`
+            }
+            label="Separation valid"
+            value={data.readiness.validation.riskyCombinationCount === 0 ? "OK" : "Not OK"}
+          />
+          <ActionSummaryCard
+            actionHref={buildGovernanceHref({ view: "readiness", level: selectedLevel, sourceEntity, sourceId })}
+            actionLabel="Open oversight details"
+            className={
+              data.readiness.validation.supervisionGapCount === 0
+                ? "border-emerald-200 bg-emerald-50 shadow-sm"
+                : "border-rose-200 bg-rose-50 shadow-sm"
+            }
+            description={
+              data.readiness.validation.supervisionGapCount === 0
+                ? "Every active agent currently has active human supervision."
+                : `${data.readiness.validation.supervisionGapCount} agent supervision gap(s) remain open.`
+            }
+            label="Human oversight"
+            value={data.readiness.validation.supervisionGapCount === 0 ? "OK" : "Not OK"}
           />
         </div>
+
+        {data.readiness.validation.recommendations.length > 0 ? (
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>Recommended next actions</CardTitle>
+              <CardDescription>Only the most important governance actions are surfaced at the top level.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {data.readiness.validation.recommendations.slice(0, 3).map((recommendation, index) => (
+                <div
+                  className={`rounded-2xl border px-4 py-4 text-sm ${
+                    recommendation.priority === "high"
+                      ? "border-rose-200 bg-rose-50 text-rose-900"
+                      : "border-amber-200 bg-amber-50 text-amber-900"
+                  }`}
+                  key={`${recommendation.kind}-${index}`}
+                >
+                  <p className="font-medium">
+                    {recommendation.priority === "high" ? "High-priority action" : "Medium-priority action"}
+                  </p>
+                  <p className="mt-2">{recommendation.description}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>

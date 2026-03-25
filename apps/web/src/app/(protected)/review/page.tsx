@@ -36,24 +36,78 @@ function getFindingClasses(category: "missing" | "uncertain" | "human_only" | "b
   return "border-sky-200 bg-sky-50 text-sky-800";
 }
 
-function getReviewStatusClasses(status: string) {
-  if (status === "promoted") {
+type DerivedReviewState = "needs_action" | "needs_confirmation" | "resolved" | "discarded";
+
+function getDerivedReviewState(candidate: {
+  reviewStatus: string;
+  importedReadinessState?: string | null;
+  complianceResult?: {
+    summary?: {
+      missing?: number;
+      uncertain?: number;
+      humanOnly?: number;
+      blocked?: number;
+    };
+  } | null;
+}) {
+  if (candidate.reviewStatus === "rejected" || candidate.importedReadinessState === "discarded") {
+    return "discarded" as const;
+  }
+
+  if (candidate.reviewStatus === "promoted") {
+    return "resolved" as const;
+  }
+
+  const summary = candidate.complianceResult?.summary;
+  const hasActionItems = (summary?.missing ?? 0) > 0 || (summary?.blocked ?? 0) > 0 || candidate.reviewStatus === "follow_up_needed";
+  const needsExplicitConfirmation =
+    (summary?.uncertain ?? 0) > 0 ||
+    (summary?.humanOnly ?? 0) > 0 ||
+    candidate.reviewStatus === "pending" ||
+    candidate.reviewStatus === "confirmed" ||
+    candidate.reviewStatus === "edited";
+
+  if (hasActionItems) {
+    return "needs_action" as const;
+  }
+
+  if (needsExplicitConfirmation) {
+    return "needs_confirmation" as const;
+  }
+
+  return "resolved" as const;
+}
+
+function getDerivedReviewLabel(state: DerivedReviewState) {
+  if (state === "needs_action") {
+    return "Needs action";
+  }
+
+  if (state === "needs_confirmation") {
+    return "Needs confirmation";
+  }
+
+  if (state === "resolved") {
+    return "Resolved";
+  }
+
+  return "Discarded";
+}
+
+function getReviewStatusClasses(state: DerivedReviewState) {
+  if (state === "resolved") {
     return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
 
-  if (status === "rejected") {
+  if (state === "discarded") {
     return "border-rose-200 bg-rose-50 text-rose-800";
   }
 
-  if (status === "follow_up_needed") {
+  if (state === "needs_confirmation") {
     return "border-amber-200 bg-amber-50 text-amber-800";
   }
 
-  if (status === "confirmed" || status === "edited") {
-    return "border-sky-200 bg-sky-50 text-sky-800";
-  }
-
-  return "border-border/70 bg-muted text-muted-foreground";
+  return "border-sky-200 bg-sky-50 text-sky-800";
 }
 
 function getActionVerb(category: "missing" | "uncertain" | "human_only" | "blocked") {
@@ -103,14 +157,28 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const candidateId = getParamValue(query.candidateId);
   const reviewStatusFilter = getParamValue(query.reviewStatusFilter) ?? "all";
   const findingFilter = getParamValue(query.findingFilter) ?? "all";
+  const resolutionSummary = queue.items.reduce(
+    (summary, candidate) => {
+      const state = getDerivedReviewState(candidate);
+      summary[state] += 1;
+      return summary;
+    },
+    {
+      needs_action: 0,
+      needs_confirmation: 0,
+      resolved: 0,
+      discarded: 0
+    }
+  );
   const visibleItems = queue.items.filter((candidate) => {
     if (reviewStatusFilter === "all") {
       return true;
     }
 
-    return candidate.reviewStatus === reviewStatusFilter;
+    return getDerivedReviewState(candidate) === reviewStatusFilter;
   });
   const selectedCandidate = visibleItems.find((candidate) => candidate.id === candidateId) ?? visibleItems[0] ?? null;
+  const selectedCandidateState = selectedCandidate ? getDerivedReviewState(selectedCandidate) : null;
   const totalFindings = selectedCandidate?.complianceResult?.findings.length ?? 0;
   const actionItems =
     selectedCandidate?.complianceResult?.findings.filter((finding) => {
@@ -120,6 +188,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
       return finding.category === findingFilter;
     }) ?? [];
+  const primaryIntent =
+    selectedCandidateState === null || selectedCandidateState === "discarded" || selectedCandidateState === "resolved"
+      ? null
+      : actionItems.length > 0
+        ? "edit"
+        : selectedCandidate?.complianceResult?.promotionBlocked === false
+          ? "promote"
+          : "confirm";
   const reviewHelp = getHelpPattern("review.workspace", selectedCandidate?.humanDecisions?.aiAccelerationLevel ?? null);
 
   return (
@@ -138,8 +214,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Human Review action list</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-            Review stays scoped to the current project and one imported candidate at a time. The page tells you what is
-            still missing, uncertain, blocked, or waiting for explicit human confirmation before approval readiness.
+            Review stays scoped to the current project and one imported candidate at a time. The queue is collapsed into
+            four actionable states: needs action, needs confirmation, resolved, and discarded.
           </p>
           <div className="mt-5 max-w-4xl">
             <ContextHelp pattern={reviewHelp} summaryLabel="Open human review help" />
@@ -160,10 +236,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           <ActionSummaryCard actionHref={buildReviewHref({ reviewStatusFilter: "all" })} actionLabel="Open all candidates" className="border-border/70 shadow-sm" label="Total" value={queue.summary.total} />
-          <ActionSummaryCard actionHref={queue.summary.pending > 0 ? buildReviewHref({ reviewStatusFilter: "pending" }) : undefined} actionLabel="Open pending candidates" className="border-border/70 shadow-sm" label="Pending" value={queue.summary.pending} />
-          <ActionSummaryCard actionHref={queue.summary.followUpNeeded > 0 ? buildReviewHref({ reviewStatusFilter: "follow_up_needed" }) : undefined} actionLabel="Open follow-up list" className="border-border/70 shadow-sm" label="Follow-up" value={queue.summary.followUpNeeded} />
-          <ActionSummaryCard actionHref={queue.summary.rejected > 0 ? buildReviewHref({ reviewStatusFilter: "rejected" }) : undefined} actionLabel="Open rejected candidates" className="border-border/70 shadow-sm" label="Rejected" value={queue.summary.rejected} />
-          <ActionSummaryCard actionHref={queue.summary.promoted > 0 ? buildReviewHref({ reviewStatusFilter: "promoted" }) : undefined} actionLabel="Open promoted records" className="border-border/70 shadow-sm" label="Promoted" value={queue.summary.promoted} />
+          <ActionSummaryCard actionHref={resolutionSummary.needs_action > 0 ? buildReviewHref({ reviewStatusFilter: "needs_action" }) : undefined} actionLabel="Open action items" className="border-sky-200 bg-sky-50 shadow-sm" label="Needs action" value={resolutionSummary.needs_action} />
+          <ActionSummaryCard actionHref={resolutionSummary.needs_confirmation > 0 ? buildReviewHref({ reviewStatusFilter: "needs_confirmation" }) : undefined} actionLabel="Open confirmations" className="border-amber-200 bg-amber-50 shadow-sm" label="Needs confirmation" value={resolutionSummary.needs_confirmation} />
+          <ActionSummaryCard actionHref={resolutionSummary.resolved > 0 ? buildReviewHref({ reviewStatusFilter: "resolved" }) : undefined} actionLabel="Open resolved candidates" className="border-emerald-200 bg-emerald-50 shadow-sm" label="Resolved" value={resolutionSummary.resolved} />
+          <ActionSummaryCard actionHref={resolutionSummary.discarded > 0 ? buildReviewHref({ reviewStatusFilter: "discarded" }) : undefined} actionLabel="Open discarded candidates" className="border-rose-200 bg-rose-50 shadow-sm" label="Discarded" value={resolutionSummary.discarded} />
         </div>
 
         {queue.state === "unavailable" ? (
@@ -241,9 +317,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
                         <div className="flex flex-wrap gap-2">
                           <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getReviewStatusClasses(selectedCandidate.reviewStatus)}`}
+                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getReviewStatusClasses(selectedCandidateState ?? "needs_action")}`}
                           >
-                            {formatLabel(selectedCandidate.reviewStatus)}
+                            {getDerivedReviewLabel(selectedCandidateState ?? "needs_action")}
                           </span>
                           {selectedCandidate.importedReadinessState ? (
                             <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
@@ -467,11 +543,11 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                       </label>
 
                       <div className="grid gap-3">
-                        <Button className="gap-2" name="intent" type="submit" value="edit" variant="secondary">
+                        <Button className="gap-2" name="intent" type="submit" value="edit" variant={primaryIntent === "edit" ? undefined : "secondary"}>
                           <GitBranch className="h-4 w-4" />
                           Save corrections
                         </Button>
-                        <Button className="gap-2" name="intent" type="submit" value="confirm">
+                        <Button className="gap-2" name="intent" type="submit" value="confirm" variant={primaryIntent === "confirm" ? undefined : "secondary"}>
                           <CircleCheckBig className="h-4 w-4" />
                           Confirm readiness
                         </Button>
@@ -480,9 +556,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           Keep follow-up open
                         </Button>
                         <Button className="gap-2" name="intent" type="submit" value="reject" variant="secondary">
-                          Discard or reject candidate
+                          Discard candidate
                         </Button>
-                        <Button className="gap-2" name="intent" type="submit" value="promote">
+                        <Button className="gap-2" name="intent" type="submit" value="promote" variant={primaryIntent === "promote" ? undefined : "secondary"}>
                           Promote into project records
                         </Button>
                       </div>

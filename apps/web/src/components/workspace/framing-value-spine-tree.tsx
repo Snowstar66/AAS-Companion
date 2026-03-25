@@ -77,7 +77,7 @@ export function FramingValueSpineTree({
               <CurrentBadge show={outcome.isCurrent} />
               <Button asChild size="sm" variant="secondary">
                 <Link href={outcome.href}>
-                  Open
+                  Open Framing
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>

@@ -13,11 +13,12 @@ import {
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
-function buildOutcomeRedirect(outcomeId: string, search: Record<string, string>) {
+function buildFramingRedirect(outcomeId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
+  params.set("outcomeId", outcomeId);
   const query = params.toString();
 
-  return `/outcomes/${outcomeId}${query ? `?${query}` : ""}`;
+  return `/framing${query ? `?${query}` : ""}`;
 }
 
 function requireExplicitConfirmation(formData: FormData) {
@@ -68,7 +69,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         save: "error",
         message: result.errors[0]?.message ?? "Outcome could not be saved."
       })
@@ -76,7 +77,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
   }
 
   redirect(
-    buildOutcomeRedirect(outcomeId, {
+    buildFramingRedirect(outcomeId, {
       save: "success"
     })
   );
@@ -99,7 +100,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         submit: "error",
         message: result.errors[0]?.message ?? "Tollgate submission failed."
       })
@@ -108,7 +109,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
 
   if (result.data.blockers.length > 0) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         submit: "blocked",
         blockers: result.data.blockers.join(" | ")
       })
@@ -116,7 +117,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
   }
 
   redirect(
-    buildOutcomeRedirect(outcomeId, {
+    buildFramingRedirect(outcomeId, {
       submit: "ready"
     })
   );
@@ -153,7 +154,7 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         submit: "error",
         message: result.errors[0]?.message ?? "Tollgate decision could not be recorded."
       })
@@ -161,7 +162,7 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   }
 
   redirect(
-    buildOutcomeRedirect(outcomeId, {
+    buildFramingRedirect(outcomeId, {
       submit: result.data.status === "approved" ? "approved" : result.data.status === "blocked" ? "blocked" : "ready"
     })
   );
@@ -183,7 +184,7 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         save: "error",
         message: result.errors[0]?.message ?? "Epic could not be created."
       })
@@ -199,7 +200,7 @@ export async function hardDeleteOutcomeAction(formData: FormData) {
 
   if (!requireExplicitConfirmation(formData)) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         lifecycle: "error",
         message: "Explicit confirmation is required before hard delete."
       })
@@ -220,7 +221,7 @@ export async function hardDeleteOutcomeAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         lifecycle: "error",
         message: result.errors[0]?.message ?? "Outcome could not be deleted."
       })
@@ -237,7 +238,7 @@ export async function archiveOutcomeAction(formData: FormData) {
 
   if (!requireExplicitConfirmation(formData)) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         lifecycle: "error",
         message: "Explicit confirmation is required before archive."
       })
@@ -260,7 +261,7 @@ export async function archiveOutcomeAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         lifecycle: "error",
         message: result.errors[0]?.message ?? "Outcome could not be archived."
       })
@@ -268,7 +269,7 @@ export async function archiveOutcomeAction(formData: FormData) {
   }
 
   redirect(
-    buildOutcomeRedirect(outcomeId, {
+    buildFramingRedirect(outcomeId, {
       lifecycle: "archived"
     })
   );
@@ -280,7 +281,7 @@ export async function restoreOutcomeAction(formData: FormData) {
 
   if (!requireExplicitConfirmation(formData)) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         lifecycle: "error",
         message: "Explicit confirmation is required before restore."
       })
@@ -302,7 +303,7 @@ export async function restoreOutcomeAction(formData: FormData) {
 
   if (!result.ok) {
     redirect(
-      buildOutcomeRedirect(outcomeId, {
+      buildFramingRedirect(outcomeId, {
         lifecycle: "error",
         message: result.errors[0]?.message ?? "Outcome could not be restored."
       })
@@ -310,7 +311,7 @@ export async function restoreOutcomeAction(formData: FormData) {
   }
 
   redirect(
-    buildOutcomeRedirect(outcomeId, {
+    buildFramingRedirect(outcomeId, {
       lifecycle: "restored"
     })
   );

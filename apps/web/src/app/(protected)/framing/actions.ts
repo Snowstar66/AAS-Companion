@@ -27,5 +27,5 @@ export async function createDraftOutcomeAction(
 
   revalidatePath("/framing");
   revalidatePath("/");
-  redirect(`/outcomes/${result.data.id}?created=1`);
+  redirect(`/framing?outcomeId=${result.data.id}&created=1`);
 }

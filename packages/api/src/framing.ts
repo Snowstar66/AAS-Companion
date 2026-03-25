@@ -166,7 +166,7 @@ export async function getFramingCockpitData(
         epicCount: entry._count.epics,
         storyCount: entry._count.stories,
         updatedAtLabel: formatUpdatedAt(entry.updatedAt),
-        detailHref: `/outcomes/${entry.id}`
+        detailHref: `/framing?outcomeId=${entry.id}`
       };
     });
 
