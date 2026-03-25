@@ -1,5 +1,4 @@
 import Image from "next/image";
-import aasLogotype from "../../../../../docs/aas logotype.png";
 
 type AasBrandMarkProps = {
   compact?: boolean;
@@ -26,7 +25,7 @@ export function AasBrandMark({
           className="h-full w-full object-contain"
           height={imageSize}
           priority={compact}
-          src={aasLogotype}
+          src="/aas-logotype.png"
           width={imageSize}
         />
       </div>
