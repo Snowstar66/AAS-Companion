@@ -42,6 +42,9 @@ describe("Login page", () => {
   it("explains that known users still use magic link when direct sign-in is disabled", async () => {
     render(await LoginPage({ searchParams: Promise.resolve({}) }));
 
+    expect(screen.getByText("Environment auth mode")).toBeDefined();
+    expect(screen.getByText("Development environment: Magic link only")).toBeDefined();
+    expect(screen.getByText("Direct sign-in OFF")).toBeDefined();
     expect(screen.getByText("Direct sign-in is off here")).toBeDefined();
     expect(screen.getByText("Known users still use email verification here because direct sign-in is disabled.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Send magic link" })).toBeDefined();
@@ -66,6 +69,8 @@ describe("Login page", () => {
       })
     );
 
+    expect(screen.getByText("Development environment: Direct sign-in is active")).toBeDefined();
+    expect(screen.getByText("Direct sign-in ON")).toBeDefined();
     expect(screen.getByText("Internal direct sign-in")).toBeDefined();
     expect(screen.getByText("Known internal users can sign in immediately in this environment.")).toBeDefined();
     expect(screen.getByText("Known internal users")).toBeDefined();

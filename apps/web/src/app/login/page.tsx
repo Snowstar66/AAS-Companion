@@ -33,6 +33,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const localAuthEnabled = isLocalAuthEnabled(process.env);
   const supabaseEnabled = isSupabaseConfigured(process.env);
   const isProduction = process.env.NODE_ENV === "production";
+  const environmentLabel = isProduction ? "Production environment" : "Development environment";
   const knownUsers = localAuthEnabled
     ? (await listAppUsers()).filter((user) => !user.userId.startsWith("user_demo_") && !user.email.endsWith("@aas-companion.local"))
     : [];
@@ -74,6 +75,37 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 )}
               </div>
             ) : null}
+
+            <div
+              className={`rounded-2xl border px-4 py-4 ${
+                localAuthEnabled ? "border-emerald-200 bg-emerald-50/80" : "border-amber-200 bg-amber-50/80"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Environment auth mode
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-foreground">
+                    {environmentLabel}: {localAuthEnabled ? "Direct sign-in is active" : "Magic link only"}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {localAuthEnabled
+                      ? "Known internal users can go straight in here. Unknown emails still fall back to inbox verification."
+                      : "This environment requires verified email login unless you explicitly enable direct internal sign-in."}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                    localAuthEnabled
+                      ? "border-emerald-200 bg-white text-emerald-800"
+                      : "border-amber-200 bg-white text-amber-800"
+                  }`}
+                >
+                  {localAuthEnabled ? "Direct sign-in ON" : "Direct sign-in OFF"}
+                </span>
+              </div>
+            </div>
 
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
