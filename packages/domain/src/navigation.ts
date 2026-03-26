@@ -14,42 +14,42 @@ export const primaryNavigation: NavigationItem[] = [
   {
     label: "Home",
     href: "/",
-    description: "Choose, resume, or create a project."
+    description: "Open, resume, or create projects."
   },
   {
     label: "Framing",
     href: "/framing",
-    description: "Define the business case and baseline for the active project."
+    description: "Business case, baseline, owner, and direction."
   },
   {
     label: "Pricing",
     href: "/pricing",
-    description: "Evaluate commercial fit and advisory pricing models for the active project."
+    description: "Commercial fit, readiness, risks, and model advice."
   },
   {
     label: "Value Spine",
     href: "/workspace",
-    description: "Inspect the active project's Framing, Epics, and Stories in one spine."
+    description: "Framing, Epics, Stories, and readiness in one spine."
   },
   {
     label: "Import",
     href: "/intake",
-    description: "Import external source artifacts into the active project."
+    description: "Upload and parse external source artifacts."
   },
   {
     label: "Human Review",
     href: "/review",
-    description: "Clear approval-readiness actions before promotion into the active project."
+    description: "Review, correct, confirm, and approve imports."
   },
   {
     label: "Governance",
     href: "/governance",
-    description: "See AI level, risk posture, and traceability for the active project."
+    description: "Roles, AI level, risks, and sign-off traceability."
   },
   {
     label: "Help",
     href: "/help",
-    description: "Understand what the tool is for and how Framing, Design and AI Build fit together."
+    description: "Method guide, process flow, and key concepts."
   }
 ];
 

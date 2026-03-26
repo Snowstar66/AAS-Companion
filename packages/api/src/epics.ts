@@ -1,5 +1,4 @@
 import {
-  getGovernedRemovalState,
   createEpic,
   createStory,
   getEpicById,
@@ -9,7 +8,73 @@ import {
   listStories,
   updateEpic
 } from "@aas-companion/db";
+import {
+  buildGovernedRemovalDecision,
+  type GovernedChildImpact
+} from "@aas-companion/domain";
 import { failure, success, type ApiResult } from "./shared";
+
+function toLineageReference(record: {
+  lineageSourceType: string | null;
+  lineageSourceId: string | null;
+  lineageNote: string | null;
+}) {
+  if (!record.lineageSourceType || !record.lineageSourceId) {
+    return null;
+  }
+
+  return {
+    sourceType: record.lineageSourceType,
+    sourceId: record.lineageSourceId,
+    note: record.lineageNote
+  };
+}
+
+function toGovernedChildImpact(record: {
+  id: string;
+  key: string;
+  title: string;
+  lifecycleState: "active" | "archived";
+}): GovernedChildImpact {
+  return {
+    objectType: "story",
+    id: record.id,
+    key: record.key,
+    title: record.title,
+    lifecycleState: record.lifecycleState
+  };
+}
+
+function buildEpicRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getEpicWorkspaceSnapshot>>>) {
+  const activeChildren = snapshot.epic.stories.map((story) => toGovernedChildImpact(story));
+  const archivedAncestorLabels =
+    snapshot.epic.lifecycleState === "archived" && snapshot.epic.outcome.lifecycleState === "archived"
+      ? [`Outcome ${snapshot.epic.outcome.key}`]
+      : [];
+
+  return {
+    entityType: "epic" as const,
+    entityId: snapshot.epic.id,
+    key: snapshot.epic.key,
+    title: snapshot.epic.title,
+    activeChildren,
+    decision: buildGovernedRemovalDecision({
+      objectType: "epic",
+      key: snapshot.epic.key,
+      title: snapshot.epic.title,
+      originType: snapshot.epic.originType,
+      createdMode: snapshot.epic.createdMode,
+      lifecycleState: snapshot.epic.lifecycleState,
+      status: snapshot.epic.status,
+      lineageReference: toLineageReference(snapshot.epic),
+      importedReadinessState: snapshot.epic.importedReadinessState,
+      activityEventCount: snapshot.activities.length,
+      tollgateCount: 0,
+      activeChildren,
+      archivedAncestorLabels
+    })
+  };
+}
 
 function buildNextKey(existingKeys: string[], prefix: string) {
   const numericKeys = existingKeys
@@ -39,15 +104,9 @@ export async function getEpicWorkspaceService(
     });
   }
 
-  const removal = await getGovernedRemovalState({
-    organizationId,
-    entityType: "epic",
-    entityId: epicId
-  });
-
   return success({
     ...snapshot,
-    removal
+    removal: buildEpicRemovalFromSnapshot(snapshot)
   });
 }
 

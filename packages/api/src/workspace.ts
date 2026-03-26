@@ -1,6 +1,5 @@
 import {
   appendActivityEvent,
-  getGovernedRemovalState,
   listOrganizationUsers,
   getOutcomeWorkspaceSnapshot,
   getStoryWorkspaceSnapshot,
@@ -10,14 +9,109 @@ import {
 } from "@aas-companion/db";
 import {
   artifactComplianceResultSchema,
+  buildGovernedRemovalDecision,
   executionContractSchema,
   executionContractToMarkdown,
+  type GovernedChildImpact,
   getOutcomeBaselineReadiness,
   getStoryHandoffReadiness
 } from "@aas-companion/domain";
 import { getArtifactCandidateById } from "@aas-companion/db";
 import { failure, success, type ApiResult } from "./shared";
 import { getTollgateReviewWorkspaceService } from "./tollgates";
+
+function toLineageReference(record: {
+  lineageSourceType: string | null;
+  lineageSourceId: string | null;
+  lineageNote: string | null;
+}) {
+  if (!record.lineageSourceType || !record.lineageSourceId) {
+    return null;
+  }
+
+  return {
+    sourceType: record.lineageSourceType,
+    sourceId: record.lineageSourceId,
+    note: record.lineageNote
+  };
+}
+
+function toGovernedChildImpact(
+  objectType: GovernedChildImpact["objectType"],
+  record: { id: string; key: string; title: string; lifecycleState: "active" | "archived" }
+): GovernedChildImpact {
+  return {
+    objectType,
+    id: record.id,
+    key: record.key,
+    title: record.title,
+    lifecycleState: record.lifecycleState
+  };
+}
+
+function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getOutcomeWorkspaceSnapshot>>>) {
+  const activeChildren = [
+    ...snapshot.outcome.epics.map((epic) => toGovernedChildImpact("epic", epic)),
+    ...snapshot.outcome.stories.map((story) => toGovernedChildImpact("story", story))
+  ];
+
+  return {
+    entityType: "outcome" as const,
+    entityId: snapshot.outcome.id,
+    key: snapshot.outcome.key,
+    title: snapshot.outcome.title,
+    activeChildren,
+    decision: buildGovernedRemovalDecision({
+      objectType: "outcome",
+      key: snapshot.outcome.key,
+      title: snapshot.outcome.title,
+      originType: snapshot.outcome.originType,
+      createdMode: snapshot.outcome.createdMode,
+      lifecycleState: snapshot.outcome.lifecycleState,
+      status: snapshot.outcome.status,
+      lineageReference: toLineageReference(snapshot.outcome),
+      importedReadinessState: snapshot.outcome.importedReadinessState,
+      activityEventCount: snapshot.activities.length,
+      tollgateCount: snapshot.tollgate ? 1 : 0,
+      activeChildren
+    })
+  };
+}
+
+function buildStoryRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getStoryWorkspaceSnapshot>>>) {
+  const archivedAncestorLabels: string[] = [];
+
+  if (snapshot.story.lifecycleState === "archived" && snapshot.story.outcome.lifecycleState === "archived") {
+    archivedAncestorLabels.push(`Outcome ${snapshot.story.outcome.key}`);
+  }
+
+  if (snapshot.story.lifecycleState === "archived" && snapshot.story.epic.lifecycleState === "archived") {
+    archivedAncestorLabels.push(`Epic ${snapshot.story.epic.key}`);
+  }
+
+  return {
+    entityType: "story" as const,
+    entityId: snapshot.story.id,
+    key: snapshot.story.key,
+    title: snapshot.story.title,
+    activeChildren: [] as GovernedChildImpact[],
+    decision: buildGovernedRemovalDecision({
+      objectType: "story",
+      key: snapshot.story.key,
+      title: snapshot.story.title,
+      originType: snapshot.story.originType,
+      createdMode: snapshot.story.createdMode,
+      lifecycleState: snapshot.story.lifecycleState,
+      status: snapshot.story.status,
+      lineageReference: toLineageReference(snapshot.story),
+      importedReadinessState: snapshot.story.importedReadinessState,
+      activityEventCount: snapshot.activities.length,
+      tollgateCount: snapshot.tollgate ? 1 : 0,
+      activeChildren: [],
+      archivedAncestorLabels
+    })
+  };
+}
 
 async function getImportedStoryBuildBlockers(input: {
   organizationId: string;
@@ -70,28 +164,27 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
     });
   }
 
-  const tollgateReview = await getTollgateReviewWorkspaceService({
-    organizationId,
-    entityType: "outcome",
-    entityId: outcomeId,
-    tollgateType: "tg1_baseline",
-    aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
-    fallbackBlockers: snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
-    fallbackComments: snapshot.tollgate?.comments ?? null,
-    existingTollgate: snapshot.tollgate
-  });
-  const availableOwners = await listOrganizationUsers(organizationId);
+  const [tollgateReview, availableOwners] = await Promise.all([
+    getTollgateReviewWorkspaceService({
+      organizationId,
+      entityType: "outcome",
+      entityId: outcomeId,
+      tollgateType: "tg1_baseline",
+      aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+      fallbackBlockers:
+        snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
+      fallbackComments: snapshot.tollgate?.comments ?? null,
+      existingTollgate: snapshot.tollgate
+    }),
+    listOrganizationUsers(organizationId)
+  ]);
 
   return success({
     ...snapshot,
     availableOwners,
     readiness: getOutcomeBaselineReadiness(snapshot.outcome),
     tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
-    removal: await getGovernedRemovalState({
-      organizationId,
-      entityType: "outcome",
-      entityId: outcomeId
-    })
+    removal: buildOutcomeRemovalFromSnapshot(snapshot)
   });
 }
 
@@ -204,11 +297,7 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
     readiness: getStoryHandoffReadiness(snapshot.story),
     importedBuildBlockers,
     tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
-    removal: await getGovernedRemovalState({
-      organizationId,
-      entityType: "story",
-      entityId: storyId
-    })
+    removal: buildStoryRemovalFromSnapshot(snapshot)
   });
 }
 
