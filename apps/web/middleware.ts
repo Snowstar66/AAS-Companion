@@ -12,7 +12,9 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-request-id", requestId);
 
-  console.warn(`[request] ${requestId} ${request.method} ${pathname}`);
+  if (process.env.NODE_ENV !== "production" && process.env.DEBUG_REQUEST_LOGS === "1") {
+    console.warn(`[request] ${requestId} ${request.method} ${pathname}`);
+  }
 
   const protectedPrefixes = ["/workspace", "/intake", "/review", "/framing", "/outcomes", "/epics", "/stories", "/handoff"];
   const isProtectedRoute = protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

@@ -1,12 +1,15 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AppSession } from "@aas-companion/domain/auth";
 import type { OrganizationContext } from "@aas-companion/domain/organization";
 import { DEMO_ORGANIZATION, DEMO_SESSION } from "@aas-companion/domain/demo";
+import {
+  DEMO_SESSION_COOKIE_NAME,
+  LOCAL_SESSION_COOKIE_NAME,
+  ORG_CONTEXT_COOKIE_NAME
+} from "@aas-companion/domain/session-constants";
 import { ensureAppUser, getAppUserById, getOrganizationContextForUser } from "@aas-companion/db/organization-repository";
-import { getOrganizationContextCookie } from "@/lib/org-context";
-import { hasDemoSession } from "@/lib/auth/demo";
-import { getLocalSessionUserId } from "@/lib/auth/local";
 import { createServerSupabaseClient } from "@/lib/auth/supabase/server";
 
 export type AccountIdentity = {
@@ -20,8 +23,20 @@ export type ViewerSession = Omit<AppSession, "organization"> & {
   organization: OrganizationContext | null;
 };
 
+const getRequestAuthCookieState = cache(async () => {
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+
+  return {
+    organizationId: cookieStore.get(ORG_CONTEXT_COOKIE_NAME)?.value ?? null,
+    hasDemoSession: cookieStore.get(DEMO_SESSION_COOKIE_NAME)?.value === "demo",
+    localUserId: cookieStore.get(LOCAL_SESSION_COOKIE_NAME)?.value ?? null,
+    hasSupabaseCookies: allCookies.some((cookie) => cookie.name.startsWith("sb-"))
+  };
+});
+
 export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentity | null> => {
-  const localUserId = await getLocalSessionUserId();
+  const { localUserId, hasSupabaseCookies } = await getRequestAuthCookieState();
 
   if (localUserId) {
     const localUser = await getAppUserById(localUserId);
@@ -34,6 +49,10 @@ export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentit
         displayName: localUser.fullName ?? localUser.email.split("@")[0] ?? "Operator"
       };
     }
+  }
+
+  if (!hasSupabaseCookies) {
+    return null;
   }
 
   const supabase = await createServerSupabaseClient();
@@ -65,10 +84,12 @@ export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentit
 });
 
 export const getAppSession = cache(async (): Promise<ViewerSession | null> => {
-  const organizationId = await getOrganizationContextCookie();
-  const account = await getSignedInAccountIdentity();
+  const [{ organizationId, hasDemoSession }, account] = await Promise.all([
+    getRequestAuthCookieState(),
+    getSignedInAccountIdentity()
+  ]);
 
-  if (await hasDemoSession()) {
+  if (hasDemoSession) {
     return {
       ...(account
         ? {
