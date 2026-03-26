@@ -98,6 +98,22 @@ function LifecycleStepIcon({ state }: { state: ReturnType<typeof getStoryUxModel
   return <CircleDashed className="h-4 w-4 text-muted-foreground" />;
 }
 
+function getMetroLabelClasses(state: ReturnType<typeof getStoryUxModel>["lifecycleSteps"][number]["state"]) {
+  if (state === "complete") {
+    return "text-emerald-900";
+  }
+
+  if (state === "current") {
+    return "text-sky-900";
+  }
+
+  if (state === "attention") {
+    return "text-amber-900";
+  }
+
+  return "text-muted-foreground";
+}
+
 export function FramingValueSpineTree({
   outcome,
   epics,
@@ -210,19 +226,31 @@ export function FramingValueSpineTree({
                               <p className="mt-2 leading-6">{storyUx.statusDetail}</p>
                             </div>
 
-                            <ol className="mt-4 space-y-2">
-                              {storyUx.lifecycleSteps.map((step) => (
-                                <li className={`rounded-2xl border px-3 py-3 text-sm ${getLifecycleStepClasses(step.state)}`} key={step.key}>
-                                  <div className="flex items-start gap-3">
-                                    <LifecycleStepIcon state={step.state} />
-                                    <div>
-                                      <p className="font-medium text-foreground">{step.label}</p>
-                                      <p className="mt-1 leading-6 text-muted-foreground">{step.description}</p>
-                                    </div>
-                                  </div>
-                                </li>
-                              ))}
-                            </ol>
+                            <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4">
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story path</p>
+                              <div className="-mx-1 mt-3 overflow-x-auto pb-1">
+                                <ol className="flex min-w-max items-start gap-0 px-1">
+                                  {storyUx.lifecycleSteps.map((step, index) => (
+                                    <li className="flex items-center gap-2" key={step.key}>
+                                      <div className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${getLifecycleStepClasses(step.state)} ${getMetroLabelClasses(step.state)}`}>
+                                        <LifecycleStepIcon state={step.state} />
+                                        <span>{step.label}</span>
+                                      </div>
+                                      {index < storyUx.lifecycleSteps.length - 1 ? (
+                                        <div
+                                          className={`mx-2 h-px w-6 ${
+                                            step.state === "complete" ? "bg-emerald-300" : "bg-border/70"
+                                          }`}
+                                        />
+                                      ) : null}
+                                    </li>
+                                  ))}
+                                </ol>
+                              </div>
+                              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                                {storyUx.nextActions[0]?.description ?? storyUx.readinessDetail}
+                              </p>
+                            </div>
 
                             <div className="mt-4 grid gap-3 lg:grid-cols-2">
                               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">

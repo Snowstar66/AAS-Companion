@@ -188,51 +188,6 @@ export function FramingOutcomeSection({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Readiness blockers</CardTitle>
-            <CardDescription>What still blocks Tollgate 1 for this outcome.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {blockers.length === 0 ? (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
-                No baseline blockers are currently visible.
-              </div>
-            ) : (
-              blockers.map((blocker) => (
-                <div
-                  className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm leading-6 text-amber-900"
-                  key={blocker}
-                >
-                  {blocker}
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>Tollgate posture</CardTitle>
-              <CardDescription>Current TG1 stance for the active outcome.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="font-medium text-foreground">Outcome status</p>
-                <p className="mt-2 leading-6 capitalize">{statusLabel}</p>
-              </div>
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                <p className="font-medium text-foreground">Approvers</p>
-                <p className="mt-2 leading-6">{(tollgate?.approverRoles ?? ["value_owner", "architect"]).join(", ")}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <ContextHelp pattern={framingHelp} summaryLabel="Open framing authoring help" />
-        </div>
-      </div>
-
       {!embeddedInFraming ? (
         <>
           <Card className="border-border/70 shadow-sm">
@@ -384,7 +339,7 @@ export function FramingOutcomeSection({
                     <div>
                       <CardTitle>Design direction seeds</CardTitle>
                       <CardDescription>
-                        Capture the rough functional direction as Epics before detailed Story decomposition begins.
+                        Capture the rough functional direction as Epics before detailed Story decomposition begins. Existing Epics and Stories are shown below in the Value Spine.
                       </CardDescription>
                     </div>
                     {!isArchived ? (
@@ -403,6 +358,24 @@ export function FramingOutcomeSection({
                     <p className="font-medium text-foreground">How to use Epic seeds</p>
                     <p className="mt-2 leading-6">{getHelpPattern("framing.design_direction").summary}</p>
                   </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current Epics</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{outcome.epics.length}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {outcome.epics.length === 0
+                          ? "No Epics exist yet for this case."
+                          : "Open and inspect them in the Value Spine below."}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current Stories</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{outcome.stories.length}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        Stories stay nested under their Epic so the branch remains easy to scan.
+                      </p>
+                    </div>
+                  </div>
                   {outcome.epics.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
                       <p className="font-medium text-foreground">No Epics exist for this case yet.</p>
@@ -412,27 +385,7 @@ export function FramingOutcomeSection({
                           : "Create the first native Epic here. No Demo Epics will be attached as fallback."}
                       </p>
                     </div>
-                  ) : (
-                    outcome.epics.map((epic) => (
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={epic.id}>
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="space-y-1">
-                            <p className="font-medium text-foreground">{epic.key}</p>
-                            <p className="text-foreground">{epic.title}</p>
-                            {epic.scopeBoundary ? (
-                              <p className="text-sm leading-6 text-muted-foreground">{epic.scopeBoundary}</p>
-                            ) : null}
-                          </div>
-                          <Button asChild className="gap-2" variant="secondary">
-                            <Link href={`/epics/${epic.id}`}>
-                              Open Epic in current Framing
-                              <ArrowRight className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                  ) : null}
                 </CardContent>
               </Card>
             </div>
@@ -498,6 +451,28 @@ export function FramingOutcomeSection({
         <div className="space-y-6">
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
+              <CardTitle>Readiness blockers</CardTitle>
+              <CardDescription>What still blocks Tollgate 1 for this outcome.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {blockers.length === 0 ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
+                  No baseline blockers are currently visible.
+                </div>
+              ) : (
+                blockers.map((blocker) => (
+                  <div
+                    className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm leading-6 text-amber-900"
+                    key={blocker}
+                  >
+                    {blocker}
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
               <CardTitle>Governance coverage</CardTitle>
               <CardDescription>Check named roles, authority and readiness for this Outcome's AI level.</CardDescription>
             </CardHeader>
@@ -511,6 +486,7 @@ export function FramingOutcomeSection({
               </Button>
             </CardContent>
           </Card>
+          <ContextHelp pattern={framingHelp} summaryLabel="Open framing authoring help" />
           <TollgateDecisionCard
             aiAccelerationLevel={outcome.aiAccelerationLevel}
             approvalActions={tollgateReview?.approvalActions ?? []}

@@ -80,12 +80,12 @@ describe("Home dashboard", () => {
   it("renders active project signals ahead of switching controls on Home", async () => {
     render(await HomePage({}));
 
-    expect(screen.getByRole("heading", { name: "Project Home", level: 1 })).toBeDefined();
-    expect(screen.getByText("Project overview")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Project dashboard", level: 1 })).toBeDefined();
+    expect(screen.getAllByText("Needs attention").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: "Open Framing" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("heading", { name: "Open project" }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Create project" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Open demo project" })).toBeDefined();
-    expect(screen.queryByText("Project status at a glance")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Project access" })).toBeDefined();
+    expect(screen.getByText("Create project")).toBeDefined();
+    expect(screen.getAllByText("Demo access").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Outcome spread")).toBeNull();
   });
 });
