@@ -299,6 +299,7 @@ model Membership {
   user           AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, userId])
+  @@index([userId, organizationId])
 }
 
 model PartyRoleEntry {
@@ -407,6 +408,8 @@ model Outcome {
   @@unique([organizationId, key])
   @@index([organizationId, originType])
   @@index([organizationId, lifecycleState])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, lifecycleState, updatedAt, createdAt])
 }
 
 model Epic {
@@ -436,6 +439,8 @@ model Epic {
   @@unique([organizationId, key])
   @@index([organizationId, originType])
   @@index([organizationId, lifecycleState])
+  @@index([organizationId, outcomeId, lifecycleState])
+  @@index([organizationId, createdAt])
 }
 
 model Story {
@@ -471,6 +476,9 @@ model Story {
   @@unique([organizationId, key])
   @@index([organizationId, originType])
   @@index([organizationId, lifecycleState])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, outcomeId, lifecycleState])
+  @@index([organizationId, epicId, lifecycleState])
 }
 
 model Tollgate {
@@ -493,6 +501,7 @@ model Tollgate {
 
   @@unique([organizationId, entityType, entityId, tollgateType])
   @@index([organizationId, entityType, entityId])
+  @@index([organizationId, entityType, updatedAt])
 }
 
 model SignoffRecord {
@@ -538,6 +547,7 @@ model ActivityEvent {
 
   @@index([organizationId, entityType, entityId])
   @@index([organizationId, createdAt])
+  @@index([organizationId, entityType, entityId, createdAt])
 }
 
 model ArtifactIntakeSession {
