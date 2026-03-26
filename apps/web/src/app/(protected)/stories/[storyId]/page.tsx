@@ -8,6 +8,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import { InlineTermHelp } from "@/components/shared/inline-term-help";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
@@ -438,10 +439,12 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
 
               {!isArchived ? (
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button className="gap-2" type="submit">
-                    Save Story changes
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  <PendingFormButton
+                    className="gap-2"
+                    icon={<ArrowRight className="h-4 w-4" />}
+                    label="Save Story changes"
+                    pendingLabel="Saving Story..."
+                  />
                   <Button asChild className="gap-2" variant="secondary">
                     <Link href={`/epics/${story.epicId}`}>Back to current Epic</Link>
                   </Button>
@@ -526,10 +529,12 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                         name="comments"
                       />
                     </label>
-                    <Button className="gap-2" type="submit">
-                      <ShieldCheck className="h-4 w-4" />
-                      Record readiness
-                    </Button>
+                    <PendingFormButton
+                      className="gap-2"
+                      icon={<ShieldCheck className="h-4 w-4" />}
+                      label="Record readiness"
+                      pendingLabel="Recording readiness..."
+                    />
                   </form>
                 </CardContent>
               </Card>

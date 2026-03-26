@@ -7,6 +7,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
@@ -189,7 +190,15 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <CardHeader>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div><CardTitle>Design direction seeds</CardTitle><CardDescription>Capture the rough functional direction as Epics before detailed Story decomposition begins.</CardDescription></div>
-                      {!isArchived ? <Button className="w-full gap-2 self-start whitespace-nowrap sm:w-auto sm:shrink-0" formAction={createEpicFromOutcomeAction} type="submit">Create Epic<ArrowRight className="h-4 w-4" /></Button> : null}
+                      {!isArchived ? (
+                        <PendingFormButton
+                          className="w-full gap-2 self-start whitespace-nowrap sm:w-auto sm:shrink-0"
+                          formAction={createEpicFromOutcomeAction}
+                          icon={<ArrowRight className="h-4 w-4" />}
+                          label="Create Epic"
+                          pendingLabel="Creating Epic..."
+                        />
+                      ) : null}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -221,14 +230,21 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: `/outcomes/${outcome.id}`, isCurrent: true }}
               />
 
-              {!isArchived ? <div className="flex flex-col gap-3 sm:flex-row"><Button className="gap-2" type="submit">Save outcome changes<ArrowRight className="h-4 w-4" /></Button><Button asChild className="gap-2" variant="secondary"><Link href="/framing">Back to Framing Cockpit</Link></Button></div> : <Button asChild className="gap-2" variant="secondary"><Link href="/framing">Back to Framing Cockpit</Link></Button>}
+              {!isArchived ? (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <PendingFormButton className="gap-2" icon={<ArrowRight className="h-4 w-4" />} label="Save outcome changes" pendingLabel="Saving Outcome..." />
+                  <Button asChild className="gap-2" variant="secondary"><Link href="/framing">Back to Framing Cockpit</Link></Button>
+                </div>
+              ) : (
+                <Button asChild className="gap-2" variant="secondary"><Link href="/framing">Back to Framing Cockpit</Link></Button>
+              )}
             </form>
           </div>
 
           <div className="space-y-6">
             <Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>Governance coverage</CardTitle><CardDescription>Check named roles, authority and readiness for this Outcome's AI level.</CardDescription></CardHeader><CardContent><Button asChild className="gap-2" variant="secondary"><Link href={`/governance?view=readiness&sourceEntity=outcome&sourceId=${outcome.id}&level=${outcome.aiAccelerationLevel}`}>Open Governance readiness</Link></Button></CardContent></Card>
             <TollgateDecisionCard aiAccelerationLevel={outcome.aiAccelerationLevel} approvalActions={tollgateReview?.approvalActions ?? []} availablePeople={tollgateReview?.availablePeople ?? []} blockers={blockers} blockedActions={tollgateReview?.blockedActions ?? []} comments={tollgateReview?.comments ?? tollgate?.comments ?? null} description="Server-backed readiness, review, approval and escalation trail for Tollgate 1." entityId={outcome.id} entityType="outcome" formAction={recordOutcomeTollgateDecisionAction} hiddenFields={[{ name: "outcomeId", value: outcome.id }]} pendingActions={tollgateReview?.pendingActions ?? []} reviewActions={tollgateReview?.reviewActions ?? []} signoffRecords={tollgateReview?.signoffRecords.map((record) => ({ id: record.id, decisionKind: record.decisionKind, requiredRoleType: record.requiredRoleType, actualPersonName: record.actualPersonName, actualRoleTitle: record.actualRoleTitle, organizationSide: record.organizationSide, decisionStatus: record.decisionStatus, note: record.note, evidenceReference: record.evidenceReference, createdAt: record.createdAt })) ?? []} status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")} title="Tollgate 1 review and approval" tollgateType="tg1_baseline" />
-            {!isArchived ? <Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>Submit into Tollgate 1</CardTitle><CardDescription>Readiness submission keeps missing baseline blockers explicit before human sign-off begins.</CardDescription></CardHeader><CardContent><form action={submitOutcomeTollgateAction} className="space-y-4"><input name="outcomeId" type="hidden" value={outcome.id} /><label className="space-y-2"><span className="text-sm font-medium text-foreground">Submission note</span><textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={tollgate?.comments ?? ""} name="comments" /></label><Button className="gap-2" type="submit"><ShieldCheck className="h-4 w-4" />Submit to Tollgate 1</Button></form></CardContent></Card> : null}
+            {!isArchived ? <Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>Submit into Tollgate 1</CardTitle><CardDescription>Readiness submission keeps missing baseline blockers explicit before human sign-off begins.</CardDescription></CardHeader><CardContent><form action={submitOutcomeTollgateAction} className="space-y-4"><input name="outcomeId" type="hidden" value={outcome.id} /><label className="space-y-2"><span className="text-sm font-medium text-foreground">Submission note</span><textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={tollgate?.comments ?? ""} name="comments" /></label><PendingFormButton className="gap-2" icon={<ShieldCheck className="h-4 w-4" />} label="Submit to Tollgate 1" pendingLabel="Submitting to Tollgate 1..." /></form></CardContent></Card> : null}
             <Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>Latest activity</CardTitle><CardDescription>Recent outcome-specific audit entries.</CardDescription></CardHeader><CardContent className="space-y-3 text-sm text-muted-foreground">{activities.length === 0 ? <p>No activity has been recorded yet for this outcome.</p> : activities.map((activity) => <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={activity.id}><p className="font-medium text-foreground">{activity.eventType.replaceAll("_", " ")}</p><p className="mt-1">{new Date(activity.createdAt).toLocaleString("en-US")}</p></div>)}</CardContent></Card>
             <GovernedLifecycleCard archiveAction={archiveOutcomeAction} decision={removal?.decision ?? null} entityId={outcome.id} entityLabel="Outcome" hardDeleteAction={hardDeleteOutcomeAction} restoreAction={restoreOutcomeAction} />
             {outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? <Card className="border-border/70 shadow-sm"><CardHeader><CardTitle>Imported lineage</CardTitle><CardDescription>Trace this governed Outcome back to its reviewed import candidate.</CardDescription></CardHeader><CardContent><Button asChild className="gap-2" variant="secondary"><Link href={`/review?candidateId=${outcome.lineageSourceId}`}>Open source candidate review</Link></Button></CardContent></Card> : null}

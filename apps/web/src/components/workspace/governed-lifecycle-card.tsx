@@ -1,6 +1,7 @@
 import { AlertTriangle, ArchiveRestore, ShieldAlert, Trash2 } from "lucide-react";
 import type { GovernedRemovalDecision } from "@aas-companion/domain";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 
 type HiddenField = {
   name: string;
@@ -94,10 +95,12 @@ export function GovernedLifecycleCard({
                     <input className="h-4 w-4" name="confirmAction" type="checkbox" value="yes" />
                     I understand this action is irreversible.
                   </label>
-                  <Button className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95" type="submit">
-                    <Trash2 className="h-4 w-4" />
-                    Permanently delete draft {entityLabel}
-                  </Button>
+                  <PendingFormButton
+                    className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95"
+                    icon={<Trash2 className="h-4 w-4" />}
+                    label={`Permanently delete draft ${entityLabel}`}
+                    pendingLabel={`Deleting ${entityLabel.toLowerCase()}...`}
+                  />
                 </form>
               ) : (
                 <div className="flex items-center gap-2 text-sm font-medium text-amber-900">
@@ -128,10 +131,13 @@ export function GovernedLifecycleCard({
                     <input className="h-4 w-4" name="confirmAction" type="checkbox" value="yes" />
                     I understand this will remove the object from active working views.
                   </label>
-                  <Button className="gap-2" type="submit" variant="secondary">
-                    <ArchiveRestore className="h-4 w-4" />
-                    Archive {entityLabel}
-                  </Button>
+                  <PendingFormButton
+                    className="gap-2"
+                    icon={<ArchiveRestore className="h-4 w-4" />}
+                    label={`Archive ${entityLabel}`}
+                    pendingLabel={`Archiving ${entityLabel.toLowerCase()}...`}
+                    variant="secondary"
+                  />
                 </form>
               ) : null}
             </div>
@@ -157,10 +163,12 @@ export function GovernedLifecycleCard({
                   <input className="h-4 w-4" name="confirmAction" type="checkbox" value="yes" />
                   I want to restore this archived object to active work.
                 </label>
-                <Button className="gap-2" type="submit">
-                  <ArchiveRestore className="h-4 w-4" />
-                  Restore {entityLabel}
-                </Button>
+                <PendingFormButton
+                  className="gap-2"
+                  icon={<ArchiveRestore className="h-4 w-4" />}
+                  label={`Restore ${entityLabel}`}
+                  pendingLabel={`Restoring ${entityLabel.toLowerCase()}...`}
+                />
               </form>
             ) : (
               <div className="flex items-center gap-2 text-sm font-medium text-emerald-950">

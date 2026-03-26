@@ -6,6 +6,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import { ExecutionContractPreview } from "@/components/handoff/execution-contract-preview";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { markStoryHandoffCompleteAction } from "./actions";
 
@@ -172,10 +173,12 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
                     <input name="storyId" type="hidden" value={storyResult.data.story.id} />
                     <input name="epicId" type="hidden" value={storyResult.data.story.epicId} />
                     <input name="outcomeId" type="hidden" value={storyResult.data.story.outcomeId} />
-                    <Button className="gap-2" type="submit">
-                      Mark handoff complete
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    <PendingFormButton
+                      className="gap-2"
+                      icon={<ArrowRight className="h-4 w-4" />}
+                      label="Mark handoff complete"
+                      pendingLabel="Recording handoff..."
+                    />
                   </form>
                 )}
                 <Button asChild className="gap-2 self-start" variant="secondary">

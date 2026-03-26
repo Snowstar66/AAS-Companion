@@ -5,6 +5,7 @@ import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
@@ -387,10 +388,13 @@ export function FramingOutcomeSection({
                       </CardDescription>
                     </div>
                     {!isArchived ? (
-                      <Button className="w-full gap-2 self-start whitespace-nowrap sm:w-auto sm:shrink-0" formAction={createEpicAction} type="submit">
-                        Create Epic
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
+                      <PendingFormButton
+                        className="w-full gap-2 self-start whitespace-nowrap sm:w-auto sm:shrink-0"
+                        formAction={createEpicAction}
+                        icon={<ArrowRight className="h-4 w-4" />}
+                        label="Create Epic"
+                        pendingLabel="Creating Epic..."
+                      />
                     ) : null}
                   </div>
                 </CardHeader>
@@ -471,10 +475,12 @@ export function FramingOutcomeSection({
 
             {!isArchived ? (
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Button className="gap-2" type="submit">
-                  Save framing changes
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                <PendingFormButton
+                  className="gap-2"
+                  icon={<ArrowRight className="h-4 w-4" />}
+                  label="Save framing changes"
+                  pendingLabel="Saving framing..."
+                />
                 {!embeddedInFraming ? (
                   <Button asChild className="gap-2" variant="secondary">
                     <Link href="/framing">Back to Framing Cockpit</Link>
@@ -556,10 +562,12 @@ export function FramingOutcomeSection({
                       name="comments"
                     />
                   </label>
-                  <Button className="gap-2" type="submit">
-                    <ShieldCheck className="h-4 w-4" />
-                    Submit to Tollgate 1
-                  </Button>
+                  <PendingFormButton
+                    className="gap-2"
+                    icon={<ShieldCheck className="h-4 w-4" />}
+                    label="Submit to Tollgate 1"
+                    pendingLabel="Submitting to Tollgate 1..."
+                  />
                 </form>
               </CardContent>
             </Card>

@@ -4,6 +4,7 @@ import { ArrowRight, GitBranch } from "lucide-react";
 import { getEpicWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
@@ -238,10 +239,12 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
 
               {!isArchived ? (
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button className="gap-2" type="submit">
-                    Save Epic changes
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  <PendingFormButton
+                    className="gap-2"
+                    icon={<ArrowRight className="h-4 w-4" />}
+                    label="Save Epic changes"
+                    pendingLabel="Saving Epic..."
+                  />
                   <Button asChild className="gap-2" variant="secondary">
                     <Link href={`/framing?outcomeId=${epic.outcomeId}`}>
                       Back to current Framing
@@ -270,10 +273,12 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     <form action={createStoryFromEpicAction}>
                       <input name="epicId" type="hidden" value={epic.id} />
                       <input name="outcomeId" type="hidden" value={epic.outcomeId} />
-                      <Button className="gap-2" type="submit">
-                        Create Story
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
+                      <PendingFormButton
+                        className="gap-2"
+                        icon={<ArrowRight className="h-4 w-4" />}
+                        label="Create Story"
+                        pendingLabel="Creating Story..."
+                      />
                     </form>
                   ) : null}
                 </div>

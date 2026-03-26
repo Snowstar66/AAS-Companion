@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ChevronDown, CircleAlert, CircleCheckBig, GitBranch, ShieldCheck } from "lucide-react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 
 type TollgateAction = {
   decisionKind: string;
@@ -423,9 +424,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                 <span className="text-sm font-medium text-foreground">Note</span>
                 <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="note" />
               </label>
-              <Button className="gap-2 whitespace-nowrap" type="submit">
-                Record approval or review
-              </Button>
+              <PendingFormButton className="gap-2 whitespace-nowrap" label="Record approval or review" pendingLabel="Recording decision..." />
             </form>
           </CollapsibleSection>
 
