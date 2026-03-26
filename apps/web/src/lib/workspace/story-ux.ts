@@ -117,7 +117,8 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
   const isArchived = input.lifecycleState === "archived";
   const isUnderSignoff = input.tollgateStatus === "ready" || input.tollgateStatus === "blocked";
   const isApproved = input.tollgateStatus === "approved";
-  const isReadyForHandoff = isApproved || input.status === "ready_for_handoff" || input.status === "in_progress";
+  const isInDelivery = input.status === "in_progress";
+  const isReadyForHandoff = isApproved || input.status === "ready_for_handoff";
   const isReviewReady = readiness.state === "ready" && !input.tollgateStatus && !isReadyForHandoff;
 
   let statusLabel = "Draft";
@@ -128,6 +129,10 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     statusLabel = "Archived";
     statusDetail = "This Story is currently out of the active workflow until it is restored.";
     tone = "archived";
+  } else if (isInDelivery) {
+    statusLabel = "In delivery";
+    statusDetail = "Handoff is complete and active implementation work can proceed.";
+    tone = "progress";
   } else if (isReadyForHandoff) {
     statusLabel = "Ready for handoff";
     statusDetail = "Required sign-offs are complete and the execution package can move forward.";
@@ -153,13 +158,19 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     tone = "warning";
   }
 
-  const readinessLabel = readiness.state === "ready" ? "Ready to review" : "Needs handoff inputs";
+  const readinessLabel = isInDelivery
+    ? "Handoff completed"
+    : readiness.state === "ready"
+      ? "Ready to review"
+      : "Needs handoff inputs";
   const readinessDetail =
-    readiness.state === "ready"
+    isInDelivery
+      ? "The Story has already been handed off and moved into active delivery."
+      : readiness.state === "ready"
       ? "Test definition, acceptance criteria and definition of done are all present."
       : blockers[0] ?? "Complete the missing handoff inputs before submitting the Story.";
 
-  const currentStepIndex = isReadyForHandoff ? 4 : isUnderSignoff ? 2 : isReviewReady ? 1 : 0;
+  const currentStepIndex = isInDelivery || isReadyForHandoff ? 4 : isUnderSignoff ? 2 : isReviewReady ? 1 : 0;
   const lifecycleSteps = lifecycleStepDefinitions.map((step, index) => {
     const isCurrent = index === currentStepIndex;
     const state: StoryUxStepState =
@@ -190,7 +201,25 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
           href: "#story-lifecycle"
         }
       ]
-    : readiness.state !== "ready"
+    : isInDelivery
+      ? [
+          {
+            label: "Open active Story",
+            description: "Return to the Story workspace to continue delivery coordination.",
+            href: input.id ? `/stories/${input.id}` : "#story-value-spine"
+          },
+          {
+            label: "Review handoff package",
+            description: "Re-open the execution contract whenever delivery needs the handoff payload.",
+            href: input.id ? `/handoff/${input.id}` : "#story-value-spine"
+          },
+          {
+            label: "Check Value Spine context",
+            description: "Keep the Story aligned with its Framing branch and Epic while delivery is active.",
+            href: "#story-value-spine"
+          }
+        ]
+      : readiness.state !== "ready"
       ? getMissingInputActions(input)
       : isApproved
         ? [

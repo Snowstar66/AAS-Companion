@@ -471,3 +471,61 @@ export async function previewExecutionContractService(input: {
     markdown: executionContractToMarkdown(contract)
   });
 }
+
+export async function markStoryHandoffCompleteService(input: {
+  organizationId: string;
+  storyId: string;
+  actorId?: string | null;
+}) {
+  const snapshot = await getStoryWorkspaceSnapshot(input.organizationId, input.storyId);
+
+  if (!snapshot) {
+    return failure({
+      code: "story_not_found",
+      message: "Story was not found in the current organization."
+    });
+  }
+
+  if (snapshot.story.lifecycleState === "archived") {
+    return failure({
+      code: "story_archived",
+      message: "Restore the Story before recording handoff completion."
+    });
+  }
+
+  const readiness = getStoryHandoffReadiness(snapshot.story);
+  const blockers = readiness.reasons.map((reason) => reason.message);
+  const importedBuildBlockers = await getImportedStoryBuildBlockers({
+    organizationId: input.organizationId,
+    originType: snapshot.story.originType,
+    lineageSourceType: snapshot.story.lineageSourceType,
+    lineageSourceId: snapshot.story.lineageSourceId
+  });
+  const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
+
+  if (combinedBlockers.length > 0 || snapshot.story.status === "definition_blocked") {
+    return failure({
+      code: "story_not_ready",
+      message: combinedBlockers[0] ?? "Story is not ready for handoff completion."
+    });
+  }
+
+  if (snapshot.story.status === "in_progress") {
+    return success({
+      story: snapshot.story,
+      alreadyCompleted: true
+    });
+  }
+
+  const story = await updateStory({
+    organizationId: input.organizationId,
+    id: input.storyId,
+    actorId: input.actorId ?? null,
+    status: "in_progress"
+  });
+
+  return success({
+    story,
+    alreadyCompleted: false
+  });
+}
