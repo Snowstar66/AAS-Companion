@@ -22,6 +22,11 @@ export const primaryNavigation: NavigationItem[] = [
     description: "Define the business case and baseline for the active project."
   },
   {
+    label: "Pricing",
+    href: "/pricing",
+    description: "Evaluate commercial fit and advisory pricing models for the active project."
+  },
+  {
     label: "Value Spine",
     href: "/workspace",
     description: "Inspect the active project's Framing, Epics, and Stories in one spine."

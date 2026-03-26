@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CircleHelp, Compass, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
+import { BriefcaseBusiness, CircleHelp, Compass, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain/navigation";
 
 const icons = {
@@ -10,6 +10,7 @@ const icons = {
   "/intake": Inbox,
   "/review": FileSearch,
   "/framing": Compass,
+  "/pricing": BriefcaseBusiness,
   "/outcomes": Workflow,
   "/stories": LibraryBig,
   "/workspace": Workflow,
