@@ -177,13 +177,6 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     };
   });
 
-  if (isReadyForHandoff) {
-    lifecycleSteps[3] = {
-      ...lifecycleSteps[3],
-      state: "complete"
-    };
-  }
-
   const nextActions: StoryUxAction[] = isArchived
     ? [
         {
