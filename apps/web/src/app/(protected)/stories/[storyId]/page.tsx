@@ -185,7 +185,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
           summary="This Story stays inside one Epic and one Framing. Related panels and navigation remain scoped to this branch instead of falling back to unrelated native or demo work."
         />
 
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
           <div className="space-y-6">
             <FramingValueSpineTree
               emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."
