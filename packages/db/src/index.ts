@@ -77,7 +77,7 @@ export {
   listSignoffRecordsForOrganization,
   listSignoffRecordsForTollgate
 } from "./repositories/signoff-repository";
-export { getProjectSpineSnapshot, getWorkspaceSnapshot } from "./repositories/workspace-repository";
+export { getHomeDashboardSnapshot, getProjectSpineSnapshot, getWorkspaceSnapshot } from "./repositories/workspace-repository";
 export { expectedSeedShape, seedRuntimeEntry } from "./seed";
 
 export type TenantScopedQuery = {

@@ -77,7 +77,8 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
     tollgateType: "tg1_baseline",
     aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
     fallbackBlockers: snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
-    fallbackComments: snapshot.tollgate?.comments ?? null
+    fallbackComments: snapshot.tollgate?.comments ?? null,
+    existingTollgate: snapshot.tollgate
   });
   const availableOwners = await listOrganizationUsers(organizationId);
 
@@ -194,7 +195,8 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
     tollgateType: "story_readiness",
     aiAccelerationLevel: snapshot.story.aiAccelerationLevel,
     fallbackBlockers: [...new Set([...(snapshot.tollgate?.blockers ?? baseReadinessBlockers), ...importedBuildBlockers])],
-    fallbackComments: snapshot.tollgate?.comments ?? null
+    fallbackComments: snapshot.tollgate?.comments ?? null,
+    existingTollgate: snapshot.tollgate
   });
 
   return success({

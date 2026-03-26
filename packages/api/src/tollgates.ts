@@ -50,8 +50,11 @@ export async function getTollgateReviewWorkspaceService(input: {
   aiAccelerationLevel: "level_1" | "level_2" | "level_3";
   fallbackBlockers?: string[];
   fallbackComments?: string | null;
+  existingTollgate?: Awaited<ReturnType<typeof getTollgate>>;
 }) {
-  const tollgate = await getTollgate(input.organizationId, input.entityType, input.entityId, input.tollgateType);
+  const tollgate =
+    input.existingTollgate ??
+    (await getTollgate(input.organizationId, input.entityType, input.entityId, input.tollgateType));
   const [people, signoffRecords] = await Promise.all([
     listPartyRoleEntries(input.organizationId),
     tollgate?.id

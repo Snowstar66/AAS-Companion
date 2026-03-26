@@ -1,5 +1,5 @@
 import { getStoryHandoffReadiness } from "@aas-companion/domain";
-import { getWorkspaceSnapshot } from "@aas-companion/db";
+import { getHomeDashboardSnapshot } from "@aas-companion/db";
 
 export type HomeSummaryMetric = {
   label: string;
@@ -119,7 +119,7 @@ export async function getHomeDashboardData(
   organizationId: string
 ): Promise<HomeDashboardData> {
   try {
-    const snapshot = await getWorkspaceSnapshot(organizationId);
+    const snapshot = await getHomeDashboardSnapshot(organizationId);
 
     if (!snapshot) {
       return createFallbackDashboard(
@@ -130,12 +130,12 @@ export async function getHomeDashboardData(
     }
 
     const { organization, counts } = snapshot;
-    const blockedTollgates = organization.tollgates.filter((item) => item.status === "blocked");
-    const pendingTollgates = organization.tollgates.filter((item) => item.status !== "approved");
+    const blockedTollgates = snapshot.tollgates.filter((item) => item.status === "blocked");
+    const pendingTollgates = snapshot.tollgates.filter((item) => item.status !== "approved");
 
     const outcomesByStatus = Object.entries(
-      organization.outcomes.reduce<Record<string, number>>((accumulator, outcome) => {
-        accumulator[outcome.status] = (accumulator[outcome.status] ?? 0) + 1;
+      snapshot.outcomeStatuses.reduce<Record<string, number>>((accumulator, item) => {
+        accumulator[item.status] = (accumulator[item.status] ?? 0) + 1;
         return accumulator;
       }, {})
     ).map(([status, count]) => ({
@@ -154,7 +154,7 @@ export async function getHomeDashboardData(
       }))
     );
 
-    const storyDefinitionBlockers: HomeBlocker[] = organization.stories.flatMap((story) => {
+    const storyDefinitionBlockers: HomeBlocker[] = snapshot.stories.flatMap((story) => {
       const readiness = getStoryHandoffReadiness(story);
 
       return readiness.reasons.map((reason) => ({
@@ -173,7 +173,7 @@ export async function getHomeDashboardData(
         detail: `${tollgate.blockers.length || 1} blocker${tollgate.blockers.length === 1 ? "" : "s"} to clear`,
         href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       })),
-      ...organization.stories
+      ...snapshot.stories
         .filter((story) => getStoryHandoffReadiness(story).state !== "ready")
         .map((story) => ({
           id: `${story.id}-action`,
@@ -184,7 +184,7 @@ export async function getHomeDashboardData(
         }))
     ].slice(0, 5);
 
-    const recentActivity: HomeActivityItem[] = organization.activityEvents.map((event) => ({
+    const recentActivity: HomeActivityItem[] = snapshot.activityEvents.map((event) => ({
       id: event.id,
       title: activityLabels[event.eventType] ?? event.eventType,
       detail: `${event.entityType} ${event.entityId}`,
@@ -200,8 +200,8 @@ export async function getHomeDashboardData(
       },
       {
         label: "Stories Ready",
-        value: String(organization.stories.filter((story) => getStoryHandoffReadiness(story).state === "ready").length),
-        tone: organization.stories.some((story) => getStoryHandoffReadiness(story).state === "ready") ? "success" : "warning",
+        value: String(snapshot.stories.filter((story) => getStoryHandoffReadiness(story).state === "ready").length),
+        tone: snapshot.stories.some((story) => getStoryHandoffReadiness(story).state === "ready") ? "success" : "warning",
         description: "Stories that can move toward execution handoff."
       },
       {
