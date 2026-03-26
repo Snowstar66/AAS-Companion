@@ -163,6 +163,8 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
   const signoffCount = props.signoffRecords.length;
   const reviewCount = props.reviewActions.length;
   const approvalCount = props.approvalActions.length;
+  const hasOpenReviewWork = props.reviewActions.some((action) => action.pending);
+  const hasOpenApprovalWork = props.approvalActions.some((action) => action.pending);
 
   return (
     <Card className="border-border/70 shadow-sm">
@@ -192,6 +194,15 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
           {props.comments ? <p className="mt-3 text-sm">Current note: {props.comments}</p> : null}
         </div>
 
+        {pendingCount > 0 || blockedCount > 0 ? (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-4 text-sm text-sky-950">
+            <p className="font-medium">Approval and review are recorded here</p>
+            <p className="mt-2 leading-6">
+              Open the approval lanes and the record section below to capture the named human decisions before handoff.
+            </p>
+          </div>
+        ) : null}
+
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Review lanes</p>
@@ -216,7 +227,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
         <div className="space-y-4">
           <CollapsibleSection
             badge={`${reviewCount}`}
-            defaultOpen={false}
+            defaultOpen={hasOpenReviewWork}
             description="Required human reviews for this tollgate."
             title="Required review roles"
           >
@@ -268,7 +279,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
 
           <CollapsibleSection
             badge={`${approvalCount}`}
-            defaultOpen={false}
+            defaultOpen={hasOpenApprovalWork}
             description="Required human approvals for this tollgate."
             title="Required approval roles"
           >
@@ -364,9 +375,9 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
 
           <CollapsibleSection
             badge={props.availablePeople.length > 0 ? `${props.availablePeople.length} signers` : "No signers"}
-            defaultOpen={false}
+            defaultOpen={pendingCount > 0 || blockedCount > 0}
             description="Capture one review, approval or escalation decision with the human signer and evidence trail."
-            title="Record sign-off"
+            title="Record approval or review"
           >
             <form action={props.formAction} className="space-y-4 rounded-2xl border border-border/70 bg-background p-4">
               {props.hiddenFields ? <HiddenFields fields={props.hiddenFields} /> : null}
@@ -413,7 +424,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                 <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="note" />
               </label>
               <Button className="gap-2 whitespace-nowrap" type="submit">
-                Record sign-off
+                Record approval or review
               </Button>
             </form>
           </CollapsibleSection>

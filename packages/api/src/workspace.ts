@@ -503,7 +503,7 @@ export async function markStoryHandoffCompleteService(input: {
   });
   const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
 
-  if (combinedBlockers.length > 0 || snapshot.story.status === "definition_blocked") {
+  if (combinedBlockers.length > 0) {
     return failure({
       code: "story_not_ready",
       message: combinedBlockers[0] ?? "Story is not ready for handoff completion."
