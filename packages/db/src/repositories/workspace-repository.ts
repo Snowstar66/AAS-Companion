@@ -1,6 +1,62 @@
 import { prisma } from "../client";
 import { withEpicShape } from "./epic-shape";
 
+export async function getProjectSpineSnapshot(organizationId: string) {
+  const organization = await prisma.organization.findUnique({
+    where: {
+      id: organizationId
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      outcomes: {
+        include: {
+          epics: {
+            include: {
+              stories: {
+                orderBy: {
+                  createdAt: "asc"
+                }
+              }
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
+          stories: {
+            orderBy: {
+              createdAt: "asc"
+            }
+          }
+        },
+        orderBy: {
+          createdAt: "desc"
+        }
+      }
+    }
+  });
+
+  if (!organization) {
+    return null;
+  }
+
+  return {
+    organization: {
+      ...organization,
+      outcomes: organization.outcomes.map((outcome) => ({
+        ...outcome,
+        epics: outcome.epics.map((epic) =>
+          withEpicShape({
+            ...epic,
+            stories: epic.stories
+          })
+        )
+      }))
+    }
+  };
+}
+
 export async function getWorkspaceSnapshot(organizationId: string) {
   const organization = await prisma.organization.findUnique({
     where: {

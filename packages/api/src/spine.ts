@@ -1,9 +1,9 @@
-import { getWorkspaceSnapshot } from "@aas-companion/db";
+import { getProjectSpineSnapshot } from "@aas-companion/db";
 import { failure, success } from "./shared";
 
 export async function getValueSpineService(organizationId: string) {
   try {
-    const snapshot = await getWorkspaceSnapshot(organizationId);
+    const snapshot = await getProjectSpineSnapshot(organizationId);
 
     if (!snapshot) {
       return failure({

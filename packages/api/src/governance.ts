@@ -92,13 +92,14 @@ export async function getGovernanceWorkspaceService(input: {
   aiAccelerationLevel?: AiAccelerationLevel;
   sourceEntity?: GovernanceSourceEntity;
   sourceId?: string;
+  includeSignoffRecords?: boolean;
 }) {
   const [people, agents, requirements, riskRules, signoffRecords, sourceContext] = await Promise.all([
     listPartyRoleEntries(input.organizationId, { includeInactive: true }),
     listAgentRegistryEntries(input.organizationId, { includeInactive: true }),
     listGovernanceRoleRequirements(input.organizationId),
     listGovernanceRiskCombinationRules(input.organizationId),
-    listSignoffRecordsForOrganization(input.organizationId),
+    input.includeSignoffRecords ? listSignoffRecordsForOrganization(input.organizationId) : Promise.resolve([]),
     getGovernanceSourceContext(input)
   ]);
 

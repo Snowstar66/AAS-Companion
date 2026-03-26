@@ -1,7 +1,16 @@
-import { getWorkspaceSnapshot } from "@aas-companion/db";
-import { buildPricingEvaluation, type AiAccelerationLevel } from "@aas-companion/domain";
+import {
+  getProjectSpineSnapshot,
+  listAgentRegistryEntries,
+  listGovernanceRiskCombinationRules,
+  listGovernanceRoleRequirements,
+  listPartyRoleEntries
+} from "@aas-companion/db";
+import {
+  buildGovernanceCoverageAssessment,
+  buildPricingEvaluation,
+  type AiAccelerationLevel
+} from "@aas-companion/domain";
 import { failure, success } from "./shared";
-import { getGovernanceWorkspaceService } from "./governance";
 
 export type PricingWorkspaceData = {
   organizationId: string;
@@ -108,7 +117,7 @@ export async function getProjectPricingWorkspaceService(input: {
   outcomeId?: string;
 }) {
   try {
-    const snapshot = await getWorkspaceSnapshot(input.organizationId);
+    const snapshot = await getProjectSpineSnapshot(input.organizationId);
 
     if (!snapshot) {
       return failure({
@@ -123,20 +132,19 @@ export async function getProjectPricingWorkspaceService(input: {
     });
 
     const governanceAiLevel = selectedOutcome?.aiAccelerationLevel ?? "level_2";
-    const governance = await getGovernanceWorkspaceService({
-      organizationId: input.organizationId,
+    const [people, agents, requirements, riskRules] = await Promise.all([
+      listPartyRoleEntries(input.organizationId, { includeInactive: true }),
+      listAgentRegistryEntries(input.organizationId, { includeInactive: true }),
+      listGovernanceRoleRequirements(input.organizationId),
+      listGovernanceRiskCombinationRules(input.organizationId)
+    ]);
+    const governance = buildGovernanceCoverageAssessment({
       aiAccelerationLevel: governanceAiLevel,
-      ...(selectedOutcome
-        ? {
-            sourceEntity: "outcome" as const,
-            sourceId: selectedOutcome.id
-          }
-        : {})
+      requirements,
+      riskRules,
+      people,
+      agents
     });
-
-    if (!governance.ok) {
-      return failure(governance.errors[0] ?? { code: "governance_unavailable", message: "Governance data is unavailable." });
-    }
 
     const selectedEpics = selectedOutcome?.epics ?? [];
     const selectedStories =
@@ -170,7 +178,7 @@ export async function getProjectPricingWorkspaceService(input: {
       outcomeClear,
       scopeStable,
       aiAccelerationLevel: selectedOutcome?.aiAccelerationLevel ?? null,
-      governanceStatus: governance.data.readiness.validation.status,
+      governanceStatus: governance.validation.status,
       hasValueSpineContext: Boolean(selectedOutcome),
       importedLineageCount
     });
@@ -230,10 +238,10 @@ export async function getProjectPricingWorkspaceService(input: {
         }
       },
       governance: {
-        selectedAiLevel: governance.data.selectedAiLevel,
-        status: governance.data.readiness.validation.status,
-        summaryTitle: governance.data.readiness.validation.summaryTitle,
-        summaryMessage: governance.data.readiness.validation.summaryMessage
+        selectedAiLevel: governanceAiLevel,
+        status: governance.validation.status,
+        summaryTitle: governance.validation.summaryTitle,
+        summaryMessage: governance.validation.summaryMessage
       },
       evaluation
     });

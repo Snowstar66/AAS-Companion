@@ -150,7 +150,10 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
     request.sourceId = sourceId;
   }
 
-  const governance = await getGovernanceWorkspaceService(request);
+  const governance = await getGovernanceWorkspaceService({
+    ...request,
+    includeSignoffRecords: view === "signoffs"
+  });
 
   if (!governance.ok) {
     throw new Error(governance.errors[0]?.message ?? "Governance workspace could not be loaded.");
