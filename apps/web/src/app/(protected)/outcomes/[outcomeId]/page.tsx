@@ -217,7 +217,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
               <FramingValueSpineTree
                 emptyEpicMessage={isArchived ? "Archived Outcomes no longer surface active Epic work in this branch." : "Create the first native Epic here. Empty branches stay empty until you add child work."}
                 emptyStoryMessage={isArchived ? "Archived Outcomes no longer surface active Story work." : "Create Stories from the relevant Epic so the hierarchy stays scoped to this Framing."}
-                epics={outcome.epics.map((epic) => ({ id: epic.id, key: epic.key, title: epic.title, href: `/epics/${epic.id}`, isCurrent: false, scopeBoundary: epic.scopeBoundary ?? null, stories: outcome.stories.filter((story) => story.epicId === epic.id).map((story) => ({ id: story.id, key: story.key, title: story.title, href: `/stories/${story.id}`, isCurrent: false, testDefinition: story.testDefinition ?? null })) }))}
+                epics={outcome.epics.map((epic) => ({ id: epic.id, key: epic.key, title: epic.title, href: `/epics/${epic.id}`, isCurrent: false, scopeBoundary: epic.scopeBoundary ?? null, stories: outcome.stories.filter((story) => story.epicId === epic.id).map((story) => ({ id: story.id, key: story.key, title: story.title, href: `/stories/${story.id}`, isCurrent: false, testDefinition: story.testDefinition ?? null, acceptanceCriteria: story.acceptanceCriteria, definitionOfDone: story.definitionOfDone, status: story.status, lifecycleState: story.lifecycleState })) }))}
                 outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: `/outcomes/${outcome.id}`, isCurrent: true }}
               />
 

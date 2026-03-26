@@ -187,9 +187,10 @@ export async function recordStoryTollgateDecisionAction(formData: FormData) {
   revalidatePath("/");
 
   if (!result.ok) {
+    const errorCode = result.errors[0]?.code;
     redirect(
       buildStoryRedirect(storyId, {
-        ready: "error",
+        ready: errorCode === "duplicate_signoff" ? "duplicate" : "error",
         message: result.errors[0]?.message ?? "Tollgate decision could not be recorded."
       })
     );

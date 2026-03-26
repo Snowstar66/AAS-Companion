@@ -459,9 +459,13 @@ export function FramingOutcomeSection({
                     title: story.title,
                     href: `/stories/${story.id}`,
                     isCurrent: false,
-                    testDefinition: story.testDefinition ?? null
-                  }))
-              }))}
+                    testDefinition: story.testDefinition ?? null,
+                    acceptanceCriteria: story.acceptanceCriteria,
+                    definitionOfDone: story.definitionOfDone,
+                    status: story.status,
+                    lifecycleState: story.lifecycleState
+                    }))
+                }))}
               outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref, isCurrent: true }}
             />
 

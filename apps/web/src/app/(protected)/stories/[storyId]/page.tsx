@@ -1,16 +1,21 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, FileJson2, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, FileJson2, ShieldCheck } from "lucide-react";
 import { getStoryReadinessBlockers } from "@aas-companion/domain";
 import { getStoryWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
+import { InlineTermHelp } from "@/components/shared/inline-term-help";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
+import { NextRequiredActionPanel } from "@/components/workspace/next-required-action-panel";
+import { StoryLifecycleStepIndicator } from "@/components/workspace/story-lifecycle-step-indicator";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+import { getStoryToneClasses, getStoryUxModel } from "@/lib/workspace/story-ux";
 import {
   archiveStoryAction,
   hardDeleteStoryAction,
@@ -29,6 +34,27 @@ type StoryWorkspacePageProps = {
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function SecondaryPanel(props: {
+  id?: string | undefined;
+  title: string;
+  description: string;
+  defaultOpen?: boolean | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group rounded-2xl border border-border/70 bg-background shadow-sm" id={props.id} open={props.defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
+        <div>
+          <p className="font-semibold text-foreground">{props.title}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
+        </div>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-border/70 px-6 py-5">{props.children}</div>
+    </details>
+  );
 }
 
 export default async function StoryWorkspacePage({ params, searchParams }: StoryWorkspacePageProps) {
@@ -56,6 +82,19 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
       ? blockersFromQuery
       : tollgateReview?.blockers ?? [...new Set([...(tollgate?.blockers ?? computedBlockers), ...importedBuildBlockers])];
   const isArchived = story.lifecycleState === "archived";
+  const storyUx = getStoryUxModel({
+    id: story.id,
+    key: story.key,
+    status: story.status,
+    lifecycleState: story.lifecycleState,
+    testDefinition: story.testDefinition ?? null,
+    acceptanceCriteria: story.acceptanceCriteria,
+    definitionOfDone: story.definitionOfDone,
+    tollgateStatus: tollgateReview?.status ?? tollgate?.status ?? null,
+    blockers,
+    pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
+    blockedActionCount: tollgateReview?.blockedActions.length ?? 0
+  });
 
   return (
     <AppShell
@@ -63,13 +102,39 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
         <aside className="space-y-4">
           <Card className="border-border/70 bg-background/90 shadow-sm">
             <CardHeader>
-              <CardTitle>Readiness blockers</CardTitle>
-              <CardDescription>Missing fields that still block build handoff readiness.</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                {storyUx.statusLabel}
+                <InlineTermHelp term="Readiness" />
+              </CardTitle>
+              <CardDescription>{storyUx.statusDetail}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className={`rounded-2xl border px-4 py-4 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
+                <p className="font-medium">{storyUx.readinessLabel}</p>
+                <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Open actions</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{storyUx.openActionCount}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Missing sign-offs</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{storyUx.missingSignoffCount}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/70 bg-background/90 shadow-sm" id="story-blockers">
+            <CardHeader>
+              <CardTitle>Current blockers</CardTitle>
+              <CardDescription>Only blocking items are shown first so the page stays easy to scan.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {blockers.length === 0 ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
-                  No readiness blockers are currently visible.
+                  No blockers are currently visible.
                 </div>
               ) : (
                 blockers.map((blocker) => (
@@ -83,7 +148,10 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
 
           <Card className="border-border/70 bg-background/90 shadow-sm">
             <CardHeader>
-              <CardTitle>Build handoff</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Build handoff
+                <InlineTermHelp term="Tollgate" />
+              </CardTitle>
               <CardDescription>Execution Contract preview opens only when the Story is ready.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -139,6 +207,11 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
             Story readiness recorded. This Story is ready for handoff preview.
           </div>
         ) : null}
+        {readyState === "duplicate" ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            This approval was already recorded. Duplicate sign-offs are blocked so the Story status stays trustworthy.
+          </div>
+        ) : null}
         {readyState === "approved" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             Required sign-offs are complete. Story readiness is now approved.
@@ -162,6 +235,9 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
             This Story is archived and currently read-only. Restore it to continue active design work.
           </div>
         ) : null}
+
+        <NextRequiredActionPanel actions={storyUx.nextActions} />
+        <StoryLifecycleStepIndicator steps={storyUx.lifecycleSteps} />
 
         <FramingContextCard
           epic={{
@@ -187,53 +263,60 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
 
         <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
           <div className="space-y-6">
-            <FramingValueSpineTree
-              emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."
-              emptyStoryMessage="This view is already scoped to the current Story branch."
-              epics={[
-                {
-                  id: story.epic.id,
-                  key: story.epic.key,
-                  title: story.epic.title,
-                  href: `/epics/${story.epicId}`,
-                  isCurrent: false,
-                  scopeBoundary: story.epic.scopeBoundary ?? null,
-                  stories: [
-                    {
-                      id: story.id,
-                      key: story.key,
-                      title: story.title,
-                      href: `/stories/${story.id}`,
-                      isCurrent: true,
-                      testDefinition: story.testDefinition ?? null
-                    }
-                  ]
-                }
-              ]}
-              outcome={{
-                id: story.outcome.id,
-                key: story.outcome.key,
-                title: story.outcome.title,
-                href: `/framing?outcomeId=${story.outcomeId}`,
-                isCurrent: false
-              }}
-            />
+            <div id="story-value-spine">
+              <FramingValueSpineTree
+                emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."
+                emptyStoryMessage="This view is already scoped to the current Story branch."
+                epics={[
+                  {
+                    id: story.epic.id,
+                    key: story.epic.key,
+                    title: story.epic.title,
+                    href: `/epics/${story.epicId}`,
+                    isCurrent: false,
+                    scopeBoundary: story.epic.scopeBoundary ?? null,
+                    stories: [
+                      {
+                        id: story.id,
+                        key: story.key,
+                        title: story.title,
+                        href: `/stories/${story.id}`,
+                        isCurrent: true,
+                        testDefinition: story.testDefinition ?? null,
+                        acceptanceCriteria: story.acceptanceCriteria,
+                        definitionOfDone: story.definitionOfDone,
+                        status: story.status,
+                        lifecycleState: story.lifecycleState,
+                        tollgateStatus: tollgateReview?.status ?? tollgate?.status ?? null,
+                        pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
+                        blockedActionCount: tollgateReview?.blockedActions.length ?? 0
+                      }
+                    ]
+                  }
+                ]}
+                outcome={{
+                  id: story.outcome.id,
+                  key: story.outcome.key,
+                  title: story.outcome.title,
+                  href: `/framing?outcomeId=${story.outcomeId}`,
+                  isCurrent: false
+                }}
+              />
+            </div>
 
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>{story.title}</CardTitle>
-                <CardDescription>
-                  {story.key} in {organization.organizationName}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-4">
+            <SecondaryPanel
+              defaultOpen={false}
+              description="Secondary metadata stays available without crowding the primary workflow."
+              title="Story details"
+            >
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story type</p>
                   <p className="mt-2 text-lg font-semibold capitalize">{story.storyType.replaceAll("_", " ")}</p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Status</p>
-                  <p className="mt-2 text-lg font-semibold capitalize">{story.status.replaceAll("_", " ")}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Shown status</p>
+                  <p className="mt-2 text-lg font-semibold">{storyUx.statusLabel}</p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
@@ -256,8 +339,8 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                     </p>
                   </div>
                 ) : null}
-              </CardContent>
-            </Card>
+              </div>
+            </SecondaryPanel>
 
             <form action={saveStoryWorkspaceAction} className="space-y-6">
               <input name="storyId" type="hidden" value={story.id} />
@@ -304,9 +387,12 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                 </CardContent>
               </Card>
 
-              <Card className="border-border/70 shadow-sm">
+              <Card className="border-border/70 shadow-sm" id="story-handoff-inputs">
                 <CardHeader>
-                  <CardTitle>Handoff inputs</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    Handoff inputs
+                    <InlineTermHelp term="Readiness" />
+                  </CardTitle>
                   <CardDescription>These are the only delivery fields this Story needs before readiness review.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
@@ -377,47 +463,54 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
           </div>
 
           <div className="space-y-6">
-            <TollgateDecisionCard
-              aiAccelerationLevel={story.aiAccelerationLevel}
-              approvalActions={tollgateReview?.approvalActions ?? []}
-              availablePeople={tollgateReview?.availablePeople ?? []}
-              blockers={blockers}
-              blockedActions={tollgateReview?.blockedActions ?? []}
-              comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
-              description="Server-backed readiness, review, approval and escalation trail for Story handoff."
-              entityId={story.id}
-              entityType="story"
-              formAction={recordStoryTollgateDecisionAction}
-              hiddenFields={[
-                { name: "storyId", value: story.id },
-                { name: "epicId", value: story.epicId },
-                { name: "outcomeId", value: story.outcomeId }
-              ]}
-              pendingActions={tollgateReview?.pendingActions ?? []}
-              reviewActions={tollgateReview?.reviewActions ?? []}
-              signoffRecords={
-                tollgateReview?.signoffRecords.map((record) => ({
-                  id: record.id,
-                  decisionKind: record.decisionKind,
-                  requiredRoleType: record.requiredRoleType,
-                  actualPersonName: record.actualPersonName,
-                  actualRoleTitle: record.actualRoleTitle,
-                  organizationSide: record.organizationSide,
-                  decisionStatus: record.decisionStatus,
-                  note: record.note,
-                  evidenceReference: record.evidenceReference,
-                  createdAt: record.createdAt
-                })) ?? []
-              }
-              status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
-              title="Story readiness review and approval"
-              tollgateType="story_readiness"
-            />
+            <div id="story-signoff-history">
+              <div id="story-signoff">
+              <TollgateDecisionCard
+                aiAccelerationLevel={story.aiAccelerationLevel}
+                approvalActions={tollgateReview?.approvalActions ?? []}
+                availablePeople={tollgateReview?.availablePeople ?? []}
+                blockers={blockers}
+                blockedActions={tollgateReview?.blockedActions ?? []}
+                comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
+                description="Server-backed readiness, review, approval and escalation trail for Story handoff."
+                entityId={story.id}
+                entityType="story"
+                formAction={recordStoryTollgateDecisionAction}
+                hiddenFields={[
+                  { name: "storyId", value: story.id },
+                  { name: "epicId", value: story.epicId },
+                  { name: "outcomeId", value: story.outcomeId }
+                ]}
+                pendingActions={tollgateReview?.pendingActions ?? []}
+                reviewActions={tollgateReview?.reviewActions ?? []}
+                signoffRecords={
+                  tollgateReview?.signoffRecords.map((record) => ({
+                    id: record.id,
+                    decisionKind: record.decisionKind,
+                    requiredRoleType: record.requiredRoleType,
+                    actualPersonName: record.actualPersonName,
+                    actualRoleTitle: record.actualRoleTitle,
+                    organizationSide: record.organizationSide,
+                    decisionStatus: record.decisionStatus,
+                    note: record.note,
+                    evidenceReference: record.evidenceReference,
+                    createdAt: record.createdAt
+                  })) ?? []
+                }
+                status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
+                title="Story readiness review and approval"
+                tollgateType="story_readiness"
+              />
+              </div>
+            </div>
 
             {!isArchived ? (
-              <Card className="border-border/70 shadow-sm">
+              <Card className="border-border/70 shadow-sm" id="story-readiness">
                 <CardHeader>
-                  <CardTitle>Submit Story readiness</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    Submit Story readiness
+                    <InlineTermHelp term="Readiness" />
+                  </CardTitle>
                   <CardDescription>Readiness submission freezes the current blockers before human sign-off continues.</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -442,7 +535,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               </Card>
             ) : null}
 
-            <Card className="border-border/70 shadow-sm">
+            <Card className="border-border/70 shadow-sm" id="story-governance">
               <CardHeader>
                 <CardTitle>Governance readiness</CardTitle>
                 <CardDescription>Check whether the project is staffed strongly enough for this Story's AI level.</CardDescription>
@@ -456,12 +549,12 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               </CardContent>
             </Card>
 
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Latest activity</CardTitle>
-                <CardDescription>Recent Story-specific audit entries.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <SecondaryPanel
+              defaultOpen={false}
+              description="Operational history is useful, but not usually the first thing needed to move work forward."
+              title="Latest activity"
+            >
+              <div className="space-y-3 text-sm text-muted-foreground">
                 {activities.length === 0 ? (
                   <p>No activity has been recorded yet for this Story.</p>
                 ) : (
@@ -472,34 +565,38 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                     </div>
                   ))
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SecondaryPanel>
 
-            <GovernedLifecycleCard
-              archiveAction={archiveStoryAction}
-              decision={removal?.decision ?? null}
-              entityId={story.id}
-              entityLabel="Story"
-              hardDeleteAction={hardDeleteStoryAction}
-              hiddenFields={[
-                { name: "epicId", value: story.epicId },
-                { name: "outcomeId", value: story.outcomeId }
-              ]}
-              restoreAction={restoreStoryAction}
-            />
+            <SecondaryPanel
+              defaultOpen={false}
+              description="Archive, restore and delete controls stay available without displacing primary Story work."
+              title="Lifecycle controls"
+            >
+              <GovernedLifecycleCard
+                archiveAction={archiveStoryAction}
+                decision={removal?.decision ?? null}
+                entityId={story.id}
+                entityLabel="Story"
+                hardDeleteAction={hardDeleteStoryAction}
+                hiddenFields={[
+                  { name: "epicId", value: story.epicId },
+                  { name: "outcomeId", value: story.outcomeId }
+                ]}
+                restoreAction={restoreStoryAction}
+              />
+            </SecondaryPanel>
 
             {story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId ? (
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Imported lineage</CardTitle>
-                  <CardDescription>Trace this governed Story back to its reviewed import candidate.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button asChild className="gap-2" variant="secondary">
-                    <Link href={`/review?candidateId=${story.lineageSourceId}`}>Open source candidate review</Link>
-                  </Button>
-                </CardContent>
-              </Card>
+              <SecondaryPanel
+                defaultOpen={false}
+                description="Imported lineage is still accessible when you need to trace the source material."
+                title="Imported lineage"
+              >
+                <Button asChild className="gap-2" variant="secondary">
+                  <Link href={`/review?candidateId=${story.lineageSourceId}`}>Open source candidate review</Link>
+                </Button>
+              </SecondaryPanel>
             ) : null}
           </div>
         </div>

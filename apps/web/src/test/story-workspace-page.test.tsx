@@ -225,6 +225,8 @@ describe("Story Workspace page", () => {
     );
 
     expect(screen.getByText("Native Story created and ready for design work.")).toBeDefined();
+    expect(screen.getByText("Next required action")).toBeDefined();
+    expect(screen.getByText("Story lifecycle")).toBeDefined();
     expect(screen.getByText("Active Framing context")).toBeDefined();
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getAllByText("Scoped native Framing").length).toBeGreaterThan(0);
@@ -235,6 +237,7 @@ describe("Story Workspace page", () => {
     expect(screen.getByRole("link", { name: "Open current Framing" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
     expect(screen.getByText("Story readiness review and approval")).toBeDefined();
+    expect(screen.getByText("Add test definition")).toBeDefined();
     expect(screen.getByText("Quality review still needs aqa on the supplier side.")).toBeDefined();
     expect(screen.getAllByText("Test Definition is required before handoff.").length).toBeGreaterThan(0);
   });

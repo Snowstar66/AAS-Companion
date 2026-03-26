@@ -110,7 +110,7 @@ describe("Value Spine page", () => {
 
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
-    expect(screen.getByText("Ready for build")).toBeDefined();
+    expect(screen.getAllByText("Ready for handoff").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Ready stories")[0]?.parentElement?.textContent).toContain("1");
     expect(screen.queryByText("Missing Test Definition")).toBeNull();
   });

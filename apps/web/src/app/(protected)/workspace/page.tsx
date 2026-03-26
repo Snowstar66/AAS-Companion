@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, GitBranch, Workflow } from "lucide-react";
-import { getStoryHandoffReadiness } from "@aas-companion/domain/story";
 import { getValueSpineService } from "@aas-companion/api/spine";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { InlineTermHelp } from "@/components/shared/inline-term-help";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { getStoryToneClasses, getStoryUxModel } from "@/lib/workspace/story-ux";
 
 type WorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -77,7 +78,18 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   const selectedStories = selectedEpics.flatMap((epic) =>
     epic.stories.filter((story) => (viewFilter === "all" ? true : story.lifecycleState === viewFilter))
   );
-  const readyStoryCount = selectedStories.filter((story) => getStoryHandoffReadiness(story).state === "ready").length;
+  const readyStoryCount = selectedStories.filter((story) =>
+    getStoryUxModel({
+      id: story.id,
+      key: story.key,
+      status: story.status,
+      lifecycleState: story.lifecycleState,
+      testDefinition: story.testDefinition ?? null,
+      acceptanceCriteria: story.acceptanceCriteria,
+      definitionOfDone: story.definitionOfDone,
+      tollgateStatus: null
+    }).isReadyForHandoff || story.status === "ready_for_handoff"
+  ).length;
   const lineageCount =
     selectedEpics.filter((epic) => epic.lineageSourceType === "artifact_aas_candidate").length +
     selectedStories.filter((story) => story.lineageSourceType === "artifact_aas_candidate").length;
@@ -96,15 +108,17 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.9fr)]">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                <Workflow className="h-3.5 w-3.5 text-primary" />
-                One active Framing branch
-              </div>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight">Project Value Spine</h1>
-              <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-                This view stays inside the current project and one Framing case at a time. Related Epics, Stories, readiness,
-                lineage, and lifecycle state remain scoped to the selected branch instead of falling back to unrelated work.
-              </p>
+              <Workflow className="h-3.5 w-3.5 text-primary" />
+              One active Framing branch
             </div>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight">Project Value Spine</h1>
+            <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
+              This view stays inside the current project and one Framing case at a time. Related Epics, Stories, readiness,
+              lineage, and lifecycle state remain scoped to the selected branch instead of falling back to unrelated work.
+              {" "}
+              <InlineTermHelp term="Value Spine" />
+            </p>
+          </div>
 
             <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-2">
               <div className="rounded-3xl border border-border/70 bg-background/90 p-4 shadow-sm">
@@ -297,7 +311,16 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                             </div>
                           ) : (
                             visibleStories.map((story) => {
-                              const readiness = getStoryHandoffReadiness(story);
+                              const storyUx = getStoryUxModel({
+                                id: story.id,
+                                key: story.key,
+                                status: story.status,
+                                lifecycleState: story.lifecycleState,
+                                testDefinition: story.testDefinition ?? null,
+                                acceptanceCriteria: story.acceptanceCriteria,
+                                definitionOfDone: story.definitionOfDone,
+                                tollgateStatus: null
+                              });
 
                               return (
                                 <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={story.id}>
@@ -313,15 +336,35 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                                       <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
                                         {formatLabel(story.lifecycleState)}
                                       </span>
-                                      <span
-                                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-                                          readiness.state === "ready"
-                                            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                                            : "border-amber-200 bg-amber-50 text-amber-800"
-                                        }`}
-                                      >
-                                        {readiness.state === "ready" ? "Ready for build" : formatLabel(readiness.state)}
+                                      <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStoryToneClasses(storyUx.tone)}`}>
+                                        {storyUx.statusLabel}
                                       </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-3 grid gap-3 xl:grid-cols-3">
+                                    <div className="rounded-2xl border border-border/70 bg-muted/10 px-3 py-3 text-sm">
+                                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Readiness</p>
+                                      <p className="mt-2 font-semibold text-foreground">
+                                        {storyUx.isReadyForHandoff ? "Ready for handoff" : storyUx.readinessLabel}
+                                      </p>
+                                      <p className="mt-2 leading-6 text-muted-foreground">{storyUx.readinessDetail}</p>
+                                    </div>
+                                    <div className="rounded-2xl border border-border/70 bg-muted/10 px-3 py-3 text-sm">
+                                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Open actions</p>
+                                      <p className="mt-2 font-semibold text-foreground">{storyUx.nextActions.length}</p>
+                                      <p className="mt-2 leading-6 text-muted-foreground">
+                                        {storyUx.blockers.length > 0
+                                          ? storyUx.blockers[0]
+                                          : "No blocking input is currently visible from the Story card."}
+                                      </p>
+                                    </div>
+                                    <div className="rounded-2xl border border-border/70 bg-muted/10 px-3 py-3 text-sm">
+                                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
+                                      <p className="mt-2 font-semibold text-foreground">{storyUx.nextActions[0]?.label ?? "Open Story"}</p>
+                                      <p className="mt-2 leading-6 text-muted-foreground">
+                                        {storyUx.nextActions[0]?.description ?? "Open the Story to continue delivery planning."}
+                                      </p>
                                     </div>
                                   </div>
 
@@ -344,6 +387,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                                         Missing acceptance criteria
                                       </span>
                                     ) : null}
+                                    <Button asChild size="sm" variant="secondary">
+                                      <Link href={`/stories/${story.id}`}>
+                                        Open Story
+                                        <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                                      </Link>
+                                    </Button>
                                   </div>
                                 </div>
                               );
