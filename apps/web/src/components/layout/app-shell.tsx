@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { RightRail } from "@/components/layout/right-rail";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar, type TopbarProps } from "@/components/layout/topbar";
 
@@ -12,6 +11,7 @@ type AppShellProps = {
 };
 
 export function AppShell({ children, rightRail, topbarProps, activeProjectName, hideRightRail = false }: AppShellProps) {
+  const resolvedRightRail = hideRightRail ? null : rightRail ?? null;
   const sidebarProps = {
     ...(activeProjectName || topbarProps?.projectName
       ? { activeProjectName: activeProjectName ?? topbarProps?.projectName ?? "" }
@@ -25,7 +25,7 @@ export function AppShell({ children, rightRail, topbarProps, activeProjectName, 
     <div className="min-h-screen p-3 text-foreground sm:p-5">
       <div
         className={`mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-[1920px] grid-cols-1 gap-5 xl:grid-cols-[248px_minmax(0,1fr)] ${
-          hideRightRail ? "" : "2xl:grid-cols-[248px_minmax(0,1fr)_292px]"
+          resolvedRightRail ? "2xl:grid-cols-[248px_minmax(0,1fr)_292px]" : ""
         }`}
       >
         <div className="xl:sticky xl:top-5 xl:self-start">
@@ -37,9 +37,9 @@ export function AppShell({ children, rightRail, topbarProps, activeProjectName, 
             {children}
           </main>
         </div>
-        {!hideRightRail ? (
+        {resolvedRightRail ? (
           <div className="order-3 xl:col-start-2 2xl:col-start-3 2xl:sticky 2xl:top-5 2xl:self-start">
-            {rightRail ?? <RightRail />}
+            {resolvedRightRail}
           </div>
         ) : null}
       </div>

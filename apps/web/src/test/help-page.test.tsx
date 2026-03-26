@@ -50,6 +50,7 @@ describe("Help page", () => {
     expect(screen.getByText("It does not generate code.")).toBeDefined();
     expect(screen.getByText("AAS method deep dive")).toBeDefined();
     expect(screen.getByText("AI levels and human mandate")).toBeDefined();
+    expect(screen.getByText("How this app is built")).toBeDefined();
     expect(screen.getByRole("link", { name: /Back to work/i }).getAttribute("href")).toBe("/review");
   });
 });

@@ -9,11 +9,8 @@ import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import { InlineTermHelp } from "@/components/shared/inline-term-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
-import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
-import { NextRequiredActionPanel } from "@/components/workspace/next-required-action-panel";
-import { StoryLifecycleStepIndicator } from "@/components/workspace/story-lifecycle-step-indicator";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import { getStoryToneClasses, getStoryUxModel } from "@/lib/workspace/story-ux";
@@ -99,77 +96,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
 
   return (
     <AppShell
-      rightRail={
-        <aside className="space-y-4">
-          <Card className="border-border/70 bg-background/90 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {storyUx.statusLabel}
-                <InlineTermHelp term="Readiness" />
-              </CardTitle>
-              <CardDescription>{storyUx.statusDetail}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className={`rounded-2xl border px-4 py-4 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
-                <p className="font-medium">{storyUx.readinessLabel}</p>
-                <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Open actions</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{storyUx.openActionCount}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Missing sign-offs</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">{storyUx.missingSignoffCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/70 bg-background/90 shadow-sm" id="story-blockers">
-            <CardHeader>
-              <CardTitle>Current blockers</CardTitle>
-              <CardDescription>Only blocking items are shown first so the page stays easy to scan.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {blockers.length === 0 ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
-                  No blockers are currently visible.
-                </div>
-              ) : (
-                blockers.map((blocker) => (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm text-amber-900" key={blocker}>
-                    {blocker}
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/70 bg-background/90 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Build handoff
-                <InlineTermHelp term="Tollgate" />
-              </CardTitle>
-              <CardDescription>Execution Contract preview opens only when the Story is ready.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {isArchived ? (
-                <p className="text-sm text-muted-foreground">Restore the Story before resuming handoff preparation.</p>
-              ) : (
-                <Button asChild className="w-full gap-2" variant={blockers.length === 0 ? "default" : "secondary"}>
-                  <Link href={`/handoff/${story.id}`}>
-                    Preview Execution Contract
-                    <FileJson2 className="h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </aside>
-      }
+      hideRightRail
       topbarProps={{
         eyebrow: "AAS Companion",
         projectName: organization.organizationName,
@@ -237,112 +164,64 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
           </div>
         ) : null}
 
-        <NextRequiredActionPanel actions={storyUx.nextActions} />
-        <StoryLifecycleStepIndicator steps={storyUx.lifecycleSteps} />
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    {story.key}
+                  </span>
+                  <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStoryToneClasses(storyUx.tone)}`}>
+                    {storyUx.statusLabel}
+                  </span>
+                  <span className="inline-flex rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    {story.storyType.replaceAll("_", " ")}
+                  </span>
+                </div>
+                <div>
+                  <CardTitle>{story.title}</CardTitle>
+                  <CardDescription className="mt-2 max-w-4xl">{storyUx.statusDetail}</CardDescription>
+                </div>
+              </div>
 
-        <FramingContextCard
-          epic={{
-            id: story.epic.id,
-            key: story.epic.key,
-            title: story.epic.title,
-            href: `/epics/${story.epicId}`
-          }}
-          outcome={{
-            id: story.outcome.id,
-            key: story.outcome.key,
-            title: story.outcome.title,
-            href: `/framing?outcomeId=${story.outcomeId}`
-          }}
-          story={{
-            id: story.id,
-            key: story.key,
-            title: story.title,
-            href: `/stories/${story.id}`
-          }}
-          summary="This Story stays inside one Epic and one Framing. Related panels and navigation remain scoped to this branch instead of falling back to unrelated native or demo work."
-        />
+              {!isArchived ? (
+                <Button asChild className="gap-2" variant={blockers.length === 0 ? "default" : "secondary"}>
+                  <Link href={`/handoff/${story.id}`}>
+                    Preview Execution Contract
+                    <FileJson2 className="h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-4 lg:grid-cols-3">
+            <div className={`rounded-2xl border px-4 py-4 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Readiness</p>
+              <p className="mt-2 font-semibold">{storyUx.readinessLabel}</p>
+              <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
+              <p className="mt-2 font-semibold text-foreground">{storyUx.nextActions[0]?.label ?? "Open Story"}</p>
+              <p className="mt-2 leading-6 text-muted-foreground">
+                {storyUx.nextActions[0]?.description ?? "Continue working in the Story workspace."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm" id="story-blockers">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current blocker</p>
+              <p className="mt-2 font-semibold text-foreground">
+                {blockers.length === 0 ? "No visible blockers" : blockers[0]}
+              </p>
+              <p className="mt-2 leading-6 text-muted-foreground">
+                {blockers.length > 1 ? `${blockers.length - 1} more blocker${blockers.length - 1 === 1 ? "" : "s"} are listed below in approvals.` : "Use the sections below to continue the Story."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
           <div className="space-y-6">
-            <div id="story-value-spine">
-              <FramingValueSpineTree
-                emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."
-                emptyStoryMessage="This view is already scoped to the current Story branch."
-                epics={[
-                  {
-                    id: story.epic.id,
-                    key: story.epic.key,
-                    title: story.epic.title,
-                    href: `/epics/${story.epicId}`,
-                    isCurrent: false,
-                    scopeBoundary: story.epic.scopeBoundary ?? null,
-                    stories: [
-                      {
-                        id: story.id,
-                        key: story.key,
-                        title: story.title,
-                        href: `/stories/${story.id}`,
-                        isCurrent: true,
-                        testDefinition: story.testDefinition ?? null,
-                        acceptanceCriteria: story.acceptanceCriteria,
-                        definitionOfDone: story.definitionOfDone,
-                        status: story.status,
-                        lifecycleState: story.lifecycleState,
-                        tollgateStatus: tollgateReview?.status ?? tollgate?.status ?? null,
-                        pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
-                        blockedActionCount: tollgateReview?.blockedActions.length ?? 0
-                      }
-                    ]
-                  }
-                ]}
-                outcome={{
-                  id: story.outcome.id,
-                  key: story.outcome.key,
-                  title: story.outcome.title,
-                  href: `/framing?outcomeId=${story.outcomeId}`,
-                  isCurrent: false
-                }}
-              />
-            </div>
-
-            <SecondaryPanel
-              defaultOpen={false}
-              description="Secondary metadata stays available without crowding the primary workflow."
-              title="Story details"
-            >
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story type</p>
-                  <p className="mt-2 text-lg font-semibold capitalize">{story.storyType.replaceAll("_", " ")}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Shown status</p>
-                  <p className="mt-2 text-lg font-semibold">{storyUx.statusLabel}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
-                  <p className="mt-2 text-lg font-semibold capitalize">{story.aiAccelerationLevel.replaceAll("_", " ")}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">Inherited from the parent Outcome framing unless explicitly lowered later.</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Lifecycle</p>
-                  <p className="mt-2 text-lg font-semibold capitalize">{story.lifecycleState}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin</p>
-                  <p className="mt-2 text-lg font-semibold capitalize">{story.originType.replaceAll("_", " ")}</p>
-                </div>
-                {story.importedReadinessState ? (
-                  <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Imported readiness</p>
-                    <p className="mt-2 text-lg font-semibold capitalize text-sky-950">
-                      {story.importedReadinessState.replaceAll("_", " ")}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            </SecondaryPanel>
-
             <form action={saveStoryWorkspaceAction} className="space-y-6">
               <input name="storyId" type="hidden" value={story.id} />
               <input name="epicId" type="hidden" value={story.epicId} />
@@ -463,6 +342,53 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                 </div>
               )}
             </form>
+
+            <SecondaryPanel
+              defaultOpen={false}
+              description="Open this only when you need to check where the Story sits in the current branch."
+              title="Branch context"
+            >
+              <div id="story-value-spine">
+                <FramingValueSpineTree
+                  emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."
+                  emptyStoryMessage="This view is already scoped to the current Story branch."
+                  epics={[
+                    {
+                      id: story.epic.id,
+                      key: story.epic.key,
+                      title: story.epic.title,
+                      href: `/epics/${story.epicId}`,
+                      isCurrent: false,
+                      scopeBoundary: story.epic.scopeBoundary ?? null,
+                      stories: [
+                        {
+                          id: story.id,
+                          key: story.key,
+                          title: story.title,
+                          href: `/stories/${story.id}`,
+                          isCurrent: true,
+                          testDefinition: story.testDefinition ?? null,
+                          acceptanceCriteria: story.acceptanceCriteria,
+                          definitionOfDone: story.definitionOfDone,
+                          status: story.status,
+                          lifecycleState: story.lifecycleState,
+                          tollgateStatus: tollgateReview?.status ?? tollgate?.status ?? null,
+                          pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
+                          blockedActionCount: tollgateReview?.blockedActions.length ?? 0
+                        }
+                      ]
+                    }
+                  ]}
+                  outcome={{
+                    id: story.outcome.id,
+                    key: story.outcome.key,
+                    title: story.outcome.title,
+                    href: `/framing?outcomeId=${story.outcomeId}`,
+                    isCurrent: false
+                  }}
+                />
+              </div>
+            </SecondaryPanel>
           </div>
 
           <div className="space-y-6">
@@ -576,6 +502,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
             <SecondaryPanel
               defaultOpen={false}
               description="Archive, restore and delete controls stay available without displacing primary Story work."
+              id="story-lifecycle"
               title="Lifecycle controls"
             >
               <GovernedLifecycleCard

@@ -104,6 +104,13 @@ const levelNotes = [
   "Level 3 means orchestrated agentic delivery, which only makes sense when governance, roles and oversight are mature."
 ] as const;
 
+const platformNotes = [
+  "One project stays active at a time, so Framing, Value Spine, Import and Review remain project-scoped instead of blending unrelated work.",
+  "Readiness, tollgates, sign-off and lineage are shown close to the work instead of being hidden in a separate governance tool.",
+  "Native and imported work can coexist, but imported material keeps its review trail until humans decide to promote it.",
+  "The current product defaults are Next.js App Router, React, TypeScript, Tailwind, shadcn/ui, Supabase, Prisma, PostHog and OpenTelemetry."
+] as const;
+
 export default async function HelpPage({ searchParams }: HelpPageProps) {
   const query = searchParams ? await searchParams : {};
   const returnTo = normalizeReturnTo(getParamValue(query.returnTo));
@@ -335,6 +342,23 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                   </div>
                 ))}
               </div>
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            accentClassName="border-border/70 bg-background/95"
+            description="A compact explanation of the product assumptions that used to sit in the right rail."
+            title="How this app is built"
+          >
+            <div className="grid gap-4 lg:grid-cols-2">
+              {platformNotes.map((item) => (
+                <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item}>
+                  <div className="flex items-start gap-3">
+                    <Compass className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <p className="text-sm leading-6 text-muted-foreground">{item}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </CollapsibleSection>
         </div>

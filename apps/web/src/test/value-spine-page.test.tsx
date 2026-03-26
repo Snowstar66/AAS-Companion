@@ -97,11 +97,10 @@ describe("Value Spine page", () => {
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
     expect(screen.getByRole("heading", { name: "Project Value Spine", level: 1 })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Project context" })).toBeDefined();
+    expect(screen.getByText("Current Framing: IMP-OUT-1")).toBeDefined();
     expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
-    expect(screen.getAllByRole("link", { name: /Open Framing/i }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: /Open review lineage/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Open lineage/i }).length).toBeGreaterThan(0);
     expect(screen.getByText("Missing Test Definition")).toBeDefined();
   });
 
@@ -111,7 +110,7 @@ describe("Value Spine page", () => {
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
     expect(screen.getAllByText("Ready for handoff").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Ready stories")[0]?.parentElement?.textContent).toContain("1");
+    expect(screen.getAllByText("Ready for handoff")[0]?.parentElement?.textContent).toContain("1");
     expect(screen.queryByText("Missing Test Definition")).toBeNull();
   });
 });

@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, CircleDashed, GitBranch, Target, TestTube2 } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Circle,
+  CircleAlert,
+  CircleDashed,
+  GitBranch,
+  Target,
+  TestTube2
+} from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { InlineTermHelp } from "@/components/shared/inline-term-help";
 import { getStoryToneClasses, getStoryUxModel } from "@/lib/workspace/story-ux";
@@ -57,6 +66,38 @@ function CurrentBadge({ show = false }: { show?: boolean | undefined }) {
   );
 }
 
+function getLifecycleStepClasses(state: ReturnType<typeof getStoryUxModel>["lifecycleSteps"][number]["state"]) {
+  if (state === "complete") {
+    return "border-emerald-200 bg-emerald-50/80";
+  }
+
+  if (state === "current") {
+    return "border-sky-200 bg-sky-50/80";
+  }
+
+  if (state === "attention") {
+    return "border-amber-200 bg-amber-50/80";
+  }
+
+  return "border-border/70 bg-muted/10";
+}
+
+function LifecycleStepIcon({ state }: { state: ReturnType<typeof getStoryUxModel>["lifecycleSteps"][number]["state"] }) {
+  if (state === "complete") {
+    return <CheckCircle2 className="h-4 w-4 text-emerald-700" />;
+  }
+
+  if (state === "current") {
+    return <Circle className="h-4 w-4 fill-sky-700 text-sky-700" />;
+  }
+
+  if (state === "attention") {
+    return <CircleAlert className="h-4 w-4 text-amber-700" />;
+  }
+
+  return <CircleDashed className="h-4 w-4 text-muted-foreground" />;
+}
+
 export function FramingValueSpineTree({
   outcome,
   epics,
@@ -84,15 +125,7 @@ export function FramingValueSpineTree({
                 <p className="mt-1 text-sm text-muted-foreground">{outcome.title}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <CurrentBadge show={outcome.isCurrent} />
-              <Button asChild size="sm" variant="secondary">
-                <Link href={outcome.href}>
-                  Open Framing
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+            <CurrentBadge show={outcome.isCurrent} />
           </div>
         </div>
 
@@ -171,54 +204,59 @@ export function FramingValueSpineTree({
                               </div>
                             </div>
 
-                            <div className="mt-4 grid gap-3 xl:grid-cols-3">
-                              <div className={`rounded-2xl border px-3 py-3 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em]">Operational status</p>
-                                <p className="mt-2 font-semibold">{storyUx.statusLabel}</p>
-                                <p className="mt-2 leading-6">{storyUx.statusDetail}</p>
-                              </div>
-                              <div className="rounded-2xl border border-border/70 bg-muted/10 px-3 py-3 text-sm">
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Open actions</p>
-                                <p className="mt-2 font-semibold text-foreground">{storyUx.openActionCount}</p>
-                                <p className="mt-2 leading-6 text-muted-foreground">
-                                  {storyUx.missingSignoffCount > 0
-                                    ? `${storyUx.missingSignoffCount} sign-off action${storyUx.missingSignoffCount === 1 ? "" : "s"} still missing.`
-                                    : "No missing sign-offs are currently visible."}
-                                </p>
-                              </div>
-                              <div className="rounded-2xl border border-border/70 bg-muted/10 px-3 py-3 text-sm">
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Handoff state</p>
-                                <p className="mt-2 font-semibold text-foreground">
-                                  {storyUx.isReadyForHandoff ? "Ready for handoff" : storyUx.readinessLabel}
-                                </p>
-                                <p className="mt-2 leading-6 text-muted-foreground">{storyUx.readinessDetail}</p>
-                              </div>
+                            <div className={`mt-4 rounded-2xl border px-3 py-3 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Operational status</p>
+                              <p className="mt-2 font-semibold">{storyUx.statusLabel}</p>
+                              <p className="mt-2 leading-6">{storyUx.statusDetail}</p>
                             </div>
 
-                            <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4">
-                              <div className="flex items-start gap-3">
-                                <TestTube2 className="mt-0.5 h-5 w-5 text-violet-700" />
-                                <div>
-                                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Test branch</p>
-                                  {story.testDefinition ? (
-                                    <>
-                                      <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                        Test Definition captured
-                                      </div>
-                                      <p className="mt-3 text-sm text-muted-foreground">{story.testDefinition}</p>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-                                        <CircleDashed className="h-3.5 w-3.5" />
-                                        Empty test branch
-                                      </div>
-                                      <p className="mt-3 text-sm text-muted-foreground">
-                                        No Test Definition is attached yet. The branch stays empty instead of showing unrelated demo data.
-                                      </p>
-                                    </>
-                                  )}
+                            <ol className="mt-4 space-y-2">
+                              {storyUx.lifecycleSteps.map((step) => (
+                                <li className={`rounded-2xl border px-3 py-3 text-sm ${getLifecycleStepClasses(step.state)}`} key={step.key}>
+                                  <div className="flex items-start gap-3">
+                                    <LifecycleStepIcon state={step.state} />
+                                    <div>
+                                      <p className="font-medium text-foreground">{step.label}</p>
+                                      <p className="mt-1 leading-6 text-muted-foreground">{step.description}</p>
+                                    </div>
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+
+                            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
+                                <p className="mt-2 font-semibold text-foreground">{storyUx.nextActions[0]?.label ?? "Open Story"}</p>
+                                <p className="mt-2 leading-6 text-muted-foreground">
+                                  {storyUx.nextActions[0]?.description ?? "Open the Story to continue delivery planning."}
+                                </p>
+                              </div>
+                              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
+                                <div className="flex items-start gap-3">
+                                  <TestTube2 className="mt-0.5 h-5 w-5 text-violet-700" />
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Test branch</p>
+                                    {story.testDefinition ? (
+                                      <>
+                                        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                                          <CheckCircle2 className="h-3.5 w-3.5" />
+                                          Test Definition captured
+                                        </div>
+                                        <p className="mt-3 text-sm text-muted-foreground">{story.testDefinition}</p>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                                          <CircleDashed className="h-3.5 w-3.5" />
+                                          Empty test branch
+                                        </div>
+                                        <p className="mt-3 text-sm text-muted-foreground">
+                                          No Test Definition is attached yet. The branch stays empty instead of showing unrelated demo data.
+                                        </p>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
