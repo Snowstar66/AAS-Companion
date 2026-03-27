@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { InlineTermHelp } from "@/components/shared/inline-term-help";
-import { getStoryToneClasses, getStoryUxModel } from "@/lib/workspace/story-ux";
+import { getStoryUxModel } from "@/lib/workspace/story-ux";
 
 type TreeOutcome = {
   id: string;

@@ -7,7 +7,7 @@ export function logDevTiming(label: string, startedAt: number, details?: string)
 
   const durationMs = Date.now() - startedAt;
   const suffix = details ? ` ${details}` : "";
-  console.info(`[perf] ${label} ${durationMs}ms${suffix}`);
+  process.stdout.write(`[perf] ${label} ${durationMs}ms${suffix}\n`);
 }
 
 export async function withDevTiming<T>(label: string, work: () => Promise<T>, details?: string) {
