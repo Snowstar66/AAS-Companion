@@ -524,71 +524,6 @@ export function FramingOutcomeSection({
           <div className="xl:col-span-4">
           <ContextHelp pattern={framingHelp} summaryLabel="Open framing authoring help" />
           </div>
-          <div className={isArchived ? "xl:col-span-12" : "xl:col-span-7"}>
-          <TollgateDecisionCard
-            aiAccelerationLevel={outcome.aiAccelerationLevel}
-            approvalActions={tollgateReview?.approvalActions ?? []}
-            availablePeople={tollgateReview?.availablePeople ?? []}
-            blockers={blockers}
-            blockedActions={tollgateReview?.blockedActions ?? []}
-            comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
-            description="Server-backed readiness, review, approval and escalation trail for Tollgate 1."
-            entityId={outcome.id}
-            entityType="outcome"
-            formAction={recordTollgateDecisionAction}
-            hiddenFields={[{ name: "outcomeId", value: outcome.id }]}
-            pendingActions={tollgateReview?.pendingActions ?? []}
-            reviewActions={tollgateReview?.reviewActions ?? []}
-            signoffRecords={
-              tollgateReview?.signoffRecords.map((record) => ({
-                id: record.id,
-                decisionKind: record.decisionKind,
-                requiredRoleType: record.requiredRoleType,
-                actualPersonName: record.actualPersonName,
-                actualRoleTitle: record.actualRoleTitle,
-                organizationSide: record.organizationSide,
-                decisionStatus: record.decisionStatus,
-                note: record.note,
-                evidenceReference: record.evidenceReference,
-                createdAt: record.createdAt
-              })) ?? []
-            }
-            status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
-            title="Tollgate 1 review and approval"
-            tollgateType="tg1_baseline"
-          />
-          </div>
-          {!isArchived ? (
-            <div className="xl:col-span-5">
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Submit into Tollgate 1</CardTitle>
-                <CardDescription>
-                  Readiness submission keeps missing baseline blockers explicit before human sign-off begins.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form action={submitTollgateAction} className="space-y-4">
-                  <input name="outcomeId" type="hidden" value={outcome.id} />
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Submission note</span>
-                    <textarea
-                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                      defaultValue={tollgate?.comments ?? ""}
-                      name="comments"
-                    />
-                  </label>
-                  <PendingFormButton
-                    className="gap-2"
-                    icon={<ShieldCheck className="h-4 w-4" />}
-                    label="Submit to Tollgate 1"
-                    pendingLabel="Submitting to Tollgate 1..."
-                  />
-                </form>
-              </CardContent>
-            </Card>
-            </div>
-          ) : null}
           <div className={outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? "xl:col-span-4" : "xl:col-span-8"}>
           <HomeActivityCard
             defaultOpen={false}
@@ -599,16 +534,6 @@ export function FramingOutcomeSection({
               title: activity.eventType.replaceAll("_", " "),
               timestamp: new Date(activity.createdAt).toLocaleString("en-US")
             }))}
-          />
-          </div>
-          <div className="xl:col-span-4">
-          <GovernedLifecycleCard
-            archiveAction={archiveAction}
-            decision={removal?.decision ?? null}
-            entityId={outcome.id}
-            entityLabel="Outcome"
-            hardDeleteAction={hardDeleteAction}
-            restoreAction={restoreAction}
           />
           </div>
           {outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? (
@@ -627,6 +552,90 @@ export function FramingOutcomeSection({
             </div>
           ) : null}
       </div>
+
+      <CollapsibleFramingPanel
+        defaultOpen
+        description="Server-backed readiness, review, approval and escalation trail for Tollgate 1."
+        title="Tollgate 1 review and approval"
+      >
+        <TollgateDecisionCard
+          aiAccelerationLevel={outcome.aiAccelerationLevel}
+          approvalActions={tollgateReview?.approvalActions ?? []}
+          availablePeople={tollgateReview?.availablePeople ?? []}
+          blockers={blockers}
+          blockedActions={tollgateReview?.blockedActions ?? []}
+          comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
+          description="Server-backed readiness, review, approval and escalation trail for Tollgate 1."
+          entityId={outcome.id}
+          entityType="outcome"
+          formAction={recordTollgateDecisionAction}
+          hiddenFields={[{ name: "outcomeId", value: outcome.id }]}
+          hideHeader
+          pendingActions={tollgateReview?.pendingActions ?? []}
+          reviewActions={tollgateReview?.reviewActions ?? []}
+          signoffRecords={
+            tollgateReview?.signoffRecords.map((record) => ({
+              id: record.id,
+              decisionKind: record.decisionKind,
+              requiredRoleType: record.requiredRoleType,
+              actualPersonName: record.actualPersonName,
+              actualRoleTitle: record.actualRoleTitle,
+              organizationSide: record.organizationSide,
+              decisionStatus: record.decisionStatus,
+              note: record.note,
+              evidenceReference: record.evidenceReference,
+              createdAt: record.createdAt
+            })) ?? []
+          }
+          status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
+          title="Tollgate 1 review and approval"
+          tollgateType="tg1_baseline"
+        />
+      </CollapsibleFramingPanel>
+
+      {!isArchived ? (
+        <CollapsibleFramingPanel
+          defaultOpen={false}
+          description="Readiness submission keeps missing baseline blockers explicit before human sign-off begins."
+          title="Submit into Tollgate 1"
+        >
+          <form action={submitTollgateAction} className="space-y-4">
+            <input name="outcomeId" type="hidden" value={outcome.id} />
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Submission note</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={tollgate?.comments ?? ""}
+                name="comments"
+              />
+            </label>
+            <PendingFormButton
+              className="gap-2"
+              icon={<ShieldCheck className="h-4 w-4" />}
+              label="Submit to Tollgate 1"
+              pendingLabel="Submitting to Tollgate 1..."
+            />
+          </form>
+        </CollapsibleFramingPanel>
+      ) : null}
+
+      {removal?.decision ? (
+        <CollapsibleFramingPanel
+          defaultOpen={false}
+          description="Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context."
+          title="Remove or archive in this project"
+        >
+          <GovernedLifecycleCard
+            archiveAction={archiveAction}
+            decision={removal.decision}
+            entityId={outcome.id}
+            entityLabel="Outcome"
+            hardDeleteAction={hardDeleteAction}
+            hideHeader
+            restoreAction={restoreAction}
+          />
+        </CollapsibleFramingPanel>
+      ) : null}
 
       <CollapsibleFramingPanel
         defaultOpen={false}

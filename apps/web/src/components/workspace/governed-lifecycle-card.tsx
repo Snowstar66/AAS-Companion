@@ -12,6 +12,7 @@ type GovernedLifecycleCardProps = {
   entityId: string;
   entityLabel: string;
   decision: GovernedRemovalDecision | null;
+  hideHeader?: boolean;
   hiddenFields?: HiddenField[];
   hardDeleteAction?: (formData: FormData) => void | Promise<void>;
   archiveAction?: (formData: FormData) => void | Promise<void>;
@@ -30,6 +31,7 @@ export function GovernedLifecycleCard({
   entityId,
   entityLabel,
   decision,
+  hideHeader = false,
   hiddenFields = [],
   hardDeleteAction,
   archiveAction,
@@ -43,12 +45,14 @@ export function GovernedLifecycleCard({
 
   return (
     <Card className="border-border/70 shadow-sm">
-      <CardHeader>
-        <CardTitle>Remove or archive in this project</CardTitle>
-        <CardDescription>
-          Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context.
-        </CardDescription>
-      </CardHeader>
+      {hideHeader ? null : (
+        <CardHeader>
+          <CardTitle>Remove or archive in this project</CardTitle>
+          <CardDescription>
+            Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context.
+          </CardDescription>
+        </CardHeader>
+      )}
       <CardContent className="space-y-6">
         <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.18em]">
           <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-muted-foreground">

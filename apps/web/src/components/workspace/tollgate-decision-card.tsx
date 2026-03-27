@@ -29,6 +29,7 @@ type TollgateAction = {
 type TollgateDecisionCardProps = {
   title: string;
   description: string;
+  hideHeader?: boolean;
   status: "blocked" | "ready" | "approved";
   blockers: string[];
   comments?: string | null;
@@ -169,10 +170,12 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
 
   return (
     <Card className="border-border/70 shadow-sm">
-      <CardHeader>
-        <CardTitle>{props.title}</CardTitle>
-        <CardDescription>{props.description}</CardDescription>
-      </CardHeader>
+      {props.hideHeader ? null : (
+        <CardHeader>
+          <CardTitle>{props.title}</CardTitle>
+          <CardDescription>{props.description}</CardDescription>
+        </CardHeader>
+      )}
       <CardContent className="space-y-6">
         <div className={`rounded-2xl border px-4 py-4 text-sm ${statusTone}`}>
           <div className="flex items-center gap-2 font-medium">
