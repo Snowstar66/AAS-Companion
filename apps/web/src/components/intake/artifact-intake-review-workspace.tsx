@@ -484,6 +484,333 @@ function describeProjectEpic(option: ProjectEpicOption) {
   return `${option.key} - ${option.title}`;
 }
 
+function issueQuickFieldNames(issueId: string, candidateType: "outcome" | "epic" | "story") {
+  switch (issueId) {
+    case "outcome_key_missing":
+    case "epic_key_missing":
+    case "story_key_missing":
+      return ["key"];
+    case "outcome_statement_missing":
+      return ["outcomeStatement"];
+    case "baseline_definition_missing":
+      return ["baselineDefinition"];
+    case "baseline_source_missing":
+      return ["baselineSource"];
+    case "epic_scope_boundary_missing":
+      return ["scopeBoundary"];
+    case "story_acceptance_criteria_missing":
+      return ["acceptanceCriteria"];
+    case "story_test_definition_missing":
+    case "story_test_link_missing":
+      return ["testDefinition"];
+    case "story_definition_of_done_missing":
+      return ["definitionOfDone"];
+    case "epic_outcome_link_missing":
+      return ["outcomeCandidateId"];
+    case "story_outcome_link_missing":
+      return ["outcomeCandidateId"];
+    case "story_epic_link_missing":
+      return ["epicCandidateId"];
+    case "candidate_relationship_uncertain":
+      return candidateType === "story"
+        ? ["outcomeCandidateId", "epicCandidateId"]
+        : candidateType === "epic"
+          ? ["outcomeCandidateId"]
+          : [];
+    case "value_owner_human_only":
+      return ["valueOwnerId"];
+    case "ai_level_human_only":
+    case "story_ai_level_human_only":
+      return ["aiAccelerationLevel"];
+    case "risk_profile_human_only":
+      return ["riskProfile"];
+    case "baseline_validity_human_only":
+      return ["baselineValidity"];
+    case "risk_acceptance_human_only":
+      return ["riskAcceptanceStatus"];
+    default:
+      return [];
+  }
+}
+
+function compactMetric(labelText: string, metricValue: string | number) {
+  return (
+    <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground">
+      {labelText}: <strong className="ml-1 text-foreground">{metricValue}</strong>
+    </span>
+  );
+}
+
+function QuickIssueEditor(props: {
+  item: QueueItem;
+  selectedCandidate: IntakeArtifactCandidate;
+  formId: string;
+  projectOutcomes: ProjectOutcomeOption[];
+  projectEpics: ProjectEpicOption[];
+  selectedOutcomeCandidateId: string;
+  selectedEpicCandidateId: string;
+}) {
+  const inputClassName =
+    "h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition focus:border-primary";
+  const textareaClassName =
+    "min-h-24 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-primary";
+  const allEpicOptions = props.projectEpics;
+
+  switch (props.item.issueId) {
+    case "outcome_key_missing":
+    case "epic_key_missing":
+    case "story_key_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <input
+            className={inputClassName}
+            defaultValue={props.selectedCandidate.draftRecord?.key ?? ""}
+            form={props.formId}
+            name="key"
+            placeholder="Enter ID / key"
+            type="text"
+          />
+        </label>
+      );
+    case "outcome_statement_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <textarea
+            className={textareaClassName}
+            defaultValue={props.selectedCandidate.draftRecord?.outcomeStatement ?? ""}
+            form={props.formId}
+            name="outcomeStatement"
+            placeholder="Describe the intended outcome"
+          />
+        </label>
+      );
+    case "baseline_definition_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <textarea
+            className={textareaClassName}
+            defaultValue={props.selectedCandidate.draftRecord?.baselineDefinition ?? ""}
+            form={props.formId}
+            name="baselineDefinition"
+            placeholder="Describe the current baseline"
+          />
+        </label>
+      );
+    case "baseline_source_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <textarea
+            className={textareaClassName}
+            defaultValue={props.selectedCandidate.draftRecord?.baselineSource ?? ""}
+            form={props.formId}
+            name="baselineSource"
+            placeholder="Capture where the baseline came from"
+          />
+        </label>
+      );
+    case "epic_scope_boundary_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <textarea
+            className={textareaClassName}
+            defaultValue={props.selectedCandidate.draftRecord?.scopeBoundary ?? ""}
+            form={props.formId}
+            name="scopeBoundary"
+            placeholder="Define what stays inside and outside the Epic"
+          />
+        </label>
+      );
+    case "story_acceptance_criteria_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <textarea
+            className={textareaClassName}
+            defaultValue={(props.selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")}
+            form={props.formId}
+            name="acceptanceCriteria"
+            placeholder="One criterion per line"
+          />
+        </label>
+      );
+    case "story_test_definition_missing":
+    case "story_test_link_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <textarea
+            className={textareaClassName}
+            defaultValue={props.selectedCandidate.draftRecord?.testDefinition ?? ""}
+            form={props.formId}
+            name="testDefinition"
+            placeholder="Describe how the Story will be verified"
+          />
+        </label>
+      );
+    case "story_definition_of_done_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <textarea
+            className={textareaClassName}
+            defaultValue={(props.selectedCandidate.draftRecord?.definitionOfDone ?? []).join("\n")}
+            form={props.formId}
+            name="definitionOfDone"
+            placeholder="One done criterion per line"
+          />
+        </label>
+      );
+    case "epic_outcome_link_missing":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <select
+            className={inputClassName}
+            defaultValue={props.selectedOutcomeCandidateId}
+            form={props.formId}
+            name="outcomeCandidateId"
+          >
+            <option value="">Select project Outcome</option>
+            {props.projectOutcomes.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {describeProjectOutcome(candidate)}
+              </option>
+            ))}
+          </select>
+        </label>
+      );
+    case "story_outcome_link_missing":
+    case "story_epic_link_missing":
+    case "candidate_relationship_uncertain":
+      return (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="space-y-2">
+            <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Outcome</span>
+            <select
+              className={inputClassName}
+              defaultValue={props.selectedOutcomeCandidateId}
+              form={props.formId}
+              name="outcomeCandidateId"
+            >
+              <option value="">Select project Outcome</option>
+              {props.projectOutcomes.map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {describeProjectOutcome(candidate)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {props.selectedCandidate.type === "story" ? (
+            <label className="space-y-2">
+              <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Epic</span>
+              <select
+                className={inputClassName}
+                defaultValue={props.selectedEpicCandidateId}
+                form={props.formId}
+                name="epicCandidateId"
+              >
+                <option value="">Select project Epic</option>
+                {allEpicOptions.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {describeProjectEpic(candidate)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
+      );
+    case "value_owner_human_only":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <input
+            className={inputClassName}
+            defaultValue={props.selectedCandidate.humanDecisions?.valueOwnerId ?? ""}
+            form={props.formId}
+            name="valueOwnerId"
+            placeholder="Enter Value Owner"
+            type="text"
+          />
+        </label>
+      );
+    case "ai_level_human_only":
+    case "story_ai_level_human_only":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <select
+            className={inputClassName}
+            defaultValue={props.selectedCandidate.humanDecisions?.aiAccelerationLevel ?? ""}
+            form={props.formId}
+            name="aiAccelerationLevel"
+          >
+            <option value="">Select AI level</option>
+            <option value="level_1">Level 1</option>
+            <option value="level_2">Level 2</option>
+            <option value="level_3">Level 3</option>
+          </select>
+        </label>
+      );
+    case "risk_profile_human_only":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <select
+            className={inputClassName}
+            defaultValue={props.selectedCandidate.humanDecisions?.riskProfile ?? ""}
+            form={props.formId}
+            name="riskProfile"
+          >
+            <option value="">Select risk profile</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      );
+    case "baseline_validity_human_only":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <select
+            className={inputClassName}
+            defaultValue={props.selectedCandidate.humanDecisions?.baselineValidity ?? ""}
+            form={props.formId}
+            name="baselineValidity"
+          >
+            <option value="">Select baseline validity</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="needs_follow_up">Needs follow-up</option>
+          </select>
+        </label>
+      );
+    case "risk_acceptance_human_only":
+      return (
+        <label className="mt-3 block space-y-2">
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
+          <select
+            className={inputClassName}
+            defaultValue={props.selectedCandidate.humanDecisions?.riskAcceptanceStatus ?? ""}
+            form={props.formId}
+            name="riskAcceptanceStatus"
+          >
+            <option value="">Select risk acceptance status</option>
+            <option value="accepted">Accepted</option>
+            <option value="needs_review">Needs review</option>
+          </select>
+        </label>
+      );
+    default:
+      return null;
+  }
+}
+
 function CollapsibleReviewPanel(props: {
   title: string;
   description: string;
@@ -573,34 +900,35 @@ export function ArtifactIntakeReviewWorkspace({
         : selectedCandidate?.type === "outcome"
           ? "Approving this import will create or update a governed Outcome in the project. After approval it continues through the same Tollgate 1 and review process as native Outcomes."
           : null;
+  const quickEditFieldNames = new Set(
+    (selectedCandidate?.complianceResult?.findings ?? []).flatMap((finding) =>
+      issueQuickFieldNames(finding.code, selectedCandidate?.type ?? "story")
+    )
+  );
+  const showHumanDecisionFields = ["valueOwnerId", "baselineValidity", "aiAccelerationLevel", "riskProfile", "riskAcceptanceStatus"].some(
+    (fieldName) => !quickEditFieldNames.has(fieldName)
+  );
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-border/70 bg-muted/10 p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               Artifact-scoped project review
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Current artifact context</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Review stays scoped to one imported artifact at a time so full source, interpreted candidates, and the
-              correction queue stay aligned.
+            <h2 className="mt-1 text-xl font-semibold tracking-tight">Current artifact context</h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Keep review scoped to one imported artifact, clear the queue inline, then approve the import into governed work.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-              {selectedFile.fileName}
-            </span>
-            <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-              {bytes(selectedFile.sizeBytes)}
-            </span>
-            <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-              {selectedFile.parsedSectionCount} parsed sections
-            </span>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {compactMetric("File", selectedFile.fileName)}
+            {compactMetric("Size", bytes(selectedFile.sizeBytes))}
+            {compactMetric("Parsed", selectedFile.parsedSectionCount)}
             {selectedFile.sourceTypeConfidence ? (
               <span
-                className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${confidenceTone(selectedFile.sourceTypeConfidence)}`}
+                className={`inline-flex rounded-full border px-3 py-1 font-medium ${confidenceTone(selectedFile.sourceTypeConfidence)}`}
               >
                 {selectedFile.sourceTypeConfidence} confidence
               </span>
@@ -628,51 +956,16 @@ export function ArtifactIntakeReviewWorkspace({
             </ol>
           </div>
           {progress ? (
-            <div className="space-y-3">
-              <div className="grid gap-3 lg:grid-cols-4">
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Remaining</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">{progress.unresolved}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Resolved</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">{progress.resolved}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">{progress.categories.blocked}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">Still intentionally stopping promotion.</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Progress</p>
-                  <p className="mt-2 text-2xl font-semibold text-foreground">
-                    {progress.total > 0 ? Math.round((progress.resolved / progress.total) * 100) : 100}%
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Missing</p>
-                  <p className="mt-1 font-semibold text-foreground">{progress.categories.missing}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Uncertain</p>
-                  <p className="mt-1 font-semibold text-foreground">{progress.categories.uncertain}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Human-only</p>
-                  <p className="mt-1 font-semibold text-foreground">{progress.categories.humanOnly}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Outside candidate</p>
-                  <p className="mt-1 font-semibold text-foreground">{progress.categories.unmapped}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Source sections not yet absorbed into a candidate.</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total tracked</p>
-                  <p className="mt-1 font-semibold text-foreground">{progress.total}</p>
-                </div>
-              </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              {compactMetric("Remaining", progress.unresolved)}
+              {compactMetric("Resolved", progress.resolved)}
+              {compactMetric("Blocked", progress.categories.blocked)}
+              {compactMetric("Progress", `${progress.total > 0 ? Math.round((progress.resolved / progress.total) * 100) : 100}%`)}
+              {compactMetric("Missing", progress.categories.missing)}
+              {compactMetric("Uncertain", progress.categories.uncertain)}
+              {compactMetric("Human-only", progress.categories.humanOnly)}
+              {compactMetric("Outside candidate", progress.categories.unmapped)}
+              {compactMetric("Total tracked", progress.total)}
             </div>
           ) : null}
 
@@ -702,7 +995,7 @@ export function ArtifactIntakeReviewWorkspace({
                     No items currently belong to this queue section for the selected artifact.
                   </div>
                 ) : (
-                  <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                  <div className="mt-4 grid gap-3">
                     {group.items.map((item) => (
                       <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item.id}>
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -725,12 +1018,31 @@ export function ArtifactIntakeReviewWorkspace({
                             {item.actionScope === "section" ? "Source section" : "Candidate issue"}
                           </span>
                         </div>
-                        <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
-                          <Link href={item.href} prefetch={false}>
-                            Open in context
-                            <GitBranch className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        {selectedCandidate && item.actionScope === "candidate" && item.candidateId === selectedCandidate.id ? (
+                          <QuickIssueEditor
+                            item={item}
+                            formId="candidate-editor"
+                            projectEpics={projectEpics}
+                            projectOutcomes={projectOutcomes}
+                            selectedCandidate={selectedCandidate}
+                            selectedEpicCandidateId={selectedCandidate.draftRecord?.epicCandidateId ?? selectedEpicCandidateId}
+                            selectedOutcomeCandidateId={selectedCandidate.draftRecord?.outcomeCandidateId ?? selectedOutcomeCandidateId}
+                          />
+                        ) : item.actionScope === "section" ? (
+                          <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
+                            <Link href={item.href} prefetch={false}>
+                              View source section
+                              <GitBranch className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        ) : item.actionScope === "candidate" ? (
+                          <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
+                            <Link href={item.href} prefetch={false}>
+                              Open candidate details
+                              <GitBranch className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        ) : null}
                         {item.actionScope === "candidate" && item.candidateId && item.candidateType ? (
                           <ArtifactIntakeDispositionButtons
                             actions={item.actions}
@@ -988,10 +1300,10 @@ export function ArtifactIntakeReviewWorkspace({
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Correction workspace and approval</CardTitle>
+                  <CardTitle>Save and approve import</CardTitle>
                   <CardDescription>
-                    Human corrections are persisted here before approval. Approving the import is the moment it becomes
-                    governed project work and continues through the same review path as native records.
+                    Quick fixes in the queue write into this same review form. Use this section for any remaining details,
+                    your review comment, and the final save or approval step.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1009,15 +1321,17 @@ export function ArtifactIntakeReviewWorkspace({
                     </div>
                   ) : null}
 
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Key</span>
-                    <input
-                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                      defaultValue={selectedCandidate.draftRecord?.key ?? ""}
-                      name="key"
-                      type="text"
-                    />
-                  </label>
+                  {!quickEditFieldNames.has("key") ? (
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-foreground">Key</span>
+                      <input
+                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                        defaultValue={selectedCandidate.draftRecord?.key ?? ""}
+                        name="key"
+                        type="text"
+                      />
+                    </label>
+                  ) : null}
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Title</span>
                     <input
@@ -1030,30 +1344,36 @@ export function ArtifactIntakeReviewWorkspace({
 
                   {selectedCandidate.type === "outcome" ? (
                     <>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Outcome statement</span>
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.draftRecord?.outcomeStatement ?? ""}
-                          name="outcomeStatement"
-                        />
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Baseline definition</span>
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.draftRecord?.baselineDefinition ?? ""}
-                          name="baselineDefinition"
-                        />
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Baseline source</span>
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.draftRecord?.baselineSource ?? ""}
-                          name="baselineSource"
-                        />
-                      </label>
+                      {!quickEditFieldNames.has("outcomeStatement") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Outcome statement</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.draftRecord?.outcomeStatement ?? ""}
+                            name="outcomeStatement"
+                          />
+                        </label>
+                      ) : null}
+                      {!quickEditFieldNames.has("baselineDefinition") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Baseline definition</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.draftRecord?.baselineDefinition ?? ""}
+                            name="baselineDefinition"
+                          />
+                        </label>
+                      ) : null}
+                      {!quickEditFieldNames.has("baselineSource") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Baseline source</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.draftRecord?.baselineSource ?? ""}
+                            name="baselineSource"
+                          />
+                        </label>
+                      ) : null}
                     </>
                   ) : null}
 
@@ -1067,14 +1387,16 @@ export function ArtifactIntakeReviewWorkspace({
                           name="purpose"
                         />
                       </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Scope boundary</span>
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.draftRecord?.scopeBoundary ?? ""}
-                          name="scopeBoundary"
-                        />
-                      </label>
+                      {!quickEditFieldNames.has("scopeBoundary") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Scope boundary</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.draftRecord?.scopeBoundary ?? ""}
+                            name="scopeBoundary"
+                          />
+                        </label>
+                      ) : null}
                       <label className="space-y-2">
                         <span className="text-sm font-medium text-foreground">Risk note</span>
                         <textarea
@@ -1083,21 +1405,23 @@ export function ArtifactIntakeReviewWorkspace({
                           name="riskNote"
                         />
                       </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
-                        <select
-                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedOutcomeCandidateId}
-                          name="outcomeCandidateId"
-                        >
-                          <option value="">Select project Outcome</option>
-                          {outcomeCandidateOptions.map((candidate) => (
-                            <option key={candidate.id} value={candidate.id}>
-                              {describeProjectOutcome(candidate)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      {!quickEditFieldNames.has("outcomeCandidateId") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                          <select
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedOutcomeCandidateId}
+                            name="outcomeCandidateId"
+                          >
+                            <option value="">Select project Outcome</option>
+                            {outcomeCandidateOptions.map((candidate) => (
+                              <option key={candidate.id} value={candidate.id}>
+                                {describeProjectOutcome(candidate)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                     </>
                   ) : null}
 
@@ -1123,14 +1447,16 @@ export function ArtifactIntakeReviewWorkspace({
                           name="valueIntent"
                         />
                       </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                          defaultValue={(selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")}
-                          name="acceptanceCriteria"
-                        />
-                      </label>
+                      {!quickEditFieldNames.has("acceptanceCriteria") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            defaultValue={(selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")}
+                            name="acceptanceCriteria"
+                          />
+                        </label>
+                      ) : null}
                       <label className="space-y-2">
                         <span className="text-sm font-medium text-foreground">AI usage scope</span>
                         <input
@@ -1140,127 +1466,151 @@ export function ArtifactIntakeReviewWorkspace({
                           type="text"
                         />
                       </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Test Definition</span>
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.draftRecord?.testDefinition ?? ""}
-                          name="testDefinition"
-                        />
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Definition of Done</span>
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                          defaultValue={(selectedCandidate.draftRecord?.definitionOfDone ?? []).join("\n")}
-                          name="definitionOfDone"
-                        />
-                      </label>
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      {!quickEditFieldNames.has("testDefinition") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
-                          <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                            defaultValue={selectedOutcomeCandidateId}
-                            name="outcomeCandidateId"
-                          >
-                            <option value="">Select project Outcome</option>
-                            {outcomeCandidateOptions.map((candidate) => (
-                              <option key={candidate.id} value={candidate.id}>
-                                {describeProjectOutcome(candidate)}
-                              </option>
-                            ))}
-                          </select>
+                          <span className="text-sm font-medium text-foreground">Test Definition</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.draftRecord?.testDefinition ?? ""}
+                            name="testDefinition"
+                          />
                         </label>
+                      ) : null}
+                      {!quickEditFieldNames.has("definitionOfDone") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Linked imported Epic</span>
-                          <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                            defaultValue={selectedEpicCandidateId}
-                            name="epicCandidateId"
-                          >
-                            <option value="">Select project Epic</option>
-                            {epicCandidateOptions.map((candidate) => (
-                              <option key={candidate.id} value={candidate.id}>
-                                {describeProjectEpic(candidate)}
-                              </option>
-                            ))}
-                          </select>
+                          <span className="text-sm font-medium text-foreground">Definition of Done</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            defaultValue={(selectedCandidate.draftRecord?.definitionOfDone ?? []).join("\n")}
+                            name="definitionOfDone"
+                          />
                         </label>
-                      </div>
-                      <p className="text-xs leading-5 text-muted-foreground">
-                        Choose the project Outcome and Epic this imported work should land in. If there is only one
-                        available option, it is preselected automatically.
-                      </p>
+                      ) : null}
+                      {!quickEditFieldNames.has("outcomeCandidateId") || !quickEditFieldNames.has("epicCandidateId") ? (
+                        <>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {!quickEditFieldNames.has("outcomeCandidateId") ? (
+                              <label className="space-y-2">
+                                <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                                <select
+                                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                  defaultValue={selectedOutcomeCandidateId}
+                                  name="outcomeCandidateId"
+                                >
+                                  <option value="">Select project Outcome</option>
+                                  {outcomeCandidateOptions.map((candidate) => (
+                                    <option key={candidate.id} value={candidate.id}>
+                                      {describeProjectOutcome(candidate)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            ) : null}
+                            {!quickEditFieldNames.has("epicCandidateId") ? (
+                              <label className="space-y-2">
+                                <span className="text-sm font-medium text-foreground">Linked imported Epic</span>
+                                <select
+                                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                  defaultValue={selectedEpicCandidateId}
+                                  name="epicCandidateId"
+                                >
+                                  <option value="">Select project Epic</option>
+                                  {epicCandidateOptions.map((candidate) => (
+                                    <option key={candidate.id} value={candidate.id}>
+                                      {describeProjectEpic(candidate)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            ) : null}
+                          </div>
+                          <p className="text-xs leading-5 text-muted-foreground">
+                            Choose the project Outcome and Epic this imported work should land in. If there is only one
+                            available option, it is preselected automatically.
+                          </p>
+                        </>
+                      ) : null}
                     </>
                   ) : null}
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary" />
-                      <p className="text-sm font-medium text-foreground">Human-only decisions</p>
+                  {showHumanDecisionFields ? (
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="mb-3 flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-medium text-foreground">Human-only decisions</p>
+                      </div>
+                      <div className="grid gap-4">
+                      {!quickEditFieldNames.has("valueOwnerId") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Value Owner</span>
+                          <input
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.humanDecisions?.valueOwnerId ?? ""}
+                            name="valueOwnerId"
+                            type="text"
+                          />
+                        </label>
+                      ) : null}
+                      {!quickEditFieldNames.has("baselineValidity") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Baseline validity</span>
+                          <select
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.humanDecisions?.baselineValidity ?? ""}
+                            name="baselineValidity"
+                          >
+                            <option value="">Unresolved</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="needs_follow_up">Needs follow-up</option>
+                          </select>
+                        </label>
+                      ) : null}
+                      {!quickEditFieldNames.has("aiAccelerationLevel") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">AI level</span>
+                          <select
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.humanDecisions?.aiAccelerationLevel ?? ""}
+                            name="aiAccelerationLevel"
+                          >
+                            <option value="">Unresolved</option>
+                            <option value="level_1">Level 1</option>
+                            <option value="level_2">Level 2</option>
+                            <option value="level_3">Level 3</option>
+                          </select>
+                        </label>
+                      ) : null}
+                      {!quickEditFieldNames.has("riskProfile") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Risk profile</span>
+                          <select
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.humanDecisions?.riskProfile ?? ""}
+                            name="riskProfile"
+                          >
+                            <option value="">Unresolved</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                          </select>
+                        </label>
+                      ) : null}
+                      {!quickEditFieldNames.has("riskAcceptanceStatus") ? (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Risk acceptance status</span>
+                          <select
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            defaultValue={selectedCandidate.humanDecisions?.riskAcceptanceStatus ?? ""}
+                            name="riskAcceptanceStatus"
+                          >
+                            <option value="">Unresolved</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="needs_review">Needs review</option>
+                          </select>
+                        </label>
+                      ) : null}
+                      </div>
                     </div>
-                    <div className="grid gap-4">
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Value Owner</span>
-                        <input
-                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.humanDecisions?.valueOwnerId ?? ""}
-                          name="valueOwnerId"
-                          type="text"
-                        />
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Baseline validity</span>
-                        <select
-                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.humanDecisions?.baselineValidity ?? ""}
-                          name="baselineValidity"
-                        >
-                          <option value="">Unresolved</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="needs_follow_up">Needs follow-up</option>
-                        </select>
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">AI level</span>
-                        <select
-                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.humanDecisions?.aiAccelerationLevel ?? ""}
-                          name="aiAccelerationLevel"
-                        >
-                          <option value="">Unresolved</option>
-                          <option value="level_1">Level 1</option>
-                          <option value="level_2">Level 2</option>
-                          <option value="level_3">Level 3</option>
-                        </select>
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Risk profile</span>
-                        <select
-                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.humanDecisions?.riskProfile ?? ""}
-                          name="riskProfile"
-                        >
-                          <option value="">Unresolved</option>
-                          <option value="low">Low</option>
-                          <option value="medium">Medium</option>
-                          <option value="high">High</option>
-                        </select>
-                      </label>
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Risk acceptance status</span>
-                        <select
-                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                          defaultValue={selectedCandidate.humanDecisions?.riskAcceptanceStatus ?? ""}
-                          name="riskAcceptanceStatus"
-                        >
-                          <option value="">Unresolved</option>
-                          <option value="accepted">Accepted</option>
-                          <option value="needs_review">Needs review</option>
-                        </select>
-                      </label>
-                    </div>
-                  </div>
+                  ) : null}
 
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Review comment</span>

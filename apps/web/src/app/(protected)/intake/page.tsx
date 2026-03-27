@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Inbox } from "lucide-react";
+import { ChevronDown, Inbox } from "lucide-react";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
@@ -139,17 +139,32 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
       }}
     >
       <section className="space-y-6">
-        <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="rounded-2xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.12),_transparent_40%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <Inbox className="h-3.5 w-3.5 text-primary" />
             Import before promotion
           </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Project Import</h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-            Upload markdown delivery artifacts, inspect the full imported source, review structured candidates, and
-            correct them before promotion.
-          </p>
-          <div className="mt-5 max-w-4xl">
+          <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight">Project Import</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                Upload markdown delivery artifacts, inspect the full imported source, review structured candidates, and
+                correct them before promotion.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                {workspace.state === "ready" ? `${workspace.summary.files} uploaded file(s)` : "Intake overview"}
+              </span>
+              <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                {workspace.state === "ready" ? `${workspace.summary.candidateObjects} candidate object(s)` : workspace.organizationName}
+              </span>
+              <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                {workspace.state === "ready" ? `${workspace.summary.humanReviewRequired} human review queue(s)` : "Project scope"}
+              </span>
+            </div>
+          </div>
+          <div className="mt-4 max-w-4xl">
             <ContextHelp pattern={importHelp} summaryLabel="Open import help" />
           </div>
         </div>
@@ -349,34 +364,27 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                           Persisted intake activity and current review volume for this project.
                         </p>
                       </div>
-                      <span className="text-xs text-muted-foreground group-open:hidden">Expand</span>
-                      <span className="hidden text-xs text-muted-foreground group-open:inline">Collapse</span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
                     </summary>
-                    <div className="grid gap-3 border-t border-border/70 px-4 py-4 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Sessions</p>
-                        <p className="mt-1 font-semibold text-foreground">{workspace.summary.sessions}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Uploaded files</p>
-                        <p className="mt-1 font-semibold text-foreground">{workspace.summary.files}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pending classification</p>
-                        <p className="mt-1 font-semibold text-foreground">{workspace.summary.pendingClassification}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Parsed sections</p>
-                        <p className="mt-1 font-semibold text-foreground">{workspace.summary.parsedSections}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Candidate objects</p>
-                        <p className="mt-1 font-semibold text-foreground">{workspace.summary.candidateObjects}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Human review queues</p>
-                        <p className="mt-1 font-semibold text-foreground">{workspace.summary.humanReviewRequired}</p>
-                      </div>
+                    <div className="flex flex-wrap gap-2 border-t border-border/70 px-4 py-4 text-xs text-muted-foreground">
+                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                        Sessions: <strong className="ml-1 text-foreground">{workspace.summary.sessions}</strong>
+                      </span>
+                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                        Uploaded files: <strong className="ml-1 text-foreground">{workspace.summary.files}</strong>
+                      </span>
+                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                        Pending classification: <strong className="ml-1 text-foreground">{workspace.summary.pendingClassification}</strong>
+                      </span>
+                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                        Parsed sections: <strong className="ml-1 text-foreground">{workspace.summary.parsedSections}</strong>
+                      </span>
+                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                        Candidate objects: <strong className="ml-1 text-foreground">{workspace.summary.candidateObjects}</strong>
+                      </span>
+                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
+                        Human review queues: <strong className="ml-1 text-foreground">{workspace.summary.humanReviewRequired}</strong>
+                      </span>
                     </div>
                   </details>
 
@@ -389,8 +397,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                             The current review context is always tied to one imported file.
                           </p>
                         </div>
-                        <span className="text-xs text-muted-foreground group-open:hidden">Expand</span>
-                        <span className="hidden text-xs text-muted-foreground group-open:inline">Collapse</span>
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
                       </summary>
                       <div className="space-y-4 border-t border-border/70 px-4 py-4">
                         <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
@@ -427,6 +434,24 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                             </div>
                           ))}
                         </div>
+                        <details className="group rounded-2xl border border-border/70 bg-muted/10">
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">Imported file snapshot</p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Expand to inspect the exact file content as it looked at intake.
+                              </p>
+                            </div>
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+                          </summary>
+                          <div className="border-t border-border/70 px-4 py-4">
+                            <div className="rounded-2xl border border-border/70 bg-slate-950 px-4 py-4 text-sm text-slate-100 shadow-inner">
+                              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words font-mono leading-6">
+                                {selectedFile.content}
+                              </pre>
+                            </div>
+                          </div>
+                        </details>
                         {selectedFileCandidates.length === 0 && (selectedSession?.clearedCandidateCount ?? 0) > 0 ? (
                           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
                             This artifact has no active import candidates left. Any earlier candidates were either rejected
