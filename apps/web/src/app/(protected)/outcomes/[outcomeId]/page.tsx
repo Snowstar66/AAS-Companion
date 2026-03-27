@@ -5,6 +5,7 @@ import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
+import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
 import { AppShell } from "@/components/layout/app-shell";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
@@ -14,6 +15,7 @@ import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { getHelpPattern, getInlineGuidance } from "@/lib/help/aas-help";
 import {
   archiveOutcomeAction,
@@ -79,6 +81,10 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
       : "not started";
   const isArchived = outcome.lifecycleState === "archived";
   const framingHelp = getHelpPattern("outcome.authoring", outcome.aiAccelerationLevel);
+  const framingBriefExport = buildFramingBriefExport({
+    outcome,
+    blockers
+  });
 
   return (
     <AppShell hideRightRail topbarProps={{ eyebrow: "AAS Companion", projectName: organization.organizationName, sectionLabel: "Outcome", badge: outcome.key }}>
@@ -229,6 +235,8 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                 epics={outcome.epics.map((epic) => ({ id: epic.id, key: epic.key, title: epic.title, href: `/epics/${epic.id}`, isCurrent: false, scopeBoundary: epic.scopeBoundary ?? null, stories: outcome.stories.filter((story) => story.epicId === epic.id).map((story) => ({ id: story.id, key: story.key, title: story.title, href: `/stories/${story.id}`, isCurrent: false, testDefinition: story.testDefinition ?? null, acceptanceCriteria: story.acceptanceCriteria, definitionOfDone: story.definitionOfDone, status: story.status, lifecycleState: story.lifecycleState, tollgateStatus: story.tollgateStatus ?? null })) }))}
                 outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: `/outcomes/${outcome.id}`, isCurrent: true }}
               />
+
+              <FramingBriefExportPanel disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
 
               {!isArchived ? (
                 <div className="flex flex-col gap-3 sm:flex-row">

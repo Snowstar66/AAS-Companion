@@ -3,6 +3,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
 import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
@@ -11,6 +12,7 @@ import { FramingValueSpineTree } from "@/components/workspace/framing-value-spin
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
+import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { getHelpPattern, getInlineGuidance } from "@/lib/help/aas-help";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
@@ -81,6 +83,10 @@ export function FramingOutcomeSection({
   const isArchived = outcome.lifecycleState === "archived";
   const framingHelp = getHelpPattern("outcome.authoring", outcome.aiAccelerationLevel);
   const framingHref = `/framing?outcomeId=${outcome.id}`;
+  const framingBriefExport = buildFramingBriefExport({
+    outcome,
+    blockers
+  });
 
   return (
     <section className="space-y-6">
@@ -426,6 +432,8 @@ export function FramingOutcomeSection({
                 }))}
               outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref, isCurrent: true }}
             />
+
+            <FramingBriefExportPanel disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
 
             {!isArchived ? (
               <div className="flex flex-col gap-3 sm:flex-row">

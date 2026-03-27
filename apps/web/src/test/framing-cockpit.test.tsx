@@ -185,6 +185,8 @@ describe("Framing page", () => {
 
     expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
+    expect(screen.getByText("Export framing brief")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Copy Framing Markdown" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Tollgate 1 review and approval" })).toBeDefined();
     expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
     expect(screen.queryByText("Framing Cockpit")).toBeNull();

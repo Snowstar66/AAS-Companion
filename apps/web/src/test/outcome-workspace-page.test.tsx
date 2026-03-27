@@ -223,6 +223,9 @@ describe("Outcome page", () => {
     expect(screen.getAllByText("Status: draft").length).toBeGreaterThan(0);
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("Customer handshake")).toBeDefined();
+    expect(screen.getByText("Export framing brief")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Copy Framing Markdown" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Copy Framing JSON" })).toBeDefined();
     expect(screen.getByText("AI and risk posture")).toBeDefined();
     expect(screen.getByDisplayValue("level_2")).toBeDefined();
     expect(screen.getByText("Design direction seeds")).toBeDefined();
