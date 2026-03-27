@@ -54,6 +54,24 @@ type FramingValueSpineTreeProps = {
   emptyStoryMessage: string;
 };
 
+function getMissingStoryInputs(story: Pick<TreeStory, "testDefinition" | "acceptanceCriteria" | "definitionOfDone">) {
+  const missing: string[] = [];
+
+  if (!story.acceptanceCriteria?.length) {
+    missing.push("Acceptance criteria");
+  }
+
+  if (!story.testDefinition?.trim()) {
+    missing.push("Test Definition");
+  }
+
+  if (!story.definitionOfDone?.length) {
+    missing.push("Definition of Done");
+  }
+
+  return missing;
+}
+
 function CurrentBadge({ show = false }: { show?: boolean | undefined }) {
   if (!show) {
     return null;
@@ -200,6 +218,13 @@ export function FramingValueSpineTree({
                           pendingActionCount: story.pendingActionCount ?? 0,
                           blockedActionCount: story.blockedActionCount ?? 0
                         });
+                        const missingInputs = getMissingStoryInputs(story);
+                        const storyPathGuidance =
+                          storyUx.statusLabel === "Ready for review"
+                            ? "All required design inputs are present. Submit the Story to start review and approval."
+                            : missingInputs.length > 0
+                              ? `Missing: ${missingInputs.join(", ")}.`
+                              : storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
 
                         return (
                           <div className="rounded-2xl border border-border/70 bg-background p-4" key={story.id}>
@@ -218,12 +243,6 @@ export function FramingValueSpineTree({
                                   </Link>
                                 </Button>
                               </div>
-                            </div>
-
-                            <div className={`mt-4 rounded-2xl border px-3 py-3 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
-                              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Operational status</p>
-                              <p className="mt-2 font-semibold">{storyUx.statusLabel}</p>
-                              <p className="mt-2 leading-6">{storyUx.statusDetail}</p>
                             </div>
 
                             <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4">
@@ -248,7 +267,7 @@ export function FramingValueSpineTree({
                                 </ol>
                               </div>
                               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                                {storyUx.nextActions[0]?.description ?? storyUx.readinessDetail}
+                                {storyPathGuidance}
                               </p>
                             </div>
 
