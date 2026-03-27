@@ -1,5 +1,6 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -51,6 +52,26 @@ function getOriginSummary(originType: string) {
 
 function getWorkspaceLabel(outcome: { originType: string; createdMode: string }) {
   return outcome.originType === "native" && outcome.createdMode === "clean" ? "Clean" : "Shared";
+}
+
+function CollapsibleFramingPanel(props: {
+  title: string;
+  description: string;
+  defaultOpen?: boolean | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group rounded-2xl border border-border/70 bg-background shadow-sm" open={props.defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
+        <div>
+          <h3 className="font-semibold text-foreground">{props.title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
+        </div>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-border/70 px-6 py-5">{props.children}</div>
+    </details>
+  );
 }
 
 export function FramingOutcomeSection({
@@ -230,9 +251,7 @@ export function FramingOutcomeSection({
         </>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.38fr)_minmax(320px,0.92fr)]">
-        <div className="space-y-6">
-          <form action={saveAction} className="space-y-6">
+      <form action={saveAction} className="space-y-6">
             <input name="outcomeId" type="hidden" value={outcome.id} />
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
@@ -396,44 +415,48 @@ export function FramingOutcomeSection({
               </Card>
             </div>
 
-            <FramingValueSpineTree
-              emptyEpicMessage={
-                isArchived
-                  ? "Archived Outcomes no longer surface active Epic work in this branch."
-                  : "Create the first native Epic here. Empty branches stay empty until you add child work."
-              }
-              emptyStoryMessage={
-                isArchived
-                  ? "Archived Outcomes no longer surface active Story work."
-                  : "Create Stories from the relevant Epic so the hierarchy stays scoped to this Framing."
-              }
-              epics={outcome.epics.map((epic) => ({
-                id: epic.id,
-                key: epic.key,
-                title: epic.title,
-                href: `/epics/${epic.id}`,
-                isCurrent: false,
-                scopeBoundary: epic.scopeBoundary ?? null,
-                stories: outcome.stories
-                  .filter((story) => story.epicId === epic.id)
-                  .map((story) => ({
-                    id: story.id,
-                    key: story.key,
-                    title: story.title,
-                    href: `/stories/${story.id}`,
-                    isCurrent: false,
-                    testDefinition: story.testDefinition ?? null,
-                    acceptanceCriteria: story.acceptanceCriteria,
-                    definitionOfDone: story.definitionOfDone,
-                    status: story.status,
-                    lifecycleState: story.lifecycleState,
-                    tollgateStatus: story.tollgateStatus ?? null
+            <CollapsibleFramingPanel
+              defaultOpen
+              description="Expand the full branch only when you need to inspect Epics and Stories in detail."
+              title="Framing scope value spine"
+            >
+              <FramingValueSpineTree
+                emptyEpicMessage={
+                  isArchived
+                    ? "Archived Outcomes no longer surface active Epic work in this branch."
+                    : "Create the first native Epic here. Empty branches stay empty until you add child work."
+                }
+                emptyStoryMessage={
+                  isArchived
+                    ? "Archived Outcomes no longer surface active Story work."
+                    : "Create Stories from the relevant Epic so the hierarchy stays scoped to this Framing."
+                }
+                epics={outcome.epics.map((epic) => ({
+                  id: epic.id,
+                  key: epic.key,
+                  title: epic.title,
+                  href: `/epics/${epic.id}`,
+                  isCurrent: false,
+                  scopeBoundary: epic.scopeBoundary ?? null,
+                  stories: outcome.stories
+                    .filter((story) => story.epicId === epic.id)
+                    .map((story) => ({
+                      id: story.id,
+                      key: story.key,
+                      title: story.title,
+                      href: `/stories/${story.id}`,
+                      isCurrent: false,
+                      testDefinition: story.testDefinition ?? null,
+                      acceptanceCriteria: story.acceptanceCriteria,
+                      definitionOfDone: story.definitionOfDone,
+                      status: story.status,
+                      lifecycleState: story.lifecycleState,
+                      tollgateStatus: story.tollgateStatus ?? null
                     }))
                 }))}
-              outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref, isCurrent: true }}
-            />
-
-            <FramingBriefExportPanel disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
+                outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref, isCurrent: true }}
+              />
+            </CollapsibleFramingPanel>
 
             {!isArchived ? (
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -454,10 +477,9 @@ export function FramingOutcomeSection({
                 <Link href="/framing">Back to Framing Cockpit</Link>
               </Button>
             ) : null}
-          </form>
-        </div>
+      </form>
 
-        <div className="space-y-6">
+      <div className="grid items-start gap-6 xl:grid-cols-2 2xl:grid-cols-3">
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>Readiness blockers</CardTitle>
@@ -588,8 +610,15 @@ export function FramingOutcomeSection({
               </CardContent>
             </Card>
           ) : null}
-        </div>
       </div>
+
+      <CollapsibleFramingPanel
+        defaultOpen={false}
+        description="Expand when you want to export the customer handshake into another AI tool or workflow."
+        title="Export framing brief"
+      >
+        <FramingBriefExportPanel disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
+      </CollapsibleFramingPanel>
     </section>
   );
 }
