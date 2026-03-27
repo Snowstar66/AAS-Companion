@@ -11,7 +11,6 @@ import {
   PlusCircle,
   ShieldCheck,
   Sparkles,
-  TestTube2,
   Trash2
 } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -129,6 +128,15 @@ function attentionTone(kind: "blocker" | "pending") {
   return "border-amber-200/80 bg-amber-50/70";
 }
 
+function CompactProjectCount(props: { label: string; value: number | string }) {
+  return (
+    <div className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+      <span className="uppercase tracking-[0.18em]">{props.label}</span>
+      <span className="ml-2 font-semibold text-foreground">{props.value}</span>
+    </div>
+  );
+}
+
 export default async function HomePage({ searchParams }: HomePageProps) {
   const query = searchParams ? await searchParams : {};
   const {
@@ -173,6 +181,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     { href: "/intake", label: "Open Import", icon: ClipboardList }
   ];
   const activeProjectSummary = projects.find((project) => project.isActive) ?? null;
+  const managedProjectCount = projects.length;
 
   return (
     <ViewerSessionProvider session={session}>
@@ -396,7 +405,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </CardHeader>
             <CardContent className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
               <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Available projects</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="mr-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Available projects</p>
+                  <CompactProjectCount label="Projects" value={managedProjectCount} />
+                  <CompactProjectCount label="Active" value={hasActiveProject ? currentProjectName : "None"} />
+                  <CompactProjectCount label="Mode" value={isDemoSession ? "Demo" : "Normal"} />
+                </div>
                 {!canManageProjects ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
                     {isDemoSession
@@ -409,11 +423,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     <p className="mt-2">Create the first project here, or open Demo explicitly if you need reference material.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="overflow-hidden rounded-3xl border border-border/70 bg-background/90 shadow-sm">
                     {projects.map((project) => (
-                      <div className="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm" key={project.organizationId}>
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
+                      <div
+                        className="border-b border-border/70 px-4 py-4 last:border-b-0 sm:px-5"
+                        key={project.organizationId}
+                      >
+                        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                          <div className="space-y-3">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-semibold text-foreground">{project.organizationName}</p>
                               {project.isActive ? (
@@ -421,35 +438,24 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                                   Active
                                 </span>
                               ) : null}
+                              <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                {project.organizationSlug}
+                              </span>
                             </div>
-                            <p className="mt-1 text-sm text-muted-foreground">{project.organizationSlug}</p>
+                            <div className="flex flex-wrap gap-2">
+                              <CompactProjectCount label="Outcomes" value={project.counts.outcomes} />
+                              <CompactProjectCount label="Epics" value={project.counts.epics} />
+                              <CompactProjectCount label="Stories" value={project.counts.stories} />
+                              <CompactProjectCount label="Events" value={project.counts.activityEvents} />
+                            </div>
                           </div>
                           <form action={openProjectAction}>
                             <input name="organizationId" type="hidden" value={project.organizationId} />
-                            <Button className="gap-2" size="sm" type="submit" variant={project.isActive ? "default" : "secondary"}>
+                            <Button className="gap-2 w-full lg:w-auto" size="sm" type="submit" variant={project.isActive ? "default" : "secondary"}>
                               {project.isActive ? "Continue" : "Open"}
                               <ArrowRight className="h-3.5 w-3.5" />
                             </Button>
                           </form>
-                        </div>
-
-                        <div className="mt-3 grid gap-3 sm:grid-cols-4">
-                          <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Outcomes</p>
-                            <p className="mt-1 font-semibold">{project.counts.outcomes}</p>
-                          </div>
-                          <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Epics</p>
-                            <p className="mt-1 font-semibold">{project.counts.epics}</p>
-                          </div>
-                          <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stories</p>
-                            <p className="mt-1 font-semibold">{project.counts.stories}</p>
-                          </div>
-                          <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Events</p>
-                            <p className="mt-1 font-semibold">{project.counts.activityEvents}</p>
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -458,119 +464,125 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-3xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <PlusCircle className="h-4 w-4 text-sky-900" />
-                    <p className="font-semibold text-sky-950">Create project</p>
+                <div className="overflow-hidden rounded-3xl border border-border/70 bg-background/92 shadow-sm">
+                  <div className="border-b border-border/70 px-5 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Project tools</p>
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-sky-900/80">
-                    Start a brand-new isolated project with its own local numbering and empty operational state.
-                  </p>
-                  {canManageProjects ? (
-                    <form action={createProjectAction} className="mt-4 space-y-3">
-                      <input
-                        className="h-11 w-full rounded-2xl border border-sky-200 bg-background px-4 text-sm outline-none transition focus:border-primary"
-                        name="projectName"
-                        placeholder="New project name"
-                        type="text"
-                      />
-                      <Button className="gap-2" type="submit">
-                        Create and open project
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </form>
-                  ) : (
-                    <Button asChild className="mt-4 gap-2">
-                      <Link href="/login?redirectTo=%2F">
-                        Sign in to create
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
 
-                <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <p className="font-semibold text-foreground">Demo access</p>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Demo remains separate from normal projects and opens only when chosen explicitly.
-                  </p>
-                  {hasAuthenticatedUser ? (
-                    <form action={openDemoProjectAction} className="mt-4">
-                      <Button className="gap-2" type="submit" variant="secondary">
-                        {isDemoSession ? "Re-open demo project" : "Open demo project"}
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </form>
-                  ) : (
-                    <Button asChild className="mt-4 gap-2" variant="secondary">
-                      <Link href="/login">
-                        Choose demo access
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-
-                {(hasActiveProject || isDemoSession) ? (
-                  <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <FolderOpen className="h-4 w-4 text-primary" />
-                      <p className="font-semibold text-foreground">Current project controls</p>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {isDemoSession
-                        ? "Leave Demo to return to a clean Home without an active project."
-                        : "Leave or delete the current project when you intentionally want to reset active context."}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <form action={clearActiveProjectAction}>
-                        <Button className="gap-2" type="submit" variant="secondary">
-                          <LogOut className="h-4 w-4" />
-                          {isDemoSession ? "Leave demo project" : "Leave current project"}
-                        </Button>
-                      </form>
-                      {hasActiveProject && !isDemoSession ? (
-                        <form action={deleteCurrentProjectAction}>
-                          <Button className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95" type="submit">
-                            <Trash2 className="h-4 w-4" />
-                            Delete project
+                  <div className="space-y-5 p-5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <PlusCircle className="h-4 w-4 text-sky-900" />
+                        <p className="font-semibold text-sky-950">Create project</p>
+                      </div>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        Start a brand-new isolated project with its own local numbering and empty operational state.
+                      </p>
+                      {canManageProjects ? (
+                        <form action={createProjectAction} className="flex flex-col gap-3 sm:flex-row">
+                          <input
+                            className="h-11 min-w-0 flex-1 rounded-2xl border border-sky-200 bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            name="projectName"
+                            placeholder="New project name"
+                            type="text"
+                          />
+                          <Button className="gap-2 sm:shrink-0" type="submit">
+                            Create and open project
+                            <ArrowRight className="h-4 w-4" />
                           </Button>
                         </form>
-                      ) : null}
+                      ) : (
+                        <Button asChild className="gap-2">
+                          <Link href="/login?redirectTo=%2F">
+                            Sign in to create
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                ) : null}
 
-                {activeProjectSummary ? (
-                  <div className="rounded-3xl border border-border/70 bg-muted/15 p-5 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Active project counts</p>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-border/70 bg-background/90 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Outcomes</p>
-                        <p className="mt-1 font-semibold">{activeProjectSummary.counts.outcomes}</p>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          <p className="font-semibold text-foreground">Demo access</p>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          Demo remains separate from normal projects and opens only when chosen explicitly.
+                        </p>
+                        {hasAuthenticatedUser ? (
+                          <form action={openDemoProjectAction} className="mt-4">
+                            <Button className="gap-2 w-full" type="submit" variant="secondary">
+                              {isDemoSession ? "Re-open demo project" : "Open demo project"}
+                              <ArrowRight className="h-4 w-4" />
+                            </Button>
+                          </form>
+                        ) : (
+                          <Button asChild className="mt-4 gap-2 w-full" variant="secondary">
+                            <Link href="/login">
+                              Choose demo access
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        )}
                       </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/90 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stories</p>
-                        <p className="mt-1 font-semibold">{activeProjectSummary.counts.stories}</p>
+
+                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                        <div className="flex items-center gap-2">
+                          <FolderOpen className="h-4 w-4 text-primary" />
+                          <p className="font-semibold text-foreground">Current project controls</p>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {isDemoSession
+                            ? "Leave Demo to return to a clean Home without an active project."
+                            : "Leave or delete the current project when you intentionally want to reset active context."}
+                        </p>
+                        {(hasActiveProject || isDemoSession) ? (
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <form action={clearActiveProjectAction}>
+                              <Button className="gap-2" type="submit" variant="secondary">
+                                <LogOut className="h-4 w-4" />
+                                {isDemoSession ? "Leave demo project" : "Leave current project"}
+                              </Button>
+                            </form>
+                            {hasActiveProject && !isDemoSession ? (
+                              <form action={deleteCurrentProjectAction}>
+                                <Button className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95" type="submit">
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete project
+                                </Button>
+                              </form>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="mt-4 text-sm text-muted-foreground">No active project controls are needed until a project is open.</p>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="rounded-3xl border border-border/70 bg-muted/15 p-5 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <TestTube2 className="h-4 w-4 text-primary" />
-                      <p className="font-semibold text-foreground">Operational note</p>
+
+                    <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Active project snapshot</p>
+                        {activeProjectSummary ? (
+                          <>
+                            <CompactProjectCount label="Outcomes" value={activeProjectSummary.counts.outcomes} />
+                            <CompactProjectCount label="Stories" value={activeProjectSummary.counts.stories} />
+                            <CompactProjectCount label="Epics" value={activeProjectSummary.counts.epics} />
+                          </>
+                        ) : (
+                          <CompactProjectCount label="Status" value={hasActiveProject ? "Scoped" : "No active project"} />
+                        )}
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {activeProjectSummary
+                          ? "The dashboard is already scoped to this project, so these counts stay close to the access controls instead of taking over the main dashboard."
+                          : hasActiveProject
+                            ? "The dashboard is already scoped to the active project even when the project list is empty, for example in Demo or in a freshly selected project."
+                            : "When a project becomes active, this panel turns into a compact snapshot instead of another landing page."}
+                      </p>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {hasActiveProject
-                        ? "The dashboard is already scoped to the active project even when the project list is empty, for example in Demo or in a freshly selected project."
-                        : "Once a project is active, this area becomes a compact control panel instead of a second landing page."}
-                    </p>
                   </div>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>
