@@ -479,7 +479,8 @@ export function FramingOutcomeSection({
             ) : null}
       </form>
 
-      <div className="grid items-start gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid items-start gap-6 xl:grid-cols-12">
+          <div className="xl:col-span-4">
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>Readiness blockers</CardTitle>
@@ -502,6 +503,8 @@ export function FramingOutcomeSection({
               )}
             </CardContent>
           </Card>
+          </div>
+          <div className="xl:col-span-4">
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>Governance coverage</CardTitle>
@@ -517,7 +520,11 @@ export function FramingOutcomeSection({
               </Button>
             </CardContent>
           </Card>
+          </div>
+          <div className="xl:col-span-4">
           <ContextHelp pattern={framingHelp} summaryLabel="Open framing authoring help" />
+          </div>
+          <div className={isArchived ? "xl:col-span-12" : "xl:col-span-7"}>
           <TollgateDecisionCard
             aiAccelerationLevel={outcome.aiAccelerationLevel}
             approvalActions={tollgateReview?.approvalActions ?? []}
@@ -550,7 +557,9 @@ export function FramingOutcomeSection({
             title="Tollgate 1 review and approval"
             tollgateType="tg1_baseline"
           />
+          </div>
           {!isArchived ? (
+            <div className="xl:col-span-5">
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle>Submit into Tollgate 1</CardTitle>
@@ -578,7 +587,9 @@ export function FramingOutcomeSection({
                 </form>
               </CardContent>
             </Card>
+            </div>
           ) : null}
+          <div className={outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? "xl:col-span-4" : "xl:col-span-8"}>
           <HomeActivityCard
             defaultOpen={false}
             description="Recent outcome-specific audit entries."
@@ -589,6 +600,8 @@ export function FramingOutcomeSection({
               timestamp: new Date(activity.createdAt).toLocaleString("en-US")
             }))}
           />
+          </div>
+          <div className="xl:col-span-4">
           <GovernedLifecycleCard
             archiveAction={archiveAction}
             decision={removal?.decision ?? null}
@@ -597,7 +610,9 @@ export function FramingOutcomeSection({
             hardDeleteAction={hardDeleteAction}
             restoreAction={restoreAction}
           />
+          </div>
           {outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? (
+            <div className="xl:col-span-4">
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle>Imported lineage</CardTitle>
@@ -609,6 +624,7 @@ export function FramingOutcomeSection({
                 </Button>
               </CardContent>
             </Card>
+            </div>
           ) : null}
       </div>
 
