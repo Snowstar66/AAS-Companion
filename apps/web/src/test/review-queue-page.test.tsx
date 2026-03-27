@@ -113,6 +113,75 @@ vi.mock("@/lib/intake/review-queue", () => ({
   }))
 }));
 
+vi.mock("@/lib/review/operational-review", () => ({
+  loadOperationalReviewDashboard: vi.fn(async () => ({
+    state: "ready",
+    organizationName: "AAS Demo Organization",
+    summary: {
+      total: 3,
+      blocked: 1,
+      inProgress: 1,
+      handoffReady: 1,
+      outcomeTollgates: 1,
+      storyReviews: 1
+    },
+    message: "Stories, handoffs and tollgates with human work are collected here.",
+    items: [
+      {
+        id: "outcome-1",
+        workflow: "outcome_tollgate",
+        entityType: "outcome",
+        entityId: "outcome-1",
+        key: "OUT-001",
+        title: "Outcome tollgate review",
+        status: "blocked",
+        tone: "blocked",
+        actionLabel: "Open Outcome tollgate",
+        href: "/outcomes/outcome-1",
+        description: "Value owner is not assigned on the customer side.",
+        context: "Outcome framing tollgate",
+        blocker: "Value owner is not assigned on the customer side.",
+        pendingLaneCount: 2,
+        updatedAt: new Date("2026-03-27T08:00:00.000Z")
+      },
+      {
+        id: "story-1",
+        workflow: "story_review",
+        entityType: "story",
+        entityId: "story-1",
+        key: "STR-003",
+        title: "Story approval review",
+        status: "ready",
+        tone: "progress",
+        actionLabel: "Open Story approval",
+        href: "/stories/story-1#story-signoff",
+        description: "1 sign-off lane still remains before this Story is approved.",
+        context: "OUT-001 / EPC-001",
+        blocker: null,
+        pendingLaneCount: 1,
+        updatedAt: new Date("2026-03-27T08:05:00.000Z")
+      },
+      {
+        id: "handoff-1",
+        workflow: "story_handoff",
+        entityType: "story",
+        entityId: "story-2",
+        key: "STR-004",
+        title: "Ready handoff story",
+        status: "approved",
+        tone: "success",
+        actionLabel: "Open handoff",
+        href: "/handoff/story-2",
+        description: "Approval is complete. Open the handoff page to finalize delivery handoff.",
+        context: "OUT-001 / EPC-001",
+        blocker: null,
+        pendingLaneCount: 0,
+        updatedAt: new Date("2026-03-27T08:10:00.000Z")
+      }
+    ]
+  }))
+}));
+
 vi.mock("@/app/(protected)/review/actions", () => ({
   submitArtifactCandidateReviewAction: vi.fn()
 }));
@@ -125,9 +194,12 @@ describe("Review queue page", () => {
   it("opens as a backlog instead of a default full form", async () => {
     render(await ReviewPage({}));
 
-    expect(screen.getByRole("heading", { name: "Human Review backlog", level: 1 })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Review backlog" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Human Review dashboard", level: 1 })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Operational review" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Imported review backlog" })).toBeDefined();
     expect(screen.getAllByText("Needs confirmation").length).toBeGreaterThan(0);
+    expect(screen.getByText("Outcome tollgate review")).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open handoff" })).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });
@@ -135,7 +207,7 @@ describe("Review queue page", () => {
   it("opens a focused correction workspace for the selected imported candidate", async () => {
     render(await ReviewPage({ searchParams: Promise.resolve({ candidateId: "candidate-story-1" }) }));
 
-    expect(screen.getAllByRole("heading", { name: "Human Review backlog", level: 1 }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("heading", { name: "Human Review dashboard", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getByText("Open human review help")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Parsed candidate" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();

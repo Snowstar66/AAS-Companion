@@ -6,6 +6,7 @@ export * from "./governed-lifecycle";
 export * from "./intake";
 export * from "./outcomes";
 export * from "./pricing";
+export * from "./review-dashboard";
 export * from "./shared";
 export * from "./spine";
 export * from "./stories";

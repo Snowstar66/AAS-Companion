@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactReviewQueue } from "@/lib/intake/review-queue";
+import { loadOperationalReviewDashboard } from "@/lib/review/operational-review";
 import { submitArtifactCandidateReviewAction } from "./actions";
 
 type ReviewPageProps = {
@@ -15,6 +16,8 @@ type ReviewPageProps = {
 type ReviewQueue = Awaited<ReturnType<typeof loadArtifactReviewQueue>>;
 type ReviewCandidate = ReviewQueue["items"][number];
 type ReviewBacklogState = "needs_action" | "needs_confirmation" | "pending" | "approved" | "discarded";
+type OperationalReviewDashboard = Awaited<ReturnType<typeof loadOperationalReviewDashboard>>;
+type OperationalReviewItem = OperationalReviewDashboard["items"][number];
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -311,9 +314,45 @@ function FindingDispositionAction(props: {
   );
 }
 
+function getOperationalBadgeClasses(status: OperationalReviewItem["status"]) {
+  if (status === "approved") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+
+  if (status === "ready") {
+    return "border-sky-200 bg-sky-50 text-sky-800";
+  }
+
+  return "border-rose-200 bg-rose-50 text-rose-800";
+}
+
+function getOperationalStatusLabel(status: OperationalReviewItem["status"]) {
+  if (status === "approved") {
+    return "Ready now";
+  }
+
+  if (status === "ready") {
+    return "In progress";
+  }
+
+  return "Blocked";
+}
+
+function getOperationalSectionLabel(workflow: OperationalReviewItem["workflow"]) {
+  if (workflow === "outcome_tollgate") {
+    return "Outcome tollgates";
+  }
+
+  if (workflow === "story_handoff") {
+    return "Ready handoffs";
+  }
+
+  return "Story approvals";
+}
+
 export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const query = searchParams ? await searchParams : {};
-  const queue = await loadArtifactReviewQueue();
+  const [queue, operationalReview] = await Promise.all([loadArtifactReviewQueue(), loadOperationalReviewDashboard()]);
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
   const candidateId = getParamValue(query.candidateId);
@@ -370,11 +409,40 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     state,
     items: visibleItems.filter((candidate) => getBacklogState(candidate) === state)
   }));
+  const operationalGroups: Array<{
+    title: string;
+    description: string;
+    items: OperationalReviewItem[];
+    defaultOpen: boolean;
+  }> = [
+    {
+      title: "Outcome tollgates",
+      description: "Formal TG1 review and approval work that still needs human progress.",
+      items: operationalReview.items.filter((item) => item.workflow === "outcome_tollgate"),
+      defaultOpen: true
+    },
+    {
+      title: "Story approvals",
+      description: "Story review and approval lanes that still need human action.",
+      items: operationalReview.items.filter((item) => item.workflow === "story_review"),
+      defaultOpen: true
+    },
+    {
+      title: "Ready handoffs",
+      description: "Stories that are already approved and are waiting for handoff completion.",
+      items: operationalReview.items.filter((item) => item.workflow === "story_handoff"),
+      defaultOpen: true
+    }
+  ];
+  const projectName =
+    operationalReview.organizationName && operationalReview.organizationName !== "Unknown project"
+      ? operationalReview.organizationName
+      : queue.organizationName;
 
   return (
     <AppShell
       topbarProps={{
-        projectName: queue.organizationName,
+        projectName,
         sectionLabel: "Human Review",
         badge: "Project section"
       }}
@@ -383,12 +451,12 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <FileSearch className="h-3.5 w-3.5 text-primary" />
-            Operational review backlog
+            Human review command center
           </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Human Review backlog</h1>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Human Review dashboard</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-            Start from the backlog, not a giant form. Grouped review items make it obvious what needs fixing,
-            confirmation, approval, or discard inside the current project.
+            Start here for every human checkpoint in the active project. Import review, story approvals, handoffs and
+            tollgates are collected in one place, with links to the exact workspace where the final decision is recorded.
           </p>
           <div className="mt-5 max-w-4xl">
             <ContextHelp pattern={reviewHelp} summaryLabel="Open human review help" />
@@ -409,7 +477,26 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total items</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Operational review</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">{operationalReview.summary.total}</p>
+          </div>
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-800">Blocked</p>
+            <p className="mt-2 text-2xl font-semibold text-rose-900">{operationalReview.summary.blocked}</p>
+          </div>
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">In progress</p>
+            <p className="mt-2 text-2xl font-semibold text-sky-900">{operationalReview.summary.inProgress}</p>
+          </div>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Ready handoffs</p>
+            <p className="mt-2 text-2xl font-semibold text-emerald-900">{operationalReview.summary.handoffReady}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Imported backlog</p>
             <p className="mt-2 text-2xl font-semibold text-foreground">{queue.summary.total}</p>
           </div>
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
@@ -426,10 +513,82 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           </div>
         </div>
 
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>Operational review</CardTitle>
+            <CardDescription>
+              This is the fast lane for project-side review and approval work. Open the item you need, record the decision in context, then return here for the next item.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {operationalReview.state === "unavailable" ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-800">
+                {operationalReview.message}
+              </div>
+            ) : operationalReview.items.length === 0 ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                No story approvals, handoffs or outcome tollgates are currently waiting for human action.
+              </div>
+            ) : (
+              operationalGroups.map((group) => (
+                <CollapsibleSection
+                  badge={`${group.items.length}`}
+                  defaultOpen={group.defaultOpen}
+                  description={group.description}
+                  key={group.title}
+                  title={group.title}
+                >
+                  {group.items.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No items are currently in this group.</p>
+                  ) : (
+                    <div className="grid gap-3">
+                      {group.items.map((item) => (
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={item.id}>
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-medium text-foreground">{item.title}</p>
+                                <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                                  {item.key}
+                                </span>
+                                <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  {getOperationalSectionLabel(item.workflow)}
+                                </span>
+                                <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getOperationalBadgeClasses(item.status)}`}>
+                                  {getOperationalStatusLabel(item.status)}
+                                </span>
+                              </div>
+                              <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
+                              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                <span>Context: {item.context}</span>
+                                <span>Open lanes: {item.pendingLaneCount}</span>
+                                {item.blocker ? <span>Primary blocker: {item.blocker}</span> : null}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-start gap-2 sm:flex-row">
+                              <Button asChild size="sm" variant="secondary">
+                                <Link href={item.href}>
+                                  {item.actionLabel}
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CollapsibleSection>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
         {queue.state === "unavailable" ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Human Review is unavailable</CardTitle>
+              <CardTitle>Imported review backlog is unavailable</CardTitle>
               <CardDescription>{queue.message}</CardDescription>
             </CardHeader>
           </Card>
@@ -439,7 +598,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardHeader>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <CardTitle>Review backlog</CardTitle>
+                    <CardTitle>Imported review backlog</CardTitle>
                     <CardDescription>
                       Each row is an imported Story, Epic or candidate item that can be opened into a focused correction workspace.
                     </CardDescription>
@@ -521,7 +680,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                 <CardHeader>
                   <CardTitle>Choose one item to start</CardTitle>
                   <CardDescription>
-                    Human Review now opens as a backlog. Select an item from the list to open its focused correction workspace.
+                    Select one imported candidate from the backlog to open its focused correction workspace.
                   </CardDescription>
                 </CardHeader>
               </Card>

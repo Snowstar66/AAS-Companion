@@ -72,6 +72,7 @@ export {
   getTollgate,
   upsertTollgate
 } from "./repositories/tollgate-repository";
+export { getHumanReviewSnapshot } from "./repositories/human-review-repository";
 export {
   createSignoffRecord,
   listSignoffRecordsForEntity,
