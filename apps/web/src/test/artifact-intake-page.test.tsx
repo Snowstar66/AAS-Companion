@@ -438,7 +438,7 @@ describe("Import page", () => {
     expect(screen.getAllByText("Imported Story").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
     expect(screen.getAllByText("Leave promotion outside this story.").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Correction and confirmation" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Correction workspace and approval" })).toBeDefined();
   });
 
   it("shows Demo as read-only and disables new uploads", async () => {

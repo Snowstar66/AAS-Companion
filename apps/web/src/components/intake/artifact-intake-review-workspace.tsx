@@ -1,5 +1,6 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { GitBranch, ShieldCheck } from "lucide-react";
+import { ChevronDown, GitBranch, ShieldCheck } from "lucide-react";
 import type {
   ArtifactCandidateDraftRecord,
   ArtifactCandidateHumanDecision,
@@ -307,8 +308,8 @@ function queueItems(
 
   items.push({
     key: "unmapped",
-    title: "Unmapped source sections",
-    description: "These sections still need explicit human interpretation.",
+    title: "Sections not yet absorbed into a candidate",
+    description: "These source sections are still outside any mapped Outcome, Epic, or Story candidate and need a human decision.",
     items: (session.mappedArtifacts?.unmappedSections ?? [])
       .filter((section) => section.sourceReference.fileId === file.id)
       .map((section) => ({
@@ -483,6 +484,26 @@ function describeProjectEpic(option: ProjectEpicOption) {
   return `${option.key} - ${option.title}`;
 }
 
+function CollapsibleReviewPanel(props: {
+  title: string;
+  description: string;
+  defaultOpen?: boolean | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group rounded-2xl border border-border/70 bg-background shadow-sm" open={props.defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
+        <div>
+          <h3 className="font-semibold text-foreground">{props.title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
+        </div>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-border/70 px-6 py-5">{props.children}</div>
+    </details>
+  );
+}
+
 export function ArtifactIntakeReviewWorkspace({
   session,
   selectedFile,
@@ -530,6 +551,28 @@ export function ArtifactIntakeReviewWorkspace({
       : epicCandidateOptions.length === 1
         ? epicCandidateOptions[0]?.id ?? ""
         : "";
+  const selectedProjectOutcome = outcomeCandidateOptions.find((candidate) => candidate.id === selectedOutcomeCandidateId) ?? null;
+  const selectedProjectEpic = epicCandidateOptions.find((candidate) => candidate.id === selectedEpicCandidateId) ?? null;
+  const mappedSectionsBySourceId = new Map(
+    fileCandidates.map((candidate) => [candidate.source.sectionId, candidate] as const)
+  );
+  const unmappedSourceSectionIds = new Set(
+    (session.mappedArtifacts?.unmappedSections ?? [])
+      .filter((section) => section.sourceReference.fileId === selectedFile.id)
+      .map((section) => section.sourceReference.sectionId)
+  );
+  const promotionSummary =
+    selectedCandidate?.type === "story"
+      ? selectedProjectOutcome && selectedProjectEpic
+        ? `Approving this import will create or update a governed Story under ${selectedProjectOutcome.key} and ${selectedProjectEpic.key}. After approval it should be treated like other project Stories and continue through the normal Story review and handoff flow.`
+        : "Approving this import will bring the Story into the project as governed work. Confirm the destination Outcome and Epic first so the imported Story lands in the correct branch."
+      : selectedCandidate?.type === "epic"
+        ? selectedProjectOutcome
+          ? `Approving this import will create or update a governed Epic under ${selectedProjectOutcome.key}. After approval it should be treated like other project Epics inside the active Framing branch.`
+          : "Approving this import will bring the Epic into the project as governed work. Confirm the destination Outcome first so the Epic lands in the correct Framing branch."
+        : selectedCandidate?.type === "outcome"
+          ? "Approving this import will create or update a governed Outcome in the project. After approval it continues through the same Tollgate 1 and review process as native Outcomes."
+          : null;
 
   return (
     <div className="space-y-6">
@@ -566,13 +609,173 @@ export function ArtifactIntakeReviewWorkspace({
         </div>
       </div>
 
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>Correction queue</CardTitle>
+          <CardDescription>
+            Start here. Clear linkage, content gaps, human-only decisions, and truly leftover source sections before you approve the import into the project.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+            <p className="font-medium">How to work this queue</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>Start with destination and linkage so the imported candidate belongs to the right Outcome and Epic.</li>
+              <li>Resolve real content gaps such as missing Test Definition, Definition of Done, or baseline fields.</li>
+              <li>Use <strong>Confirm</strong> when an interpretation is correct and you want it accepted.</li>
+              <li>Use <strong>Not relevant</strong> when a finding or source section should be dismissed from the queue.</li>
+              <li>Use <strong>Mark blocker</strong> only when you want the import to stay visible and intentionally stop promotion.</li>
+            </ol>
+          </div>
+          {progress ? (
+            <div className="space-y-3">
+              <div className="grid gap-3 lg:grid-cols-4">
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Remaining</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{progress.unresolved}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Resolved</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{progress.resolved}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{progress.categories.blocked}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Still intentionally stopping promotion.</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Progress</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">
+                    {progress.total > 0 ? Math.round((progress.resolved / progress.total) * 100) : 100}%
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Missing</p>
+                  <p className="mt-1 font-semibold text-foreground">{progress.categories.missing}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Uncertain</p>
+                  <p className="mt-1 font-semibold text-foreground">{progress.categories.uncertain}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Human-only</p>
+                  <p className="mt-1 font-semibold text-foreground">{progress.categories.humanOnly}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Outside candidate</p>
+                  <p className="mt-1 font-semibold text-foreground">{progress.categories.unmapped}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Source sections not yet absorbed into a candidate.</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total tracked</p>
+                  <p className="mt-1 font-semibold text-foreground">{progress.total}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {groups.map((group) => {
+            const unresolved = group.items.filter((item) => item.status === "unresolved").length;
+            const resolved = group.items.filter((item) => item.status === "resolved").length;
+
+            return (
+              <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={group.key}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-foreground">{group.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                      {unresolved} unresolved
+                    </span>
+                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                      {resolved} resolved
+                    </span>
+                  </div>
+                </div>
+
+                {group.items.length === 0 ? (
+                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                    No items currently belong to this queue section for the selected artifact.
+                  </div>
+                ) : (
+                  <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                    {group.items.map((item) => (
+                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item.id}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-foreground">{item.title}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                            <p className="mt-2 text-xs text-muted-foreground">{item.context}</p>
+                            {item.dispositionLabel ? (
+                              <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                                Disposition: {item.dispositionLabel}
+                              </p>
+                            ) : null}
+                            {item.dispositionLabel === "blocked" ? (
+                              <p className="mt-2 text-xs text-rose-700">
+                                This item remains in the queue and continues to block import approval.
+                              </p>
+                            ) : null}
+                          </div>
+                          <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                            {item.actionScope === "section" ? "Source section" : "Candidate issue"}
+                          </span>
+                        </div>
+                        <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
+                          <Link href={item.href} prefetch={false}>
+                            Open in context
+                            <GitBranch className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        {item.actionScope === "candidate" && item.candidateId && item.candidateType ? (
+                          <ArtifactIntakeDispositionButtons
+                            actions={item.actions}
+                            candidateId={item.candidateId}
+                            candidateType={item.candidateType}
+                            initialAction={item.selectedAction}
+                            initialStatus={item.status}
+                            issueId={item.issueId}
+                            key={`${item.id}-candidate-actions`}
+                            kind="candidate"
+                            resolvedActions={item.resolvedActions}
+                            submitCandidateDisposition={submitCandidateDispositionInlineAction}
+                          />
+                        ) : null}
+                        {item.actionScope === "section" ? (
+                          <ArtifactIntakeDispositionButtons
+                            actions={item.actions}
+                            fileId={selectedFile.id}
+                            initialAction={item.selectedAction}
+                            initialStatus={item.status}
+                            key={`${item.id}-section-actions`}
+                            kind="section"
+                            resolvedActions={item.resolvedActions}
+                            sectionId={item.issueId}
+                            submitSectionDisposition={submitSectionDispositionInlineAction}
+                          />
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)]">
-        <Card className="order-2 border-border/70 shadow-sm 2xl:order-1">
-          <CardHeader>
-            <CardTitle>Full imported source artifact</CardTitle>
-            <CardDescription>Read the original markdown top to bottom without leaving intake review.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="order-2 space-y-6 2xl:order-1">
+          <CollapsibleReviewPanel
+            defaultOpen={false}
+            description="Expand the original markdown only when you need full-source verification or line-by-line context."
+            title="Full imported source artifact"
+          >
+            <div className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1">
                 {selectedFile.sourceType ? label(selectedFile.sourceType) : label(selectedFile.sourceTypeStatus)}
@@ -616,52 +819,88 @@ export function ArtifactIntakeReviewWorkspace({
             </div>
 
             {selectedFile.parsedArtifacts?.sections.length ? (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Parsed source sections
-                </p>
-                {selectedFile.parsedArtifacts.sections.map((section) => (
-                  <div
-                    className="rounded-2xl border border-border/70 bg-background/80 p-4"
-                    id={`source-section-${section.id}`}
-                    key={section.id}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-foreground">{section.title}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {section.sourceReference.sectionMarker} - lines {section.sourceReference.lineStart}-
-                          {section.sourceReference.lineEnd}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                          {label(section.kind)}
-                        </span>
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-1 text-xs ${confidenceTone(section.confidence)}`}
-                        >
-                          {section.confidence}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{section.text}</p>
+              <details className="group rounded-2xl border border-border/70 bg-muted/10">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Parsed sections</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Expand to inspect how each section was interpreted and whether it already became a candidate or
+                      still needs a human decision.
+                    </p>
                   </div>
-                ))}
-              </div>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+                </summary>
+                <div className="space-y-3 border-t border-border/70 px-4 py-4">
+                  {selectedFile.parsedArtifacts.sections.map((section) => {
+                    const sourceSectionId = section.sourceReference.sectionId;
+                    const mappedCandidate = mappedSectionsBySourceId.get(sourceSectionId) ?? null;
+                    const sectionState = mappedCandidate
+                      ? {
+                          badge: `${mappedCandidate.type} candidate`,
+                          tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+                          description: `Already interpreted into ${mappedCandidate.title}. Adjust the candidate workspace if the governed fields need correction.`
+                        }
+                      : unmappedSourceSectionIds.has(sourceSectionId)
+                        ? {
+                            badge: "Needs human decision",
+                            tone: "border-amber-200 bg-amber-50 text-amber-800",
+                            description:
+                              "Still outside any mapped Outcome, Epic, or Story candidate. Use the Correction queue to absorb it, dismiss it, or intentionally keep it blocked."
+                          }
+                        : {
+                            badge: "Supporting context",
+                            tone: "border-border/70 bg-muted/20 text-muted-foreground",
+                            description:
+                              "Parsed for traceability, but not currently treated as a standalone candidate or queue item."
+                          };
+
+                    return (
+                      <div
+                        className="rounded-2xl border border-border/70 bg-background/80 p-4"
+                        id={`source-section-${section.id}`}
+                        key={section.id}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-foreground">{section.title}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {section.sourceReference.sectionMarker} - lines {section.sourceReference.lineStart}-
+                              {section.sourceReference.lineEnd}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                              {label(section.kind)}
+                            </span>
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-1 text-xs ${confidenceTone(section.confidence)}`}
+                            >
+                              {section.confidence}
+                            </span>
+                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${sectionState.tone}`}>
+                              {sectionState.badge}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">{sectionState.description}</p>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{section.text}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
             ) : null}
-          </CardContent>
-        </Card>
+            </div>
+          </CollapsibleReviewPanel>
+        </div>
 
         <div className="order-1 space-y-6 2xl:order-2">
-          <Card className="border-border/70 shadow-sm" id="candidate-panel">
-            <CardHeader>
-              <CardTitle>Structured candidate view</CardTitle>
-              <CardDescription>
-                Compare the imported artifact with the interpreted governed candidate fields.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <CollapsibleReviewPanel
+            defaultOpen
+            description="Compare the imported interpretation with the governed fields that will be saved into the project."
+            title="Structured candidate view"
+          >
+            <div className="space-y-4" id="candidate-panel">
               {fileCandidates.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {fileCandidates.map((candidate) => (
@@ -737,166 +976,8 @@ export function ArtifactIntakeReviewWorkspace({
                   unmapped sections are reviewed.
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Correction queue</CardTitle>
-                <CardDescription>
-                  Work through unresolved import work in order: link the candidate, resolve real gaps, mark irrelevant
-                  items, and only use blockers when you want progression to stay intentionally stopped.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-                  <p className="font-medium">Recommended way to clear this list</p>
-                  <ol className="mt-2 list-decimal space-y-1 pl-5">
-                    <li>Start with linkage issues so each imported candidate belongs to the right Outcome and Epic.</li>
-                    <li>Resolve real content gaps such as missing Test Definition or Definition of Done.</li>
-                    <li>Use <strong>Not relevant</strong> when a finding should be dismissed.</li>
-                    <li>Use <strong>Mark blocker</strong> only when you want the item to stay visible and prevent promotion.</li>
-                  </ol>
-                </div>
-                {progress ? (
-                  <div className="space-y-3">
-                    <div className="grid gap-3 lg:grid-cols-4">
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Remaining</p>
-                        <p className="mt-2 text-2xl font-semibold text-foreground">{progress.unresolved}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Resolved</p>
-                        <p className="mt-2 text-2xl font-semibold text-foreground">{progress.resolved}</p>
-                      </div>
-                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked</p>
-                          <p className="mt-2 text-2xl font-semibold text-foreground">{progress.categories.blocked}</p>
-                          <p className="mt-2 text-sm text-muted-foreground">Still intentionally blocking promotion.</p>
-                        </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Progress</p>
-                        <p className="mt-2 text-2xl font-semibold text-foreground">
-                          {progress.total > 0 ? Math.round((progress.resolved / progress.total) * 100) : 100}%
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Missing</p>
-                        <p className="mt-1 font-semibold text-foreground">{progress.categories.missing}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Uncertain</p>
-                        <p className="mt-1 font-semibold text-foreground">{progress.categories.uncertain}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Human-only</p>
-                        <p className="mt-1 font-semibold text-foreground">{progress.categories.humanOnly}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Unmapped</p>
-                        <p className="mt-1 font-semibold text-foreground">{progress.categories.unmapped}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-background/80 p-3 text-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total tracked</p>
-                        <p className="mt-1 font-semibold text-foreground">{progress.total}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                {groups.map((group) => {
-                  const unresolved = group.items.filter((item) => item.status === "unresolved").length;
-                  const resolved = group.items.filter((item) => item.status === "resolved").length;
-
-                return (
-                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={group.key}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-foreground">{group.title}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                          {unresolved} unresolved
-                        </span>
-                        <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                          {resolved} resolved
-                        </span>
-                      </div>
-                    </div>
-
-                    {group.items.length === 0 ? (
-                      <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                        No items currently belong to this queue section for the selected artifact.
-                      </div>
-                    ) : (
-                      <div className="mt-4 grid gap-3 xl:grid-cols-2">
-                        {group.items.map((item) => (
-                          <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item.id}>
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div>
-                                <p className="font-medium text-foreground">{item.title}</p>
-                                <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
-                                <p className="mt-2 text-xs text-muted-foreground">{item.context}</p>
-                                {item.dispositionLabel ? (
-                                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                                    Disposition: {item.dispositionLabel}
-                                  </p>
-                                ) : null}
-                                {item.dispositionLabel === "blocked" ? (
-                                  <p className="mt-2 text-xs text-rose-700">
-                                    This item remains in the queue and continues to block promotion.
-                                  </p>
-                                ) : null}
-                              </div>
-                              <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-                                {item.actionScope === "section" ? "Source section" : "Candidate issue"}
-                              </span>
-                            </div>
-                            <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
-                              <Link href={item.href} prefetch={false}>
-                                Open in context
-                                <GitBranch className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            {item.actionScope === "candidate" && item.candidateId && item.candidateType ? (
-                              <ArtifactIntakeDispositionButtons
-                                actions={item.actions}
-                                candidateId={item.candidateId}
-                                candidateType={item.candidateType}
-                                initialAction={item.selectedAction}
-                                initialStatus={item.status}
-                                issueId={item.issueId}
-                                key={`${item.id}-candidate-actions`}
-                                kind="candidate"
-                                resolvedActions={item.resolvedActions}
-                                submitCandidateDisposition={submitCandidateDispositionInlineAction}
-                              />
-                            ) : null}
-                            {item.actionScope === "section" ? (
-                              <ArtifactIntakeDispositionButtons
-                                actions={item.actions}
-                                fileId={selectedFile.id}
-                                initialAction={item.selectedAction}
-                                initialStatus={item.status}
-                                key={`${item.id}-section-actions`}
-                                kind="section"
-                                resolvedActions={item.resolvedActions}
-                                sectionId={item.issueId}
-                                submitSectionDisposition={submitSectionDispositionInlineAction}
-                              />
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+            </div>
+          </CollapsibleReviewPanel>
 
           {selectedCandidate ? (
             <form action={submitAction} className="space-y-4" id="candidate-editor">
@@ -907,10 +988,10 @@ export function ArtifactIntakeReviewWorkspace({
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Correction and confirmation</CardTitle>
+                  <CardTitle>Correction workspace and approval</CardTitle>
                   <CardDescription>
-                    Human corrections are persisted here before promotion. The original imported source remains visible on
-                    the left.
+                    Human corrections are persisted here before approval. Approving the import is the moment it becomes
+                    governed project work and continues through the same review path as native records.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -918,6 +999,13 @@ export function ArtifactIntakeReviewWorkspace({
                     <div className={`rounded-2xl border px-4 py-4 text-sm ${ready[0]}`}>
                       <p className="font-medium">{ready[1]}</p>
                       <p className="mt-2">{ready[2]}</p>
+                    </div>
+                  ) : null}
+
+                  {promotionSummary ? (
+                    <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                      <p className="font-medium">What approval does</p>
+                      <p className="mt-2">{promotionSummary}</p>
                     </div>
                   ) : null}
 
@@ -1187,7 +1275,8 @@ export function ArtifactIntakeReviewWorkspace({
 
                   {selectedCandidate.promotedEntityId ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                      Promoted into project {selectedCandidate.promotedEntityType} with ID {selectedCandidate.promotedEntityId}.
+                      Imported into the project as governed {selectedCandidate.promotedEntityType} with ID{" "}
+                      {selectedCandidate.promotedEntityId}. It now continues like native project work.
                     </div>
                   ) : null}
                 </CardContent>

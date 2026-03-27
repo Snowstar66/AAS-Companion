@@ -25,9 +25,9 @@ const reviewActionConfig: Array<{
   },
   {
     intent: "confirm",
-    label: "Confirm readiness for promotion",
-    pendingLabel: "Confirming readiness...",
-    pendingMessage: "Recording confirmation and recalculating promotion readiness.",
+    label: "Confirm review state",
+    pendingLabel: "Confirming review state...",
+    pendingMessage: "Recording confirmation and recalculating import approval readiness.",
     Icon: CircleCheckBig
   },
   {
@@ -48,9 +48,9 @@ const reviewActionConfig: Array<{
   },
   {
     intent: "promote",
-    label: "Promote into project records",
-    pendingLabel: "Promoting into project...",
-    pendingMessage: "Creating governed project records from the imported candidate.",
+    label: "Approve import into project",
+    pendingLabel: "Approving import...",
+    pendingMessage: "Creating governed project records and moving the import into the normal project workflow.",
     Icon: Upload
   }
 ];
