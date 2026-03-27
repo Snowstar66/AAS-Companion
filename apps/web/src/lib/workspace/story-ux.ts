@@ -150,15 +150,24 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
 
   const readinessLabel = isInDelivery
     ? "Design handoff completed"
-    : readiness.state === "ready"
-      ? "Ready to review"
-      : "Needs design inputs";
-  const readinessDetail =
-    isInDelivery
-      ? "The Story has already been handed off and moved into active delivery."
-      : readiness.state === "ready"
-      ? "Test definition, acceptance criteria and definition of done are all present."
-      : blockers[0] ?? "Complete the missing design inputs before submitting the Story.";
+    : isReadyForHandoff
+      ? "Ready for design"
+      : isUnderSignoff
+        ? "Review in progress"
+        : readiness.state === "ready"
+          ? "Ready to review"
+          : "Needs design inputs";
+  const readinessDetail = isInDelivery
+    ? "The Story has already been handed off and moved into active delivery."
+    : isReadyForHandoff
+      ? "Required approval is complete and all design inputs needed for progression are present."
+      : isUnderSignoff
+        ? missingSignoffCount > 0
+          ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before approval.`
+          : "Human review is in progress for this Story."
+        : readiness.state === "ready"
+          ? "Test definition, acceptance criteria and definition of done are all present."
+          : blockers[0] ?? "Complete the missing design inputs before submitting the Story.";
 
   const currentStepIndex = isReadyForHandoff || isInDelivery ? 2 : isUnderSignoff || isReviewReady ? 1 : 0;
   const lifecycleSteps = lifecycleStepDefinitions.map((step, index) => {

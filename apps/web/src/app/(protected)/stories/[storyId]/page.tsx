@@ -76,34 +76,6 @@ function getReadinessFieldStatus(story: {
   ] as const;
 }
 
-function mapBlockerToField(blocker: string) {
-  if (blocker.includes("Test Definition")) {
-    return {
-      label: "Add Test Definition",
-      href: "#story-test-definition"
-    };
-  }
-
-  if (blocker.includes("Definition of Done")) {
-    return {
-      label: "Add Definition of Done",
-      href: "#story-definition-of-done"
-    };
-  }
-
-  if (blocker.includes("acceptance criterion")) {
-    return {
-      label: "Add acceptance criteria",
-      href: "#story-acceptance-criteria"
-    };
-  }
-
-  return {
-    label: "Review approvals and blockers",
-    href: "#story-signoff"
-  };
-}
-
 function SecondaryPanel(props: {
   id?: string | undefined;
   title: string;
@@ -164,7 +136,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
     blockedActionCount: tollgateReview?.blockedActions.length ?? 0
   });
   const readinessFields = getReadinessFieldStatus(story);
-  const primaryBlockerTarget = blockers[0] ? mapBlockerToField(blockers[0]) : null;
+  const missingReadinessFields = readinessFields.filter((field) => !field.complete);
 
   return (
     <AppShell
@@ -288,51 +260,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               <p className="mt-2 leading-6 text-muted-foreground">
                 {blockers.length > 1 ? `${blockers.length - 1} more blocker${blockers.length - 1 === 1 ? "" : "s"} are listed below in approvals.` : "Use the sections below to continue the Story."}
               </p>
-              {primaryBlockerTarget ? (
-                <Button asChild className="mt-4 gap-2" size="sm" variant="secondary">
-                  <Link href={primaryBlockerTarget.href}>
-                    {primaryBlockerTarget.label}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              ) : null}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Required design inputs</CardTitle>
-            <CardDescription>
-              This is what currently controls Story readiness. Fill the missing fields below, then submit the Story for review.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 lg:grid-cols-2">
-            {readinessFields.map((field) => (
-              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={field.key}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{field.label}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{field.help}</p>
-                  </div>
-                  <span
-                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-                      field.complete
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                        : "border-amber-200 bg-amber-50 text-amber-800"
-                    }`}
-                  >
-                    {field.complete ? "Ready" : "Missing"}
-                  </span>
-                </div>
-                <Button asChild className="mt-4 gap-2" size="sm" variant="secondary">
-                  <Link href={field.href}>
-                    {field.key === "ai-level" ? "Open AI level context" : "Open field"}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            ))}
           </CardContent>
         </Card>
 
@@ -396,17 +324,37 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                     Required design inputs
                     <InlineTermHelp term="Readiness" />
                   </CardTitle>
-                  <CardDescription>These are the fields that decide whether the Story is ready for review.</CardDescription>
+                  <CardDescription>
+                    {missingReadinessFields.length === 0
+                      ? "All required design inputs are present. Review and approval can continue without more field edits."
+                      : `Fields highlighted below still need input before the Story can move forward.`}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <label className="space-y-2" id="story-acceptance-criteria">
-                    <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                          readinessFields[0].complete
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : "border-amber-200 bg-amber-50 text-amber-800"
+                        }`}
+                      >
+                        {readinessFields[0].complete ? "Ready" : "Missing"}
+                      </span>
+                    </div>
                     <textarea
-                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      className={`min-h-28 w-full rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30 ${
+                        readinessFields[0].complete ? "border-border" : "border-amber-300 bg-amber-50/30"
+                      }`}
                       defaultValue={story.acceptanceCriteria.join("\n")}
                       disabled={isArchived}
                       name="acceptanceCriteria"
                     />
+                    {!readinessFields[0].complete ? (
+                      <p className="text-sm text-amber-800">{readinessFields[0].help}</p>
+                    ) : null}
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">AI Usage Scope</span>
@@ -419,22 +367,54 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                     />
                   </label>
                   <label className="space-y-2" id="story-test-definition">
-                    <span className="text-sm font-medium text-foreground">Test Definition</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground">Test Definition</span>
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                          readinessFields[1].complete
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : "border-amber-200 bg-amber-50 text-amber-800"
+                        }`}
+                      >
+                        {readinessFields[1].complete ? "Ready" : "Missing"}
+                      </span>
+                    </div>
                     <textarea
-                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      className={`min-h-24 w-full rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30 ${
+                        readinessFields[1].complete ? "border-border" : "border-amber-300 bg-amber-50/30"
+                      }`}
                       defaultValue={story.testDefinition ?? ""}
                       disabled={isArchived}
                       name="testDefinition"
                     />
+                    {!readinessFields[1].complete ? (
+                      <p className="text-sm text-amber-800">{readinessFields[1].help}</p>
+                    ) : null}
                   </label>
                   <label className="space-y-2" id="story-definition-of-done">
-                    <span className="text-sm font-medium text-foreground">Definition of Done</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground">Definition of Done</span>
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                          readinessFields[2].complete
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : "border-amber-200 bg-amber-50 text-amber-800"
+                        }`}
+                      >
+                        {readinessFields[2].complete ? "Ready" : "Missing"}
+                      </span>
+                    </div>
                     <textarea
-                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      className={`min-h-28 w-full rounded-2xl border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30 ${
+                        readinessFields[2].complete ? "border-border" : "border-amber-300 bg-amber-50/30"
+                      }`}
                       defaultValue={story.definitionOfDone.join("\n")}
                       disabled={isArchived}
                       name="definitionOfDone"
                     />
+                    {!readinessFields[2].complete ? (
+                      <p className="text-sm text-amber-800">{readinessFields[2].help}</p>
+                    ) : null}
                   </label>
                 </CardContent>
               </Card>
