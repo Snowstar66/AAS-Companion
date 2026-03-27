@@ -34,6 +34,76 @@ function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function formatAiLevel(value: string) {
+  return value.replace("level_", "Level ").replaceAll("_", " ");
+}
+
+function getReadinessFieldStatus(story: {
+  acceptanceCriteria: string[];
+  testDefinition: string | null;
+  definitionOfDone: string[];
+  aiAccelerationLevel: string;
+}) {
+  return [
+    {
+      key: "acceptance-criteria",
+      label: "Acceptance criteria",
+      href: "#story-acceptance-criteria",
+      complete: story.acceptanceCriteria.length > 0,
+      help: "Add at least one checkable outcome for the Story."
+    },
+    {
+      key: "test-definition",
+      label: "Test Definition",
+      href: "#story-test-definition",
+      complete: Boolean(story.testDefinition?.trim()),
+      help: "Describe how the Story will be verified before approval."
+    },
+    {
+      key: "definition-of-done",
+      label: "Definition of Done",
+      href: "#story-definition-of-done",
+      complete: story.definitionOfDone.length > 0,
+      help: "List the minimum conditions for considering the Story done."
+    },
+    {
+      key: "ai-level",
+      label: "AI level",
+      href: "#story-ai-level",
+      complete: true,
+      help: `Inherited from the current Framing: ${formatAiLevel(story.aiAccelerationLevel)}.`
+    }
+  ] as const;
+}
+
+function mapBlockerToField(blocker: string) {
+  if (blocker.includes("Test Definition")) {
+    return {
+      label: "Add Test Definition",
+      href: "#story-test-definition"
+    };
+  }
+
+  if (blocker.includes("Definition of Done")) {
+    return {
+      label: "Add Definition of Done",
+      href: "#story-definition-of-done"
+    };
+  }
+
+  if (blocker.includes("acceptance criterion")) {
+    return {
+      label: "Add acceptance criteria",
+      href: "#story-acceptance-criteria"
+    };
+  }
+
+  return {
+    label: "Review approvals and blockers",
+    href: "#story-signoff"
+  };
+}
+
 function SecondaryPanel(props: {
   id?: string | undefined;
   title: string;
@@ -93,6 +163,8 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
     pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
     blockedActionCount: tollgateReview?.blockedActions.length ?? 0
   });
+  const readinessFields = getReadinessFieldStatus(story);
+  const primaryBlockerTarget = blockers[0] ? mapBlockerToField(blockers[0]) : null;
 
   return (
     <AppShell
@@ -216,7 +288,51 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               <p className="mt-2 leading-6 text-muted-foreground">
                 {blockers.length > 1 ? `${blockers.length - 1} more blocker${blockers.length - 1 === 1 ? "" : "s"} are listed below in approvals.` : "Use the sections below to continue the Story."}
               </p>
+              {primaryBlockerTarget ? (
+                <Button asChild className="mt-4 gap-2" size="sm" variant="secondary">
+                  <Link href={primaryBlockerTarget.href}>
+                    {primaryBlockerTarget.label}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : null}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>Required design inputs</CardTitle>
+            <CardDescription>
+              This is what currently controls Story readiness. Fill the missing fields below, then submit the Story for review.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 lg:grid-cols-2">
+            {readinessFields.map((field) => (
+              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={field.key}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{field.label}</p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{field.help}</p>
+                  </div>
+                  <span
+                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                      field.complete
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-amber-200 bg-amber-50 text-amber-800"
+                    }`}
+                  >
+                    {field.complete ? "Ready" : "Missing"}
+                  </span>
+                </div>
+                <Button asChild className="mt-4 gap-2" size="sm" variant="secondary">
+                  <Link href={field.href}>
+                    {field.key === "ai-level" ? "Open AI level context" : "Open field"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -232,6 +348,13 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                   <CardDescription>Keep Story focused on one testable delivery unit and its explicit handoff inputs.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-ai-level">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
+                    <p className="mt-2 font-semibold text-foreground">{formatAiLevel(story.aiAccelerationLevel)}</p>
+                    <p className="mt-2 leading-6 text-muted-foreground">
+                      This comes from the current Framing and affects governance requirements for the Story.
+                    </p>
+                  </div>
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Title</span>
                     <input
@@ -270,13 +393,13 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               <Card className="border-border/70 shadow-sm" id="story-handoff-inputs">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    Handoff inputs
+                    Required design inputs
                     <InlineTermHelp term="Readiness" />
                   </CardTitle>
-                  <CardDescription>These are the only delivery fields this Story needs before readiness review.</CardDescription>
+                  <CardDescription>These are the fields that decide whether the Story is ready for review.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
-                  <label className="space-y-2">
+                  <label className="space-y-2" id="story-acceptance-criteria">
                     <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
                     <textarea
                       className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
@@ -295,7 +418,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       type="text"
                     />
                   </label>
-                  <label className="space-y-2">
+                  <label className="space-y-2" id="story-test-definition">
                     <span className="text-sm font-medium text-foreground">Test Definition</span>
                     <textarea
                       className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
@@ -304,7 +427,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       name="testDefinition"
                     />
                   </label>
-                  <label className="space-y-2">
+                  <label className="space-y-2" id="story-definition-of-done">
                     <span className="text-sm font-medium text-foreground">Definition of Done</span>
                     <textarea
                       className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
