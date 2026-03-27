@@ -1,186 +1,30 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { PrismaClient } from "../generated/client/index.js";
 
 const prisma = new PrismaClient();
 
-const ids = {
-  organizationId: "org_demo_control_plane",
-  users: {
-    valueOwner: "user_demo_value_owner",
-    aida: "user_demo_aida",
-    aqa: "user_demo_aqa",
-    architect: "user_demo_architect",
-    deliveryLead: "user_demo_delivery_lead",
-    builder: "user_demo_builder"
-  },
-  memberships: {
-    valueOwner: "membership_demo_value_owner",
-    aida: "membership_demo_aida",
-    aqa: "membership_demo_aqa",
-    architect: "membership_demo_architect",
-    deliveryLead: "membership_demo_delivery_lead",
-    builder: "membership_demo_builder"
-  },
-  partyRoles: {
-    sponsor: "party_role_demo_customer_sponsor",
-    domainOwner: "party_role_demo_customer_domain_owner",
-    valueOwner: "party_role_demo_value_owner",
-    riskOwner: "party_role_demo_risk_owner",
-    architect: "party_role_demo_architect",
-    aida: "party_role_demo_aida",
-    aqa: "party_role_demo_aqa",
-    deliveryLead: "party_role_demo_delivery_lead",
-    builder: "party_role_demo_builder"
-  },
-  agents: {
-    framing: "agent_demo_framing",
-    governance: "agent_demo_governance"
-  },
-  signoffs: {
-    outcomeReview: "signoff_demo_outcome_review",
-    storyReview: "signoff_demo_story_review"
-  },
-  outcomes: {
-    draft: "outcome_demo_governance_gap",
-    almostReady: "outcome_demo_outcome_readiness"
-  },
-  epicId: "epic_demo_framing",
-  stories: {
-    blocked: "story_demo_outcome_workspace",
-    ready: "story_demo_execution_contract",
-    draft: "story_demo_activity_timeline"
-  },
-  tollgateId: "tollgate_demo_baseline_blocked",
-  activityEventId: "activity_demo_seed"
-};
+const currentDirectory = dirname(fileURLToPath(import.meta.url));
+const seedDataPath = resolve(currentDirectory, "data/aas-demo-replacement.json");
+const seedData = JSON.parse(readFileSync(seedDataPath, "utf8"));
 
-const users = [
-  {
-    id: ids.users.valueOwner,
-    membershipId: ids.memberships.valueOwner,
-    email: "value.owner@aas-companion.local",
-    fullName: "Demo Value Owner",
-    role: "value_owner"
-  },
-  {
-    id: ids.users.aida,
-    membershipId: ids.memberships.aida,
-    email: "aida@aas-companion.local",
-    fullName: "Demo AIDA",
-    role: "aida"
-  },
-  {
-    id: ids.users.aqa,
-    membershipId: ids.memberships.aqa,
-    email: "aqa@aas-companion.local",
-    fullName: "Demo AQA",
-    role: "aqa"
-  },
-  {
-    id: ids.users.architect,
-    membershipId: ids.memberships.architect,
-    email: "architect@aas-companion.local",
-    fullName: "Demo Architect",
-    role: "architect"
-  },
-  {
-    id: ids.users.deliveryLead,
-    membershipId: ids.memberships.deliveryLead,
-    email: "delivery.lead@aas-companion.local",
-    fullName: "Demo Delivery Lead",
-    role: "delivery_lead"
-  },
-  {
-    id: ids.users.builder,
-    membershipId: ids.memberships.builder,
-    email: "builder@aas-companion.local",
-    fullName: "Demo Builder",
-    role: "builder"
-  }
-];
+const organization = seedData.organization;
+const appUsers = seedData.app_users;
+const partyRoles = seedData.party_roles;
+const outcomes = seedData.outcomes;
+const epics = seedData.epics;
+const stories = seedData.stories;
+const tests = seedData.tests;
+const runtimeOverrides = seedData.runtime_seed_overrides;
+const expectedShape = seedData.expected_shape;
+const organizationId = organization.runtime_id;
 
-const partyRoles = [
-  {
-    id: ids.partyRoles.sponsor,
-    fullName: "Mikael Sponsor",
-    email: "mikael.sponsor@customer.local",
-    organizationSide: "customer",
-    roleType: "customer_sponsor",
-    roleTitle: "Executive Sponsor",
-    mandateNotes: "Approves escalation and major AI acceleration risk."
-  },
-  {
-    id: ids.partyRoles.domainOwner,
-    fullName: "Karin Domain Owner",
-    email: "karin.domain@customer.local",
-    organizationSide: "customer",
-    roleType: "customer_domain_owner",
-    roleTitle: "Customer Domain Owner",
-    mandateNotes: "Owns outcome framing and domain clarity."
-  },
-  {
-    id: ids.partyRoles.valueOwner,
-    fullName: "Demo Value Owner",
-    email: "value.owner@aas-companion.local",
-    organizationSide: "customer",
-    roleType: "value_owner",
-    roleTitle: "Value Owner",
-    mandateNotes: "Owns business value and framing scope."
-  },
-  {
-    id: ids.partyRoles.riskOwner,
-    fullName: "Sara Risk Owner",
-    email: "sara.risk@customer.local",
-    organizationSide: "customer",
-    roleType: "risk_owner",
-    roleTitle: "Risk Owner",
-    mandateNotes: "Accepts material delivery and AI governance risk."
-  },
-  {
-    id: ids.partyRoles.architect,
-    fullName: "Demo Architect",
-    email: "architect@aas-companion.local",
-    organizationSide: "supplier",
-    roleType: "architect",
-    roleTitle: "Solution Architect",
-    mandateNotes: "Reviews architecture and solution constraints."
-  },
-  {
-    id: ids.partyRoles.aida,
-    fullName: "Demo AIDA",
-    email: "aida@aas-companion.local",
-    organizationSide: "supplier",
-    roleType: "aida",
-    roleTitle: "AI Delivery Architect",
-    mandateNotes: "Shapes governed AI delivery patterns."
-  },
-  {
-    id: ids.partyRoles.aqa,
-    fullName: "Demo AQA",
-    email: "aqa@aas-companion.local",
-    organizationSide: "supplier",
-    roleType: "aqa",
-    roleTitle: "AI Quality Assurance",
-    mandateNotes: "Reviews testability and AI quality posture."
-  },
-  {
-    id: ids.partyRoles.deliveryLead,
-    fullName: "Demo Delivery Lead",
-    email: "delivery.lead@aas-companion.local",
-    organizationSide: "supplier",
-    roleType: "delivery_lead",
-    roleTitle: "Delivery Lead",
-    mandateNotes: "Owns supplier execution readiness and escalation."
-  },
-  {
-    id: ids.partyRoles.builder,
-    fullName: "Demo Builder",
-    email: "builder@aas-companion.local",
-    organizationSide: "supplier",
-    roleType: "builder",
-    roleTitle: "Builder",
-    mandateNotes: "Owns implementation execution inside the governed scope."
-  }
-];
+const userByRole = new Map(appUsers.map((user) => [user.membership_role, user]));
+const partyRoleByType = new Map(partyRoles.map((role) => [role.role_type, role]));
+const outcomeIdByCanonical = new Map(outcomes.map((outcome) => [outcome.canonical_id, outcome.runtime_id]));
+const epicIdByCanonical = new Map(epics.map((epic) => [epic.canonical_id, epic.runtime_id]));
+const testById = new Map(tests.map((test) => [test.test_id, test]));
 
 const governanceRoleRequirements = [
   {
@@ -188,14 +32,14 @@ const governanceRoleRequirements = [
     organizationSide: "customer",
     roleType: "value_owner",
     minimumCount: 1,
-    rationale: "Level 1 work still needs a named business owner."
+    rationale: "Level 1 still needs named business ownership."
   },
   {
     aiAccelerationLevel: "level_1",
     organizationSide: "supplier",
     roleType: "delivery_lead",
     minimumCount: 1,
-    rationale: "Level 1 work needs one supplier-side delivery owner."
+    rationale: "Level 1 still needs delivery accountability."
   },
   {
     aiAccelerationLevel: "level_1",
@@ -209,49 +53,49 @@ const governanceRoleRequirements = [
     organizationSide: "customer",
     roleType: "value_owner",
     minimumCount: 1,
-    rationale: "Level 2 work needs named value ownership."
+    rationale: "Structured acceleration needs named value ownership."
   },
   {
     aiAccelerationLevel: "level_2",
     organizationSide: "customer",
     roleType: "customer_domain_owner",
     minimumCount: 1,
-    rationale: "Level 2 work requires explicit customer domain oversight."
+    rationale: "Customer-side domain context is required before governed delivery can proceed."
   },
   {
     aiAccelerationLevel: "level_2",
     organizationSide: "supplier",
     roleType: "architect",
     minimumCount: 1,
-    rationale: "Level 2 work requires architecture review."
+    rationale: "Structured acceleration requires architecture review."
   },
   {
     aiAccelerationLevel: "level_2",
     organizationSide: "supplier",
     roleType: "aida",
     minimumCount: 1,
-    rationale: "Level 2 work requires named AI delivery oversight."
+    rationale: "Structured acceleration requires named AI delivery oversight."
   },
   {
     aiAccelerationLevel: "level_2",
     organizationSide: "supplier",
     roleType: "aqa",
     minimumCount: 1,
-    rationale: "Level 2 work requires AI quality review."
+    rationale: "Structured acceleration requires independent AI quality review."
   },
   {
     aiAccelerationLevel: "level_2",
     organizationSide: "supplier",
     roleType: "delivery_lead",
     minimumCount: 1,
-    rationale: "Level 2 work needs one supplier delivery owner."
+    rationale: "Supplier execution still needs an accountable delivery lead."
   },
   {
     aiAccelerationLevel: "level_3",
     organizationSide: "customer",
     roleType: "customer_sponsor",
     minimumCount: 1,
-    rationale: "Level 3 work requires named sponsor authority."
+    rationale: "Level 3 work requires sponsor authority."
   },
   {
     aiAccelerationLevel: "level_3",
@@ -293,7 +137,7 @@ const governanceRoleRequirements = [
     organizationSide: "supplier",
     roleType: "delivery_lead",
     minimumCount: 1,
-    rationale: "Level 3 work needs one accountable delivery lead."
+    rationale: "Level 3 work requires accountable delivery leadership."
   },
   {
     aiAccelerationLevel: "level_3",
@@ -307,146 +151,222 @@ const governanceRoleRequirements = [
     organizationSide: "supplier",
     roleType: "ai_governance_lead",
     minimumCount: 1,
-    rationale: "Level 3 work requires a named AI governance lead before approval can be trusted."
+    rationale: "Level 3 work requires a named AI governance lead."
   }
 ];
 
 const governanceRiskCombinationRules = [
   {
     aiAccelerationLevel: "level_2",
-    primaryRoleType: "aida",
+    primaryRoleType: "value_owner",
     conflictingRoleType: "aqa",
-    rationale: "The same person should not both shape AI delivery and independently assure AI quality."
+    rationale: "Business approval and independent quality stop authority should stay separated."
+  },
+  {
+    aiAccelerationLevel: "level_2",
+    primaryRoleType: "delivery_lead",
+    conflictingRoleType: "aqa",
+    rationale: "Execution ownership and independent quality review should not collapse into one role."
   },
   {
     aiAccelerationLevel: "level_3",
     primaryRoleType: "architect",
     conflictingRoleType: "risk_owner",
-    rationale: "The same person should not own both solution design and final risk acceptance at Level 3."
-  },
-  {
-    aiAccelerationLevel: "level_3",
-    primaryRoleType: "aida",
-    conflictingRoleType: "aqa",
-    rationale: "Level 3 requires separation between AI delivery design and AI quality sign-off."
+    rationale: "The same person should not own both design and final risk acceptance at level 3."
   }
 ];
 
 const agentRegistryEntries = [
   {
-    id: ids.agents.framing,
-    agentName: "BMAD Framing Agent",
+    id: "agent_demo_framing",
+    agentName: "OrderFlow Framing Agent",
     agentType: "bmad_agent",
-    purpose: "Helps teams shape outcomes, epics and stories inside governed project scope.",
-    scopeOfWork: "Framing assistance, story shaping and structured drafting for active project work.",
+    purpose: "Supports framing, shaping, and backlog structuring for OrderFlow.",
+    scopeOfWork: "Drafting, reframing, decomposition, and traceability support for outcome, epic, and story work.",
     allowedArtifactTypes: ["outcome", "epic", "story"],
     allowedActions: ["draft", "summarize", "suggest_structure"],
-    supervisingPartyRoleId: ids.partyRoles.aida
+    supervisingPartyRoleId: partyRoleByType.get("aida").runtime_id
   },
   {
-    id: ids.agents.governance,
-    agentName: "Governance Review Agent",
+    id: "agent_demo_governance",
+    agentName: "OrderFlow Governance Review Agent",
     agentType: "governance_agent",
-    purpose: "Highlights readiness gaps and governance concerns before promotion or handoff.",
-    scopeOfWork: "Review-only checks against role coverage, readiness posture and traceability evidence.",
+    purpose: "Highlights readiness gaps, missing approvals, and evidence-chain issues.",
+    scopeOfWork: "Review-only checks against governance coverage, tollgates, traceability, and handoff readiness.",
     allowedArtifactTypes: ["tollgate", "story", "outcome"],
     allowedActions: ["review", "flag_risks", "summarize_gaps"],
-    supervisingPartyRoleId: ids.partyRoles.aqa
+    supervisingPartyRoleId: partyRoleByType.get("aqa").runtime_id
   }
 ];
 
+function ensureValue(value, message) {
+  if (!value) {
+    throw new Error(message);
+  }
+
+  return value;
+}
+
+function humanize(value) {
+  return value.replaceAll("_", " ");
+}
+
+function sentenceCase(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function buildStoryValueIntent(story) {
+  return `Enable a reviewable delivery step for ${story.title.toLowerCase()}.`;
+}
+
+function buildStoryAcceptanceCriteria(story) {
+  return [
+    `${story.title} is described in a way that stakeholders can review.`,
+    `${story.key} can be traced to the active outcome and epic.`
+  ];
+}
+
+function buildStoryDefinitionOfDone(story) {
+  return [
+    `${story.key} is linked to its governing outcome and epic.`,
+    `A human review note exists for ${story.key}.`
+  ];
+}
+
+function buildStoryAiUsageScope(story) {
+  if (story.runtime_story_type === "governance") {
+    return ["content"];
+  }
+
+  if (story.runtime_story_type === "enablement") {
+    return ["content", "test"];
+  }
+
+  return story.title.toLowerCase().includes("test") ? ["test", "code"] : ["code"];
+}
+
+function buildTestDefinition(story) {
+  if (story.runtime_status === "definition_blocked") {
+    return null;
+  }
+
+  const test = testById.get(story.test_id);
+
+  if (!test) {
+    return "Seeded verification plan pending runtime mapping.";
+  }
+
+  return `${sentenceCase(test.test_level)} ${humanize(test.test_type)} with ${test.automation} automation.`;
+}
+
+async function resetSeedManagedOrganizationState() {
+  await prisma.signoffRecord.deleteMany({ where: { organizationId } });
+  await prisma.tollgate.deleteMany({ where: { organizationId } });
+  await prisma.activityEvent.deleteMany({
+    where: {
+      organizationId,
+      eventType: "demo_seeded"
+    }
+  });
+  await prisma.story.deleteMany({
+    where: {
+      organizationId,
+      originType: "seeded",
+      createdMode: "demo"
+    }
+  });
+  await prisma.epic.deleteMany({
+    where: {
+      organizationId,
+      originType: "seeded",
+      createdMode: "demo"
+    }
+  });
+  await prisma.outcome.deleteMany({
+    where: {
+      organizationId,
+      originType: "seeded",
+      createdMode: "demo"
+    }
+  });
+  await prisma.agentRegistryEntry.deleteMany({ where: { organizationId } });
+  await prisma.governanceRiskCombinationRule.deleteMany({ where: { organizationId } });
+  await prisma.governanceRoleRequirement.deleteMany({ where: { organizationId } });
+  await prisma.partyRoleEntry.deleteMany({ where: { organizationId } });
+}
+
 async function main() {
   await prisma.organization.upsert({
-    where: { id: ids.organizationId },
+    where: { id: organizationId },
     update: {
-      name: "AAS Demo Organization",
-      slug: "aas-demo-org"
+      name: organization.name,
+      slug: organization.slug
     },
     create: {
-      id: ids.organizationId,
-      name: "AAS Demo Organization",
-      slug: "aas-demo-org"
+      id: organizationId,
+      name: organization.name,
+      slug: organization.slug
     }
   });
 
-  for (const user of users) {
+  await resetSeedManagedOrganizationState();
+
+  for (const user of appUsers) {
     await prisma.appUser.upsert({
-      where: { id: user.id },
+      where: { id: user.runtime_id },
       update: {
         email: user.email,
-        fullName: user.fullName
+        fullName: user.full_name
       },
       create: {
-        id: user.id,
+        id: user.runtime_id,
         email: user.email,
-        fullName: user.fullName
+        fullName: user.full_name
       }
     });
 
     await prisma.membership.upsert({
       where: {
         organizationId_userId: {
-          organizationId: ids.organizationId,
-          userId: user.id
+          organizationId,
+          userId: user.runtime_id
         }
       },
       update: {
-        role: user.role
+        role: user.membership_role
       },
       create: {
-        id: user.membershipId,
-        organizationId: ids.organizationId,
-        userId: user.id,
-        role: user.role
+        id: user.membership_id,
+        organizationId,
+        userId: user.runtime_id,
+        role: user.membership_role
       }
     });
   }
 
   for (const partyRole of partyRoles) {
-    await prisma.partyRoleEntry.upsert({
-      where: {
-        id: partyRole.id
-      },
-      update: {
-        fullName: partyRole.fullName,
+    await prisma.partyRoleEntry.create({
+      data: {
+        id: partyRole.runtime_id,
+        organizationId,
+        fullName: partyRole.full_name,
         email: partyRole.email,
-        organizationSide: partyRole.organizationSide,
-        roleType: partyRole.roleType,
-        roleTitle: partyRole.roleTitle,
-        mandateNotes: partyRole.mandateNotes,
-        isActive: true
-      },
-      create: {
-        id: partyRole.id,
-        organizationId: ids.organizationId,
-        fullName: partyRole.fullName,
-        email: partyRole.email,
-        organizationSide: partyRole.organizationSide,
-        roleType: partyRole.roleType,
-        roleTitle: partyRole.roleTitle,
-        mandateNotes: partyRole.mandateNotes,
+        organizationSide: partyRole.organization_side,
+        roleType: partyRole.role_type,
+        roleTitle: partyRole.role_title,
+        mandateNotes:
+          partyRole.mandate_notes ??
+          `${partyRole.role_title} is a seeded AAS runtime role for ${organization.system_name}.`,
         isActive: true
       }
     });
   }
 
   for (const requirement of governanceRoleRequirements) {
-    await prisma.governanceRoleRequirement.upsert({
-      where: {
-        organizationId_aiAccelerationLevel_organizationSide_roleType: {
-          organizationId: ids.organizationId,
-          aiAccelerationLevel: requirement.aiAccelerationLevel,
-          organizationSide: requirement.organizationSide,
-          roleType: requirement.roleType
-        }
-      },
-      update: {
-        minimumCount: requirement.minimumCount,
-        rationale: requirement.rationale
-      },
-      create: {
+    await prisma.governanceRoleRequirement.create({
+      data: {
         id: `gov_req_${requirement.aiAccelerationLevel}_${requirement.organizationSide}_${requirement.roleType}`,
-        organizationId: ids.organizationId,
+        organizationId,
         aiAccelerationLevel: requirement.aiAccelerationLevel,
         organizationSide: requirement.organizationSide,
         roleType: requirement.roleType,
@@ -457,21 +377,10 @@ async function main() {
   }
 
   for (const rule of governanceRiskCombinationRules) {
-    await prisma.governanceRiskCombinationRule.upsert({
-      where: {
-        organizationId_aiAccelerationLevel_primaryRoleType_conflictingRoleType: {
-          organizationId: ids.organizationId,
-          aiAccelerationLevel: rule.aiAccelerationLevel,
-          primaryRoleType: rule.primaryRoleType,
-          conflictingRoleType: rule.conflictingRoleType
-        }
-      },
-      update: {
-        rationale: rule.rationale
-      },
-      create: {
+    await prisma.governanceRiskCombinationRule.create({
+      data: {
         id: `gov_risk_${rule.aiAccelerationLevel}_${rule.primaryRoleType}_${rule.conflictingRoleType}`,
-        organizationId: ids.organizationId,
+        organizationId,
         aiAccelerationLevel: rule.aiAccelerationLevel,
         primaryRoleType: rule.primaryRoleType,
         conflictingRoleType: rule.conflictingRoleType,
@@ -481,23 +390,10 @@ async function main() {
   }
 
   for (const agent of agentRegistryEntries) {
-    await prisma.agentRegistryEntry.upsert({
-      where: {
-        id: agent.id
-      },
-      update: {
-        agentName: agent.agentName,
-        agentType: agent.agentType,
-        purpose: agent.purpose,
-        scopeOfWork: agent.scopeOfWork,
-        allowedArtifactTypes: agent.allowedArtifactTypes,
-        allowedActions: agent.allowedActions,
-        supervisingPartyRoleId: agent.supervisingPartyRoleId,
-        isActive: true
-      },
-      create: {
+    await prisma.agentRegistryEntry.create({
+      data: {
         id: agent.id,
-        organizationId: ids.organizationId,
+        organizationId,
         agentName: agent.agentName,
         agentType: agent.agentType,
         purpose: agent.purpose,
@@ -510,328 +406,195 @@ async function main() {
     });
   }
 
-  await prisma.outcome.upsert({
-    where: {
-      organizationId_key: {
-        organizationId: ids.organizationId,
-        key: "OUT-001"
-      }
-    },
-    update: {
-      title: "Close the governance readiness gap",
-      status: "draft",
-      originType: "seeded",
-      createdMode: "demo"
-    },
-    create: {
-      id: ids.outcomes.draft,
-      organizationId: ids.organizationId,
-      key: "OUT-001",
-      title: "Close the governance readiness gap",
-      problemStatement: "Teams can accelerate AI delivery faster than they can govern it.",
-      outcomeStatement: "Create an AAS control plane that makes delivery status, gates, and evidence explicit.",
-      baselineDefinition: null,
-      baselineSource: null,
-      timeframe: "Q2 2026",
-      valueOwnerId: ids.users.valueOwner,
-      riskProfile: "high",
-      aiAccelerationLevel: "level_2",
-      status: "draft",
-      originType: "seeded",
-      createdMode: "demo"
-    }
-  });
-
-  await prisma.outcome.upsert({
-    where: {
-      organizationId_key: {
-        organizationId: ids.organizationId,
-        key: "OUT-002"
-      }
-    },
-    update: {
-      title: "Make outcome delivery reviewable",
-      status: "ready_for_tg1",
-      originType: "seeded",
-      createdMode: "demo"
-    },
-    create: {
-      id: ids.outcomes.almostReady,
-      organizationId: ids.organizationId,
-      key: "OUT-002",
-      title: "Make outcome delivery reviewable",
-      problemStatement: "Stakeholders cannot tell if AI-assisted delivery is ready for review.",
-      outcomeStatement: "Show a demonstrable path from outcome framing to execution handoff.",
-      baselineDefinition: "Manual review against missing baseline fields and missing story test definitions.",
-      baselineSource: "Seeded demo records",
-      timeframe: "Q2 2026",
-      valueOwnerId: ids.users.valueOwner,
-      riskProfile: "medium",
-      aiAccelerationLevel: "level_2",
-      status: "ready_for_tg1",
-      originType: "seeded",
-      createdMode: "demo"
-    }
-  });
-
-  await prisma.epic.upsert({
-    where: {
-      organizationId_key: {
-        organizationId: ids.organizationId,
-        key: "EPC-001"
-      }
-    },
-    update: {
-      title: "Framing and delivery visibility",
-      status: "in_progress",
-      originType: "seeded",
-      createdMode: "demo"
-    },
-    create: {
-      id: ids.epicId,
-      organizationId: ids.organizationId,
-      outcomeId: ids.outcomes.almostReady,
-      key: "EPC-001",
-      title: "Framing and delivery visibility",
-      purpose: "Connect framing, story readiness, and execution handoff in one governed slice.",
-      status: "in_progress",
-      originType: "seeded",
-      createdMode: "demo"
-    }
-  });
-
-  const storySeeds = [
-    {
-      id: ids.stories.blocked,
-      key: "M1-STORY-004",
-      title: "Build the Home dashboard",
-      storyType: "outcome_delivery",
-      valueIntent: "Give the value owner a fast read on current control-plane health.",
-      acceptanceCriteria: [
-        "Home shows core system status.",
-        "User can see blocked and ready work."
-      ],
-      aiUsageScope: ["ui", "copy"],
-      testDefinition: null,
-      definitionOfDone: ["Dashboard renders", "Counts are tenant-scoped"],
-      status: "definition_blocked"
-    },
-    {
-      id: ids.stories.ready,
-      key: "M1-STORY-008",
-      title: "Preview execution contract",
-      storyType: "governance",
-      valueIntent: "Allow teams to preview a governed handoff before delivery starts.",
-      acceptanceCriteria: [
-        "Valid story can produce a preview.",
-        "Preview shows required inputs."
-      ],
-      aiUsageScope: ["contract_generation"],
-      testDefinition: "Service-level validation plus smoke coverage for preview entry.",
-      definitionOfDone: ["Contract preview loads", "Missing fields are surfaced"],
-      status: "ready_for_handoff"
-    },
-    {
-      id: ids.stories.draft,
-      key: "M1-STORY-009",
-      title: "Show core activity timeline",
-      storyType: "enablement",
-      valueIntent: "Expose the latest governance-relevant events to reviewers.",
-      acceptanceCriteria: [
-        "Timeline lists newest events first."
-      ],
-      aiUsageScope: ["instrumentation"],
-      testDefinition: "Repository integration test for append-only event reads.",
-      definitionOfDone: ["Events are ordered", "Events remain append-only"],
-      status: "draft"
-    }
-  ];
-
-  for (const story of storySeeds) {
-    await prisma.story.upsert({
-      where: {
-        organizationId_key: {
-          organizationId: ids.organizationId,
-          key: story.key
-        }
-      },
-      update: {
-        title: story.title,
-        storyType: story.storyType,
-        valueIntent: story.valueIntent,
-        acceptanceCriteria: story.acceptanceCriteria,
-        aiUsageScope: story.aiUsageScope,
-        testDefinition: story.testDefinition,
-        definitionOfDone: story.definitionOfDone,
-        status: story.status,
+  for (const outcome of outcomes) {
+    await prisma.outcome.create({
+      data: {
+        id: outcome.runtime_id,
+        organizationId,
+        key: outcome.key,
+        title: outcome.title,
+        problemStatement: `The current delivery profile in ${organization.system_name} is too slow and too incident-prone to sustain governed change.`,
+        outcomeStatement: outcome.outcome_statement,
+        baselineDefinition: outcome.baseline_definition,
+        baselineSource: outcome.baseline_source,
+        timeframe: outcome.timeframe,
+        valueOwnerId: ensureValue(userByRole.get("value_owner")?.runtime_id, "Missing demo value owner user."),
+        riskProfile: outcome.risk_profile,
+        aiAccelerationLevel: outcome.ai_acceleration_level,
+        status: outcome.runtime_status,
         originType: "seeded",
         createdMode: "demo"
-      },
-      create: {
-        id: story.id,
-        organizationId: ids.organizationId,
-        outcomeId: ids.outcomes.almostReady,
-        epicId: ids.epicId,
+      }
+    });
+  }
+
+  for (const epic of epics) {
+    await prisma.epic.create({
+      data: {
+        id: epic.runtime_id,
+        organizationId,
+        outcomeId: ensureValue(
+          outcomeIdByCanonical.get(epic.outcome_canonical_id),
+          `Missing outcome mapping for epic ${epic.key}.`
+        ),
+        key: epic.key,
+        title: epic.title,
+        purpose: epic.purpose ?? `Advance the outcome through ${epic.title.toLowerCase()}.`,
+        summary: epic.summary ?? epic.title,
+        status: epic.runtime_status,
+        originType: "seeded",
+        createdMode: "demo"
+      }
+    });
+  }
+
+  for (const story of stories) {
+    await prisma.story.create({
+      data: {
+        id: story.runtime_id,
+        organizationId,
+        outcomeId: ensureValue(
+          outcomeIdByCanonical.get(story.outcome_canonical_id ?? "O-001"),
+          `Missing outcome mapping for story ${story.key}.`
+        ),
+        epicId: ensureValue(epicIdByCanonical.get(story.epic_canonical_id), `Missing epic mapping for story ${story.key}.`),
         key: story.key,
         title: story.title,
-        storyType: story.storyType,
-        valueIntent: story.valueIntent,
-        acceptanceCriteria: story.acceptanceCriteria,
-        aiUsageScope: story.aiUsageScope,
-        aiAccelerationLevel: "level_2",
-        testDefinition: story.testDefinition,
-        definitionOfDone: story.definitionOfDone,
-        status: story.status,
+        storyType: story.runtime_story_type,
+        valueIntent: story.value_intent ?? buildStoryValueIntent(story),
+        acceptanceCriteria: story.acceptance_criteria ?? buildStoryAcceptanceCriteria(story),
+        aiUsageScope: story.ai_usage_scope ?? buildStoryAiUsageScope(story),
+        aiAccelerationLevel: story.ai_acceleration_level,
+        testDefinition: story.test_definition_summary ?? buildTestDefinition(story),
+        definitionOfDone: story.definition_of_done ?? buildStoryDefinitionOfDone(story),
+        status: story.runtime_status,
         originType: "seeded",
         createdMode: "demo"
       }
     });
   }
 
-  await prisma.tollgate.upsert({
-    where: {
-      organizationId_entityType_entityId_tollgateType: {
-        organizationId: ids.organizationId,
-        entityType: "outcome",
-        entityId: ids.outcomes.draft,
-        tollgateType: "tg1_baseline"
-      }
-    },
-    update: {
-      status: "blocked",
-      blockers: [
-        "Baseline definition is missing.",
-        "Baseline source is missing."
-      ],
-      approverRoles: ["value_owner", "architect"],
-      comments: "Tollgate 1 remains blocked until baseline fields are completed."
-    },
-    create: {
-      id: ids.tollgateId,
-      organizationId: ids.organizationId,
+  const primaryOutcomeTollgate = runtimeOverrides.primary_outcome_tollgate;
+  const handoffStoryTollgate = runtimeOverrides.handoff_story_tollgate;
+
+  await prisma.tollgate.create({
+    data: {
+      id: primaryOutcomeTollgate.runtime_id,
+      organizationId,
       entityType: "outcome",
-      entityId: ids.outcomes.draft,
-      tollgateType: "tg1_baseline",
-      status: "blocked",
-      blockers: [
-        "Baseline definition is missing.",
-        "Baseline source is missing."
-      ],
-      approverRoles: ["value_owner", "architect"],
-      comments: "Tollgate 1 remains blocked until baseline fields are completed."
+      entityId: outcomes[0].runtime_id,
+      tollgateType: primaryOutcomeTollgate.tollgate_type,
+      status: primaryOutcomeTollgate.status,
+      blockers: [],
+      approverRoles: primaryOutcomeTollgate.approver_roles,
+      comments: "OrderFlow framing is seeded as ready for Tollgate 1 review."
     }
   });
 
-  await prisma.signoffRecord.upsert({
-    where: {
-      id: ids.signoffs.outcomeReview
-    },
-    update: {
-      decisionKind: "review",
-      requiredRoleType: "architect",
-      actualPartyRoleEntryId: ids.partyRoles.architect,
-      actualPersonName: "Demo Architect",
-      actualPersonEmail: "architect@aas-companion.local",
-      actualRoleTitle: "Solution Architect",
-      organizationSide: "supplier",
-      decisionStatus: "changes_requested",
-      note: "Baseline source still needs explicit evidence before approval can proceed.",
-      evidenceReference: "demo://baseline-gap/outcome-001",
-      createdBy: ids.users.architect
-    },
-    create: {
-      id: ids.signoffs.outcomeReview,
-      organizationId: ids.organizationId,
-      entityType: "outcome",
-      entityId: ids.outcomes.draft,
-      tollgateId: ids.tollgateId,
-      tollgateType: "tg1_baseline",
-      decisionKind: "review",
-      requiredRoleType: "architect",
-      actualPartyRoleEntryId: ids.partyRoles.architect,
-      actualPersonName: "Demo Architect",
-      actualPersonEmail: "architect@aas-companion.local",
-      actualRoleTitle: "Solution Architect",
-      organizationSide: "supplier",
-      decisionStatus: "changes_requested",
-      note: "Baseline source still needs explicit evidence before approval can proceed.",
-      evidenceReference: "demo://baseline-gap/outcome-001",
-      createdBy: ids.users.architect
-    }
-  });
-
-  await prisma.signoffRecord.upsert({
-    where: {
-      id: ids.signoffs.storyReview
-    },
-    update: {
-      decisionKind: "review",
-      requiredRoleType: "aqa",
-      actualPartyRoleEntryId: ids.partyRoles.aqa,
-      actualPersonName: "Demo AQA",
-      actualPersonEmail: "aqa@aas-companion.local",
-      actualRoleTitle: "AI Quality Assurance",
-      organizationSide: "supplier",
-      decisionStatus: "approved",
-      note: "Quality review completed for the ready story.",
-      evidenceReference: "demo://handoff/quality-review/story-ready",
-      createdBy: ids.users.aqa
-    },
-    create: {
-      id: ids.signoffs.storyReview,
-      organizationId: ids.organizationId,
+  await prisma.tollgate.create({
+    data: {
+      id: handoffStoryTollgate.runtime_id,
+      organizationId,
       entityType: "story",
-      entityId: ids.stories.ready,
-      tollgateType: "story_readiness",
-      decisionKind: "review",
-      requiredRoleType: "aqa",
-      actualPartyRoleEntryId: ids.partyRoles.aqa,
-      actualPersonName: "Demo AQA",
-      actualPersonEmail: "aqa@aas-companion.local",
-      actualRoleTitle: "AI Quality Assurance",
-      organizationSide: "supplier",
-      decisionStatus: "approved",
-      note: "Quality review completed for the ready story.",
-      evidenceReference: "demo://handoff/quality-review/story-ready",
-      createdBy: ids.users.aqa
+      entityId: ensureValue(stories.find((story) => story.runtime_status === "ready_for_handoff")?.runtime_id, "Missing ready-for-handoff story."),
+      tollgateType: handoffStoryTollgate.tollgate_type,
+      status: handoffStoryTollgate.status,
+      blockers: [],
+      approverRoles: handoffStoryTollgate.approver_roles,
+      comments: "Representative OrderFlow delivery slice is seeded as handoff-ready."
     }
   });
 
-  await prisma.activityEvent.upsert({
-    where: { id: ids.activityEventId },
-    update: {
-      metadata: {
-        seededBy: "packages/db/prisma/seed.mjs",
-        outcomes: 2,
-        epics: 1,
-        stories: 3,
-        tollgates: 1,
-        signoffRecords: 2,
-        partyRoleEntries: partyRoles.length,
-        governanceRoleRequirements: governanceRoleRequirements.length,
-        governanceRiskCombinationRules: governanceRiskCombinationRules.length,
-        agentRegistryEntries: agentRegistryEntries.length,
-        provenance: {
-          originType: "seeded",
-          createdMode: "demo",
-          lineageReference: null
-        }
-      }
-    },
-    create: {
-      id: ids.activityEventId,
-      organizationId: ids.organizationId,
-      actorId: ids.users.valueOwner,
+  const architectRole = ensureValue(partyRoleByType.get("architect"), "Missing architect party role.");
+  const architectUser = ensureValue(userByRole.get("architect"), "Missing architect user.");
+  const aqaRole = ensureValue(partyRoleByType.get("aqa"), "Missing AQA party role.");
+  const aqaUser = ensureValue(userByRole.get("aqa"), "Missing AQA user.");
+  const valueOwnerRole = ensureValue(partyRoleByType.get("value_owner"), "Missing value owner party role.");
+  const valueOwnerUser = ensureValue(userByRole.get("value_owner"), "Missing value owner user.");
+  const readyStoryId = ensureValue(stories.find((story) => story.runtime_status === "ready_for_handoff")?.runtime_id, "Missing ready story id.");
+
+  await prisma.signoffRecord.create({
+    data: {
+      id: runtimeOverrides.signoff_records[0].runtime_id,
+      organizationId,
+      entityType: "outcome",
+      entityId: outcomes[0].runtime_id,
+      tollgateId: primaryOutcomeTollgate.runtime_id,
+      tollgateType: primaryOutcomeTollgate.tollgate_type,
+      decisionKind: "review",
+      requiredRoleType: "architect",
+      actualPartyRoleEntryId: architectRole.runtime_id,
+      actualPersonName: architectRole.full_name,
+      actualPersonEmail: architectRole.email,
+      actualRoleTitle: architectRole.role_title,
+      organizationSide: architectRole.organization_side,
+      decisionStatus: "approved",
+      note: "Architecture and delivery framing are coherent enough to proceed to design review.",
+      evidenceReference: "aas://orderflow/outcome/O-001/design-readiness",
+      createdBy: architectUser.runtime_id
+    }
+  });
+
+  await prisma.signoffRecord.create({
+    data: {
+      id: runtimeOverrides.signoff_records[1].runtime_id,
+      organizationId,
+      entityType: "story",
+      entityId: readyStoryId,
+      tollgateId: handoffStoryTollgate.runtime_id,
+      tollgateType: handoffStoryTollgate.tollgate_type,
+      decisionKind: "review",
+      requiredRoleType: "aqa",
+      actualPartyRoleEntryId: aqaRole.runtime_id,
+      actualPersonName: aqaRole.full_name,
+      actualPersonEmail: aqaRole.email,
+      actualRoleTitle: aqaRole.role_title,
+      organizationSide: aqaRole.organization_side,
+      decisionStatus: "approved",
+      note: "Quality review is complete for the seeded handoff-ready story.",
+      evidenceReference: "aas://orderflow/story/S-002/readiness-review",
+      createdBy: aqaUser.runtime_id
+    }
+  });
+
+  await prisma.signoffRecord.create({
+    data: {
+      id: runtimeOverrides.signoff_records[2].runtime_id,
+      organizationId,
+      entityType: "story",
+      entityId: readyStoryId,
+      tollgateId: handoffStoryTollgate.runtime_id,
+      tollgateType: handoffStoryTollgate.tollgate_type,
+      decisionKind: "approval",
+      requiredRoleType: "value_owner",
+      actualPartyRoleEntryId: valueOwnerRole.runtime_id,
+      actualPersonName: valueOwnerRole.full_name,
+      actualPersonEmail: valueOwnerRole.email,
+      actualRoleTitle: valueOwnerRole.role_title,
+      organizationSide: valueOwnerRole.organization_side,
+      decisionStatus: "approved",
+      note: "Value owner accepts the scoped delivery package for controlled handoff.",
+      evidenceReference: "aas://orderflow/story/S-002/value-owner-approval",
+      createdBy: valueOwnerUser.runtime_id
+    }
+  });
+
+  await prisma.activityEvent.create({
+    data: {
+      id: "activity_demo_seed",
+      organizationId,
+      actorId: valueOwnerUser.runtime_id,
       entityType: "organization",
-      entityId: ids.organizationId,
+      entityId: organizationId,
       eventType: "demo_seeded",
       metadata: {
         seededBy: "packages/db/prisma/seed.mjs",
-        outcomes: 2,
-        epics: 1,
-        stories: 3,
-        tollgates: 1,
-        signoffRecords: 2,
+        seedSource: "packages/db/prisma/data/aas-demo-replacement.json",
+        outcomes: expectedShape.outcomes,
+        epics: expectedShape.epics,
+        stories: expectedShape.stories,
+        tollgates: 2,
+        signoffRecords: runtimeOverrides.signoff_records.length,
         partyRoleEntries: partyRoles.length,
         governanceRoleRequirements: governanceRoleRequirements.length,
         governanceRiskCombinationRules: governanceRiskCombinationRules.length,

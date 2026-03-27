@@ -298,7 +298,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   Demo project access
                 </CardTitle>
                 <CardDescription>
-                  The Demo project includes all six BMAD-aligned delivery roles and reference records for guided exploration.
+                  The Demo project includes AAS-aligned delivery roles and seeded OrderFlow reference records for guided exploration.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -309,7 +309,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                   <p className="text-sm text-muted-foreground">
-                    Demo org: <strong>AAS Demo Organization</strong>. Primary login lands as the{" "}
+                    Demo org: <strong>OrderFlow AAS Test Organization</strong>. Primary login lands as the{" "}
                     <strong>Value Owner</strong>.
                   </p>
                 </form>
@@ -327,7 +327,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>Protected routes with server-side session checks and a protected layout group.</p>
               <p>Explicit organization context for the current project and for Demo access.</p>
-              <p>Six demo roles for governance-aware exploration before wider UI work begins.</p>
+              <p>Seeded OrderFlow AAS roles for governance-aware exploration before wider UI work begins.</p>
             </CardContent>
           </Card>
 

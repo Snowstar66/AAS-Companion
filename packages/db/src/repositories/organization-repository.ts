@@ -1,5 +1,6 @@
 import type { MembershipRole } from "@aas-companion/domain";
 import { prisma } from "../client";
+import { withDevTiming } from "../dev-timing";
 
 export type OrganizationMembershipContext = {
   organizationId: string;
@@ -130,28 +131,30 @@ export async function listOrganizationProjectSummariesForUser(
 }
 
 export async function getOrganizationContextForUser(userId: string, organizationId: string) {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      organizationId_userId: {
-        organizationId,
-        userId
+  return withDevTiming("db.getOrganizationContextForUser", async () => {
+    const membership = await prisma.membership.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId,
+          userId
+        }
+      },
+      include: {
+        organization: true
       }
-    },
-    include: {
-      organization: true
+    });
+
+    if (!membership) {
+      return null;
     }
-  });
 
-  if (!membership) {
-    return null;
-  }
-
-  return {
-    organizationId: membership.organization.id,
-    organizationName: membership.organization.name,
-    organizationSlug: membership.organization.slug,
-    role: membership.role as MembershipRole
-  };
+    return {
+      organizationId: membership.organization.id,
+      organizationName: membership.organization.name,
+      organizationSlug: membership.organization.slug,
+      role: membership.role as MembershipRole
+    };
+  }, `organizationId=${organizationId}`);
 }
 
 export async function ensureAppUser(input: {
@@ -247,32 +250,34 @@ export async function listAppUsers(): Promise<AppUserIdentity[]> {
 }
 
 export async function listOrganizationUsers(organizationId: string): Promise<AppUserIdentity[]> {
-  const memberships = await prisma.membership.findMany({
-    where: {
-      organizationId
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          email: true,
-          fullName: true
+  return withDevTiming("db.listOrganizationUsers", async () => {
+    const memberships = await prisma.membership.findMany({
+      where: {
+        organizationId
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true
+          }
         }
       }
-    }
-  });
-
-  return memberships
-    .map((membership) => ({
-      userId: membership.user.id,
-      email: membership.user.email,
-      fullName: membership.user.fullName
-    }))
-    .sort((left, right) => {
-      const leftLabel = left.fullName ?? left.email;
-      const rightLabel = right.fullName ?? right.email;
-      return leftLabel.localeCompare(rightLabel, "en");
     });
+
+    return memberships
+      .map((membership) => ({
+        userId: membership.user.id,
+        email: membership.user.email,
+        fullName: membership.user.fullName
+      }))
+      .sort((left, right) => {
+        const leftLabel = left.fullName ?? left.email;
+        const rightLabel = right.fullName ?? right.email;
+        return leftLabel.localeCompare(rightLabel, "en");
+      });
+  }, `organizationId=${organizationId}`);
 }
 
 export async function upsertAppUserByEmail(input: {

@@ -47,6 +47,7 @@ export {
 } from "./repositories/governance-repository";
 export {
   createOutcome,
+  getPreferredFramingOutcomeId,
   getOutcomeById,
   getOutcomeWorkspaceSnapshot,
   listOutcomeCockpitEntries,

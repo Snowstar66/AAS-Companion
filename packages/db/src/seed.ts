@@ -9,9 +9,9 @@ export type SeedStorySummary = {
 };
 
 export const expectedSeedShape: SeedStorySummary = {
-  outcomes: 2,
-  epics: 1,
-  stories: 3,
-  tollgates: 1,
+  outcomes: 1,
+  epics: 8,
+  stories: 24,
+  tollgates: 2,
   activityEvents: 1
 };

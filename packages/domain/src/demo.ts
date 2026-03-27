@@ -13,8 +13,7 @@ export const DEMO_IDS = {
     builder: "user_demo_builder"
   },
   outcomes: {
-    draft: "outcome_demo_governance_gap",
-    almostReady: "outcome_demo_outcome_readiness"
+    primary: "outcome_demo_governance_gap"
   },
   epicId: "epic_demo_framing",
   stories: {
@@ -27,7 +26,7 @@ export const DEMO_IDS = {
 
 export const DEMO_ORGANIZATION: OrganizationContext = {
   organizationId: DEMO_IDS.organizationId,
-  organizationName: "AAS Demo Organization",
+  organizationName: "OrderFlow AAS Test Organization",
   organizationSlug: "aas-demo-org",
   role: "value_owner"
 };
@@ -35,8 +34,8 @@ export const DEMO_ORGANIZATION: OrganizationContext = {
 export const DEMO_SESSION: AppSession = {
   mode: "demo",
   userId: DEMO_IDS.users.valueOwner,
-  email: "value.owner@aas-companion.local",
-  displayName: "Demo Value Owner",
+  email: "value.owner@orderflow-aas.local",
+  displayName: "Anna Lund",
   organization: DEMO_ORGANIZATION
 };
 

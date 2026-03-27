@@ -1,5 +1,6 @@
 import type { StoryRecord } from "@aas-companion/domain";
 import { prisma } from "../client";
+import { withDevTiming } from "../dev-timing";
 import { withEpicShape } from "./epic-shape";
 
 export type HomeDashboardSnapshot = {
@@ -42,59 +43,119 @@ export type HomeDashboardSnapshot = {
 };
 
 export async function getProjectSpineSnapshot(organizationId: string) {
-  const organization = await prisma.organization.findUnique({
-    where: {
-      id: organizationId
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      outcomes: {
-        include: {
-          epics: {
-            include: {
-              stories: {
-                orderBy: {
-                  createdAt: "asc"
+  return withDevTiming("db.getProjectSpineSnapshot", async () => {
+    const organization = await prisma.organization.findUnique({
+      where: {
+        id: organizationId
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        outcomes: {
+          select: {
+            id: true,
+            organizationId: true,
+            key: true,
+            title: true,
+            problemStatement: true,
+            outcomeStatement: true,
+            baselineDefinition: true,
+            baselineSource: true,
+            timeframe: true,
+            valueOwnerId: true,
+            riskProfile: true,
+            aiAccelerationLevel: true,
+            status: true,
+            originType: true,
+            createdMode: true,
+            lifecycleState: true,
+            archivedAt: true,
+            archiveReason: true,
+            lineageSourceType: true,
+            lineageSourceId: true,
+            lineageNote: true,
+            importedReadinessState: true,
+            createdAt: true,
+            updatedAt: true,
+            epics: {
+              select: {
+                id: true,
+                key: true,
+                title: true,
+                purpose: true,
+                summary: true,
+                originType: true,
+                lifecycleState: true,
+                lineageSourceType: true,
+                lineageSourceId: true,
+                stories: {
+                  select: {
+                    id: true,
+                    key: true,
+                    title: true,
+                    status: true,
+                    lifecycleState: true,
+                    testDefinition: true,
+                    acceptanceCriteria: true,
+                    definitionOfDone: true,
+                    lineageSourceType: true,
+                    lineageSourceId: true
+                  },
+                  orderBy: {
+                    createdAt: "asc"
+                  }
                 }
+              },
+              orderBy: {
+                createdAt: "asc"
               }
             },
-            orderBy: {
-              createdAt: "asc"
+            stories: {
+              select: {
+                id: true,
+                key: true,
+                title: true,
+                epicId: true,
+                status: true,
+                lifecycleState: true,
+                testDefinition: true,
+                acceptanceCriteria: true,
+                definitionOfDone: true,
+                lineageSourceType: true,
+                lineageSourceId: true
+              },
+              orderBy: {
+                createdAt: "asc"
+              }
             }
           },
-          stories: {
-            orderBy: {
-              createdAt: "asc"
-            }
+          orderBy: {
+            createdAt: "desc"
           }
-        },
-        orderBy: {
-          createdAt: "desc"
         }
       }
-    }
-  });
+    });
 
-  if (!organization) {
-    return null;
-  }
-
-  return {
-    organization: {
-      ...organization,
-      outcomes: organization.outcomes.map((outcome) => ({
-        ...outcome,
-        epics: outcome.epics.map((epic) =>
-          withEpicShape({
-            ...epic,
-            stories: epic.stories
-          })
-        )
-      }))
+    if (!organization) {
+      return null;
     }
-  };
+
+    return {
+      organization: {
+        ...organization,
+        outcomes: organization.outcomes.map((outcome) => ({
+          ...outcome,
+          epics: outcome.epics.map((epic) =>
+            withEpicShape({
+              ...epic,
+              stories: epic.stories
+            })
+          )
+        }))
+      }
+    };
+  }, `organizationId=${organizationId}`);
 }
 
 export async function getWorkspaceSnapshot(organizationId: string) {
@@ -107,10 +168,55 @@ export async function getWorkspaceSnapshot(organizationId: string) {
       name: true,
       slug: true,
       outcomes: {
-        include: {
+        select: {
+          id: true,
+          organizationId: true,
+          key: true,
+          title: true,
+          problemStatement: true,
+          outcomeStatement: true,
+          baselineDefinition: true,
+          baselineSource: true,
+          timeframe: true,
+          valueOwnerId: true,
+          riskProfile: true,
+          aiAccelerationLevel: true,
+          status: true,
+          originType: true,
+          createdMode: true,
+          lifecycleState: true,
+          archivedAt: true,
+          archiveReason: true,
+          lineageSourceType: true,
+          lineageSourceId: true,
+          lineageNote: true,
+          importedReadinessState: true,
+          createdAt: true,
+          updatedAt: true,
           epics: {
-            include: {
+            select: {
+              id: true,
+              key: true,
+              title: true,
+              purpose: true,
+              summary: true,
+              originType: true,
+              lifecycleState: true,
+              lineageSourceType: true,
+              lineageSourceId: true,
               stories: {
+                select: {
+                  id: true,
+                  key: true,
+                  title: true,
+                  status: true,
+                  lifecycleState: true,
+                  testDefinition: true,
+                  acceptanceCriteria: true,
+                  definitionOfDone: true,
+                  lineageSourceType: true,
+                  lineageSourceId: true
+                },
                 orderBy: {
                   createdAt: "asc"
                 }
@@ -121,6 +227,19 @@ export async function getWorkspaceSnapshot(organizationId: string) {
             }
           },
           stories: {
+            select: {
+              id: true,
+              key: true,
+              title: true,
+              epicId: true,
+              status: true,
+              lifecycleState: true,
+              testDefinition: true,
+              acceptanceCriteria: true,
+              definitionOfDone: true,
+              lineageSourceType: true,
+              lineageSourceId: true
+            },
             orderBy: {
               createdAt: "asc"
             }
@@ -131,17 +250,42 @@ export async function getWorkspaceSnapshot(organizationId: string) {
         }
       },
       stories: {
+        select: {
+          id: true,
+          key: true,
+          status: true,
+          lifecycleState: true,
+          testDefinition: true,
+          definitionOfDone: true,
+          acceptanceCriteria: true
+        },
         orderBy: {
           createdAt: "desc"
         }
       },
       tollgates: {
+        select: {
+          id: true,
+          entityType: true,
+          entityId: true,
+          tollgateType: true,
+          status: true,
+          blockers: true,
+          updatedAt: true
+        },
         orderBy: {
           updatedAt: "desc"
         },
         take: 5
       },
       activityEvents: {
+        select: {
+          id: true,
+          entityType: true,
+          entityId: true,
+          eventType: true,
+          createdAt: true
+        },
         orderBy: {
           createdAt: "desc"
         },

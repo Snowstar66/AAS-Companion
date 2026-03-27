@@ -10,6 +10,7 @@ import {
   partyRoleEntryUpdateInputSchema
 } from "@aas-companion/domain";
 import { prisma } from "../client";
+import { withDevTiming } from "../dev-timing";
 import { appendActivityEvent } from "./activity-repository";
 
 type DbClient = Prisma.TransactionClient | PrismaClient;
@@ -39,15 +40,17 @@ async function requireActiveSupervisor(
 }
 
 export async function listPartyRoleEntries(organizationId: string, options?: { includeInactive?: boolean }) {
-  const entries = await prisma.partyRoleEntry.findMany({
-    where: {
-      organizationId,
-      ...(options?.includeInactive ? {} : { isActive: true })
-    },
-    orderBy: [{ isActive: "desc" }, { organizationSide: "asc" }, { roleType: "asc" }, { fullName: "asc" }]
-  });
+  return withDevTiming("db.listPartyRoleEntries", async () => {
+    const entries = await prisma.partyRoleEntry.findMany({
+      where: {
+        organizationId,
+        ...(options?.includeInactive ? {} : { isActive: true })
+      },
+      orderBy: [{ isActive: "desc" }, { organizationSide: "asc" }, { roleType: "asc" }, { fullName: "asc" }]
+    });
 
-  return entries.map((entry) => partyRoleEntryRecordSchema.parse(entry));
+    return entries.map((entry) => partyRoleEntryRecordSchema.parse(entry));
+  }, `organizationId=${organizationId}`);
 }
 
 export async function createPartyRoleEntry(input: unknown, db: DbClient = prisma) {

@@ -17,6 +17,7 @@ import {
   getStoryHandoffReadiness
 } from "@aas-companion/domain";
 import { getArtifactCandidateById } from "@aas-companion/db";
+import { withDevTiming } from "./dev-timing";
 import { failure, success, type ApiResult } from "./shared";
 import { getTollgateReviewWorkspaceService } from "./tollgates";
 
@@ -155,37 +156,39 @@ async function getImportedStoryBuildBlockers(input: {
 }
 
 export async function getOutcomeWorkspaceService(organizationId: string, outcomeId: string) {
-  const snapshot = await getOutcomeWorkspaceSnapshot(organizationId, outcomeId);
+  return withDevTiming("api.getOutcomeWorkspaceService", async () => {
+    const snapshot = await getOutcomeWorkspaceSnapshot(organizationId, outcomeId);
 
-  if (!snapshot) {
-    return failure({
-      code: "outcome_not_found",
-      message: "Outcome was not found in the current organization."
+    if (!snapshot) {
+      return failure({
+        code: "outcome_not_found",
+        message: "Outcome was not found in the current organization."
+      });
+    }
+
+    const [tollgateReview, availableOwners] = await Promise.all([
+      getTollgateReviewWorkspaceService({
+        organizationId,
+        entityType: "outcome",
+        entityId: outcomeId,
+        tollgateType: "tg1_baseline",
+        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+        fallbackBlockers:
+          snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
+        fallbackComments: snapshot.tollgate?.comments ?? null,
+        existingTollgate: snapshot.tollgate
+      }),
+      listOrganizationUsers(organizationId)
+    ]);
+
+    return success({
+      ...snapshot,
+      availableOwners,
+      readiness: getOutcomeBaselineReadiness(snapshot.outcome),
+      tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
+      removal: buildOutcomeRemovalFromSnapshot(snapshot)
     });
-  }
-
-  const [tollgateReview, availableOwners] = await Promise.all([
-    getTollgateReviewWorkspaceService({
-      organizationId,
-      entityType: "outcome",
-      entityId: outcomeId,
-      tollgateType: "tg1_baseline",
-      aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
-      fallbackBlockers:
-        snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
-      fallbackComments: snapshot.tollgate?.comments ?? null,
-      existingTollgate: snapshot.tollgate
-    }),
-    listOrganizationUsers(organizationId)
-  ]);
-
-  return success({
-    ...snapshot,
-    availableOwners,
-    readiness: getOutcomeBaselineReadiness(snapshot.outcome),
-    tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
-    removal: buildOutcomeRemovalFromSnapshot(snapshot)
-  });
+  }, `organizationId=${organizationId} outcomeId=${outcomeId}`);
 }
 
 export async function saveOutcomeWorkspaceService(input: {
@@ -265,40 +268,42 @@ export async function submitOutcomeTollgateService(input: {
 }
 
 export async function getStoryWorkspaceService(organizationId: string, storyId: string) {
-  const snapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
+  return withDevTiming("api.getStoryWorkspaceService", async () => {
+    const snapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
 
-  if (!snapshot) {
-    return failure({
-      code: "story_not_found",
-      message: "Story was not found in the current organization."
+    if (!snapshot) {
+      return failure({
+        code: "story_not_found",
+        message: "Story was not found in the current organization."
+      });
+    }
+
+    const importedBuildBlockers = await getImportedStoryBuildBlockers({
+      organizationId,
+      originType: snapshot.story.originType,
+      lineageSourceType: snapshot.story.lineageSourceType,
+      lineageSourceId: snapshot.story.lineageSourceId
     });
-  }
+    const baseReadinessBlockers = getStoryHandoffReadiness(snapshot.story).reasons.map((reason) => reason.message);
+    const tollgateReview = await getTollgateReviewWorkspaceService({
+      organizationId,
+      entityType: "story",
+      entityId: storyId,
+      tollgateType: "story_readiness",
+      aiAccelerationLevel: snapshot.story.aiAccelerationLevel,
+      fallbackBlockers: [...new Set([...(snapshot.tollgate?.blockers ?? baseReadinessBlockers), ...importedBuildBlockers])],
+      fallbackComments: snapshot.tollgate?.comments ?? null,
+      existingTollgate: snapshot.tollgate
+    });
 
-  const importedBuildBlockers = await getImportedStoryBuildBlockers({
-    organizationId,
-    originType: snapshot.story.originType,
-    lineageSourceType: snapshot.story.lineageSourceType,
-    lineageSourceId: snapshot.story.lineageSourceId
-  });
-  const baseReadinessBlockers = getStoryHandoffReadiness(snapshot.story).reasons.map((reason) => reason.message);
-  const tollgateReview = await getTollgateReviewWorkspaceService({
-    organizationId,
-    entityType: "story",
-    entityId: storyId,
-    tollgateType: "story_readiness",
-    aiAccelerationLevel: snapshot.story.aiAccelerationLevel,
-    fallbackBlockers: [...new Set([...(snapshot.tollgate?.blockers ?? baseReadinessBlockers), ...importedBuildBlockers])],
-    fallbackComments: snapshot.tollgate?.comments ?? null,
-    existingTollgate: snapshot.tollgate
-  });
-
-  return success({
-    ...snapshot,
-    readiness: getStoryHandoffReadiness(snapshot.story),
-    importedBuildBlockers,
-    tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
-    removal: buildStoryRemovalFromSnapshot(snapshot)
-  });
+    return success({
+      ...snapshot,
+      readiness: getStoryHandoffReadiness(snapshot.story),
+      importedBuildBlockers,
+      tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
+      removal: buildStoryRemovalFromSnapshot(snapshot)
+    });
+  }, `organizationId=${organizationId} storyId=${storyId}`);
 }
 
 export async function saveStoryWorkspaceService(input: {
@@ -390,86 +395,88 @@ export async function previewExecutionContractService(input: {
     markdown: string;
   }>
 > {
-  const snapshot = await getStoryWorkspaceSnapshot(input.organizationId, input.storyId);
+  return withDevTiming("api.previewExecutionContractService", async () => {
+    const snapshot = await getStoryWorkspaceSnapshot(input.organizationId, input.storyId);
 
-  if (!snapshot) {
-    return failure({
-      code: "story_not_found",
-      message: "Story was not found in the current organization."
+    if (!snapshot) {
+      return failure({
+        code: "story_not_found",
+        message: "Story was not found in the current organization."
+      });
+    }
+
+    const readiness = getStoryHandoffReadiness(snapshot.story);
+    const blockers = readiness.reasons.map((reason) => reason.message);
+    const importedBuildBlockers = await getImportedStoryBuildBlockers({
+      organizationId: input.organizationId,
+      originType: snapshot.story.originType,
+      lineageSourceType: snapshot.story.lineageSourceType,
+      lineageSourceId: snapshot.story.lineageSourceId
     });
-  }
+    const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
 
-  const readiness = getStoryHandoffReadiness(snapshot.story);
-  const blockers = readiness.reasons.map((reason) => reason.message);
-  const importedBuildBlockers = await getImportedStoryBuildBlockers({
-    organizationId: input.organizationId,
-    originType: snapshot.story.originType,
-    lineageSourceType: snapshot.story.lineageSourceType,
-    lineageSourceId: snapshot.story.lineageSourceId
-  });
-  const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
+    if (combinedBlockers.length > 0) {
+      if (snapshot.story.originType === "imported") {
+        await appendActivityEvent({
+          organizationId: input.organizationId,
+          entityType: "story",
+          entityId: snapshot.story.id,
+          eventType: "imported_progression_blocked",
+          actorId: input.actorId ?? null,
+          metadata: {
+            storyKey: snapshot.story.key,
+            blockers: combinedBlockers
+          }
+        });
+      }
 
-  if (combinedBlockers.length > 0) {
+      return failure({
+        code: "story_not_ready",
+        message: combinedBlockers[0] ?? "Story is not ready for execution contract generation."
+      });
+    }
+
+    const contract = executionContractSchema.parse({
+      outcome_id: snapshot.story.outcomeId,
+      epic_id: snapshot.story.epicId,
+      story_id: snapshot.story.id,
+      story_key: snapshot.story.key,
+      ai_level: snapshot.story.aiAccelerationLevel,
+      acceptance_criteria: snapshot.story.acceptanceCriteria,
+      test_definition: snapshot.story.testDefinition,
+      definition_of_done: snapshot.story.definitionOfDone
+    });
+
+    await appendActivityEvent({
+      organizationId: input.organizationId,
+      entityType: "story",
+      entityId: snapshot.story.id,
+      eventType: "execution_contract_generated",
+      actorId: input.actorId ?? null,
+      metadata: {
+        storyKey: snapshot.story.key
+      }
+    });
+
     if (snapshot.story.originType === "imported") {
       await appendActivityEvent({
         organizationId: input.organizationId,
         entityType: "story",
         entityId: snapshot.story.id,
-        eventType: "imported_progression_blocked",
+        eventType: "imported_progression_allowed",
         actorId: input.actorId ?? null,
         metadata: {
           storyKey: snapshot.story.key,
-          blockers: combinedBlockers
+          importedReadinessState: snapshot.story.importedReadinessState ?? null
         }
       });
     }
 
-    return failure({
-      code: "story_not_ready",
-      message: combinedBlockers[0] ?? "Story is not ready for execution contract generation."
+    return success({
+      contract,
+      markdown: executionContractToMarkdown(contract)
     });
-  }
-
-  const contract = executionContractSchema.parse({
-    outcome_id: snapshot.story.outcomeId,
-    epic_id: snapshot.story.epicId,
-    story_id: snapshot.story.id,
-    story_key: snapshot.story.key,
-    ai_level: snapshot.story.aiAccelerationLevel,
-    acceptance_criteria: snapshot.story.acceptanceCriteria,
-    test_definition: snapshot.story.testDefinition,
-    definition_of_done: snapshot.story.definitionOfDone
-  });
-
-  await appendActivityEvent({
-    organizationId: input.organizationId,
-    entityType: "story",
-    entityId: snapshot.story.id,
-    eventType: "execution_contract_generated",
-    actorId: input.actorId ?? null,
-    metadata: {
-      storyKey: snapshot.story.key
-    }
-  });
-
-  if (snapshot.story.originType === "imported") {
-    await appendActivityEvent({
-      organizationId: input.organizationId,
-      entityType: "story",
-      entityId: snapshot.story.id,
-      eventType: "imported_progression_allowed",
-      actorId: input.actorId ?? null,
-      metadata: {
-        storyKey: snapshot.story.key,
-        importedReadinessState: snapshot.story.importedReadinessState ?? null
-      }
-    });
-  }
-
-  return success({
-    contract,
-    markdown: executionContractToMarkdown(contract)
-  });
+  }, `organizationId=${input.organizationId} storyId=${input.storyId}`);
 }
 
 export async function markStoryHandoffCompleteService(input: {
@@ -477,55 +484,57 @@ export async function markStoryHandoffCompleteService(input: {
   storyId: string;
   actorId?: string | null;
 }) {
-  const snapshot = await getStoryWorkspaceSnapshot(input.organizationId, input.storyId);
+  return withDevTiming("api.markStoryHandoffCompleteService", async () => {
+    const snapshot = await getStoryWorkspaceSnapshot(input.organizationId, input.storyId);
 
-  if (!snapshot) {
-    return failure({
-      code: "story_not_found",
-      message: "Story was not found in the current organization."
+    if (!snapshot) {
+      return failure({
+        code: "story_not_found",
+        message: "Story was not found in the current organization."
+      });
+    }
+
+    if (snapshot.story.lifecycleState === "archived") {
+      return failure({
+        code: "story_archived",
+        message: "Restore the Story before recording handoff completion."
+      });
+    }
+
+    const readiness = getStoryHandoffReadiness(snapshot.story);
+    const blockers = readiness.reasons.map((reason) => reason.message);
+    const importedBuildBlockers = await getImportedStoryBuildBlockers({
+      organizationId: input.organizationId,
+      originType: snapshot.story.originType,
+      lineageSourceType: snapshot.story.lineageSourceType,
+      lineageSourceId: snapshot.story.lineageSourceId
     });
-  }
+    const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
 
-  if (snapshot.story.lifecycleState === "archived") {
-    return failure({
-      code: "story_archived",
-      message: "Restore the Story before recording handoff completion."
+    if (combinedBlockers.length > 0) {
+      return failure({
+        code: "story_not_ready",
+        message: combinedBlockers[0] ?? "Story is not ready for handoff completion."
+      });
+    }
+
+    if (snapshot.story.status === "in_progress") {
+      return success({
+        story: snapshot.story,
+        alreadyCompleted: true
+      });
+    }
+
+    const story = await updateStory({
+      organizationId: input.organizationId,
+      id: input.storyId,
+      actorId: input.actorId ?? null,
+      status: "in_progress"
     });
-  }
 
-  const readiness = getStoryHandoffReadiness(snapshot.story);
-  const blockers = readiness.reasons.map((reason) => reason.message);
-  const importedBuildBlockers = await getImportedStoryBuildBlockers({
-    organizationId: input.organizationId,
-    originType: snapshot.story.originType,
-    lineageSourceType: snapshot.story.lineageSourceType,
-    lineageSourceId: snapshot.story.lineageSourceId
-  });
-  const combinedBlockers = [...new Set([...blockers, ...importedBuildBlockers])];
-
-  if (combinedBlockers.length > 0) {
-    return failure({
-      code: "story_not_ready",
-      message: combinedBlockers[0] ?? "Story is not ready for handoff completion."
-    });
-  }
-
-  if (snapshot.story.status === "in_progress") {
     return success({
-      story: snapshot.story,
-      alreadyCompleted: true
+      story,
+      alreadyCompleted: false
     });
-  }
-
-  const story = await updateStory({
-    organizationId: input.organizationId,
-    id: input.storyId,
-    actorId: input.actorId ?? null,
-    status: "in_progress"
-  });
-
-  return success({
-    story,
-    alreadyCompleted: false
-  });
+  }, `organizationId=${input.organizationId} storyId=${input.storyId}`);
 }

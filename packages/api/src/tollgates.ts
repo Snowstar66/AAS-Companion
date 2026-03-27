@@ -14,6 +14,7 @@ import {
   summarizeTollgateFromSignoffs,
   tollgateUpsertInputSchema
 } from "@aas-companion/domain";
+import { withDevTiming } from "./dev-timing";
 import { failure, success, type ApiResult } from "./shared";
 
 export async function getTollgateService(
@@ -52,102 +53,107 @@ export async function getTollgateReviewWorkspaceService(input: {
   fallbackComments?: string | null;
   existingTollgate?: Awaited<ReturnType<typeof getTollgate>>;
 }) {
-  const tollgate =
-    input.existingTollgate ??
-    (await getTollgate(input.organizationId, input.entityType, input.entityId, input.tollgateType));
-  const [people, signoffRecords] = await Promise.all([
-    listPartyRoleEntries(input.organizationId),
-    tollgate?.id
-      ? listSignoffRecordsForTollgate(input.organizationId, tollgate.id)
-      : listSignoffRecordsForEntity(input.organizationId, input.entityType, input.entityId)
-  ]);
-  const profile = getTollgateDecisionProfile({
-    tollgateType: input.tollgateType,
-    aiAccelerationLevel: input.aiAccelerationLevel
-  });
-  const buildActions = (
-    requirements: typeof profile.reviewRequirements | typeof profile.approvalRequirements
-  ) =>
-    requirements.map((requirement) => {
-      const assignedPeople = people
-        .filter(
-          (person) =>
-            person.isActive &&
-            person.roleType === requirement.roleType &&
-            person.organizationSide === requirement.organizationSide
-        )
-        .map((person) => ({
-          partyRoleEntryId: person.id,
-          fullName: person.fullName,
-          email: person.email,
-          roleTitle: person.roleTitle
-        }));
-      const relatedRecords = signoffRecords.filter(
-        (record) =>
-          record.decisionKind === requirement.decisionKind &&
-          record.requiredRoleType === requirement.roleType &&
-          record.organizationSide === requirement.organizationSide
-      );
-      const completedRecords = relatedRecords.filter((record) => record.decisionStatus === "approved");
-      const blockedReasons = [
-        ...(assignedPeople.length === 0
-          ? [`No active ${formatLabel(requirement.roleType)} is currently assigned on the ${requirement.organizationSide} side.`]
-          : []),
-        ...relatedRecords
-          .filter((record) => record.decisionStatus !== "approved")
-          .map(
-            (record) =>
-              `${record.actualPersonName} recorded ${formatLabel(record.decisionStatus)} for ${requirement.label.toLowerCase()}.`
+  return withDevTiming("api.getTollgateReviewWorkspaceService", async () => {
+    const tollgate =
+      input.existingTollgate ??
+      (await getTollgate(input.organizationId, input.entityType, input.entityId, input.tollgateType));
+    const [people, signoffRecords] = await Promise.all([
+      listPartyRoleEntries(input.organizationId),
+      tollgate?.id
+        ? listSignoffRecordsForTollgate(input.organizationId, tollgate.id)
+        : listSignoffRecordsForEntity(input.organizationId, input.entityType, input.entityId)
+    ]);
+    const profile = getTollgateDecisionProfile({
+      tollgateType: input.tollgateType,
+      aiAccelerationLevel: input.aiAccelerationLevel
+    });
+    const buildActions = (
+      requirements: typeof profile.reviewRequirements | typeof profile.approvalRequirements
+    ) =>
+      requirements.map((requirement) => {
+        const assignedPeople = people
+          .filter(
+            (person) =>
+              person.isActive &&
+              person.roleType === requirement.roleType &&
+              person.organizationSide === requirement.organizationSide
           )
-      ];
+          .map((person) => ({
+            partyRoleEntryId: person.id,
+            fullName: person.fullName,
+            email: person.email,
+            roleTitle: person.roleTitle
+          }));
+        const relatedRecords = signoffRecords.filter(
+          (record) =>
+            record.decisionKind === requirement.decisionKind &&
+            record.requiredRoleType === requirement.roleType &&
+            record.organizationSide === requirement.organizationSide
+        );
+        const completedRecords = relatedRecords.filter((record) => record.decisionStatus === "approved");
+        const blockedReasons = [
+          ...(assignedPeople.length === 0
+            ? [`No active ${formatLabel(requirement.roleType)} is currently assigned on the ${requirement.organizationSide} side.`]
+            : []),
+          ...relatedRecords
+            .filter((record) => record.decisionStatus !== "approved")
+            .map(
+              (record) =>
+                `${record.actualPersonName} recorded ${formatLabel(record.decisionStatus)} for ${requirement.label.toLowerCase()}.`
+            )
+        ];
 
-      return {
-        ...requirement,
-        assignedPeople,
-        completedRecords,
-        pending: completedRecords.length === 0,
-        blockedReasons
-      };
+        return {
+          ...requirement,
+          assignedPeople,
+          completedRecords,
+          pending: completedRecords.length === 0,
+          blockedReasons
+        };
+      });
+
+    const reviewActions = buildActions(profile.reviewRequirements);
+    const approvalActions = buildActions(profile.approvalRequirements);
+    const tollgateSummary = summarizeTollgateFromSignoffs({
+      blockers: tollgate?.blockers ?? input.fallbackBlockers ?? [],
+      profile,
+      signoffs: signoffRecords.map((record) => ({
+        ...record,
+        tollgateType: record.tollgateType ?? undefined,
+        tollgateId: record.tollgateId ?? undefined,
+        note: record.note ?? undefined,
+        evidenceReference: record.evidenceReference ?? undefined,
+        createdBy: record.createdBy ?? undefined
+      }))
     });
 
-  const reviewActions = buildActions(profile.reviewRequirements);
-  const approvalActions = buildActions(profile.approvalRequirements);
-  const tollgateSummary = summarizeTollgateFromSignoffs({
-    blockers: tollgate?.blockers ?? input.fallbackBlockers ?? [],
-    profile,
-    signoffs: signoffRecords.map((record) => ({
-      ...record,
-      tollgateType: record.tollgateType ?? undefined,
-      tollgateId: record.tollgateId ?? undefined,
-      note: record.note ?? undefined,
-      evidenceReference: record.evidenceReference ?? undefined,
-      createdBy: record.createdBy ?? undefined
-    }))
-  });
-
-  return success({
-    tollgate,
-    availablePeople: people
-      .filter((person) => person.isActive)
-      .map((person) => ({
-        id: person.id,
-        fullName: person.fullName,
-        email: person.email,
-        roleType: person.roleType,
-        organizationSide: person.organizationSide,
-        roleTitle: person.roleTitle
-      })),
-    signoffRecords,
-    reviewActions,
-    approvalActions,
-    pendingActions: [...reviewActions, ...approvalActions].filter((action) => action.pending),
-    blockedActions: [...reviewActions, ...approvalActions].filter((action) => action.blockedReasons.length > 0),
-    blockers: [...(tollgate?.blockers ?? input.fallbackBlockers ?? []), ...(tollgateSummary.status === "blocked" ? ["Required sign-off is still missing or explicitly blocked."] : [])],
-    comments: tollgate?.comments ?? input.fallbackComments ?? null,
-    status: tollgateSummary.status,
-    requiredReviewRoles: profile.reviewRequirements,
-    requiredApprovalRoles: profile.approvalRequirements
-  });
+    return success({
+      tollgate,
+      availablePeople: people
+        .filter((person) => person.isActive)
+        .map((person) => ({
+          id: person.id,
+          fullName: person.fullName,
+          email: person.email,
+          roleType: person.roleType,
+          organizationSide: person.organizationSide,
+          roleTitle: person.roleTitle
+        })),
+      signoffRecords,
+      reviewActions,
+      approvalActions,
+      pendingActions: [...reviewActions, ...approvalActions].filter((action) => action.pending),
+      blockedActions: [...reviewActions, ...approvalActions].filter((action) => action.blockedReasons.length > 0),
+      blockers: [
+        ...(tollgate?.blockers ?? input.fallbackBlockers ?? []),
+        ...(tollgateSummary.status === "blocked" ? ["Required sign-off is still missing or explicitly blocked."] : [])
+      ],
+      comments: tollgate?.comments ?? input.fallbackComments ?? null,
+      status: tollgateSummary.status,
+      requiredReviewRoles: profile.reviewRequirements,
+      requiredApprovalRoles: profile.approvalRequirements
+    });
+  }, `${input.entityType}:${input.entityId}:${input.tollgateType}`);
 }
 
 export async function recordTollgateDecisionService(input: unknown) {

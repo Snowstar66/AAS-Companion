@@ -13,6 +13,7 @@ import { getValueSpineService } from "@aas-companion/api/spine";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { withDevTiming } from "@/lib/dev-timing";
 import { getStoryToneClasses, getStoryUxModel, type StoryUxModel } from "@/lib/workspace/story-ux";
 
 type WorkspacePageProps = {
@@ -71,6 +72,22 @@ function LifecycleStepIcon({ state }: { state: StoryUxModel["lifecycleSteps"][nu
   return <CircleDashed className="h-4 w-4 text-muted-foreground" />;
 }
 
+function getMetroLabelClasses(state: StoryUxModel["lifecycleSteps"][number]["state"]) {
+  if (state === "complete") {
+    return "text-emerald-900";
+  }
+
+  if (state === "current") {
+    return "text-sky-900";
+  }
+
+  if (state === "attention") {
+    return "text-amber-900";
+  }
+
+  return "text-muted-foreground";
+}
+
 function StatCard(props: {
   label: string;
   count: number;
@@ -97,94 +114,97 @@ function StatCard(props: {
 }
 
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
-  const session = await requireActiveProjectSession();
-  const query = searchParams ? await searchParams : {};
-  const viewFilter = getParamValue(query.view) ?? "active";
-  const snapshot = await getValueSpineService(session.organization.organizationId);
+  return withDevTiming("web.page.workspace", async () => {
+    const [session, query] = await Promise.all([
+      requireActiveProjectSession(),
+      searchParams ? searchParams : Promise.resolve<Record<string, string | string[] | undefined>>({})
+    ]);
+    const viewFilter = getParamValue(query.view) ?? "active";
+    const snapshot = await getValueSpineService(session.organization.organizationId);
 
-  if (!snapshot.ok) {
-    return (
-      <AppShell>
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Value Spine is unavailable</CardTitle>
-            <CardDescription>{snapshot.errors[0]?.message ?? "The project spine could not be loaded."}</CardDescription>
-          </CardHeader>
-        </Card>
-      </AppShell>
-    );
-  }
+    if (!snapshot.ok) {
+      return (
+        <AppShell>
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>Value Spine is unavailable</CardTitle>
+              <CardDescription>{snapshot.errors[0]?.message ?? "The project spine could not be loaded."}</CardDescription>
+            </CardHeader>
+          </Card>
+        </AppShell>
+      );
+    }
 
-  const orderedOutcomes = [...snapshot.data.organization.outcomes].sort((left, right) => {
-    if (left.lifecycleState === right.lifecycleState) {
+    const orderedOutcomes = [...snapshot.data.organization.outcomes].sort((left, right) => {
+      if (left.lifecycleState === right.lifecycleState) {
+        return left.key.localeCompare(right.key);
+      }
+
+      if (left.lifecycleState === "active") {
+        return -1;
+      }
+
+      if (right.lifecycleState === "active") {
+        return 1;
+      }
+
       return left.key.localeCompare(right.key);
-    }
+    });
 
-    if (left.lifecycleState === "active") {
-      return -1;
-    }
+    const selectedOutcome =
+      orderedOutcomes.find((outcome) => outcome.lifecycleState === "active" && outcome.originType !== "seeded") ??
+      orderedOutcomes.find((outcome) => outcome.lifecycleState === "active") ??
+      orderedOutcomes[0] ??
+      null;
 
-    if (right.lifecycleState === "active") {
-      return 1;
-    }
+    const selectedEpics =
+      selectedOutcome?.epics.filter((epic) => (viewFilter === "all" ? true : epic.lifecycleState === viewFilter)) ?? [];
+    const selectedStories = selectedEpics.flatMap((epic) =>
+      epic.stories.filter((story) => (viewFilter === "all" ? true : story.lifecycleState === viewFilter))
+    );
+    const readyStories = selectedStories.filter((story) =>
+      getStoryUxModel({
+        id: story.id,
+        key: story.key,
+        status: story.status,
+        lifecycleState: story.lifecycleState,
+        testDefinition: story.testDefinition ?? null,
+        acceptanceCriteria: story.acceptanceCriteria,
+        definitionOfDone: story.definitionOfDone,
+        tollgateStatus: null
+      }).isReadyForHandoff || story.status === "ready_for_handoff"
+    );
+    const missingTestStories = selectedStories.filter((story) => !story.testDefinition);
+    const lineageTargets = [
+      ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
+        ? [{ href: `/review?candidateId=${selectedOutcome.lineageSourceId}`, label: `Open ${selectedOutcome.key} lineage` }]
+        : []),
+      ...selectedEpics
+        .filter((epic) => epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId)
+        .map((epic) => ({
+          href: `/review?candidateId=${epic.lineageSourceId}`,
+          label: `Open ${epic.key} lineage`
+        })),
+      ...selectedStories
+        .filter((story) => story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId)
+        .map((story) => ({
+          href: `/review?candidateId=${story.lineageSourceId}`,
+          label: `Open ${story.key} lineage`
+        }))
+    ];
+    const firstVisibleStory = selectedStories[0] ?? null;
+    const firstReadyStory = readyStories[0] ?? null;
+    const firstMissingTestStory = missingTestStories[0] ?? null;
+    const firstLineageTarget = lineageTargets[0] ?? null;
 
-    return left.key.localeCompare(right.key);
-  });
-
-  const selectedOutcome =
-    orderedOutcomes.find((outcome) => outcome.lifecycleState === "active" && outcome.originType !== "seeded") ??
-    orderedOutcomes.find((outcome) => outcome.lifecycleState === "active") ??
-    orderedOutcomes[0] ??
-    null;
-
-  const selectedEpics =
-    selectedOutcome?.epics.filter((epic) => (viewFilter === "all" ? true : epic.lifecycleState === viewFilter)) ?? [];
-  const selectedStories = selectedEpics.flatMap((epic) =>
-    epic.stories.filter((story) => (viewFilter === "all" ? true : story.lifecycleState === viewFilter))
-  );
-  const readyStories = selectedStories.filter((story) =>
-    getStoryUxModel({
-      id: story.id,
-      key: story.key,
-      status: story.status,
-      lifecycleState: story.lifecycleState,
-      testDefinition: story.testDefinition ?? null,
-      acceptanceCriteria: story.acceptanceCriteria,
-      definitionOfDone: story.definitionOfDone,
-      tollgateStatus: null
-    }).isReadyForHandoff || story.status === "ready_for_handoff"
-  );
-  const missingTestStories = selectedStories.filter((story) => !story.testDefinition);
-  const lineageTargets = [
-    ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
-      ? [{ href: `/review?candidateId=${selectedOutcome.lineageSourceId}`, label: `Open ${selectedOutcome.key} lineage` }]
-      : []),
-    ...selectedEpics
-      .filter((epic) => epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId)
-      .map((epic) => ({
-        href: `/review?candidateId=${epic.lineageSourceId}`,
-        label: `Open ${epic.key} lineage`
-      })),
-    ...selectedStories
-      .filter((story) => story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId)
-      .map((story) => ({
-        href: `/review?candidateId=${story.lineageSourceId}`,
-        label: `Open ${story.key} lineage`
-      }))
-  ];
-  const firstVisibleStory = selectedStories[0] ?? null;
-  const firstReadyStory = readyStories[0] ?? null;
-  const firstMissingTestStory = missingTestStories[0] ?? null;
-  const firstLineageTarget = lineageTargets[0] ?? null;
-
-  return (
-    <AppShell
-      topbarProps={{
-        projectName: session.organization.organizationName,
-        sectionLabel: "Value Spine",
-        badge: "Project section"
-      }}
-    >
+    return (
+      <AppShell
+        topbarProps={{
+          projectName: session.organization.organizationName,
+          sectionLabel: "Value Spine",
+          badge: "Project section"
+        }}
+      >
       <section className="space-y-6">
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_40%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(241,246,252,0.92))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
           <div className="space-y-6">
@@ -214,8 +234,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 actionLabel={firstReadyStory ? "Open ready Story" : undefined}
                 className="border-emerald-200 bg-emerald-50/85 text-emerald-950"
                 count={readyStories.length}
-                description="Stories that can move forward into handoff or delivery."
-                label="Ready for handoff"
+                description="Stories that have been approved and can move forward into design."
+                label="Ready for design"
               />
               <StatCard
                 actionHref={firstLineageTarget?.href}
@@ -291,7 +311,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
               <CardHeader>
                 <CardTitle>Value Spine in current Framing</CardTitle>
                 <CardDescription>
-                  The branch is shown as one active path from Framing into Epics and Stories. Story progress is stacked so the next move is easier to scan.
+                  The branch is shown as one active path from Framing into Epics and Stories. Story progress follows the same tunnel map as Framing so the next move is easier to scan.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -407,22 +427,33 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                                       </div>
                                     </div>
 
-                                    <ol className="mt-4 space-y-2">
-                                      {storyUx.lifecycleSteps.map((step) => (
-                                        <li
-                                          className={`rounded-2xl border px-3 py-3 text-sm ${getLifecycleStepClasses(step.state)}`}
-                                          key={step.key}
-                                        >
-                                          <div className="flex items-start gap-3">
-                                            <LifecycleStepIcon state={step.state} />
-                                            <div>
-                                              <p className="font-medium text-foreground">{step.label}</p>
-                                              <p className="mt-1 leading-6 text-muted-foreground">{step.description}</p>
-                                            </div>
-                                          </div>
-                                        </li>
-                                      ))}
-                                    </ol>
+                                    <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4">
+                                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story path</p>
+                                      <div className="-mx-1 mt-3 overflow-x-auto pb-1">
+                                        <ol className="flex min-w-max items-start gap-0 px-1">
+                                          {storyUx.lifecycleSteps.map((step, index) => (
+                                            <li className="flex items-center gap-2" key={step.key}>
+                                              <div
+                                                className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${getLifecycleStepClasses(step.state)} ${getMetroLabelClasses(step.state)}`}
+                                              >
+                                                <LifecycleStepIcon state={step.state} />
+                                                <span>{step.label}</span>
+                                              </div>
+                                              {index < storyUx.lifecycleSteps.length - 1 ? (
+                                                <div
+                                                  className={`mx-2 h-px w-6 ${
+                                                    step.state === "complete" ? "bg-emerald-300" : "bg-border/70"
+                                                  }`}
+                                                />
+                                              ) : null}
+                                            </li>
+                                          ))}
+                                        </ol>
+                                      </div>
+                                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                                        {storyUx.nextActions[0]?.description ?? storyUx.readinessDetail}
+                                      </p>
+                                    </div>
 
                                     <div className="mt-4 grid gap-3 lg:grid-cols-2">
                                       <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
@@ -463,6 +494,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           </>
         )}
       </section>
-    </AppShell>
-  );
+      </AppShell>
+    );
+  });
 }

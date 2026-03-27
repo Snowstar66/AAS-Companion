@@ -132,7 +132,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
         ) : null}
         {readyState === "success" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Story readiness recorded. This Story is ready for handoff preview.
+            Story readiness recorded. This Story is now ready for design review.
           </div>
         ) : null}
         {readyState === "duplicate" ? (
@@ -142,7 +142,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
         ) : null}
         {readyState === "approved" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Required sign-offs are complete. Story readiness is now approved.
+            Required sign-offs are complete. This Story is now ready for design.
           </div>
         ) : null}
         {lifecycleState === "archived" ? (

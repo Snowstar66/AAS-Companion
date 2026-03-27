@@ -52,22 +52,12 @@ const lifecycleStepDefinitions = [
   {
     key: "review_ready",
     label: "Ready for review",
-    description: "The Story can now be submitted for human sign-off."
+    description: "The Story is ready for human review and approval."
   },
   {
-    key: "signoff",
-    label: "Under sign-off",
-    description: "Review and approval work is actively in progress."
-  },
-  {
-    key: "approved",
-    label: "Approved",
-    description: "Required human sign-offs are complete."
-  },
-  {
-    key: "handoff",
-    label: "Ready for handoff",
-    description: "The execution package can move into delivery."
+    key: "design_ready",
+    label: "Ready for design",
+    description: "Required approval is complete and design can now move forward."
   }
 ] as const;
 
@@ -134,19 +124,19 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     statusDetail = "Handoff is complete and active implementation work can proceed.";
     tone = "progress";
   } else if (isReadyForHandoff) {
-    statusLabel = "Ready for handoff";
-    statusDetail = "Required sign-offs are complete and the execution package can move forward.";
+    statusLabel = "Ready for design";
+    statusDetail = "Required approval is complete and the Story can now move into design and delivery handoff.";
     tone = "success";
   } else if (isUnderSignoff) {
-    statusLabel = "Under sign-off";
+    statusLabel = "Ready for review";
     statusDetail =
       missingSignoffCount > 0
-        ? `${missingSignoffCount} human action${missingSignoffCount === 1 ? "" : "s"} still remain before handoff.`
+        ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before approval.`
         : "Human review is in progress for this Story.";
     tone = "progress";
   } else if (isReviewReady) {
     statusLabel = "Ready for review";
-    statusDetail = "All required handoff inputs are present. Submit the Story to begin human sign-off.";
+    statusDetail = "All required design inputs are present. Submit the Story to begin human review.";
     tone = "progress";
   } else if (input.status === "in_progress") {
     statusLabel = "In delivery";
@@ -159,18 +149,18 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
   }
 
   const readinessLabel = isInDelivery
-    ? "Handoff completed"
+    ? "Design handoff completed"
     : readiness.state === "ready"
       ? "Ready to review"
-      : "Needs handoff inputs";
+      : "Needs design inputs";
   const readinessDetail =
     isInDelivery
       ? "The Story has already been handed off and moved into active delivery."
       : readiness.state === "ready"
       ? "Test definition, acceptance criteria and definition of done are all present."
-      : blockers[0] ?? "Complete the missing handoff inputs before submitting the Story.";
+      : blockers[0] ?? "Complete the missing design inputs before submitting the Story.";
 
-  const currentStepIndex = isInDelivery || isReadyForHandoff ? 4 : isUnderSignoff ? 2 : isReviewReady ? 1 : 0;
+  const currentStepIndex = isReadyForHandoff || isInDelivery ? 2 : isUnderSignoff || isReviewReady ? 1 : 0;
   const lifecycleSteps = lifecycleStepDefinitions.map((step, index) => {
     const isCurrent = index === currentStepIndex;
     const state: StoryUxStepState =
@@ -187,12 +177,18 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
       state
     };
   });
+  const visibleLifecycleSteps = isInDelivery
+    ? lifecycleSteps.map((step) => ({
+        ...step,
+        state: "complete" as StoryUxStepState
+      }))
+    : lifecycleSteps;
 
   const nextActions: StoryUxAction[] = isArchived
     ? [
         {
           label: "Restore Story",
-          description: "Return this Story to the active workflow before making changes or handoff decisions.",
+          description: "Return this Story to the active workflow before making changes or design decisions.",
           href: "#story-lifecycle"
         },
         {
@@ -227,7 +223,7 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
               ? [
                   {
                     label: "Open execution contract",
-                    description: "Preview the handoff package that delivery will use next.",
+                    description: "Preview the handoff package that delivery will use once design is approved.",
                     href: `/handoff/${input.id}`
                   }
                 ]
@@ -296,7 +292,7 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     openActionCount,
     isReadyForHandoff,
     blockers,
-    lifecycleSteps,
+    lifecycleSteps: visibleLifecycleSteps,
     nextActions: nextActions.slice(0, 3)
   };
 }

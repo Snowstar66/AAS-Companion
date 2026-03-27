@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Prisma } from "../../generated/client";
 import { outcomeCreateInputSchema, outcomeUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
+import { logDevTiming, withDevTiming } from "../dev-timing";
 import { appendActivityEvent } from "./activity-repository";
 import { withEpicShape } from "./epic-shape";
 import {
@@ -27,46 +28,96 @@ export async function listOutcomes(organizationId: string, options?: { includeAr
   });
 }
 
-export async function listOutcomeCockpitEntries(organizationId: string) {
-  const outcomeWhere: Prisma.OutcomeWhereInput = {
-    organizationId,
-    lifecycleState: "active"
-  };
-
-  const [outcomes, tollgates] = await prisma.$transaction([
-    prisma.outcome.findMany({
-      where: outcomeWhere,
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      include: {
-        valueOwner: {
-          select: {
-            fullName: true,
-            email: true
-          }
-        },
-        _count: {
-          select: {
-            epics: true,
-            stories: true
-          }
-        }
-      }
-    }),
-    prisma.tollgate.findMany({
+export async function getPreferredFramingOutcomeId(organizationId: string) {
+  return withDevTiming("db.getPreferredFramingOutcomeId", async () => {
+    const outcomes = await prisma.outcome.findMany({
       where: {
         organizationId,
-        entityType: "outcome"
+        lifecycleState: "active"
       },
-      orderBy: {
-        updatedAt: "desc"
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        originType: true
       }
-    })
-  ]);
+    });
 
-  return outcomes.map((outcome) => ({
-    ...outcome,
-    tollgates: tollgates.filter((tollgate) => tollgate.entityId === outcome.id)
-  }));
+    return outcomes.find((outcome) => outcome.originType === "native")?.id ?? outcomes[0]?.id ?? null;
+  }, `organizationId=${organizationId}`);
+}
+
+export async function listOutcomeCockpitEntries(organizationId: string) {
+  return withDevTiming("db.listOutcomeCockpitEntries", async () => {
+    const outcomeWhere: Prisma.OutcomeWhereInput = {
+      organizationId,
+      lifecycleState: "active"
+    };
+
+    const [outcomes, tollgates] = await prisma.$transaction([
+      prisma.outcome.findMany({
+        where: outcomeWhere,
+        orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          key: true,
+          title: true,
+          status: true,
+          originType: true,
+          importedReadinessState: true,
+          lineageSourceType: true,
+          lineageSourceId: true,
+          baselineDefinition: true,
+          baselineSource: true,
+          timeframe: true,
+          updatedAt: true,
+          valueOwner: {
+            select: {
+              fullName: true,
+              email: true
+            }
+          },
+          _count: {
+            select: {
+              epics: true,
+              stories: true
+            }
+          }
+        }
+      }),
+      prisma.tollgate.findMany({
+        where: {
+          organizationId,
+          entityType: "outcome"
+        },
+        orderBy: {
+          updatedAt: "desc"
+        },
+        select: {
+          id: true,
+          entityId: true,
+          status: true,
+          blockers: true
+        }
+      })
+    ]);
+
+    const mapStartedAt = Date.now();
+    const tollgatesByEntityId = new Map<string, typeof tollgates>();
+
+    for (const tollgate of tollgates) {
+      const existing = tollgatesByEntityId.get(tollgate.entityId) ?? [];
+      existing.push(tollgate);
+      tollgatesByEntityId.set(tollgate.entityId, existing);
+    }
+
+    const entries = outcomes.map((outcome) => ({
+      ...outcome,
+      tollgates: tollgatesByEntityId.get(outcome.id) ?? []
+    }));
+    logDevTiming("db.listOutcomeCockpitEntries.map", mapStartedAt, `outcomes=${outcomes.length} tollgates=${tollgates.length}`);
+
+    return entries;
+  }, `organizationId=${organizationId}`);
 }
 
 export async function getOutcomeById(organizationId: string, id: string) {
@@ -79,70 +130,164 @@ export async function getOutcomeById(organizationId: string, id: string) {
 }
 
 export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: string) {
-  const [outcome, tollgate, activities] = await prisma.$transaction([
-    prisma.outcome.findFirst({
-      where: {
-        organizationId,
-        id
-      },
-      include: {
-        valueOwner: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
+  return withDevTiming("db.getOutcomeWorkspaceSnapshot", async () => {
+    const [outcome, tollgate, activities] = await prisma.$transaction([
+      prisma.outcome.findFirst({
+        where: {
+          organizationId,
+          id
         },
-        epics: {
-          orderBy: {
-            createdAt: "asc"
-          }
-        },
-        stories: {
-          orderBy: {
-            createdAt: "asc"
+        select: {
+          id: true,
+          organizationId: true,
+          key: true,
+          title: true,
+          problemStatement: true,
+          outcomeStatement: true,
+          baselineDefinition: true,
+          baselineSource: true,
+          timeframe: true,
+          valueOwnerId: true,
+          riskProfile: true,
+          aiAccelerationLevel: true,
+          status: true,
+          originType: true,
+          createdMode: true,
+          lifecycleState: true,
+          archivedAt: true,
+          archiveReason: true,
+          lineageSourceType: true,
+          lineageSourceId: true,
+          lineageNote: true,
+          importedReadinessState: true,
+          createdAt: true,
+          updatedAt: true,
+          valueOwner: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true
+            }
+          },
+          epics: {
+            select: {
+              id: true,
+              organizationId: true,
+              outcomeId: true,
+              key: true,
+              title: true,
+              purpose: true,
+              summary: true,
+              status: true,
+              originType: true,
+              createdMode: true,
+              lifecycleState: true,
+              archivedAt: true,
+              archiveReason: true,
+              lineageSourceType: true,
+              lineageSourceId: true,
+              lineageNote: true,
+              importedReadinessState: true,
+              createdAt: true,
+              updatedAt: true
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
+          stories: {
+            select: {
+              id: true,
+              organizationId: true,
+              outcomeId: true,
+              epicId: true,
+              key: true,
+              title: true,
+              storyType: true,
+              valueIntent: true,
+              acceptanceCriteria: true,
+              aiUsageScope: true,
+              aiAccelerationLevel: true,
+              testDefinition: true,
+              definitionOfDone: true,
+              status: true,
+              originType: true,
+              createdMode: true,
+              lifecycleState: true,
+              archivedAt: true,
+              archiveReason: true,
+              lineageSourceType: true,
+              lineageSourceId: true,
+              lineageNote: true,
+              importedReadinessState: true,
+              createdAt: true,
+              updatedAt: true
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
           }
         }
-      }
-    }),
-    prisma.tollgate.findFirst({
-      where: {
-        organizationId,
-        entityType: "outcome",
-        entityId: id,
-        tollgateType: "tg1_baseline"
-      }
-    }),
-    prisma.activityEvent.findMany({
-      where: {
-        organizationId,
-        entityType: "outcome",
-        entityId: id
+      }),
+      prisma.tollgate.findFirst({
+        where: {
+          organizationId,
+          entityType: "outcome",
+          entityId: id,
+          tollgateType: "tg1_baseline"
+        },
+        select: {
+          id: true,
+          organizationId: true,
+          entityType: true,
+          entityId: true,
+          tollgateType: true,
+          status: true,
+          blockers: true,
+          approverRoles: true,
+          decidedBy: true,
+          decidedAt: true,
+          comments: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }),
+      prisma.activityEvent.findMany({
+        where: {
+          organizationId,
+          entityType: "outcome",
+          entityId: id
+        },
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: 10,
+        select: {
+          id: true,
+          createdAt: true,
+          eventType: true
+        }
+      })
+    ]);
+
+    if (!outcome) {
+      return null;
+    }
+
+    const relatedLifecycleState = outcome.lifecycleState === "archived" ? "archived" : "active";
+
+    return {
+      outcome: {
+        ...outcome,
+        epics: outcome.epics
+          .filter((epic) => epic.lifecycleState === relatedLifecycleState)
+          .map((epic) => withEpicShape(epic)),
+        stories: outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState)
       },
-      orderBy: {
-        createdAt: "desc"
-      },
-      take: 10
-    })
-  ]);
-
-  if (!outcome) {
-    return null;
-  }
-
-  const relatedLifecycleState = outcome.lifecycleState === "archived" ? "archived" : "active";
-
-  return {
-    outcome: {
-      ...outcome,
-      epics: outcome.epics
-        .filter((epic) => epic.lifecycleState === relatedLifecycleState)
-        .map((epic) => withEpicShape(epic)),
-      stories: outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState)
-    },
-    tollgate,
-    activities
-  };
+      tollgate,
+      activities
+    };
+  }, `organizationId=${organizationId} outcomeId=${id}`);
 }
 
 export async function createOutcome(input: unknown, db: Prisma.TransactionClient | typeof prisma = prisma) {

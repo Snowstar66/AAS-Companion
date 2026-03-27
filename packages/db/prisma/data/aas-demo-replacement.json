@@ -1,0 +1,151 @@
+{
+  "metadata": {
+    "purpose": "Candidate replacement dataset for the current demo project",
+    "source_file": "AAS-Testdata.txt",
+    "created_on": "2026-03-26",
+    "status": "draft_for_review",
+    "encoding_note": "Use UTF-8 when wiring this file into the seed runtime."
+  },
+  "compatibility_strategy": {
+    "preserve_demo_ids": true,
+    "organization_id": "org_demo_control_plane",
+    "organization_slug": "aas-demo-org",
+    "entrypoint_ids": {
+      "outcome": "outcome_demo_governance_gap",
+      "epic": "epic_demo_framing",
+      "blocked_story": "story_demo_outcome_workspace",
+      "handoff_story": "story_demo_execution_contract",
+      "draft_story": "story_demo_activity_timeline"
+    },
+    "why": [
+      "Existing routes and tests reference current demo IDs directly.",
+      "Keeping technical IDs stable makes the future swap safer."
+    ]
+  },
+  "organization": {
+    "runtime_id": "org_demo_control_plane",
+    "canonical_id": "ORG-ORDERFLOW-AAS",
+    "name": "OrderFlow AAS Test Organization",
+    "slug": "aas-demo-org",
+    "system_name": "OrderFlow",
+    "domain": "Retail Order Management"
+  },
+  "app_users": [
+    { "runtime_id": "user_demo_value_owner", "membership_id": "membership_demo_value_owner", "email": "value.owner@orderflow-aas.local", "full_name": "Anna Lund", "membership_role": "value_owner", "source_role_id": "VO-001" },
+    { "runtime_id": "user_demo_delivery_lead", "membership_id": "membership_demo_delivery_lead", "email": "delivery.lead@orderflow-aas.local", "full_name": "Johan Ek", "membership_role": "delivery_lead", "source_role_id": "DL-001" },
+    { "runtime_id": "user_demo_aida", "membership_id": "membership_demo_aida", "email": "aida@orderflow-aas.local", "full_name": "Elin Rahm", "membership_role": "aida", "source_role_id": "AIDA-001" },
+    { "runtime_id": "user_demo_aqa", "membership_id": "membership_demo_aqa", "email": "aqa@orderflow-aas.local", "full_name": "Mikael Sten", "membership_role": "aqa", "source_role_id": "AQA-001" },
+    { "runtime_id": "user_demo_architect", "membership_id": "membership_demo_architect", "email": "architect@orderflow-aas.local", "full_name": "Sara Holm", "membership_role": "architect", "source_role_id": null, "source_basis": "synthesized_for_runtime" },
+    { "runtime_id": "user_demo_builder", "membership_id": "membership_demo_builder", "email": "builder@orderflow-aas.local", "full_name": "Oskar Berg", "membership_role": "builder", "source_role_id": null, "source_basis": "synthesized_for_runtime" }
+  ],
+  "party_roles": [
+    { "runtime_id": "party_role_demo_customer_sponsor", "full_name": "Maria Sjostrom", "email": "sponsor@orderflow.customer.local", "organization_side": "customer", "role_type": "customer_sponsor", "role_title": "Executive Sponsor", "source_basis": "synthesized_for_runtime" },
+    { "runtime_id": "party_role_demo_customer_domain_owner", "full_name": "Lars Nygren", "email": "customer.architect@orderflow.customer.local", "organization_side": "customer", "role_type": "customer_domain_owner", "role_title": "Customer Architect", "source_role_id": "CA-001" },
+    { "runtime_id": "party_role_demo_value_owner", "full_name": "Anna Lund", "email": "value.owner@orderflow-aas.local", "organization_side": "customer", "role_type": "value_owner", "role_title": "Head of Digital Commerce", "source_role_id": "VO-001" },
+    { "runtime_id": "party_role_demo_risk_owner", "full_name": "Karin Dahl", "email": "risk.owner@orderflow.customer.local", "organization_side": "customer", "role_type": "risk_owner", "role_title": "Governance and Risk Owner", "source_role_id": "GRO-001" },
+    { "runtime_id": "party_role_demo_architect", "full_name": "Sara Holm", "email": "architect@orderflow-aas.local", "organization_side": "supplier", "role_type": "architect", "role_title": "Supplier Architect", "source_basis": "synthesized_for_runtime" },
+    { "runtime_id": "party_role_demo_aida", "full_name": "Elin Rahm", "email": "aida@orderflow-aas.local", "organization_side": "supplier", "role_type": "aida", "role_title": "AI Delivery Architect", "source_role_id": "AIDA-001" },
+    { "runtime_id": "party_role_demo_aqa", "full_name": "Mikael Sten", "email": "aqa@orderflow-aas.local", "organization_side": "supplier", "role_type": "aqa", "role_title": "AI Quality Authority", "source_role_id": "AQA-001" },
+    { "runtime_id": "party_role_demo_delivery_lead", "full_name": "Johan Ek", "email": "delivery.lead@orderflow-aas.local", "organization_side": "supplier", "role_type": "delivery_lead", "role_title": "Delivery Lead", "source_role_id": "DL-001" },
+    { "runtime_id": "party_role_demo_builder", "full_name": "Oskar Berg", "email": "builder@orderflow-aas.local", "organization_side": "supplier", "role_type": "builder", "role_title": "Senior Builder", "source_basis": "synthesized_for_runtime" }
+  ],
+  "outcomes": [
+    {
+      "canonical_id": "O-001",
+      "runtime_id": "outcome_demo_governance_gap",
+      "key": "OUT-001",
+      "title": "Reduce change lead time and production incidents in OrderFlow",
+      "outcome_statement": "Reduce median change lead time from 20 days to 8 days within 9 months, reduce production incidents by 30 percent, increase automated test coverage to 70 percent, and raise deployment frequency from 2 to at least 4 times per month.",
+      "baseline_definition": "Lead time, incident rate, test automation level, and deployment frequency measured from existing engineering and operations reports.",
+      "baseline_source": "Commit-to-production reports, monthly incident reports, CI test coverage reports, and release logs.",
+      "timeframe": "9 months",
+      "risk_profile": "high",
+      "ai_acceleration_level": "level_2",
+      "runtime_status": "ready_for_tg1"
+    }
+  ],
+  "epics": [
+    { "canonical_id": "E-001", "runtime_id": "epic_demo_framing", "outcome_canonical_id": "O-001", "key": "EPC-001", "title": "Stabilize core order domain and reduce coupling", "runtime_status": "in_progress" },
+    { "canonical_id": "E-002", "runtime_id": "epic_orderflow_build_deploy", "outcome_canonical_id": "O-001", "key": "EPC-002", "title": "Automate build, deploy and rollback", "runtime_status": "draft" },
+    { "canonical_id": "E-003", "runtime_id": "epic_orderflow_test_safety", "outcome_canonical_id": "O-001", "key": "EPC-003", "title": "Increase test automation and regression safety", "runtime_status": "draft" },
+    { "canonical_id": "E-004", "runtime_id": "epic_orderflow_observability", "outcome_canonical_id": "O-001", "key": "EPC-004", "title": "Improve observability and incident response", "runtime_status": "draft" },
+    { "canonical_id": "E-005", "runtime_id": "epic_orderflow_ai_support", "outcome_canonical_id": "O-001", "key": "EPC-005", "title": "Introduce controlled AI support in development and testing", "runtime_status": "draft" },
+    { "canonical_id": "E-006", "runtime_id": "epic_orderflow_security_audit", "outcome_canonical_id": "O-001", "key": "EPC-006", "title": "Ensure security, compliance and auditability", "runtime_status": "draft" },
+    { "canonical_id": "E-007", "runtime_id": "epic_orderflow_handover_measurement", "outcome_canonical_id": "O-001", "key": "EPC-007", "title": "Operationalize handover and value measurement", "runtime_status": "draft" },
+    { "canonical_id": "E-008", "runtime_id": "epic_orderflow_evidence_chain", "outcome_canonical_id": "O-001", "key": "EPC-008", "title": "AAS governance and evidence chain", "runtime_status": "draft" }
+  ],
+  "stories": [
+    { "canonical_id": "S-001", "runtime_id": "story_demo_outcome_workspace", "epic_canonical_id": "E-001", "key": "OF-STORY-001", "title": "Identify and freeze core order domain boundaries", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_1", "test_id": "T-001", "runtime_status": "definition_blocked" },
+    { "canonical_id": "S-002", "runtime_id": "story_demo_execution_contract", "epic_canonical_id": "E-001", "key": "OF-STORY-002", "title": "Extract payment orchestration into a separate module", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-002", "runtime_status": "ready_for_handoff" },
+    { "canonical_id": "S-003", "runtime_id": "story_demo_activity_timeline", "epic_canonical_id": "E-001", "key": "OF-STORY-003", "title": "Define versioned API contract for order service", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-003", "runtime_status": "draft" },
+    { "canonical_id": "S-004", "runtime_id": "story_orderflow_004", "epic_canonical_id": "E-002", "key": "OF-STORY-004", "title": "Implement automated build pipeline", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-004", "runtime_status": "draft" },
+    { "canonical_id": "S-005", "runtime_id": "story_orderflow_005", "epic_canonical_id": "E-002", "key": "OF-STORY-005", "title": "Automate deployment to staging", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-005", "runtime_status": "draft" },
+    { "canonical_id": "S-006", "runtime_id": "story_orderflow_006", "epic_canonical_id": "E-002", "key": "OF-STORY-006", "title": "Introduce rollback mechanism for releases", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-006", "runtime_status": "draft" },
+    { "canonical_id": "S-007", "runtime_id": "story_orderflow_007", "epic_canonical_id": "E-003", "key": "OF-STORY-007", "title": "Expand unit test coverage for critical business rules", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-007", "runtime_status": "draft" },
+    { "canonical_id": "S-008", "runtime_id": "story_orderflow_008", "epic_canonical_id": "E-003", "key": "OF-STORY-008", "title": "Build integration test harness for order-to-cash flow", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-008", "runtime_status": "draft" },
+    { "canonical_id": "S-009", "runtime_id": "story_orderflow_009", "epic_canonical_id": "E-003", "key": "OF-STORY-009", "title": "Define regression coverage thresholds", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-009", "runtime_status": "draft" },
+    { "canonical_id": "S-010", "runtime_id": "story_orderflow_010", "epic_canonical_id": "E-004", "key": "OF-STORY-010", "title": "Centralize logging with correlation IDs", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_1", "test_id": "T-010", "runtime_status": "draft" },
+    { "canonical_id": "S-011", "runtime_id": "story_orderflow_011", "epic_canonical_id": "E-004", "key": "OF-STORY-011", "title": "Configure alerting and incident classification", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-011", "runtime_status": "draft" },
+    { "canonical_id": "S-012", "runtime_id": "story_orderflow_012", "epic_canonical_id": "E-004", "key": "OF-STORY-012", "title": "Implement automated root cause tagging for incidents", "runtime_story_type": "outcome_delivery", "ai_acceleration_level": "level_2", "test_id": "T-012", "runtime_status": "draft" },
+    { "canonical_id": "S-013", "runtime_id": "story_orderflow_013", "epic_canonical_id": "E-005", "key": "OF-STORY-013", "title": "Create prompt library for AI-assisted test generation", "runtime_story_type": "enablement", "ai_acceleration_level": "level_2", "test_id": "T-013", "runtime_status": "draft" },
+    { "canonical_id": "S-014", "runtime_id": "story_orderflow_014", "epic_canonical_id": "E-005", "key": "OF-STORY-014", "title": "Implement AI-assisted refactor workflow with mandatory human review", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-014", "runtime_status": "draft" },
+    { "canonical_id": "S-015", "runtime_id": "story_orderflow_015", "epic_canonical_id": "E-005", "key": "OF-STORY-015", "title": "Log all AI usage by story and model version", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-015", "runtime_status": "draft" },
+    { "canonical_id": "S-016", "runtime_id": "story_orderflow_016", "epic_canonical_id": "E-006", "key": "OF-STORY-016", "title": "Implement data classification and masking for test and logs", "runtime_story_type": "governance", "ai_acceleration_level": "level_1", "test_id": "T-016", "runtime_status": "draft" },
+    { "canonical_id": "S-017", "runtime_id": "story_orderflow_017", "epic_canonical_id": "E-006", "key": "OF-STORY-017", "title": "Establish audit trail for changes, approvals and AI usage", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-017", "runtime_status": "draft" },
+    { "canonical_id": "S-018", "runtime_id": "story_orderflow_018", "epic_canonical_id": "E-006", "key": "OF-STORY-018", "title": "Define AI review checklist and release stop criteria", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-018", "runtime_status": "draft" },
+    { "canonical_id": "S-019", "runtime_id": "story_orderflow_019", "epic_canonical_id": "E-007", "key": "OF-STORY-019", "title": "Prepare operational runbook for support, deploy and rollback", "runtime_story_type": "enablement", "ai_acceleration_level": "level_1", "test_id": "T-019", "runtime_status": "draft" },
+    { "canonical_id": "S-020", "runtime_id": "story_orderflow_020", "epic_canonical_id": "E-007", "key": "OF-STORY-020", "title": "Re-measure baseline and validate outcome progress", "runtime_story_type": "governance", "ai_acceleration_level": "level_1", "test_id": "T-020", "runtime_status": "draft" },
+    { "canonical_id": "S-021", "runtime_id": "story_orderflow_021", "epic_canonical_id": "E-007", "key": "OF-STORY-021", "title": "Transfer ownership and monitoring responsibilities to operations", "runtime_story_type": "enablement", "ai_acceleration_level": "level_1", "test_id": "T-021", "runtime_status": "draft" },
+    { "canonical_id": "S-022", "runtime_id": "story_orderflow_022", "epic_canonical_id": "E-008", "key": "OF-STORY-022", "title": "Generate AAS evidence pack for release", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-022", "runtime_status": "draft" },
+    { "canonical_id": "S-023", "runtime_id": "story_orderflow_023", "epic_canonical_id": "E-008", "key": "OF-STORY-023", "title": "Integrate AI review into Definition of Done", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-023", "runtime_status": "draft" },
+    { "canonical_id": "S-024", "runtime_id": "story_orderflow_024", "epic_canonical_id": "E-008", "key": "OF-STORY-024", "title": "Activate AQA role and release stop authority", "runtime_story_type": "governance", "ai_acceleration_level": "level_2", "test_id": "T-024", "runtime_status": "draft" }
+  ],
+  "tests": [
+    { "test_id": "T-001", "story_canonical_id": "S-001", "test_level": "system", "test_type": "architecture_validation", "automation": "low" },
+    { "test_id": "T-002", "story_canonical_id": "S-002", "test_level": "regression", "test_type": "contract_and_regression_validation", "automation": "high" },
+    { "test_id": "T-003", "story_canonical_id": "S-003", "test_level": "integration", "test_type": "contract_test", "automation": "high" },
+    { "test_id": "T-004", "story_canonical_id": "S-004", "test_level": "integration", "test_type": "pipeline_validation", "automation": "high" },
+    { "test_id": "T-005", "story_canonical_id": "S-005", "test_level": "system", "test_type": "deployment_smoke_test", "automation": "high" },
+    { "test_id": "T-006", "story_canonical_id": "S-006", "test_level": "recovery", "test_type": "recovery_test", "automation": "medium" },
+    { "test_id": "T-007", "story_canonical_id": "S-007", "test_level": "unit", "test_type": "coverage_and_correctness", "automation": "high" },
+    { "test_id": "T-008", "story_canonical_id": "S-008", "test_level": "integration", "test_type": "flow_validation", "automation": "high" },
+    { "test_id": "T-009", "story_canonical_id": "S-009", "test_level": "regression", "test_type": "policy_gate_test", "automation": "high" },
+    { "test_id": "T-010", "story_canonical_id": "S-010", "test_level": "system", "test_type": "observability_validation", "automation": "high" },
+    { "test_id": "T-011", "story_canonical_id": "S-011", "test_level": "integration", "test_type": "alert_and_classification_validation", "automation": "high" },
+    { "test_id": "T-012", "story_canonical_id": "S-012", "test_level": "system", "test_type": "classification_accuracy_test", "automation": "medium" },
+    { "test_id": "T-013", "story_canonical_id": "S-013", "test_level": "system", "test_type": "repository_and_reproducibility_validation", "automation": "medium" },
+    { "test_id": "T-014", "story_canonical_id": "S-014", "test_level": "code_review", "test_type": "review_validation", "automation": "medium" },
+    { "test_id": "T-015", "story_canonical_id": "S-015", "test_level": "system", "test_type": "log_query_validation", "automation": "high" },
+    { "test_id": "T-016", "story_canonical_id": "S-016", "test_level": "security", "test_type": "data_protection_validation", "automation": "medium" },
+    { "test_id": "T-017", "story_canonical_id": "S-017", "test_level": "system", "test_type": "auditability_validation", "automation": "high" },
+    { "test_id": "T-018", "story_canonical_id": "S-018", "test_level": "system", "test_type": "governance_validation", "automation": "low" },
+    { "test_id": "T-019", "story_canonical_id": "S-019", "test_level": "system", "test_type": "operational_readiness", "automation": "low" },
+    { "test_id": "T-020", "story_canonical_id": "S-020", "test_level": "system", "test_type": "measurement_validation", "automation": "medium" },
+    { "test_id": "T-021", "story_canonical_id": "S-021", "test_level": "system", "test_type": "ownership_transfer_validation", "automation": "low" },
+    { "test_id": "T-022", "story_canonical_id": "S-022", "test_level": "system", "test_type": "evidence_completeness_validation", "automation": "high" },
+    { "test_id": "T-023", "story_canonical_id": "S-023", "test_level": "integration", "test_type": "pipeline_gate", "automation": "high" },
+    { "test_id": "T-024", "story_canonical_id": "S-024", "test_level": "system", "test_type": "governance_validation", "automation": "low" }
+  ],
+  "runtime_seed_overrides": {
+    "primary_outcome_tollgate": { "runtime_id": "tollgate_demo_baseline_blocked", "status": "ready", "tollgate_type": "tg1_baseline", "approver_roles": ["value_owner", "architect"] },
+    "handoff_story_tollgate": { "runtime_id": "tollgate_orderflow_story_ready", "status": "approved", "tollgate_type": "story_readiness", "approver_roles": ["aqa", "delivery_lead"] },
+    "signoff_records": [
+      { "runtime_id": "signoff_demo_outcome_review", "entity_runtime_id": "outcome_demo_governance_gap", "required_role_type": "architect", "decision_kind": "review", "decision_status": "approved" },
+      { "runtime_id": "signoff_demo_story_review", "entity_runtime_id": "story_demo_execution_contract", "required_role_type": "aqa", "decision_kind": "review", "decision_status": "approved" },
+      { "runtime_id": "signoff_orderflow_release_value_owner", "entity_runtime_id": "story_demo_execution_contract", "required_role_type": "value_owner", "decision_kind": "approval", "decision_status": "approved" }
+    ]
+  },
+  "expected_shape": {
+    "outcomes": 1,
+    "epics": 8,
+    "stories": 24,
+    "tests": 24
+  },
+  "synthesized_assumptions": [
+    "Supplier architect and builder users were added because the runtime membership model requires them but the source file does not name them.",
+    "Customer Architect was mapped to runtime role_type customer_domain_owner because the current schema lacks a dedicated customer_architect role type.",
+    "A customer sponsor was added because the current demo model expects escalation authority even though the source file does not name one.",
+    "The current application supports tg1_baseline and story_readiness tollgates only, so TG-2 to TG-4 remain implicit for now.",
+    "Story runtime statuses were intentionally mixed to keep useful UI coverage: one blocked story, one ready-for-handoff story, and one draft story."
+  ]
+}

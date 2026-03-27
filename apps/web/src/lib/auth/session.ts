@@ -11,6 +11,7 @@ import {
 } from "@aas-companion/domain/session-constants";
 import { ensureAppUser, getAppUserById, getOrganizationContextForUser } from "@aas-companion/db/organization-repository";
 import { createServerSupabaseClient } from "@/lib/auth/supabase/server";
+import { withDevTiming } from "@/lib/dev-timing";
 
 export type AccountIdentity = {
   authMode: "local" | "supabase";
@@ -35,92 +36,100 @@ const getRequestAuthCookieState = cache(async () => {
   };
 });
 
-export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentity | null> => {
-  const { localUserId, hasSupabaseCookies } = await getRequestAuthCookieState();
+export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentity | null> =>
+  withDevTiming("web.auth.getSignedInAccountIdentity", async () => {
+    const { localUserId, hasSupabaseCookies } = await getRequestAuthCookieState();
 
-  if (localUserId) {
-    const localUser = await getAppUserById(localUserId);
+    if (localUserId) {
+      const localUser = await withDevTiming("web.auth.getAppUserById", () => getAppUserById(localUserId));
 
-    if (localUser) {
+      if (localUser) {
+        return {
+          authMode: "local",
+          userId: localUser.userId,
+          email: localUser.email,
+          displayName: localUser.fullName ?? localUser.email.split("@")[0] ?? "Operator"
+        };
+      }
+    }
+
+    if (!hasSupabaseCookies) {
+      return null;
+    }
+
+    const supabase = await createServerSupabaseClient();
+
+    if (!supabase) {
+      return null;
+    }
+
+    const {
+      data: { user }
+    } = await withDevTiming("web.auth.supabase.getUser", () => supabase.auth.getUser());
+
+    if (!user) {
+      return null;
+    }
+
+    await withDevTiming("web.auth.ensureAppUser", () =>
+      ensureAppUser({
+        userId: user.id,
+        email: user.email ?? "unknown@supabase.local",
+        fullName: user.user_metadata.full_name ?? null
+      })
+    );
+
+    return {
+      authMode: "supabase",
+      userId: user.id,
+      email: user.email ?? "unknown@supabase.local",
+      displayName: user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "Operator"
+    };
+  })
+);
+
+export const getAppSession = cache(async (): Promise<ViewerSession | null> =>
+  withDevTiming("web.auth.getAppSession", async () => {
+    const [{ organizationId, hasDemoSession }, account] = await Promise.all([
+      getRequestAuthCookieState(),
+      getSignedInAccountIdentity()
+    ]);
+
+    if (hasDemoSession) {
       return {
-        authMode: "local",
-        userId: localUser.userId,
-        email: localUser.email,
-        displayName: localUser.fullName ?? localUser.email.split("@")[0] ?? "Operator"
+        ...(account
+          ? {
+              mode: "demo" as const,
+              userId: account.userId,
+              email: account.email,
+              displayName: account.displayName
+            }
+          : DEMO_SESSION),
+        organization:
+          organizationId === null || organizationId === DEMO_ORGANIZATION.organizationId ? DEMO_ORGANIZATION : null
       };
     }
-  }
 
-  if (!hasSupabaseCookies) {
-    return null;
-  }
+    if (!account) {
+      return null;
+    }
 
-  const supabase = await createServerSupabaseClient();
+    const organization =
+      organizationId && organizationId !== DEMO_ORGANIZATION.organizationId
+        ? await withDevTiming("web.auth.getOrganizationContextForUser", () =>
+            getOrganizationContextForUser(account.userId, organizationId)
+          )
+        : null;
 
-  if (!supabase) {
-    return null;
-  }
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  await ensureAppUser({
-    userId: user.id,
-    email: user.email ?? "unknown@supabase.local",
-    fullName: user.user_metadata.full_name ?? null
-  });
-
-  return {
-    authMode: "supabase",
-    userId: user.id,
-    email: user.email ?? "unknown@supabase.local",
-    displayName: user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "Operator"
-  };
-});
-
-export const getAppSession = cache(async (): Promise<ViewerSession | null> => {
-  const [{ organizationId, hasDemoSession }, account] = await Promise.all([
-    getRequestAuthCookieState(),
-    getSignedInAccountIdentity()
-  ]);
-
-  if (hasDemoSession) {
     return {
-      ...(account
-        ? {
-            mode: "demo" as const,
-            userId: account.userId,
-            email: account.email,
-            displayName: account.displayName
-          }
-        : DEMO_SESSION),
-      organization:
-        organizationId === null || organizationId === DEMO_ORGANIZATION.organizationId ? DEMO_ORGANIZATION : null
+      mode: account.authMode,
+      userId: account.userId,
+      email: account.email,
+      displayName: account.displayName,
+      organization
     };
-  }
-
-  if (!account) {
-    return null;
-  }
-
-  const organization =
-    organizationId && organizationId !== DEMO_ORGANIZATION.organizationId
-      ? await getOrganizationContextForUser(account.userId, organizationId)
-      : null;
-
-  return {
-    mode: account.authMode,
-    userId: account.userId,
-    email: account.email,
-    displayName: account.displayName,
-    organization
-  };
-});
+  })
+);
 
 export async function requireAppSession() {
   const session = await getAppSession();

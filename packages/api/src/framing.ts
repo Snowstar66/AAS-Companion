@@ -1,5 +1,6 @@
 import { getOutcomeBaselineReadiness } from "@aas-companion/domain";
-import { createOutcome, listOutcomeCockpitEntries, listOutcomes } from "@aas-companion/db";
+import { createOutcome, getPreferredFramingOutcomeId, listOutcomeCockpitEntries, listOutcomes } from "@aas-companion/db";
+import { logDevTiming, withDevTiming } from "./dev-timing";
 import { success, type ApiResult } from "./shared";
 
 export type FramingReadinessTone = "blocked" | "progress" | "ready";
@@ -111,96 +112,103 @@ export async function createCleanDraftOutcomeFromFramingService(input: {
   );
 }
 
+export async function getPreferredFramingOutcomeIdService(organizationId: string) {
+  return withDevTiming("api.getPreferredFramingOutcomeIdService", () => getPreferredFramingOutcomeId(organizationId), `organizationId=${organizationId}`);
+}
+
 export async function getFramingCockpitData(
   organizationId: string,
   organizationName: string
 ): Promise<FramingCockpitData> {
-  try {
-    const entries = await listOutcomeCockpitEntries(organizationId);
+  return withDevTiming("api.getFramingCockpitData", async () => {
+    try {
+      const entries = await listOutcomeCockpitEntries(organizationId);
+      const mapStartedAt = Date.now();
+      const items: FramingOutcomeItem[] = entries.map((entry) => {
+        const readiness = getOutcomeBaselineReadiness(entry);
+        const tollgateBlockers = entry.tollgates
+          .filter((tollgate) => tollgate.status === "blocked")
+          .flatMap((tollgate) => tollgate.blockers);
+        const blockers = [...new Set([...readiness.reasons.map((reason) => reason.message), ...tollgateBlockers])];
+        const missingBaselineFields = countMissingBaselineFields(entry);
+        const isBlocked = blockers.length > 0 || readiness.state === "blocked";
 
-    const items: FramingOutcomeItem[] = entries.map((entry) => {
-      const readiness = getOutcomeBaselineReadiness(entry);
-      const tollgateBlockers = entry.tollgates
-        .filter((tollgate) => tollgate.status === "blocked")
-        .flatMap((tollgate) => tollgate.blockers);
-      const blockers = [...new Set([...readiness.reasons.map((reason) => reason.message), ...tollgateBlockers])];
-      const missingBaselineFields = countMissingBaselineFields(entry);
-      const isBlocked = blockers.length > 0 || readiness.state === "blocked";
+        let readinessLabel = "Ready for framing review";
+        let readinessTone: FramingReadinessTone = "ready";
+        let readinessDetail = "Baseline fields are present and the outcome can continue toward TG1.";
 
-      let readinessLabel = "Ready for framing review";
-      let readinessTone: FramingReadinessTone = "ready";
-      let readinessDetail = "Baseline fields are present and the outcome can continue toward TG1.";
+        if (isBlocked) {
+          readinessLabel = "Blocked";
+          readinessTone = "blocked";
+          readinessDetail =
+            blockers[0] ??
+            `${missingBaselineFields} baseline field${missingBaselineFields === 1 ? "" : "s"} still missing.`;
+        } else if (readiness.state === "in_progress") {
+          readinessLabel = "In progress";
+          readinessTone = "progress";
+          readinessDetail = "Framing has started, but the outcome is not yet marked ready for TG1.";
+        }
 
-      if (isBlocked) {
-        readinessLabel = "Blocked";
-        readinessTone = "blocked";
-        readinessDetail =
-          blockers[0] ??
-          `${missingBaselineFields} baseline field${missingBaselineFields === 1 ? "" : "s"} still missing.`;
-      } else if (readiness.state === "in_progress") {
-        readinessLabel = "In progress";
-        readinessTone = "progress";
-        readinessDetail = "Framing has started, but the outcome is not yet marked ready for TG1.";
+        return {
+          id: entry.id,
+          key: entry.key,
+          title: entry.title,
+          originType: entry.originType,
+          importedReadinessState: entry.importedReadinessState ?? null,
+          lineageHref:
+            entry.lineageSourceType === "artifact_aas_candidate" && entry.lineageSourceId
+              ? `/review?candidateId=${entry.lineageSourceId}`
+              : null,
+          status: entry.status,
+          statusLabel: statusLabels[entry.status] ?? entry.status,
+          readinessLabel,
+          readinessTone,
+          readinessDetail,
+          isBlocked,
+          blockers,
+          baselineComplete: missingBaselineFields === 0,
+          ownerLabel: entry.valueOwner?.fullName ?? entry.valueOwner?.email ?? "Unassigned",
+          timeframe: entry.timeframe,
+          epicCount: entry._count.epics,
+          storyCount: entry._count.stories,
+          updatedAtLabel: formatUpdatedAt(entry.updatedAt),
+          detailHref: `/framing?outcomeId=${entry.id}`
+        };
+      });
+      logDevTiming("api.getFramingCockpitData.mapItems", mapStartedAt, `count=${items.length}`);
+
+      if (items.length === 0) {
+        return {
+          state: "empty",
+          organizationName,
+          message: "Start a clean native case from Framing to begin work in this project.",
+          items,
+          summary: createSummary(items)
+        };
       }
 
       return {
-        id: entry.id,
-        key: entry.key,
-        title: entry.title,
-        originType: entry.originType,
-        importedReadinessState: entry.importedReadinessState ?? null,
-        lineageHref:
-          entry.lineageSourceType === "artifact_aas_candidate" && entry.lineageSourceId
-            ? `/review?candidateId=${entry.lineageSourceId}`
-            : null,
-        status: entry.status,
-        statusLabel: statusLabels[entry.status] ?? entry.status,
-        readinessLabel,
-        readinessTone,
-        readinessDetail,
-        isBlocked,
-        blockers,
-        baselineComplete: missingBaselineFields === 0,
-        ownerLabel: entry.valueOwner?.fullName ?? entry.valueOwner?.email ?? "Unassigned",
-        timeframe: entry.timeframe,
-        epicCount: entry._count.epics,
-        storyCount: entry._count.stories,
-        updatedAtLabel: formatUpdatedAt(entry.updatedAt),
-        detailHref: `/framing?outcomeId=${entry.id}`
-      };
-    });
-
-    if (items.length === 0) {
-      return {
-        state: "empty",
+        state: "live",
         organizationName,
-        message: "Start a clean native case from Framing to begin work in this project.",
+        message: "Framing stays isolated to the active project and only shows work that belongs here.",
         items,
         summary: createSummary(items)
       };
+    } catch (error) {
+      return {
+        state: "unavailable",
+        organizationName,
+        message:
+          error instanceof Error
+            ? `Framing data is unavailable right now: ${error.message}`
+            : "Framing data is unavailable right now.",
+        items: [],
+        summary: {
+          total: 0,
+          blocked: 0,
+          ready: 0
+        }
+      };
     }
-
-    return {
-      state: "live",
-      organizationName,
-      message: "Framing stays isolated to the active project and only shows work that belongs here.",
-      items,
-      summary: createSummary(items)
-    };
-  } catch (error) {
-    return {
-      state: "unavailable",
-      organizationName,
-      message:
-        error instanceof Error
-          ? `Framing data is unavailable right now: ${error.message}`
-          : "Framing data is unavailable right now.",
-      items: [],
-      summary: {
-        total: 0,
-        blocked: 0,
-        ready: 0
-      }
-    };
-  }
+  }, `organizationId=${organizationId}`);
 }
