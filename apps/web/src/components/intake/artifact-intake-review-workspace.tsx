@@ -183,10 +183,6 @@ function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
 
-function hasItems(value: string[] | null | undefined) {
-  return Boolean(value && value.length > 0);
-}
-
 function value(value: string | string[] | null) {
   if (Array.isArray(value)) {
     return value.length ? value.join("\n") : "Not set";
@@ -194,47 +190,131 @@ function value(value: string | string[] | null) {
   return value && value.trim() ? value : "Not set";
 }
 
-function candidateFields(candidate: IntakeArtifactCandidate) {
+function buildSuggestedImportedStoryKey(session: IntakeArtifactSession, candidate: IntakeArtifactCandidate | null) {
+  if (!candidate || candidate.type !== "story") {
+    return "";
+  }
+
+  const storyCandidates = session.allCandidates.filter((entry) => entry.type === "story");
+  const index = storyCandidates.findIndex((entry) => entry.id === candidate.id);
+  const sequence = index >= 0 ? index + 1 : storyCandidates.length + 1;
+
+  return `IMP-STR-${String(sequence).padStart(3, "0")}`;
+}
+
+function candidateAttentionItems(candidate: IntakeArtifactCandidate) {
+  return (candidate.complianceResult?.findings ?? [])
+    .filter((finding) =>
+      !findingResolved({
+        category: finding.category,
+        action: candidate.issueDispositions[finding.code]?.action
+      })
+    )
+    .map((finding) => ({
+      id: finding.code,
+      label: finding.fieldLabel ?? "Imported issue",
+      message: finding.message,
+      tone:
+        finding.category === "missing" || finding.category === "blocked"
+          ? "border-rose-200 bg-rose-50 text-rose-800"
+          : finding.category === "human_only"
+            ? "border-sky-200 bg-sky-50 text-sky-800"
+            : "border-amber-200 bg-amber-50 text-amber-800"
+    }));
+}
+
+function candidateDestinationSummary(input: {
+  candidate: IntakeArtifactCandidate;
+  selectedProjectOutcome: ProjectOutcomeOption | null;
+  selectedProjectEpic: ProjectEpicOption | null;
+}) {
+  if (input.candidate.type === "outcome") {
+    return {
+      value: "Creates or updates the single governed Outcome in the project.",
+      tone: "resolved" as const
+    };
+  }
+
+  if (input.candidate.type === "epic") {
+    if (input.selectedProjectOutcome) {
+      return {
+        value: `Outcome: ${describeProjectOutcome(input.selectedProjectOutcome)}`,
+        tone: "resolved" as const
+      };
+    }
+
+    return {
+      value: "Choose which governed Outcome this Epic should land in.",
+      tone: "missing" as const
+    };
+  }
+
+  if (input.selectedProjectOutcome && input.selectedProjectEpic) {
+    return {
+      value: `${input.selectedProjectOutcome.key} -> ${input.selectedProjectEpic.key}`,
+      tone: "resolved" as const
+    };
+  }
+
+  if (input.selectedProjectOutcome) {
+    return {
+      value: `Outcome fixed to ${input.selectedProjectOutcome.key}. Choose the Epic destination.`,
+      tone: "uncertain" as const
+    };
+  }
+
+  return {
+    value: "Choose the governed Outcome and Epic destination before approval.",
+    tone: "missing" as const
+  };
+}
+
+function candidateFields(input: {
+  candidate: IntakeArtifactCandidate;
+  selectedProjectOutcome: ProjectOutcomeOption | null;
+  selectedProjectEpic: ProjectEpicOption | null;
+  suggestedStoryKey: string;
+}) {
+  const candidate = input.candidate;
   const draft = candidate.draftRecord;
   const decisions = candidate.humanDecisions;
-  const uncertain =
-    candidate.mappingState !== "mapped" ||
-    candidate.relationshipState !== "mapped" ||
-    candidate.source.confidence !== "high";
+  const destination = candidateDestinationSummary(input);
 
   if (candidate.type === "outcome") {
     return [
-      ["Key", draft?.key ?? null, !hasText(draft?.key) ? "missing" : "resolved"],
-      ["Title", draft?.title ?? candidate.title, "neutral"],
-      ["Outcome statement", draft?.outcomeStatement ?? null, !hasText(draft?.outcomeStatement) ? "missing" : uncertain ? "uncertain" : "resolved"],
-      ["Baseline definition", draft?.baselineDefinition ?? null, !hasText(draft?.baselineDefinition) ? "missing" : "resolved"],
-      ["Baseline source", draft?.baselineSource ?? null, !hasText(draft?.baselineSource) ? "missing" : "resolved"],
-      ["Value Owner", decisions?.valueOwnerId ?? null, !hasText(decisions?.valueOwnerId) ? "missing" : "resolved"]
+      ["Will save as", draft?.key ?? "Set the Outcome key before approval", !hasText(draft?.key) ? "missing" : "resolved"],
+      ["Handshake", draft?.outcomeStatement ?? candidate.summary, !hasText(draft?.outcomeStatement) ? "missing" : "resolved"],
+      [
+        "Baseline package",
+        `Definition: ${draft?.baselineDefinition ?? "Missing"}\nSource: ${draft?.baselineSource ?? "Missing"}`,
+        !hasText(draft?.baselineDefinition) || !hasText(draft?.baselineSource) ? "missing" : "resolved"
+      ],
+      ["Human decisions", `Value owner: ${decisions?.valueOwnerId ?? "Missing"}\nAI level: ${decisions?.aiAccelerationLevel ?? "Pending"}`, !hasText(decisions?.valueOwnerId) ? "missing" : "uncertain"]
     ] as const;
   }
 
   if (candidate.type === "epic") {
     return [
-      ["Key", draft?.key ?? null, !hasText(draft?.key) ? "missing" : "resolved"],
-      ["Title", draft?.title ?? candidate.title, "neutral"],
-      ["Purpose", draft?.purpose ?? candidate.summary, uncertain ? "uncertain" : "neutral"],
-      ["Scope boundary", draft?.scopeBoundary ?? null, !hasText(draft?.scopeBoundary) ? "missing" : "resolved"],
-      ["Risk note", draft?.riskNote ?? null, "neutral"],
-      ["Linked Outcome candidate", draft?.outcomeCandidateId ?? null, !hasText(draft?.outcomeCandidateId) ? "missing" : candidate.relationshipState !== "mapped" ? "uncertain" : "resolved"]
+      ["Will save as", draft?.key ?? "Set the Epic key before approval", !hasText(draft?.key) ? "missing" : "resolved"],
+      ["Destination", destination.value, destination.tone],
+      ["Purpose", draft?.purpose ?? candidate.summary, !hasText(draft?.purpose) ? "uncertain" : "resolved"],
+      ["Scope boundary", draft?.scopeBoundary ?? "Still missing", !hasText(draft?.scopeBoundary) ? "missing" : "resolved"]
     ] as const;
   }
 
+  const suggestedKey = draft?.key ?? input.suggestedStoryKey;
+  const acceptanceCount = draft?.acceptanceCriteria?.length ?? 0;
+  const definitionOfDoneCount = draft?.definitionOfDone?.length ?? 0;
+
   return [
-    ["Key", draft?.key ?? null, !hasText(draft?.key) ? "missing" : "resolved"],
-    ["Title", draft?.title ?? candidate.title, "neutral"],
-    ["Story type", draft?.storyType ?? null, "neutral"],
-    ["Value intent", draft?.valueIntent ?? candidate.summary, uncertain ? "uncertain" : "neutral"],
-    ["Acceptance criteria", draft?.acceptanceCriteria ?? [], !hasItems(draft?.acceptanceCriteria) ? "missing" : "resolved"],
-    ["AI usage scope", draft?.aiUsageScope ?? [], "neutral"],
-    ["Test Definition", draft?.testDefinition ?? null, !hasText(draft?.testDefinition) ? "missing" : "resolved"],
-    ["Definition of Done", draft?.definitionOfDone ?? [], !hasItems(draft?.definitionOfDone) ? "missing" : "resolved"],
-    ["Linked Outcome candidate", draft?.outcomeCandidateId ?? null, !hasText(draft?.outcomeCandidateId) ? "missing" : candidate.relationshipState !== "mapped" ? "uncertain" : "resolved"],
-    ["Linked Epic candidate", draft?.epicCandidateId ?? null, !hasText(draft?.epicCandidateId) ? "missing" : candidate.relationshipState !== "mapped" ? "uncertain" : "resolved"]
+    ["Will save as", suggestedKey || "Set the Story key before approval", !hasText(suggestedKey) ? "missing" : "resolved"],
+    ["Destination", destination.value, destination.tone],
+    ["Story type", draft?.storyType ?? "outcome_delivery", "neutral"],
+    [
+      "Delivery package",
+      `Acceptance criteria: ${acceptanceCount}\nTest Definition: ${hasText(draft?.testDefinition) ? "Captured" : "Missing"}\nDefinition of Done: ${definitionOfDoneCount}`,
+      acceptanceCount === 0 || !hasText(draft?.testDefinition) || definitionOfDoneCount === 0 ? "missing" : "resolved"
+    ]
   ] as const;
 }
 
@@ -549,12 +629,16 @@ function QuickIssueEditor(props: {
   projectEpics: ProjectEpicOption[];
   selectedOutcomeCandidateId: string;
   selectedEpicCandidateId: string;
+  suggestedStoryKey: string;
 }) {
   const inputClassName =
     "h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition focus:border-primary";
   const textareaClassName =
     "min-h-24 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-primary";
-  const allEpicOptions = props.projectEpics;
+  const epicOptions = props.projectEpics ?? [];
+  const allEpicOptions = props.selectedOutcomeCandidateId
+    ? epicOptions.filter((epic) => epic.outcomeId === props.selectedOutcomeCandidateId)
+    : epicOptions;
 
   switch (props.item.issueId) {
     case "outcome_key_missing":
@@ -565,10 +649,14 @@ function QuickIssueEditor(props: {
           <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
           <input
             className={inputClassName}
-            defaultValue={props.selectedCandidate.draftRecord?.key ?? ""}
+            defaultValue={
+              props.selectedCandidate.type === "story"
+                ? props.selectedCandidate.draftRecord?.key ?? props.suggestedStoryKey
+                : props.selectedCandidate.draftRecord?.key ?? ""
+            }
             form={props.formId}
             name="key"
-            placeholder="Enter ID / key"
+            placeholder={props.selectedCandidate.type === "story" ? "IMP-STR-001" : "Enter ID / key"}
             type="text"
           />
         </label>
@@ -666,7 +754,12 @@ function QuickIssueEditor(props: {
         </label>
       );
     case "epic_outcome_link_missing":
-      return (
+      return props.projectOutcomes.length === 1 && props.selectedOutcomeCandidateId ? (
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
+          <input form={props.formId} name="outcomeCandidateId" type="hidden" value={props.selectedOutcomeCandidateId} />
+          Outcome destination is fixed to {describeProjectOutcome(props.projectOutcomes[0]!)} for this import.
+        </div>
+      ) : (
         <label className="mt-3 block space-y-2">
           <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick fix</span>
           <select
@@ -689,22 +782,29 @@ function QuickIssueEditor(props: {
     case "candidate_relationship_uncertain":
       return (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Outcome</span>
-            <select
-              className={inputClassName}
-              defaultValue={props.selectedOutcomeCandidateId}
-              form={props.formId}
-              name="outcomeCandidateId"
-            >
-              <option value="">Select project Outcome</option>
-              {props.projectOutcomes.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {describeProjectOutcome(candidate)}
-                </option>
-              ))}
-            </select>
-          </label>
+          {props.projectOutcomes.length === 1 && props.selectedOutcomeCandidateId ? (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-900 sm:col-span-2">
+              <input form={props.formId} name="outcomeCandidateId" type="hidden" value={props.selectedOutcomeCandidateId} />
+              Outcome destination is fixed to {describeProjectOutcome(props.projectOutcomes[0]!)} for this import.
+            </div>
+          ) : (
+            <label className="space-y-2">
+              <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Outcome</span>
+              <select
+                className={inputClassName}
+                defaultValue={props.selectedOutcomeCandidateId}
+                form={props.formId}
+                name="outcomeCandidateId"
+              >
+                <option value="">Select project Outcome</option>
+                {props.projectOutcomes.map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {describeProjectOutcome(candidate)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {props.selectedCandidate.type === "story" ? (
             <label className="space-y-2">
               <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Epic</span>
@@ -880,6 +980,11 @@ export function ArtifactIntakeReviewWorkspace({
         : "";
   const selectedProjectOutcome = outcomeCandidateOptions.find((candidate) => candidate.id === selectedOutcomeCandidateId) ?? null;
   const selectedProjectEpic = epicCandidateOptions.find((candidate) => candidate.id === selectedEpicCandidateId) ?? null;
+  const suggestedStoryKey = buildSuggestedImportedStoryKey(session, selectedCandidate);
+  const selectedCandidateKeyValue =
+    selectedCandidate?.type === "story"
+      ? selectedCandidate.draftRecord?.key ?? suggestedStoryKey
+      : selectedCandidate?.draftRecord?.key ?? "";
   const mappedSectionsBySourceId = new Map(
     fileCandidates.map((candidate) => [candidate.source.sectionId, candidate] as const)
   );
@@ -905,6 +1010,7 @@ export function ArtifactIntakeReviewWorkspace({
       issueQuickFieldNames(finding.code, selectedCandidate?.type ?? "story")
     )
   );
+  const attentionItems = selectedCandidate ? candidateAttentionItems(selectedCandidate) : [];
   const showHumanDecisionFields = ["valueOwnerId", "baselineValidity", "aiAccelerationLevel", "riskProfile", "riskAcceptanceStatus"].some(
     (fieldName) => !quickEditFieldNames.has(fieldName)
   );
@@ -995,7 +1101,7 @@ export function ArtifactIntakeReviewWorkspace({
                     No items currently belong to this queue section for the selected artifact.
                   </div>
                 ) : (
-                  <div className="mt-4 grid gap-3">
+                  <div className="mt-4 grid gap-3 xl:grid-cols-2">
                     {group.items.map((item) => (
                       <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item.id}>
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1027,6 +1133,7 @@ export function ArtifactIntakeReviewWorkspace({
                             selectedCandidate={selectedCandidate}
                             selectedEpicCandidateId={selectedCandidate.draftRecord?.epicCandidateId ?? selectedEpicCandidateId}
                             selectedOutcomeCandidateId={selectedCandidate.draftRecord?.outcomeCandidateId ?? selectedOutcomeCandidateId}
+                            suggestedStoryKey={suggestedStoryKey}
                           />
                         ) : item.actionScope === "section" ? (
                           <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
@@ -1080,8 +1187,8 @@ export function ArtifactIntakeReviewWorkspace({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)]">
-        <div className="order-2 space-y-6 2xl:order-1">
+      <div className="space-y-6">
+        <div className="space-y-6">
           <CollapsibleReviewPanel
             defaultOpen={false}
             description="Expand the original markdown only when you need full-source verification or line-by-line context."
@@ -1206,10 +1313,10 @@ export function ArtifactIntakeReviewWorkspace({
           </CollapsibleReviewPanel>
         </div>
 
-        <div className="order-1 space-y-6 2xl:order-2">
+        <div className="space-y-6">
           <CollapsibleReviewPanel
             defaultOpen
-            description="Compare the imported interpretation with the governed fields that will be saved into the project."
+            description="Review the imported candidate at a glance instead of scanning every governed field in full."
             title="Structured candidate view"
           >
             <div className="space-y-4" id="candidate-panel">
@@ -1232,15 +1339,18 @@ export function ArtifactIntakeReviewWorkspace({
               ) : null}
               {selectedCandidate ? (
                 <>
-                  <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                          {selectedCandidate.type}
-                        </p>
-                        <h3 className="mt-2 text-lg font-semibold text-foreground">{selectedCandidate.title}</h3>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{selectedCandidate.summary}</p>
-                      </div>
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+                    <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {selectedCandidate.type}
+                      </p>
+                      <h3 className="mt-2 text-lg font-semibold text-foreground">{selectedCandidate.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{selectedCandidate.summary}</p>
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Source: {selectedCandidate.source.sectionMarker} in {selectedCandidate.source.fileName}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                       <div className="flex flex-wrap gap-2">
                         <span
                           className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${confidenceTone(selectedCandidate.source.confidence)}`}
@@ -1261,14 +1371,42 @@ export function ArtifactIntakeReviewWorkspace({
                           {candidateLinkageState(selectedCandidate).label}
                         </span>
                       </div>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {candidateLinkageState(selectedCandidate).description}
+                      </p>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {candidateLinkageState(selectedCandidate).description}
-                    </p>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {candidateFields(selectedCandidate).map(([fieldLabel, fieldValue, tone]) => (
+                  {attentionItems.length > 0 ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-amber-950">What still needs attention</p>
+                          <p className="mt-1 text-sm text-amber-900">
+                            These are the remaining gaps that still matter before this import can be approved.
+                          </p>
+                        </div>
+                        <span className="inline-flex rounded-full border border-amber-200 bg-background px-2.5 py-1 text-xs font-semibold text-amber-900">
+                          {attentionItems.length} open item(s)
+                        </span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {attentionItems.map((item) => (
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${item.tone}`} key={item.id}>
+                            {item.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
+                    {candidateFields({
+                      candidate: selectedCandidate,
+                      selectedProjectOutcome,
+                      selectedProjectEpic,
+                      suggestedStoryKey
+                    }).map(([fieldLabel, fieldValue, tone]) => (
                       <div className={`rounded-2xl border p-4 ${fieldTone(tone)}`} key={fieldLabel}>
                         <p className="text-xs font-semibold uppercase tracking-[0.18em]">{fieldLabel}</p>
                         <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 font-sans">{value(fieldValue)}</pre>
@@ -1302,8 +1440,8 @@ export function ArtifactIntakeReviewWorkspace({
                 <CardHeader>
                   <CardTitle>Save and approve import</CardTitle>
                   <CardDescription>
-                    Quick fixes in the queue write into this same review form. Use this section for any remaining details,
-                    your review comment, and the final save or approval step.
+                    This is the same correction workspace used by the queue above. Finish the remaining fields here, then
+                    save or approve the import into the project branch.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1326,10 +1464,15 @@ export function ArtifactIntakeReviewWorkspace({
                       <span className="text-sm font-medium text-foreground">Key</span>
                       <input
                         className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                        defaultValue={selectedCandidate.draftRecord?.key ?? ""}
+                        defaultValue={selectedCandidateKeyValue}
                         name="key"
                         type="text"
                       />
+                      {selectedCandidate.type === "story" && !selectedCandidate.draftRecord?.key ? (
+                        <p className="text-xs text-muted-foreground">
+                          Suggested import key. It stays visibly separate from native Story keys.
+                        </p>
+                      ) : null}
                     </label>
                   ) : null}
                   <label className="space-y-2">
@@ -1406,21 +1549,28 @@ export function ArtifactIntakeReviewWorkspace({
                         />
                       </label>
                       {!quickEditFieldNames.has("outcomeCandidateId") ? (
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
-                          <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                            defaultValue={selectedOutcomeCandidateId}
-                            name="outcomeCandidateId"
-                          >
-                            <option value="">Select project Outcome</option>
-                            {outcomeCandidateOptions.map((candidate) => (
-                              <option key={candidate.id} value={candidate.id}>
-                                {describeProjectOutcome(candidate)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                        outcomeCandidateOptions.length === 1 && selectedOutcomeCandidateId ? (
+                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+                            <input name="outcomeCandidateId" type="hidden" value={selectedOutcomeCandidateId} />
+                            Outcome destination is fixed to {describeProjectOutcome(outcomeCandidateOptions[0]!)} for this import.
+                          </div>
+                        ) : (
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                            <select
+                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                              defaultValue={selectedOutcomeCandidateId}
+                              name="outcomeCandidateId"
+                            >
+                              <option value="">Select project Outcome</option>
+                              {outcomeCandidateOptions.map((candidate) => (
+                                <option key={candidate.id} value={candidate.id}>
+                                  {describeProjectOutcome(candidate)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )
                       ) : null}
                     </>
                   ) : null}
@@ -1490,21 +1640,28 @@ export function ArtifactIntakeReviewWorkspace({
                         <>
                           <div className="grid gap-4 sm:grid-cols-2">
                             {!quickEditFieldNames.has("outcomeCandidateId") ? (
-                              <label className="space-y-2">
-                                <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
-                                <select
-                                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                                  defaultValue={selectedOutcomeCandidateId}
-                                  name="outcomeCandidateId"
-                                >
-                                  <option value="">Select project Outcome</option>
-                                  {outcomeCandidateOptions.map((candidate) => (
-                                    <option key={candidate.id} value={candidate.id}>
-                                      {describeProjectOutcome(candidate)}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
+                              outcomeCandidateOptions.length === 1 && selectedOutcomeCandidateId ? (
+                                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+                                  <input name="outcomeCandidateId" type="hidden" value={selectedOutcomeCandidateId} />
+                                  Outcome destination is fixed to {describeProjectOutcome(outcomeCandidateOptions[0]!)}.
+                                </div>
+                              ) : (
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                                  <select
+                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={selectedOutcomeCandidateId}
+                                    name="outcomeCandidateId"
+                                  >
+                                    <option value="">Select project Outcome</option>
+                                    {outcomeCandidateOptions.map((candidate) => (
+                                      <option key={candidate.id} value={candidate.id}>
+                                        {describeProjectOutcome(candidate)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              )
                             ) : null}
                             {!quickEditFieldNames.has("epicCandidateId") ? (
                               <label className="space-y-2">
@@ -1525,8 +1682,7 @@ export function ArtifactIntakeReviewWorkspace({
                             ) : null}
                           </div>
                           <p className="text-xs leading-5 text-muted-foreground">
-                            Choose the project Outcome and Epic this imported work should land in. If there is only one
-                            available option, it is preselected automatically.
+                            Choose the project Epic this imported Story should land in. The Outcome is preselected automatically when the project only has one active branch.
                           </p>
                         </>
                       ) : null}
@@ -1538,7 +1694,7 @@ export function ArtifactIntakeReviewWorkspace({
                         <ShieldCheck className="h-4 w-4 text-primary" />
                         <p className="text-sm font-medium text-foreground">Human-only decisions</p>
                       </div>
-                      <div className="grid gap-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
                       {!quickEditFieldNames.has("valueOwnerId") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Value Owner</span>

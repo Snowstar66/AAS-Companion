@@ -74,13 +74,13 @@ export function ArtifactIntakeReviewSubmitButtons() {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {reviewActionConfig.map((action) => {
           const isActive = pending && activeIntent === action.intent;
 
           return (
             <Button
-              className="gap-2"
+              className="gap-2 justify-start"
               disabled={pending}
               key={action.intent}
               name="intent"
