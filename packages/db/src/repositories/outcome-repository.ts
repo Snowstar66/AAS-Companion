@@ -6,6 +6,10 @@ import { logDevTiming, withDevTiming } from "../dev-timing";
 import { appendActivityEvent } from "./activity-repository";
 import { withEpicShape } from "./epic-shape";
 import {
+  attachStoryReadinessTollgateStatus,
+  mapStoryReadinessTollgateStatusByEntityId
+} from "./story-readiness-tollgate";
+import {
   resolveGovernedObjectProvenance,
   toGovernedObjectProvenanceFields,
   toGovernedObjectProvenanceMetadata
@@ -274,15 +278,43 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
       return null;
     }
 
+    const storyTollgates = await prisma.tollgate.findMany({
+      where: {
+        organizationId,
+        entityType: "story",
+        tollgateType: "story_readiness",
+        entityId: {
+          in: outcome.stories.map((story) => story.id)
+        }
+      },
+      orderBy: {
+        updatedAt: "desc"
+      },
+      select: {
+        entityId: true,
+        status: true
+      }
+    });
+
     const relatedLifecycleState = outcome.lifecycleState === "archived" ? "archived" : "active";
+    const storyTollgateStatuses = mapStoryReadinessTollgateStatusByEntityId(storyTollgates);
+    const scopedStories = attachStoryReadinessTollgateStatus(
+      outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState),
+      storyTollgateStatuses
+    );
 
     return {
       outcome: {
         ...outcome,
         epics: outcome.epics
           .filter((epic) => epic.lifecycleState === relatedLifecycleState)
-          .map((epic) => withEpicShape(epic)),
-        stories: outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState)
+          .map((epic) =>
+            withEpicShape({
+              ...epic,
+              stories: scopedStories.filter((story) => story.epicId === epic.id)
+            })
+          ),
+        stories: scopedStories
       },
       tollgate,
       activities

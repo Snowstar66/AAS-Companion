@@ -420,7 +420,8 @@ export function FramingOutcomeSection({
                     acceptanceCriteria: story.acceptanceCriteria,
                     definitionOfDone: story.definitionOfDone,
                     status: story.status,
-                    lifecycleState: story.lifecycleState
+                    lifecycleState: story.lifecycleState,
+                    tollgateStatus: story.tollgateStatus ?? null
                     }))
                 }))}
               outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref, isCurrent: true }}

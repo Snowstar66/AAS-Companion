@@ -175,7 +175,8 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                       acceptanceCriteria: story.acceptanceCriteria,
                       definitionOfDone: story.definitionOfDone,
                       status: story.status,
-                      lifecycleState: story.lifecycleState
+                      lifecycleState: story.lifecycleState,
+                      tollgateStatus: story.tollgateStatus ?? null
                     }))
                   }
                 ]}

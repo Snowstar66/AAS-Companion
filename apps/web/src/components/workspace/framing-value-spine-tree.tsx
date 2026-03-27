@@ -220,11 +220,11 @@ export function FramingValueSpineTree({
                         });
                         const missingInputs = getMissingStoryInputs(story);
                         const storyPathGuidance =
-                          storyUx.statusLabel === "Ready for review"
+                          storyUx.statusLabel === "Draft" && missingInputs.length > 0
+                            ? `Missing: ${missingInputs.join(", ")}.`
+                            : storyUx.statusLabel === "Ready for review"
                             ? "All required design inputs are present. Submit the Story to start review and approval."
-                            : missingInputs.length > 0
-                              ? `Missing: ${missingInputs.join(", ")}.`
-                              : storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
+                            : storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
 
                         return (
                           <div className="rounded-2xl border border-border/70 bg-background p-4" key={story.id}>

@@ -5,6 +5,10 @@ import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
 import { encodeEpicShape, withEpicShape } from "./epic-shape";
 import {
+  attachStoryReadinessTollgateStatus,
+  mapStoryReadinessTollgateStatusByEntityId
+} from "./story-readiness-tollgate";
+import {
   resolveGovernedObjectProvenance,
   toGovernedObjectProvenanceFields,
   toGovernedObjectProvenanceMetadata
@@ -126,12 +130,34 @@ export async function getEpicWorkspaceSnapshot(organizationId: string, id: strin
     return null;
   }
 
+  const storyTollgates = await prisma.tollgate.findMany({
+    where: {
+      organizationId,
+      entityType: "story",
+      tollgateType: "story_readiness",
+      entityId: {
+        in: epic.stories.map((story) => story.id)
+      }
+    },
+    orderBy: {
+      updatedAt: "desc"
+    },
+    select: {
+      entityId: true,
+      status: true
+    }
+  });
+
   const relatedLifecycleState = epic.lifecycleState === "archived" ? "archived" : "active";
+  const storyTollgateStatuses = mapStoryReadinessTollgateStatusByEntityId(storyTollgates);
 
   return {
     epic: withEpicShape({
       ...epic,
-      stories: epic.stories.filter((story) => story.lifecycleState === relatedLifecycleState)
+      stories: attachStoryReadinessTollgateStatus(
+        epic.stories.filter((story) => story.lifecycleState === relatedLifecycleState),
+        storyTollgateStatuses
+      )
     }),
     activities
   };

@@ -102,14 +102,15 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
   const blockers = input.blockers?.length ? input.blockers : readiness.reasons.map((reason) => reason.message);
   const openActionCount = input.pendingActionCount ?? 0;
   const blockedActionCount = input.blockedActionCount ?? 0;
+  const hasTollgateStatus = input.tollgateStatus === "blocked" || input.tollgateStatus === "ready" || input.tollgateStatus === "approved";
   const missingSignoffCount =
     input.tollgateStatus === "approved" ? 0 : openActionCount + (input.tollgateStatus === "ready" ? 0 : blockedActionCount);
   const isArchived = input.lifecycleState === "archived";
   const isUnderSignoff = input.tollgateStatus === "ready" || input.tollgateStatus === "blocked";
   const isApproved = input.tollgateStatus === "approved";
   const isInDelivery = input.status === "in_progress";
-  const isReadyForHandoff = isApproved || input.status === "ready_for_handoff";
-  const isReviewReady = readiness.state === "ready" && !input.tollgateStatus && !isReadyForHandoff;
+  const isReadyForHandoff = hasTollgateStatus ? isApproved : isApproved || input.status === "ready_for_handoff";
+  const isReviewReady = readiness.state === "ready" && !hasTollgateStatus && !isReadyForHandoff;
 
   let statusLabel = "Draft";
   let statusDetail = "This Story still needs key delivery inputs before review can start.";

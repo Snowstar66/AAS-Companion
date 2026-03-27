@@ -2,6 +2,10 @@ import type { StoryRecord } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { withDevTiming } from "../dev-timing";
 import { withEpicShape } from "./epic-shape";
+import {
+  attachStoryReadinessTollgateStatus,
+  mapStoryReadinessTollgateStatusByEntityId
+} from "./story-readiness-tollgate";
 
 export type HomeDashboardSnapshot = {
   organization: {
@@ -44,112 +48,131 @@ export type HomeDashboardSnapshot = {
 
 export async function getProjectSpineSnapshot(organizationId: string) {
   return withDevTiming("db.getProjectSpineSnapshot", async () => {
-    const organization = await prisma.organization.findUnique({
-      where: {
-        id: organizationId
-      },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        outcomes: {
-          select: {
-            id: true,
-            organizationId: true,
-            key: true,
-            title: true,
-            problemStatement: true,
-            outcomeStatement: true,
-            baselineDefinition: true,
-            baselineSource: true,
-            timeframe: true,
-            valueOwnerId: true,
-            riskProfile: true,
-            aiAccelerationLevel: true,
-            status: true,
-            originType: true,
-            createdMode: true,
-            lifecycleState: true,
-            archivedAt: true,
-            archiveReason: true,
-            lineageSourceType: true,
-            lineageSourceId: true,
-            lineageNote: true,
-            importedReadinessState: true,
-            createdAt: true,
-            updatedAt: true,
-            epics: {
-              select: {
-                id: true,
-                key: true,
-                title: true,
-                purpose: true,
-                summary: true,
-                originType: true,
-                lifecycleState: true,
-                lineageSourceType: true,
-                lineageSourceId: true,
-                stories: {
-                  select: {
-                    id: true,
-                    key: true,
-                    title: true,
-                    status: true,
-                    lifecycleState: true,
-                    testDefinition: true,
-                    acceptanceCriteria: true,
-                    definitionOfDone: true,
-                    lineageSourceType: true,
-                    lineageSourceId: true
-                  },
-                  orderBy: {
-                    createdAt: "asc"
+    const [organization, storyTollgates] = await prisma.$transaction([
+      prisma.organization.findUnique({
+        where: {
+          id: organizationId
+        },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          outcomes: {
+            select: {
+              id: true,
+              organizationId: true,
+              key: true,
+              title: true,
+              problemStatement: true,
+              outcomeStatement: true,
+              baselineDefinition: true,
+              baselineSource: true,
+              timeframe: true,
+              valueOwnerId: true,
+              riskProfile: true,
+              aiAccelerationLevel: true,
+              status: true,
+              originType: true,
+              createdMode: true,
+              lifecycleState: true,
+              archivedAt: true,
+              archiveReason: true,
+              lineageSourceType: true,
+              lineageSourceId: true,
+              lineageNote: true,
+              importedReadinessState: true,
+              createdAt: true,
+              updatedAt: true,
+              epics: {
+                select: {
+                  id: true,
+                  key: true,
+                  title: true,
+                  purpose: true,
+                  summary: true,
+                  originType: true,
+                  lifecycleState: true,
+                  lineageSourceType: true,
+                  lineageSourceId: true,
+                  stories: {
+                    select: {
+                      id: true,
+                      key: true,
+                      title: true,
+                      status: true,
+                      lifecycleState: true,
+                      testDefinition: true,
+                      acceptanceCriteria: true,
+                      definitionOfDone: true,
+                      lineageSourceType: true,
+                      lineageSourceId: true
+                    },
+                    orderBy: {
+                      createdAt: "asc"
+                    }
                   }
+                },
+                orderBy: {
+                  createdAt: "asc"
                 }
               },
-              orderBy: {
-                createdAt: "asc"
+              stories: {
+                select: {
+                  id: true,
+                  key: true,
+                  title: true,
+                  epicId: true,
+                  status: true,
+                  lifecycleState: true,
+                  testDefinition: true,
+                  acceptanceCriteria: true,
+                  definitionOfDone: true,
+                  lineageSourceType: true,
+                  lineageSourceId: true
+                },
+                orderBy: {
+                  createdAt: "asc"
+                }
               }
             },
-            stories: {
-              select: {
-                id: true,
-                key: true,
-                title: true,
-                epicId: true,
-                status: true,
-                lifecycleState: true,
-                testDefinition: true,
-                acceptanceCriteria: true,
-                definitionOfDone: true,
-                lineageSourceType: true,
-                lineageSourceId: true
-              },
-              orderBy: {
-                createdAt: "asc"
-              }
+            orderBy: {
+              createdAt: "desc"
             }
-          },
-          orderBy: {
-            createdAt: "desc"
           }
         }
-      }
-    });
+      }),
+      prisma.tollgate.findMany({
+        where: {
+          organizationId,
+          entityType: "story",
+          tollgateType: "story_readiness"
+        },
+        orderBy: {
+          updatedAt: "desc"
+        },
+        select: {
+          entityId: true,
+          status: true
+        }
+      })
+    ]);
 
     if (!organization) {
       return null;
     }
+
+    const storyTollgateStatuses = mapStoryReadinessTollgateStatusByEntityId(storyTollgates);
 
     return {
       organization: {
         ...organization,
         outcomes: organization.outcomes.map((outcome) => ({
           ...outcome,
+          stories: attachStoryReadinessTollgateStatus(outcome.stories, storyTollgateStatuses),
           epics: outcome.epics.map((epic) =>
             withEpicShape({
               ...epic,
-              stories: epic.stories
+              stories: attachStoryReadinessTollgateStatus(epic.stories, storyTollgateStatuses)
             })
           )
         }))

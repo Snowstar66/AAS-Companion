@@ -171,8 +171,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         testDefinition: story.testDefinition ?? null,
         acceptanceCriteria: story.acceptanceCriteria,
         definitionOfDone: story.definitionOfDone,
-        tollgateStatus: null
-      }).isReadyForHandoff || story.status === "ready_for_handoff"
+        tollgateStatus: story.tollgateStatus ?? null
+      }).isReadyForHandoff
     );
     const missingTestStories = selectedStories.filter((story) => !story.testDefinition);
     const lineageTargets = [
@@ -388,7 +388,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                                   testDefinition: story.testDefinition ?? null,
                                   acceptanceCriteria: story.acceptanceCriteria,
                                   definitionOfDone: story.definitionOfDone,
-                                  tollgateStatus: null
+                                  tollgateStatus: story.tollgateStatus ?? null
                                 });
 
                                 return (

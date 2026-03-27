@@ -24,7 +24,12 @@ afterEach(() => {
   cleanup();
 });
 
-function createWorkspaceSnapshot(storyStatus: "definition_blocked" | "ready_for_handoff") {
+function createWorkspaceSnapshot(
+  storyStatus: "definition_blocked" | "ready_for_handoff" | "draft",
+  options?: {
+    tollgateStatus?: "blocked" | "ready" | "approved" | null;
+  }
+) {
   return {
     ok: true,
     data: {
@@ -59,6 +64,7 @@ function createWorkspaceSnapshot(storyStatus: "definition_blocked" | "ready_for_
                     key: "IMP-STORY-1",
                     title: "Imported Story",
                     status: storyStatus,
+                    tollgateStatus: options?.tollgateStatus ?? null,
                     originType: "imported",
                     lifecycleState: "active",
                     importedReadinessState: "imported_design_ready",
@@ -112,5 +118,14 @@ describe("Value Spine page", () => {
     expect(screen.getAllByText("Ready for design").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Ready for design")[0]?.parentElement?.textContent).toContain("1");
     expect(screen.queryByText("Missing Test Definition")).toBeNull();
+  });
+
+  it("prefers the shared tollgate approval status over a stale story status", async () => {
+    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot("draft", { tollgateStatus: "approved" }));
+
+    render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
+
+    expect(screen.getAllByText("Ready for design").length).toBeGreaterThan(0);
+    expect(screen.queryByText("This Story still needs key delivery inputs before review can start.")).toBeNull();
   });
 });
