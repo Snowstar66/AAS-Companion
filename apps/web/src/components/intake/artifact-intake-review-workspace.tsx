@@ -166,10 +166,6 @@ function confidenceTone(confidence: "high" | "medium" | "low") {
   return "border-rose-200 bg-rose-50 text-rose-700";
 }
 
-function hasText(value: string | null | undefined) {
-  return Boolean(value && value.trim());
-}
-
 function value(value: string | string[] | null) {
   if (Array.isArray(value)) {
     return value.length ? value.join("\n") : "Not set";

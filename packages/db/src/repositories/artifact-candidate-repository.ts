@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { Prisma } from "../../generated/client";
 import {
   analyzeArtifactCandidateCompliance,
@@ -590,7 +589,7 @@ export async function promoteArtifactCandidate(input: {
     };
 
     let promotedEntityId = "";
-    let promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
+    const promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
 
     if (candidate.type === "outcome") {
       const created = await createOutcome({
