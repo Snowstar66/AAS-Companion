@@ -65,6 +65,7 @@ export async function listOutcomeCockpitEntries(organizationId: string) {
           id: true,
           key: true,
           title: true,
+          outcomeStatement: true,
           status: true,
           originType: true,
           importedReadinessState: true,
@@ -73,6 +74,9 @@ export async function listOutcomeCockpitEntries(organizationId: string) {
           baselineDefinition: true,
           baselineSource: true,
           timeframe: true,
+          valueOwnerId: true,
+          riskProfile: true,
+          aiAccelerationLevel: true,
           updatedAt: true,
           valueOwner: {
             select: {

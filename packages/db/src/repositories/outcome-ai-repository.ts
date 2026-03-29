@@ -257,15 +257,14 @@ function buildFramingReviewPrompt(input: {
     title: string;
     purpose?: string | null;
     scopeBoundary?: string | null;
-    storyCount: number;
+    seedCount: number;
   }>;
-  stories: Array<{
-    key: string;
+  directionSeeds: Array<{
+    seedId: string;
     title: string;
-    status: string;
-    acceptanceCriteriaCount: number;
-    hasTestDefinition: boolean;
-    definitionOfDoneCount: number;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
   }>;
 }) {
   const nextAiLevel =
@@ -283,11 +282,12 @@ Rules:
 - If the framing is already good enough, say so plainly.
 - Suggested changes should be limited to the few changes that would most improve clarity or readiness.
 - "nextAiLevel" should explain what would be required to move one level higher than the current AI level.
+- Treat direction seeds as lightweight directional hints, not delivery stories.
 
 What to evaluate:
 - whether the Outcome framing reads like a real framing, not just a delivery task
 - whether the baseline is sufficiently grounded
-- whether the current Epic and Story structure is defined enough to support the current AI level
+- whether the current Epic direction and Direction Seeds are defined enough to support the current AI level
 - what is still missing in general
 - what would be additionally required for the next AI level
 
@@ -378,15 +378,14 @@ export async function reviewOutcomeFramingWithAi(input: {
     title: string;
     purpose?: string | null;
     scopeBoundary?: string | null;
-    storyCount: number;
+    seedCount: number;
   }>;
-  stories: Array<{
-    key: string;
+  directionSeeds: Array<{
+    seedId: string;
     title: string;
-    status: string;
-    acceptanceCriteriaCount: number;
-    hasTestDefinition: boolean;
-    definitionOfDoneCount: number;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
   }>;
 }) {
   const env = readRequiredLlmEnv();

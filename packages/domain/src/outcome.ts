@@ -101,6 +101,12 @@ export type OutcomeCreateInput = z.infer<typeof outcomeCreateInputSchema>;
 export type OutcomeUpdateInput = z.infer<typeof outcomeUpdateInputSchema>;
 
 type OutcomeBaselineFields = Pick<OutcomeRecord, "baselineDefinition" | "baselineSource" | "status">;
+type OutcomeFramingFields = Pick<
+  OutcomeRecord,
+  "title" | "outcomeStatement" | "baselineDefinition" | "valueOwnerId" | "riskProfile" | "aiAccelerationLevel" | "status"
+> & {
+  epicCount: number;
+};
 
 export function getOutcomeBaselineReadiness(outcome: OutcomeBaselineFields) {
   const reasons: ReadinessBlockReason[] = [];
@@ -133,4 +139,77 @@ export function getOutcomeBaselineBlockers(outcome: OutcomeBaselineFields) {
 
 export function isOutcomeReadyForTollgateOne(outcome: OutcomeBaselineFields) {
   return getOutcomeBaselineReadiness(outcome).state === "ready";
+}
+
+export function getOutcomeFramingReadiness(outcome: OutcomeFramingFields) {
+  const reasons: ReadinessBlockReason[] = [];
+
+  if (!outcome.title?.trim()) {
+    reasons.push({
+      code: "outcome_title_missing",
+      message: "Outcome title is missing.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.outcomeStatement?.trim()) {
+    reasons.push({
+      code: "outcome_statement_missing",
+      message: "Outcome statement is missing.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.baselineDefinition?.trim()) {
+    reasons.push({
+      code: "baseline_missing",
+      message: "Baseline is missing.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.valueOwnerId?.trim()) {
+    reasons.push({
+      code: "value_owner_missing",
+      message: "Value owner is missing.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.aiAccelerationLevel) {
+    reasons.push({
+      code: "ai_level_missing",
+      message: "AI level is missing.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.riskProfile) {
+    reasons.push({
+      code: "risk_profile_missing",
+      message: "Risk profile is missing.",
+      severity: "high"
+    });
+  }
+
+  if (outcome.epicCount < 1) {
+    reasons.push({
+      code: "epic_direction_missing",
+      message: "At least one Epic direction is required.",
+      severity: "high"
+    });
+  }
+
+  return createReadinessAssessment({
+    reasons,
+    isReadyForProgression: outcome.status === "ready_for_tg1"
+  });
+}
+
+export function getOutcomeFramingBlockers(outcome: OutcomeFramingFields) {
+  return getOutcomeFramingReadiness(outcome).reasons.map((reason) => reason.message);
+}
+
+export function isOutcomeFramingReadyForTollgate(outcome: OutcomeFramingFields) {
+  return getOutcomeFramingReadiness(outcome).state === "ready";
 }

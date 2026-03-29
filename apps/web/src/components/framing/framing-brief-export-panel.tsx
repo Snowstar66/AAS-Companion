@@ -37,7 +37,7 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
       <CardHeader>
         <CardTitle>Export framing brief</CardTitle>
         <CardDescription>
-          Export the current customer handshake as an AI-friendly brief for further refinement in tools such as BMAD.
+          Export the current framing brief, epics and direction seeds as an AI-friendly package for further refinement in tools such as BMAD.
           Business content comes first. Internal IDs remain as metadata only.
         </CardDescription>
       </CardHeader>
@@ -45,8 +45,8 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
           <p className="font-medium">How to use this export</p>
           <p className="mt-2">
-            Use Markdown when you want to paste the brief into another AI tool. Use JSON when another system or workflow
-            should read the package structurally.
+            Use Markdown when you want to paste the framing brief into another AI tool. Use JSON when another system or workflow
+            should read the package structurally with epics and direction seeds intact.
           </p>
           {disabled ? <p className="mt-2">Restore the Outcome first if you want to update the framing before exporting again.</p> : null}
         </div>

@@ -194,10 +194,10 @@ describe("Framing page", () => {
 
     expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Framing scope value spine" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
     expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
     expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Tollgate 1 review and approval" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Framing tollgate" })).toBeDefined();
     expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
     expect(screen.queryByText("Framing Cockpit")).toBeNull();
   });

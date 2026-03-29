@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
-import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
+import { getOutcomeFramingBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type {
   OutcomeFieldAiActionState,
@@ -10,7 +10,7 @@ import type {
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
 import { HomeActivityCard } from "@/components/home/home-activity-card";
-import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
+import { InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
 import { OutcomeAiValidatedTextarea } from "@/components/workspace/outcome-ai-validated-textarea";
@@ -18,9 +18,8 @@ import { FramingContextCard } from "@/components/workspace/framing-context-card"
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
-import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
-import { getHelpPattern, getInlineGuidance } from "@/lib/help/aas-help";
+import { getInlineGuidance } from "@/lib/help/aas-help";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
 
@@ -49,7 +48,6 @@ type FramingOutcomeSectionProps = {
   hardDeleteAction: (formData: FormData) => void | Promise<void>;
   restoreAction: (formData: FormData) => void | Promise<void>;
   submitTollgateAction: (formData: FormData) => void | Promise<void>;
-  recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
   validateOutcomeStatementAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   validateBaselineDefinitionAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   reviewFramingAction: typeof reviewOutcomeFramingWithAiAction;
@@ -117,19 +115,27 @@ export function FramingOutcomeSection({
   hardDeleteAction,
   restoreAction,
   submitTollgateAction,
-  recordTollgateDecisionAction,
   validateOutcomeStatementAiAction,
   validateBaselineDefinitionAiAction,
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
   const { outcome, tollgate, activities, removal, availableOwners, tollgateReview } = data;
-  const computedBlockers = getOutcomeBaselineBlockers(outcome);
+  const computedBlockers = getOutcomeFramingBlockers({
+    title: outcome.title,
+    outcomeStatement: outcome.outcomeStatement ?? null,
+    baselineDefinition: outcome.baselineDefinition ?? null,
+    valueOwnerId: outcome.valueOwnerId ?? null,
+    riskProfile: outcome.riskProfile,
+    aiAccelerationLevel: outcome.aiAccelerationLevel,
+    status: outcome.status,
+    epicCount: outcome.epics.length
+  });
   const blockers =
     search.blockersFromQuery && search.blockersFromQuery.length > 0
       ? search.blockersFromQuery
       : tollgateReview?.blockers ?? tollgate?.blockers ?? computedBlockers;
-  const baselineComplete = computedBlockers.length === 0;
+  const framingComplete = computedBlockers.length === 0;
   const statusLabel = outcome.status.replaceAll("_", " ");
   const originLabel = getOriginLabel(outcome.originType);
   const workspaceLabel = getWorkspaceLabel(outcome);
@@ -139,7 +145,6 @@ export function FramingOutcomeSection({
       ? tollgate.status.replaceAll("_", " ")
       : "not started";
   const isArchived = outcome.lifecycleState === "archived";
-  const framingHelp = getHelpPattern("outcome.authoring", outcome.aiAccelerationLevel);
   const framingHref = `/framing?outcomeId=${outcome.id}`;
   const framingBriefExport = buildFramingBriefExport({
     outcome,
@@ -158,6 +163,7 @@ export function FramingOutcomeSection({
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
+  const directionSeedCount = outcome.stories.length;
 
   return (
     <section className="space-y-6">
@@ -178,12 +184,12 @@ export function FramingOutcomeSection({
       ) : null}
       {search.submitState === "blocked" ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Tollgate 1 is still blocked. Complete the missing baseline fields listed below.
+          Tollgate submission is still blocked. Complete the missing framing fields listed below.
         </div>
       ) : null}
       {search.submitState === "ready" ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Tollgate 1 submission recorded. This outcome is now ready for review.
+          Framing was submitted to Tollgate. Human review can now continue from the review workspace.
         </div>
       ) : null}
       {search.submitState === "approved" ? (
@@ -259,7 +265,7 @@ export function FramingOutcomeSection({
           <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Baseline readiness</p>
             <p className="mt-2 text-base font-semibold">
-              {baselineComplete ? "Baseline fields present" : "Baseline incomplete"}
+              {framingComplete ? "Framing complete for submit" : "Framing still incomplete"}
             </p>
           </div>
         </CardContent>
@@ -428,7 +434,7 @@ export function FramingOutcomeSection({
                     <div>
                       <CardTitle>Design direction seeds</CardTitle>
                       <CardDescription>
-                        Capture the rough functional direction as Epics before detailed Story decomposition begins. Existing Epics and Stories are shown below in the Value Spine.
+                        Capture epics and lightweight direction seeds here. Keep them directional, not operational.
                       </CardDescription>
                     </div>
                     {!isArchived ? (
@@ -443,10 +449,6 @@ export function FramingOutcomeSection({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                    <p className="font-medium text-foreground">How to use Epic seeds</p>
-                    <p className="mt-2 leading-6">{getHelpPattern("framing.design_direction").summary}</p>
-                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current Epics</p>
@@ -458,10 +460,10 @@ export function FramingOutcomeSection({
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current Stories</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{outcome.stories.length}</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Direction Seeds</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{directionSeedCount}</p>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Stories stay nested under their Epic so the branch remains easy to scan.
+                        Direction seeds stay nested under their Epic and only capture intent, not delivery workflow.
                       </p>
                     </div>
                   </div>
@@ -481,11 +483,11 @@ export function FramingOutcomeSection({
 
             <CollapsibleFramingPanel
               defaultOpen
-              description="Expand the full branch only when you need to inspect Epics and Stories in detail."
-              title="Framing scope value spine"
+              description="Scan the framing brief, epics and direction seeds together in one compact branch."
+              title="Framing value spine"
             >
               <FramingValueSpineTree
-                description="Read the active branch as one backlog from Framing into Epics and Stories."
+                description="Read the active branch as one framing brief with epics and direction seeds."
                 emptyEpicMessage={
                   isArchived
                     ? "Archived Outcomes no longer surface active Epic work in this branch."
@@ -493,9 +495,10 @@ export function FramingOutcomeSection({
                 }
                 emptyStoryMessage={
                   isArchived
-                    ? "Archived Outcomes no longer surface active Story work."
-                    : "Create Stories from the relevant Epic so the hierarchy stays scoped to this Framing."
+                    ? "Archived Outcomes no longer surface active direction seeds."
+                    : "Create direction seeds from the relevant Epic so the hierarchy stays scoped to this Framing."
                 }
+                mode="framing"
                 epics={outcome.epics.map((epic) => ({
                   id: epic.id,
                   key: epic.key,
@@ -531,7 +534,7 @@ export function FramingOutcomeSection({
                       lineageHref:
                         story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
                           ? `/review?candidateId=${story.lineageSourceId}`
-                          : null
+                      : null
                     }))
                 }))}
                 outcome={{
@@ -577,13 +580,13 @@ export function FramingOutcomeSection({
           <div className="xl:col-span-4">
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Readiness blockers</CardTitle>
-              <CardDescription>What still blocks Tollgate 1 for this outcome.</CardDescription>
+              <CardTitle>Framing blockers</CardTitle>
+              <CardDescription>These are the missing framing fields that still prevent Tollgate submission.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {blockers.length === 0 ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
-                  No baseline blockers are currently visible.
+                  No framing blockers are currently visible.
                 </div>
               ) : (
                 blockers.map((blocker) => (
@@ -602,7 +605,7 @@ export function FramingOutcomeSection({
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>Governance coverage</CardTitle>
-              <CardDescription>Check named roles, authority and readiness for this Outcome's AI level.</CardDescription>
+              <CardDescription>Check named roles and authority only when you need deeper governance context.</CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild className="gap-2" variant="secondary">
@@ -616,7 +619,20 @@ export function FramingOutcomeSection({
           </Card>
           </div>
           <div className="xl:col-span-4">
-          <ContextHelp pattern={framingHelp} summaryLabel="Open framing authoring help" />
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>After submit</CardTitle>
+              <CardDescription>Framing uses one submit step here. Human sign-off continues in the review workspace.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm leading-6 text-muted-foreground">
+                When the framing brief is complete, submit it once. The detailed human decisions are then handled from Human Review, not inside this authoring form.
+              </p>
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href="/review">Open Human Review</Link>
+              </Button>
+            </CardContent>
+          </Card>
           </div>
           <div className={outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? "xl:col-span-4" : "xl:col-span-8"}>
           <HomeActivityCard
@@ -649,49 +665,68 @@ export function FramingOutcomeSection({
 
       <CollapsibleFramingPanel
         defaultOpen
-        description="Server-backed readiness, review, approval and escalation trail for Tollgate 1."
-        title="Tollgate 1 review and approval"
+        description="This panel only shows framing submit status. Detailed sign-off handling happens in Human Review."
+        title="Framing tollgate"
       >
-        <TollgateDecisionCard
-          aiAccelerationLevel={outcome.aiAccelerationLevel}
-          approvalActions={tollgateReview?.approvalActions ?? []}
-          availablePeople={tollgateReview?.availablePeople ?? []}
-          blockers={blockers}
-          blockedActions={tollgateReview?.blockedActions ?? []}
-          comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
-          description="Server-backed readiness, review, approval and escalation trail for Tollgate 1."
-          entityId={outcome.id}
-          entityType="outcome"
-          formAction={recordTollgateDecisionAction}
-          hiddenFields={[{ name: "outcomeId", value: outcome.id }]}
-          hideHeader
-          pendingActions={tollgateReview?.pendingActions ?? []}
-          reviewActions={tollgateReview?.reviewActions ?? []}
-          signoffRecords={
-            tollgateReview?.signoffRecords.map((record) => ({
-              id: record.id,
-              decisionKind: record.decisionKind,
-              requiredRoleType: record.requiredRoleType,
-              actualPersonName: record.actualPersonName,
-              actualRoleTitle: record.actualRoleTitle,
-              organizationSide: record.organizationSide,
-              decisionStatus: record.decisionStatus,
-              note: record.note,
-              evidenceReference: record.evidenceReference,
-              createdAt: record.createdAt
-            })) ?? []
-          }
-          status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
-          title="Tollgate 1 review and approval"
-          tollgateType="tg1_baseline"
-        />
+        <div className="space-y-4">
+          <div
+            className={`rounded-2xl border px-4 py-4 text-sm ${
+              tollgateReview?.status === "approved"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : tollgateReview?.status === "ready"
+                  ? "border-sky-200 bg-sky-50 text-sky-900"
+                  : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
+            <p className="font-medium">
+              {tollgateReview?.status === "approved"
+                ? "Tollgate approved"
+                : tollgateReview?.status === "ready"
+                  ? "Submitted and waiting for human review"
+                  : "Not ready for submit yet"}
+            </p>
+            <p className="mt-2 leading-6">
+              {tollgateReview?.status === "approved"
+                ? "The framing brief is approved and traceable for the next phase."
+                : tollgateReview?.status === "ready"
+                  ? "The framing brief has been submitted. Record the human decision from Human Review when people are ready."
+                  : blockers[0] ?? "Complete the missing framing fields before submitting."}
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Open blockers</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{blockers.length}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pending sign-off lanes</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{tollgateReview?.pendingActions.length ?? 0}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recorded sign-offs</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{tollgateReview?.signoffRecords.length ?? 0}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild className="gap-2" variant="secondary">
+              <Link href="/review">Open Human Review</Link>
+            </Button>
+            {tollgateReview?.status === "ready" || tollgateReview?.status === "approved" ? (
+              <p className="self-center text-sm text-muted-foreground">
+                Continue human sign-off from the review workspace when needed.
+              </p>
+            ) : null}
+          </div>
+        </div>
       </CollapsibleFramingPanel>
 
       {!isArchived ? (
         <CollapsibleFramingPanel
           defaultOpen={false}
-          description="Readiness submission keeps missing baseline blockers explicit before human sign-off begins."
-          title="Submit into Tollgate 1"
+          description="Submit only when the framing brief is complete enough for Tollgate review."
+          title="Submit to Tollgate"
         >
           <form action={submitTollgateAction} className="space-y-4">
             <input name="outcomeId" type="hidden" value={outcome.id} />
@@ -705,10 +740,16 @@ export function FramingOutcomeSection({
             </label>
             <PendingFormButton
               className="gap-2"
+              disabled={!framingComplete}
               icon={<ShieldCheck className="h-4 w-4" />}
-              label="Submit to Tollgate 1"
-              pendingLabel="Submitting to Tollgate 1..."
+              label="Submit to Tollgate"
+              pendingLabel="Submitting to Tollgate..."
             />
+            {!framingComplete ? (
+              <p className="text-sm text-muted-foreground">
+                Submit unlocks as soon as the outcome statement, baseline, value owner, AI level, risk profile and at least one epic are in place.
+              </p>
+            ) : null}
           </form>
         </CollapsibleFramingPanel>
       ) : null}

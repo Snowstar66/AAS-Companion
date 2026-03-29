@@ -64,6 +64,7 @@ type FramingValueSpineTreeProps = {
   epics: TreeEpic[];
   emptyEpicMessage: string;
   emptyStoryMessage: string;
+  mode?: "delivery" | "framing";
   title?: string | undefined;
   description?: string | undefined;
 };
@@ -130,7 +131,7 @@ function getStorySurfaceClasses(story: TreeStory, needsAttention: boolean, isRev
   return "border-border/70 bg-background";
 }
 
-function OutcomeRow({ outcome }: { outcome: TreeOutcome }) {
+function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" | "framing" }) {
   return (
     <div className={`rounded-2xl border px-5 py-4 ${outcome.isCurrent ? "border-sky-200 bg-sky-50/55" : "border-border/70 bg-background"}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -139,7 +140,9 @@ function OutcomeRow({ outcome }: { outcome: TreeOutcome }) {
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-sky-700">
               <Target className="h-4 w-4" />
             </span>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Framing</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {mode === "framing" ? "Framing brief" : "Framing"}
+            </p>
             <h3 className="text-sm font-semibold text-foreground">{outcome.key}</h3>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{outcome.title}</p>
@@ -175,9 +178,20 @@ function OutcomeRow({ outcome }: { outcome: TreeOutcome }) {
   );
 }
 
-function EpicRow({ epic, emptyStoryMessage }: { epic: TreeEpic; emptyStoryMessage: string }) {
+function EpicRow({
+  epic,
+  emptyStoryMessage,
+  mode
+}: {
+  epic: TreeEpic;
+  emptyStoryMessage: string;
+  mode: "delivery" | "framing";
+}) {
   const storyCount = epic.stories.length;
-  const storiesWithMissingInputs = epic.stories.filter((story) => getMissingStoryInputs(story).length > 0).length;
+  const storiesWithMissingInputs =
+    mode === "framing"
+      ? epic.stories.filter((story) => !story.valueIntent?.trim() && !story.acceptanceCriteria?.length).length
+      : epic.stories.filter((story) => getMissingStoryInputs(story).length > 0).length;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/55">
@@ -197,8 +211,16 @@ function EpicRow({ epic, emptyStoryMessage }: { epic: TreeEpic; emptyStoryMessag
               {joinMeta([
                 getOriginLabel(epic.originType),
                 formatLabel(epic.lifecycleState),
-                `${storyCount} stor${storyCount === 1 ? "y" : "ies"} in branch`,
-                storiesWithMissingInputs > 0 ? `${storiesWithMissingInputs} need attention` : null,
+                `${
+                  mode === "framing"
+                    ? `${storyCount} direction seed${storyCount === 1 ? "" : "s"}`
+                    : `${storyCount} stor${storyCount === 1 ? "y" : "ies"} in branch`
+                }`,
+                storiesWithMissingInputs > 0
+                  ? mode === "framing"
+                    ? `${storiesWithMissingInputs} need clearer seed descriptions`
+                    : `${storiesWithMissingInputs} need attention`
+                  : null,
                 formatLabel(epic.importedReadinessState)
               ])}
             </p>
@@ -228,7 +250,7 @@ function EpicRow({ epic, emptyStoryMessage }: { epic: TreeEpic; emptyStoryMessag
         ) : (
           <div className="divide-y divide-border/70">
             {epic.stories.map((story) => (
-              <StoryRow key={story.id} story={story} />
+              <StoryRow key={story.id} mode={mode} story={story} />
             ))}
           </div>
         )}
@@ -237,7 +259,7 @@ function EpicRow({ epic, emptyStoryMessage }: { epic: TreeEpic; emptyStoryMessag
   );
 }
 
-function StoryRow({ story }: { story: TreeStory }) {
+function StoryRow({ story, mode }: { story: TreeStory; mode: "delivery" | "framing" }) {
   const storyUx = getStoryUxModel({
     id: story.id,
     key: story.key,
@@ -253,7 +275,10 @@ function StoryRow({ story }: { story: TreeStory }) {
   const missingInputs = getMissingStoryInputs(story);
   const nextStep = storyUx.nextActions[0]?.label ?? storyUx.readinessLabel;
   const nextStepDetail = storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
-  const needsAttention = storyUx.tone === "warning" || missingInputs.length > 0 || storyUx.blockers.length > 0;
+  const needsAttention =
+    mode === "framing"
+      ? !story.valueIntent?.trim()
+      : storyUx.tone === "warning" || missingInputs.length > 0 || storyUx.blockers.length > 0;
   const isReviewing = storyUx.statusLabel === "Ready for review";
   const storySummary = story.valueIntent?.trim() || storyUx.statusDetail;
   const storyMeta = joinMeta([
@@ -266,31 +291,73 @@ function StoryRow({ story }: { story: TreeStory }) {
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
     story.testDefinition ? "Test path defined" : "Test path missing"
   ]);
+  const expectedBehavior = story.acceptanceCriteria?.map((item) => item.trim()).filter(Boolean).slice(0, 2).join(" | ") || null;
+
+  const showReviewingTone = mode === "delivery" && isReviewing;
+  const showReadyTone = mode === "delivery" && storyUx.isReadyForHandoff;
 
   return (
-    <div className={`border-l-4 px-5 py-4 ${getStorySurfaceClasses(story, needsAttention, isReviewing, storyUx.isReadyForHandoff)} ${needsAttention ? "border-l-amber-400" : isReviewing ? "border-l-sky-400" : storyUx.isReadyForHandoff ? "border-l-emerald-400" : "border-l-transparent"}`}>
+    <div
+      className={`border-l-4 px-5 py-4 ${getStorySurfaceClasses(story, needsAttention, showReviewingTone, showReadyTone)} ${
+        needsAttention
+          ? "border-l-amber-400"
+          : showReviewingTone
+            ? "border-l-sky-400"
+            : showReadyTone
+              ? "border-l-emerald-400"
+              : "border-l-transparent"
+      }`}
+    >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {mode === "framing" ? "Direction seed" : "Story"}
+            </p>
             <h5 className="text-sm font-semibold text-foreground">{story.key}</h5>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{storySummary}</p>
-          <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Story path:</span> {storyUx.statusLabel}
-          </p>
-          {needsAttention ? (
-            <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">Attention:</span> {missingInputs.join(", ") || storyUx.blockers[0]}
-            </p>
-          ) : null}
-          <p className="mt-1 text-sm text-foreground">
-            <span className="font-medium">Next step:</span> {nextStep}
-          </p>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
+          {mode === "framing" ? (
+            <>
+              <p className="mt-2 text-sm text-foreground">
+                <span className="font-medium">Linked epic intent:</span> {story.valueIntent?.trim() ? "Captured" : "Needs short description"}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {story.valueIntent?.trim()
+                  ? story.valueIntent
+                  : "Add a short directional description so the seed explains what kind of change it points toward."}
+              </p>
+              {expectedBehavior ? (
+                <p className="mt-1 text-sm text-foreground">
+                  <span className="font-medium">Expected behavior:</span> {expectedBehavior}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">Expected behavior is optional and not captured yet.</p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-foreground">
+                <span className="font-medium">Story path:</span> {storyUx.statusLabel}
+              </p>
+              {needsAttention ? (
+                <p className="mt-1 text-sm text-amber-900">
+                  <span className="font-medium">Attention:</span> {missingInputs.join(", ") || storyUx.blockers[0]}
+                </p>
+              ) : null}
+              <p className="mt-1 text-sm text-foreground">
+                <span className="font-medium">Next step:</span> {nextStep}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
+            </>
+          )}
           {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}
-          <p className="mt-1 text-xs text-muted-foreground">{structureMeta}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {mode === "framing"
+              ? `Seed description: ${story.valueIntent?.trim() ? "Present" : "Missing"}`
+              : structureMeta}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {story.lineageHref ? (
@@ -303,25 +370,27 @@ function StoryRow({ story }: { story: TreeStory }) {
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              Open Story
+              {mode === "framing" ? "Open seed record" : "Open Story"}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
-        <span className={`inline-flex items-center gap-2 ${story.testDefinition ? "text-emerald-800" : "text-amber-800"}`}>
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          <TestTube2 className="h-3.5 w-3.5" />
-          {story.testDefinition ? "Test path defined" : "Test path missing"}
-        </span>
-        {missingInputs.length > 0 ? (
-          <span className="inline-flex items-center gap-2 text-amber-800">
-            <CircleAlert className="h-3.5 w-3.5" />
-            {missingInputs.join(", ")}
+      {mode === "delivery" ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+          <span className={`inline-flex items-center gap-2 ${story.testDefinition ? "text-emerald-800" : "text-amber-800"}`}>
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <TestTube2 className="h-3.5 w-3.5" />
+            {story.testDefinition ? "Test path defined" : "Test path missing"}
           </span>
-        ) : null}
-      </div>
+          {missingInputs.length > 0 ? (
+            <span className="inline-flex items-center gap-2 text-amber-800">
+              <CircleAlert className="h-3.5 w-3.5" />
+              {missingInputs.join(", ")}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -331,6 +400,7 @@ export function FramingValueSpineTree({
   epics,
   emptyEpicMessage,
   emptyStoryMessage,
+  mode = "delivery",
   title = "Framing-scoped Value Spine",
   description
 }: FramingValueSpineTreeProps) {
@@ -341,7 +411,7 @@ export function FramingValueSpineTree({
         {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
       <CardContent className="space-y-4">
-        <OutcomeRow outcome={outcome} />
+        <OutcomeRow mode={mode} outcome={outcome} />
 
         {epics.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
@@ -351,7 +421,7 @@ export function FramingValueSpineTree({
         ) : (
           <div className="space-y-3">
             {epics.map((epic) => (
-              <EpicRow emptyStoryMessage={emptyStoryMessage} epic={epic} key={epic.id} />
+              <EpicRow emptyStoryMessage={emptyStoryMessage} epic={epic} key={epic.id} mode={mode} />
             ))}
           </div>
         )}

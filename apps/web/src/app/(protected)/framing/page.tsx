@@ -13,7 +13,6 @@ import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
   hardDeleteOutcomeAction,
-  recordOutcomeTollgateDecisionAction,
   reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
@@ -98,7 +97,6 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                 data={selectedOutcomeData}
                 embeddedInFraming
                 hardDeleteAction={hardDeleteOutcomeAction}
-                recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
                 restoreAction={restoreOutcomeAction}
                 saveAction={saveOutcomeWorkspaceAction}
                 search={{

@@ -15,7 +15,7 @@ import {
   executionContractSchema,
   executionContractToMarkdown,
   type GovernedChildImpact,
-  getOutcomeBaselineReadiness,
+  getOutcomeFramingReadiness,
   getStoryHandoffReadiness
 } from "@aas-companion/domain";
 import { getArtifactCandidateById } from "@aas-companion/db";
@@ -157,6 +157,16 @@ async function getImportedStoryBuildBlockers(input: {
   return [];
 }
 
+function summarizeExpectedBehavior(acceptanceCriteria: string[]) {
+  const normalized = acceptanceCriteria.map((item) => item.trim()).filter(Boolean);
+
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  return normalized.slice(0, 2).join(" | ");
+}
+
 export async function getOutcomeWorkspaceService(organizationId: string, outcomeId: string) {
   return withDevTiming("api.getOutcomeWorkspaceService", async () => {
     const snapshot = await getOutcomeWorkspaceSnapshot(organizationId, outcomeId);
@@ -176,7 +186,11 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
         tollgateType: "tg1_baseline",
         aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
         fallbackBlockers:
-          snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
+          snapshot.tollgate?.blockers ??
+          getOutcomeFramingReadiness({
+            ...snapshot.outcome,
+            epicCount: snapshot.outcome.epics.length
+          }).reasons.map((reason) => reason.message),
         fallbackComments: snapshot.tollgate?.comments ?? null,
         existingTollgate: snapshot.tollgate
       }),
@@ -186,7 +200,10 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
     return success({
       ...snapshot,
       availableOwners,
-      readiness: getOutcomeBaselineReadiness(snapshot.outcome),
+      readiness: getOutcomeFramingReadiness({
+        ...snapshot.outcome,
+        epicCount: snapshot.outcome.epics.length
+      }),
       tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
       removal: buildOutcomeRemovalFromSnapshot(snapshot)
     });
@@ -289,15 +306,14 @@ export async function reviewOutcomeFramingWithAiService(input: {
           title: epic.title,
           purpose: epic.purpose ?? null,
           scopeBoundary: epic.scopeBoundary ?? null,
-          storyCount: epic.stories.length
+          seedCount: epic.stories.length
         })),
-        stories: snapshot.outcome.stories.map((story) => ({
-          key: story.key,
+        directionSeeds: snapshot.outcome.stories.map((story) => ({
+          seedId: story.key,
           title: story.title,
-          status: story.status,
-          acceptanceCriteriaCount: story.acceptanceCriteria.length,
-          hasTestDefinition: Boolean(story.testDefinition?.trim()),
-          definitionOfDoneCount: story.definitionOfDone.length
+          epicKey: snapshot.outcome.epics.find((epic) => epic.id === story.epicId)?.key ?? null,
+          shortDescription: story.valueIntent?.trim() || null,
+          expectedBehavior: summarizeExpectedBehavior(story.acceptanceCriteria)
         }))
       });
 
@@ -326,7 +342,10 @@ export async function submitOutcomeTollgateService(input: {
     });
   }
 
-  const readiness = getOutcomeBaselineReadiness(snapshot.outcome);
+  const readiness = getOutcomeFramingReadiness({
+    ...snapshot.outcome,
+    epicCount: snapshot.outcome.epics.length
+  });
   const blockers = readiness.reasons.map((reason) => reason.message);
   const isReady = readiness.state === "ready";
 
