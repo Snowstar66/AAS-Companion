@@ -371,8 +371,8 @@ function queueItems(
 
   items.push({
     key: "unmapped",
-    title: "Slask and sections not yet absorbed into a candidate",
-    description: "These source sections are still outside any mapped Outcome, Epic, or Story candidate and stay in the slask until a human decides what to do with them.",
+    title: "Review leftovers",
+    description: "These source sections could not yet be placed confidently into an Outcome, Epic, or Story candidate. Review them here to see exactly what was left outside the structured import.",
     items: (session.mappedArtifacts?.unmappedSections ?? [])
       .filter((section) => section.sourceReference.fileId === file.id)
       .map((section) => ({
@@ -1030,7 +1030,7 @@ export function ArtifactIntakeReviewWorkspace({
         <CardHeader>
           <CardTitle>Correction queue</CardTitle>
           <CardDescription>
-            Start here. Clear linkage, content gaps, human-only decisions, and truly leftover source sections in the slask before you approve the import into the project.
+            Start here. Clear linkage, content gaps, human-only decisions, and anything listed under Review leftovers before you approve the import into the project.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1039,7 +1039,7 @@ export function ArtifactIntakeReviewWorkspace({
               {compactMetric("Remaining", progress.unresolved)}
               {compactMetric("Resolved", progress.resolved)}
               {compactMetric("Blocked", progress.categories.blocked)}
-              {compactMetric("Outside candidate", progress.categories.unmapped)}
+              {compactMetric("Review leftovers", progress.categories.unmapped)}
             </div>
           ) : null}
 
@@ -1229,10 +1229,10 @@ export function ArtifactIntakeReviewWorkspace({
                         }
                       : unmappedSourceSectionIds.has(sourceSectionId)
                         ? {
-                            badge: "Needs human decision",
+                            badge: "Review leftover",
                             tone: "border-amber-200 bg-amber-50 text-amber-800",
                             description:
-                              "Still outside any mapped Outcome, Epic, or Story candidate. Use the Correction queue to absorb it, dismiss it, or intentionally keep it blocked."
+                              "This section could not be placed confidently into a mapped Outcome, Epic, or Story candidate. Review it in the Correction queue, then absorb it, dismiss it, or keep it pending."
                           }
                         : {
                             badge: "Supporting context",

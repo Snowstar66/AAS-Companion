@@ -97,7 +97,7 @@ export function ArtifactIntakeUploadSubmitButton({ disabled }: { disabled?: bool
           <LoaderCircle className="h-3.5 w-3.5 animate-spin text-primary" />
           <span>
             {activeMode === "ai_assisted"
-              ? "Classifying the files, extracting likely Value Spine candidates, and placing uncertain leftovers into the slask."
+              ? "Classifying the files, extracting likely Value Spine candidates, and placing anything unclear into Review leftovers."
               : "Creating the standard import session and mapping structured candidates for review."}
           </span>
         </div>

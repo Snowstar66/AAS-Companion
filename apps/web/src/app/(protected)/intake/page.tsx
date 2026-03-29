@@ -289,7 +289,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                           <p className="mt-1 font-semibold">{artifactSession.candidateCount}</p>
                         </div>
                         <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Outside candidate</p>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Review leftovers</p>
                           <p className="mt-1 font-semibold">{artifactSession.unmappedSectionCount}</p>
                         </div>
                       </div>

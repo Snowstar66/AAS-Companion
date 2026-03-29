@@ -17,6 +17,83 @@ import { appendActivityEvent } from "./activity-repository";
 import { createPersistedArtifactCandidates } from "./artifact-candidate-repository";
 import { interpretArtifactFilesWithAi } from "./artifact-intake-ai";
 
+type AiFallbackIssue = {
+  path?: Array<string | number>;
+  message?: string;
+};
+
+function humanizeAiFallbackField(path: Array<string | number>) {
+  const normalized = path.filter((part) => typeof part === "string") as string[];
+  const last = normalized.at(-1);
+  const parent = normalized.at(-2);
+
+  if (!last) {
+    return null;
+  }
+
+  const fieldLabels: Record<string, string> = {
+    rationale: "file rationale",
+    type: "candidate type",
+    title: "candidate title",
+    summary: "candidate summary",
+    draftRecord: "candidate draft fields"
+  };
+
+  if (fieldLabels[last]) {
+    return fieldLabels[last];
+  }
+
+  if (parent === "candidates") {
+    return `candidate ${last.replaceAll("_", " ")}`;
+  }
+
+  if (normalized.includes("files")) {
+    return `file ${last.replaceAll("_", " ")}`;
+  }
+
+  return last.replaceAll("_", " ");
+}
+
+function extractAiFallbackIssues(error: unknown) {
+  if (error && typeof error === "object" && "issues" in error && Array.isArray((error as { issues?: unknown[] }).issues)) {
+    return (error as { issues: AiFallbackIssue[] }).issues;
+  }
+
+  if (error instanceof Error) {
+    try {
+      const parsed = JSON.parse(error.message) as unknown;
+
+      if (Array.isArray(parsed)) {
+        return parsed.filter((entry): entry is AiFallbackIssue => Boolean(entry) && typeof entry === "object");
+      }
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function describeAiFallback(error: unknown) {
+  const issues = extractAiFallbackIssues(error);
+
+  if (issues.length === 0) {
+    return "The AI response was incomplete, so the built-in parser completed the import instead.";
+  }
+
+  const fields = [...new Set(
+    issues
+      .map((issue) => humanizeAiFallbackField(issue.path ?? []))
+      .filter((value): value is string => Boolean(value))
+  )];
+
+  if (fields.length === 0) {
+    return "The AI response was incomplete, so the built-in parser completed the import instead.";
+  }
+
+  return `The AI response was incomplete, so the built-in parser completed the import instead. Missing or invalid AI fields: ${fields.slice(0, 4).join(", ")}${fields.length > 4 ? ", and more" : ""}.`;
+}
+
 type ArtifactRejectionContext = {
   organizationId: string;
   actorId?: string | null;
@@ -298,10 +375,7 @@ async function processArtifactIntakeSession(
       mappingResult = aiResult.mappingResult;
       processingModeUsed = "ai_assisted";
     } catch (error) {
-      processingNote =
-        error instanceof Error
-          ? `AI-assisted import fell back to the standard parser: ${error.message}`
-          : "AI-assisted import fell back to the standard parser.";
+      processingNote = describeAiFallback(error);
     }
   }
 
