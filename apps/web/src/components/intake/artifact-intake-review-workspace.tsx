@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ChevronDown, GitBranch, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ChevronDown, CircleAlert, GitBranch, ShieldCheck } from "lucide-react";
 import type {
   ArtifactCandidateDraftRecord,
   ArtifactCandidateHumanDecision,
@@ -425,6 +425,18 @@ function compactMetric(labelText: string, metricValue: string | number) {
   );
 }
 
+function queueItemTone(item: QueueItem) {
+  if (item.selectedAction === "blocked") {
+    return "border-rose-200 bg-rose-50/60";
+  }
+
+  if (item.status === "resolved") {
+    return "border-emerald-200 bg-emerald-50/50";
+  }
+
+  return "border-amber-200 bg-amber-50/50";
+}
+
 function CollapsibleReviewPanel(props: {
   title: string;
   description: string;
@@ -545,7 +557,12 @@ export function ArtifactIntakeReviewWorkspace({
             const resolved = group.items.filter((item) => item.status === "resolved").length;
 
             return (
-              <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={group.key}>
+              <div
+                className={`rounded-2xl border p-4 ${
+                  unresolved > 0 ? "border-amber-200 bg-amber-50/20" : "border-border/70 bg-background/80"
+                }`}
+                key={group.key}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-medium text-foreground">{group.title}</p>
@@ -562,16 +579,36 @@ export function ArtifactIntakeReviewWorkspace({
                 </div>
 
                 {group.items.length === 0 ? (
-                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                  <div className="mt-4 rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
                     No items currently belong to this queue section for the selected artifact.
                   </div>
                 ) : (
-                  <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                  <div className="mt-4 space-y-3">
                     {group.items.map((item) => (
-                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item.id}>
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="font-medium text-foreground">{item.title}</p>
+                      <div className={`rounded-2xl border p-4 ${queueItemTone(item)}`} key={item.id}>
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span
+                                className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
+                                  item.selectedAction === "blocked"
+                                    ? "border-rose-200 bg-rose-100 text-rose-700"
+                                    : item.status === "resolved"
+                                      ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                                      : "border-amber-200 bg-amber-100 text-amber-700"
+                                }`}
+                              >
+                                {item.status === "resolved" && item.selectedAction !== "blocked" ? (
+                                  <CheckCircle2 className="h-4 w-4" />
+                                ) : (
+                                  <CircleAlert className="h-4 w-4" />
+                                )}
+                              </span>
+                              <p className="font-medium text-foreground">{item.title}</p>
+                              <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                {item.actionScope === "section" ? "Source section" : "Candidate issue"}
+                              </span>
+                            </div>
                             <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
                             <p className="mt-2 text-xs text-muted-foreground">{item.context}</p>
                             {item.dispositionLabel ? (
@@ -585,25 +622,37 @@ export function ArtifactIntakeReviewWorkspace({
                               </p>
                             ) : null}
                           </div>
-                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                            {item.actionScope === "section" ? "Source section" : "Candidate issue"}
-                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                                item.selectedAction === "blocked"
+                                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                                  : item.status === "resolved"
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border-amber-200 bg-amber-50 text-amber-700"
+                              }`}
+                            >
+                              {item.selectedAction === "blocked" ? "blocked" : item.status}
+                            </span>
+                          </div>
                         </div>
-                        {item.actionScope === "section" ? (
-                          <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
-                            <Link href={item.href} prefetch={false}>
-                              View source section
-                              <GitBranch className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        ) : item.actionScope === "candidate" ? (
-                          <Button asChild className="mt-3 gap-2" size="sm" variant="secondary">
-                            <Link href={item.href} prefetch={false}>
-                              Open fields to fix
-                              <GitBranch className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        ) : null}
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          {item.actionScope === "section" ? (
+                            <Button asChild className="gap-2" size="sm" variant="secondary">
+                              <Link href={item.href} prefetch={false}>
+                                View source section
+                                <GitBranch className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          ) : item.actionScope === "candidate" ? (
+                            <Button asChild className="gap-2" size="sm" variant="secondary">
+                              <Link href={item.href} prefetch={false}>
+                                Open fields to fix
+                                <GitBranch className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          ) : null}
+                        </div>
                         {item.actionScope === "section" ? (
                           <ArtifactIntakeDispositionButtons
                             actions={item.actions}
@@ -935,9 +984,10 @@ export function ArtifactIntakeReviewWorkspace({
                       </div>
                       {!quickEditFieldNames.has("outcomeCandidateId") ? (
                         outcomeCandidateOptions.length === 1 && selectedOutcomeCandidateId ? (
-                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+                          <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-foreground">
                             <input name="outcomeCandidateId" type="hidden" value={selectedOutcomeCandidateId} />
-                            Outcome destination is fixed to {describeProjectOutcome(outcomeCandidateOptions[0]!)} for this import.
+                            <p className="font-medium">Outcome destination</p>
+                            <p className="mt-1 text-muted-foreground">{describeProjectOutcome(outcomeCandidateOptions[0]!)}</p>
                           </div>
                         ) : (
                           <label className="space-y-2">
@@ -1032,9 +1082,10 @@ export function ArtifactIntakeReviewWorkspace({
                           <div className="grid gap-4 sm:grid-cols-2">
                             {!quickEditFieldNames.has("outcomeCandidateId") ? (
                               outcomeCandidateOptions.length === 1 && selectedOutcomeCandidateId ? (
-                                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+                                <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-foreground">
                                   <input name="outcomeCandidateId" type="hidden" value={selectedOutcomeCandidateId} />
-                                  Outcome: {describeProjectOutcome(outcomeCandidateOptions[0]!)}
+                                  <p className="font-medium">Outcome destination</p>
+                                  <p className="mt-1 text-muted-foreground">{describeProjectOutcome(outcomeCandidateOptions[0]!)}</p>
                                 </div>
                               ) : (
                                 <label className="space-y-2">

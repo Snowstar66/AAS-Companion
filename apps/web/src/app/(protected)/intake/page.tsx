@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Inbox } from "lucide-react";
+import { CheckCircle2, CircleAlert, Inbox } from "lucide-react";
+import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
@@ -24,21 +25,16 @@ function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(value);
-}
-
 function formatBytes(value: number) {
   return value < 1024 ? `${value} B` : `${(value / 1024).toFixed(1)} KB`;
 }
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function flashTone(status: string | undefined) {
@@ -114,6 +110,90 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     : [];
   const selectedCandidate =
     selectedFileCandidates.find((candidate) => candidate.id === candidateId) ?? selectedFileCandidates[0] ?? null;
+  const backlogRows =
+    workspace.state === "ready"
+      ? visibleSessions.flatMap((artifactSession) => {
+          const sessionCandidates =
+            artifactSession.candidates.length > 0 ? artifactSession.candidates : artifactSession.displayCandidates;
+
+          return artifactSession.files
+            .filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0)
+            .flatMap((artifactFile) => {
+              const fileCandidates = sessionCandidates.filter((candidate) =>
+                "fileId" in candidate ? candidate.fileId === artifactFile.id : candidate.source.fileId === artifactFile.id
+              );
+              const unmappedSectionCount = (artifactSession.mappedArtifacts?.unmappedSections ?? []).filter(
+                (section) => section.sourceReference.fileId === artifactFile.id
+              ).length;
+
+              if (fileCandidates.length === 0) {
+                return [
+                  {
+                    kind: "leftovers" as const,
+                    id: `${artifactFile.id}-leftovers`,
+                    href: buildIntakeHref(artifactSession.id, artifactFile.id, null, queueFilter),
+                    isSelected: selectedSession?.id === artifactSession.id && selectedFile?.id === artifactFile.id && !selectedCandidate,
+                    sessionLabel: artifactSession.label,
+                    fileName: artifactFile.fileName,
+                    title: artifactFile.fileName,
+                    subtitle: "No mapped candidate yet. Review leftovers and source sections for this file.",
+                    typeLabel: "source review",
+                    statusLabel: formatLabel(artifactSession.status),
+                    unresolvedCount: unmappedSectionCount,
+                    blockedCount: 0,
+                    leftoverCount: unmappedSectionCount,
+                    meta: `${formatBytes(artifactFile.sizeBytes)} • ${pluralize(artifactFile.parsedSectionCount, "parsed section")}`,
+                    attentionPreview:
+                      unmappedSectionCount > 0
+                        ? [`${pluralize(unmappedSectionCount, "review leftover")}`]
+                        : ["No open correction items"]
+                  }
+                ];
+              }
+
+              return fileCandidates.map((candidate) => {
+                const progress = candidate.complianceResult
+                  ? getArtifactCandidateIssueProgress({
+                      complianceResult: candidate.complianceResult,
+                      issueDispositions: candidate.issueDispositions,
+                      unmappedSectionCount,
+                      sectionDispositions: artifactFile.sectionDispositions
+                    })
+                  : null;
+                const attentionPreview = [
+                  ...(candidate.complianceResult?.findings ?? [])
+                    .map((finding) => finding.fieldLabel ?? finding.message)
+                    .filter(Boolean)
+                    .slice(0, 2),
+                  ...(unmappedSectionCount > 0 ? [`${pluralize(unmappedSectionCount, "review leftover")}`] : [])
+                ].slice(0, 3);
+
+                return {
+                  kind: "candidate" as const,
+                  id: candidate.id,
+                  href: buildIntakeHref(artifactSession.id, artifactFile.id, candidate.id, queueFilter),
+                  isSelected: selectedCandidate?.id === candidate.id,
+                  sessionLabel: artifactSession.label,
+                  fileName: artifactFile.fileName,
+                  title: candidate.title,
+                  subtitle: candidate.summary,
+                  typeLabel: candidate.type,
+                  statusLabel: formatLabel(candidate.reviewStatus),
+                  unresolvedCount: progress?.unresolved ?? 0,
+                  blockedCount: progress?.categories.blocked ?? 0,
+                  leftoverCount: progress?.categories.unmapped ?? 0,
+                  meta: `${formatBytes(artifactFile.sizeBytes)} • ${pluralize(artifactFile.parsedSectionCount, "parsed section")}`,
+                  attentionPreview:
+                    attentionPreview.length > 0
+                      ? attentionPreview
+                      : candidate.reviewStatus === "promoted"
+                        ? ["Already promoted"]
+                        : ["No open correction items"]
+                };
+              });
+            });
+        })
+      : [];
   const importHelp = getHelpPattern(
     "import.workspace",
     selectedCandidate?.humanDecisions?.aiAccelerationLevel ?? null
@@ -240,86 +320,81 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <CardHeader>
                 <CardTitle>Imported candidates</CardTitle>
                 <CardDescription>
-                  Pick the imported file and candidate you want to inspect and continue working on.
+                  Work through the imported material as a backlog. Each row shows what still needs attention before approval.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {visibleSessions.map((artifactSession) => (
-                  <div
-                    className={`rounded-2xl border p-4 ${selectedSession?.id === artifactSession.id ? "border-primary/50 bg-primary/5" : "border-border/70 bg-background/80"}`}
-                    key={artifactSession.id}
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-foreground">{artifactSession.label}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Created {formatDate(artifactSession.createdAt)} by{" "}
-                          {artifactSession.creator?.fullName ?? artifactSession.creator?.email ?? "Unknown uploader"}
-                        </p>
-                      </div>
-                      <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                        {formatLabel(artifactSession.status)}
-                      </span>
-                    </div>
+              <CardContent className="space-y-3">
+                {backlogRows.length > 0 ? (
+                  <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">
+                    {backlogRows.map((row, index) => {
+                      const needsAttention = row.unresolvedCount > 0 || row.blockedCount > 0 || row.leftoverCount > 0;
 
-                    <div className="mt-4 space-y-3">
-                      {artifactSession.files
-                        .filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0)
-                        .map((artifactFile) => {
-                          const sessionCandidates =
-                            artifactSession.candidates.length > 0 ? artifactSession.candidates : artifactSession.displayCandidates;
-                          const fileCandidates = sessionCandidates.filter((candidate) =>
-                            "fileId" in candidate ? candidate.fileId === artifactFile.id : candidate.source.fileId === artifactFile.id
-                          );
-                          const firstCandidate = fileCandidates[0] ?? null;
-
-                          return (
-                            <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={artifactFile.id}>
-                              <div className="flex flex-wrap items-center justify-between gap-3">
-                                <Button
-                                  asChild
-                                  size="sm"
-                                  variant={
-                                    selectedSession?.id === artifactSession.id && selectedFile?.id === artifactFile.id
-                                      ? "default"
-                                      : "secondary"
-                                  }
+                      return (
+                        <Link
+                          className={`block px-5 py-4 transition ${
+                            index > 0 ? "border-t border-border/70" : ""
+                          } ${
+                            row.isSelected
+                              ? "border-l-4 border-l-primary bg-primary/5"
+                              : needsAttention
+                                ? "border-l-4 border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/50"
+                                : "border-l-4 border-l-transparent hover:bg-muted/30"
+                          }`}
+                          href={row.href}
+                          key={row.id}
+                          prefetch={false}
+                        >
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
+                                    needsAttention
+                                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                                      : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                  }`}
                                 >
-                                  <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, firstCandidate?.id ?? null, queueFilter)} prefetch={false}>
-                                    {artifactFile.fileName}
-                                  </Link>
-                                </Button>
-                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                  <span>{formatBytes(artifactFile.sizeBytes)}</span>
-                                  <span>{artifactFile.parsedSectionCount} parsed</span>
-                                  <span>{fileCandidates.length} candidate(s)</span>
-                                </div>
+                                  {needsAttention ? <CircleAlert className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                </span>
+                                <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                  {row.typeLabel}
+                                </span>
+                                <h3 className="text-sm font-semibold text-foreground">{row.title}</h3>
                               </div>
+                              <p className="mt-2 text-sm leading-6 text-muted-foreground">{row.subtitle}</p>
+                              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                <span>{row.fileName}</span>
+                                <span>{row.sessionLabel}</span>
+                                <span>{row.meta}</span>
+                                <span>{row.statusLabel}</span>
+                              </div>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                {needsAttention ? "Needs review:" : "Status:"} {row.attentionPreview.join(" • ")}
+                              </p>
+                            </div>
 
-                              {fileCandidates.length > 0 ? (
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {fileCandidates.map((candidate) => (
-                                    <Button
-                                      asChild
-                                      className="gap-2"
-                                      key={candidate.id}
-                                      size="sm"
-                                      variant={selectedCandidate?.id === candidate.id ? "default" : "secondary"}
-                                    >
-                                      <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, candidate.id, queueFilter)} prefetch={false}>
-                                        {candidate.type}: {candidate.title}
-                                      </Link>
-                                    </Button>
-                                  ))}
-                                </div>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-muted-foreground">
+                                Open: <strong className="ml-1 text-foreground">{row.unresolvedCount}</strong>
+                              </span>
+                              {row.blockedCount > 0 ? (
+                                <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">
+                                  Blocked: {row.blockedCount}
+                                </span>
+                              ) : null}
+                              {row.leftoverCount > 0 ? (
+                                <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700">
+                                  Leftovers: {row.leftoverCount}
+                                </span>
                               ) : null}
                             </div>
-                          );
-                        })}
-                    </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                ))}
-                {visibleSessions.length === 0 ? (
+                ) : null}
+                {backlogRows.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
                     No import sessions match the current action filter.
                   </div>
