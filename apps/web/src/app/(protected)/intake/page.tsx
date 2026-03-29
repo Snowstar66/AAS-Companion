@@ -21,6 +21,24 @@ type ArtifactIntakePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type BacklogRow = {
+  kind: "candidate" | "leftovers";
+  id: string;
+  href: string;
+  isSelected: boolean;
+  sessionLabel: string;
+  fileName: string;
+  title: string;
+  subtitle: string;
+  typeLabel: string;
+  statusLabel: string;
+  unresolvedCount: number;
+  blockedCount: number;
+  leftoverCount: number;
+  meta: string;
+  attentionPreview: string[];
+};
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -110,48 +128,50 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     : [];
   const selectedCandidate =
     selectedFileCandidates.find((candidate) => candidate.id === candidateId) ?? selectedFileCandidates[0] ?? null;
-  const backlogRows =
+
+  const backlogRows: BacklogRow[] =
     workspace.state === "ready"
-      ? visibleSessions.flatMap((artifactSession) => {
+      ? visibleSessions.flatMap((artifactSession): BacklogRow[] => {
           const sessionCandidates =
             artifactSession.candidates.length > 0 ? artifactSession.candidates : artifactSession.displayCandidates;
 
           return artifactSession.files
             .filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0)
-            .flatMap((artifactFile) => {
+            .reduce<BacklogRow[]>((rows, artifactFile) => {
               const fileCandidates = sessionCandidates.filter((candidate) =>
                 "fileId" in candidate ? candidate.fileId === artifactFile.id : candidate.source.fileId === artifactFile.id
               );
               const unmappedSectionCount = (artifactSession.mappedArtifacts?.unmappedSections ?? []).filter(
                 (section) => section.sourceReference.fileId === artifactFile.id
               ).length;
+              const meta = `${formatBytes(artifactFile.sizeBytes)} - ${pluralize(artifactFile.parsedSectionCount, "parsed section")}`;
 
               if (fileCandidates.length === 0) {
-                return [
-                  {
-                    kind: "leftovers" as const,
-                    id: `${artifactFile.id}-leftovers`,
-                    href: buildIntakeHref(artifactSession.id, artifactFile.id, null, queueFilter),
-                    isSelected: selectedSession?.id === artifactSession.id && selectedFile?.id === artifactFile.id && !selectedCandidate,
-                    sessionLabel: artifactSession.label,
-                    fileName: artifactFile.fileName,
-                    title: artifactFile.fileName,
-                    subtitle: "No mapped candidate yet. Review leftovers and source sections for this file.",
-                    typeLabel: "source review",
-                    statusLabel: formatLabel(artifactSession.status),
-                    unresolvedCount: unmappedSectionCount,
-                    blockedCount: 0,
-                    leftoverCount: unmappedSectionCount,
-                    meta: `${formatBytes(artifactFile.sizeBytes)} • ${pluralize(artifactFile.parsedSectionCount, "parsed section")}`,
-                    attentionPreview:
-                      unmappedSectionCount > 0
-                        ? [`${pluralize(unmappedSectionCount, "review leftover")}`]
-                        : ["No open correction items"]
-                  }
-                ];
+                rows.push({
+                  kind: "leftovers",
+                  id: `${artifactFile.id}-leftovers`,
+                  href: buildIntakeHref(artifactSession.id, artifactFile.id, null, queueFilter),
+                  isSelected: selectedSession?.id === artifactSession.id && selectedFile?.id === artifactFile.id && !selectedCandidate,
+                  sessionLabel: artifactSession.label,
+                  fileName: artifactFile.fileName,
+                  title: artifactFile.fileName,
+                  subtitle: "No mapped candidate yet. Review leftovers and source sections for this file.",
+                  typeLabel: "source review",
+                  statusLabel: formatLabel(artifactSession.status),
+                  unresolvedCount: unmappedSectionCount,
+                  blockedCount: 0,
+                  leftoverCount: unmappedSectionCount,
+                  meta,
+                  attentionPreview:
+                    unmappedSectionCount > 0
+                      ? [`${pluralize(unmappedSectionCount, "review leftover")}`]
+                      : ["No open correction items"]
+                });
+
+                return rows;
               }
 
-              return fileCandidates.map((candidate) => {
+              for (const candidate of fileCandidates) {
                 const progress = candidate.complianceResult
                   ? getArtifactCandidateIssueProgress({
                       complianceResult: candidate.complianceResult,
@@ -168,8 +188,8 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   ...(unmappedSectionCount > 0 ? [`${pluralize(unmappedSectionCount, "review leftover")}`] : [])
                 ].slice(0, 3);
 
-                return {
-                  kind: "candidate" as const,
+                rows.push({
+                  kind: "candidate",
                   id: candidate.id,
                   href: buildIntakeHref(artifactSession.id, artifactFile.id, candidate.id, queueFilter),
                   isSelected: selectedCandidate?.id === candidate.id,
@@ -182,18 +202,21 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   unresolvedCount: progress?.unresolved ?? 0,
                   blockedCount: progress?.categories.blocked ?? 0,
                   leftoverCount: progress?.categories.unmapped ?? 0,
-                  meta: `${formatBytes(artifactFile.sizeBytes)} • ${pluralize(artifactFile.parsedSectionCount, "parsed section")}`,
+                  meta,
                   attentionPreview:
                     attentionPreview.length > 0
                       ? attentionPreview
                       : candidate.reviewStatus === "promoted"
                         ? ["Already promoted"]
                         : ["No open correction items"]
-                };
-              });
-            });
+                });
+              }
+
+              return rows;
+            }, []);
         })
       : [];
+
   const importHelp = getHelpPattern(
     "import.workspace",
     selectedCandidate?.humanDecisions?.aiAccelerationLevel ?? null
@@ -369,7 +392,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                                 <span>{row.statusLabel}</span>
                               </div>
                               <p className="mt-2 text-xs text-muted-foreground">
-                                {needsAttention ? "Needs review:" : "Status:"} {row.attentionPreview.join(" • ")}
+                                {needsAttention ? "Needs review:" : "Status:"} {row.attentionPreview.join(" - ")}
                               </p>
                             </div>
 
