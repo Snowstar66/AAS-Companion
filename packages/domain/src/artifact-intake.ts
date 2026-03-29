@@ -363,6 +363,101 @@ function normalizeText(value: string) {
   return normalizeMarkdownForParsing(value).trim();
 }
 
+type JsonArtifactRecord = Record<string, unknown>;
+
+function tryParseJsonArtifactDocument(content: string) {
+  const trimmed = content.trim().replace(/^\uFEFF/, "");
+
+  if (!trimmed.startsWith("{")) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as JsonArtifactRecord) : null;
+  } catch {
+    return null;
+  }
+}
+
+function getJsonObjectArray(document: JsonArtifactRecord, key: string) {
+  const value = document[key];
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((entry): entry is JsonArtifactRecord => Boolean(entry) && typeof entry === "object" && !Array.isArray(entry));
+}
+
+function getJsonString(record: JsonArtifactRecord, key: string) {
+  const value = record[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function getJsonNumber(record: JsonArtifactRecord, key: string) {
+  const value = record[key];
+  return typeof value === "number" ? value : null;
+}
+
+function getJsonStringArray(record: JsonArtifactRecord, key: string) {
+  const value = record[key];
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function getJsonObject(record: JsonArtifactRecord, key: string) {
+  const value = record[key];
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonArtifactRecord) : null;
+}
+
+function joinTaggedValues(values: string[]) {
+  return values.map((value) => value.trim()).filter(Boolean).join(" | ");
+}
+
+function findApproximateLineNumber(content: string, needle: string, fallback: number) {
+  const normalizedLines = normalizeMarkdownForParsing(content).split("\n");
+  const normalizedNeedle = needle.trim();
+
+  if (!normalizedNeedle) {
+    return fallback;
+  }
+
+  const index = normalizedLines.findIndex((line) => line.includes(normalizedNeedle));
+  return index >= 0 ? index + 1 : fallback;
+}
+
+function buildJsonSection(input: {
+  fileId: string;
+  fileName: string;
+  content: string;
+  sectionId: string;
+  title: string;
+  marker: string;
+  anchorNeedle: string;
+  bodyLines: string[];
+}) {
+  const text = input.bodyLines.filter(Boolean).join("\n").trim();
+  const lineStart = findApproximateLineNumber(input.content, input.anchorNeedle, 1);
+  const lineEnd = Math.max(lineStart, lineStart + Math.max(text.split("\n").length - 1, 0));
+
+  return {
+    sectionId: input.sectionId,
+    title: input.title,
+    marker: input.marker,
+    lineStart,
+    lineEnd,
+    text
+  };
+}
+
 function splitMarkdownSections(content: string) {
   const lines = normalizeMarkdownForParsing(content).split("\n");
   const sections: MarkdownSection[] = [];
@@ -425,6 +520,46 @@ function splitMarkdownSections(content: string) {
 
 function normalizeHeading(value: string) {
   return value.trim().toLowerCase();
+}
+
+function detectStructuredJsonArtifactType(document: JsonArtifactRecord) {
+  const outcomes = getJsonObjectArray(document, "outcomes");
+  const epics = getJsonObjectArray(document, "epics");
+  const stories = getJsonObjectArray(document, "stories");
+
+  if (outcomes.length > 0 && (epics.length > 0 || stories.length > 0)) {
+    return {
+      sourceType: "mixed_markdown_bundle" as const,
+      confidence: "high" as const,
+      rationale: "Detected a structured artifact package with linked Outcome, Epic, and Story records."
+    };
+  }
+
+  if (stories.length > 0) {
+    return {
+      sourceType: "story_file" as const,
+      confidence: "high" as const,
+      rationale: "Detected a structured artifact package dominated by Story records."
+    };
+  }
+
+  if (epics.length > 0) {
+    return {
+      sourceType: "epic_file" as const,
+      confidence: "high" as const,
+      rationale: "Detected a structured artifact package dominated by Epic records."
+    };
+  }
+
+  if (outcomes.length > 0) {
+    return {
+      sourceType: "bmad_prd" as const,
+      confidence: "high" as const,
+      rationale: "Detected a structured artifact package with Outcome framing data."
+    };
+  }
+
+  return null;
 }
 
 function isStructuredStorySpecArtifact(input: {
@@ -516,6 +651,16 @@ function summarizeText(text: string, maxLength = 180) {
 export function classifyArtifactSource(fileName: string, content: string): ArtifactSourceClassification {
   const normalizedFileName = fileName.toLowerCase();
   const normalized = normalizeText(content).toLowerCase();
+  const jsonDocument = tryParseJsonArtifactDocument(content);
+
+  if (jsonDocument) {
+    const jsonClassification = detectStructuredJsonArtifactType(jsonDocument);
+
+    if (jsonClassification) {
+      return jsonClassification;
+    }
+  }
+
   const sections = splitMarkdownSections(content);
 
   if (isStructuredStorySpecArtifact({ fileName, content, sections })) {
@@ -571,6 +716,191 @@ export function classifyArtifactSource(fileName: string, content: string): Artif
   };
 }
 
+function parseStructuredJsonArtifact(
+  fileId: string,
+  fileName: string,
+  content: string,
+  document: JsonArtifactRecord
+): ArtifactParseResult | null {
+  const classification = detectStructuredJsonArtifactType(document);
+
+  if (!classification) {
+    return null;
+  }
+
+  const sections: ArtifactParseResult["sections"] = [];
+  const metadata = getJsonObject(document, "metadata");
+  const governance = getJsonObject(document, "governance");
+  const riskProfile = getJsonObject(document, "risk_profile");
+  const phases = getJsonObjectArray(document, "phases");
+  const tollgates = getJsonObjectArray(document, "tollgates");
+  const outcomes = getJsonObjectArray(document, "outcomes");
+  const epics = getJsonObjectArray(document, "epics");
+  const stories = getJsonObjectArray(document, "stories");
+
+  if (metadata) {
+    const metadataSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-metadata",
+      title: "Metadata",
+      marker: "metadata",
+      anchorNeedle: "\"metadata\"",
+      bodyLines: [
+        "Metadata",
+        `Package: ${getJsonString(metadata, "package_name") || getJsonString(metadata, "system_name") || fileName}`,
+        `Language: ${getJsonString(metadata, "language") || "Not set"}`,
+        `AI Acceleration Level: ${String(getJsonNumber(metadata, "ai_acceleration_level") ?? "Not set")}`,
+        `Status: ${getJsonString(metadata, "status") || "Not set"}`
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, metadataSection, "problem_goal", "medium"));
+  }
+
+  if (governance || riskProfile || phases.length > 0 || tollgates.length > 0) {
+    const governanceSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-governance-context",
+      title: "Governance and delivery context",
+      marker: "governance",
+      anchorNeedle: "\"governance\"",
+      bodyLines: [
+        "Governance and delivery context",
+        governance ? `Governance roles: ${Object.keys(governance).join(", ")}` : "",
+        riskProfile ? `Risk profile: ${joinTaggedValues(Object.entries(riskProfile).map(([key, value]) => `${key}=${String(value)}`))}` : "",
+        phases.length > 0 ? `Phases: ${joinTaggedValues(phases.map((phase) => getJsonString(phase, "phase_name")).filter(Boolean))}` : "",
+        tollgates.length > 0 ? `Tollgates: ${joinTaggedValues(tollgates.map((tollgate) => getJsonString(tollgate, "name")).filter(Boolean))}` : ""
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, governanceSection, "architecture_notes", "medium"));
+  }
+
+  for (const [index, outcome] of outcomes.entries()) {
+    const outcomeId = getJsonString(outcome, "outcome_id") || `O-${index + 1}`;
+    const baseline = getJsonObject(outcome, "baseline");
+    const targets = getJsonObject(outcome, "targets");
+    const outcomeSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: `json-outcome-${index}`,
+      title: getJsonString(outcome, "title") || `Outcome ${outcomeId}`,
+      marker: `outcomes[${index}]`,
+      anchorNeedle: outcomeId,
+      bodyLines: [
+        `Outcome ID: ${outcomeId}`,
+        `Title: ${getJsonString(outcome, "title") || `Outcome ${outcomeId}`}`,
+        `Outcome Statement: ${getJsonString(outcome, "statement") || "Not set"}`,
+        baseline ? `Baseline Definition: ${joinTaggedValues(Object.entries(baseline).map(([key, value]) => `${key}=${String(value)}`))}` : "",
+        targets ? `Target Definition: ${joinTaggedValues(Object.entries(targets).map(([key, value]) => `${key}=${String(value)}`))}` : "",
+        `Measurement Method: ${joinTaggedValues(getJsonStringArray(outcome, "measurement_method"))}`,
+        `Timeframe: ${String(getJsonNumber(outcome, "timebox_months") ?? "Not set")} months`,
+        `Owner Role ID: ${getJsonString(outcome, "owner_role_id") || "Not set"}`
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, outcomeSection, "outcome_candidate", "high"));
+  }
+
+  for (const [index, epic] of epics.entries()) {
+    const epicId = getJsonString(epic, "epic_id") || `E-${index + 1}`;
+    const epicSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: `json-epic-${index}`,
+      title: getJsonString(epic, "title") || `Epic ${epicId}`,
+      marker: `epics[${index}]`,
+      anchorNeedle: epicId,
+      bodyLines: [
+        `Epic ID: ${epicId}`,
+        `Title: ${getJsonString(epic, "title") || `Epic ${epicId}`}`,
+        `Purpose: ${getJsonString(epic, "purpose") || "Not set"}`,
+        `Outcome ID: ${getJsonString(epic, "outcome_id") || "Not set"}`,
+        `Scope In: ${joinTaggedValues(getJsonStringArray(epic, "scope_in"))}`,
+        `Scope Out: ${joinTaggedValues(getJsonStringArray(epic, "scope_out"))}`,
+        `Risk Note: ${getJsonString(epic, "risk_note") || "Not set"}`
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, epicSection, "epic_candidate", "high"));
+  }
+
+  for (const [index, story] of stories.entries()) {
+    const storyId = getJsonString(story, "story_id") || `S-${index + 1}`;
+    const storyTitle = getJsonString(story, "title") || `Story ${storyId}`;
+    const definitionOfDone = getJsonStringArray(story, "definition_of_done");
+    const storySection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: `json-story-${index}`,
+      title: storyTitle,
+      marker: `stories[${index}]`,
+      anchorNeedle: storyId,
+      bodyLines: [
+        `Story ID: ${storyId}`,
+        `Title: ${storyTitle}`,
+        `Story Type: ${getJsonString(story, "story_type") || "Feature"}`,
+        `Value Intent: ${getJsonString(story, "value_intent") || "Not set"}`,
+        `AI Usage Scope: ${joinTaggedValues(getJsonStringArray(story, "ai_usage_scope"))}`,
+        `AI Acceleration Level: ${String(getJsonNumber(story, "ai_acceleration_level") ?? "Not set")}`,
+        `Outcome ID: ${getJsonString(story, "outcome_id") || "Not set"}`,
+        `Epic ID: ${getJsonString(story, "epic_id") || "Not set"}`,
+        `Definition of Done: ${joinTaggedValues(definitionOfDone)}`
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, storySection, "story_candidate", "high"));
+
+    const acceptanceCriteria = getJsonStringArray(story, "acceptance_criteria");
+    if (acceptanceCriteria.length > 0) {
+      const acceptanceSection = buildJsonSection({
+        fileId,
+        fileName,
+        content,
+        sectionId: `json-story-${index}-acceptance`,
+        title: `${storyTitle} acceptance criteria`,
+        marker: `stories[${index}].acceptance_criteria`,
+        anchorNeedle: "\"acceptance_criteria\"",
+        bodyLines: [
+          "Acceptance Criteria",
+          ...acceptanceCriteria.map((criterion) => `- ${criterion}`)
+        ]
+      });
+      sections.push(createParsedSection(fileId, fileName, acceptanceSection, "acceptance_criteria", "high"));
+    }
+
+    const testDefinition = getJsonObject(story, "test_definition");
+    const testDefinitionLines = testDefinition
+      ? Object.entries(testDefinition).map(([key, value]) => `- ${key}: ${String(value)}`)
+      : [];
+
+    if (testDefinitionLines.length > 0 || getJsonString(story, "test_id")) {
+      const testSection = buildJsonSection({
+        fileId,
+        fileName,
+        content,
+        sectionId: `json-story-${index}-test`,
+        title: `${storyTitle} test definition`,
+        marker: `stories[${index}].test_definition`,
+        anchorNeedle: "\"test_definition\"",
+        bodyLines: [
+          `Test ID: ${getJsonString(story, "test_id") || "Not set"}`,
+          "Test Definition",
+          ...testDefinitionLines
+        ]
+      });
+      sections.push(createParsedSection(fileId, fileName, testSection, "test_notes", "high"));
+    }
+  }
+
+  return {
+    classification,
+    sections
+  };
+}
+
 function createParsedSection(
   fileId: string,
   fileName: string,
@@ -598,6 +928,13 @@ function createParsedSection(
 }
 
 export function parseMarkdownArtifact(fileId: string, fileName: string, content: string): ArtifactParseResult {
+  const jsonDocument = tryParseJsonArtifactDocument(content);
+  const structuredJsonResult = jsonDocument ? parseStructuredJsonArtifact(fileId, fileName, content, jsonDocument) : null;
+
+  if (structuredJsonResult) {
+    return structuredJsonResult;
+  }
+
   const classification = classifyArtifactSource(fileName, content);
   const sections = splitMarkdownSections(content);
   const parsedSections: ArtifactParsedSection[] = [];
@@ -722,6 +1059,152 @@ function normalizeDraftText(value: string | null | undefined) {
 
 function dedupeArtifactText(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function extractTaggedLineValue(text: string, label: string) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = text.match(new RegExp(`^${escapedLabel}:\\s*(.+)$`, "im"));
+  return match?.[1]?.trim() ?? "";
+}
+
+function extractTaggedLineList(text: string, label: string) {
+  return extractTaggedLineValue(text, label)
+    .split("|")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function normalizeImportedStoryType(rawType: string, fallbackText: string) {
+  const normalized = `${rawType} ${fallbackText}`.toLowerCase();
+
+  if (/\b(governance|review|approval|audit|risk|compliance|evidence|signoff)\b/.test(normalized)) {
+    return "governance" as const;
+  }
+
+  if (/\b(enablement|tooling|platform|workflow|runbook|migration|operational|support)\b/.test(normalized)) {
+    return "enablement" as const;
+  }
+
+  return "outcome_delivery" as const;
+}
+
+function buildDraftRecordFromParsedSection(input: {
+  candidateType: ArtifactAasCandidate["type"];
+  section: ArtifactParsedSection;
+  acceptanceCriteria: string[];
+  testNotes: string[];
+  inferredOutcomeCandidateId?: string | undefined;
+  inferredEpicCandidateId?: string | undefined;
+}) {
+  const taggedTitle = extractTaggedLineValue(input.section.text, "Title");
+
+  if (input.candidateType === "outcome") {
+    return {
+      key: null,
+      title: taggedTitle || input.section.title,
+      problemStatement: null,
+      outcomeStatement: extractTaggedLineValue(input.section.text, "Outcome Statement") || summarizeText(input.section.text),
+      baselineDefinition: extractTaggedLineValue(input.section.text, "Baseline Definition") || null,
+      baselineSource: extractTaggedLineValue(input.section.text, "Measurement Method") || null,
+      timeframe: extractTaggedLineValue(input.section.text, "Timeframe") || null,
+      purpose: null,
+      scopeBoundary: null,
+      riskNote: null,
+      storyType: null,
+      valueIntent: null,
+      acceptanceCriteria: [],
+      aiUsageScope: [],
+      testDefinition: null,
+      definitionOfDone: [],
+      outcomeCandidateId: null,
+      epicCandidateId: null
+    } satisfies ArtifactCandidateDraftRecord;
+  }
+
+  if (input.candidateType === "epic") {
+    const scopeIn = extractTaggedLineValue(input.section.text, "Scope In");
+    const scopeOut = extractTaggedLineValue(input.section.text, "Scope Out");
+    const scopeBoundary = [scopeIn ? `Scope in: ${scopeIn}` : "", scopeOut ? `Scope out: ${scopeOut}` : ""]
+      .filter(Boolean)
+      .join("\n");
+
+    return {
+      key: null,
+      title: taggedTitle || input.section.title,
+      problemStatement: null,
+      outcomeStatement: null,
+      baselineDefinition: null,
+      baselineSource: null,
+      timeframe: null,
+      purpose: extractTaggedLineValue(input.section.text, "Purpose") || summarizeText(input.section.text),
+      scopeBoundary: scopeBoundary || null,
+      riskNote: extractTaggedLineValue(input.section.text, "Risk Note") || null,
+      storyType: null,
+      valueIntent: null,
+      acceptanceCriteria: [],
+      aiUsageScope: [],
+      testDefinition: null,
+      definitionOfDone: [],
+      outcomeCandidateId: input.inferredOutcomeCandidateId ?? null,
+      epicCandidateId: null
+    } satisfies ArtifactCandidateDraftRecord;
+  }
+
+  const valueIntent = extractTaggedLineValue(input.section.text, "Value Intent");
+  const aiUsageScope = extractTaggedLineList(input.section.text, "AI Usage Scope");
+  const definitionOfDone = extractTaggedLineList(input.section.text, "Definition of Done");
+  const rawStoryType = extractTaggedLineValue(input.section.text, "Story Type");
+
+  return {
+    key: null,
+    title: taggedTitle || input.section.title,
+    problemStatement: null,
+    outcomeStatement: null,
+    baselineDefinition: null,
+    baselineSource: null,
+    timeframe: null,
+    purpose: null,
+    scopeBoundary: null,
+    riskNote: null,
+    storyType: normalizeImportedStoryType(rawStoryType, input.section.text),
+    valueIntent: valueIntent || summarizeText(input.section.text),
+    acceptanceCriteria: input.acceptanceCriteria,
+    aiUsageScope,
+    testDefinition: input.testNotes.length > 0 ? input.testNotes.join("\n") : null,
+    definitionOfDone,
+    outcomeCandidateId: input.inferredOutcomeCandidateId ?? null,
+    epicCandidateId: input.inferredEpicCandidateId ?? null
+  } satisfies ArtifactCandidateDraftRecord;
+}
+
+function mergeDraftRecordValues(
+  base: ArtifactCandidateDraftRecord,
+  override: ArtifactAiCandidateInterpretation["draftRecord"] | undefined
+) {
+  if (!override) {
+    return base;
+  }
+
+  const normalizedOverride = Object.fromEntries(
+    Object.entries(override).filter(([, value]) => value !== undefined)
+  ) as Partial<ArtifactCandidateDraftRecord>;
+
+  return {
+    ...base,
+    ...normalizedOverride,
+    acceptanceCriteria:
+      normalizedOverride.acceptanceCriteria && normalizedOverride.acceptanceCriteria.length > 0
+        ? normalizedOverride.acceptanceCriteria
+        : base.acceptanceCriteria,
+    aiUsageScope:
+      normalizedOverride.aiUsageScope && normalizedOverride.aiUsageScope.length > 0
+        ? normalizedOverride.aiUsageScope
+        : base.aiUsageScope,
+    definitionOfDone:
+      normalizedOverride.definitionOfDone && normalizedOverride.definitionOfDone.length > 0
+        ? normalizedOverride.definitionOfDone
+        : base.definitionOfDone
+  } satisfies ArtifactCandidateDraftRecord;
 }
 
 function resolveAiCandidateRelationshipState(input: {
@@ -909,7 +1392,17 @@ export function buildAiAssistedArtifactProcessingResult(input: {
         relationshipNote: relationship.relationshipNote,
         acceptanceCriteria: dedupeArtifactText(interpretedCandidate.acceptanceCriteria),
         testNotes: dedupeArtifactText(interpretedCandidate.testNotes),
-        draftRecord: interpretedCandidate.draftRecord
+        draftRecord: mergeDraftRecordValues(
+          buildDraftRecordFromParsedSection({
+            candidateType: interpretedCandidate.type,
+            section: sourceSection,
+            acceptanceCriteria: dedupeArtifactText(interpretedCandidate.acceptanceCriteria),
+            testNotes: dedupeArtifactText(interpretedCandidate.testNotes),
+            inferredOutcomeCandidateId,
+            inferredEpicCandidateId
+          }),
+          interpretedCandidate.draftRecord
+        )
       });
 
       if (interpretedCandidate.type === "outcome") {
@@ -1660,6 +2153,9 @@ export function mapParsedArtifactsToAasCandidates(input: {
 
             if (lastStoryCandidate?.type === "story") {
               lastStoryCandidate.acceptanceCriteria = [...lastStoryCandidate.acceptanceCriteria, ...listItems];
+              if (lastStoryCandidate.draftRecord) {
+                lastStoryCandidate.draftRecord.acceptanceCriteria = [...lastStoryCandidate.acceptanceCriteria];
+              }
 
               if (section.confidence === "low" && lastStoryCandidate.mappingState === "mapped") {
                 lastStoryCandidate.mappingState = "uncertain";
@@ -1680,6 +2176,9 @@ export function mapParsedArtifactsToAasCandidates(input: {
 
           if (lastStoryCandidate?.type === "story") {
             lastStoryCandidate.testNotes = [...lastStoryCandidate.testNotes, summarizeText(section.text, 120)];
+            if (lastStoryCandidate.draftRecord) {
+              lastStoryCandidate.draftRecord.testDefinition = lastStoryCandidate.testNotes.join("\n");
+            }
 
             if (section.confidence === "low" && lastStoryCandidate.mappingState === "mapped") {
               lastStoryCandidate.mappingState = "uncertain";
@@ -1753,12 +2252,26 @@ export function mapParsedArtifactsToAasCandidates(input: {
       const acceptanceCriteria = candidateType === "story" ? extractListItems(section.text) : [];
       const testNotes =
         candidateType === "story" && /test|verification|qa/i.test(section.text) ? [summarizeText(section.text, 120)] : [];
+      const draftRecord = buildDraftRecordFromParsedSection({
+        candidateType,
+        section,
+        acceptanceCriteria,
+        testNotes,
+        inferredOutcomeCandidateId,
+        inferredEpicCandidateId
+      });
 
       candidates.push({
         id: candidateId,
         type: candidateType,
-        title: summarizeText(section.title, 80),
-        summary: summarizeText(section.text),
+        title: summarizeText(draftRecord.title || section.title, 80),
+        summary: summarizeText(
+          candidateType === "outcome"
+            ? draftRecord.outcomeStatement || section.text
+            : candidateType === "epic"
+              ? draftRecord.purpose || section.text
+              : draftRecord.valueIntent || section.text
+        ),
         mappingState,
         source: {
           fileId: section.sourceReference.fileId,
@@ -1774,7 +2287,8 @@ export function mapParsedArtifactsToAasCandidates(input: {
         relationshipState,
         relationshipNote,
         acceptanceCriteria,
-        testNotes
+        testNotes,
+        draftRecord
       });
 
       if (candidateType === "story") {

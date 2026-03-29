@@ -219,6 +219,103 @@ describe("artifact intake helpers", () => {
     expect(result.mappingResult.unmappedSections.map((section) => section.id)).toContain(deliverySliceSection!.id);
   });
 
+  it("parses structured JSON artifact packages into outcome, epic, and story candidates", () => {
+    const content = JSON.stringify(
+      {
+        metadata: {
+          package_name: "OrderFlow_AAS_Seed_Package",
+          ai_acceleration_level: 2,
+          status: "framing_design_ready"
+        },
+        outcomes: [
+          {
+            outcome_id: "O-001",
+            title: "Reduce change lead time and incidents",
+            statement: "Reduce lead time from 20 days to 8 days within 9 months.",
+            baseline: {
+              change_lead_time_days_median: 20,
+              production_incidents_per_month: 35
+            },
+            measurement_method: ["commit_to_production_lead_time"],
+            timebox_months: 9,
+            owner_role_id: "VO-001"
+          }
+        ],
+        epics: [
+          {
+            epic_id: "E-005",
+            outcome_id: "O-001",
+            title: "Introduce controlled AI support in development and testing",
+            purpose: "Use AI to accelerate code and test delivery with governance.",
+            scope_in: ["prompt_library", "ai_usage_logging"],
+            scope_out: ["autonomous_production_deployment"],
+            risk_note: "AI-generated artifacts require mandatory review."
+          }
+        ],
+        stories: [
+          {
+            story_id: "S-015",
+            epic_id: "E-005",
+            outcome_id: "O-001",
+            title: "Log all AI usage by story and model version",
+            story_type: "Feature",
+            value_intent: "Make AI usage auditable and reproducible.",
+            ai_usage_scope: ["CONTENT", "CODE", "TEST"],
+            ai_acceleration_level: 2,
+            acceptance_criteria: [
+              "log includes prompt id and model version",
+              "history is linked to story id and release"
+            ],
+            test_id: "T-015",
+            test_definition: {
+              test_level: "integration",
+              test_type: "audit_log_validation",
+              automation: "high"
+            },
+            definition_of_done: [
+              "usage log persisted",
+              "history is searchable by story id"
+            ]
+          }
+        ]
+      },
+      null,
+      2
+    );
+
+    const parsed = parseMarkdownArtifact("file-json-1", "AAS-Testdata.txt", content);
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-json-1",
+          fileName: "AAS-Testdata.txt",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ]
+    });
+
+    expect(parsed.classification.sourceType).toBe("mixed_markdown_bundle");
+    expect(parsed.classification.confidence).toBe("high");
+    expect(mapping.candidates.some((candidate) => candidate.type === "outcome")).toBe(true);
+    expect(mapping.candidates.some((candidate) => candidate.type === "epic")).toBe(true);
+    expect(mapping.candidates.some((candidate) => candidate.type === "story")).toBe(true);
+
+    const storyCandidate = mapping.candidates.find((candidate) => candidate.type === "story");
+    expect(storyCandidate?.title).toContain("Log all AI usage");
+    expect(storyCandidate?.draftRecord?.valueIntent).toBe("Make AI usage auditable and reproducible.");
+    expect(storyCandidate?.draftRecord?.aiUsageScope).toEqual(["CONTENT", "CODE", "TEST"]);
+    expect(storyCandidate?.draftRecord?.definitionOfDone).toEqual([
+      "usage log persisted",
+      "history is searchable by story id"
+    ]);
+    expect(storyCandidate?.draftRecord?.testDefinition).toContain("test_level: integration");
+    expect(storyCandidate?.acceptanceCriteria).toEqual([
+      "log includes prompt id and model version",
+      "history is linked to story id and release"
+    ]);
+  });
+
   it("maps structured story spec files into one story candidate instead of fragmented outcome-like candidates", () => {
     const content = [
       "# M1-STORY-006",
