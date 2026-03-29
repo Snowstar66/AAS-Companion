@@ -41,9 +41,15 @@ vi.mock("@aas-companion/api", async () => {
           outcome: {
             id: "outcome-native-1",
             key: "OUT-003",
-            title: "New customer case"
+            title: "New customer case",
+            outcomeStatement: "Improve customer case clarity before delivery work starts.",
+            originType: "native",
+            lifecycleState: "active",
+            importedReadinessState: null,
+            lineageSourceType: null,
+            lineageSourceId: null
           },
-          stories: []
+          directionSeeds: []
         },
         activities: [
           {
@@ -119,14 +125,15 @@ vi.mock("@aas-companion/api", async () => {
 
 vi.mock("@/app/(protected)/epics/[epicId]/actions", () => ({
   archiveEpicAction: vi.fn(),
-  createStoryFromEpicAction: vi.fn(),
+  createDirectionSeedFromEpicAction: vi.fn(),
   hardDeleteEpicAction: vi.fn(),
   restoreEpicAction: vi.fn(),
+  saveDirectionSeedAction: vi.fn(),
   saveEpicWorkspaceAction: vi.fn()
 }));
 
 describe("Epic page", () => {
-  it("shows a clean epic page with native story creation", async () => {
+  it("shows a clean epic page with native direction seeding", async () => {
     render(
       await EpicWorkspacePage({
         params: Promise.resolve({ epicId: "epic-native-1" }),
@@ -134,14 +141,14 @@ describe("Epic page", () => {
       })
     );
 
-    expect(screen.getByText("Native Epic created and ready for Story breakdown.")).toBeDefined();
+    expect(screen.getByText("Native Epic created and ready for direction seeding.")).toBeDefined();
     expect(screen.getByText("Active Framing context")).toBeDefined();
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("Origin")).toBeDefined();
     expect(screen.getByText("Clean")).toBeDefined();
-    expect(screen.getByText("No Stories exist for this Epic yet.")).toBeDefined();
-    expect(screen.getByText("No Stories are attached to this Epic yet.")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Create Story" })).toBeDefined();
+    expect(screen.getByText("Direction seeds")).toBeDefined();
+    expect(screen.getByText("No direction seeds exist for this Epic yet.")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Create Direction Seed" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Back to current Framing" })).toBeDefined();
     expect(screen.getByText("epic created")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();

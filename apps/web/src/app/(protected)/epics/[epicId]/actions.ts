@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   archiveGovernedObjectService,
-  createNativeStoryFromEpicService,
+  createNativeDirectionSeedFromEpicService,
   hardDeleteGovernedObjectService,
   restoreGovernedObjectService,
+  saveDirectionSeedService,
   saveEpicWorkspaceService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
@@ -61,11 +62,11 @@ export async function saveEpicWorkspaceAction(formData: FormData) {
   );
 }
 
-export async function createStoryFromEpicAction(formData: FormData) {
+export async function createDirectionSeedFromEpicAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
-  const result = await createNativeStoryFromEpicService({
+  const result = await createNativeDirectionSeedFromEpicService({
     organizationId: session.organization.organizationId,
     epicId,
     actorId: session.userId
@@ -83,12 +84,55 @@ export async function createStoryFromEpicAction(formData: FormData) {
   if (!result.ok) {
     redirect(
       buildEpicRedirect(epicId, {
-        error: result.errors[0]?.message ?? "Story could not be created."
+        error: result.errors[0]?.message ?? "Direction seed could not be created."
       })
     );
   }
 
-  redirect(`/stories/${result.data.id}?created=1`);
+  redirect(
+    buildEpicRedirect(epicId, {
+      save: "success"
+    }) + `#seed-${result.data.id}`
+  );
+}
+
+export async function saveDirectionSeedAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const epicId = String(formData.get("epicId") ?? "");
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const seedId = String(formData.get("seedId") ?? "");
+
+  const result = await saveDirectionSeedService({
+    organizationId: session.organization.organizationId,
+    id: seedId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    shortDescription: String(formData.get("shortDescription") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
+  });
+
+  revalidatePath(`/epics/${epicId}`);
+  if (outcomeId) {
+    revalidatePath(`/outcomes/${outcomeId}`);
+    revalidatePath("/framing");
+  }
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildEpicRedirect(epicId, {
+        save: "error",
+        message: result.errors[0]?.message ?? "Direction seed could not be saved."
+      }) + `#seed-${seedId}`
+    );
+  }
+
+  redirect(
+    buildEpicRedirect(epicId, {
+      save: "success"
+    }) + `#seed-${seedId}`
+  );
 }
 
 export async function hardDeleteEpicAction(formData: FormData) {

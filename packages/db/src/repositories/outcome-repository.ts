@@ -87,7 +87,7 @@ export async function listOutcomeCockpitEntries(organizationId: string) {
           _count: {
             select: {
               epics: true,
-              stories: true
+              directionSeeds: true
             }
           }
         }
@@ -187,6 +187,33 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
               purpose: true,
               summary: true,
               status: true,
+              originType: true,
+              createdMode: true,
+              lifecycleState: true,
+              archivedAt: true,
+              archiveReason: true,
+              lineageSourceType: true,
+              lineageSourceId: true,
+              lineageNote: true,
+              importedReadinessState: true,
+              createdAt: true,
+              updatedAt: true
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
+          directionSeeds: {
+            select: {
+              id: true,
+              organizationId: true,
+              outcomeId: true,
+              epicId: true,
+              key: true,
+              title: true,
+              shortDescription: true,
+              expectedBehavior: true,
+              sourceStoryId: true,
               originType: true,
               createdMode: true,
               lifecycleState: true,
@@ -315,9 +342,11 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           .map((epic) =>
             withEpicShape({
               ...epic,
+              directionSeeds: outcome.directionSeeds.filter((seed) => seed.epicId === epic.id && seed.lifecycleState === relatedLifecycleState),
               stories: scopedStories.filter((story) => story.epicId === epic.id)
             })
           ),
+        directionSeeds: outcome.directionSeeds.filter((seed) => seed.lifecycleState === relatedLifecycleState),
         stories: scopedStories
       },
       tollgate,

@@ -24,6 +24,21 @@ type TreeOutcome = {
   lineageHref?: string | null;
 };
 
+type TreeDirectionSeed = {
+  id: string;
+  key: string;
+  title: string;
+  href: string;
+  isCurrent?: boolean;
+  shortDescription?: string | null;
+  expectedBehavior?: string | null;
+  sourceStoryId?: string | null;
+  lifecycleState?: string | null;
+  originType?: string | null;
+  importedReadinessState?: string | null;
+  lineageHref?: string | null;
+};
+
 type TreeStory = {
   id: string;
   key: string;
@@ -56,7 +71,8 @@ type TreeEpic = {
   lifecycleState?: string | null | undefined;
   importedReadinessState?: string | null | undefined;
   lineageHref?: string | null | undefined;
-  stories: TreeStory[];
+  directionSeeds?: TreeDirectionSeed[];
+  stories?: TreeStory[];
 };
 
 type FramingValueSpineTreeProps = {
@@ -178,6 +194,166 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
   );
 }
 
+function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
+  const needsAttention = !seed.shortDescription?.trim();
+
+  return (
+    <div
+      className={`border-l-4 px-5 py-4 ${
+        needsAttention ? "border-l-amber-400 border-amber-200 bg-amber-50/35" : "border-l-transparent border-border/70 bg-background"
+      }`}
+      id={`seed-${seed.id}`}
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Direction seed</p>
+            <h5 className="text-sm font-semibold text-foreground">{seed.key}</h5>
+          </div>
+          <p className="mt-2 text-sm font-semibold text-foreground">{seed.title}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {seed.shortDescription?.trim() || "Add a short directional description so the seed explains what kind of change it points toward."}
+          </p>
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">Expected behavior:</span> {seed.expectedBehavior?.trim() || "Optional and not captured yet."}
+          </p>
+          {needsAttention ? (
+            <p className="mt-1 text-sm text-amber-900">
+              <span className="font-medium">Attention:</span> Short description is still missing.
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs text-muted-foreground">
+            {joinMeta([
+              getOriginLabel(seed.originType),
+              formatLabel(seed.lifecycleState),
+              seed.sourceStoryId ? `Migrated from Story ${seed.sourceStoryId}` : null,
+              formatLabel(seed.importedReadinessState)
+            ])}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {seed.lineageHref ? (
+            <Button asChild size="sm" variant="secondary">
+              <Link href={seed.lineageHref}>
+                <FileSearch className="mr-2 h-3.5 w-3.5" />
+                Open lineage
+              </Link>
+            </Button>
+          ) : null}
+          <Button asChild size="sm" variant="secondary">
+            <Link href={seed.href}>
+              Open seed record
+              <ArrowRight className="ml-2 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StoryRow({ story }: { story: TreeStory }) {
+  const storyUx = getStoryUxModel({
+    id: story.id,
+    key: story.key,
+    status: story.status ?? (story.testDefinition ? "ready_for_handoff" : "definition_blocked"),
+    lifecycleState: story.lifecycleState ?? "active",
+    testDefinition: story.testDefinition,
+    acceptanceCriteria: story.acceptanceCriteria ?? [],
+    definitionOfDone: story.definitionOfDone ?? [],
+    tollgateStatus: story.tollgateStatus ?? null,
+    pendingActionCount: story.pendingActionCount ?? 0,
+    blockedActionCount: story.blockedActionCount ?? 0
+  });
+  const missingInputs = getMissingStoryInputs(story);
+  const nextStep = storyUx.nextActions[0]?.label ?? storyUx.readinessLabel;
+  const nextStepDetail = storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
+  const needsAttention = storyUx.tone === "warning" || missingInputs.length > 0 || storyUx.blockers.length > 0;
+  const isReviewing = storyUx.statusLabel === "Ready for review";
+  const storySummary = story.valueIntent?.trim() || storyUx.statusDetail;
+  const storyMeta = joinMeta([
+    getOriginLabel(story.originType),
+    formatLabel(story.lifecycleState),
+    formatLabel(story.importedReadinessState)
+  ]);
+  const structureMeta = joinMeta([
+    `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`,
+    `DoD: ${story.definitionOfDone?.length ?? 0}`,
+    story.testDefinition ? "Test path defined" : "Test path missing"
+  ]);
+
+  const showReviewingTone = isReviewing;
+  const showReadyTone = storyUx.isReadyForHandoff;
+
+  return (
+    <div
+      className={`border-l-4 px-5 py-4 ${getStorySurfaceClasses(story, needsAttention, showReviewingTone, showReadyTone)} ${
+        needsAttention
+          ? "border-l-amber-400"
+          : showReviewingTone
+            ? "border-l-sky-400"
+            : showReadyTone
+              ? "border-l-emerald-400"
+              : "border-l-transparent"
+      }`}
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story</p>
+            <h5 className="text-sm font-semibold text-foreground">{story.key}</h5>
+          </div>
+          <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">{storySummary}</p>
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">Story path:</span> {storyUx.statusLabel}
+          </p>
+          {needsAttention ? (
+            <p className="mt-1 text-sm text-amber-900">
+              <span className="font-medium">Attention:</span> {missingInputs.join(", ") || storyUx.blockers[0]}
+            </p>
+          ) : null}
+          <p className="mt-1 text-sm text-foreground">
+            <span className="font-medium">Next step:</span> {nextStep}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
+          {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}
+          <p className="mt-1 text-xs text-muted-foreground">{structureMeta}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {story.lineageHref ? (
+            <Button asChild size="sm" variant="secondary">
+              <Link href={story.lineageHref}>
+                <FileSearch className="mr-2 h-3.5 w-3.5" />
+                Open lineage
+              </Link>
+            </Button>
+          ) : null}
+          <Button asChild size="sm" variant="secondary">
+            <Link href={story.href}>
+              Open Story
+              <ArrowRight className="ml-2 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+        <span className={`inline-flex items-center gap-2 ${story.testDefinition ? "text-emerald-800" : "text-amber-800"}`}>
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <TestTube2 className="h-3.5 w-3.5" />
+          {story.testDefinition ? "Test path defined" : "Test path missing"}
+        </span>
+        {missingInputs.length > 0 ? (
+          <span className="inline-flex items-center gap-2 text-amber-800">
+            <CircleAlert className="h-3.5 w-3.5" />
+            {missingInputs.join(", ")}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function EpicRow({
   epic,
   emptyStoryMessage,
@@ -187,11 +363,11 @@ function EpicRow({
   emptyStoryMessage: string;
   mode: "delivery" | "framing";
 }) {
-  const storyCount = epic.stories.length;
-  const storiesWithMissingInputs =
-    mode === "framing"
-      ? epic.stories.filter((story) => !story.valueIntent?.trim() && !story.acceptanceCriteria?.length).length
-      : epic.stories.filter((story) => getMissingStoryInputs(story).length > 0).length;
+  const directionSeeds = epic.directionSeeds ?? [];
+  const stories = epic.stories ?? [];
+  const itemCount = mode === "framing" ? directionSeeds.length : stories.length;
+  const framingNeedsAttention = directionSeeds.filter((seed) => !seed.shortDescription?.trim()).length;
+  const deliveryNeedsAttention = stories.filter((story) => getMissingStoryInputs(story).length > 0).length;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/55">
@@ -211,16 +387,16 @@ function EpicRow({
               {joinMeta([
                 getOriginLabel(epic.originType),
                 formatLabel(epic.lifecycleState),
-                `${
-                  mode === "framing"
-                    ? `${storyCount} direction seed${storyCount === 1 ? "" : "s"}`
-                    : `${storyCount} stor${storyCount === 1 ? "y" : "ies"} in branch`
-                }`,
-                storiesWithMissingInputs > 0
-                  ? mode === "framing"
-                    ? `${storiesWithMissingInputs} need clearer seed descriptions`
-                    : `${storiesWithMissingInputs} need attention`
-                  : null,
+                mode === "framing"
+                  ? `${itemCount} direction seed${itemCount === 1 ? "" : "s"}`
+                  : `${itemCount} stor${itemCount === 1 ? "y" : "ies"} in branch`,
+                mode === "framing"
+                  ? framingNeedsAttention > 0
+                    ? `${framingNeedsAttention} need clearer descriptions`
+                    : null
+                  : deliveryNeedsAttention > 0
+                    ? `${deliveryNeedsAttention} need attention`
+                    : null,
                 formatLabel(epic.importedReadinessState)
               ])}
             </p>
@@ -245,152 +421,16 @@ function EpicRow({
       </div>
 
       <div className="border-t border-border/70">
-        {epic.stories.length === 0 ? (
+        {itemCount === 0 ? (
           <div className="px-5 py-4 text-sm text-muted-foreground">{emptyStoryMessage}</div>
         ) : (
           <div className="divide-y divide-border/70">
-            {epic.stories.map((story) => (
-              <StoryRow key={story.id} mode={mode} story={story} />
-            ))}
+            {mode === "framing"
+              ? directionSeeds.map((seed) => <DirectionSeedRow key={seed.id} seed={seed} />)
+              : stories.map((story) => <StoryRow key={story.id} story={story} />)}
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function StoryRow({ story, mode }: { story: TreeStory; mode: "delivery" | "framing" }) {
-  const storyUx = getStoryUxModel({
-    id: story.id,
-    key: story.key,
-    status: story.status ?? (story.testDefinition ? "ready_for_handoff" : "definition_blocked"),
-    lifecycleState: story.lifecycleState ?? "active",
-    testDefinition: story.testDefinition,
-    acceptanceCriteria: story.acceptanceCriteria ?? [],
-    definitionOfDone: story.definitionOfDone ?? [],
-    tollgateStatus: story.tollgateStatus ?? null,
-    pendingActionCount: story.pendingActionCount ?? 0,
-    blockedActionCount: story.blockedActionCount ?? 0
-  });
-  const missingInputs = getMissingStoryInputs(story);
-  const nextStep = storyUx.nextActions[0]?.label ?? storyUx.readinessLabel;
-  const nextStepDetail = storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
-  const needsAttention =
-    mode === "framing"
-      ? !story.valueIntent?.trim()
-      : storyUx.tone === "warning" || missingInputs.length > 0 || storyUx.blockers.length > 0;
-  const isReviewing = storyUx.statusLabel === "Ready for review";
-  const storySummary = story.valueIntent?.trim() || storyUx.statusDetail;
-  const storyMeta = joinMeta([
-    getOriginLabel(story.originType),
-    formatLabel(story.lifecycleState),
-    formatLabel(story.importedReadinessState)
-  ]);
-  const structureMeta = joinMeta([
-    `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`,
-    `DoD: ${story.definitionOfDone?.length ?? 0}`,
-    story.testDefinition ? "Test path defined" : "Test path missing"
-  ]);
-  const expectedBehavior = story.acceptanceCriteria?.map((item) => item.trim()).filter(Boolean).slice(0, 2).join(" | ") || null;
-
-  const showReviewingTone = mode === "delivery" && isReviewing;
-  const showReadyTone = mode === "delivery" && storyUx.isReadyForHandoff;
-
-  return (
-    <div
-      className={`border-l-4 px-5 py-4 ${getStorySurfaceClasses(story, needsAttention, showReviewingTone, showReadyTone)} ${
-        needsAttention
-          ? "border-l-amber-400"
-          : showReviewingTone
-            ? "border-l-sky-400"
-            : showReadyTone
-              ? "border-l-emerald-400"
-              : "border-l-transparent"
-      }`}
-    >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {mode === "framing" ? "Direction seed" : "Story"}
-            </p>
-            <h5 className="text-sm font-semibold text-foreground">{story.key}</h5>
-          </div>
-          <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{storySummary}</p>
-          {mode === "framing" ? (
-            <>
-              <p className="mt-2 text-sm text-foreground">
-                <span className="font-medium">Linked epic intent:</span> {story.valueIntent?.trim() ? "Captured" : "Needs short description"}
-              </p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {story.valueIntent?.trim()
-                  ? story.valueIntent
-                  : "Add a short directional description so the seed explains what kind of change it points toward."}
-              </p>
-              {expectedBehavior ? (
-                <p className="mt-1 text-sm text-foreground">
-                  <span className="font-medium">Expected behavior:</span> {expectedBehavior}
-                </p>
-              ) : (
-                <p className="mt-1 text-sm text-muted-foreground">Expected behavior is optional and not captured yet.</p>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="mt-2 text-sm text-foreground">
-                <span className="font-medium">Story path:</span> {storyUx.statusLabel}
-              </p>
-              {needsAttention ? (
-                <p className="mt-1 text-sm text-amber-900">
-                  <span className="font-medium">Attention:</span> {missingInputs.join(", ") || storyUx.blockers[0]}
-                </p>
-              ) : null}
-              <p className="mt-1 text-sm text-foreground">
-                <span className="font-medium">Next step:</span> {nextStep}
-              </p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
-            </>
-          )}
-          {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}
-          <p className="mt-1 text-xs text-muted-foreground">
-            {mode === "framing"
-              ? `Seed description: ${story.valueIntent?.trim() ? "Present" : "Missing"}`
-              : structureMeta}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {story.lineageHref ? (
-            <Button asChild size="sm" variant="secondary">
-              <Link href={story.lineageHref}>
-                <FileSearch className="mr-2 h-3.5 w-3.5" />
-                Open lineage
-              </Link>
-            </Button>
-          ) : null}
-          <Button asChild size="sm" variant="secondary">
-            <Link href={story.href}>
-              {mode === "framing" ? "Open seed record" : "Open Story"}
-              <ArrowRight className="ml-2 h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-      {mode === "delivery" ? (
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
-          <span className={`inline-flex items-center gap-2 ${story.testDefinition ? "text-emerald-800" : "text-amber-800"}`}>
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <TestTube2 className="h-3.5 w-3.5" />
-            {story.testDefinition ? "Test path defined" : "Test path missing"}
-          </span>
-          {missingInputs.length > 0 ? (
-            <span className="inline-flex items-center gap-2 text-amber-800">
-              <CircleAlert className="h-3.5 w-3.5" />
-              {missingInputs.join(", ")}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 }

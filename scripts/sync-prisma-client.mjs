@@ -8,7 +8,8 @@ const repoRoot = path.resolve(scriptDir, "..");
 const sourceDir = path.join(repoRoot, "packages", "db", "generated", "client");
 const targetDirs = [
   path.join(repoRoot, "apps", "web", ".prisma", "client"),
-  path.join(repoRoot, "apps", "web", "generated", "client")
+  path.join(repoRoot, "apps", "web", "generated", "client"),
+  path.join(repoRoot, "apps", "web", "node_modules", ".prisma", "client")
 ];
 
 function syncDirectory(targetDir) {

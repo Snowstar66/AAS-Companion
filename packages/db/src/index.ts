@@ -61,6 +61,12 @@ export {
   type OutcomeFramingAiReview
 } from "./repositories/outcome-ai-repository";
 export {
+  createDirectionSeed,
+  getDirectionSeedById,
+  listDirectionSeeds,
+  updateDirectionSeed
+} from "./repositories/direction-seed-repository";
+export {
   createEpic,
   getEpicById,
   getEpicWorkspaceSnapshot,

@@ -11,9 +11,10 @@ import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
   archiveEpicAction,
-  createStoryFromEpicAction,
+  createDirectionSeedFromEpicAction,
   hardDeleteEpicAction,
   restoreEpicAction,
+  saveDirectionSeedAction,
   saveEpicWorkspaceAction
 } from "./actions";
 
@@ -76,7 +77,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
       <section className="space-y-6">
         {created ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Native Epic created and ready for Story breakdown.
+            Native Epic created and ready for direction seeding.
           </div>
         ) : null}
         {saveState === "success" ? (
@@ -145,7 +146,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
             title: epic.outcome.title,
             href: `/framing?outcomeId=${epic.outcomeId}`
           }}
-          summary="This Epic remains inside one active Framing. Only Stories linked to this Epic and its parent Outcome are shown in this project."
+          summary="This Epic remains inside one active Framing. Only direction seeds linked to this Epic and its parent Outcome are shown in this authoring view."
         />
 
         <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -154,9 +155,10 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
               emptyEpicMessage="This view is already scoped to one Epic, so no sibling Framing branches are shown here."
               emptyStoryMessage={
                 isArchived
-                  ? "Restore the Epic before resuming Story breakdown in this branch."
-                  : "Create the first native Story here. Empty branches stay empty until you add scoped child work."
+                  ? "Restore the Epic before resuming direction seeding in this branch."
+                  : "Create the first native direction seed here. Empty branches stay empty until you add scoped child work."
               }
+              mode="framing"
               epics={[
                 {
                   id: epic.id,
@@ -173,24 +175,21 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
                       ? `/review?candidateId=${epic.lineageSourceId}`
                       : null,
-                  stories: epic.stories.map((story) => ({
-                    id: story.id,
-                    key: story.key,
-                    title: story.title,
-                    href: `/stories/${story.id}`,
+                  directionSeeds: epic.directionSeeds.map((seed) => ({
+                    id: seed.id,
+                    key: seed.key,
+                    title: seed.title,
+                    href: `/epics/${epic.id}#seed-${seed.id}`,
                     isCurrent: false,
-                    valueIntent: story.valueIntent ?? null,
-                    testDefinition: story.testDefinition ?? null,
-                    acceptanceCriteria: story.acceptanceCriteria,
-                    definitionOfDone: story.definitionOfDone,
-                    status: story.status,
-                    originType: story.originType,
-                    lifecycleState: story.lifecycleState,
-                    tollgateStatus: story.tollgateStatus ?? null,
-                    importedReadinessState: story.importedReadinessState ?? null,
+                    shortDescription: seed.shortDescription ?? null,
+                    expectedBehavior: seed.expectedBehavior ?? null,
+                    sourceStoryId: seed.sourceStoryId ?? null,
+                    originType: seed.originType,
+                    lifecycleState: seed.lifecycleState,
+                    importedReadinessState: seed.importedReadinessState ?? null,
                     lineageHref:
-                      story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                        ? `/review?candidateId=${story.lineageSourceId}`
+                      seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
+                        ? `/review?candidateId=${seed.lineageSourceId}`
                         : null
                   }))
                 }
@@ -286,53 +285,88 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
               )}
             </form>
 
-            <Card className="border-border/70 shadow-sm">
+                <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <CardTitle>Story breakdown</CardTitle>
-                    <CardDescription>Create native Stories directly from this Epic without using import.</CardDescription>
+                    <CardTitle>Direction seeds</CardTitle>
+                    <CardDescription>Create lightweight direction seeds directly from this Epic without introducing delivery workflow.</CardDescription>
                   </div>
                   {!isArchived ? (
-                    <form action={createStoryFromEpicAction}>
+                    <form action={createDirectionSeedFromEpicAction}>
                       <input name="epicId" type="hidden" value={epic.id} />
                       <input name="outcomeId" type="hidden" value={epic.outcomeId} />
                       <PendingFormButton
                         className="gap-2"
                         icon={<ArrowRight className="h-4 w-4" />}
-                        label="Create Story"
-                        pendingLabel="Creating Story..."
+                        label="Create Direction Seed"
+                        pendingLabel="Creating Direction Seed..."
                       />
                     </form>
                   ) : null}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {epic.stories.length === 0 ? (
+                {epic.directionSeeds.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
-                    <p className="font-medium text-foreground">No Stories exist for this Epic yet.</p>
+                    <p className="font-medium text-foreground">No direction seeds exist for this Epic yet.</p>
                     <p className="mt-2">
                       {isArchived
-                        ? "Restore the Epic before resuming Story breakdown."
-                        : "Start the first native Story here. No demo acceptance criteria, tests, or fallback design content will be injected."}
+                        ? "Restore the Epic before resuming direction seeding."
+                        : "Start the first native direction seed here. Keep it directional and lightweight."}
                     </p>
                   </div>
                 ) : (
-                  epic.stories.map((story) => (
-                    <div className="rounded-2xl border border-border/70 bg-background p-4" key={story.id}>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{story.key}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{story.title}</p>
+                  epic.directionSeeds.map((seed) => (
+                    <form action={saveDirectionSeedAction} className="rounded-2xl border border-border/70 bg-background p-4" id={`seed-${seed.id}`} key={seed.id}>
+                      <input name="epicId" type="hidden" value={epic.id} />
+                      <input name="outcomeId" type="hidden" value={epic.outcomeId} />
+                      <input name="seedId" type="hidden" value={seed.id} />
+                      <div className="grid gap-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{seed.key}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {seed.sourceStoryId ? `Migrated from Story ${seed.sourceStoryId}` : "Native framing seed"}
+                            </p>
+                          </div>
+                          <PendingFormButton
+                            className="gap-2"
+                            icon={<ArrowRight className="h-4 w-4" />}
+                            label="Save Seed"
+                            pendingLabel="Saving Seed..."
+                          />
                         </div>
-                        <Button asChild className="gap-2" variant="secondary">
-                          <Link href={`/stories/${story.id}`}>
-                            Open Story in current Framing
-                            <ArrowRight className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Seed title</span>
+                          <input
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                            defaultValue={seed.title}
+                            disabled={isArchived}
+                            name="title"
+                            type="text"
+                          />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Short description</span>
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                            defaultValue={seed.shortDescription ?? ""}
+                            disabled={isArchived}
+                            name="shortDescription"
+                          />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                          <textarea
+                            className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                            defaultValue={seed.expectedBehavior ?? ""}
+                            disabled={isArchived}
+                            name="expectedBehavior"
+                          />
+                        </label>
                       </div>
-                    </div>
+                    </form>
                   ))
                 )}
               </CardContent>
@@ -340,14 +374,14 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
           </div>
 
           <div className="space-y-6">
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
                 <CardTitle>Clean project scope</CardTitle>
-                <CardDescription>Only the current Outcome, this Epic, and its Stories are surfaced here.</CardDescription>
+                <CardDescription>Only the current Outcome, this Epic, and its direction seeds are surfaced here.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>No Demo Epics or Stories are shown in this context unless you opened Demo explicitly.</p>
-                <p>{isArchived ? "Restore the Epic to continue native work from here." : "Use Create Story to continue design work natively from this Epic."}</p>
+                <p>No Demo Epics or delivery Stories are shown in this context unless you opened Demo explicitly.</p>
+                <p>{isArchived ? "Restore the Epic to continue native work from here." : "Use Create Direction Seed to continue framing work natively from this Epic."}</p>
               </CardContent>
             </Card>
 

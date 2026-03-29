@@ -179,7 +179,7 @@ export async function getFramingCockpitData(
           ownerLabel: entry.valueOwner?.fullName ?? entry.valueOwner?.email ?? "Unassigned",
           timeframe: entry.timeframe,
           epicCount: entry._count.epics,
-          storyCount: entry._count.stories,
+          storyCount: entry._count.directionSeeds,
           updatedAtLabel: formatUpdatedAt(entry.updatedAt),
           detailHref: `/framing?outcomeId=${entry.id}`
         };

@@ -232,8 +232,8 @@ export function FramingCockpit({
               <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">What comes later</p>
                 <p className="mt-3 text-sm leading-6 text-foreground">
-                  Detailed Epic and Story breakdown belongs later. Use this cockpit to pick the right case and move
-                  into design only when the handshake is stable.
+                  Delivery planning belongs later. Use this cockpit to pick the right case and move into deeper framing
+                  only when the handshake is stable.
                 </p>
               </div>
             </div>
@@ -512,8 +512,8 @@ export function FramingCockpit({
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em]">Linked work</p>
                           <p className="mt-2 text-foreground">
-                            {item.epicCount} epic{item.epicCount === 1 ? "" : "s"} / {item.storyCount} story
-                            {item.storyCount === 1 ? "" : "ies"}
+                            {item.epicCount} epic{item.epicCount === 1 ? "" : "s"} / {item.storyCount} direction seed
+                            {item.storyCount === 1 ? "" : "s"}
                           </p>
                         </div>
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">

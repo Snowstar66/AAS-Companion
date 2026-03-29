@@ -97,6 +97,25 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                   importedReadinessState: true,
                   lineageSourceType: true,
                   lineageSourceId: true,
+                  directionSeeds: {
+                    select: {
+                      id: true,
+                      epicId: true,
+                      key: true,
+                      title: true,
+                      shortDescription: true,
+                      expectedBehavior: true,
+                      sourceStoryId: true,
+                      originType: true,
+                      lifecycleState: true,
+                      importedReadinessState: true,
+                      lineageSourceType: true,
+                      lineageSourceId: true
+                    },
+                    orderBy: {
+                      createdAt: "asc"
+                    }
+                  },
                   stories: {
                     select: {
                       id: true,
@@ -117,6 +136,25 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                       createdAt: "asc"
                     }
                   }
+                },
+                orderBy: {
+                  createdAt: "asc"
+                }
+              },
+              directionSeeds: {
+                select: {
+                  id: true,
+                  key: true,
+                  title: true,
+                  epicId: true,
+                  shortDescription: true,
+                  expectedBehavior: true,
+                  sourceStoryId: true,
+                  originType: true,
+                  lifecycleState: true,
+                  importedReadinessState: true,
+                  lineageSourceType: true,
+                  lineageSourceId: true
                 },
                 orderBy: {
                   createdAt: "asc"
@@ -181,9 +219,11 @@ export async function getProjectSpineSnapshot(organizationId: string) {
           epics: outcome.epics.map((epic) =>
             withEpicShape({
               ...epic,
+              directionSeeds: epic.directionSeeds,
               stories: attachStoryReadinessTollgateStatus(epic.stories, storyTollgateStatuses)
             })
-          )
+          ),
+          directionSeeds: outcome.directionSeeds
         }))
       }
     };
@@ -237,6 +277,25 @@ export async function getWorkspaceSnapshot(organizationId: string) {
               importedReadinessState: true,
               lineageSourceType: true,
               lineageSourceId: true,
+              directionSeeds: {
+                select: {
+                  id: true,
+                  epicId: true,
+                  key: true,
+                  title: true,
+                  shortDescription: true,
+                  expectedBehavior: true,
+                  sourceStoryId: true,
+                  originType: true,
+                  lifecycleState: true,
+                  importedReadinessState: true,
+                  lineageSourceType: true,
+                  lineageSourceId: true
+                },
+                orderBy: {
+                  createdAt: "asc"
+                }
+              },
               stories: {
                 select: {
                   id: true,
@@ -257,6 +316,25 @@ export async function getWorkspaceSnapshot(organizationId: string) {
                   createdAt: "asc"
                 }
               }
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
+          directionSeeds: {
+            select: {
+              id: true,
+              key: true,
+              title: true,
+              epicId: true,
+              shortDescription: true,
+              expectedBehavior: true,
+              sourceStoryId: true,
+              originType: true,
+              lifecycleState: true,
+              importedReadinessState: true,
+              lineageSourceType: true,
+              lineageSourceId: true
             },
             orderBy: {
               createdAt: "asc"
@@ -351,9 +429,11 @@ export async function getWorkspaceSnapshot(organizationId: string) {
       ...organization,
       outcomes: organization.outcomes.map((outcome) => ({
         ...outcome,
+        directionSeeds: outcome.directionSeeds,
         epics: outcome.epics.map((epic) =>
           withEpicShape({
             ...epic,
+            directionSeeds: epic.directionSeeds,
             stories: epic.stories
           })
         )

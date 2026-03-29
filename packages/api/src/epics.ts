@@ -1,13 +1,15 @@
 import {
+  createDirectionSeed,
   createEpic,
-  createStory,
+  getDirectionSeedById,
   getEpicById,
   getEpicWorkspaceSnapshot,
   getOutcomeById,
+  listDirectionSeeds,
   listEpics,
-  listStories,
   updateEpic
 } from "@aas-companion/db";
+import { updateDirectionSeed } from "@aas-companion/db";
 import {
   buildGovernedRemovalDecision,
   type GovernedChildImpact
@@ -35,9 +37,9 @@ function toGovernedChildImpact(record: {
   key: string;
   title: string;
   lifecycleState: "active" | "archived";
-}): GovernedChildImpact {
+}, objectType: GovernedChildImpact["objectType"] = "story"): GovernedChildImpact {
   return {
-    objectType: "story",
+    objectType,
     id: record.id,
     key: record.key,
     title: record.title,
@@ -46,7 +48,10 @@ function toGovernedChildImpact(record: {
 }
 
 function buildEpicRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getEpicWorkspaceSnapshot>>>) {
-  const activeChildren = snapshot.epic.stories.map((story) => toGovernedChildImpact(story));
+  const activeChildren = [
+    ...snapshot.epic.directionSeeds.map((seed) => toGovernedChildImpact(seed, "direction_seed")),
+    ...snapshot.epic.stories.map((story) => toGovernedChildImpact(story))
+  ];
   const archivedAncestorLabels =
     snapshot.epic.lifecycleState === "archived" && snapshot.epic.outcome.lifecycleState === "archived"
       ? [`Outcome ${snapshot.epic.outcome.key}`]
@@ -144,7 +149,7 @@ export async function createNativeEpicFromOutcomeService(input: {
   );
 }
 
-export async function createNativeStoryFromEpicService(input: {
+export async function createNativeDirectionSeedFromEpicService(input: {
   organizationId: string;
   epicId: string;
   actorId?: string | null;
@@ -158,30 +163,52 @@ export async function createNativeStoryFromEpicService(input: {
     });
   }
 
-  const stories = await listStories(input.organizationId, { includeArchived: true });
-  const key = buildNextKey(stories.map((story) => story.key), "STR");
-  const outcome = await getOutcomeById(input.organizationId, epic.outcomeId);
+  const directionSeeds = await listDirectionSeeds(input.organizationId, { includeArchived: true });
+  const key = buildNextKey(directionSeeds.map((seed) => seed.key), "SEED");
 
   return success(
-    await createStory({
+    await createDirectionSeed({
       organizationId: input.organizationId,
       outcomeId: epic.outcomeId,
       epicId: epic.id,
       key,
-      title: "New story",
-      storyType: "outcome_delivery",
-      valueIntent: "Describe the intended value for this story.",
-      acceptanceCriteria: [],
-      aiUsageScope: [],
-      aiAccelerationLevel: outcome?.aiAccelerationLevel ?? "level_2",
-      testDefinition: null,
-      definitionOfDone: [],
-      status: "draft",
+      title: "New direction seed",
+      shortDescription: "Describe the directional change this seed points toward.",
+      expectedBehavior: null,
       originType: "native",
       createdMode: "clean",
       actorId: input.actorId ?? null
     })
   );
+}
+
+export async function saveDirectionSeedService(input: {
+  organizationId: string;
+  id: string;
+  actorId?: string | null;
+  title?: string;
+  shortDescription?: string;
+  expectedBehavior?: string | null;
+}) {
+  const existing = await getDirectionSeedById(input.organizationId, input.id);
+
+  if (!existing) {
+    return failure({
+      code: "direction_seed_not_found",
+      message: "Direction seed was not found in the current organization."
+    });
+  }
+
+  const result = await updateDirectionSeed({
+    organizationId: input.organizationId,
+    id: input.id,
+    actorId: input.actorId ?? null,
+    title: input.title,
+    shortDescription: input.shortDescription,
+    expectedBehavior: input.expectedBehavior
+  });
+
+  return success(result);
 }
 
 export async function saveEpicWorkspaceService(input: {

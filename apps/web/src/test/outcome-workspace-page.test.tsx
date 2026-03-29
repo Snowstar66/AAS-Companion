@@ -44,7 +44,8 @@ vi.mock("@aas-companion/api", async () => {
           createdAt: new Date("2026-03-23T20:00:00.000Z"),
           updatedAt: new Date("2026-03-23T20:00:00.000Z"),
           epics: [],
-          stories: []
+          stories: [],
+          directionSeeds: []
         },
         tollgate: {
           id: "tg-1",
@@ -241,7 +242,6 @@ describe("Outcome page", () => {
     expect(screen.getByRole("combobox", { name: /AI level/i })).toBeDefined();
     expect(screen.getByText("Design direction seeds")).toBeDefined();
     expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
-    expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
     expect(screen.getByText("Framing tollgate")).toBeDefined();

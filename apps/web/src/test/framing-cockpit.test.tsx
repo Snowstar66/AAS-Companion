@@ -37,7 +37,8 @@ vi.mock("@aas-companion/api", async () => {
           createdAt: new Date("2026-03-23T20:00:00.000Z"),
           updatedAt: new Date("2026-03-23T20:00:00.000Z"),
           epics: [],
-          stories: []
+          stories: [],
+          directionSeeds: []
         },
         tollgate: {
           id: "tg-1",

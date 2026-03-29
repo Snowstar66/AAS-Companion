@@ -55,6 +55,7 @@ function toGovernedChildImpact(
 function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getOutcomeWorkspaceSnapshot>>>) {
   const activeChildren = [
     ...snapshot.outcome.epics.map((epic) => toGovernedChildImpact("epic", epic)),
+    ...snapshot.outcome.directionSeeds.map((seed) => toGovernedChildImpact("direction_seed", seed)),
     ...snapshot.outcome.stories.map((story) => toGovernedChildImpact("story", story))
   ];
 
@@ -155,16 +156,6 @@ async function getImportedStoryBuildBlockers(input: {
   }
 
   return [];
-}
-
-function summarizeExpectedBehavior(acceptanceCriteria: string[]) {
-  const normalized = acceptanceCriteria.map((item) => item.trim()).filter(Boolean);
-
-  if (normalized.length === 0) {
-    return null;
-  }
-
-  return normalized.slice(0, 2).join(" | ");
 }
 
 export async function getOutcomeWorkspaceService(organizationId: string, outcomeId: string) {
@@ -306,14 +297,14 @@ export async function reviewOutcomeFramingWithAiService(input: {
           title: epic.title,
           purpose: epic.purpose ?? null,
           scopeBoundary: epic.scopeBoundary ?? null,
-          seedCount: epic.stories.length
+          seedCount: epic.directionSeeds.length
         })),
-        directionSeeds: snapshot.outcome.stories.map((story) => ({
-          seedId: story.key,
-          title: story.title,
-          epicKey: snapshot.outcome.epics.find((epic) => epic.id === story.epicId)?.key ?? null,
-          shortDescription: story.valueIntent?.trim() || null,
-          expectedBehavior: summarizeExpectedBehavior(story.acceptanceCriteria)
+        directionSeeds: snapshot.outcome.directionSeeds.map((seed) => ({
+          seedId: seed.key,
+          title: seed.title,
+          epicKey: snapshot.outcome.epics.find((epic) => epic.id === seed.epicId)?.key ?? null,
+          shortDescription: seed.shortDescription?.trim() || null,
+          expectedBehavior: seed.expectedBehavior?.trim() || null
         }))
       });
 

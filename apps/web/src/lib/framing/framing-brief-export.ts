@@ -22,13 +22,14 @@ type FramingBriefOutcome = {
     title: string;
     scopeBoundary?: string | null;
   }>;
-  stories: Array<{
+  directionSeeds: Array<{
     id: string;
     key: string;
     title: string;
     epicId?: string | null;
-    valueIntent?: string | null;
-    acceptanceCriteria: string[];
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
+    sourceStoryId?: string | null;
   }>;
 };
 
@@ -102,16 +103,6 @@ function formatSentence(value: string) {
   return value.replaceAll("_", " ");
 }
 
-function summarizeExpectedBehavior(acceptanceCriteria: string[]) {
-  const normalized = acceptanceCriteria.map((item) => item.trim()).filter(Boolean);
-
-  if (normalized.length === 0) {
-    return null;
-  }
-
-  return normalized.slice(0, 2).join(" | ");
-}
-
 export function buildFramingBriefExport(input: {
   outcome: FramingBriefOutcome;
   blockers: string[];
@@ -145,19 +136,19 @@ export function buildFramingBriefExport(input: {
     },
     direction_seeds: {
       epic_count: input.outcome.epics.length,
-      seed_count: input.outcome.stories.length,
+      seed_count: input.outcome.directionSeeds.length,
       epics: input.outcome.epics.map((epic) => ({
         key: epic.key,
         title: epic.title,
         scope_boundary: epic.scopeBoundary ?? null,
-        seed_count: input.outcome.stories.filter((story) => story.epicId === epic.id).length
+        seed_count: input.outcome.directionSeeds.filter((seed) => seed.epicId === epic.id).length
       })),
-      seeds: input.outcome.stories.map((story) => ({
-        seed_id: story.key,
-        title: story.title,
-        linked_epic: story.epicId ? epicKeyById.get(story.epicId) ?? null : null,
-        short_description: story.valueIntent?.trim() || null,
-        expected_behavior: summarizeExpectedBehavior(story.acceptanceCriteria)
+      seeds: input.outcome.directionSeeds.map((seed) => ({
+        seed_id: seed.key,
+        title: seed.title,
+        linked_epic: seed.epicId ? epicKeyById.get(seed.epicId) ?? null : null,
+        short_description: seed.shortDescription?.trim() || null,
+        expected_behavior: seed.expectedBehavior?.trim() || null
       }))
     },
     guidance_for_next_tool: {
@@ -176,10 +167,10 @@ export function buildFramingBriefExport(input: {
         key: epic.key,
         epic_id: epic.id
       })),
-      direction_seeds: input.outcome.stories.map((story) => ({
-        seed_id: story.key,
-        source_story_id: story.id,
-        linked_epic_id: story.epicId ?? null
+      direction_seeds: input.outcome.directionSeeds.map((seed) => ({
+        seed_id: seed.key,
+        source_story_id: seed.sourceStoryId ?? seed.id,
+        linked_epic_id: seed.epicId ?? null
       })),
       lifecycle_state: input.outcome.lifecycleState,
       origin_type: input.outcome.originType,
@@ -238,7 +229,7 @@ export function buildFramingBriefExport(input: {
           `  Short description: ${seed.short_description ?? "Not captured yet"}`,
           `  Expected behavior: ${seed.expected_behavior ?? "Optional and not captured yet"}`
         ])
-      : ["- No story seeds captured yet."]),
+      : ["- No direction seeds captured yet."]),
     "",
     "## Suggested Use In The Next Tool",
     payload.guidance_for_next_tool.intended_use,

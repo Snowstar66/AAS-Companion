@@ -6,7 +6,6 @@ import { AppShell } from "@/components/layout/app-shell";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { withDevTiming } from "@/lib/dev-timing";
-import { getStoryUxModel } from "@/lib/workspace/story-ux";
 
 type WorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -79,33 +78,10 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       null;
 
     const selectedEpics = selectedOutcome?.epics.filter((epic) => epic.lifecycleState === "active") ?? [];
-    const selectedStories = selectedEpics.flatMap((epic) => epic.stories.filter((story) => story.lifecycleState === "active"));
-    const readyStories = selectedStories.filter((story) =>
-      getStoryUxModel({
-        id: story.id,
-        key: story.key,
-        status: story.status,
-        lifecycleState: story.lifecycleState,
-        testDefinition: story.testDefinition ?? null,
-        acceptanceCriteria: story.acceptanceCriteria,
-        definitionOfDone: story.definitionOfDone,
-        tollgateStatus: story.tollgateStatus ?? null
-      }).isReadyForHandoff
+    const selectedDirectionSeeds = selectedEpics.flatMap((epic) =>
+      (epic.directionSeeds ?? []).filter((seed) => seed.lifecycleState === "active")
     );
-    const attentionStories = selectedStories.filter((story) => {
-      const model = getStoryUxModel({
-        id: story.id,
-        key: story.key,
-        status: story.status,
-        lifecycleState: story.lifecycleState,
-        testDefinition: story.testDefinition ?? null,
-        acceptanceCriteria: story.acceptanceCriteria,
-        definitionOfDone: story.definitionOfDone,
-        tollgateStatus: story.tollgateStatus ?? null
-      });
-
-      return model.tone === "warning" || model.statusLabel === "Ready for review";
-    });
+    const attentionSeeds = selectedDirectionSeeds.filter((seed) => !seed.shortDescription?.trim());
     const lineageTargets = [
       ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
         ? [{ href: `/review?candidateId=${selectedOutcome.lineageSourceId}`, label: `Open ${selectedOutcome.key} lineage` }]
@@ -116,16 +92,15 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           href: `/review?candidateId=${epic.lineageSourceId}`,
           label: `Open ${epic.key} lineage`
         })),
-      ...selectedStories
-        .filter((story) => story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId)
-        .map((story) => ({
-          href: `/review?candidateId=${story.lineageSourceId}`,
-          label: `Open ${story.key} lineage`
+      ...selectedDirectionSeeds
+        .filter((seed) => seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId)
+        .map((seed) => ({
+          href: `/review?candidateId=${seed.lineageSourceId}`,
+          label: `Open ${seed.key} lineage`
         }))
     ];
-    const firstVisibleStory = selectedStories[0] ?? null;
-    const firstReadyStory = readyStories[0] ?? null;
-    const firstAttentionStory = attentionStories[0] ?? null;
+    const firstVisibleSeed = selectedDirectionSeeds[0] ?? null;
+    const firstAttentionSeed = attentionSeeds[0] ?? null;
     const firstLineageTarget = lineageTargets[0] ?? null;
 
     return (
@@ -153,20 +128,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
-                actionHref={firstVisibleStory ? `/stories/${firstVisibleStory.id}` : undefined}
-                actionLabel={firstVisibleStory ? "Open first Story" : undefined}
+                actionHref={firstVisibleSeed ? `/epics/${firstVisibleSeed.epicId}#seed-${firstVisibleSeed.id}` : undefined}
+                actionLabel={firstVisibleSeed ? "Open first seed" : undefined}
                 className="border-border/70 bg-background/90 text-foreground"
-                count={selectedStories.length}
+                count={selectedDirectionSeeds.length}
                 description={`${selectedEpics.length} epic${selectedEpics.length === 1 ? "" : "s"} visible in the active Framing.`}
-                label="Visible stories"
-              />
-              <StatCard
-                actionHref={firstReadyStory ? `/stories/${firstReadyStory.id}` : undefined}
-                actionLabel={firstReadyStory ? "Open ready Story" : undefined}
-                className="border-emerald-200 bg-emerald-50/85 text-emerald-950"
-                count={readyStories.length}
-                description="Stories that have been approved and can move forward into design."
-                label="Ready for design"
+                label="Visible seeds"
               />
               <StatCard
                 actionHref={firstLineageTarget?.href}
@@ -177,11 +144,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 label="Imported lineage"
               />
               <StatCard
-                actionHref={firstAttentionStory ? `/stories/${firstAttentionStory.id}` : undefined}
-                actionLabel={firstAttentionStory ? "Open next attention story" : undefined}
+                actionHref={firstAttentionSeed ? `/epics/${firstAttentionSeed.epicId}#seed-${firstAttentionSeed.id}` : undefined}
+                actionLabel={firstAttentionSeed ? "Open next attention seed" : undefined}
                 className="border-amber-200 bg-amber-50/85 text-amber-950"
-                count={attentionStories.length}
-                description="Stories that still need work before the branch feels clear."
+                count={attentionSeeds.length}
+                description="Direction seeds that still need clearer framing before the branch feels clear."
                 label="Needs attention"
               />
             </div>
@@ -204,9 +171,10 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
             ) : null}
 
             <FramingValueSpineTree
-              description="The active branch is listed from Framing into Epics and Stories with the same story attention rules used elsewhere."
+              description="The active branch is listed from Framing into Epics and Direction Seeds using the same framing model shown elsewhere."
               emptyEpicMessage="No active Epics are currently visible in this branch."
-              emptyStoryMessage="No active Stories are currently visible in this Epic."
+              emptyStoryMessage="No active Direction Seeds are currently visible in this Epic."
+              mode="framing"
               epics={selectedEpics.map((epic) => ({
                 id: epic.id,
                 key: epic.key,
@@ -222,28 +190,23 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                   epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
                     ? `/review?candidateId=${epic.lineageSourceId}`
                     : null,
-                stories: epic.stories
-                  .filter((story) => story.lifecycleState === "active")
-                  .map((story) => ({
-                    id: story.id,
-                    key: story.key,
-                    title: story.title,
-                    href: `/stories/${story.id}`,
+                directionSeeds: (epic.directionSeeds ?? [])
+                  .filter((seed) => seed.lifecycleState === "active")
+                  .map((seed) => ({
+                    id: seed.id,
+                    key: seed.key,
+                    title: seed.title,
+                    href: `/epics/${epic.id}#seed-${seed.id}`,
                     isCurrent: false,
-                    valueIntent: story.valueIntent ?? null,
-                    testDefinition: story.testDefinition ?? null,
-                    acceptanceCriteria: story.acceptanceCriteria,
-                    definitionOfDone: story.definitionOfDone,
-                    status: story.status,
-                    originType: story.originType,
-                    lifecycleState: story.lifecycleState,
-                    tollgateStatus: story.tollgateStatus ?? null,
-                    pendingActionCount: 0,
-                    blockedActionCount: 0,
-                    importedReadinessState: story.importedReadinessState ?? null,
+                    shortDescription: seed.shortDescription ?? null,
+                    expectedBehavior: seed.expectedBehavior ?? null,
+                    sourceStoryId: seed.sourceStoryId ?? null,
+                    originType: seed.originType,
+                    lifecycleState: seed.lifecycleState,
+                    importedReadinessState: seed.importedReadinessState ?? null,
                     lineageHref:
-                      story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                        ? `/review?candidateId=${story.lineageSourceId}`
+                      seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
+                        ? `/review?candidateId=${seed.lineageSourceId}`
                         : null
                   }))
               }))}

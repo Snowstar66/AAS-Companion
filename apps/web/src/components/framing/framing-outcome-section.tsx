@@ -163,7 +163,7 @@ export function FramingOutcomeSection({
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
-  const directionSeedCount = outcome.stories.length;
+  const directionSeedCount = outcome.directionSeeds.length;
 
   return (
     <section className="space-y-6">
@@ -302,7 +302,7 @@ export function FramingOutcomeSection({
           <FramingContextCard
             epic={null}
             outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref }}
-            summary="Opening this Framing establishes the active business context. Only Epics and Stories attached to this case are shown by default."
+            summary="Opening this Framing establishes the active business context. Only Epics and Direction Seeds attached to this case are shown by default."
           />
         </>
       ) : null}
@@ -514,26 +514,23 @@ export function FramingOutcomeSection({
                     epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
                       ? `/review?candidateId=${epic.lineageSourceId}`
                       : null,
-                  stories: outcome.stories
-                    .filter((story) => story.epicId === epic.id)
-                    .map((story) => ({
-                      id: story.id,
-                      key: story.key,
-                      title: story.title,
-                      href: `/stories/${story.id}`,
+                  directionSeeds: outcome.directionSeeds
+                    .filter((seed) => seed.epicId === epic.id)
+                    .map((seed) => ({
+                      id: seed.id,
+                      key: seed.key,
+                      title: seed.title,
+                      href: `/epics/${epic.id}#seed-${seed.id}`,
                       isCurrent: false,
-                      valueIntent: story.valueIntent ?? null,
-                      testDefinition: story.testDefinition ?? null,
-                      acceptanceCriteria: story.acceptanceCriteria,
-                      definitionOfDone: story.definitionOfDone,
-                      status: story.status,
-                      originType: story.originType,
-                      lifecycleState: story.lifecycleState,
-                      tollgateStatus: story.tollgateStatus ?? null,
-                      importedReadinessState: story.importedReadinessState ?? null,
+                      shortDescription: seed.shortDescription ?? null,
+                      expectedBehavior: seed.expectedBehavior ?? null,
+                      sourceStoryId: seed.sourceStoryId ?? null,
+                      originType: seed.originType,
+                      lifecycleState: seed.lifecycleState,
+                      importedReadinessState: seed.importedReadinessState ?? null,
                       lineageHref:
-                        story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                          ? `/review?candidateId=${story.lineageSourceId}`
+                        seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
+                          ? `/review?candidateId=${seed.lineageSourceId}`
                       : null
                     }))
                 }))}

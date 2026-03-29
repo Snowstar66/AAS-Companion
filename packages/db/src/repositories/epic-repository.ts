@@ -106,6 +106,11 @@ export async function getEpicWorkspaceSnapshot(organizationId: string, id: strin
       },
       include: {
         outcome: true,
+        directionSeeds: {
+          orderBy: {
+            createdAt: "asc"
+          }
+        },
         stories: {
           orderBy: {
             createdAt: "asc"
@@ -154,6 +159,7 @@ export async function getEpicWorkspaceSnapshot(organizationId: string, id: strin
   return {
     epic: withEpicShape({
       ...epic,
+      directionSeeds: epic.directionSeeds.filter((seed) => seed.lifecycleState === relatedLifecycleState),
       stories: attachStoryReadinessTollgateStatus(
         epic.stories.filter((story) => story.lifecycleState === relatedLifecycleState),
         storyTollgateStatuses
