@@ -388,8 +388,8 @@ function queueItems(
 
   items.push({
     key: "unmapped",
-    title: "Sections not yet absorbed into a candidate",
-    description: "These source sections are still outside any mapped Outcome, Epic, or Story candidate and need a human decision.",
+    title: "Slask and sections not yet absorbed into a candidate",
+    description: "These source sections are still outside any mapped Outcome, Epic, or Story candidate and stay in the slask until a human decides what to do with them.",
     items: (session.mappedArtifacts?.unmappedSections ?? [])
       .filter((section) => section.sourceReference.fileId === file.id)
       .map((section) => ({
@@ -1047,7 +1047,7 @@ export function ArtifactIntakeReviewWorkspace({
         <CardHeader>
           <CardTitle>Correction queue</CardTitle>
           <CardDescription>
-            Start here. Clear linkage, content gaps, human-only decisions, and truly leftover source sections before you approve the import into the project.
+            Start here. Clear linkage, content gaps, human-only decisions, and truly leftover source sections in the slask before you approve the import into the project.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

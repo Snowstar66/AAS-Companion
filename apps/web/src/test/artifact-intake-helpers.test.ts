@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   analyzeArtifactCandidateCompliance,
+  buildAiAssistedArtifactProcessingResult,
   classifyArtifactSource,
   getArtifactCandidateIssueProgress,
   getArtifactFileExtension,
@@ -21,7 +22,7 @@ describe("artifact intake helpers", () => {
 
   it("rejects unsupported artifact file types", () => {
     expect(isSupportedArtifactFile("diagram.pdf")).toBe(false);
-    expect(getArtifactFileExtension("notes.txt")).toBe("");
+    expect(getArtifactFileExtension("notes.txt")).toBe(".txt");
   });
 
   it("classifies BMAD-style planning markdown with high confidence", () => {
@@ -110,6 +111,112 @@ describe("artifact intake helpers", () => {
     expect(storyCandidate?.relationshipState).toBe("mapped");
     expect(storyCandidate?.source.fileName).toBe("delivery-plan.md");
     expect(mapping.unmappedSections.some((section) => section.kind === "architecture_notes")).toBe(true);
+  });
+
+  it("builds AI-assisted import results on top of the existing intake model", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-ai-1",
+      "messy-intake.txt",
+      [
+        "# Workshop notes",
+        "",
+        "## Desired change",
+        "Reduce onboarding delay for supplier teams within the first month.",
+        "",
+        "## Delivery slice",
+        "Create intake cues and a review inbox for weakly structured material.",
+        "",
+        "## Candidate story",
+        "Let a value owner review AI-imported leftovers before promotion."
+      ].join("\n")
+    );
+    const desiredChangeSection = parsed.sections.find((section) => section.title === "Desired change");
+    const deliverySliceSection = parsed.sections.find((section) => section.title === "Delivery slice");
+    const candidateStorySection = parsed.sections.find((section) => section.title === "Candidate story");
+
+    const result = buildAiAssistedArtifactProcessingResult({
+      files: [
+        {
+          id: "file-ai-1",
+          fileName: "messy-intake.txt",
+          parsedArtifacts: parsed
+        }
+      ],
+      interpretation: {
+        files: [
+          {
+            fileName: "messy-intake.txt",
+            sourceType: "mixed_markdown_bundle",
+            confidence: "medium",
+            rationale: "Loose notes contain outcome, epic, and story material.",
+            sectionDecisions: [
+              {
+                sectionId: desiredChangeSection!.id,
+                kind: "outcome_candidate",
+                confidence: "medium"
+              },
+              {
+                sectionId: deliverySliceSection!.id,
+                kind: "epic_candidate",
+                confidence: "medium"
+              },
+              {
+                sectionId: candidateStorySection!.id,
+                kind: "story_candidate",
+                confidence: "medium"
+              }
+            ],
+            candidates: [
+              {
+                sectionId: desiredChangeSection!.id,
+                type: "outcome",
+                title: "Reduce onboarding delay",
+                summary: "Reduce onboarding delay for supplier teams within the first month.",
+                draftRecord: {
+                  title: "Reduce onboarding delay",
+                  outcomeStatement: "Reduce onboarding delay for supplier teams within the first month."
+                }
+              },
+              {
+                sectionId: deliverySliceSection!.id,
+                type: "epic",
+                title: "Create intake cues and review inbox",
+                summary: "Create intake cues and a review inbox for weakly structured material.",
+                draftRecord: {
+                  title: "Create intake cues and review inbox",
+                  purpose: "Create intake cues and a review inbox for weakly structured material.",
+                  scopeBoundary: "Covers import interpretation and manual review, not downstream promotion."
+                }
+              },
+              {
+                sectionId: candidateStorySection!.id,
+                type: "story",
+                title: "Review AI-imported leftovers before promotion",
+                summary: "Let a value owner review AI-imported leftovers before promotion.",
+                acceptanceCriteria: ["Leftovers remain visible in a slask"],
+                testNotes: ["Verify leftover sections stay reviewable"],
+                draftRecord: {
+                  title: "Review AI-imported leftovers before promotion",
+                  storyType: "outcome_delivery",
+                  valueIntent: "Let a value owner review AI-imported leftovers before promotion.",
+                  acceptanceCriteria: ["Leftovers remain visible in a slask"],
+                  testDefinition: "Verify leftover sections stay reviewable",
+                  definitionOfDone: ["Human review can clear or keep leftovers pending"]
+                }
+              }
+            ],
+            leftoverSectionIds: [deliverySliceSection!.id]
+          }
+        ]
+      }
+    });
+
+    expect(result.files[0]?.parseResult.classification.sourceType).toBe("mixed_markdown_bundle");
+    expect(result.mappingResult.candidates).toHaveLength(3);
+    expect(result.mappingResult.candidates[2]?.draftRecord?.definitionOfDone).toEqual([
+      "Human review can clear or keep leftovers pending"
+    ]);
+    expect(result.mappingResult.unmappedSections.map((section) => section.id)).toContain(deliverySliceSection!.id);
   });
 
   it("maps structured story spec files into one story candidate instead of fragmented outcome-like candidates", () => {
@@ -530,5 +637,49 @@ describe("artifact intake helpers", () => {
 
     expect(compliance.findings.some((finding) => finding.message.includes("->"))).toBe(true);
     expect(compliance.findings.some((finding) => finding.message.includes("→"))).toBe(false);
+  });
+  it("flags activity-shaped outcomes for human strengthening without blocking them", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-outcome-ai-1",
+        type: "outcome",
+        title: "New dashboard",
+        summary: "Implement a new dashboard for suppliers.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-outcome-ai-1",
+          fileName: "messy-intake.txt",
+          sectionId: "section-outcome",
+          sectionTitle: "Desired change",
+          sectionMarker: "## Desired change",
+          sourceType: "mixed_markdown_bundle",
+          confidence: "medium"
+        },
+        inferredOutcomeCandidateId: null,
+        inferredEpicCandidateId: null,
+        relationshipState: "mapped",
+        relationshipNote: null,
+        acceptanceCriteria: [],
+        testNotes: []
+      },
+      reviewStatus: "edited",
+      draftRecord: {
+        key: "OUT-NEW",
+        title: "New dashboard",
+        outcomeStatement: "Implement a new dashboard for suppliers.",
+        baselineDefinition: "Current onboarding takes too long.",
+        baselineSource: "Workshop notes"
+      },
+      humanDecisions: {
+        valueOwnerId: "user-1",
+        aiAccelerationLevel: "level_2",
+        riskProfile: "medium",
+        baselineValidity: "confirmed"
+      }
+    });
+
+    expect(compliance.findings.some((finding) => finding.code === "outcome_statement_activity_shaped")).toBe(true);
+    expect(compliance.summary.uncertain).toBeGreaterThan(0);
+    expect(compliance.summary.blocked).toBe(0);
   });
 });

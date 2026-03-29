@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "../../generated/client";
 import {
+  buildAiAssistedArtifactProcessingResult,
   artifactFileSectionDispositionActionInputSchema,
   artifactIssueDispositionMapSchema,
   artifactIntakeUploadRequestSchema,
@@ -14,6 +15,7 @@ import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
 import { createPersistedArtifactCandidates } from "./artifact-candidate-repository";
+import { interpretArtifactFilesWithAi } from "./artifact-intake-ai";
 
 type ArtifactRejectionContext = {
   organizationId: string;
@@ -25,6 +27,7 @@ type ArtifactRejectionContext = {
 type ArtifactProcessingContext = {
   organizationId: string;
   sessionId: string;
+  processingMode: "deterministic" | "ai_assisted";
 };
 
 async function resolveExistingActorId(
@@ -249,17 +252,65 @@ async function processArtifactIntakeSession(
   });
 
   const parsedAt = new Date();
-  const parsedArtifacts = session.files.map((file) => ({
+  const initialParsedArtifacts = session.files.map((file) => ({
     fileId: file.id,
     fileName: file.fileName,
     sourceType: classifications.find((entry) => entry.fileId === file.id)?.classification.sourceType ?? null,
     parseResult: parseMarkdownArtifact(file.id, file.fileName, file.content)
   }));
 
+  let parsedArtifacts = initialParsedArtifacts;
+  let mappingResult = mapParsedArtifactsToAasCandidates({
+    files: initialParsedArtifacts.map((entry) => ({
+      id: entry.fileId,
+      fileName: entry.fileName,
+      sourceType: entry.sourceType,
+      parsedArtifacts: entry.parseResult
+    }))
+  });
+  let processingModeUsed: "deterministic" | "ai_assisted" = "deterministic";
+  let processingNote: string | null = null;
+
+  if (input.processingMode === "ai_assisted") {
+    try {
+      const aiInterpretation = await interpretArtifactFilesWithAi({
+        files: initialParsedArtifacts.map((entry) => ({
+          fileId: entry.fileId,
+          fileName: entry.fileName,
+          parsedArtifacts: entry.parseResult
+        }))
+      });
+      const aiResult = buildAiAssistedArtifactProcessingResult({
+        files: initialParsedArtifacts.map((entry) => ({
+          id: entry.fileId,
+          fileName: entry.fileName,
+          parsedArtifacts: entry.parseResult
+        })),
+        interpretation: aiInterpretation
+      });
+
+      parsedArtifacts = aiResult.files.map((entry) => ({
+        fileId: entry.fileId,
+        fileName: entry.fileName,
+        sourceType: entry.sourceType,
+        parseResult: entry.parseResult
+      }));
+      mappingResult = aiResult.mappingResult;
+      processingModeUsed = "ai_assisted";
+    } catch (error) {
+      processingNote =
+        error instanceof Error
+          ? `AI-assisted import fell back to the standard parser: ${error.message}`
+          : "AI-assisted import fell back to the standard parser.";
+    }
+  }
+
   for (const entry of parsedArtifacts) {
     await db.artifactIntakeFile.update({
       where: { id: entry.fileId },
       data: {
+        sourceType: entry.parseResult.classification.sourceType,
+        sourceTypeConfidence: entry.parseResult.classification.confidence,
         parsedAt,
         parsedArtifacts: entry.parseResult as Prisma.InputJsonValue
       }
@@ -281,14 +332,6 @@ async function processArtifactIntakeSession(
   });
 
   const mappingCompletedAt = new Date();
-  const mappingResult = mapParsedArtifactsToAasCandidates({
-    files: parsedArtifacts.map((entry) => ({
-      id: entry.fileId,
-      fileName: entry.fileName,
-      sourceType: entry.sourceType,
-      parsedArtifacts: entry.parseResult
-    }))
-  });
 
   await db.artifactIntakeSession.update({
     where: { id: session.id },
@@ -315,7 +358,11 @@ async function processArtifactIntakeSession(
     db
   );
 
-  return mappingResult;
+  return {
+    mappingResult,
+    processingModeUsed,
+    processingNote
+  };
 }
 
 export async function createArtifactIntakeSession(input: unknown, rejectedFiles: ArtifactIntakeRejectedFile[] = []) {
@@ -423,15 +470,18 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
   });
 
   try {
-    const mappingResult = await processArtifactIntakeSession({
+    const processingResult = await processArtifactIntakeSession({
       organizationId: parsed.organizationId,
-      sessionId: session.id
+      sessionId: session.id,
+      processingMode: parsed.processingMode
     });
 
     return {
       session,
       files,
-      mappingResult
+      mappingResult: processingResult.mappingResult,
+      processingModeUsed: processingResult.processingModeUsed,
+      processingNote: processingResult.processingNote
     };
   } catch (error) {
     await prisma.artifactIntakeSession

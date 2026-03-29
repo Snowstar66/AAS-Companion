@@ -16,7 +16,9 @@ import {
   storyTypeSchema
 } from "./enums";
 
-export const supportedArtifactExtensions = [".md", ".mdx", ".markdown"] as const;
+export const supportedArtifactExtensions = [".md", ".mdx", ".markdown", ".txt"] as const;
+
+export const artifactIntakeProcessingModeSchema = z.enum(["deterministic", "ai_assisted"]);
 
 export const artifactIntakeFileRecordSchema = z.object({
   id: z.string().min(1),
@@ -61,6 +63,7 @@ export const artifactIntakeUploadRequestSchema = z.object({
   organizationId: z.string().min(1),
   actorId: z.string().nullish(),
   label: z.string().trim().min(1).max(120).optional(),
+  processingMode: artifactIntakeProcessingModeSchema.default("deterministic"),
   files: z.array(artifactIntakeUploadFileSchema).min(1)
 });
 
@@ -111,26 +114,6 @@ export const artifactAasCandidateSourceSchema = z.object({
   confidence: extractionConfidenceSchema
 });
 
-export const artifactAasCandidateSchema = z.object({
-  id: z.string().min(1),
-  type: artifactAasCandidateTypeSchema,
-  title: z.string().min(1),
-  summary: z.string().min(1),
-  mappingState: artifactAasMappingStateSchema,
-  source: artifactAasCandidateSourceSchema,
-  inferredOutcomeCandidateId: z.string().nullish(),
-  inferredEpicCandidateId: z.string().nullish(),
-  relationshipState: artifactAasMappingStateSchema,
-  relationshipNote: z.string().nullish(),
-  acceptanceCriteria: z.array(z.string()),
-  testNotes: z.array(z.string())
-});
-
-export const artifactMappingResultSchema = z.object({
-  candidates: z.array(artifactAasCandidateSchema),
-  unmappedSections: z.array(artifactParsedSectionSchema)
-});
-
 export const artifactCandidateHumanDecisionSchema = z.object({
   valueOwnerId: z.string().nullish(),
   baselineValidity: z.enum(["confirmed", "needs_follow_up"]).nullish(),
@@ -158,6 +141,27 @@ export const artifactCandidateDraftRecordSchema = z.object({
   definitionOfDone: z.array(z.string()).default([]),
   outcomeCandidateId: z.string().nullish(),
   epicCandidateId: z.string().nullish()
+});
+
+export const artifactAasCandidateSchema = z.object({
+  id: z.string().min(1),
+  type: artifactAasCandidateTypeSchema,
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  mappingState: artifactAasMappingStateSchema,
+  source: artifactAasCandidateSourceSchema,
+  inferredOutcomeCandidateId: z.string().nullish(),
+  inferredEpicCandidateId: z.string().nullish(),
+  relationshipState: artifactAasMappingStateSchema,
+  relationshipNote: z.string().nullish(),
+  acceptanceCriteria: z.array(z.string()),
+  testNotes: z.array(z.string()),
+  draftRecord: z.lazy(() => artifactCandidateDraftRecordSchema.partial()).optional()
+});
+
+export const artifactMappingResultSchema = z.object({
+  candidates: z.array(artifactAasCandidateSchema),
+  unmappedSections: z.array(artifactParsedSectionSchema)
 });
 
 export const artifactComplianceFindingSchema = z.object({
@@ -262,9 +266,43 @@ export const artifactCandidatePromotionResultSchema = z.object({
   importedReadinessState: importedGovernedReadinessStateSchema
 });
 
+export const artifactAiSectionDecisionSchema = z.object({
+  sectionId: z.string().min(1),
+  kind: artifactParsedSectionKindSchema,
+  confidence: extractionConfidenceSchema
+});
+
+export const artifactAiCandidateInterpretationSchema = z.object({
+  sectionId: z.string().min(1),
+  type: artifactAasCandidateTypeSchema,
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  mappingState: artifactAasMappingStateSchema.optional(),
+  relationshipState: artifactAasMappingStateSchema.optional(),
+  relationshipNote: z.string().nullish(),
+  acceptanceCriteria: z.array(z.string().min(1)).default([]),
+  testNotes: z.array(z.string().min(1)).default([]),
+  draftRecord: artifactCandidateDraftRecordSchema.partial().optional()
+});
+
+export const artifactAiFileInterpretationSchema = z.object({
+  fileName: z.string().min(1),
+  sourceType: artifactSourceTypeSchema,
+  confidence: extractionConfidenceSchema,
+  rationale: z.string().min(1),
+  sectionDecisions: z.array(artifactAiSectionDecisionSchema).default([]),
+  candidates: z.array(artifactAiCandidateInterpretationSchema).default([]),
+  leftoverSectionIds: z.array(z.string().min(1)).default([])
+});
+
+export const artifactAiSessionInterpretationSchema = z.object({
+  files: z.array(artifactAiFileInterpretationSchema)
+});
+
 export type ArtifactIntakeFileRecord = z.infer<typeof artifactIntakeFileRecordSchema>;
 export type ArtifactIntakeSessionRecord = z.infer<typeof artifactIntakeSessionRecordSchema>;
 export type ArtifactIntakeUploadRequest = z.infer<typeof artifactIntakeUploadRequestSchema>;
+export type ArtifactIntakeProcessingMode = z.infer<typeof artifactIntakeProcessingModeSchema>;
 export type ArtifactIntakeRejectedFile = z.infer<typeof artifactIntakeRejectedFileSchema>;
 export type ArtifactSourceClassification = z.infer<typeof artifactSourceClassificationSchema>;
 export type ArtifactParsedSection = z.infer<typeof artifactParsedSectionSchema>;
@@ -282,6 +320,10 @@ export type ArtifactCandidateRecord = z.infer<typeof artifactCandidateRecordSche
 export type ArtifactCandidateReviewActionInput = z.infer<typeof artifactCandidateReviewActionInputSchema>;
 export type ArtifactFileSectionDispositionActionInput = z.infer<typeof artifactFileSectionDispositionActionInputSchema>;
 export type ArtifactCandidatePromotionResult = z.infer<typeof artifactCandidatePromotionResultSchema>;
+export type ArtifactAiSectionDecision = z.infer<typeof artifactAiSectionDecisionSchema>;
+export type ArtifactAiCandidateInterpretation = z.infer<typeof artifactAiCandidateInterpretationSchema>;
+export type ArtifactAiFileInterpretation = z.infer<typeof artifactAiFileInterpretationSchema>;
+export type ArtifactAiSessionInterpretation = z.infer<typeof artifactAiSessionInterpretationSchema>;
 
 export function getArtifactFileExtension(fileName: string) {
   const normalized = fileName.trim().toLowerCase();
@@ -661,6 +703,235 @@ function findStructuredSection(
   return sections.find((section) => normalizeHeading(section.title) === normalizeHeading(title));
 }
 
+function normalizeDraftText(value: string | null | undefined) {
+  return value?.replace(/\s+/g, " ").trim() ?? "";
+}
+
+function dedupeArtifactText(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function resolveAiCandidateRelationshipState(input: {
+  candidateType: ArtifactAasCandidate["type"];
+  explicitRelationshipState?: ArtifactAasCandidate["relationshipState"] | undefined;
+  explicitRelationshipNote?: string | null | undefined;
+  inferredOutcomeCandidateId?: string | undefined;
+  inferredEpicCandidateId?: string | undefined;
+  confidence: ArtifactParsedSection["confidence"];
+}) {
+  if (input.explicitRelationshipState) {
+    return {
+      relationshipState: input.explicitRelationshipState,
+      relationshipNote: input.explicitRelationshipNote ?? undefined
+    };
+  }
+
+  if (input.candidateType === "outcome") {
+    return {
+      relationshipState: "mapped" as const,
+      relationshipNote: undefined
+    };
+  }
+
+  if (input.candidateType === "epic") {
+    if (!input.inferredOutcomeCandidateId) {
+      return {
+        relationshipState: "missing" as const,
+        relationshipNote: "No prior Outcome candidate was available to anchor this Epic relationship."
+      };
+    }
+
+    if (input.confidence === "low") {
+      return {
+        relationshipState: "uncertain" as const,
+        relationshipNote: "Epic likely belongs to the nearest Outcome candidate, but the relationship remains uncertain."
+      };
+    }
+
+    return {
+      relationshipState: "mapped" as const,
+      relationshipNote: "Epic relationship was inferred from nearby Outcome context."
+    };
+  }
+
+  if (!input.inferredOutcomeCandidateId || !input.inferredEpicCandidateId) {
+    return {
+      relationshipState: "missing" as const,
+      relationshipNote: "Story relationship inference is incomplete because a prior Outcome or Epic candidate was not found."
+    };
+  }
+
+  if (input.confidence === "low") {
+    return {
+      relationshipState: "uncertain" as const,
+      relationshipNote: "Story relationship is inferred from nearby sections but remains uncertain."
+    };
+  }
+
+  return {
+    relationshipState: "mapped" as const,
+    relationshipNote: undefined
+  };
+}
+
+export function buildAiAssistedArtifactProcessingResult(input: {
+  files: Array<{
+    id: string;
+    fileName: string;
+    parsedArtifacts: ArtifactParseResult;
+  }>;
+  interpretation: ArtifactAiSessionInterpretation;
+}) {
+  const normalizedInterpretation = artifactAiSessionInterpretationSchema.parse(input.interpretation);
+  const aiFilesByName = new Map<string, ArtifactAiFileInterpretation[]>();
+
+  for (const file of normalizedInterpretation.files) {
+    const key = file.fileName.trim().toLowerCase();
+    const existing = aiFilesByName.get(key) ?? [];
+    existing.push(file);
+    aiFilesByName.set(key, existing);
+  }
+
+  const parseResults: Array<{
+    fileId: string;
+    fileName: string;
+    sourceType: ArtifactSourceClassification["sourceType"];
+    parseResult: ArtifactParseResult;
+  }> = [];
+  const candidates: ArtifactAasCandidate[] = [];
+  const unmappedSections: ArtifactParsedSection[] = [];
+  let lastOutcomeCandidateId: string | undefined;
+  let lastEpicCandidateId: string | undefined;
+
+  for (const file of input.files) {
+    const fileKey = file.fileName.trim().toLowerCase();
+    const aiMatch = aiFilesByName.get(fileKey)?.shift();
+
+    if (!aiMatch) {
+      throw new Error(`AI-assisted import did not return an interpretation for ${file.fileName}.`);
+    }
+
+    const decisionsBySectionId = new Map(aiMatch.sectionDecisions.map((decision) => [decision.sectionId, decision] as const));
+    const nextSections = file.parsedArtifacts.sections.map((section) => {
+      const decision = decisionsBySectionId.get(section.id);
+
+      if (!decision) {
+        return section;
+      }
+
+      return {
+        ...section,
+        kind: decision.kind,
+        confidence: decision.confidence,
+        isUncertain: decision.confidence === "low"
+      };
+    });
+    const sectionById = new Map(nextSections.map((section) => [section.id, section] as const));
+    const sourceType = aiMatch.sourceType;
+
+    parseResults.push({
+      fileId: file.id,
+      fileName: file.fileName,
+      sourceType,
+      parseResult: {
+        classification: {
+          sourceType,
+          confidence: aiMatch.confidence,
+          rationale: aiMatch.rationale
+        },
+        sections: nextSections
+      }
+    });
+
+    const usedSectionIds = new Set<string>();
+
+    for (const interpretedCandidate of aiMatch.candidates) {
+      const sourceSection = sectionById.get(interpretedCandidate.sectionId);
+
+      if (!sourceSection) {
+        continue;
+      }
+
+      usedSectionIds.add(sourceSection.id);
+      const candidateId = buildArtifactCandidateId({
+        fileId: file.id,
+        sectionId: sourceSection.id,
+        candidateType: interpretedCandidate.type
+      });
+      const inferredOutcomeCandidateId =
+        interpretedCandidate.type === "outcome" ? undefined : lastOutcomeCandidateId;
+      const inferredEpicCandidateId =
+        interpretedCandidate.type === "story" ? lastEpicCandidateId : undefined;
+      const sourceConfidence =
+        sourceType === "unknown_artifact" && sourceSection.confidence === "high" ? "medium" : sourceSection.confidence;
+      const relationship = resolveAiCandidateRelationshipState({
+        candidateType: interpretedCandidate.type,
+        explicitRelationshipState: interpretedCandidate.relationshipState,
+        explicitRelationshipNote: interpretedCandidate.relationshipNote,
+        inferredOutcomeCandidateId,
+        inferredEpicCandidateId,
+        confidence: sourceSection.confidence
+      });
+
+      candidates.push({
+        id: candidateId,
+        type: interpretedCandidate.type,
+        title: summarizeText(interpretedCandidate.title, 80),
+        summary: summarizeText(interpretedCandidate.summary),
+        mappingState:
+          interpretedCandidate.mappingState ??
+          (sourceType === "unknown_artifact" || sourceConfidence === "low" ? "uncertain" : "mapped"),
+        source: {
+          fileId: sourceSection.sourceReference.fileId,
+          fileName: sourceSection.sourceReference.fileName,
+          sectionId: sourceSection.sourceReference.sectionId,
+          sectionTitle: sourceSection.sourceReference.sectionTitle,
+          sectionMarker: sourceSection.sourceReference.sectionMarker,
+          sourceType,
+          confidence: sourceConfidence
+        },
+        inferredOutcomeCandidateId,
+        inferredEpicCandidateId,
+        relationshipState: relationship.relationshipState,
+        relationshipNote: relationship.relationshipNote,
+        acceptanceCriteria: dedupeArtifactText(interpretedCandidate.acceptanceCriteria),
+        testNotes: dedupeArtifactText(interpretedCandidate.testNotes),
+        draftRecord: interpretedCandidate.draftRecord
+      });
+
+      if (interpretedCandidate.type === "outcome") {
+        lastOutcomeCandidateId = candidateId;
+        lastEpicCandidateId = undefined;
+      }
+
+      if (interpretedCandidate.type === "epic") {
+        lastEpicCandidateId = candidateId;
+      }
+    }
+
+    const leftoverSectionIds = new Set(aiMatch.leftoverSectionIds);
+
+    for (const section of nextSections) {
+      if (leftoverSectionIds.has(section.id)) {
+        unmappedSections.push(section);
+        continue;
+      }
+
+      if (!usedSectionIds.has(section.id) && (section.kind === "unmapped" || section.kind === "architecture_notes")) {
+        unmappedSections.push(section);
+      }
+    }
+  }
+
+  return {
+    files: parseResults,
+    mappingResult: {
+      candidates,
+      unmappedSections
+    }
+  };
+}
+
 export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandidate | ArtifactCandidateRecord): ArtifactCandidateDraftRecord {
   if (candidate.type === "outcome") {
     return {
@@ -737,6 +1008,29 @@ function shouldSurfaceUncertainty(
 
 function getCandidateSourceConfidence(candidate: ArtifactAasCandidate | ArtifactCandidateRecord) {
   return "source" in candidate ? candidate.source.confidence : candidate.sourceConfidence;
+}
+
+function countMeaningfulWords(value: string | null | undefined) {
+  return normalizeDraftText(value)
+    .split(/\s+/)
+    .filter((token) => token.length > 1).length;
+}
+
+function looksLikeActivityStatement(value: string | null | undefined) {
+  const normalized = normalizeDraftText(value).toLowerCase();
+
+  if (!normalized) {
+    return false;
+  }
+
+  const activityStarts = /^(build|create|implement|set up|setup|design|develop|deliver|launch|roll out|rollout|document|configure)\b/;
+  const effectSignals = /\b(reduce|increase|improve|decrease|shorten|raise|lower|stabilize|enable|faster|safer|better|more reliable|less)\b/;
+
+  return activityStarts.test(normalized) && !effectSignals.test(normalized);
+}
+
+function listItemsNeedStrengthening(values: string[]) {
+  return values.length > 0 && values.every((value) => countMeaningfulWords(value) < 4);
 }
 
 export function analyzeArtifactCandidateCompliance(input: {
@@ -829,6 +1123,26 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
+    if (draftRecord.outcomeStatement?.trim()) {
+      if (looksLikeActivityStatement(draftRecord.outcomeStatement)) {
+        findings.push({
+          code: "outcome_statement_activity_shaped",
+          category: "uncertain",
+          message:
+            "Outcome statement currently reads more like planned work than an observed effect. Reframe it around the result you want to see, for example: 'Reduce <problem> for <actor> by <metric or time horizon>'.",
+          fieldLabel: "Outcome statement"
+        });
+      } else if (countMeaningfulWords(draftRecord.outcomeStatement) < 6) {
+        findings.push({
+          code: "outcome_statement_too_thin",
+          category: "uncertain",
+          message:
+            "Outcome statement is present but too thin to confirm the intended effect. Strengthen it with the target change, affected actor, and preferably a measurable direction.",
+          fieldLabel: "Outcome statement"
+        });
+      }
+    }
+
     if (!humanDecisions.valueOwnerId) {
       findings.push({
         code: "value_owner_human_only",
@@ -893,6 +1207,31 @@ export function analyzeArtifactCandidateCompliance(input: {
         fieldLabel: "Scope boundary"
       });
     }
+
+    if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && draftRecord.purpose?.trim() && countMeaningfulWords(draftRecord.purpose) < 6) {
+      findings.push({
+        code: "epic_purpose_too_thin",
+        category: "uncertain",
+        message:
+          "Epic purpose exists but is still too thin to guide decomposition. Strengthen it by naming the capability or business change this Epic delivers and its main boundary.",
+        fieldLabel: "Epic purpose"
+      });
+    }
+
+    if (
+      shouldSurfaceUncertainty(input.candidate, reviewStatus) &&
+      draftRecord.scopeBoundary?.trim() &&
+      (countMeaningfulWords(draftRecord.scopeBoundary) < 4 ||
+        normalizeDraftText(draftRecord.scopeBoundary).toLowerCase() === normalizeDraftText(draftRecord.title).toLowerCase())
+    ) {
+      findings.push({
+        code: "epic_scope_boundary_weak",
+        category: "uncertain",
+        message:
+          "Scope boundary is present but too weak to protect decomposition. Clarify what is explicitly in scope, out of scope, or otherwise constrained.",
+        fieldLabel: "Scope boundary"
+      });
+    }
   }
 
   if (input.candidate.type === "story") {
@@ -910,6 +1249,17 @@ export function analyzeArtifactCandidateCompliance(input: {
         code: "story_acceptance_criteria_missing",
         category: "missing",
         message: "Acceptance criteria are missing.",
+        fieldLabel: "Acceptance criteria"
+      });
+    } else if (
+      shouldSurfaceUncertainty(input.candidate, reviewStatus) &&
+      (draftRecord.acceptanceCriteria.length < 2 && listItemsNeedStrengthening(draftRecord.acceptanceCriteria))
+    ) {
+      findings.push({
+        code: "story_acceptance_criteria_weak",
+        category: "uncertain",
+        message:
+          "Acceptance criteria exist but are still weak as verification anchors. Rewrite them as concrete, testable checks that let a reviewer tell when the Story is actually complete.",
         fieldLabel: "Acceptance criteria"
       });
     }
@@ -934,6 +1284,14 @@ export function analyzeArtifactCandidateCompliance(input: {
         code: "story_definition_of_done_missing",
         category: "missing",
         message: "Definition of Done is missing.",
+        fieldLabel: "Definition of Done"
+      });
+    } else if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && listItemsNeedStrengthening(draftRecord.definitionOfDone)) {
+      findings.push({
+        code: "story_definition_of_done_weak",
+        category: "uncertain",
+        message:
+          "Definition of Done is present but too weak to serve as a handoff guardrail. Strengthen it with concrete completion signals such as review, verification, documentation, or evidence expectations.",
         fieldLabel: "Definition of Done"
       });
     }
@@ -971,6 +1329,20 @@ export function analyzeArtifactCandidateCompliance(input: {
         category: "human_only",
         message: "Risk acceptance status must be confirmed by a human reviewer.",
         fieldLabel: "Risk acceptance status"
+      });
+    }
+
+    if (
+      shouldSurfaceUncertainty(input.candidate, reviewStatus) &&
+      draftRecord.valueIntent?.trim() &&
+      countMeaningfulWords(draftRecord.valueIntent) < 6
+    ) {
+      findings.push({
+        code: "story_value_intent_too_thin",
+        category: "uncertain",
+        message:
+          "Value intent exists but is too thin to explain why the Story matters. Strengthen it with who benefits, what change is expected, and why the work is valuable.",
+        fieldLabel: "Value intent"
       });
     }
   }

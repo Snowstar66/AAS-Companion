@@ -273,8 +273,8 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
       sessions,
       message:
         sessions.length > 0
-          ? "Imported markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates."
-          : "No import sessions exist yet. Upload markdown artifacts to start the governed import path."
+          ? "Imported text and markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates."
+          : "No import sessions exist yet. Upload import artifacts to start the governed import path."
       };
   } catch (error) {
     unstable_rethrow(error);

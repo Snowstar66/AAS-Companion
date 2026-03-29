@@ -12,8 +12,10 @@ import {
 import {
   artifactCandidateReviewActionInputSchema,
   artifactFileSectionDispositionActionInputSchema,
+  artifactIntakeProcessingModeSchema,
   artifactIntakeRejectedFileSchema,
   isSupportedArtifactFile,
+  type ArtifactIntakeProcessingMode,
   type ArtifactIntakeRejectedFile
 } from "@aas-companion/domain";
 import { failure, success, type ApiResult } from "./shared";
@@ -35,7 +37,7 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
         artifactIntakeRejectedFileSchema.parse({
           fileName: file.fileName,
           mimeType: file.mimeType ?? null,
-          reason: "Only markdown files (.md, .mdx, .markdown) are supported in Import."
+          reason: "Only text and markdown files (.md, .mdx, .markdown, .txt) are supported in Import."
         })
       );
       continue;
@@ -46,7 +48,7 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
         artifactIntakeRejectedFileSchema.parse({
           fileName: file.fileName,
           mimeType: file.mimeType ?? null,
-          reason: "Uploaded markdown files must contain content before intake can continue."
+          reason: "Uploaded text or markdown files must contain content before intake can continue."
         })
       );
       continue;
@@ -78,6 +80,7 @@ export async function createArtifactIntakeSessionService(input: {
   organizationId: string;
   actorId?: string | null;
   label?: string;
+  processingMode?: ArtifactIntakeProcessingMode;
   files: UploadArtifactFileInput[];
 }): Promise<
   ApiResult<{
@@ -85,12 +88,14 @@ export async function createArtifactIntakeSessionService(input: {
     uploadedCount: number;
     rejectedCount: number;
     rejectedFiles: ArtifactIntakeRejectedFile[];
+    processingModeUsed: ArtifactIntakeProcessingMode;
+    processingNote: string | null;
   }>
 > {
   if (input.files.length === 0) {
     return failure({
       code: "artifact_files_required",
-      message: "Select one or more markdown files before creating an intake session."
+      message: "Select one or more text or markdown files before creating an intake session."
     });
   }
 
@@ -107,11 +112,12 @@ export async function createArtifactIntakeSessionService(input: {
 
     return failure({
       code: "artifact_files_unsupported",
-      message: rejected[0]?.reason ?? "No supported markdown files were uploaded."
+      message: rejected[0]?.reason ?? "No supported text or markdown files were uploaded."
     });
   }
 
   let result;
+  const requestedProcessingMode = artifactIntakeProcessingModeSchema.parse(input.processingMode ?? "deterministic");
 
   try {
     result = await createArtifactIntakeSession(
@@ -119,6 +125,7 @@ export async function createArtifactIntakeSessionService(input: {
         organizationId: input.organizationId,
         actorId: input.actorId ?? null,
         label: input.label,
+        processingMode: requestedProcessingMode,
         files: accepted
       },
       rejected
@@ -134,7 +141,9 @@ export async function createArtifactIntakeSessionService(input: {
     sessionId: result.session.id,
     uploadedCount: result.files.length,
     rejectedCount: rejected.length,
-    rejectedFiles: rejected
+    rejectedFiles: rejected,
+    processingModeUsed: result.processingModeUsed ?? requestedProcessingMode,
+    processingNote: result.processingNote ?? null
   });
 }
 

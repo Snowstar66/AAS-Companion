@@ -148,8 +148,9 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
             <div>
               <h1 className="text-3xl font-semibold tracking-tight">Project Import</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                Upload markdown delivery artifacts, inspect the full imported source, review structured candidates, and
-                correct them before promotion.
+                Upload text or markdown delivery artifacts, inspect the full imported source, review structured candidates,
+                and correct them before promotion. Use AI-assisted import when the source material is looser and needs help
+                to be interpreted into the Value Spine.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -178,24 +179,24 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Upload markdown artifacts</CardTitle>
+            <CardTitle>Upload import artifacts</CardTitle>
             <CardDescription>
-              Supported extensions: <strong>.md</strong>, <strong>.mdx</strong>, and <strong>.markdown</strong>. Uploads are
-              grouped into a persisted import session for {workspace.organizationName}.
+              Supported extensions: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong>, and{" "}
+              <strong>.txt</strong>. Uploads are grouped into a persisted import session for {workspace.organizationName}.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isDemoSession ? (
               <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
                 Import writes persisted intake sessions and is therefore disabled in Demo. Leave Demo, then open or create a
-                normal project before uploading markdown artifacts.
+                normal project before uploading import artifacts.
               </div>
             ) : null}
             <form action={uploadArtifactIntakeFilesAction} className="space-y-4">
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-foreground">Artifact files</span>
                 <input
-                  accept=".md,.mdx,.markdown,text/markdown"
+                  accept=".md,.mdx,.markdown,.txt,text/markdown,text/plain"
                   className="block w-full rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-6 text-sm text-muted-foreground file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:opacity-90"
                   multiple
                   name="files"

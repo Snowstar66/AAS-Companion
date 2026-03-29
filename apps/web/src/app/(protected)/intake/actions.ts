@@ -56,6 +56,8 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
     redirectDemoIntakeBlocked();
   }
 
+  const requestedProcessingMode = String(formData.get("processingMode") ?? "deterministic");
+  const processingMode = requestedProcessingMode === "ai_assisted" ? "ai_assisted" : "deterministic";
   const files = formData
     .getAll("files")
     .filter((value): value is File => value instanceof File && value.size > 0);
@@ -63,7 +65,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   if (files.length === 0) {
     redirect(
       buildRedirect("/intake", {
-        error: "Select one or more markdown files before creating an import session."
+        error: "Select one or more text or markdown files before creating an import session."
       })
     );
   }
@@ -80,6 +82,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   const result = await createArtifactIntakeSessionService({
     organizationId: session.organization.organizationId,
     actorId: session.userId,
+    processingMode,
     files: preparedFiles
   });
 
@@ -94,10 +97,13 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   revalidatePath("/intake");
   revalidatePath("/");
 
-  const message =
-    result.data.rejectedCount > 0
-      ? `Uploaded ${result.data.uploadedCount} markdown file(s). ${result.data.rejectedCount} file(s) were rejected with clear feedback while the accepted files were classified and mapped for review.`
-      : `Uploaded ${result.data.uploadedCount} markdown file(s) into a new import session and mapped them into reviewable candidates.`;
+  const baseMessage =
+    result.data.processingModeUsed === "ai_assisted"
+      ? `Uploaded ${result.data.uploadedCount} file(s) into a new AI-assisted import session. Likely Value Spine candidates were extracted while leftover or doubtful material was kept in the slask for human review.`
+      : result.data.rejectedCount > 0
+        ? `Uploaded ${result.data.uploadedCount} file(s). ${result.data.rejectedCount} file(s) were rejected with clear feedback while the accepted files were classified and mapped for review.`
+        : `Uploaded ${result.data.uploadedCount} file(s) into a new import session and mapped them into reviewable candidates.`;
+  const message = result.data.processingNote ? `${baseMessage} ${result.data.processingNote}` : baseMessage;
 
   redirect(
     buildRedirect("/intake", {

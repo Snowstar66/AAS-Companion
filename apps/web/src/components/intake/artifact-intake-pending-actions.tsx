@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CircleAlert, CircleCheckBig, GitBranch, LoaderCircle, Upload, XCircle } from "lucide-react";
+import { Bot, CircleAlert, CircleCheckBig, GitBranch, LoaderCircle, Upload, XCircle } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
 type ReviewIntent = "edit" | "confirm" | "follow_up" | "reject" | "promote";
+type UploadProcessingMode = "deterministic" | "ai_assisted";
 
 const reviewActionConfig: Array<{
   intent: ReviewIntent;
@@ -57,12 +58,51 @@ const reviewActionConfig: Array<{
 
 export function ArtifactIntakeUploadSubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
+  const [submittedMode, setSubmittedMode] = useState<UploadProcessingMode | null>(null);
+  const activeMode = pending ? submittedMode : null;
 
   return (
-    <Button className="gap-2" disabled={disabled || pending} type="submit">
-      {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-      {pending ? "Creating import session..." : "Create import session"}
-    </Button>
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-3">
+        <Button
+          className="gap-2"
+          disabled={disabled || pending}
+          name="processingMode"
+          onClick={() => setSubmittedMode("deterministic")}
+          type="submit"
+          value="deterministic"
+        >
+          {pending && activeMode === "deterministic" ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <Upload className="h-4 w-4" />
+          )}
+          {pending && activeMode === "deterministic" ? "Creating standard import..." : "Create import session"}
+        </Button>
+        <Button
+          className="gap-2"
+          disabled={disabled || pending}
+          name="processingMode"
+          onClick={() => setSubmittedMode("ai_assisted")}
+          type="submit"
+          value="ai_assisted"
+          variant="secondary"
+        >
+          {pending && activeMode === "ai_assisted" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+          {pending && activeMode === "ai_assisted" ? "Running AI-assisted import..." : "AI-assisted import"}
+        </Button>
+      </div>
+      {pending ? (
+        <div className="flex items-center gap-2 rounded-2xl border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <LoaderCircle className="h-3.5 w-3.5 animate-spin text-primary" />
+          <span>
+            {activeMode === "ai_assisted"
+              ? "Classifying the files, extracting likely Value Spine candidates, and placing uncertain leftovers into the slask."
+              : "Creating the standard import session and mapping structured candidates for review."}
+          </span>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

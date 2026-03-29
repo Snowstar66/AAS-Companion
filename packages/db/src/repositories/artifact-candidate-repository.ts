@@ -159,7 +159,12 @@ export async function createPersistedArtifactCandidates(input: {
 
   for (const candidate of input.candidates) {
     const sanitizedCandidate = sanitizeArtifactPersistenceValue(candidate);
-    const draftRecord = sanitizeArtifactPersistenceValue(createArtifactCandidateDraftRecord(sanitizedCandidate));
+    const draftRecord = sanitizeArtifactPersistenceValue(
+      artifactCandidateDraftRecordSchema.parse({
+        ...createArtifactCandidateDraftRecord(sanitizedCandidate),
+        ...(sanitizedCandidate.draftRecord ?? {})
+      })
+    );
     const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse({
       valueOwnerId: null,
       baselineValidity: null,
