@@ -566,6 +566,7 @@ export function FramingOutcomeSection({
                       title: story.title,
                       href: `/stories/${story.id}`,
                       isCurrent: false,
+                      valueIntent: story.valueIntent ?? null,
                       testDefinition: story.testDefinition ?? null,
                       acceptanceCriteria: story.acceptanceCriteria,
                       definitionOfDone: story.definitionOfDone,

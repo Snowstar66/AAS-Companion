@@ -12,26 +12,6 @@ type WorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function getParamValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function formatLabel(value: string) {
-  return value.replaceAll("_", " ");
-}
-
-function getOriginLabel(originType: string) {
-  if (originType === "seeded") {
-    return "Demo";
-  }
-
-  if (originType === "native") {
-    return "Native";
-  }
-
-  return "Imported";
-}
-
 function StatCard(props: {
   label: string;
   count: number;
@@ -59,11 +39,8 @@ function StatCard(props: {
 
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
   return withDevTiming("web.page.workspace", async () => {
-    const [session, query] = await Promise.all([
-      requireActiveProjectSession(),
-      searchParams ? searchParams : Promise.resolve<Record<string, string | string[] | undefined>>({})
-    ]);
-    const viewFilter = getParamValue(query.view) ?? "active";
+    void searchParams;
+    const session = await requireActiveProjectSession();
     const snapshot = await getValueSpineService(session.organization.organizationId);
 
     if (!snapshot.ok) {
@@ -101,11 +78,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       orderedOutcomes[0] ??
       null;
 
-    const selectedEpics =
-      selectedOutcome?.epics.filter((epic) => (viewFilter === "all" ? true : epic.lifecycleState === viewFilter)) ?? [];
-    const selectedStories = selectedEpics.flatMap((epic) =>
-      epic.stories.filter((story) => (viewFilter === "all" ? true : story.lifecycleState === viewFilter))
-    );
+    const selectedEpics = selectedOutcome?.epics.filter((epic) => epic.lifecycleState === "active") ?? [];
+    const selectedStories = selectedEpics.flatMap((epic) => epic.stories.filter((story) => story.lifecycleState === "active"));
     const readyStories = selectedStories.filter((story) =>
       getStoryUxModel({
         id: story.id,
@@ -118,7 +92,20 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         tollgateStatus: story.tollgateStatus ?? null
       }).isReadyForHandoff
     );
-    const missingTestStories = selectedStories.filter((story) => !story.testDefinition);
+    const attentionStories = selectedStories.filter((story) => {
+      const model = getStoryUxModel({
+        id: story.id,
+        key: story.key,
+        status: story.status,
+        lifecycleState: story.lifecycleState,
+        testDefinition: story.testDefinition ?? null,
+        acceptanceCriteria: story.acceptanceCriteria,
+        definitionOfDone: story.definitionOfDone,
+        tollgateStatus: story.tollgateStatus ?? null
+      });
+
+      return model.tone === "warning" || model.statusLabel === "Ready for review";
+    });
     const lineageTargets = [
       ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
         ? [{ href: `/review?candidateId=${selectedOutcome.lineageSourceId}`, label: `Open ${selectedOutcome.key} lineage` }]
@@ -138,7 +125,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     ];
     const firstVisibleStory = selectedStories[0] ?? null;
     const firstReadyStory = readyStories[0] ?? null;
-    const firstMissingTestStory = missingTestStories[0] ?? null;
+    const firstAttentionStory = attentionStories[0] ?? null;
     const firstLineageTarget = lineageTargets[0] ?? null;
 
     return (
@@ -190,12 +177,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 label="Imported lineage"
               />
               <StatCard
-                actionHref={firstMissingTestStory ? `/stories/${firstMissingTestStory.id}#story-handoff-inputs` : undefined}
-                actionLabel={firstMissingTestStory ? "Fix next test gap" : undefined}
+                actionHref={firstAttentionStory ? `/stories/${firstAttentionStory.id}` : undefined}
+                actionLabel={firstAttentionStory ? "Open next attention story" : undefined}
                 className="border-amber-200 bg-amber-50/85 text-amber-950"
-                count={missingTestStories.length}
-                description="Stories that still miss a Test Definition."
-                label="Missing tests"
+                count={attentionStories.length}
+                description="Stories that still need work before the branch feels clear."
+                label="Needs attention"
               />
             </div>
           </div>
@@ -210,45 +197,6 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           </Card>
         ) : (
           <>
-            <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,252,0.92))] shadow-sm">
-              <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <CardTitle>Lifecycle view</CardTitle>
-                    <CardDescription>
-                      The selected Framing branch is already shown in the backlog below. Use the filter here to decide which lifecycle states to include.
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                        {selectedOutcome.key}
-                      </span>
-                      <span className="inline-flex rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                        {getOriginLabel(selectedOutcome.originType)}
-                      </span>
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                        {formatLabel(selectedOutcome.lifecycleState)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Lifecycle filter</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button asChild variant={viewFilter === "active" ? "default" : "secondary"}>
-                        <Link href="/workspace?view=active">Active only</Link>
-                      </Button>
-                      <Button asChild variant={viewFilter === "archived" ? "default" : "secondary"}>
-                        <Link href="/workspace?view=archived">Archived only</Link>
-                      </Button>
-                      <Button asChild variant={viewFilter === "all" ? "default" : "secondary"}>
-                        <Link href="/workspace?view=all">All lifecycle states</Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-
             {selectedOutcome.lifecycleState === "archived" ? (
               <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
                 This Framing branch is archived. Restore it from the Outcome page if you want it active again.
@@ -256,9 +204,9 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
             ) : null}
 
             <FramingValueSpineTree
-              description="The active branch is listed like one backlog from Framing into Epics and Stories."
-              emptyEpicMessage="No Epics are currently visible in this branch for the selected lifecycle filter."
-              emptyStoryMessage="No Stories are currently visible in this Epic for the selected lifecycle filter."
+              description="The active branch is listed from Framing into Epics and Stories with the same story attention rules used elsewhere."
+              emptyEpicMessage="No active Epics are currently visible in this branch."
+              emptyStoryMessage="No active Stories are currently visible in this Epic."
               epics={selectedEpics.map((epic) => ({
                 id: epic.id,
                 key: epic.key,
@@ -275,13 +223,14 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     ? `/review?candidateId=${epic.lineageSourceId}`
                     : null,
                 stories: epic.stories
-                  .filter((story) => (viewFilter === "all" ? true : story.lifecycleState === viewFilter))
+                  .filter((story) => story.lifecycleState === "active")
                   .map((story) => ({
                     id: story.id,
                     key: story.key,
                     title: story.title,
                     href: `/stories/${story.id}`,
                     isCurrent: false,
+                    valueIntent: story.valueIntent ?? null,
                     testDefinition: story.testDefinition ?? null,
                     acceptanceCriteria: story.acceptanceCriteria,
                     definitionOfDone: story.definitionOfDone,
@@ -313,7 +262,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     ? `/review?candidateId=${selectedOutcome.lineageSourceId}`
                     : null
               }}
-              title="Project Value Spine backlog"
+              title="Project Value Spine"
             />
           </>
         )}

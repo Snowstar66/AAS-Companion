@@ -165,27 +165,50 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                   href: `/epics/${epic.id}`,
                   isCurrent: true,
                   scopeBoundary: epic.scopeBoundary ?? null,
+                  purpose: epic.purpose ?? null,
+                  originType: epic.originType,
+                  lifecycleState: epic.lifecycleState,
+                  importedReadinessState: epic.importedReadinessState ?? null,
+                  lineageHref:
+                    epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
+                      ? `/review?candidateId=${epic.lineageSourceId}`
+                      : null,
                   stories: epic.stories.map((story) => ({
                     id: story.id,
                     key: story.key,
                     title: story.title,
                     href: `/stories/${story.id}`,
                     isCurrent: false,
-                      testDefinition: story.testDefinition ?? null,
-                      acceptanceCriteria: story.acceptanceCriteria,
-                      definitionOfDone: story.definitionOfDone,
-                      status: story.status,
-                      lifecycleState: story.lifecycleState,
-                      tollgateStatus: story.tollgateStatus ?? null
-                    }))
-                  }
-                ]}
+                    valueIntent: story.valueIntent ?? null,
+                    testDefinition: story.testDefinition ?? null,
+                    acceptanceCriteria: story.acceptanceCriteria,
+                    definitionOfDone: story.definitionOfDone,
+                    status: story.status,
+                    originType: story.originType,
+                    lifecycleState: story.lifecycleState,
+                    tollgateStatus: story.tollgateStatus ?? null,
+                    importedReadinessState: story.importedReadinessState ?? null,
+                    lineageHref:
+                      story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                        ? `/review?candidateId=${story.lineageSourceId}`
+                        : null
+                  }))
+                }
+              ]}
               outcome={{
                 id: epic.outcome.id,
                 key: epic.outcome.key,
                 title: epic.outcome.title,
                 href: `/framing?outcomeId=${epic.outcomeId}`,
-                isCurrent: false
+                isCurrent: false,
+                statement: epic.outcome.outcomeStatement ?? null,
+                originType: epic.outcome.originType,
+                lifecycleState: epic.outcome.lifecycleState,
+                importedReadinessState: epic.outcome.importedReadinessState ?? null,
+                lineageHref:
+                  epic.outcome.lineageSourceType === "artifact_aas_candidate" && epic.outcome.lineageSourceId
+                    ? `/review?candidateId=${epic.outcome.lineageSourceId}`
+                    : null
               }}
             />
 

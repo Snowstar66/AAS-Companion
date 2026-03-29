@@ -85,6 +85,64 @@ const activityLabels: Record<string, string> = {
   imported_progression_allowed: "Imported build progression allowed"
 };
 
+function getDashboardStoryModel(input: {
+  key: string;
+  status: string;
+  lifecycleState: string;
+  testDefinition: string | null;
+  acceptanceCriteria: string[];
+  definitionOfDone: string[];
+  tollgateStatus?: "blocked" | "ready" | "approved" | null;
+}) {
+  const readiness = getStoryHandoffReadiness({
+    key: input.key,
+    testDefinition: input.testDefinition,
+    definitionOfDone: input.definitionOfDone,
+    acceptanceCriteria: input.acceptanceCriteria,
+    status: input.status as "draft" | "definition_blocked" | "ready_for_handoff" | "in_progress"
+  });
+
+  const blockers = readiness.reasons.map((reason) => reason.message);
+  const hasTollgateStatus =
+    input.tollgateStatus === "blocked" || input.tollgateStatus === "ready" || input.tollgateStatus === "approved";
+  const isReadyForHandoff = hasTollgateStatus ? input.tollgateStatus === "approved" : input.status === "ready_for_handoff";
+  const isReviewReady = readiness.state === "ready" && !hasTollgateStatus && !isReadyForHandoff;
+
+  if (input.tollgateStatus === "blocked" || input.tollgateStatus === "ready") {
+    return {
+      blockers,
+      isReadyForHandoff: false,
+      nextStep: "Record remaining sign-offs",
+      needsAttention: true
+    };
+  }
+
+  if (isReadyForHandoff) {
+    return {
+      blockers: [],
+      isReadyForHandoff: true,
+      nextStep: "Open ready story",
+      needsAttention: false
+    };
+  }
+
+  return {
+    blockers,
+    isReadyForHandoff: false,
+    nextStep:
+      !input.testDefinition?.trim()
+        ? "Add test definition"
+        : input.acceptanceCriteria.length === 0
+          ? "Add acceptance criteria"
+          : input.definitionOfDone.length === 0
+            ? "Add definition of done"
+            : isReviewReady
+              ? "Submit for sign-off"
+              : blockers[0] ?? "Complete story readiness",
+    needsAttention: blockers.length > 0 || isReviewReady
+  };
+}
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
@@ -132,6 +190,18 @@ export async function getHomeDashboardData(
     const { organization, counts } = snapshot;
     const blockedTollgates = snapshot.tollgates.filter((item) => item.status === "blocked");
     const pendingTollgates = snapshot.tollgates.filter((item) => item.status !== "approved");
+    const storyModels = snapshot.stories.map((story) => ({
+      story,
+      model: getDashboardStoryModel({
+        key: story.key,
+        status: story.status,
+        lifecycleState: story.lifecycleState,
+        testDefinition: story.testDefinition,
+        acceptanceCriteria: story.acceptanceCriteria,
+        definitionOfDone: story.definitionOfDone,
+        tollgateStatus: story.tollgateStatus ?? null
+      })
+    }));
 
     const outcomesByStatus = Object.entries(
       snapshot.outcomeStatuses.reduce<Record<string, number>>((accumulator, item) => {
@@ -154,14 +224,16 @@ export async function getHomeDashboardData(
       }))
     );
 
-    const storyDefinitionBlockers: HomeBlocker[] = snapshot.stories.flatMap((story) => {
-      const readiness = getStoryHandoffReadiness(story);
+    const storyDefinitionBlockers: HomeBlocker[] = storyModels.flatMap(({ story, model }) => {
+      if (story.tollgateStatus) {
+        return [];
+      }
 
-      return readiness.reasons.map((reason) => ({
-        id: `${story.id}-${reason.code}`,
-        title: `${story.key} is blocked`,
-        detail: reason.message,
-        severity: reason.severity,
+      return model.blockers.map((blocker) => ({
+        id: `${story.id}-${blocker}`,
+        title: `${story.key} needs attention`,
+        detail: blocker,
+        severity: "medium",
         href: "/stories"
       }));
     });
@@ -173,16 +245,15 @@ export async function getHomeDashboardData(
         detail: `${tollgate.blockers.length || 1} blocker${tollgate.blockers.length === 1 ? "" : "s"} to clear`,
         href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       })),
-      ...snapshot.stories
-        .filter((story) => getStoryHandoffReadiness(story).state !== "ready")
-        .map((story) => ({
+      ...storyModels
+        .filter(({ story, model }) => !story.tollgateStatus && !model.isReadyForHandoff)
+        .map(({ story, model }) => ({
           id: `${story.id}-action`,
           title: `Complete ${story.key}`,
-          detail:
-            getStoryHandoffReadiness(story).reasons[0]?.message ?? "Story still needs readiness work before handoff.",
+          detail: `Next step: ${model.nextStep}`,
           href: "/stories"
         }))
-    ].slice(0, 5);
+    ];
 
     const recentActivity: HomeActivityItem[] = snapshot.activityEvents.map((event) => ({
       id: event.id,
@@ -194,14 +265,14 @@ export async function getHomeDashboardData(
     const summary: HomeSummaryMetric[] = [
       {
         label: "Outcomes",
-        value: String(counts.outcomes),
-        tone: counts.outcomes > 0 ? "default" : "warning",
-        description: "Tracked outcomes in the current project scope."
+        value: String(snapshot.outcomeStatuses.length),
+        tone: snapshot.outcomeStatuses.length > 0 ? "default" : "warning",
+        description: "Active outcomes in the current project scope."
       },
       {
         label: "Stories Ready",
-        value: String(snapshot.stories.filter((story) => getStoryHandoffReadiness(story).state === "ready").length),
-        tone: snapshot.stories.some((story) => getStoryHandoffReadiness(story).state === "ready") ? "success" : "warning",
+        value: String(storyModels.filter(({ model }) => model.isReadyForHandoff).length),
+        tone: storyModels.some(({ model }) => model.isReadyForHandoff) ? "success" : "warning",
         description: "Stories that can move toward execution handoff."
       },
       {
@@ -218,7 +289,7 @@ export async function getHomeDashboardData(
       }
     ];
 
-    if (counts.outcomes === 0 && counts.stories === 0 && counts.tollgates === 0 && counts.activityEvents === 0) {
+    if (snapshot.outcomeStatuses.length === 0 && snapshot.stories.length === 0 && counts.tollgates === 0 && counts.activityEvents === 0) {
       return {
         ...createFallbackDashboard(
           "empty",
@@ -234,7 +305,7 @@ export async function getHomeDashboardData(
       organizationName: organization.name,
       summary,
       outcomesByStatus,
-      topBlockers: [...topBlockers, ...storyDefinitionBlockers].slice(0, 5),
+      topBlockers: [...topBlockers, ...storyDefinitionBlockers],
       pendingActions,
       recentActivity,
       rightRail: {

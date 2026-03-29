@@ -25,9 +25,11 @@ export type HomeDashboardSnapshot = {
     id: string;
     key: string;
     status: StoryRecord["status"];
+    lifecycleState: StoryRecord["lifecycleState"];
     testDefinition: string | null;
     definitionOfDone: string[];
     acceptanceCriteria: string[];
+    tollgateStatus?: "blocked" | "ready" | "approved" | null;
   }>;
   tollgates: Array<{
     id: string;
@@ -100,6 +102,7 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                       id: true,
                       key: true,
                       title: true,
+                      valueIntent: true,
                       status: true,
                       originType: true,
                       lifecycleState: true,
@@ -125,6 +128,7 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                   key: true,
                   title: true,
                   epicId: true,
+                  valueIntent: true,
                   status: true,
                   originType: true,
                   lifecycleState: true,
@@ -238,6 +242,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
                   id: true,
                   key: true,
                   title: true,
+                  valueIntent: true,
                   status: true,
                   originType: true,
                   lifecycleState: true,
@@ -263,6 +268,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
               key: true,
               title: true,
               epicId: true,
+              valueIntent: true,
               status: true,
               originType: true,
               lifecycleState: true,
@@ -364,7 +370,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
 }
 
 export async function getHomeDashboardSnapshot(organizationId: string): Promise<HomeDashboardSnapshot | null> {
-  const [organization, outcomeStatuses, stories] = await prisma.$transaction([
+  const [organization, outcomeStatuses, stories, storyTollgates] = await prisma.$transaction([
     prisma.organization.findUnique({
       where: {
         id: organizationId
@@ -376,7 +382,6 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
           orderBy: {
             updatedAt: "desc"
           },
-          take: 5,
           select: {
             id: true,
             entityType: true,
@@ -411,7 +416,8 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
     }),
     prisma.outcome.findMany({
       where: {
-        organizationId
+        organizationId,
+        lifecycleState: "active"
       },
       select: {
         status: true
@@ -419,7 +425,8 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
     }),
     prisma.story.findMany({
       where: {
-        organizationId
+        organizationId,
+        lifecycleState: "active"
       },
       orderBy: {
         createdAt: "desc"
@@ -428,9 +435,21 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
         id: true,
         key: true,
         status: true,
+        lifecycleState: true,
         testDefinition: true,
         definitionOfDone: true,
         acceptanceCriteria: true
+      }
+    }),
+    prisma.tollgate.findMany({
+      where: {
+        organizationId,
+        entityType: "story",
+        tollgateType: "story_readiness"
+      },
+      select: {
+        entityId: true,
+        status: true
       }
     })
   ]);
@@ -438,6 +457,8 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
   if (!organization) {
     return null;
   }
+
+  const storyTollgateStatuses = mapStoryReadinessTollgateStatusByEntityId(storyTollgates);
 
   return {
     organization: {
@@ -453,7 +474,7 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
     outcomeStatuses: outcomeStatuses.map((item) => ({
       status: item.status
     })),
-    stories,
+    stories: attachStoryReadinessTollgateStatus(stories, storyTollgateStatuses),
     tollgates: organization.tollgates,
     activityEvents: organization.activityEvents
   };

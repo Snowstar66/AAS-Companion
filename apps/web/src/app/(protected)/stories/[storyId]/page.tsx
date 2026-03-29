@@ -463,6 +463,14 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       href: `/epics/${story.epicId}`,
                       isCurrent: false,
                       scopeBoundary: story.epic.scopeBoundary ?? null,
+                      purpose: story.epic.purpose ?? null,
+                      originType: story.epic.originType,
+                      lifecycleState: story.epic.lifecycleState,
+                      importedReadinessState: story.epic.importedReadinessState ?? null,
+                      lineageHref:
+                        story.epic.lineageSourceType === "artifact_aas_candidate" && story.epic.lineageSourceId
+                          ? `/review?candidateId=${story.epic.lineageSourceId}`
+                          : null,
                       stories: [
                         {
                           id: story.id,
@@ -470,14 +478,21 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                           title: story.title,
                           href: `/stories/${story.id}`,
                           isCurrent: true,
+                          valueIntent: story.valueIntent ?? null,
                           testDefinition: story.testDefinition ?? null,
                           acceptanceCriteria: story.acceptanceCriteria,
                           definitionOfDone: story.definitionOfDone,
                           status: story.status,
+                          originType: story.originType,
                           lifecycleState: story.lifecycleState,
                           tollgateStatus: tollgateReview?.status ?? tollgate?.status ?? null,
                           pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
-                          blockedActionCount: tollgateReview?.blockedActions.length ?? 0
+                          blockedActionCount: tollgateReview?.blockedActions.length ?? 0,
+                          importedReadinessState: story.importedReadinessState ?? null,
+                          lineageHref:
+                            story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                              ? `/review?candidateId=${story.lineageSourceId}`
+                              : null
                         }
                       ]
                     }
@@ -487,7 +502,15 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                     key: story.outcome.key,
                     title: story.outcome.title,
                     href: `/framing?outcomeId=${story.outcomeId}`,
-                    isCurrent: false
+                    isCurrent: false,
+                    statement: story.outcome.outcomeStatement ?? null,
+                    originType: story.outcome.originType,
+                    lifecycleState: story.outcome.lifecycleState,
+                    importedReadinessState: story.outcome.importedReadinessState ?? null,
+                    lineageHref:
+                      story.outcome.lineageSourceType === "artifact_aas_candidate" && story.outcome.lineageSourceId
+                        ? `/review?candidateId=${story.outcome.lineageSourceId}`
+                        : null
                   }}
                 />
               </div>

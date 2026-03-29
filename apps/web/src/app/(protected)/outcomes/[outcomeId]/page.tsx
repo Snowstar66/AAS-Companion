@@ -306,8 +306,59 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
               <FramingValueSpineTree
                 emptyEpicMessage={isArchived ? "Archived Outcomes no longer surface active Epic work in this branch." : "Create the first native Epic here. Empty branches stay empty until you add child work."}
                 emptyStoryMessage={isArchived ? "Archived Outcomes no longer surface active Story work." : "Create Stories from the relevant Epic so the hierarchy stays scoped to this Framing."}
-                epics={outcome.epics.map((epic) => ({ id: epic.id, key: epic.key, title: epic.title, href: `/epics/${epic.id}`, isCurrent: false, scopeBoundary: epic.scopeBoundary ?? null, stories: outcome.stories.filter((story) => story.epicId === epic.id).map((story) => ({ id: story.id, key: story.key, title: story.title, href: `/stories/${story.id}`, isCurrent: false, testDefinition: story.testDefinition ?? null, acceptanceCriteria: story.acceptanceCriteria, definitionOfDone: story.definitionOfDone, status: story.status, lifecycleState: story.lifecycleState, tollgateStatus: story.tollgateStatus ?? null })) }))}
-                outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: `/outcomes/${outcome.id}`, isCurrent: true }}
+                epics={outcome.epics.map((epic) => ({
+                  id: epic.id,
+                  key: epic.key,
+                  title: epic.title,
+                  href: `/epics/${epic.id}`,
+                  isCurrent: false,
+                  scopeBoundary: epic.scopeBoundary ?? null,
+                  purpose: epic.purpose ?? null,
+                  originType: epic.originType,
+                  lifecycleState: epic.lifecycleState,
+                  importedReadinessState: epic.importedReadinessState ?? null,
+                  lineageHref:
+                    epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
+                      ? `/review?candidateId=${epic.lineageSourceId}`
+                      : null,
+                  stories: outcome.stories
+                    .filter((story) => story.epicId === epic.id)
+                    .map((story) => ({
+                      id: story.id,
+                      key: story.key,
+                      title: story.title,
+                      href: `/stories/${story.id}`,
+                      isCurrent: false,
+                      valueIntent: story.valueIntent ?? null,
+                      testDefinition: story.testDefinition ?? null,
+                      acceptanceCriteria: story.acceptanceCriteria,
+                      definitionOfDone: story.definitionOfDone,
+                      status: story.status,
+                      originType: story.originType,
+                      lifecycleState: story.lifecycleState,
+                      tollgateStatus: story.tollgateStatus ?? null,
+                      importedReadinessState: story.importedReadinessState ?? null,
+                      lineageHref:
+                        story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                          ? `/review?candidateId=${story.lineageSourceId}`
+                          : null
+                    }))
+                }))}
+                outcome={{
+                  id: outcome.id,
+                  key: outcome.key,
+                  title: outcome.title,
+                  href: `/outcomes/${outcome.id}`,
+                  isCurrent: true,
+                  statement: outcome.outcomeStatement ?? null,
+                  originType: outcome.originType,
+                  lifecycleState: outcome.lifecycleState,
+                  importedReadinessState: outcome.importedReadinessState ?? null,
+                  lineageHref:
+                    outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId
+                      ? `/review?candidateId=${outcome.lineageSourceId}`
+                      : null
+                }}
               />
 
               <FramingBriefExportPanel disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />

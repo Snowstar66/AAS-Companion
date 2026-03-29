@@ -137,6 +137,10 @@ function CompactProjectCount(props: { label: string; value: number | string }) {
   );
 }
 
+function getSummaryMetricValue(summary: Array<{ label: string; value: string }>, label: string) {
+  return Number.parseInt(summary.find((item) => item.label === label)?.value ?? "0", 10) || 0;
+}
+
 export default async function HomePage({ searchParams }: HomePageProps) {
   const query = searchParams ? await searchParams : {};
   const {
@@ -151,13 +155,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const flashError = getParamValue(query.error);
   const flashMessage = getParamValue(query.message);
-  const readyStoriesMetric = Number.parseInt(
-    dashboard.summary.find((item) => item.label === "Stories Ready")?.value ?? "0",
-    10
-  ) || 0;
+  const readyStoriesMetric = getSummaryMetricValue(dashboard.summary, "Stories Ready");
+  const recentEventsMetric = getSummaryMetricValue(dashboard.summary, "Recent Events");
   const blockedCount = dashboard.topBlockers.length;
   const pendingCount = dashboard.pendingActions.length;
-  const recentCount = dashboard.recentActivity.length;
   const hasActiveProject = Boolean(activeProject?.organizationId);
   const status = deriveProjectStatus({
     hasActiveProject,
@@ -289,13 +290,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   value={pendingCount}
                 />
                 <MetricCard
-                  actionLabel={recentCount > 0 ? "Open project activity" : undefined}
+                  actionLabel={recentEventsMetric > 0 ? "Open project activity" : undefined}
                   className="border-border/70 bg-background/90 text-foreground"
                   description="Recent movement visible in the active project trail."
-                  href="/workspace"
+                  href={recentEventsMetric > 0 ? "/workspace" : undefined}
                   icon={ClipboardList}
                   label="Recent events"
-                  value={recentCount}
+                  value={recentEventsMetric}
                 />
               </div>
 

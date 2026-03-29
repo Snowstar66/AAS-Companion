@@ -231,7 +231,8 @@ describe("Story Workspace page", () => {
     expect(screen.getByText("Branch context")).toBeDefined();
     expect(screen.getAllByText("Scoped native Framing").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Scoped native Epic").length).toBeGreaterThan(0);
-    expect(screen.getByText("Empty test branch")).toBeDefined();
+    expect(screen.getAllByText("Keep Story work inside the active Framing branch.").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Story path:/i)).toBeDefined();
     expect(screen.getByRole("link", { name: "Back to current Epic" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open current Framing" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
