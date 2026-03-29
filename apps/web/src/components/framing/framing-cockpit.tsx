@@ -512,8 +512,8 @@ export function FramingCockpit({
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em]">Linked work</p>
                           <p className="mt-2 text-foreground">
-                            {item.epicCount} epic{item.epicCount === 1 ? "" : "s"} / {item.storyCount} direction seed
-                            {item.storyCount === 1 ? "" : "s"}
+                            {item.epicCount} epic{item.epicCount === 1 ? "" : "s"} / {item.directionSeedCount} direction seed
+                            {item.directionSeedCount === 1 ? "" : "s"}
                           </p>
                         </div>
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">

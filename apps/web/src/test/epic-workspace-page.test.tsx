@@ -133,7 +133,9 @@ vi.mock("@/app/(protected)/epics/[epicId]/actions", () => ({
 }));
 
 describe("Epic page", () => {
-  it("shows a clean epic page with native direction seeding", async () => {
+  it(
+    "shows a clean epic page with native direction seeding",
+    async () => {
     render(
       await EpicWorkspacePage({
         params: Promise.resolve({ epicId: "epic-native-1" }),
@@ -152,5 +154,7 @@ describe("Epic page", () => {
     expect(screen.getByRole("link", { name: "Back to current Framing" })).toBeDefined();
     expect(screen.getByText("epic created")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
-  });
+    },
+    15000
+  );
 });

@@ -82,7 +82,7 @@ export type FramingBriefExportPayload = {
     }>;
     direction_seeds: Array<{
       seed_id: string;
-      source_story_id: string;
+      legacy_source_reference: string;
       linked_epic_id: string | null;
     }>;
     lifecycle_state: string;
@@ -169,7 +169,7 @@ export function buildFramingBriefExport(input: {
       })),
       direction_seeds: input.outcome.directionSeeds.map((seed) => ({
         seed_id: seed.key,
-        source_story_id: seed.sourceStoryId ?? seed.id,
+        legacy_source_reference: seed.sourceStoryId ?? seed.id,
         linked_epic_id: seed.epicId ?? null
       })),
       lifecycle_state: input.outcome.lifecycleState,
@@ -244,7 +244,8 @@ export function buildFramingBriefExport(input: {
       : ["- Epic metadata: None"]),
     ...(payload.metadata.direction_seeds.length > 0
       ? payload.metadata.direction_seeds.map(
-          (seed) => `- Direction seed metadata: ${seed.seed_id} -> ${seed.source_story_id} (epic ${seed.linked_epic_id ?? "none"})`
+          (seed) =>
+            `- Direction seed metadata: ${seed.seed_id} -> legacy source ${seed.legacy_source_reference} (epic ${seed.linked_epic_id ?? "none"})`
         )
       : ["- Direction seed metadata: None"]),
     `- Lifecycle state: ${formatSentence(payload.metadata.lifecycle_state)}`,

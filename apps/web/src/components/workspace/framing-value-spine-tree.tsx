@@ -124,7 +124,7 @@ function getMissingStoryInputs(story: Pick<TreeStory, "testDefinition" | "accept
 }
 
 function joinMeta(parts: Array<string | null | undefined>) {
-  return parts.filter(Boolean).join(" · ");
+  return parts.filter(Boolean).join(" | ");
 }
 
 function getStorySurfaceClasses(story: TreeStory, needsAttention: boolean, isReviewing: boolean, isReady: boolean) {
@@ -162,9 +162,7 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
             <h3 className="text-sm font-semibold text-foreground">{outcome.key}</h3>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{outcome.title}</p>
-          {outcome.statement ? (
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{outcome.statement}</p>
-          ) : null}
+          {outcome.statement ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{outcome.statement}</p> : null}
           <p className="mt-2 text-xs text-muted-foreground">
             {joinMeta([
               getOriginLabel(outcome.originType),
@@ -196,6 +194,12 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
 
 function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
   const needsAttention = !seed.shortDescription?.trim();
+  const framingStatus = needsAttention ? "Needs refinement" : "Clear enough for framing";
+  const nextImprovement = needsAttention
+    ? "Add a short directional description so the seed explains what kind of change it points toward."
+    : seed.expectedBehavior?.trim()
+      ? "No immediate framing changes are required."
+      : "Optionally add expected behavior if you want sharper AI guidance later.";
 
   return (
     <div
@@ -215,18 +219,19 @@ function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
             {seed.shortDescription?.trim() || "Add a short directional description so the seed explains what kind of change it points toward."}
           </p>
           <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">Framing status:</span> {framingStatus}
+          </p>
+          <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">Expected behavior:</span> {seed.expectedBehavior?.trim() || "Optional and not captured yet."}
           </p>
-          {needsAttention ? (
-            <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">Attention:</span> Short description is still missing.
-            </p>
-          ) : null}
+          <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
+            <span className="font-medium">Next improvement:</span> {nextImprovement}
+          </p>
           <p className="mt-2 text-xs text-muted-foreground">
             {joinMeta([
               getOriginLabel(seed.originType),
               formatLabel(seed.lifecycleState),
-              seed.sourceStoryId ? `Migrated from Story ${seed.sourceStoryId}` : null,
+              seed.sourceStoryId ? `Legacy source ${seed.sourceStoryId}` : null,
               formatLabel(seed.importedReadinessState)
             ])}
           </p>
@@ -242,7 +247,7 @@ function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={seed.href}>
-              Open seed record
+              Open seed
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>

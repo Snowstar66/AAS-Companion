@@ -141,7 +141,8 @@ describe("Value Spine page", () => {
     expect(screen.queryByText("Native Outcome")).toBeNull();
     expect(screen.getAllByRole("link", { name: /Open lineage/i }).length).toBeGreaterThan(0);
     expect(screen.getByText("Visible seeds")).toBeDefined();
-    expect(screen.getByText("Short description is still missing.")).toBeDefined();
+    expect(screen.getByText(/Framing status:/i)).toBeDefined();
+    expect(screen.getByText(/Needs refinement/i)).toBeDefined();
   });
 
   it("shows direction seeds as clear when framing descriptions and expected behavior exist", async () => {

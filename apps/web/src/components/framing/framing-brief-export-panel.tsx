@@ -38,7 +38,7 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
         <CardTitle>Export framing brief</CardTitle>
         <CardDescription>
           Export the current framing brief, epics and direction seeds as an AI-friendly package for further refinement in tools such as BMAD.
-          Business content comes first. Internal IDs remain as metadata only.
+          Business content comes first. Internal IDs and any legacy migration references remain as metadata only.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -98,7 +98,7 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>JSON preview</CardTitle>
-              <CardDescription>Structured payload with metadata retained for traceability.</CardDescription>
+              <CardDescription>Structured payload with metadata retained only for traceability and migration context.</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="max-h-[520px] overflow-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">

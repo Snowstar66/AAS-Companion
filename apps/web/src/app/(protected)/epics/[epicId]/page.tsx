@@ -327,7 +327,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                           <div>
                             <p className="text-sm font-semibold text-foreground">{seed.key}</p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {seed.sourceStoryId ? `Migrated from Story ${seed.sourceStoryId}` : "Native framing seed"}
+                              {seed.sourceStoryId ? `Legacy source available: ${seed.sourceStoryId}` : "Native framing seed"}
                             </p>
                           </div>
                           <PendingFormButton

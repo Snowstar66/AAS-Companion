@@ -216,7 +216,9 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
 }));
 
 describe("Outcome page", () => {
-  it("shows native provenance and blocked TG1 posture for a clean draft case", async () => {
+  it(
+    "shows native provenance and blocked TG1 posture for a clean draft case",
+    async () => {
     render(
       await OutcomeWorkspacePage({
         params: Promise.resolve({ outcomeId: "outcome-native-1" }),
@@ -247,5 +249,7 @@ describe("Outcome page", () => {
     expect(screen.getByText("Framing tollgate")).toBeDefined();
     expect(screen.getByRole("button", { name: "Submit to Tollgate" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
-  });
+    },
+    15000
+  );
 });

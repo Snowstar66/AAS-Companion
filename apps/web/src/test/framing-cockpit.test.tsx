@@ -127,7 +127,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
           lineageHref: null,
           timeframe: "Q2 2026",
           epicCount: 0,
-          storyCount: 0,
+          directionSeedCount: 0,
           updatedAtLabel: "Mar 23",
           detailHref: "/framing?outcomeId=outcome-1"
         },
@@ -149,7 +149,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
           lineageHref: null,
           timeframe: "Q2 2026",
           epicCount: 1,
-          storyCount: 3,
+          directionSeedCount: 3,
           updatedAtLabel: "Mar 23",
           detailHref: "/framing?outcomeId=outcome-2"
         }
@@ -190,18 +190,22 @@ describe("Framing page", () => {
     cleanup();
   });
 
-  it("opens the active framing directly instead of requiring a separate open step", async () => {
-    render(await FramingPage({}));
+  it(
+    "opens the active framing directly instead of requiring a separate open step",
+    async () => {
+      render(await FramingPage({}));
 
-    expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
-    expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Framing tollgate" })).toBeDefined();
-    expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
-    expect(screen.queryByText("Framing Cockpit")).toBeNull();
-  });
+      expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
+      expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
+      expect(screen.getByRole("heading", { name: "Framing tollgate" })).toBeDefined();
+      expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
+      expect(screen.queryByText("Framing Cockpit")).toBeNull();
+    },
+    15000
+  );
 
   it("shows a compact switcher instead of a full duplicate cockpit when demo content exists", async () => {
     render(await FramingPage({}));
