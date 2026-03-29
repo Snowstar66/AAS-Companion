@@ -39,7 +39,7 @@ function syncDirectory(targetDir) {
   }
 }
 
-if (process.env.VERCEL === "1") {
+if (process.env.VERCEL === "1" || !existsSync(sourceDir)) {
   const result = spawnSync("pnpm", ["--filter", "@aas-companion/db", "db:generate"], {
     cwd: repoRoot,
     stdio: "inherit",
