@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -11,7 +11,7 @@ import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-he
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
-import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
+import { OutcomeAiValidatedTextarea } from "@/components/workspace/outcome-ai-validated-textarea";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
@@ -27,7 +27,6 @@ import {
   reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
-  stageOutcomeAiSuggestionAction,
   submitOutcomeTollgateAction,
   validateBaselineDefinitionAiAction,
   validateOutcomeStatementAiAction
@@ -208,54 +207,36 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <label className="space-y-2"><span className="text-sm font-medium text-foreground">Timeframe</span><input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.timeframe ?? ""} disabled={isArchived} name="timeframe" type="text" /><InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe")} /></label>
                   <label className="space-y-2"><span className="text-sm font-medium text-foreground">Value owner</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.valueOwnerId ?? ""} disabled={isArchived} name="valueOwnerId"><option value="">Unassigned</option>{availableOwners.map((owner) => <option key={owner.userId} value={owner.userId}>{owner.fullName ?? owner.email}</option>)}</select><InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} /></label>
                   <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Problem statement</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.problemStatement ?? ""} disabled={isArchived} name="problemStatement" /><InlineFieldGuidance guidance={getInlineGuidance("framing.problem")} /></label>
-                  <label className="space-y-2 xl:col-span-2">
-                    <span className="flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-foreground">Outcome statement</span>
-                      {!isArchived ? <PendingFormButton className="gap-2" formAction={validateOutcomeStatementAiAction} icon={<Sparkles className="h-4 w-4" />} label="AI validate" pendingLabel="Validating..." size="sm" variant="secondary" /> : null}
-                    </span>
-                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={draftOutcomeStatement} disabled={isArchived} name="outcomeStatement" />
-                    <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
-                    <OutcomeFieldAiFeedback error={aiField === "outcome_statement" ? aiError : null} feedback={aiFeedback} field="outcome_statement" />
-                    {aiField === "outcome_statement" && aiFeedback?.suggestedRewrite ? (
-                      <div className="flex flex-wrap gap-2">
-                        <input name="suggestionField" type="hidden" value="outcome_statement" />
-                        <input name="suggestedText" type="hidden" value={aiFeedback.suggestedRewrite} />
-                        <input name="aiField" type="hidden" value={aiField ?? ""} />
-                        <input name="aiVerdict" type="hidden" value={aiVerdict ?? ""} />
-                        <input name="aiConfidence" type="hidden" value={aiConfidence ?? ""} />
-                        <input name="aiReason" type="hidden" value={aiReason ?? ""} />
-                        <input name="aiSuggestion" type="hidden" value={aiSuggestion ?? ""} />
-                        <PendingFormButton className="gap-2" formAction={stageOutcomeAiSuggestionAction} label="Use suggestion in editor" pendingLabel="Opening suggestion..." size="sm" variant="secondary" />
-                      </div>
-                    ) : null}
-                  </label>
+                  <div className="xl:col-span-2">
+                    <OutcomeAiValidatedTextarea
+                      disabled={isArchived}
+                      field="outcome_statement"
+                      guidance={<InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />}
+                      initialError={aiField === "outcome_statement" ? aiError : null}
+                      initialFeedback={aiField === "outcome_statement" ? aiFeedback : null}
+                      initialValue={draftOutcomeStatement}
+                      label="Outcome statement"
+                      name="outcomeStatement"
+                      validateAction={validateOutcomeStatementAiAction}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader><CardTitle>Baseline</CardTitle><CardDescription>These fields must be present before Tollgate 1 can move to review.</CardDescription></CardHeader>
                 <CardContent className="grid gap-5 xl:grid-cols-2">
-                  <label className="space-y-2">
-                    <span className="flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-sm font-medium text-foreground">Baseline definition</span>
-                      {!isArchived ? <PendingFormButton className="gap-2" formAction={validateBaselineDefinitionAiAction} icon={<Sparkles className="h-4 w-4" />} label="AI validate" pendingLabel="Validating..." size="sm" variant="secondary" /> : null}
-                    </span>
-                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={draftBaselineDefinition} disabled={isArchived} name="baselineDefinition" />
-                    <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
-                    <OutcomeFieldAiFeedback error={aiField === "baseline_definition" ? aiError : null} feedback={aiFeedback} field="baseline_definition" />
-                    {aiField === "baseline_definition" && aiFeedback?.suggestedRewrite ? (
-                      <div className="flex flex-wrap gap-2">
-                        <input name="suggestionField" type="hidden" value="baseline_definition" />
-                        <input name="suggestedText" type="hidden" value={aiFeedback.suggestedRewrite} />
-                        <input name="aiField" type="hidden" value={aiField ?? ""} />
-                        <input name="aiVerdict" type="hidden" value={aiVerdict ?? ""} />
-                        <input name="aiConfidence" type="hidden" value={aiConfidence ?? ""} />
-                        <input name="aiReason" type="hidden" value={aiReason ?? ""} />
-                        <input name="aiSuggestion" type="hidden" value={aiSuggestion ?? ""} />
-                        <PendingFormButton className="gap-2" formAction={stageOutcomeAiSuggestionAction} label="Use suggestion in editor" pendingLabel="Opening suggestion..." size="sm" variant="secondary" />
-                      </div>
-                    ) : null}
-                  </label>
+                  <OutcomeAiValidatedTextarea
+                    disabled={isArchived}
+                    field="baseline_definition"
+                    guidance={<InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />}
+                    initialError={aiField === "baseline_definition" ? aiError : null}
+                    initialFeedback={aiField === "baseline_definition" ? aiFeedback : null}
+                    initialValue={draftBaselineDefinition}
+                    label="Baseline definition"
+                    name="baselineDefinition"
+                    validateAction={validateBaselineDefinitionAiAction}
+                  />
                   <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline source</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineSource ?? ""} disabled={isArchived} name="baselineSource" /><InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source")} /></label>
                 </CardContent>
               </Card>

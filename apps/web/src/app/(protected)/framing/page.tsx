@@ -17,7 +17,6 @@ import {
   reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
-  stageOutcomeAiSuggestionAction,
   submitOutcomeTollgateAction,
   validateBaselineDefinitionAiAction,
   validateOutcomeStatementAiAction
@@ -121,7 +120,6 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                 submitTollgateAction={submitOutcomeTollgateAction}
                 initialReviewFramingState={{ status: "idle", message: null, report: null }}
                 reviewFramingAction={reviewOutcomeFramingWithAiAction}
-                stageSuggestionAction={stageOutcomeAiSuggestionAction}
                 validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
                 validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
               />

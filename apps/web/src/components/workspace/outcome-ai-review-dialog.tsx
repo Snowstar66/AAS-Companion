@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { AlertTriangle, Sparkles, X } from "lucide-react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { AlertTriangle, PanelRightOpen, Sparkles, X } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import type { reviewOutcomeFramingWithAiAction } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 
@@ -49,12 +49,43 @@ export function OutcomeAiReviewDialog({
 }: OutcomeAiReviewDialogProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (state.status !== "idle") {
       setOpen(true);
     }
   }, [state.status]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    panelRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   return (
     <>
@@ -67,17 +98,28 @@ export function OutcomeAiReviewDialog({
       </form>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">
-          <div className="max-h-[85vh] w-full max-w-4xl overflow-auto rounded-3xl border border-border bg-background shadow-[0_32px_120px_rgba(15,23,42,0.28)]">
+        <div className="fixed inset-0 z-50 bg-slate-950/55">
+          <button
+            aria-label="Close framing report"
+            className="absolute inset-0 h-full w-full cursor-default"
+            onClick={() => setOpen(false)}
+            type="button"
+          />
+          <div
+            className="absolute inset-y-0 right-0 flex w-full max-w-3xl flex-col border-l border-border bg-background shadow-[-24px_0_80px_rgba(15,23,42,0.18)]"
+            ref={panelRef}
+            tabIndex={-1}
+          >
             <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-border bg-background/95 px-6 py-5 backdrop-blur">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <PanelRightOpen className="h-3.5 w-3.5" />
                   AI framing review
                 </div>
-                <h3 className="text-xl font-semibold text-foreground">Saved framing report</h3>
+                <h3 className="text-xl font-semibold text-foreground">Framing review report</h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  This report reviews the currently saved framing for AI level {currentAiLevel.replaceAll("_", " ")}.
+                  This report stays pinned to the viewport while you review the currently saved framing for AI level{" "}
+                  {currentAiLevel.replaceAll("_", " ")}.
                 </p>
               </div>
               <Button onClick={() => setOpen(false)} size="sm" type="button" variant="secondary">
@@ -85,7 +127,7 @@ export function OutcomeAiReviewDialog({
               </Button>
             </div>
 
-            <div className="space-y-6 px-6 py-6">
+            <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
               {state.status === "error" ? (
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
                   AI framing review could not run: {state.message}

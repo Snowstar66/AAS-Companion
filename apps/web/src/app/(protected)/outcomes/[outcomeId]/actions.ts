@@ -107,13 +107,26 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
   );
 }
 
+export type OutcomeFieldAiActionState =
+  | {
+      status: "success";
+      field: "outcome_statement" | "baseline_definition";
+      verdict: "good" | "needs_revision" | "unclear";
+      confidence: "high" | "medium" | "low";
+      rationale: string;
+      suggestedRewrite: string | null;
+    }
+  | {
+      status: "error";
+      field: "outcome_statement" | "baseline_definition";
+      error: string;
+    };
+
 async function validateOutcomeFieldAiAction(
   formData: FormData,
   field: "outcome_statement" | "baseline_definition"
-) {
+) : Promise<OutcomeFieldAiActionState> {
   const session = await requireActiveProjectSession();
-  const outcomeId = String(formData.get("outcomeId") ?? "");
-  const returnPath = String(formData.get("returnPath") ?? "") || null;
   const result = await validateOutcomeFieldWithAiService({
     organizationId: session.organization.organizationId,
     field,
@@ -126,31 +139,21 @@ async function validateOutcomeFieldAiAction(
   });
 
   if (!result.ok) {
-    redirect(
-      buildOutcomeReturnRedirect({
-        outcomeId,
-        returnPath,
-        search: {
-          aiField: field,
-          aiError: result.errors[0]?.message ?? "AI validation failed."
-        }
-      })
-    );
+    return {
+      status: "error",
+      field,
+      error: result.errors[0]?.message ?? "AI validation failed."
+    };
   }
 
-  redirect(
-    buildOutcomeReturnRedirect({
-      outcomeId,
-      returnPath,
-      search: {
-        aiField: result.data.field,
-        aiVerdict: result.data.verdict,
-        aiConfidence: result.data.confidence,
-        aiReason: result.data.rationale,
-        aiSuggestion: result.data.suggestedRewrite ?? ""
-      }
-    })
-  );
+  return {
+    status: "success",
+    field: result.data.field,
+    verdict: result.data.verdict,
+    confidence: result.data.confidence,
+    rationale: result.data.rationale,
+    suggestedRewrite: result.data.suggestedRewrite ?? null
+  };
 }
 
 export async function validateOutcomeStatementAiAction(formData: FormData) {

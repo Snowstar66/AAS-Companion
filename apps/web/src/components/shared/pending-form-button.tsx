@@ -1,7 +1,6 @@
 "use client";
 
 import type { ComponentProps, ReactNode } from "react";
-import { useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@aas-companion/ui";
@@ -21,22 +20,6 @@ export function PendingFormButton({
   ...buttonProps
 }: PendingFormButtonProps) {
   const { pending } = useFormStatus();
-
-  useEffect(() => {
-    if (!pending) {
-      return;
-    }
-
-    const previousBodyCursor = document.body.style.cursor;
-    const previousHtmlCursor = document.documentElement.style.cursor;
-    document.body.style.cursor = "wait";
-    document.documentElement.style.cursor = "wait";
-
-    return () => {
-      document.body.style.cursor = previousBodyCursor;
-      document.documentElement.style.cursor = previousHtmlCursor;
-    };
-  }, [pending]);
 
   return (
     <Button
