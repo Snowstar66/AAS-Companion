@@ -186,29 +186,6 @@ function dispositionLabel(action: string | null | undefined) {
   return label(action);
 }
 
-function findingResolved(input: {
-  category: "missing" | "uncertain" | "human_only" | "blocked";
-  action: string | null | undefined;
-}) {
-  if (!input.action || input.action === "pending" || input.action === "blocked") {
-    return false;
-  }
-
-  if (input.category === "human_only") {
-    return false;
-  }
-
-  if (input.category === "missing") {
-    return input.action === "not_relevant";
-  }
-
-  if (input.category === "blocked") {
-    return input.action === "not_relevant";
-  }
-
-  return input.action === "confirmed" || input.action === "not_relevant";
-}
-
 function normalizedCandidateQueueItems(
   candidate: IntakeArtifactCandidate,
   sessionId: string,
