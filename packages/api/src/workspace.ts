@@ -2,6 +2,7 @@ import {
   appendActivityEvent,
   listOrganizationUsers,
   getOutcomeWorkspaceSnapshot,
+  reviewOutcomeFramingWithAi,
   getStoryWorkspaceSnapshot,
   validateOutcomeFieldWithAi,
   updateOutcome,
@@ -254,6 +255,60 @@ export async function validateOutcomeFieldWithAiService(input: {
       });
     }
   }, `organizationId=${input.organizationId} field=${input.field}`);
+}
+
+export async function reviewOutcomeFramingWithAiService(input: {
+  organizationId: string;
+  outcomeId: string;
+}) {
+  return withDevTiming("api.reviewOutcomeFramingWithAiService", async () => {
+    const snapshot = await getOutcomeWorkspaceSnapshot(input.organizationId, input.outcomeId);
+
+    if (!snapshot) {
+      return failure({
+        code: "outcome_not_found",
+        message: "Outcome was not found in the current organization."
+      });
+    }
+
+    try {
+      const result = await reviewOutcomeFramingWithAi({
+        outcome: {
+          key: snapshot.outcome.key,
+          title: snapshot.outcome.title,
+          problemStatement: snapshot.outcome.problemStatement ?? null,
+          outcomeStatement: snapshot.outcome.outcomeStatement ?? null,
+          baselineDefinition: snapshot.outcome.baselineDefinition ?? null,
+          baselineSource: snapshot.outcome.baselineSource ?? null,
+          timeframe: snapshot.outcome.timeframe ?? null,
+          aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+          riskProfile: snapshot.outcome.riskProfile
+        },
+        epics: snapshot.outcome.epics.map((epic) => ({
+          key: epic.key,
+          title: epic.title,
+          purpose: epic.purpose ?? null,
+          scopeBoundary: epic.scopeBoundary ?? null,
+          storyCount: epic.stories.length
+        })),
+        stories: snapshot.outcome.stories.map((story) => ({
+          key: story.key,
+          title: story.title,
+          status: story.status,
+          acceptanceCriteriaCount: story.acceptanceCriteria.length,
+          hasTestDefinition: Boolean(story.testDefinition?.trim()),
+          definitionOfDoneCount: story.definitionOfDone.length
+        }))
+      });
+
+      return success(result);
+    } catch (error) {
+      return failure({
+        code: "ai_framing_review_failed",
+        message: error instanceof Error ? error.message : "AI framing review failed."
+      });
+    }
+  }, `organizationId=${input.organizationId} outcomeId=${input.outcomeId}`);
 }
 
 export async function submitOutcomeTollgateService(input: {

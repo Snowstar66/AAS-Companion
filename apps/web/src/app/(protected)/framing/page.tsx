@@ -14,8 +14,10 @@ import {
   createEpicFromOutcomeAction,
   hardDeleteOutcomeAction,
   recordOutcomeTollgateDecisionAction,
+  reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
+  stageOutcomeAiSuggestionAction,
   submitOutcomeTollgateAction,
   validateBaselineDefinitionAiAction,
   validateOutcomeStatementAiAction
@@ -107,6 +109,8 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                   aiReason: getParamValue(query.aiReason) ?? null,
                   aiSuggestion: getParamValue(query.aiSuggestion) ?? null,
                   aiVerdict: (getParamValue(query.aiVerdict) as "good" | "needs_revision" | "unclear" | null) ?? null,
+                  draftBaselineDefinition: getParamValue(query.draftBaselineDefinition) ?? null,
+                  draftOutcomeStatement: getParamValue(query.draftOutcomeStatement) ?? null,
                   blockersFromQuery: getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [],
                   created: getParamValue(query.created) === "1",
                   lifecycleState: getParamValue(query.lifecycle) ?? null,
@@ -115,6 +119,9 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                   submitState: getParamValue(query.submit) ?? null
                 }}
                 submitTollgateAction={submitOutcomeTollgateAction}
+                initialReviewFramingState={{ status: "idle", message: null, report: null }}
+                reviewFramingAction={reviewOutcomeFramingWithAiAction}
+                stageSuggestionAction={stageOutcomeAiSuggestionAction}
                 validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
                 validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
               />

@@ -7,6 +7,7 @@ import {
   createNativeEpicFromOutcomeService,
   hardDeleteGovernedObjectService,
   recordTollgateDecisionService,
+  reviewOutcomeFramingWithAiService,
   restoreGovernedObjectService,
   saveOutcomeWorkspaceService,
   submitOutcomeTollgateService,
@@ -36,6 +37,12 @@ function buildOutcomeReturnRedirect(input: {
 
   const query = params.toString();
   return `${path}${query ? `?${query}` : ""}`;
+}
+
+function copyIfPresent(target: Record<string, string>, key: string, value: FormDataEntryValue | null) {
+  if (typeof value === "string" && value.trim()) {
+    target[key] = value;
+  }
 }
 
 function requireExplicitConfirmation(formData: FormData) {
@@ -152,6 +159,83 @@ export async function validateOutcomeStatementAiAction(formData: FormData) {
 
 export async function validateBaselineDefinitionAiAction(formData: FormData) {
   return validateOutcomeFieldAiAction(formData, "baseline_definition");
+}
+
+export async function stageOutcomeAiSuggestionAction(formData: FormData) {
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const returnPath = String(formData.get("returnPath") ?? "") || null;
+  const suggestionField = String(formData.get("suggestionField") ?? "");
+  const suggestedText = String(formData.get("suggestedText") ?? "");
+  const search: Record<string, string> = {};
+
+  if (suggestionField === "outcome_statement" && suggestedText.trim()) {
+    search.draftOutcomeStatement = suggestedText;
+  }
+
+  if (suggestionField === "baseline_definition" && suggestedText.trim()) {
+    search.draftBaselineDefinition = suggestedText;
+  }
+
+  copyIfPresent(search, "aiField", formData.get("aiField"));
+  copyIfPresent(search, "aiVerdict", formData.get("aiVerdict"));
+  copyIfPresent(search, "aiConfidence", formData.get("aiConfidence"));
+  copyIfPresent(search, "aiReason", formData.get("aiReason"));
+  copyIfPresent(search, "aiSuggestion", formData.get("aiSuggestion"));
+  copyIfPresent(search, "aiError", formData.get("aiError"));
+
+  redirect(
+    buildOutcomeReturnRedirect({
+      outcomeId,
+      returnPath,
+      search
+    })
+  );
+}
+
+export type ReviewOutcomeFramingAiActionState = {
+  status: "idle" | "success" | "error";
+  message: string | null;
+  report:
+    | {
+        overallVerdict: "good" | "needs_attention" | "blocked";
+        executiveSummary: string;
+        missingItems: string[];
+        suggestedChanges: string[];
+        nextAiLevel: {
+          canAdvance: boolean;
+          targetLevel: "level_2" | "level_3" | null;
+          rationale: string;
+          requirements: string[];
+        };
+      }
+    | null;
+};
+
+export async function reviewOutcomeFramingWithAiAction(
+  previousState: ReviewOutcomeFramingAiActionState,
+  formData: FormData
+): Promise<ReviewOutcomeFramingAiActionState> {
+  void previousState;
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const result = await reviewOutcomeFramingWithAiService({
+    organizationId: session.organization.organizationId,
+    outcomeId
+  });
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      message: result.errors[0]?.message ?? "AI framing review failed.",
+      report: null
+    };
+  }
+
+  return {
+    status: "success",
+    message: null,
+    report: result.data
+  };
 }
 
 export async function submitOutcomeTollgateAction(formData: FormData) {

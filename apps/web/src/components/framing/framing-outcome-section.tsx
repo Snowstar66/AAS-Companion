@@ -4,11 +4,13 @@ import { ArrowRight, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import type { reviewOutcomeFramingWithAiAction } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
 import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
+import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
@@ -34,6 +36,8 @@ type FramingOutcomeSectionProps = {
     aiReason?: string | null;
     aiSuggestion?: string | null;
     aiError?: string | null;
+    draftOutcomeStatement?: string | null;
+    draftBaselineDefinition?: string | null;
   };
   embeddedInFraming?: boolean;
   saveAction: (formData: FormData) => void | Promise<void>;
@@ -45,6 +49,24 @@ type FramingOutcomeSectionProps = {
   recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
   validateOutcomeStatementAiAction: (formData: FormData) => void | Promise<void>;
   validateBaselineDefinitionAiAction: (formData: FormData) => void | Promise<void>;
+  stageSuggestionAction: (formData: FormData) => void | Promise<void>;
+  reviewFramingAction: typeof reviewOutcomeFramingWithAiAction;
+  initialReviewFramingState: {
+    status: "idle" | "success" | "error";
+    message: string | null;
+    report: {
+      overallVerdict: "good" | "needs_attention" | "blocked";
+      executiveSummary: string;
+      missingItems: string[];
+      suggestedChanges: string[];
+      nextAiLevel: {
+        canAdvance: boolean;
+        targetLevel: "level_2" | "level_3" | null;
+        rationale: string;
+        requirements: string[];
+      };
+    } | null;
+  };
 };
 
 function getOriginLabel(originType: string) {
@@ -95,7 +117,10 @@ export function FramingOutcomeSection({
   submitTollgateAction,
   recordTollgateDecisionAction,
   validateOutcomeStatementAiAction,
-  validateBaselineDefinitionAiAction
+  validateBaselineDefinitionAiAction,
+  stageSuggestionAction,
+  reviewFramingAction,
+  initialReviewFramingState
 }: FramingOutcomeSectionProps) {
   const { outcome, tollgate, activities, removal, availableOwners, tollgateReview } = data;
   const computedBlockers = getOutcomeBaselineBlockers(outcome);
@@ -130,6 +155,8 @@ export function FramingOutcomeSection({
         }
       : null;
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
+  const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
+  const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
 
   return (
     <section className="space-y-6">
@@ -273,6 +300,15 @@ export function FramingOutcomeSection({
         </>
       ) : null}
 
+      <div className="flex justify-start">
+        <OutcomeAiReviewDialog
+          action={reviewFramingAction}
+          currentAiLevel={outcome.aiAccelerationLevel}
+          initialState={initialReviewFramingState}
+          outcomeId={outcome.id}
+        />
+      </div>
+
       <form action={saveAction} className="space-y-6">
             <input name="outcomeId" type="hidden" value={outcome.id} />
             <input name="returnPath" type="hidden" value={returnPath} />
@@ -350,12 +386,24 @@ export function FramingOutcomeSection({
                   </span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                    defaultValue={outcome.outcomeStatement ?? ""}
+                    defaultValue={draftOutcomeStatement}
                     disabled={isArchived}
                     name="outcomeStatement"
                   />
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
                   <OutcomeFieldAiFeedback error={search.aiField === "outcome_statement" ? search.aiError ?? null : null} feedback={aiFeedback} field="outcome_statement" />
+                  {search.aiField === "outcome_statement" && aiFeedback?.suggestedRewrite ? (
+                    <div className="flex flex-wrap gap-2">
+                      <input name="suggestionField" type="hidden" value="outcome_statement" />
+                      <input name="suggestedText" type="hidden" value={aiFeedback.suggestedRewrite} />
+                      <input name="aiField" type="hidden" value={search.aiField ?? ""} />
+                      <input name="aiVerdict" type="hidden" value={search.aiVerdict ?? ""} />
+                      <input name="aiConfidence" type="hidden" value={search.aiConfidence ?? ""} />
+                      <input name="aiReason" type="hidden" value={search.aiReason ?? ""} />
+                      <input name="aiSuggestion" type="hidden" value={search.aiSuggestion ?? ""} />
+                      <PendingFormButton className="gap-2" formAction={stageSuggestionAction} label="Use suggestion in editor" pendingLabel="Opening suggestion..." size="sm" variant="secondary" />
+                    </div>
+                  ) : null}
                 </label>
               </CardContent>
             </Card>
@@ -383,12 +431,24 @@ export function FramingOutcomeSection({
                   </span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                    defaultValue={outcome.baselineDefinition ?? ""}
+                    defaultValue={draftBaselineDefinition}
                     disabled={isArchived}
                     name="baselineDefinition"
                   />
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
                   <OutcomeFieldAiFeedback error={search.aiField === "baseline_definition" ? search.aiError ?? null : null} feedback={aiFeedback} field="baseline_definition" />
+                  {search.aiField === "baseline_definition" && aiFeedback?.suggestedRewrite ? (
+                    <div className="flex flex-wrap gap-2">
+                      <input name="suggestionField" type="hidden" value="baseline_definition" />
+                      <input name="suggestedText" type="hidden" value={aiFeedback.suggestedRewrite} />
+                      <input name="aiField" type="hidden" value={search.aiField ?? ""} />
+                      <input name="aiVerdict" type="hidden" value={search.aiVerdict ?? ""} />
+                      <input name="aiConfidence" type="hidden" value={search.aiConfidence ?? ""} />
+                      <input name="aiReason" type="hidden" value={search.aiReason ?? ""} />
+                      <input name="aiSuggestion" type="hidden" value={search.aiSuggestion ?? ""} />
+                      <PendingFormButton className="gap-2" formAction={stageSuggestionAction} label="Use suggestion in editor" pendingLabel="Opening suggestion..." size="sm" variant="secondary" />
+                    </div>
+                  ) : null}
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">Baseline source</span>

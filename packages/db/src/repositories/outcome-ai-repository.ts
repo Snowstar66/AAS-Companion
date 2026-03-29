@@ -6,6 +6,19 @@ export type OutcomeFieldAiValidation = {
   suggestedRewrite: string | null;
 };
 
+export type OutcomeFramingAiReview = {
+  overallVerdict: "good" | "needs_attention" | "blocked";
+  executiveSummary: string;
+  missingItems: string[];
+  suggestedChanges: string[];
+  nextAiLevel: {
+    canAdvance: boolean;
+    targetLevel: "level_2" | "level_3" | null;
+    rationale: string;
+    requirements: string[];
+  };
+};
+
 function parseOutcomeFieldAiValidation(input: unknown): OutcomeFieldAiValidation {
   if (!input || typeof input !== "object") {
     throw new Error("AI validation response was not an object.");
@@ -44,6 +57,74 @@ function parseOutcomeFieldAiValidation(input: unknown): OutcomeFieldAiValidation
     confidence,
     rationale: rationale.trim(),
     suggestedRewrite: typeof suggestedRewrite === "string" && suggestedRewrite.trim() ? suggestedRewrite.trim() : null
+  };
+}
+
+function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
+  if (!input || typeof input !== "object") {
+    throw new Error("AI framing review response was not an object.");
+  }
+
+  const candidate = input as Record<string, unknown>;
+  const overallVerdict = candidate.overallVerdict;
+  const executiveSummary = candidate.executiveSummary;
+  const missingItems = candidate.missingItems;
+  const suggestedChanges = candidate.suggestedChanges;
+  const nextAiLevel = candidate.nextAiLevel;
+
+  if (overallVerdict !== "good" && overallVerdict !== "needs_attention" && overallVerdict !== "blocked") {
+    throw new Error("AI framing review returned an invalid verdict.");
+  }
+
+  if (typeof executiveSummary !== "string" || !executiveSummary.trim()) {
+    throw new Error("AI framing review returned an invalid summary.");
+  }
+
+  if (!Array.isArray(missingItems) || !missingItems.every((item) => typeof item === "string")) {
+    throw new Error("AI framing review returned invalid missing items.");
+  }
+
+  if (!Array.isArray(suggestedChanges) || !suggestedChanges.every((item) => typeof item === "string")) {
+    throw new Error("AI framing review returned invalid suggested changes.");
+  }
+
+  if (!nextAiLevel || typeof nextAiLevel !== "object") {
+    throw new Error("AI framing review returned an invalid next AI level section.");
+  }
+
+  const next = nextAiLevel as Record<string, unknown>;
+  const targetLevel = next.targetLevel;
+  const canAdvance = next.canAdvance;
+  const rationale = next.rationale;
+  const requirements = next.requirements;
+
+  if (targetLevel !== null && targetLevel !== "level_2" && targetLevel !== "level_3") {
+    throw new Error("AI framing review returned an invalid target AI level.");
+  }
+
+  if (typeof canAdvance !== "boolean") {
+    throw new Error("AI framing review returned an invalid canAdvance flag.");
+  }
+
+  if (typeof rationale !== "string" || !rationale.trim()) {
+    throw new Error("AI framing review returned an invalid next-level rationale.");
+  }
+
+  if (!Array.isArray(requirements) || !requirements.every((item) => typeof item === "string")) {
+    throw new Error("AI framing review returned invalid next-level requirements.");
+  }
+
+  return {
+    overallVerdict,
+    executiveSummary: executiveSummary.trim(),
+    missingItems: missingItems.map((item) => item.trim()).filter(Boolean),
+    suggestedChanges: suggestedChanges.map((item) => item.trim()).filter(Boolean),
+    nextAiLevel: {
+      canAdvance,
+      targetLevel,
+      rationale: rationale.trim(),
+      requirements: requirements.map((item) => item.trim()).filter(Boolean)
+    }
   };
 }
 
@@ -159,6 +240,79 @@ ${JSON.stringify(payload, null, 2)}
   `.trim();
 }
 
+function buildFramingReviewPrompt(input: {
+  outcome: {
+    key: string;
+    title: string;
+    problemStatement?: string | null;
+    outcomeStatement?: string | null;
+    baselineDefinition?: string | null;
+    baselineSource?: string | null;
+    timeframe?: string | null;
+    aiAccelerationLevel: "level_1" | "level_2" | "level_3";
+    riskProfile: "low" | "medium" | "high";
+  };
+  epics: Array<{
+    key: string;
+    title: string;
+    purpose?: string | null;
+    scopeBoundary?: string | null;
+    storyCount: number;
+  }>;
+  stories: Array<{
+    key: string;
+    title: string;
+    status: string;
+    acceptanceCriteriaCount: number;
+    hasTestDefinition: boolean;
+    definitionOfDoneCount: number;
+  }>;
+}) {
+  const nextAiLevel =
+    input.outcome.aiAccelerationLevel === "level_1"
+      ? "level_2"
+      : input.outcome.aiAccelerationLevel === "level_2"
+        ? "level_3"
+        : null;
+
+  return `
+You review a whole governed Framing conservatively.
+
+Rules:
+- Only report material gaps, not stylistic preferences.
+- If the framing is already good enough, say so plainly.
+- Suggested changes should be limited to the few changes that would most improve clarity or readiness.
+- "nextAiLevel" should explain what would be required to move one level higher than the current AI level.
+
+What to evaluate:
+- whether the Outcome framing reads like a real framing, not just a delivery task
+- whether the baseline is sufficiently grounded
+- whether the current Epic and Story structure is defined enough to support the current AI level
+- what is still missing in general
+- what would be additionally required for the next AI level
+
+Current AI level: ${input.outcome.aiAccelerationLevel}
+Next higher level to consider: ${nextAiLevel ?? "none"}
+
+Required output JSON:
+{
+  "overallVerdict": "good" | "needs_attention" | "blocked",
+  "executiveSummary": "short report summary",
+  "missingItems": ["..."],
+  "suggestedChanges": ["..."],
+  "nextAiLevel": {
+    "canAdvance": true | false,
+    "targetLevel": "level_2" | "level_3" | null,
+    "rationale": "short explanation",
+    "requirements": ["..."]
+  }
+}
+
+Payload:
+${JSON.stringify(input, null, 2)}
+  `.trim();
+}
+
 export async function validateOutcomeFieldWithAi(input: {
   field: "outcome_statement" | "baseline_definition";
   title?: string | null;
@@ -205,4 +359,59 @@ export async function validateOutcomeFieldWithAi(input: {
   const parsed = JSON.parse(jsonText) as OutcomeFieldAiValidation;
 
   return parseOutcomeFieldAiValidation(parsed);
+}
+
+export async function reviewOutcomeFramingWithAi(input: {
+  outcome: {
+    key: string;
+    title: string;
+    problemStatement?: string | null;
+    outcomeStatement?: string | null;
+    baselineDefinition?: string | null;
+    baselineSource?: string | null;
+    timeframe?: string | null;
+    aiAccelerationLevel: "level_1" | "level_2" | "level_3";
+    riskProfile: "low" | "medium" | "high";
+  };
+  epics: Array<{
+    key: string;
+    title: string;
+    purpose?: string | null;
+    scopeBoundary?: string | null;
+    storyCount: number;
+  }>;
+  stories: Array<{
+    key: string;
+    title: string;
+    status: string;
+    acceptanceCriteriaCount: number;
+    hasTestDefinition: boolean;
+    definitionOfDoneCount: number;
+  }>;
+}) {
+  const env = readRequiredLlmEnv();
+  const response = await fetch(new URL("responses", env.endpoint), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${env.apiKey}`,
+      "api-key": env.apiKey
+    },
+    body: JSON.stringify({
+      model: env.model,
+      input: buildFramingReviewPrompt(input)
+    }),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI framing review failed with HTTP ${response.status}.`);
+  }
+
+  const responseBody = await response.json();
+  const outputText = extractOutputText(responseBody);
+  const jsonText = extractJsonObject(outputText);
+  const parsed = JSON.parse(jsonText) as OutcomeFramingAiReview;
+
+  return parseOutcomeFramingAiReview(parsed);
 }

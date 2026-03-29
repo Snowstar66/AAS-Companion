@@ -9,6 +9,7 @@ import { FramingBriefExportPanel } from "@/components/framing/framing-brief-expo
 import { AppShell } from "@/components/layout/app-shell";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
+import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
@@ -23,8 +24,10 @@ import {
   createEpicFromOutcomeAction,
   hardDeleteOutcomeAction,
   recordOutcomeTollgateDecisionAction,
+  reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
+  stageOutcomeAiSuggestionAction,
   submitOutcomeTollgateAction,
   validateBaselineDefinitionAiAction,
   validateOutcomeStatementAiAction
@@ -76,6 +79,8 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   if (!outcomeResult.ok) notFound();
 
   const { outcome, tollgate, activities, removal, availableOwners } = outcomeResult.data;
+  const draftOutcomeStatement = getParamValue(query.draftOutcomeStatement) ?? outcome.outcomeStatement ?? "";
+  const draftBaselineDefinition = getParamValue(query.draftBaselineDefinition) ?? outcome.baselineDefinition ?? "";
   const tollgateReview = outcomeResult.data.tollgateReview;
   const computedBlockers = getOutcomeBaselineBlockers(outcome);
   const blockers = blockersFromQuery.length > 0 ? blockersFromQuery : tollgateReview?.blockers ?? tollgate?.blockers ?? computedBlockers;
@@ -119,6 +124,15 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
         {lifecycleState === "restored" ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Outcome restored to active work.</div> : null}
         {lifecycleState === "error" && saveMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{saveMessage}</div> : null}
         {isArchived ? <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">This Outcome is archived and currently read-only. Restore it to continue active framing work.</div> : null}
+
+        <div className="flex justify-start">
+          <OutcomeAiReviewDialog
+            action={reviewOutcomeFramingWithAiAction}
+            currentAiLevel={outcome.aiAccelerationLevel}
+            initialState={{ status: "idle", message: null, report: null }}
+            outcomeId={outcome.id}
+          />
+        </div>
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
@@ -199,9 +213,21 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                       <span className="text-sm font-medium text-foreground">Outcome statement</span>
                       {!isArchived ? <PendingFormButton className="gap-2" formAction={validateOutcomeStatementAiAction} icon={<Sparkles className="h-4 w-4" />} label="AI validate" pendingLabel="Validating..." size="sm" variant="secondary" /> : null}
                     </span>
-                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.outcomeStatement ?? ""} disabled={isArchived} name="outcomeStatement" />
+                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={draftOutcomeStatement} disabled={isArchived} name="outcomeStatement" />
                     <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
                     <OutcomeFieldAiFeedback error={aiField === "outcome_statement" ? aiError : null} feedback={aiFeedback} field="outcome_statement" />
+                    {aiField === "outcome_statement" && aiFeedback?.suggestedRewrite ? (
+                      <div className="flex flex-wrap gap-2">
+                        <input name="suggestionField" type="hidden" value="outcome_statement" />
+                        <input name="suggestedText" type="hidden" value={aiFeedback.suggestedRewrite} />
+                        <input name="aiField" type="hidden" value={aiField ?? ""} />
+                        <input name="aiVerdict" type="hidden" value={aiVerdict ?? ""} />
+                        <input name="aiConfidence" type="hidden" value={aiConfidence ?? ""} />
+                        <input name="aiReason" type="hidden" value={aiReason ?? ""} />
+                        <input name="aiSuggestion" type="hidden" value={aiSuggestion ?? ""} />
+                        <PendingFormButton className="gap-2" formAction={stageOutcomeAiSuggestionAction} label="Use suggestion in editor" pendingLabel="Opening suggestion..." size="sm" variant="secondary" />
+                      </div>
+                    ) : null}
                   </label>
                 </CardContent>
               </Card>
@@ -214,9 +240,21 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                       <span className="text-sm font-medium text-foreground">Baseline definition</span>
                       {!isArchived ? <PendingFormButton className="gap-2" formAction={validateBaselineDefinitionAiAction} icon={<Sparkles className="h-4 w-4" />} label="AI validate" pendingLabel="Validating..." size="sm" variant="secondary" /> : null}
                     </span>
-                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineDefinition ?? ""} disabled={isArchived} name="baselineDefinition" />
+                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={draftBaselineDefinition} disabled={isArchived} name="baselineDefinition" />
                     <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
                     <OutcomeFieldAiFeedback error={aiField === "baseline_definition" ? aiError : null} feedback={aiFeedback} field="baseline_definition" />
+                    {aiField === "baseline_definition" && aiFeedback?.suggestedRewrite ? (
+                      <div className="flex flex-wrap gap-2">
+                        <input name="suggestionField" type="hidden" value="baseline_definition" />
+                        <input name="suggestedText" type="hidden" value={aiFeedback.suggestedRewrite} />
+                        <input name="aiField" type="hidden" value={aiField ?? ""} />
+                        <input name="aiVerdict" type="hidden" value={aiVerdict ?? ""} />
+                        <input name="aiConfidence" type="hidden" value={aiConfidence ?? ""} />
+                        <input name="aiReason" type="hidden" value={aiReason ?? ""} />
+                        <input name="aiSuggestion" type="hidden" value={aiSuggestion ?? ""} />
+                        <PendingFormButton className="gap-2" formAction={stageOutcomeAiSuggestionAction} label="Use suggestion in editor" pendingLabel="Opening suggestion..." size="sm" variant="secondary" />
+                      </div>
+                    ) : null}
                   </label>
                   <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline source</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineSource ?? ""} disabled={isArchived} name="baselineSource" /><InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source")} /></label>
                 </CardContent>

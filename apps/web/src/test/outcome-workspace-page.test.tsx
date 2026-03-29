@@ -199,9 +199,16 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   archiveOutcomeAction: vi.fn(),
   createEpicFromOutcomeAction: vi.fn(),
   hardDeleteOutcomeAction: vi.fn(),
+  initialReviewOutcomeFramingAiActionState: {
+    status: "idle",
+    message: null,
+    report: null
+  },
   recordOutcomeTollgateDecisionAction: vi.fn(),
+  reviewOutcomeFramingWithAiAction: vi.fn(),
   restoreOutcomeAction: vi.fn(),
   saveOutcomeWorkspaceAction: vi.fn(),
+  stageOutcomeAiSuggestionAction: vi.fn(),
   submitOutcomeTollgateAction: vi.fn(),
   validateOutcomeStatementAiAction: vi.fn(),
   validateBaselineDefinitionAiAction: vi.fn()
@@ -226,6 +233,7 @@ describe("Outcome page", () => {
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("Customer handshake")).toBeDefined();
     expect(screen.getAllByText("AI validate").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
     expect(screen.getByText("Export framing brief")).toBeDefined();
     expect(screen.getByRole("button", { name: "Copy Framing Markdown" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Copy Framing JSON" })).toBeDefined();

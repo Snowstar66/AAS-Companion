@@ -54,7 +54,12 @@ export {
   listOutcomes,
   updateOutcome
 } from "./repositories/outcome-repository";
-export { validateOutcomeFieldWithAi, type OutcomeFieldAiValidation } from "./repositories/outcome-ai-repository";
+export {
+  reviewOutcomeFramingWithAi,
+  validateOutcomeFieldWithAi,
+  type OutcomeFieldAiValidation,
+  type OutcomeFramingAiReview
+} from "./repositories/outcome-ai-repository";
 export {
   createEpic,
   getEpicById,

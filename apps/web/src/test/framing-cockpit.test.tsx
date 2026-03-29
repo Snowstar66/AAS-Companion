@@ -165,9 +165,16 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   archiveOutcomeAction: vi.fn(),
   createEpicFromOutcomeAction: vi.fn(),
   hardDeleteOutcomeAction: vi.fn(),
+  initialReviewOutcomeFramingAiActionState: {
+    status: "idle",
+    message: null,
+    report: null
+  },
   recordOutcomeTollgateDecisionAction: vi.fn(),
+  reviewOutcomeFramingWithAiAction: vi.fn(),
   restoreOutcomeAction: vi.fn(),
   saveOutcomeWorkspaceAction: vi.fn(),
+  stageOutcomeAiSuggestionAction: vi.fn(),
   submitOutcomeTollgateAction: vi.fn(),
   validateOutcomeStatementAiAction: vi.fn(),
   validateBaselineDefinitionAiAction: vi.fn()
@@ -188,6 +195,7 @@ describe("Framing page", () => {
     expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Framing scope value spine" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
     expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Tollgate 1 review and approval" })).toBeDefined();
     expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
