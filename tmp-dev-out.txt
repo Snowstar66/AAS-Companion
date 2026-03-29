@@ -1,0 +1,23 @@
+
+> @aas-companion/web@0.1.0 predev C:\Users\hellgrenpo\AAS-Companion\apps\web
+> pnpm -C ../.. build:web-runtime-packages && node ../../scripts/sync-prisma-client.mjs --dev
+
+
+> aas-companion@0.1.0 build:web-runtime-packages C:\Users\hellgrenpo\AAS-Companion
+> node ./scripts/build-web-runtime-packages.mjs
+
+
+> @aas-companion/web@0.1.0 dev C:\Users\hellgrenpo\AAS-Companion\apps\web
+> node ../../scripts/run-next-with-optional-env.mjs dev
+
+   ▲ Next.js 15.5.14 (Turbopack)
+   - Local:        http://localhost:3005
+   - Network:      http://10.66.39.219:3005
+
+ ✓ Starting...
+Creating turbopack project {
+  dir: 'C:\\Users\\hellgrenpo\\AAS-Companion\\apps\\web',
+  testMode: true
+}
+ ✓ Compiled middleware in 365ms
+ ✓ Ready in 3.3s
