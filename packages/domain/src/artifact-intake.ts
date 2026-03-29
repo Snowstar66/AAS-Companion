@@ -1483,8 +1483,10 @@ export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandida
     };
   }
 
+  const uniqueStoryImportKey = `IMP-STR-${candidate.id.slice(-8).replace(/[^a-z0-9]/gi, "").toUpperCase()}`;
+
   return {
-    key: null,
+    key: uniqueStoryImportKey,
     title: candidate.title,
     problemStatement: null,
     outcomeStatement: null,

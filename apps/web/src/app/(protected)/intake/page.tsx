@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDown, Inbox } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
@@ -39,16 +39,6 @@ function formatBytes(value: number) {
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
-}
-
-function confidenceTone(confidence: "high" | "medium" | "low") {
-  if (confidence === "high") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-  if (confidence === "medium") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  }
-  return "border-rose-200 bg-rose-50 text-rose-700";
 }
 
 function flashTone(status: string | undefined) {
@@ -246,227 +236,96 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
           </Card>
         ) : (
           <>
-            <div className="grid gap-4 2xl:grid-cols-[1.15fr,0.85fr]">
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Import sessions</CardTitle>
-                  <CardDescription>
-                    Pick a session and then a single imported artifact to keep review scoped and trustworthy.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {visibleSessions.map((artifactSession) => (
-                    <div
-                      className={`rounded-2xl border p-4 ${selectedSession?.id === artifactSession.id ? "border-primary/50 bg-primary/5" : "border-border/70 bg-background/80"}`}
-                      key={artifactSession.id}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-foreground">{artifactSession.label}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Created {formatDate(artifactSession.createdAt)} by{" "}
-                            {artifactSession.creator?.fullName ?? artifactSession.creator?.email ?? "Unknown uploader"}
-                          </p>
-                        </div>
-                        <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                          {formatLabel(artifactSession.status)}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Files</p>
-                          <p className="mt-1 font-semibold">{artifactSession.files.length}</p>
-                        </div>
-                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Parsed</p>
-                          <p className="mt-1 font-semibold">
-                            {artifactSession.files.reduce((count, file) => count + file.parsedSectionCount, 0)}
-                          </p>
-                        </div>
-                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Candidates</p>
-                          <p className="mt-1 font-semibold">{artifactSession.candidateCount}</p>
-                        </div>
-                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-3 text-sm">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Review leftovers</p>
-                          <p className="mt-1 font-semibold">{artifactSession.unmappedSectionCount}</p>
-                        </div>
-                      </div>
-
-                      {artifactSession.clearedCandidateCount > 0 ? (
-                        <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-                          {artifactSession.rejectedCandidateCount > 0 ? (
-                            <span>{artifactSession.rejectedCandidateCount} candidate(s) were rejected and removed from the active import queue. </span>
-                          ) : null}
-                          {artifactSession.promotedCandidateCount > 0 ? (
-                            <span>{artifactSession.promotedCandidateCount} candidate(s) were already promoted into the project Value Spine. </span>
-                          ) : null}
-                          Review keeps the audit trail, but intake now focuses on work that is still active.
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {artifactSession.files
-                          .filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0)
-                          .map((artifactFile) => {
-                          const sessionCandidates =
-                            artifactSession.candidates.length > 0 ? artifactSession.candidates : artifactSession.displayCandidates;
-                          const firstCandidate =
-                            sessionCandidates.find((candidate) => {
-                              if ("fileId" in candidate) {
-                                return candidate.fileId === artifactFile.id;
-                              }
-
-                              return candidate.source.fileId === artifactFile.id;
-                            }) ?? null;
-
-                          return (
-                            <Button
-                              asChild
-                              key={artifactFile.id}
-                              size="sm"
-                              variant={
-                                selectedSession?.id === artifactSession.id && selectedFile?.id === artifactFile.id
-                                  ? "default"
-                                  : "secondary"
-                              }
-                            >
-                              <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, firstCandidate?.id ?? null, queueFilter)} prefetch={false}>
-                                {artifactFile.fileName}
-                              </Link>
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                  {visibleSessions.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-                      No import sessions match the current action filter.
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Import context and summary</CardTitle>
-                  <CardDescription>
-                    The intake summary lives here in-flow so the review workspace can stay focused on the correction queue.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <details className="group rounded-2xl border border-border/70 bg-muted/10">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>Imported candidates</CardTitle>
+                <CardDescription>
+                  Pick the imported file and candidate you want to inspect and continue working on.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {visibleSessions.map((artifactSession) => (
+                  <div
+                    className={`rounded-2xl border p-4 ${selectedSession?.id === artifactSession.id ? "border-primary/50 bg-primary/5" : "border-border/70 bg-background/80"}`}
+                    key={artifactSession.id}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="font-medium text-foreground">Import summary</p>
+                        <p className="font-medium text-foreground">{artifactSession.label}</p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Persisted intake activity and current review volume for this project.
+                          Created {formatDate(artifactSession.createdAt)} by{" "}
+                          {artifactSession.creator?.fullName ?? artifactSession.creator?.email ?? "Unknown uploader"}
                         </p>
                       </div>
-                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
-                    </summary>
-                    <div className="flex flex-wrap gap-2 border-t border-border/70 px-4 py-4 text-xs text-muted-foreground">
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                        Sessions: <strong className="ml-1 text-foreground">{workspace.summary.sessions}</strong>
-                      </span>
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                        Uploaded files: <strong className="ml-1 text-foreground">{workspace.summary.files}</strong>
-                      </span>
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                        Pending classification: <strong className="ml-1 text-foreground">{workspace.summary.pendingClassification}</strong>
-                      </span>
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                        Parsed sections: <strong className="ml-1 text-foreground">{workspace.summary.parsedSections}</strong>
-                      </span>
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                        Candidate objects: <strong className="ml-1 text-foreground">{workspace.summary.candidateObjects}</strong>
-                      </span>
-                      <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                        Human review queues: <strong className="ml-1 text-foreground">{workspace.summary.humanReviewRequired}</strong>
+                      <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                        {formatLabel(artifactSession.status)}
                       </span>
                     </div>
-                  </details>
 
-                  {selectedFile ? (
-                    <details className="group rounded-2xl border border-border/70 bg-background/80" open>
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
-                        <div>
-                          <p className="font-medium text-foreground">Selected artifact</p>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            The current review context is always tied to one imported file.
-                          </p>
-                        </div>
-                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
-                      </summary>
-                      <div className="space-y-4 border-t border-border/70 px-4 py-4">
-                        <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                          <p className="font-medium text-foreground">{selectedFile.fileName}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {selectedSession?.label} for {workspace.organizationName}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                            {selectedFile.sourceType ? formatLabel(selectedFile.sourceType) : formatLabel(selectedFile.sourceTypeStatus)}
-                          </span>
-                          {selectedFile.sourceTypeConfidence ? (
-                            <span
-                              className={`inline-flex rounded-full border px-2.5 py-1 text-xs ${confidenceTone(selectedFile.sourceTypeConfidence)}`}
-                            >
-                              {selectedFile.sourceTypeConfidence} confidence
-                            </span>
-                          ) : null}
-                          <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                            {selectedFile.parsedSectionCount} parsed sections
-                          </span>
-                          <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                            {formatBytes(selectedFile.sizeBytes)}
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {selectedFile.parsedArtifacts?.sections.slice(0, 4).map((section) => (
-                            <div className="rounded-2xl border border-border/70 bg-muted/10 p-3 text-sm" key={section.id}>
-                              <p className="font-medium text-foreground">{section.title}</p>
-                              <p className="mt-1 text-muted-foreground">
-                                {formatLabel(section.kind)}: {section.sourceReference.sectionMarker}
-                              </p>
+                    <div className="mt-4 space-y-3">
+                      {artifactSession.files
+                        .filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0)
+                        .map((artifactFile) => {
+                          const sessionCandidates =
+                            artifactSession.candidates.length > 0 ? artifactSession.candidates : artifactSession.displayCandidates;
+                          const fileCandidates = sessionCandidates.filter((candidate) =>
+                            "fileId" in candidate ? candidate.fileId === artifactFile.id : candidate.source.fileId === artifactFile.id
+                          );
+                          const firstCandidate = fileCandidates[0] ?? null;
+
+                          return (
+                            <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={artifactFile.id}>
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <Button
+                                  asChild
+                                  size="sm"
+                                  variant={
+                                    selectedSession?.id === artifactSession.id && selectedFile?.id === artifactFile.id
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
+                                  <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, firstCandidate?.id ?? null, queueFilter)} prefetch={false}>
+                                    {artifactFile.fileName}
+                                  </Link>
+                                </Button>
+                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                  <span>{formatBytes(artifactFile.sizeBytes)}</span>
+                                  <span>{artifactFile.parsedSectionCount} parsed</span>
+                                  <span>{fileCandidates.length} candidate(s)</span>
+                                </div>
+                              </div>
+
+                              {fileCandidates.length > 0 ? (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {fileCandidates.map((candidate) => (
+                                    <Button
+                                      asChild
+                                      className="gap-2"
+                                      key={candidate.id}
+                                      size="sm"
+                                      variant={selectedCandidate?.id === candidate.id ? "default" : "secondary"}
+                                    >
+                                      <Link href={buildIntakeHref(artifactSession.id, artifactFile.id, candidate.id, queueFilter)} prefetch={false}>
+                                        {candidate.type}: {candidate.title}
+                                      </Link>
+                                    </Button>
+                                  ))}
+                                </div>
+                              ) : null}
                             </div>
-                          ))}
-                        </div>
-                        <details className="group rounded-2xl border border-border/70 bg-muted/10">
-                          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">Imported file snapshot</p>
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                Expand to inspect the exact file content as it looked at intake.
-                              </p>
-                            </div>
-                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
-                          </summary>
-                          <div className="border-t border-border/70 px-4 py-4">
-                            <div className="rounded-2xl border border-border/70 bg-slate-950 px-4 py-4 text-sm text-slate-100 shadow-inner">
-                              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap break-words font-mono leading-6">
-                                {selectedFile.content}
-                              </pre>
-                            </div>
-                          </div>
-                        </details>
-                        {selectedFileCandidates.length === 0 && (selectedSession?.clearedCandidateCount ?? 0) > 0 ? (
-                          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-                            This artifact has no active import candidates left. Any earlier candidates were either rejected
-                            or already promoted into the project Value Spine.
-                          </div>
-                        ) : null}
-                      </div>
-                    </details>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Select an artifact file to begin scoped intake review.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ))}
+                {visibleSessions.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
+                    No import sessions match the current action filter.
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
 
             {selectedSession && selectedFile ? (
               <ArtifactIntakeReviewWorkspace

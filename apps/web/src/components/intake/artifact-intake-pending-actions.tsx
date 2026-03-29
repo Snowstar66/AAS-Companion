@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Bot, CircleAlert, CircleCheckBig, GitBranch, LoaderCircle, Upload, XCircle } from "lucide-react";
+import { Bot, GitBranch, LoaderCircle, Upload, XCircle } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
-type ReviewIntent = "edit" | "confirm" | "follow_up" | "reject" | "promote";
+type ReviewIntent = "edit" | "reject" | "promote";
 type UploadProcessingMode = "deterministic" | "ai_assisted";
 
 const reviewActionConfig: Array<{
@@ -23,21 +23,6 @@ const reviewActionConfig: Array<{
     pendingMessage: "Saving your corrections and refreshing the imported candidate.",
     variant: "secondary",
     Icon: GitBranch
-  },
-  {
-    intent: "confirm",
-    label: "Confirm review state",
-    pendingLabel: "Confirming review state...",
-    pendingMessage: "Recording confirmation and recalculating import approval readiness.",
-    Icon: CircleCheckBig
-  },
-  {
-    intent: "follow_up",
-    label: "Keep follow-up open",
-    pendingLabel: "Keeping follow-up open...",
-    pendingMessage: "Saving the follow-up state for continued human review.",
-    variant: "secondary",
-    Icon: CircleAlert
   },
   {
     intent: "reject",

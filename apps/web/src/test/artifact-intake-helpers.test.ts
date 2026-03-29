@@ -3,6 +3,7 @@ import {
   analyzeArtifactCandidateCompliance,
   buildAiAssistedArtifactProcessingResult,
   classifyArtifactSource,
+  createArtifactCandidateDraftRecord,
   getArtifactCandidateIssueProgress,
   getArtifactFileExtension,
   inferImportedReadinessState,
@@ -390,6 +391,33 @@ describe("artifact intake helpers", () => {
       "validation is enforced server-side",
       "blocked and valid states are both demonstrable"
     ]);
+  });
+
+  it("assigns an automatic unique-looking import key for story candidates", () => {
+    const draftRecord = createArtifactCandidateDraftRecord({
+      id: "mapped-file-1-section-1-story",
+      type: "story",
+      title: "Imported Story",
+      summary: "Imported Story summary",
+      mappingState: "mapped",
+      source: {
+        fileId: "file-1",
+        fileName: "story.md",
+        sectionId: "section-1",
+        sectionTitle: "Story",
+        sectionMarker: "## Story",
+        sourceType: "story_file",
+        confidence: "high"
+      },
+      inferredOutcomeCandidateId: null,
+      inferredEpicCandidateId: null,
+      relationshipState: "missing",
+      relationshipNote: null,
+      acceptanceCriteria: [],
+      testNotes: []
+    });
+
+    expect(draftRecord.key).toMatch(/^IMP-STR-/);
   });
 
   it("maps escaped structured story spec markdown into one story candidate", () => {
