@@ -103,11 +103,12 @@ describe("Value Spine page", () => {
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
     expect(screen.getByRole("heading", { name: "Project Value Spine", level: 1 })).toBeDefined();
-    expect(screen.getByText("Current Framing: IMP-OUT-1")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Project Value Spine backlog" })).toBeDefined();
+    expect(screen.getAllByText("IMP-OUT-1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
     expect(screen.getAllByRole("link", { name: /Open lineage/i }).length).toBeGreaterThan(0);
-    expect(screen.getByText("Missing Test Definition")).toBeDefined();
+    expect(screen.getByText("Test branch missing")).toBeDefined();
   });
 
   it("shows approved handoff stories as ready in the Value Spine summary and story card", async () => {

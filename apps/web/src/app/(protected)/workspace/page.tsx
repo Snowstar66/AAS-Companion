@@ -1,20 +1,12 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Circle,
-  CircleAlert,
-  CircleDashed,
-  FileSearch,
-  TestTube2,
-  Workflow
-} from "lucide-react";
+import { ArrowRight, Workflow } from "lucide-react";
 import { getValueSpineService } from "@aas-companion/api/spine";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { Button, Card, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
+import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { withDevTiming } from "@/lib/dev-timing";
-import { getStoryToneClasses, getStoryUxModel, type StoryUxModel } from "@/lib/workspace/story-ux";
+import { getStoryUxModel } from "@/lib/workspace/story-ux";
 
 type WorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -38,54 +30,6 @@ function getOriginLabel(originType: string) {
   }
 
   return "Imported";
-}
-
-function getLifecycleStepClasses(state: StoryUxModel["lifecycleSteps"][number]["state"]) {
-  if (state === "complete") {
-    return "border-emerald-200 bg-emerald-50/80";
-  }
-
-  if (state === "current") {
-    return "border-sky-200 bg-sky-50/80";
-  }
-
-  if (state === "attention") {
-    return "border-amber-200 bg-amber-50/80";
-  }
-
-  return "border-border/70 bg-muted/10";
-}
-
-function LifecycleStepIcon({ state }: { state: StoryUxModel["lifecycleSteps"][number]["state"] }) {
-  if (state === "complete") {
-    return <CheckCircle2 className="h-4 w-4 text-emerald-700" />;
-  }
-
-  if (state === "current") {
-    return <Circle className="h-4 w-4 fill-sky-700 text-sky-700" />;
-  }
-
-  if (state === "attention") {
-    return <CircleAlert className="h-4 w-4 text-amber-700" />;
-  }
-
-  return <CircleDashed className="h-4 w-4 text-muted-foreground" />;
-}
-
-function getMetroLabelClasses(state: StoryUxModel["lifecycleSteps"][number]["state"]) {
-  if (state === "complete") {
-    return "text-emerald-900";
-  }
-
-  if (state === "current") {
-    return "text-sky-900";
-  }
-
-  if (state === "attention") {
-    return "text-amber-900";
-  }
-
-  return "text-muted-foreground";
 }
 
 function StatCard(props: {
@@ -269,10 +213,14 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
             <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,252,0.92))] shadow-sm">
               <CardHeader>
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-3">
+                  <div className="space-y-2">
+                    <CardTitle>Lifecycle view</CardTitle>
+                    <CardDescription>
+                      The selected Framing branch is already shown in the backlog below. Use the filter here to decide which lifecycle states to include.
+                    </CardDescription>
                     <div className="flex flex-wrap gap-2">
                       <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                        Current Framing: {selectedOutcome.key}
+                        {selectedOutcome.key}
                       </span>
                       <span className="inline-flex rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                         {getOriginLabel(selectedOutcome.originType)}
@@ -280,12 +228,6 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                       <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
                         {formatLabel(selectedOutcome.lifecycleState)}
                       </span>
-                    </div>
-                    <div>
-                      <CardTitle>{selectedOutcome.title}</CardTitle>
-                      <CardDescription className="mt-2 max-w-4xl">
-                        {selectedOutcome.outcomeStatement ?? "Outcome statement is still missing."}
-                      </CardDescription>
                     </div>
                   </div>
 
@@ -307,190 +249,72 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
               </CardHeader>
             </Card>
 
-            <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,252,0.92))] shadow-sm">
-              <CardHeader>
-                <CardTitle>Value Spine in current Framing</CardTitle>
-                <CardDescription>
-                  The branch is shown as one active path from Framing into Epics and Stories. Story progress follows the same tunnel map as Framing so the next move is easier to scan.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {selectedOutcome.lifecycleState === "archived" ? (
-                  <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-                    This Framing branch is archived. Restore it from the Outcome page if you want it active again.
-                  </div>
-                ) : null}
+            {selectedOutcome.lifecycleState === "archived" ? (
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                This Framing branch is archived. Restore it from the Outcome page if you want it active again.
+              </div>
+            ) : null}
 
-                {selectedEpics.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
-                    No Epics are currently visible in this branch for the selected lifecycle filter.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {selectedEpics.map((epic) => {
-                      const visibleStories = epic.stories.filter((story) =>
-                        viewFilter === "all" ? true : story.lifecycleState === viewFilter
-                      );
-
-                      return (
-                        <div className="rounded-[28px] border border-border/70 bg-muted/15 p-4" key={epic.id}>
-                          <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap gap-2">
-                                <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                                  {epic.key}
-                                </span>
-                                <span className="inline-flex rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                                  {formatLabel(epic.lifecycleState)}
-                                </span>
-                                <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                                  {getOriginLabel(epic.originType)}
-                                </span>
-                              </div>
-                              <div>
-                                <h2 className="text-lg font-semibold text-foreground">{epic.title}</h2>
-                                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                                  {epic.scopeBoundary ?? epic.purpose}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              {epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId ? (
-                                <Button asChild size="sm" variant="secondary">
-                                  <Link href={`/review?candidateId=${epic.lineageSourceId}`}>
-                                    <FileSearch className="mr-2 h-3.5 w-3.5" />
-                                    Open lineage
-                                  </Link>
-                                </Button>
-                              ) : null}
-                              <Button asChild size="sm" variant="secondary">
-                                <Link href={`/epics/${epic.id}`}>
-                                  Open Epic
-                                  <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                                </Link>
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 space-y-3 border-l border-border/70 pl-4">
-                            {visibleStories.length === 0 ? (
-                              <div className="rounded-2xl border border-dashed border-border/70 bg-background px-4 py-4 text-sm text-muted-foreground">
-                                No Stories are currently visible in this Epic for the selected lifecycle filter.
-                              </div>
-                            ) : (
-                              visibleStories.map((story) => {
-                                const storyUx = getStoryUxModel({
-                                  id: story.id,
-                                  key: story.key,
-                                  status: story.status,
-                                  lifecycleState: story.lifecycleState,
-                                  testDefinition: story.testDefinition ?? null,
-                                  acceptanceCriteria: story.acceptanceCriteria,
-                                  definitionOfDone: story.definitionOfDone,
-                                  tollgateStatus: story.tollgateStatus ?? null
-                                });
-
-                                return (
-                                  <div className="rounded-2xl border border-border/70 bg-background p-4" key={story.id}>
-                                    <div className="flex flex-wrap items-start justify-between gap-3">
-                                      <div className="space-y-2">
-                                        <div className="flex flex-wrap gap-2">
-                                          <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                                            {story.key}
-                                          </span>
-                                          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStoryToneClasses(storyUx.tone)}`}>
-                                            {storyUx.statusLabel}
-                                          </span>
-                                        </div>
-                                        <div>
-                                          <p className="text-sm font-semibold text-foreground">{story.title}</p>
-                                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{storyUx.statusDetail}</p>
-                                        </div>
-                                      </div>
-
-                                      <div className="flex flex-wrap gap-2">
-                                        {story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId ? (
-                                          <Button asChild size="sm" variant="secondary">
-                                            <Link href={`/review?candidateId=${story.lineageSourceId}`}>
-                                              <FileSearch className="mr-2 h-3.5 w-3.5" />
-                                              Open lineage
-                                            </Link>
-                                          </Button>
-                                        ) : null}
-                                        <Button asChild size="sm" variant="secondary">
-                                          <Link href={`/stories/${story.id}`}>
-                                            Open Story
-                                            <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                                          </Link>
-                                        </Button>
-                                      </div>
-                                    </div>
-
-                                    <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4">
-                                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story path</p>
-                                      <div className="-mx-1 mt-3 overflow-x-auto pb-1">
-                                        <ol className="flex min-w-max items-start gap-0 px-1">
-                                          {storyUx.lifecycleSteps.map((step, index) => (
-                                            <li className="flex items-center gap-2" key={step.key}>
-                                              <div
-                                                className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold ${getLifecycleStepClasses(step.state)} ${getMetroLabelClasses(step.state)}`}
-                                              >
-                                                <LifecycleStepIcon state={step.state} />
-                                                <span>{step.label}</span>
-                                              </div>
-                                              {index < storyUx.lifecycleSteps.length - 1 ? (
-                                                <div
-                                                  className={`mx-2 h-px w-6 ${
-                                                    step.state === "complete" ? "bg-emerald-300" : "bg-border/70"
-                                                  }`}
-                                                />
-                                              ) : null}
-                                            </li>
-                                          ))}
-                                        </ol>
-                                      </div>
-                                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                                        {storyUx.nextActions[0]?.description ?? storyUx.readinessDetail}
-                                      </p>
-                                    </div>
-
-                                    <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
-                                        <p className="mt-2 font-semibold text-foreground">{storyUx.nextActions[0]?.label ?? "Open Story"}</p>
-                                        <p className="mt-2 leading-6 text-muted-foreground">
-                                          {storyUx.nextActions[0]?.description ?? "Open the Story to continue delivery planning."}
-                                        </p>
-                                      </div>
-                                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-                                        <div className="flex items-start gap-3">
-                                          <TestTube2 className="mt-0.5 h-4 w-4 text-primary" />
-                                          <div>
-                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Test branch</p>
-                                            <p className="mt-2 font-semibold text-foreground">
-                                              {story.testDefinition ? "Test Definition captured" : "Missing Test Definition"}
-                                            </p>
-                                            <p className="mt-2 leading-6 text-muted-foreground">
-                                              {story.testDefinition ??
-                                                "Add the test definition on the Story page so handoff can move forward cleanly."}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <FramingValueSpineTree
+              description="The active branch is listed like one backlog from Framing into Epics and Stories."
+              emptyEpicMessage="No Epics are currently visible in this branch for the selected lifecycle filter."
+              emptyStoryMessage="No Stories are currently visible in this Epic for the selected lifecycle filter."
+              epics={selectedEpics.map((epic) => ({
+                id: epic.id,
+                key: epic.key,
+                title: epic.title,
+                href: `/epics/${epic.id}`,
+                isCurrent: false,
+                scopeBoundary: epic.scopeBoundary ?? null,
+                purpose: epic.purpose ?? null,
+                originType: epic.originType,
+                lifecycleState: epic.lifecycleState,
+                importedReadinessState: epic.importedReadinessState ?? null,
+                lineageHref:
+                  epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
+                    ? `/review?candidateId=${epic.lineageSourceId}`
+                    : null,
+                stories: epic.stories
+                  .filter((story) => (viewFilter === "all" ? true : story.lifecycleState === viewFilter))
+                  .map((story) => ({
+                    id: story.id,
+                    key: story.key,
+                    title: story.title,
+                    href: `/stories/${story.id}`,
+                    isCurrent: false,
+                    testDefinition: story.testDefinition ?? null,
+                    acceptanceCriteria: story.acceptanceCriteria,
+                    definitionOfDone: story.definitionOfDone,
+                    status: story.status,
+                    originType: story.originType,
+                    lifecycleState: story.lifecycleState,
+                    tollgateStatus: story.tollgateStatus ?? null,
+                    pendingActionCount: story.pendingActionCount ?? 0,
+                    blockedActionCount: story.blockedActionCount ?? 0,
+                    importedReadinessState: story.importedReadinessState ?? null,
+                    lineageHref:
+                      story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                        ? `/review?candidateId=${story.lineageSourceId}`
+                        : null
+                  }))
+              }))}
+              outcome={{
+                id: selectedOutcome.id,
+                key: selectedOutcome.key,
+                title: selectedOutcome.title,
+                href: `/outcomes/${selectedOutcome.id}`,
+                isCurrent: true,
+                statement: selectedOutcome.outcomeStatement ?? null,
+                originType: selectedOutcome.originType,
+                lifecycleState: selectedOutcome.lifecycleState,
+                importedReadinessState: selectedOutcome.importedReadinessState ?? null,
+                lineageHref:
+                  selectedOutcome.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
+                    ? `/review?candidateId=${selectedOutcome.lineageSourceId}`
+                    : null
+              }}
+              title="Project Value Spine backlog"
+            />
           </>
         )}
       </section>

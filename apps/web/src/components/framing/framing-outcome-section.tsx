@@ -421,6 +421,7 @@ export function FramingOutcomeSection({
               title="Framing scope value spine"
             >
               <FramingValueSpineTree
+                description="Read the active branch as one backlog from Framing into Epics and Stories."
                 emptyEpicMessage={
                   isArchived
                     ? "Archived Outcomes no longer surface active Epic work in this branch."
@@ -438,6 +439,14 @@ export function FramingOutcomeSection({
                   href: `/epics/${epic.id}`,
                   isCurrent: false,
                   scopeBoundary: epic.scopeBoundary ?? null,
+                  purpose: epic.purpose ?? null,
+                  originType: epic.originType,
+                  lifecycleState: epic.lifecycleState,
+                  importedReadinessState: epic.importedReadinessState ?? null,
+                  lineageHref:
+                    epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
+                      ? `/review?candidateId=${epic.lineageSourceId}`
+                      : null,
                   stories: outcome.stories
                     .filter((story) => story.epicId === epic.id)
                     .map((story) => ({
@@ -450,11 +459,31 @@ export function FramingOutcomeSection({
                       acceptanceCriteria: story.acceptanceCriteria,
                       definitionOfDone: story.definitionOfDone,
                       status: story.status,
+                      originType: story.originType,
                       lifecycleState: story.lifecycleState,
-                      tollgateStatus: story.tollgateStatus ?? null
+                      tollgateStatus: story.tollgateStatus ?? null,
+                      importedReadinessState: story.importedReadinessState ?? null,
+                      lineageHref:
+                        story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                          ? `/review?candidateId=${story.lineageSourceId}`
+                          : null
                     }))
                 }))}
-                outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref, isCurrent: true }}
+                outcome={{
+                  id: outcome.id,
+                  key: outcome.key,
+                  title: outcome.title,
+                  href: framingHref,
+                  isCurrent: true,
+                  statement: outcome.outcomeStatement ?? null,
+                  originType: outcome.originType,
+                  lifecycleState: outcome.lifecycleState,
+                  importedReadinessState: outcome.importedReadinessState ?? null,
+                  lineageHref:
+                    outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId
+                      ? `/review?candidateId=${outcome.lineageSourceId}`
+                      : null
+                }}
               />
             </CollapsibleFramingPanel>
 
