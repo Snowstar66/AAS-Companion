@@ -16,7 +16,9 @@ import {
   recordOutcomeTollgateDecisionAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
-  submitOutcomeTollgateAction
+  submitOutcomeTollgateAction,
+  validateBaselineDefinitionAiAction,
+  validateOutcomeStatementAiAction
 } from "../outcomes/[outcomeId]/actions";
 
 type FramingPageProps = {
@@ -99,6 +101,12 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                 restoreAction={restoreOutcomeAction}
                 saveAction={saveOutcomeWorkspaceAction}
                 search={{
+                  aiConfidence: (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | null) ?? null,
+                  aiError: getParamValue(query.aiError) ?? null,
+                  aiField: (getParamValue(query.aiField) as "outcome_statement" | "baseline_definition" | null) ?? null,
+                  aiReason: getParamValue(query.aiReason) ?? null,
+                  aiSuggestion: getParamValue(query.aiSuggestion) ?? null,
+                  aiVerdict: (getParamValue(query.aiVerdict) as "good" | "needs_revision" | "unclear" | null) ?? null,
                   blockersFromQuery: getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [],
                   created: getParamValue(query.created) === "1",
                   lifecycleState: getParamValue(query.lifecycle) ?? null,
@@ -107,6 +115,8 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                   submitState: getParamValue(query.submit) ?? null
                 }}
                 submitTollgateAction={submitOutcomeTollgateAction}
+                validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
+                validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
               />
             ) : null}
             {!selectedOutcomeData ? (

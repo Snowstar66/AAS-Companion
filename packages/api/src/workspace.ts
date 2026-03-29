@@ -3,6 +3,7 @@ import {
   listOrganizationUsers,
   getOutcomeWorkspaceSnapshot,
   getStoryWorkspaceSnapshot,
+  validateOutcomeFieldWithAi,
   updateOutcome,
   updateStory,
   upsertTollgate
@@ -221,6 +222,38 @@ export async function saveOutcomeWorkspaceService(input: {
   });
 
   return success(result);
+}
+
+export async function validateOutcomeFieldWithAiService(input: {
+  organizationId: string;
+  field: "outcome_statement" | "baseline_definition";
+  title?: string | null;
+  problemStatement?: string | null;
+  outcomeStatement?: string | null;
+  baselineDefinition?: string | null;
+  baselineSource?: string | null;
+  timeframe?: string | null;
+}) {
+  return withDevTiming("api.validateOutcomeFieldWithAiService", async () => {
+    try {
+      const result = await validateOutcomeFieldWithAi({
+        field: input.field,
+        title: input.title ?? null,
+        problemStatement: input.problemStatement ?? null,
+        outcomeStatement: input.outcomeStatement ?? null,
+        baselineDefinition: input.baselineDefinition ?? null,
+        baselineSource: input.baselineSource ?? null,
+        timeframe: input.timeframe ?? null
+      });
+
+      return success(result);
+    } catch (error) {
+      return failure({
+        code: "ai_validation_failed",
+        message: error instanceof Error ? error.message : "AI field validation failed."
+      });
+    }
+  }, `organizationId=${input.organizationId} field=${input.field}`);
 }
 
 export async function submitOutcomeTollgateService(input: {

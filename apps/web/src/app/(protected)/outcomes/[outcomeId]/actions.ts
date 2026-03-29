@@ -9,7 +9,8 @@ import {
   recordTollgateDecisionService,
   restoreGovernedObjectService,
   saveOutcomeWorkspaceService,
-  submitOutcomeTollgateService
+  submitOutcomeTollgateService,
+  validateOutcomeFieldWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
@@ -19,6 +20,22 @@ function buildFramingRedirect(outcomeId: string, search: Record<string, string>)
   const query = params.toString();
 
   return `/framing${query ? `?${query}` : ""}`;
+}
+
+function buildOutcomeReturnRedirect(input: {
+  outcomeId: string;
+  returnPath?: string | null;
+  search: Record<string, string>;
+}) {
+  const path = input.returnPath?.trim() || `/outcomes/${input.outcomeId}`;
+  const params = new URLSearchParams(input.search);
+
+  if (path === "/framing") {
+    params.set("outcomeId", input.outcomeId);
+  }
+
+  const query = params.toString();
+  return `${path}${query ? `?${query}` : ""}`;
 }
 
 function requireExplicitConfirmation(formData: FormData) {
@@ -81,6 +98,60 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
       save: "success"
     })
   );
+}
+
+async function validateOutcomeFieldAiAction(
+  formData: FormData,
+  field: "outcome_statement" | "baseline_definition"
+) {
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const returnPath = String(formData.get("returnPath") ?? "") || null;
+  const result = await validateOutcomeFieldWithAiService({
+    organizationId: session.organization.organizationId,
+    field,
+    title: String(formData.get("title") ?? "") || null,
+    problemStatement: String(formData.get("problemStatement") ?? "") || null,
+    outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
+    baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
+    baselineSource: String(formData.get("baselineSource") ?? "") || null,
+    timeframe: String(formData.get("timeframe") ?? "") || null
+  });
+
+  if (!result.ok) {
+    redirect(
+      buildOutcomeReturnRedirect({
+        outcomeId,
+        returnPath,
+        search: {
+          aiField: field,
+          aiError: result.errors[0]?.message ?? "AI validation failed."
+        }
+      })
+    );
+  }
+
+  redirect(
+    buildOutcomeReturnRedirect({
+      outcomeId,
+      returnPath,
+      search: {
+        aiField: result.data.field,
+        aiVerdict: result.data.verdict,
+        aiConfidence: result.data.confidence,
+        aiReason: result.data.rationale,
+        aiSuggestion: result.data.suggestedRewrite ?? ""
+      }
+    })
+  );
+}
+
+export async function validateOutcomeStatementAiAction(formData: FormData) {
+  return validateOutcomeFieldAiAction(formData, "outcome_statement");
+}
+
+export async function validateBaselineDefinitionAiAction(formData: FormData) {
+  return validateOutcomeFieldAiAction(formData, "baseline_definition");
 }
 
 export async function submitOutcomeTollgateAction(formData: FormData) {

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -8,6 +8,7 @@ import { FramingBriefExportPanel } from "@/components/framing/framing-brief-expo
 import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
+import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
@@ -27,6 +28,12 @@ type FramingOutcomeSectionProps = {
     lifecycleState?: string | null;
     saveMessage?: string | null;
     blockersFromQuery?: string[];
+    aiField?: "outcome_statement" | "baseline_definition" | null;
+    aiVerdict?: "good" | "needs_revision" | "unclear" | null;
+    aiConfidence?: "high" | "medium" | "low" | null;
+    aiReason?: string | null;
+    aiSuggestion?: string | null;
+    aiError?: string | null;
   };
   embeddedInFraming?: boolean;
   saveAction: (formData: FormData) => void | Promise<void>;
@@ -36,6 +43,8 @@ type FramingOutcomeSectionProps = {
   restoreAction: (formData: FormData) => void | Promise<void>;
   submitTollgateAction: (formData: FormData) => void | Promise<void>;
   recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
+  validateOutcomeStatementAiAction: (formData: FormData) => void | Promise<void>;
+  validateBaselineDefinitionAiAction: (formData: FormData) => void | Promise<void>;
 };
 
 function getOriginLabel(originType: string) {
@@ -84,7 +93,9 @@ export function FramingOutcomeSection({
   hardDeleteAction,
   restoreAction,
   submitTollgateAction,
-  recordTollgateDecisionAction
+  recordTollgateDecisionAction,
+  validateOutcomeStatementAiAction,
+  validateBaselineDefinitionAiAction
 }: FramingOutcomeSectionProps) {
   const { outcome, tollgate, activities, removal, availableOwners, tollgateReview } = data;
   const computedBlockers = getOutcomeBaselineBlockers(outcome);
@@ -108,6 +119,17 @@ export function FramingOutcomeSection({
     outcome,
     blockers
   });
+  const aiFeedback =
+    search.aiField && search.aiVerdict && search.aiReason
+      ? {
+          field: search.aiField,
+          verdict: search.aiVerdict,
+          confidence: search.aiConfidence ?? "medium",
+          rationale: search.aiReason,
+          suggestedRewrite: search.aiSuggestion ?? null
+        }
+      : null;
+  const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
 
   return (
     <section className="space-y-6">
@@ -253,6 +275,7 @@ export function FramingOutcomeSection({
 
       <form action={saveAction} className="space-y-6">
             <input name="outcomeId" type="hidden" value={outcome.id} />
+            <input name="returnPath" type="hidden" value={returnPath} />
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle>Customer handshake</CardTitle>
@@ -311,7 +334,20 @@ export function FramingOutcomeSection({
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.problem")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Outcome statement</span>
+                  <span className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-foreground">Outcome statement</span>
+                    {!isArchived ? (
+                      <PendingFormButton
+                        className="gap-2"
+                        formAction={validateOutcomeStatementAiAction}
+                        icon={<Sparkles className="h-4 w-4" />}
+                        label="AI validate"
+                        pendingLabel="Validating..."
+                        size="sm"
+                        variant="secondary"
+                      />
+                    ) : null}
+                  </span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.outcomeStatement ?? ""}
@@ -319,6 +355,7 @@ export function FramingOutcomeSection({
                     name="outcomeStatement"
                   />
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
+                  <OutcomeFieldAiFeedback error={search.aiField === "outcome_statement" ? search.aiError ?? null : null} feedback={aiFeedback} field="outcome_statement" />
                 </label>
               </CardContent>
             </Card>
@@ -330,7 +367,20 @@ export function FramingOutcomeSection({
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Baseline definition</span>
+                  <span className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-foreground">Baseline definition</span>
+                    {!isArchived ? (
+                      <PendingFormButton
+                        className="gap-2"
+                        formAction={validateBaselineDefinitionAiAction}
+                        icon={<Sparkles className="h-4 w-4" />}
+                        label="AI validate"
+                        pendingLabel="Validating..."
+                        size="sm"
+                        variant="secondary"
+                      />
+                    ) : null}
+                  </span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.baselineDefinition ?? ""}
@@ -338,6 +388,7 @@ export function FramingOutcomeSection({
                     name="baselineDefinition"
                   />
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
+                  <OutcomeFieldAiFeedback error={search.aiField === "baseline_definition" ? search.aiError ?? null : null} feedback={aiFeedback} field="baseline_definition" />
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">Baseline source</span>

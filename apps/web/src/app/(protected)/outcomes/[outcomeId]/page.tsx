@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import { getOutcomeBaselineBlockers } from "@aas-companion/domain";
 import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -10,6 +10,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ContextHelp, InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
+import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
@@ -24,7 +25,9 @@ import {
   recordOutcomeTollgateDecisionAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceAction,
-  submitOutcomeTollgateAction
+  submitOutcomeTollgateAction,
+  validateBaselineDefinitionAiAction,
+  validateOutcomeStatementAiAction
 } from "./actions";
 
 type OutcomeWorkspacePageProps = {
@@ -61,6 +64,12 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   const submitState = getParamValue(query.submit);
   const lifecycleState = getParamValue(query.lifecycle);
   const saveMessage = getParamValue(query.message);
+  const aiField = (getParamValue(query.aiField) as "outcome_statement" | "baseline_definition" | undefined) ?? null;
+  const aiVerdict = (getParamValue(query.aiVerdict) as "good" | "needs_revision" | "unclear" | undefined) ?? null;
+  const aiConfidence = (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | undefined) ?? null;
+  const aiReason = getParamValue(query.aiReason) ?? null;
+  const aiSuggestion = getParamValue(query.aiSuggestion) ?? null;
+  const aiError = getParamValue(query.aiError) ?? null;
   const blockersFromQuery = getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [];
   const outcomeResult = await getOutcomeWorkspaceService(organization.organizationId, outcomeId);
 
@@ -85,6 +94,16 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
     outcome,
     blockers
   });
+  const aiFeedback =
+    aiField && aiVerdict && aiReason
+      ? {
+          field: aiField,
+          verdict: aiVerdict,
+          confidence: aiConfidence ?? "medium",
+          rationale: aiReason,
+          suggestedRewrite: aiSuggestion ?? null
+        }
+      : null;
 
   return (
     <AppShell hideRightRail topbarProps={{ eyebrow: "AAS Companion", projectName: organization.organizationName, sectionLabel: "Outcome", badge: outcome.key }}>
@@ -164,6 +183,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
           <div className="space-y-6">
             <form action={saveOutcomeWorkspaceAction} className="space-y-6">
               <input name="outcomeId" type="hidden" value={outcome.id} />
+              <input name="returnPath" type="hidden" value={`/outcomes/${outcome.id}`} />
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Customer handshake</CardTitle>
@@ -174,14 +194,30 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
                   <label className="space-y-2"><span className="text-sm font-medium text-foreground">Timeframe</span><input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.timeframe ?? ""} disabled={isArchived} name="timeframe" type="text" /><InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe")} /></label>
                   <label className="space-y-2"><span className="text-sm font-medium text-foreground">Value owner</span><select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.valueOwnerId ?? ""} disabled={isArchived} name="valueOwnerId"><option value="">Unassigned</option>{availableOwners.map((owner) => <option key={owner.userId} value={owner.userId}>{owner.fullName ?? owner.email}</option>)}</select><InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} /></label>
                   <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Problem statement</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.problemStatement ?? ""} disabled={isArchived} name="problemStatement" /><InlineFieldGuidance guidance={getInlineGuidance("framing.problem")} /></label>
-                  <label className="space-y-2 xl:col-span-2"><span className="text-sm font-medium text-foreground">Outcome statement</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.outcomeStatement ?? ""} disabled={isArchived} name="outcomeStatement" /><InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} /></label>
+                  <label className="space-y-2 xl:col-span-2">
+                    <span className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm font-medium text-foreground">Outcome statement</span>
+                      {!isArchived ? <PendingFormButton className="gap-2" formAction={validateOutcomeStatementAiAction} icon={<Sparkles className="h-4 w-4" />} label="AI validate" pendingLabel="Validating..." size="sm" variant="secondary" /> : null}
+                    </span>
+                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.outcomeStatement ?? ""} disabled={isArchived} name="outcomeStatement" />
+                    <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
+                    <OutcomeFieldAiFeedback error={aiField === "outcome_statement" ? aiError : null} feedback={aiFeedback} field="outcome_statement" />
+                  </label>
                 </CardContent>
               </Card>
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader><CardTitle>Baseline</CardTitle><CardDescription>These fields must be present before Tollgate 1 can move to review.</CardDescription></CardHeader>
                 <CardContent className="grid gap-5 xl:grid-cols-2">
-                  <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline definition</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineDefinition ?? ""} disabled={isArchived} name="baselineDefinition" /><InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} /></label>
+                  <label className="space-y-2">
+                    <span className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm font-medium text-foreground">Baseline definition</span>
+                      {!isArchived ? <PendingFormButton className="gap-2" formAction={validateBaselineDefinitionAiAction} icon={<Sparkles className="h-4 w-4" />} label="AI validate" pendingLabel="Validating..." size="sm" variant="secondary" /> : null}
+                    </span>
+                    <textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineDefinition ?? ""} disabled={isArchived} name="baselineDefinition" />
+                    <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
+                    <OutcomeFieldAiFeedback error={aiField === "baseline_definition" ? aiError : null} feedback={aiFeedback} field="baseline_definition" />
+                  </label>
                   <label className="space-y-2"><span className="text-sm font-medium text-foreground">Baseline source</span><textarea className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30" defaultValue={outcome.baselineSource ?? ""} disabled={isArchived} name="baselineSource" /><InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source")} /></label>
                 </CardContent>
               </Card>

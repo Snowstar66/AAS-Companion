@@ -289,8 +289,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     originType: story.originType,
                     lifecycleState: story.lifecycleState,
                     tollgateStatus: story.tollgateStatus ?? null,
-                    pendingActionCount: story.pendingActionCount ?? 0,
-                    blockedActionCount: story.blockedActionCount ?? 0,
+                    pendingActionCount: 0,
+                    blockedActionCount: 0,
                     importedReadinessState: story.importedReadinessState ?? null,
                     lineageHref:
                       story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId

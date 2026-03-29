@@ -168,7 +168,9 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   recordOutcomeTollgateDecisionAction: vi.fn(),
   restoreOutcomeAction: vi.fn(),
   saveOutcomeWorkspaceAction: vi.fn(),
-  submitOutcomeTollgateAction: vi.fn()
+  submitOutcomeTollgateAction: vi.fn(),
+  validateOutcomeStatementAiAction: vi.fn(),
+  validateBaselineDefinitionAiAction: vi.fn()
 }));
 
 describe("Framing page", () => {

@@ -202,7 +202,9 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   recordOutcomeTollgateDecisionAction: vi.fn(),
   restoreOutcomeAction: vi.fn(),
   saveOutcomeWorkspaceAction: vi.fn(),
-  submitOutcomeTollgateAction: vi.fn()
+  submitOutcomeTollgateAction: vi.fn(),
+  validateOutcomeStatementAiAction: vi.fn(),
+  validateBaselineDefinitionAiAction: vi.fn()
 }));
 
 describe("Outcome page", () => {
@@ -223,6 +225,7 @@ describe("Outcome page", () => {
     expect(screen.getAllByText("Status: draft").length).toBeGreaterThan(0);
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("Customer handshake")).toBeDefined();
+    expect(screen.getAllByText("AI validate").length).toBeGreaterThan(0);
     expect(screen.getByText("Export framing brief")).toBeDefined();
     expect(screen.getByRole("button", { name: "Copy Framing Markdown" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Copy Framing JSON" })).toBeDefined();
