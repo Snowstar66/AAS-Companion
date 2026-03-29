@@ -67,6 +67,7 @@ export async function saveStoryWorkspaceAction(formData: FormData) {
     title: String(formData.get("title") ?? ""),
     storyType: String(formData.get("storyType") ?? "outcome_delivery") as "outcome_delivery" | "governance" | "enablement",
     valueIntent: String(formData.get("valueIntent") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
     acceptanceCriteria: readMultilineValues(formData, "acceptanceCriteria"),
     aiUsageScope: readCommaValues(formData, "aiUsageScope"),
     testDefinition: String(formData.get("testDefinition") ?? "") || null,

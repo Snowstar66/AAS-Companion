@@ -30,6 +30,9 @@ type StoryWorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+const STORY_IDEA_GUIDANCE =
+  "Describe this Story Idea so it is clear enough to guide design and AI refinement, but not detailed enough to become a delivery specification.";
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -137,6 +140,28 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   });
   const readinessFields = getReadinessFieldStatus(story);
   const missingReadinessFields = readinessFields.filter((field) => !field.complete);
+  const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
+  const isDeliveryMode = tollgateStatus === "approved" || story.status === "in_progress";
+  const ideaBlockers = [
+    !story.valueIntent?.trim() ? "Value Intent still needs to be described." : null,
+    !story.expectedBehavior?.trim() ? "Expected Behavior still needs to be described." : null
+  ].filter((value): value is string => Boolean(value));
+  const epicAlignmentText =
+    story.epic.purpose?.trim() ||
+    story.epic.scopeBoundary?.trim() ||
+    `This story idea should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`;
+  const primaryStatusLabel = isDeliveryMode ? storyUx.statusLabel : "Story idea";
+  const primaryStatusDetail = isDeliveryMode ? storyUx.statusDetail : STORY_IDEA_GUIDANCE;
+  const primaryNextStepLabel = isDeliveryMode
+    ? storyUx.nextActions[0]?.label ?? "Continue Story"
+    : ideaBlockers.length > 0
+      ? "Refine the story idea"
+      : "Keep guiding design and AI refinement";
+  const primaryNextStepDetail = isDeliveryMode
+    ? storyUx.nextActions[0]?.description ?? "Continue working in the Story workspace."
+    : ideaBlockers.length > 0
+      ? ideaBlockers[0]
+      : "This story idea is already clear enough to support design and AI refinement without becoming a delivery specification.";
 
   return (
     <AppShell
@@ -158,7 +183,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
       <section className="space-y-6">
         {created ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Native Story created and ready for design work.
+            {isDeliveryMode ? "Native Story created and ready for design work." : "Native Story idea created inside the current Framing."}
           </div>
         ) : null}
         {saveState === "success" ? (
@@ -216,20 +241,26 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                   <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
                     {story.key}
                   </span>
-                  <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStoryToneClasses(storyUx.tone)}`}>
-                    {storyUx.statusLabel}
+                  <span
+                    className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                      isDeliveryMode ? getStoryToneClasses(storyUx.tone) : "border-sky-200 bg-sky-50 text-sky-800"
+                    }`}
+                  >
+                    {primaryStatusLabel}
                   </span>
-                  <span className="inline-flex rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    {story.storyType.replaceAll("_", " ")}
-                  </span>
+                  {isDeliveryMode ? (
+                    <span className="inline-flex rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                      {story.storyType.replaceAll("_", " ")}
+                    </span>
+                  ) : null}
                 </div>
                 <div>
                   <CardTitle>{story.title}</CardTitle>
-                  <CardDescription className="mt-2 max-w-4xl">{storyUx.statusDetail}</CardDescription>
+                  <CardDescription className="mt-2 max-w-4xl">{primaryStatusDetail}</CardDescription>
                 </div>
               </div>
 
-              {!isArchived ? (
+              {!isArchived && isDeliveryMode ? (
                 <Button asChild className="gap-2" variant={blockers.length === 0 ? "default" : "secondary"}>
                   <Link href={`/handoff/${story.id}`}>
                     Preview Execution Contract
@@ -240,27 +271,59 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 lg:grid-cols-3">
-            <div className={`rounded-2xl border px-4 py-4 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Readiness</p>
-              <p className="mt-2 font-semibold">{storyUx.readinessLabel}</p>
-              <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
-              <p className="mt-2 font-semibold text-foreground">{storyUx.nextActions[0]?.label ?? "Open Story"}</p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {storyUx.nextActions[0]?.description ?? "Continue working in the Story workspace."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm" id="story-blockers">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current blocker</p>
-              <p className="mt-2 font-semibold text-foreground">
-                {blockers.length === 0 ? "No visible blockers" : blockers[0]}
-              </p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {blockers.length > 1 ? `${blockers.length - 1} more blocker${blockers.length - 1 === 1 ? "" : "s"} are listed below in approvals.` : "Use the sections below to continue the Story."}
-              </p>
-            </div>
+            {isDeliveryMode ? (
+              <>
+                <div className={`rounded-2xl border px-4 py-4 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em]">Readiness</p>
+                  <p className="mt-2 font-semibold">{storyUx.readinessLabel}</p>
+                  <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
+                  <p className="mt-2 font-semibold text-foreground">{primaryNextStepLabel}</p>
+                  <p className="mt-2 leading-6 text-muted-foreground">{primaryNextStepDetail}</p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm" id="story-blockers">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current blocker</p>
+                  <p className="mt-2 font-semibold text-foreground">
+                    {blockers.length === 0 ? "No visible blockers" : blockers[0]}
+                  </p>
+                  <p className="mt-2 leading-6 text-muted-foreground">
+                    {blockers.length > 1
+                      ? `${blockers.length - 1} more blocker${blockers.length - 1 === 1 ? "" : "s"} are listed below in approvals.`
+                      : "Use the sections below to continue the Story."}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value intent</p>
+                  <p className="mt-2 font-semibold text-foreground">
+                    {story.valueIntent?.trim() ? "Described" : "Still needs definition"}
+                  </p>
+                  <p className="mt-2 leading-6 text-muted-foreground">
+                    {story.valueIntent?.trim() || "Explain why this story idea matters and what user or business value it should create."}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Expected behavior</p>
+                  <p className="mt-2 font-semibold text-foreground">
+                    {story.expectedBehavior?.trim() ? "Described" : "Still needs definition"}
+                  </p>
+                  <p className="mt-2 leading-6 text-muted-foreground">
+                    {story.expectedBehavior?.trim() || "Describe roughly what should happen when this idea is implemented without turning it into detailed delivery requirements."}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm" id="story-blockers">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic alignment</p>
+                  <p className="mt-2 font-semibold text-foreground">
+                    {story.epic.key} {story.epic.title}
+                  </p>
+                  <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -272,8 +335,12 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               <input name="outcomeId" type="hidden" value={story.outcomeId} />
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Story design</CardTitle>
-                  <CardDescription>Keep Story focused on one testable delivery unit and its explicit handoff inputs.</CardDescription>
+                  <CardTitle>{isDeliveryMode ? "Story design" : "Story idea definition"}</CardTitle>
+                  <CardDescription>
+                    {isDeliveryMode
+                      ? "Keep Story focused on one testable delivery unit and its explicit handoff inputs."
+                      : STORY_IDEA_GUIDANCE}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-ai-level">
@@ -293,19 +360,23 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       type="text"
                     />
                   </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Story type</span>
-                    <select
-                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                      defaultValue={story.storyType}
-                      disabled={isArchived}
-                      name="storyType"
-                    >
-                      <option value="outcome_delivery">Outcome delivery</option>
-                      <option value="governance">Governance</option>
-                      <option value="enablement">Enablement</option>
-                    </select>
-                  </label>
+                  {isDeliveryMode ? (
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-foreground">Story type</span>
+                      <select
+                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                        defaultValue={story.storyType}
+                        disabled={isArchived}
+                        name="storyType"
+                      >
+                        <option value="outcome_delivery">Outcome delivery</option>
+                        <option value="governance">Governance</option>
+                        <option value="enablement">Enablement</option>
+                      </select>
+                    </label>
+                  ) : (
+                    <input name="storyType" type="hidden" value={story.storyType} />
+                  )}
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Value intent</span>
                     <textarea
@@ -315,22 +386,38 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       name="valueIntent"
                     />
                   </label>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                    <textarea
+                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                      defaultValue={story.expectedBehavior ?? ""}
+                      disabled={isArchived}
+                      name="expectedBehavior"
+                    />
+                  </label>
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic alignment</p>
+                    <p className="mt-2 font-semibold text-foreground">
+                      {story.epic.key} {story.epic.title}
+                    </p>
+                    <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-border/70 shadow-sm" id="story-handoff-inputs">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    Required design inputs
-                    <InlineTermHelp term="Readiness" />
-                  </CardTitle>
-                  <CardDescription>
-                    {missingReadinessFields.length === 0
+              <SecondaryPanel
+                defaultOpen={isDeliveryMode}
+                description={
+                  isDeliveryMode
+                    ? missingReadinessFields.length === 0
                       ? "All required design inputs are present. Review and approval can continue without more field edits."
-                      : `Fields highlighted below still need input before the Story can move forward.`}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
+                      : "Fields highlighted below still need input before the Story can move forward."
+                    : "These delivery details can wait until the story idea is approved for later handoff work."
+                }
+                id="story-handoff-inputs"
+                title={isDeliveryMode ? "Required design inputs" : "Delivery details later"}
+              >
+                <div className="grid gap-4">
                   <label className="space-y-2" id="story-acceptance-criteria">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
@@ -416,8 +503,8 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       <p className="text-sm text-amber-800">{readinessFields[2].help}</p>
                     ) : null}
                   </label>
-                </CardContent>
-              </Card>
+                </div>
+              </SecondaryPanel>
 
               {!isArchived ? (
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -452,74 +539,106 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               title="Branch context"
             >
               <div id="story-value-spine">
-                <FramingValueSpineTree
-                  emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."
-                  emptyStoryMessage="This view is already scoped to the current Story branch."
-                  epics={[
-                    {
-                      id: story.epic.id,
-                      key: story.epic.key,
-                      title: story.epic.title,
-                      href: `/epics/${story.epicId}`,
+                {isDeliveryMode ? (
+                  <FramingValueSpineTree
+                    emptyEpicMessage="This Story is already inside an active Framing branch, so no sibling Framing branches are shown here."
+                    emptyStoryMessage="This view is already scoped to the current Story branch."
+                    epics={[
+                      {
+                        id: story.epic.id,
+                        key: story.epic.key,
+                        title: story.epic.title,
+                        href: `/epics/${story.epicId}`,
+                        isCurrent: false,
+                        scopeBoundary: story.epic.scopeBoundary ?? null,
+                        purpose: story.epic.purpose ?? null,
+                        originType: story.epic.originType,
+                        lifecycleState: story.epic.lifecycleState,
+                        importedReadinessState: story.epic.importedReadinessState ?? null,
+                        lineageHref:
+                          story.epic.lineageSourceType === "artifact_aas_candidate" && story.epic.lineageSourceId
+                            ? `/review?candidateId=${story.epic.lineageSourceId}`
+                            : null,
+                        stories: [
+                          {
+                            id: story.id,
+                            key: story.key,
+                            title: story.title,
+                            href: `/stories/${story.id}`,
+                            isCurrent: true,
+                            valueIntent: story.valueIntent ?? null,
+                            testDefinition: story.testDefinition ?? null,
+                            acceptanceCriteria: story.acceptanceCriteria,
+                            definitionOfDone: story.definitionOfDone,
+                            status: story.status,
+                            originType: story.originType,
+                            lifecycleState: story.lifecycleState,
+                            tollgateStatus,
+                            pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
+                            blockedActionCount: tollgateReview?.blockedActions.length ?? 0,
+                            importedReadinessState: story.importedReadinessState ?? null,
+                            lineageHref:
+                              story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                                ? `/review?candidateId=${story.lineageSourceId}`
+                                : null
+                          }
+                        ]
+                      }
+                    ]}
+                    outcome={{
+                      id: story.outcome.id,
+                      key: story.outcome.key,
+                      title: story.outcome.title,
+                      href: `/framing?outcomeId=${story.outcomeId}`,
                       isCurrent: false,
-                      scopeBoundary: story.epic.scopeBoundary ?? null,
-                      purpose: story.epic.purpose ?? null,
-                      originType: story.epic.originType,
-                      lifecycleState: story.epic.lifecycleState,
-                      importedReadinessState: story.epic.importedReadinessState ?? null,
+                      statement: story.outcome.outcomeStatement ?? null,
+                      originType: story.outcome.originType,
+                      lifecycleState: story.outcome.lifecycleState,
+                      importedReadinessState: story.outcome.importedReadinessState ?? null,
                       lineageHref:
-                        story.epic.lineageSourceType === "artifact_aas_candidate" && story.epic.lineageSourceId
-                          ? `/review?candidateId=${story.epic.lineageSourceId}`
-                          : null,
-                      stories: [
-                        {
-                          id: story.id,
-                          key: story.key,
-                          title: story.title,
-                          href: `/stories/${story.id}`,
-                          isCurrent: true,
-                          valueIntent: story.valueIntent ?? null,
-                          testDefinition: story.testDefinition ?? null,
-                          acceptanceCriteria: story.acceptanceCriteria,
-                          definitionOfDone: story.definitionOfDone,
-                          status: story.status,
-                          originType: story.originType,
-                          lifecycleState: story.lifecycleState,
-                          tollgateStatus: tollgateReview?.status ?? tollgate?.status ?? null,
-                          pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
-                          blockedActionCount: tollgateReview?.blockedActions.length ?? 0,
-                          importedReadinessState: story.importedReadinessState ?? null,
-                          lineageHref:
-                            story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                              ? `/review?candidateId=${story.lineageSourceId}`
-                              : null
-                        }
-                      ]
-                    }
-                  ]}
-                  outcome={{
-                    id: story.outcome.id,
-                    key: story.outcome.key,
-                    title: story.outcome.title,
-                    href: `/framing?outcomeId=${story.outcomeId}`,
-                    isCurrent: false,
-                    statement: story.outcome.outcomeStatement ?? null,
-                    originType: story.outcome.originType,
-                    lifecycleState: story.outcome.lifecycleState,
-                    importedReadinessState: story.outcome.importedReadinessState ?? null,
-                    lineageHref:
-                      story.outcome.lineageSourceType === "artifact_aas_candidate" && story.outcome.lineageSourceId
-                        ? `/review?candidateId=${story.outcome.lineageSourceId}`
-                        : null
-                  }}
-                />
+                        story.outcome.lineageSourceType === "artifact_aas_candidate" && story.outcome.lineageSourceId
+                          ? `/review?candidateId=${story.outcome.lineageSourceId}`
+                          : null
+                    }}
+                  />
+                ) : (
+                  <Card className="border-border/70 shadow-none">
+                    <CardContent className="grid gap-4 p-5 md:grid-cols-2">
+                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current framing</p>
+                        <p className="mt-2 font-semibold text-foreground">
+                          {story.outcome.key} {story.outcome.title}
+                        </p>
+                        <p className="mt-2 leading-6 text-muted-foreground">
+                          {story.outcome.outcomeStatement?.trim() || "Outcome statement is not yet described in this Framing."}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current epic</p>
+                        <p className="mt-2 font-semibold text-foreground">
+                          {story.epic.key} {story.epic.title}
+                        </p>
+                        <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </SecondaryPanel>
           </div>
 
           <div className="space-y-6">
-            <div id="story-signoff-history">
-              <div id="story-signoff">
+            <SecondaryPanel
+              defaultOpen={isDeliveryMode}
+              description={
+                isDeliveryMode
+                  ? "Server-backed readiness, review, approval and escalation trail for Story handoff."
+                  : "This delivery review trail becomes important later, after the story idea is clear enough for framing."
+              }
+              title={isDeliveryMode ? "Story readiness review and approval" : "Delivery review later"}
+            >
+              <div id="story-signoff-history">
+                <div id="story-signoff">
               <TollgateDecisionCard
                 aiAccelerationLevel={story.aiAccelerationLevel}
                 approvalActions={tollgateReview?.approvalActions ?? []}
@@ -556,10 +675,11 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                 title="Story readiness review and approval"
                 tollgateType="story_readiness"
               />
+                </div>
               </div>
-            </div>
+            </SecondaryPanel>
 
-            {!isArchived ? (
+            {!isArchived && isDeliveryMode ? (
               <Card className="border-border/70 shadow-sm" id="story-readiness">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

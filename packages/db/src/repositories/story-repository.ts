@@ -98,6 +98,7 @@ export async function createStory(input: unknown, db: Prisma.TransactionClient |
         title: parsed.title,
         storyType: parsed.storyType,
         valueIntent: parsed.valueIntent,
+        expectedBehavior: parsed.expectedBehavior ?? null,
         acceptanceCriteria: parsed.acceptanceCriteria,
         aiUsageScope: parsed.aiUsageScope,
         aiAccelerationLevel: parsed.aiAccelerationLevel,
@@ -193,6 +194,10 @@ export async function updateStory(input: unknown) {
 
     if (parsed.valueIntent !== undefined) {
       data.valueIntent = parsed.valueIntent;
+    }
+
+    if (parsed.expectedBehavior !== undefined) {
+      data.expectedBehavior = parsed.expectedBehavior;
     }
 
     if (parsed.acceptanceCriteria !== undefined) {

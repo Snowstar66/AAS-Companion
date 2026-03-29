@@ -491,6 +491,7 @@ model Story {
   title               String
   storyType           StoryType
   valueIntent         String
+  expectedBehavior    String?
   acceptanceCriteria  String[]            @default([])
   aiUsageScope        String[]            @default([])
   aiAccelerationLevel AiAccelerationLevel @default(level_2)

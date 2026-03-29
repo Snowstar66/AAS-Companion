@@ -26,6 +26,7 @@ vi.mock("@aas-companion/api", async () => {
           title: "Scoped native Story",
           storyType: "outcome_delivery",
           valueIntent: "Keep Story work inside the active Framing branch.",
+          expectedBehavior: "Capture a mushroom find quickly enough to guide later design decisions.",
           acceptanceCriteria: [],
           aiUsageScope: [],
           aiAccelerationLevel: "level_2",
@@ -46,7 +47,13 @@ vi.mock("@aas-companion/api", async () => {
           outcome: {
             id: "outcome-native-1",
             key: "OUT-010",
-            title: "Scoped native Framing"
+            title: "Scoped native Framing",
+            outcomeStatement: "Make it easier to capture findings while still in the forest.",
+            originType: "native",
+            lifecycleState: "active",
+            importedReadinessState: null,
+            lineageSourceType: null,
+            lineageSourceId: null
           },
           epic: {
             id: "epic-native-1",
@@ -54,7 +61,12 @@ vi.mock("@aas-companion/api", async () => {
             title: "Scoped native Epic",
             purpose: "Keep the branch explicit.",
             scopeBoundary: null,
-            riskNote: null
+            riskNote: null,
+            originType: "native",
+            lifecycleState: "active",
+            importedReadinessState: null,
+            lineageSourceType: null,
+            lineageSourceId: null
           }
         },
         tollgate: {
@@ -216,7 +228,7 @@ vi.mock("@/app/(protected)/stories/[storyId]/actions", () => ({
 }));
 
 describe("Story Workspace page", () => {
-  it("shows the current Framing branch and scoped navigation for native story work", async () => {
+  it("keeps pre-approval story work focused on framing clarity instead of delivery workflow", async () => {
     render(
       await StoryWorkspacePage({
         params: Promise.resolve({ storyId: "story-native-1" }),
@@ -224,25 +236,26 @@ describe("Story Workspace page", () => {
       })
     );
 
-    expect(screen.getByText("Native Story created and ready for design work.")).toBeDefined();
+    expect(screen.getByText("Native Story idea created inside the current Framing.")).toBeDefined();
     expect(screen.getAllByText("Scoped native Story").length).toBeGreaterThan(0);
-    expect(screen.getByText("Current blocker")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Preview Execution Contract" })).toBeDefined();
+    expect(screen.getByText("Story idea")).toBeDefined();
+    expect(screen.getByText("Story idea definition")).toBeDefined();
+    expect(screen.getAllByText("Expected behavior").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Epic alignment").length).toBeGreaterThan(0);
     expect(screen.getByText("Branch context")).toBeDefined();
-    expect(screen.getAllByText("Scoped native Framing").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Scoped native Epic").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/OUT-010\s+Scoped native Framing/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/EPC-010\s+Scoped native Epic/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Keep Story work inside the active Framing branch.").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Story path:/i)).toBeDefined();
+    expect(screen.queryByText(/Story path:/i)).toBeNull();
+    expect(screen.queryByRole("link", { name: "Preview Execution Contract" })).toBeNull();
     expect(screen.getByRole("link", { name: "Back to current Epic" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open current Framing" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
-    expect(screen.getByText("Story readiness review and approval")).toBeDefined();
-    expect(screen.getByText("Required design inputs")).toBeDefined();
+    expect(screen.getByText("Delivery review later")).toBeDefined();
+    expect(screen.getByText("Delivery details later")).toBeDefined();
     expect(screen.getAllByText("AI level").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Level 2").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Missing").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Add test definition").length).toBeGreaterThan(0);
-    expect(screen.getByText("Quality review still needs aqa on the supplier side.")).toBeDefined();
-    expect(screen.getAllByText("Test Definition is required before handoff.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Capture a mushroom find quickly enough to guide later design decisions.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Make it easier to capture findings while still in the forest.").length).toBeGreaterThan(0);
   });
 });

@@ -411,6 +411,7 @@ export async function saveStoryWorkspaceService(input: {
   title?: string;
   storyType?: "outcome_delivery" | "governance" | "enablement";
   valueIntent?: string;
+  expectedBehavior?: string | null;
   acceptanceCriteria?: string[];
   aiUsageScope?: string[];
   testDefinition?: string | null;
@@ -423,6 +424,7 @@ export async function saveStoryWorkspaceService(input: {
     title: input.title,
     storyType: input.storyType,
     valueIntent: input.valueIntent,
+    expectedBehavior: input.expectedBehavior,
     acceptanceCriteria: input.acceptanceCriteria,
     aiUsageScope: input.aiUsageScope,
     testDefinition: input.testDefinition,

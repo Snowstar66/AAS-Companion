@@ -24,6 +24,7 @@ export const storyRecordSchema = z.object({
   title: z.string().min(1),
   storyType: storyTypeSchema,
   valueIntent: z.string().min(1),
+  expectedBehavior: z.string().nullish(),
   acceptanceCriteria: z.array(z.string().min(1)).default([]),
   aiUsageScope: z.array(z.string().min(1)).default([]),
   aiAccelerationLevel: aiAccelerationLevelSchema,
