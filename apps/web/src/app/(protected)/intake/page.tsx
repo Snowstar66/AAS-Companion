@@ -6,9 +6,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { AppShell } from "@/components/layout/app-shell";
 import { ArtifactIntakeUploadSubmitButton } from "@/components/intake/artifact-intake-pending-actions";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
-import { ContextHelp } from "@/components/shared/context-help";
 import { requireProtectedSession } from "@/lib/auth/guards";
-import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import {
   submitArtifactSectionDispositionInlineAction,
@@ -217,11 +215,6 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
         })
       : [];
 
-  const importHelp = getHelpPattern(
-    "import.workspace",
-    selectedCandidate?.humanDecisions?.aiAccelerationLevel ?? null
-  );
-
   return (
     <AppShell
       hideRightRail
@@ -257,9 +250,6 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 {workspace.state === "ready" ? `${workspace.summary.humanReviewRequired} human review queue(s)` : "Project scope"}
               </span>
             </div>
-          </div>
-          <div className="mt-4 max-w-4xl">
-            <ContextHelp pattern={importHelp} summaryLabel="Open import help" />
           </div>
         </div>
 
@@ -302,11 +292,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   <Button asChild className="gap-2" variant="secondary">
                     <Link href="/">Leave Demo and choose project</Link>
                   </Button>
-                ) : (
-                  <Button asChild className="gap-2" variant="secondary">
-                    <Link href="/review">Open Human Review</Link>
-                  </Button>
-                )}
+                ) : null}
               </div>
             </form>
           </CardContent>
@@ -358,7 +344,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                             index > 0 ? "border-t border-border/70" : ""
                           } ${
                             row.isSelected
-                              ? "border-l-4 border-l-primary bg-primary/5"
+                              ? "border-l-4 border-l-[#2f5f98] bg-[#2f5f98] text-white"
                               : needsAttention
                                 ? "border-l-4 border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/50"
                                 : "border-l-4 border-l-transparent hover:bg-muted/30"
@@ -372,33 +358,49 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                               <div className="flex flex-wrap items-center gap-2">
                                 <span
                                   className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
-                                    needsAttention
+                                    row.isSelected
+                                      ? "border-white/30 bg-white/10 text-white"
+                                      : needsAttention
                                       ? "border-amber-200 bg-amber-50 text-amber-700"
                                       : "border-emerald-200 bg-emerald-50 text-emerald-700"
                                   }`}
                                 >
                                   {needsAttention ? <CircleAlert className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                                 </span>
-                                <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                <span
+                                  className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                                    row.isSelected
+                                      ? "border-white/20 bg-white/10 text-white/85"
+                                      : "border-border/70 bg-muted text-muted-foreground"
+                                  }`}
+                                >
                                   {row.typeLabel}
                                 </span>
-                                <h3 className="text-sm font-semibold text-foreground">{row.title}</h3>
+                                <h3 className={`text-sm font-semibold ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.title}</h3>
                               </div>
-                              <p className="mt-2 text-sm leading-6 text-muted-foreground">{row.subtitle}</p>
-                              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                              <p className={`mt-2 text-sm leading-6 ${row.isSelected ? "text-white/90" : "text-muted-foreground"}`}>
+                                {row.subtitle}
+                              </p>
+                              <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs ${row.isSelected ? "text-white/75" : "text-muted-foreground"}`}>
                                 <span>{row.fileName}</span>
                                 <span>{row.sessionLabel}</span>
                                 <span>{row.meta}</span>
                                 <span>{row.statusLabel}</span>
                               </div>
-                              <p className="mt-2 text-xs text-muted-foreground">
+                              <p className={`mt-2 text-xs ${row.isSelected ? "text-white/80" : "text-muted-foreground"}`}>
                                 {needsAttention ? "Needs review:" : "Status:"} {row.attentionPreview.join(" - ")}
                               </p>
                             </div>
 
                             <div className="flex flex-wrap gap-2 text-xs">
-                              <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1 text-muted-foreground">
-                                Open: <strong className="ml-1 text-foreground">{row.unresolvedCount}</strong>
+                              <span
+                                className={`inline-flex rounded-full border px-3 py-1 ${
+                                  row.isSelected
+                                    ? "border-white/20 bg-white/10 text-white/90"
+                                    : "border-border/70 bg-background text-muted-foreground"
+                                }`}
+                              >
+                                Open: <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
                               </span>
                               {row.blockedCount > 0 ? (
                                 <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">

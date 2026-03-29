@@ -99,6 +99,12 @@ type QueueItem = {
   }>;
 };
 
+type FieldValidationNote = {
+  fieldName: string;
+  label: string;
+  message: string;
+};
+
 type ArtifactIntakeReviewWorkspaceProps = {
   session: IntakeArtifactSession;
   selectedFile: IntakeArtifactFile;
@@ -152,10 +158,6 @@ function label(value: string) {
   return value.replaceAll("_", " ");
 }
 
-function bytes(value: number) {
-  return value < 1024 ? `${value} B` : `${(value / 1024).toFixed(1)} KB`;
-}
-
 function confidenceTone(confidence: "high" | "medium" | "low") {
   if (confidence === "high") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -186,80 +188,9 @@ function dispositionLabel(action: string | null | undefined) {
   return label(action);
 }
 
-function normalizedCandidateQueueItems(
-  candidate: IntakeArtifactCandidate,
-  sessionId: string,
-  fileId: string,
-  currentSelection?: {
-    sessionId: string;
-    fileId: string;
-    candidateId: string | null;
-  }
-) {
-  const findings = candidate.complianceResult?.findings ?? [];
-  const items: QueueItem[] = [];
-  const linkageCodes =
-    candidate.type === "story"
-      ? new Set(["story_outcome_link_missing", "story_epic_link_missing", "candidate_relationship_uncertain"])
-      : candidate.type === "epic"
-        ? new Set(["epic_outcome_link_missing", "candidate_relationship_uncertain"])
-        : new Set<string>();
-  const linkageFindings = findings.filter((finding) => linkageCodes.has(finding.code));
-
-  if (linkageFindings.length > 0) {
-    items.push({
-      id: `${candidate.id}-destination`,
-      title: candidate.type === "story" ? "Story destination" : "Epic destination",
-      description:
-        candidate.type === "story"
-          ? "Set the destination once in the form below. If the project only has one Outcome, only the Epic needs to be chosen."
-          : "Set the destination Outcome once in the form below.",
-      context: candidate.title,
-      status: "unresolved",
-      href: intakeHref(sessionId, fileId, candidate.id, "candidate-editor", currentSelection),
-      selectedAction: null,
-      dispositionLabel: null,
-      resolvedActions: [],
-      actionScope: "candidate",
-      candidateId: candidate.id,
-      candidateType: candidate.type,
-      issueId: candidate.type === "story" ? "story_destination" : "epic_destination",
-      actions: []
-    });
-  }
-
-  const hiddenCodes = new Set(linkageFindings.map((finding) => finding.code));
-
-  for (const finding of findings) {
-    if (hiddenCodes.has(finding.code)) {
-      continue;
-    }
-
-    items.push({
-      id: `${candidate.id}-${finding.code}`,
-      title: finding.fieldLabel ?? "Imported issue",
-      description: finding.message,
-      context: candidate.title,
-      status: "unresolved",
-      href: intakeHref(sessionId, fileId, candidate.id, "candidate-editor", currentSelection),
-      selectedAction: null,
-      dispositionLabel: null,
-      resolvedActions: [],
-      actionScope: "candidate",
-      candidateId: candidate.id,
-      candidateType: candidate.type,
-      issueId: finding.code,
-      actions: []
-    });
-  }
-
-  return items;
-}
-
 function queueItems(
   session: IntakeArtifactSession,
   file: IntakeArtifactFile,
-  candidates: IntakeArtifactCandidate[],
   currentSelection?: {
     sessionId: string;
     fileId: string;
@@ -267,7 +198,8 @@ function queueItems(
   }
 ) {
   const items: Array<{ key: string; title: string; description: string; items: QueueItem[] }> = [];
-  const baseCandidateId = candidates[0]?.id ?? null;
+  const baseCandidateId =
+    session.allCandidates.find((candidate) => candidate.fileId === file.id)?.id ?? null;
 
   items.push({
     key: "unmapped",
@@ -301,112 +233,7 @@ function queueItems(
       }))
   });
 
-  items.push({
-    key: "required",
-    title: "Candidate issues",
-    description: "These are the remaining fields or decisions that still need attention in the candidate form below.",
-    items: candidates.flatMap((candidate) => normalizedCandidateQueueItems(candidate, session.id, file.id, currentSelection))
-  });
-
   return items;
-}
-
-function readiness(candidate: IntakeArtifactCandidate, file: IntakeArtifactFile, session: IntakeArtifactSession) {
-  const compliance = candidate.complianceResult;
-  if (!compliance) {
-    return ["border-amber-200 bg-amber-50 text-amber-900", "Correction state unavailable", "Persisted compliance analysis is missing for this candidate."] as const;
-  }
-  const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
-    (section) => section.sourceReference.fileId === file.id
-  ).length;
-  const progress = getArtifactCandidateIssueProgress({
-    complianceResult: compliance,
-    issueDispositions: candidate.issueDispositions,
-    unmappedSectionCount,
-    sectionDispositions: file.sectionDispositions
-  });
-  if (candidate.reviewStatus === "promoted") {
-    return ["border-emerald-200 bg-emerald-50 text-emerald-900", "Already promoted", `This candidate has already been promoted into governed ${candidate.promotedEntityType ?? candidate.type} work.`] as const;
-  }
-  if (candidate.reviewStatus === "rejected" || candidate.importedReadinessState === "discarded") {
-    return ["border-rose-200 bg-rose-50 text-rose-900", "Discarded or rejected", "This imported candidate has been explicitly taken out of the active promotion path."] as const;
-  }
-  if (candidate.importedReadinessState === "blocked" || progress.categories.blocked > 0) {
-    return ["border-rose-200 bg-rose-50 text-rose-900", "Blocked by human decision", "Blocking issues or blocked section dispositions still prevent promotion."] as const;
-  }
-  if (
-    candidate.importedReadinessState === "imported_incomplete" ||
-    candidate.importedReadinessState === "imported_human_review_needed" ||
-    progress.unresolved > 0
-  ) {
-    return [
-      "border-amber-200 bg-amber-50 text-amber-900",
-      "Not ready for promotion",
-      `${progress.unresolved} unresolved item(s) still remain across missing fields, uncertainty, human-only confirmation, or unmapped source work.`
-    ] as const;
-  }
-  if (
-    candidate.importedReadinessState === "imported_framing_ready" ||
-    candidate.importedReadinessState === "imported_design_ready" ||
-    candidate.reviewStatus === "confirmed" ||
-    candidate.reviewStatus === "edited"
-  ) {
-    return ["border-emerald-200 bg-emerald-50 text-emerald-900", "Ready for promotion", "Required correction work looks complete and the candidate is ready for explicit promotion."] as const;
-  }
-  return ["border-sky-200 bg-sky-50 text-sky-900", "Awaiting explicit human confirmation", "The candidate can now be reviewed directly against the source artifact."] as const;
-}
-
-function candidateLinkageState(candidate: IntakeArtifactCandidate) {
-  const relationshipDisposition = candidate.issueDispositions["candidate_relationship_uncertain"]?.action;
-  const hasExplicitOutcomeLink = Boolean(candidate.draftRecord?.outcomeCandidateId?.trim());
-  const hasExplicitEpicLink = Boolean(candidate.draftRecord?.epicCandidateId?.trim());
-  const hasExplicitProjectLinkage =
-    candidate.type === "story"
-      ? hasExplicitOutcomeLink && hasExplicitEpicLink
-      : candidate.type === "epic"
-        ? hasExplicitOutcomeLink
-        : true;
-
-  if (
-    hasExplicitProjectLinkage &&
-    (relationshipDisposition === "confirmed" || relationshipDisposition === "corrected" || relationshipDisposition === "not_relevant")
-  ) {
-    return {
-      label: "Linkage confirmed in review",
-      tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
-      description: "This candidate has explicit project linkage recorded in review and no longer depends on inferred file context."
-    } as const;
-  }
-
-  if (hasExplicitProjectLinkage && candidate.relationshipState !== "mapped") {
-    return {
-      label: "Explicitly linked in workspace",
-      tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
-      description: "Outcome/Epic links are filled explicitly in the review workspace even if the original file inference stayed incomplete."
-    } as const;
-  }
-
-  if (candidate.relationshipState === "missing") {
-    return {
-      label: "Unlinked import candidate",
-      tone: "border-rose-200 bg-rose-50 text-rose-800",
-      description: "This candidate was extracted from the file, but it is not yet connected to the needed Outcome/Epic context."
-    } as const;
-  }
-
-  if (candidate.relationshipState === "uncertain") {
-    return {
-      label: "Linkage needs confirmation",
-      tone: "border-amber-200 bg-amber-50 text-amber-800",
-      description: "The nearest Outcome/Epic linkage was inferred, but it still needs human confirmation."
-    } as const;
-  }
-
-  return {
-    label: "Linkage looks connected",
-    tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    description: "This candidate is already connected to the inferred Value Spine context."
-  } as const;
 }
 
 function describeProjectOutcome(option: ProjectOutcomeOption) {
@@ -439,7 +266,7 @@ function queueItemTone(item: QueueItem) {
 
 function CollapsibleReviewPanel(props: {
   title: string;
-  description: string;
+  description?: string | undefined;
   defaultOpen?: boolean | undefined;
   children: ReactNode;
 }) {
@@ -448,13 +275,78 @@ function CollapsibleReviewPanel(props: {
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
         <div>
           <h3 className="font-semibold text-foreground">{props.title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
+          {props.description ? <p className="mt-1 text-sm text-muted-foreground">{props.description}</p> : null}
         </div>
         <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
       </summary>
       <div className="border-t border-border/70 px-6 py-5">{props.children}</div>
     </details>
   );
+}
+
+function resolveFieldValidationNotes(candidate: IntakeArtifactCandidate | null): FieldValidationNote[] {
+  if (!candidate?.complianceResult) {
+    return [];
+  }
+
+  const notes: FieldValidationNote[] = [];
+
+  for (const finding of candidate.complianceResult.findings) {
+    const mappedFields =
+      finding.code === "story_outcome_link_missing"
+        ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
+        : finding.code === "story_epic_link_missing"
+          ? [{ fieldName: "epicCandidateId", label: "Epic destination" }]
+          : finding.code === "epic_outcome_link_missing"
+            ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
+            : finding.code === "candidate_relationship_uncertain"
+              ? candidate.type === "story"
+                ? [{ fieldName: "epicCandidateId", label: "Epic destination" }]
+                : candidate.type === "epic"
+                  ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
+                  : []
+              : finding.code === "story_test_definition_missing"
+                ? [{ fieldName: "testDefinition", label: "Test Definition" }]
+                : finding.code === "story_definition_of_done_missing"
+                  ? [{ fieldName: "definitionOfDone", label: "Definition of Done" }]
+                  : finding.code === "story_acceptance_criteria_missing"
+                    ? [{ fieldName: "acceptanceCriteria", label: "Acceptance criteria" }]
+                    : finding.code === "story_value_intent_missing"
+                      ? [{ fieldName: "valueIntent", label: "Value intent" }]
+                      : finding.code === "story_key_missing"
+                        ? [{ fieldName: "key", label: "Key" }]
+                        : finding.code === "outcome_statement_missing"
+                          ? [{ fieldName: "outcomeStatement", label: "Outcome statement" }]
+                          : finding.code === "baseline_definition_missing"
+                            ? [{ fieldName: "baselineDefinition", label: "Baseline definition" }]
+                            : finding.code === "baseline_source_missing"
+                              ? [{ fieldName: "baselineSource", label: "Baseline source" }]
+                              : finding.code === "epic_purpose_missing"
+                                ? [{ fieldName: "purpose", label: "Purpose" }]
+                                : finding.code === "epic_scope_boundary_missing"
+                                  ? [{ fieldName: "scopeBoundary", label: "Scope boundary" }]
+                                  : finding.code === "ai_acceleration_human_only"
+                                    ? [{ fieldName: "aiAccelerationLevel", label: "AI level" }]
+                                    : finding.code === "risk_acceptance_human_only"
+                                      ? [{ fieldName: "riskAcceptanceStatus", label: "Risk acceptance status" }]
+                                      : finding.code === "risk_profile_human_only"
+                                        ? [{ fieldName: "riskProfile", label: "Risk profile" }]
+                                        : finding.code === "baseline_validity_human_only"
+                                          ? [{ fieldName: "baselineValidity", label: "Baseline validity" }]
+                                          : finding.code === "value_owner_human_only"
+                                            ? [{ fieldName: "valueOwnerId", label: "Value owner" }]
+                                            : [];
+
+    for (const mappedField of mappedFields) {
+      notes.push({
+        fieldName: mappedField.fieldName,
+        label: mappedField.label,
+        message: finding.message
+      });
+    }
+  }
+
+  return notes;
 }
 
 export function ArtifactIntakeReviewWorkspace({
@@ -472,8 +364,7 @@ export function ArtifactIntakeReviewWorkspace({
     fileId: selectedFile.id,
     candidateId: selectedCandidate?.id ?? null
   };
-  const groups = queueItems(session, selectedFile, fileCandidates, currentSelection);
-  const ready = selectedCandidate ? readiness(selectedCandidate, selectedFile, session) : null;
+  const groups = queueItems(session, selectedFile, currentSelection);
   const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
     (section) => section.sourceReference.fileId === selectedFile.id
   ).length;
@@ -503,8 +394,6 @@ export function ArtifactIntakeReviewWorkspace({
       : epicCandidateOptions.length === 1
         ? epicCandidateOptions[0]?.id ?? ""
         : "";
-  const selectedProjectOutcome = outcomeCandidateOptions.find((candidate) => candidate.id === selectedOutcomeCandidateId) ?? null;
-  const selectedProjectEpic = epicCandidateOptions.find((candidate) => candidate.id === selectedEpicCandidateId) ?? null;
   const suggestedStoryKey = buildSuggestedImportedStoryKey(session, selectedCandidate);
   const selectedCandidateKeyValue =
     selectedCandidate?.type === "story"
@@ -518,36 +407,36 @@ export function ArtifactIntakeReviewWorkspace({
       .filter((section) => section.sourceReference.fileId === selectedFile.id)
       .map((section) => section.sourceReference.sectionId)
   );
-  const promotionSummary =
-    selectedCandidate?.type === "story"
-      ? selectedProjectOutcome && selectedProjectEpic
-        ? `Approving this import will create or update a governed Story under ${selectedProjectOutcome.key} and ${selectedProjectEpic.key}. After approval it should be treated like other project Stories and continue through the normal Story review and handoff flow.`
-        : "Approving this import will bring the Story into the project as governed work. Confirm the destination Outcome and Epic first so the imported Story lands in the correct branch."
-      : selectedCandidate?.type === "epic"
-        ? selectedProjectOutcome
-          ? `Approving this import will create or update a governed Epic under ${selectedProjectOutcome.key}. After approval it should be treated like other project Epics inside the active Framing branch.`
-          : "Approving this import will bring the Epic into the project as governed work. Confirm the destination Outcome first so the Epic lands in the correct Framing branch."
-        : selectedCandidate?.type === "outcome"
-          ? "Approving this import will create or update a governed Outcome in the project. After approval it continues through the same Tollgate 1 and review process as native Outcomes."
-          : null;
   const quickEditFieldNames = new Set<string>();
   const showHumanDecisionFields = true;
+  const fieldValidationNotes = resolveFieldValidationNotes(selectedCandidate);
+  const fieldValidationMap = new Map<string, FieldValidationNote[]>();
+
+  for (const note of fieldValidationNotes) {
+    const existing = fieldValidationMap.get(note.fieldName) ?? [];
+    existing.push(note);
+    fieldValidationMap.set(note.fieldName, existing);
+  }
+
+  function fieldNotes(fieldName: string) {
+    return fieldValidationMap.get(fieldName) ?? [];
+  }
+
+  function withValidationTone(baseClassName: string, fieldName: string) {
+    return fieldNotes(fieldName).length > 0
+      ? `${baseClassName} border-amber-300 bg-amber-50/30 focus:border-amber-500`
+      : baseClassName;
+  }
 
   return (
     <div className="space-y-6">
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Correction queue</CardTitle>
-          <CardDescription>
-            Start here. Clear linkage, content gaps, human-only decisions, and anything listed under Review leftovers before you approve the import into the project.
-          </CardDescription>
+          <CardTitle>Review leftovers</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {progress ? (
+          {progress?.categories.unmapped ? (
             <div className="flex flex-wrap gap-2 text-xs">
-              {compactMetric("Remaining", progress.unresolved)}
-              {compactMetric("Resolved", progress.resolved)}
-              {compactMetric("Blocked", progress.categories.blocked)}
               {compactMetric("Review leftovers", progress.categories.unmapped)}
             </div>
           ) : null}
@@ -678,11 +567,7 @@ export function ArtifactIntakeReviewWorkspace({
 
       <div className="space-y-6">
         <div className="space-y-6">
-          <CollapsibleReviewPanel
-            defaultOpen={false}
-            description="Expand the original markdown only when you need full-source verification or line-by-line context."
-            title="Full imported source artifact"
-          >
+          <CollapsibleReviewPanel defaultOpen={false} title="Full imported source artifact">
             <div className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1">
@@ -803,59 +688,6 @@ export function ArtifactIntakeReviewWorkspace({
         </div>
 
         <div className="space-y-6">
-          <CollapsibleReviewPanel
-            defaultOpen
-            description="This is the candidate you are currently editing."
-            title="Selected candidate"
-          >
-            <div className="space-y-4" id="candidate-panel">
-              {selectedCandidate ? (
-                <>
-                  <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                          {selectedCandidate.type}
-                        </p>
-                        <h3 className="mt-2 text-lg font-semibold text-foreground">{selectedCandidate.title}</h3>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{selectedCandidate.summary}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        {compactMetric("File", selectedFile.fileName)}
-                        {compactMetric("Size", bytes(selectedFile.sizeBytes))}
-                        {compactMetric("Parsed", selectedFile.parsedSectionCount)}
-                        {selectedFile.sourceTypeConfidence ? (
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 font-medium ${confidenceTone(selectedFile.sourceTypeConfidence)}`}
-                          >
-                            {selectedFile.sourceTypeConfidence} confidence
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      Source: {selectedCandidate.source.sectionMarker} in {selectedCandidate.source.fileName}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {candidateLinkageState(selectedCandidate).description}
-                    </p>
-                  </div>
-
-                  {selectedCandidate.relationshipNote ? (
-                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-muted-foreground">
-                      <strong className="text-foreground">Relationship note:</strong> {selectedCandidate.relationshipNote}
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-                  No mapped candidate is currently attached to this artifact file. The source view remains available while
-                  unmapped sections are reviewed.
-                </div>
-              )}
-            </div>
-          </CollapsibleReviewPanel>
-
           {selectedCandidate ? (
             <form action={submitAction} className="space-y-4" id="candidate-editor">
               <input name="sessionId" type="hidden" value={session.id} />
@@ -866,39 +698,31 @@ export function ArtifactIntakeReviewWorkspace({
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Save and approve import</CardTitle>
-                  <CardDescription>
-                    Edit only the fields that are still needed, then save or approve.
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {ready ? (
-                    <div className={`rounded-2xl border px-4 py-4 text-sm ${ready[0]}`}>
-                      <p className="font-medium">{ready[1]}</p>
-                      <p className="mt-2">{ready[2]}</p>
-                    </div>
-                  ) : null}
-
-                  {promotionSummary ? (
-                    <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-                      <p className="font-medium">What approval does</p>
-                      <p className="mt-2">{promotionSummary}</p>
-                    </div>
-                  ) : null}
-
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Imported record</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Edit the fields that will be saved into the project.</p>
+                    {fieldValidationNotes.length > 0 ? (
+                      <p className="mt-1 text-sm text-amber-700">
+                        Needs review: {[...new Set(fieldValidationNotes.map((note) => note.label))].join(", ")}
+                      </p>
+                    ) : null}
                   </div>
 
                   {!quickEditFieldNames.has("key") ? (
                     <label className="space-y-2">
                       <span className="text-sm font-medium text-foreground">Key</span>
                       <input
-                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                        className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "key")}
                         defaultValue={selectedCandidateKeyValue}
                         name="key"
                         type="text"
                       />
+                      {fieldNotes("key").map((note) => (
+                        <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                          {note.message}
+                        </p>
+                      ))}
                       {selectedCandidate.type === "story" && !selectedCandidate.draftRecord?.key ? (
                         <p className="text-xs text-muted-foreground">
                           Suggested import key. It stays visibly separate from native Story keys.
@@ -909,11 +733,16 @@ export function ArtifactIntakeReviewWorkspace({
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Title</span>
                     <input
-                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                      className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "title")}
                       defaultValue={selectedCandidate.draftRecord?.title ?? selectedCandidate.title}
                       name="title"
                       type="text"
                     />
+                    {fieldNotes("title").map((note) => (
+                      <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                        {note.message}
+                      </p>
+                    ))}
                   </label>
 
                   {selectedCandidate.type === "outcome" ? (
@@ -922,30 +751,45 @@ export function ArtifactIntakeReviewWorkspace({
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Outcome statement</span>
                           <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "outcomeStatement")}
                             defaultValue={selectedCandidate.draftRecord?.outcomeStatement ?? ""}
                             name="outcomeStatement"
                           />
+                          {fieldNotes("outcomeStatement").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       {!quickEditFieldNames.has("baselineDefinition") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Baseline definition</span>
                           <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "baselineDefinition")}
                             defaultValue={selectedCandidate.draftRecord?.baselineDefinition ?? ""}
                             name="baselineDefinition"
                           />
+                          {fieldNotes("baselineDefinition").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       {!quickEditFieldNames.has("baselineSource") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Baseline source</span>
                           <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "baselineSource")}
                             defaultValue={selectedCandidate.draftRecord?.baselineSource ?? ""}
                             name="baselineSource"
                           />
+                          {fieldNotes("baselineSource").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                     </>
@@ -956,19 +800,29 @@ export function ArtifactIntakeReviewWorkspace({
                       <label className="space-y-2">
                         <span className="text-sm font-medium text-foreground">Purpose</span>
                         <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                          className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "purpose")}
                           defaultValue={selectedCandidate.draftRecord?.purpose ?? ""}
                           name="purpose"
                         />
+                        {fieldNotes("purpose").map((note) => (
+                          <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                            {note.message}
+                          </p>
+                        ))}
                       </label>
                       {!quickEditFieldNames.has("scopeBoundary") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Scope boundary</span>
                           <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "scopeBoundary")}
                             defaultValue={selectedCandidate.draftRecord?.scopeBoundary ?? ""}
                             name="scopeBoundary"
                           />
+                          {fieldNotes("scopeBoundary").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       <label className="space-y-2">
@@ -993,7 +847,7 @@ export function ArtifactIntakeReviewWorkspace({
                           <label className="space-y-2">
                             <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
                             <select
-                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                              className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "outcomeCandidateId")}
                               defaultValue={selectedOutcomeCandidateId}
                               name="outcomeCandidateId"
                             >
@@ -1004,6 +858,11 @@ export function ArtifactIntakeReviewWorkspace({
                                 </option>
                               ))}
                             </select>
+                            {fieldNotes("outcomeCandidateId").map((note) => (
+                              <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                                {note.message}
+                              </p>
+                            ))}
                           </label>
                         )
                       ) : null}
@@ -1027,25 +886,35 @@ export function ArtifactIntakeReviewWorkspace({
                       <label className="space-y-2">
                         <span className="text-sm font-medium text-foreground">Value intent</span>
                         <textarea
-                          className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                          className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "valueIntent")}
                           defaultValue={selectedCandidate.draftRecord?.valueIntent ?? ""}
                           name="valueIntent"
                         />
+                        {fieldNotes("valueIntent").map((note) => (
+                          <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                            {note.message}
+                          </p>
+                        ))}
                       </label>
                       {!quickEditFieldNames.has("acceptanceCriteria") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
                           <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "acceptanceCriteria")}
                             defaultValue={(selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")}
                             name="acceptanceCriteria"
                           />
+                          {fieldNotes("acceptanceCriteria").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       <label className="space-y-2">
                         <span className="text-sm font-medium text-foreground">AI usage scope</span>
                         <input
-                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                          className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "aiUsageScope")}
                           defaultValue={(selectedCandidate.draftRecord?.aiUsageScope ?? []).join(", ")}
                           name="aiUsageScope"
                           type="text"
@@ -1055,20 +924,30 @@ export function ArtifactIntakeReviewWorkspace({
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Test Definition</span>
                           <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "testDefinition")}
                             defaultValue={selectedCandidate.draftRecord?.testDefinition ?? ""}
                             name="testDefinition"
                           />
+                          {fieldNotes("testDefinition").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       {!quickEditFieldNames.has("definitionOfDone") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Definition of Done</span>
                           <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "definitionOfDone")}
                             defaultValue={(selectedCandidate.draftRecord?.definitionOfDone ?? []).join("\n")}
                             name="definitionOfDone"
                           />
+                          {fieldNotes("definitionOfDone").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       <div className="pt-2">
@@ -1091,7 +970,7 @@ export function ArtifactIntakeReviewWorkspace({
                                 <label className="space-y-2">
                                   <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
                                   <select
-                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "outcomeCandidateId")}
                                     defaultValue={selectedOutcomeCandidateId}
                                     name="outcomeCandidateId"
                                   >
@@ -1102,6 +981,11 @@ export function ArtifactIntakeReviewWorkspace({
                                       </option>
                                     ))}
                                   </select>
+                                  {fieldNotes("outcomeCandidateId").map((note) => (
+                                    <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                                      {note.message}
+                                    </p>
+                                  ))}
                                 </label>
                               )
                             ) : null}
@@ -1109,7 +993,7 @@ export function ArtifactIntakeReviewWorkspace({
                               <label className="space-y-2">
                                 <span className="text-sm font-medium text-foreground">Linked imported Epic</span>
                                 <select
-                                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                  className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "epicCandidateId")}
                                   defaultValue={selectedEpicCandidateId}
                                   name="epicCandidateId"
                                 >
@@ -1120,6 +1004,11 @@ export function ArtifactIntakeReviewWorkspace({
                                     </option>
                                   ))}
                                 </select>
+                                {fieldNotes("epicCandidateId").map((note) => (
+                                  <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                                    {note.message}
+                                  </p>
+                                ))}
                               </label>
                             ) : null}
                           </div>
@@ -1138,18 +1027,23 @@ export function ArtifactIntakeReviewWorkspace({
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Value Owner</span>
                           <input
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "valueOwnerId")}
                             defaultValue={selectedCandidate.humanDecisions?.valueOwnerId ?? ""}
                             name="valueOwnerId"
                             type="text"
                           />
+                          {fieldNotes("valueOwnerId").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       {!quickEditFieldNames.has("baselineValidity") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Baseline validity</span>
                           <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "baselineValidity")}
                             defaultValue={selectedCandidate.humanDecisions?.baselineValidity ?? ""}
                             name="baselineValidity"
                           >
@@ -1157,13 +1051,18 @@ export function ArtifactIntakeReviewWorkspace({
                             <option value="confirmed">Confirmed</option>
                             <option value="needs_follow_up">Needs follow-up</option>
                           </select>
+                          {fieldNotes("baselineValidity").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       {!quickEditFieldNames.has("aiAccelerationLevel") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">AI level</span>
                           <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "aiAccelerationLevel")}
                             defaultValue={selectedCandidate.humanDecisions?.aiAccelerationLevel ?? ""}
                             name="aiAccelerationLevel"
                           >
@@ -1172,13 +1071,18 @@ export function ArtifactIntakeReviewWorkspace({
                             <option value="level_2">Level 2</option>
                             <option value="level_3">Level 3</option>
                           </select>
+                          {fieldNotes("aiAccelerationLevel").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       {!quickEditFieldNames.has("riskProfile") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Risk profile</span>
                           <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "riskProfile")}
                             defaultValue={selectedCandidate.humanDecisions?.riskProfile ?? ""}
                             name="riskProfile"
                           >
@@ -1187,13 +1091,18 @@ export function ArtifactIntakeReviewWorkspace({
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
                           </select>
+                          {fieldNotes("riskProfile").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       {!quickEditFieldNames.has("riskAcceptanceStatus") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Risk acceptance status</span>
                           <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "riskAcceptanceStatus")}
                             defaultValue={selectedCandidate.humanDecisions?.riskAcceptanceStatus ?? ""}
                             name="riskAcceptanceStatus"
                           >
@@ -1201,6 +1110,11 @@ export function ArtifactIntakeReviewWorkspace({
                             <option value="accepted">Accepted</option>
                             <option value="needs_review">Needs review</option>
                           </select>
+                          {fieldNotes("riskAcceptanceStatus").map((note) => (
+                            <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                              {note.message}
+                            </p>
+                          ))}
                         </label>
                       ) : null}
                       </div>

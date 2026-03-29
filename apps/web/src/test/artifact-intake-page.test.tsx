@@ -432,12 +432,10 @@ describe("Import page", () => {
 
     expect(screen.getByRole("heading", { name: "Project Import", level: 1 })).toBeDefined();
     expect(screen.getByRole("button", { name: /AI-assisted import/i })).toBeDefined();
-    expect(screen.getByText("Open import help")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Selected candidate" })).toBeDefined();
     expect(screen.getAllByText("Imported Story").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Review leftovers" })).toBeDefined();
     expect(screen.getAllByText("Leave promotion outside this story.").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Save and approve import" })).toBeDefined();
   });
