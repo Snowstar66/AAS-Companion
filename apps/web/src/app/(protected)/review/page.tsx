@@ -350,6 +350,31 @@ function getOperationalSectionLabel(workflow: OperationalReviewItem["workflow"])
   return "Story approvals";
 }
 
+function ReviewSummaryCard(props: {
+  label: string;
+  count: number | string;
+  description: string;
+  className: string;
+  actionHref?: string | undefined;
+  actionLabel?: string | undefined;
+}) {
+  return (
+    <div className={`rounded-2xl border p-4 shadow-sm ${props.className}`}>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em]">{props.label}</p>
+      <p className="mt-2 text-2xl font-semibold">{props.count}</p>
+      <p className="mt-2 text-sm leading-6 opacity-90">{props.description}</p>
+      {props.actionHref && props.actionLabel ? (
+        <Button asChild className="mt-4 gap-2" size="sm" variant="secondary">
+          <Link href={props.actionHref}>
+            {props.actionLabel}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const query = searchParams ? await searchParams : {};
   const [queue, operationalReview] = await Promise.all([loadArtifactReviewQueue(), loadOperationalReviewDashboard()]);
@@ -438,6 +463,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     operationalReview.organizationName && operationalReview.organizationName !== "Unknown project"
       ? operationalReview.organizationName
       : queue.organizationName;
+  const firstBlockedOperational = operationalReview.items.find((item) => item.status === "blocked") ?? null;
+  const firstInProgressOperational = operationalReview.items.find((item) => item.status === "ready") ?? null;
+  const firstReadyHandoff = operationalReview.items.find((item) => item.workflow === "story_handoff") ?? null;
+  const firstImportedCandidate =
+    queue.items.find((candidate) => {
+      const state = getBacklogState(candidate);
+      return state === "needs_action" || state === "needs_confirmation" || state === "pending";
+    }) ?? null;
 
   return (
     <AppShell
@@ -455,9 +488,30 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Human Review dashboard</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-            Start here for every human checkpoint in the active project. Import review, story approvals, handoffs and
-            tollgates are collected in one place, with links to the exact workspace where the final decision is recorded.
+            Use this page whenever you want one answer to the question: what still needs a human decision right now?
+            Framing and Value Spine hold the working context, while Human Review collects every review, approval and
+            handoff checkpoint that still needs a person.
           </p>
+          <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+              <p className="text-sm font-semibold text-foreground">Human Review</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Start here when you want to know what a human must review, approve, confirm or hand off next.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+              <p className="text-sm font-semibold text-foreground">Framing</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Use Framing to define the business case, baseline, owner and outcome tollgate context.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+              <p className="text-sm font-semibold text-foreground">Value Spine</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Use Value Spine to inspect the branch, understand story paths and see what each Story still needs.
+              </p>
+            </div>
+          </div>
           <div className="mt-5 max-w-4xl">
             <ContextHelp pattern={reviewHelp} summaryLabel="Open human review help" />
           </div>
@@ -476,48 +530,84 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Operational review</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{operationalReview.summary.total}</p>
-          </div>
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-800">Blocked</p>
-            <p className="mt-2 text-2xl font-semibold text-rose-900">{operationalReview.summary.blocked}</p>
-          </div>
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">In progress</p>
-            <p className="mt-2 text-2xl font-semibold text-sky-900">{operationalReview.summary.inProgress}</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Ready handoffs</p>
-            <p className="mt-2 text-2xl font-semibold text-emerald-900">{operationalReview.summary.handoffReady}</p>
-          </div>
+          <ReviewSummaryCard
+            actionHref={firstBlockedOperational?.href ?? firstInProgressOperational?.href ?? firstReadyHandoff?.href}
+            actionLabel={
+              firstBlockedOperational
+                ? "Open first blocked review"
+                : firstInProgressOperational
+                  ? "Open next review"
+                  : firstReadyHandoff
+                    ? "Open ready handoff"
+                    : undefined
+            }
+            className="border-border/70 bg-background text-foreground"
+            count={operationalReview.summary.total}
+            description="All live outcome tollgates, story approvals and handoff completions that still need human attention."
+            label="Needs human action now"
+          />
+          <ReviewSummaryCard
+            actionHref={firstBlockedOperational?.href}
+            actionLabel={firstBlockedOperational ? "Go to blocker" : undefined}
+            className="border-rose-200 bg-rose-50 text-rose-950"
+            count={operationalReview.summary.blocked}
+            description="Human work cannot continue until these blockers are cleared in the linked workspace."
+            label="Blocked reviews"
+          />
+          <ReviewSummaryCard
+            actionHref={firstInProgressOperational?.href}
+            actionLabel={firstInProgressOperational ? "Continue review" : undefined}
+            className="border-sky-200 bg-sky-50 text-sky-950"
+            count={operationalReview.summary.inProgress}
+            description="The review exists and humans are involved, but final approval is still not complete."
+            label="Reviews in progress"
+          />
+          <ReviewSummaryCard
+            actionHref={firstReadyHandoff?.href}
+            actionLabel={firstReadyHandoff ? "Open handoff" : undefined}
+            className="border-emerald-200 bg-emerald-50 text-emerald-950"
+            count={operationalReview.summary.handoffReady}
+            description="Stories that are already approved and only need the final human handoff completion step."
+            label="Ready handoffs"
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Imported backlog</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{queue.summary.total}</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Completed</p>
-            <p className="mt-2 text-2xl font-semibold text-emerald-900">{completedCount}</p>
-          </div>
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Unresolved</p>
-            <p className="mt-2 text-2xl font-semibold text-sky-900">{remainingCount}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Completion</p>
-            <p className="mt-2 text-2xl font-semibold text-foreground">{completionPercent}%</p>
-          </div>
+          <ReviewSummaryCard
+            actionHref={firstImportedCandidate ? buildReviewHref({ candidateId: firstImportedCandidate.id }) : undefined}
+            actionLabel={firstImportedCandidate ? "Open imported candidate" : undefined}
+            className="border-border/70 bg-background text-foreground"
+            count={queue.summary.total}
+            description="Imported candidates that still need human interpretation, correction, confirmation or approval."
+            label="Imported items to review"
+          />
+          <ReviewSummaryCard
+            className="border-emerald-200 bg-emerald-50 text-emerald-950"
+            count={completedCount}
+            description="Imported candidates that already have a final human decision: approved into project records or discarded."
+            label="Imported decisions done"
+          />
+          <ReviewSummaryCard
+            actionHref={firstImportedCandidate ? buildReviewHref({ candidateId: firstImportedCandidate.id }) : undefined}
+            actionLabel={firstImportedCandidate ? "Resolve next imported item" : undefined}
+            className="border-sky-200 bg-sky-50 text-sky-950"
+            count={remainingCount}
+            description="Imported candidates that still need a human to fix, confirm or explicitly send onward."
+            label="Imported decisions left"
+          />
+          <ReviewSummaryCard
+            className="border-border/70 bg-background text-foreground"
+            count={`${completionPercent}%`}
+            description="How much of the imported review queue already has a final human disposition."
+            label="Imported queue completed"
+          />
         </div>
 
-        <Card className="border-border/70 shadow-sm">
+        <Card className="border-border/70 shadow-sm" id="operational-review">
           <CardHeader>
-            <CardTitle>Operational review</CardTitle>
+            <CardTitle>Human review lanes</CardTitle>
             <CardDescription>
-              This is the fast lane for project-side review and approval work. Open the item you need, record the decision in context, then return here for the next item.
+              This is the fast lane for project-side approvals and handoffs. Open the linked item, record the human decision in its own workspace, then return here for the next checkpoint.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

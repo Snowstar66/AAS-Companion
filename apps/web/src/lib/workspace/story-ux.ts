@@ -210,13 +210,13 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     : isInDelivery
       ? [
           {
-            label: "Open active Story",
-            description: "Return to the Story workspace to continue delivery coordination.",
+            label: "Continue delivery coordination",
+            description: "Track implementation progress, blockers and any follow-up decisions that still need to be recorded.",
             href: input.id ? `/stories/${input.id}` : "#story-value-spine"
           },
           {
-            label: "Review handoff package",
-            description: "Re-open the execution contract whenever delivery needs the handoff payload.",
+            label: "Review execution contract",
+            description: "Re-open the execution contract whenever delivery needs the approved handoff payload.",
             href: input.id ? `/handoff/${input.id}` : "#story-value-spine"
           },
           {
@@ -232,8 +232,8 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
             ...(input.id
               ? [
                   {
-                    label: "Open execution contract",
-                    description: "Preview the handoff package that delivery will use once design is approved.",
+                    label: "Complete delivery handoff",
+                    description: "Open the handoff page and finalize the approved package for delivery.",
                     href: `/handoff/${input.id}`
                   }
                 ]

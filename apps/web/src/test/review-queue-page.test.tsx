@@ -195,11 +195,13 @@ describe("Review queue page", () => {
     render(await ReviewPage({}));
 
     expect(screen.getByRole("heading", { name: "Human Review dashboard", level: 1 })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Operational review" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Human review lanes" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Imported review backlog" })).toBeDefined();
+    expect(screen.getByText(/Use this page whenever you want one answer to the question/i)).toBeDefined();
+    expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getAllByText("Needs confirmation").length).toBeGreaterThan(0);
     expect(screen.getByText("Outcome tollgate review")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Open handoff" })).toBeDefined();
+    expect(screen.getAllByRole("link", { name: "Open handoff" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });

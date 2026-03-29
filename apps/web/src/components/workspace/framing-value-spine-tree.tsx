@@ -252,6 +252,7 @@ function StoryRow({ story }: { story: TreeStory }) {
   });
   const missingInputs = getMissingStoryInputs(story);
   const nextStep = storyUx.nextActions[0]?.label ?? storyUx.readinessLabel;
+  const nextStepDetail = storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
   const needsAttention = storyUx.tone === "warning" || missingInputs.length > 0 || storyUx.blockers.length > 0;
   const isReviewing = storyUx.statusLabel === "Ready for review";
   const storySummary = story.valueIntent?.trim() || storyUx.statusDetail;
@@ -287,6 +288,7 @@ function StoryRow({ story }: { story: TreeStory }) {
           <p className="mt-1 text-sm text-foreground">
             <span className="font-medium">Next step:</span> {nextStep}
           </p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
           {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}
           <p className="mt-1 text-xs text-muted-foreground">{structureMeta}</p>
         </div>
