@@ -703,6 +703,19 @@ function findStructuredSection(
   return sections.find((section) => normalizeHeading(section.title) === normalizeHeading(title));
 }
 
+function getStructuredSectionBody(section: ArtifactParseResult["sections"][number] | undefined | null) {
+  if (!section) {
+    return "";
+  }
+
+  const lines = section.text.split("\n");
+  if (lines.length <= 1) {
+    return section.text.trim();
+  }
+
+  return lines.slice(1).join("\n").trim();
+}
+
 function normalizeDraftText(value: string | null | undefined) {
   return value?.replace(/\s+/g, " ").trim() ?? "";
 }
@@ -992,7 +1005,7 @@ export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandida
     valueIntent: candidate.summary,
     acceptanceCriteria: candidate.acceptanceCriteria,
     aiUsageScope: [],
-    testDefinition: candidate.testNotes[0] ?? null,
+    testDefinition: candidate.testNotes.length > 0 ? candidate.testNotes.join("\n") : null,
     definitionOfDone: [],
     outcomeCandidateId: candidate.inferredOutcomeCandidateId ?? null,
     epicCandidateId: candidate.inferredEpicCandidateId ?? null
@@ -1539,12 +1552,30 @@ export function mapParsedArtifactsToAasCandidates(input: {
         findStructuredSection(parsedArtifacts.sections, "Title") ??
         findStructuredSection(parsedArtifacts.sections, "Summary") ??
         parsedArtifacts.sections[0];
+      const storyTypeSection = findStructuredSection(parsedArtifacts.sections, "Story Type");
+      const valueIntentSection = findStructuredSection(parsedArtifacts.sections, "Value Intent");
       const summarySection =
         findStructuredSection(parsedArtifacts.sections, "Summary") ??
         findStructuredSection(parsedArtifacts.sections, "Value Intent") ??
         titleSection;
       const acceptanceCriteriaSection = findStructuredSection(parsedArtifacts.sections, "Acceptance Criteria");
+      const aiUsageScopeSection = findStructuredSection(parsedArtifacts.sections, "AI Usage Scope");
       const testDefinitionSection = findStructuredSection(parsedArtifacts.sections, "Test Definition");
+      const definitionOfDoneSection = findStructuredSection(parsedArtifacts.sections, "Definition of Done");
+      const storyTypeBody = getStructuredSectionBody(storyTypeSection).toLowerCase();
+      const storyType =
+        storyTypeBody.includes("governance")
+          ? "governance"
+          : storyTypeBody.includes("enablement")
+            ? "enablement"
+            : "outcome_delivery";
+      const titleText = getStructuredSectionBody(titleSection) || titleSection?.title || "Imported story";
+      const summaryText = getStructuredSectionBody(summarySection) || summarySection?.text || titleText;
+      const valueIntentText = getStructuredSectionBody(valueIntentSection) || summaryText;
+      const acceptanceCriteria = acceptanceCriteriaSection ? extractListItems(acceptanceCriteriaSection.text) : [];
+      const aiUsageScope = aiUsageScopeSection ? extractListItems(aiUsageScopeSection.text) : [];
+      const testNotes = testDefinitionSection ? extractListItems(testDefinitionSection.text) : [];
+      const definitionOfDone = definitionOfDoneSection ? extractListItems(definitionOfDoneSection.text) : [];
 
       if (titleSection && summarySection) {
         candidates.push({
@@ -1554,21 +1585,8 @@ export function mapParsedArtifactsToAasCandidates(input: {
             candidateType: "story"
           }),
           type: "story",
-          title: summarizeText(
-            titleSection.text
-              .split("\n")
-              .slice(1)
-              .join(" ")
-              .trim() || titleSection.title,
-            80
-          ),
-          summary: summarizeText(
-            summarySection.text
-              .split("\n")
-              .slice(1)
-              .join(" ")
-              .trim() || summarySection.text
-          ),
+          title: summarizeText(titleText, 80),
+          summary: summarizeText(summaryText),
           mappingState: "mapped",
           source: {
             fileId: titleSection.sourceReference.fileId,
@@ -1583,8 +1601,19 @@ export function mapParsedArtifactsToAasCandidates(input: {
           inferredEpicCandidateId: undefined,
           relationshipState: "missing",
           relationshipNote: "This story spec still needs explicit Outcome and Epic linkage inside the project Value Spine.",
-          acceptanceCriteria: acceptanceCriteriaSection ? extractListItems(acceptanceCriteriaSection.text) : [],
-          testNotes: testDefinitionSection ? extractListItems(testDefinitionSection.text) : []
+          acceptanceCriteria,
+          testNotes,
+          draftRecord: {
+            title: titleText,
+            storyType,
+            valueIntent: valueIntentText,
+            acceptanceCriteria,
+            aiUsageScope,
+            testDefinition: testNotes.length > 0 ? testNotes.join("\n") : null,
+            definitionOfDone,
+            outcomeCandidateId: null,
+            epicCandidateId: null
+          }
         });
       }
 

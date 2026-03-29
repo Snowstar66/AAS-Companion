@@ -166,19 +166,6 @@ function confidenceTone(confidence: "high" | "medium" | "low") {
   return "border-rose-200 bg-rose-50 text-rose-700";
 }
 
-function fieldTone(kind: "neutral" | "resolved" | "missing" | "uncertain") {
-  if (kind === "resolved") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  }
-  if (kind === "missing") {
-    return "border-rose-200 bg-rose-50 text-rose-800";
-  }
-  if (kind === "uncertain") {
-    return "border-amber-200 bg-amber-50 text-amber-800";
-  }
-  return "border-border/70 bg-muted/20 text-muted-foreground";
-}
-
 function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
@@ -269,7 +256,7 @@ function candidateDestinationSummary(input: {
   };
 }
 
-function candidateFields(input: {
+function buildObjectSnapshot(input: {
   candidate: IntakeArtifactCandidate;
   selectedProjectOutcome: ProjectOutcomeOption | null;
   selectedProjectEpic: ProjectEpicOption | null;
@@ -282,39 +269,39 @@ function candidateFields(input: {
 
   if (candidate.type === "outcome") {
     return [
-      ["Will save as", draft?.key ?? "Set the Outcome key before approval", !hasText(draft?.key) ? "missing" : "resolved"],
-      ["Handshake", draft?.outcomeStatement ?? candidate.summary, !hasText(draft?.outcomeStatement) ? "missing" : "resolved"],
-      [
-        "Baseline package",
-        `Definition: ${draft?.baselineDefinition ?? "Missing"}\nSource: ${draft?.baselineSource ?? "Missing"}`,
-        !hasText(draft?.baselineDefinition) || !hasText(draft?.baselineSource) ? "missing" : "resolved"
-      ],
-      ["Human decisions", `Value owner: ${decisions?.valueOwnerId ?? "Missing"}\nAI level: ${decisions?.aiAccelerationLevel ?? "Pending"}`, !hasText(decisions?.valueOwnerId) ? "missing" : "uncertain"]
+      ["Key", draft?.key ?? "Missing"],
+      ["Title", draft?.title ?? candidate.title],
+      ["Outcome statement", draft?.outcomeStatement ?? candidate.summary],
+      ["Baseline definition", draft?.baselineDefinition ?? "Missing"],
+      ["Baseline source", draft?.baselineSource ?? "Missing"],
+      ["Value owner", decisions?.valueOwnerId ?? "Pending"],
+      ["AI level", decisions?.aiAccelerationLevel ?? "Pending"]
     ] as const;
   }
 
   if (candidate.type === "epic") {
     return [
-      ["Will save as", draft?.key ?? "Set the Epic key before approval", !hasText(draft?.key) ? "missing" : "resolved"],
-      ["Destination", destination.value, destination.tone],
-      ["Purpose", draft?.purpose ?? candidate.summary, !hasText(draft?.purpose) ? "uncertain" : "resolved"],
-      ["Scope boundary", draft?.scopeBoundary ?? "Still missing", !hasText(draft?.scopeBoundary) ? "missing" : "resolved"]
+      ["Key", draft?.key ?? "Missing"],
+      ["Title", draft?.title ?? candidate.title],
+      ["Destination", destination.value],
+      ["Purpose", draft?.purpose ?? candidate.summary],
+      ["Scope boundary", draft?.scopeBoundary ?? "Missing"],
+      ["Risk note", draft?.riskNote ?? "Not set"]
     ] as const;
   }
 
   const suggestedKey = draft?.key ?? input.suggestedStoryKey;
-  const acceptanceCount = draft?.acceptanceCriteria?.length ?? 0;
-  const definitionOfDoneCount = draft?.definitionOfDone?.length ?? 0;
 
   return [
-    ["Will save as", suggestedKey || "Set the Story key before approval", !hasText(suggestedKey) ? "missing" : "resolved"],
-    ["Destination", destination.value, destination.tone],
-    ["Story type", draft?.storyType ?? "outcome_delivery", "neutral"],
-    [
-      "Delivery package",
-      `Acceptance criteria: ${acceptanceCount}\nTest Definition: ${hasText(draft?.testDefinition) ? "Captured" : "Missing"}\nDefinition of Done: ${definitionOfDoneCount}`,
-      acceptanceCount === 0 || !hasText(draft?.testDefinition) || definitionOfDoneCount === 0 ? "missing" : "resolved"
-    ]
+    ["Key", suggestedKey || "Missing"],
+    ["Title", draft?.title ?? candidate.title],
+    ["Destination", destination.value],
+    ["Story type", draft?.storyType ?? "outcome_delivery"],
+    ["Value intent", draft?.valueIntent ?? candidate.summary],
+    ["Acceptance criteria", value(draft?.acceptanceCriteria ?? [])],
+    ["AI usage scope", value(draft?.aiUsageScope ?? [])],
+    ["Test Definition", draft?.testDefinition ?? "Missing"],
+    ["Definition of Done", value(draft?.definitionOfDone ?? [])]
   ] as const;
 }
 
@@ -1051,27 +1038,12 @@ export function ArtifactIntakeReviewWorkspace({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            <p className="font-medium">How to work this queue</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-5">
-              <li>Start with destination and linkage so the imported candidate belongs to the right Outcome and Epic.</li>
-              <li>Resolve real content gaps such as missing Test Definition, Definition of Done, or baseline fields.</li>
-              <li>Use <strong>Confirm</strong> when an interpretation is correct and you want it accepted.</li>
-              <li>Use <strong>Not relevant</strong> when a finding or source section should be dismissed from the queue.</li>
-              <li>Use <strong>Mark blocker</strong> only when you want the import to stay visible and intentionally stop promotion.</li>
-            </ol>
-          </div>
           {progress ? (
             <div className="flex flex-wrap gap-2 text-xs">
               {compactMetric("Remaining", progress.unresolved)}
               {compactMetric("Resolved", progress.resolved)}
               {compactMetric("Blocked", progress.categories.blocked)}
-              {compactMetric("Progress", `${progress.total > 0 ? Math.round((progress.resolved / progress.total) * 100) : 100}%`)}
-              {compactMetric("Missing", progress.categories.missing)}
-              {compactMetric("Uncertain", progress.categories.uncertain)}
-              {compactMetric("Human-only", progress.categories.humanOnly)}
               {compactMetric("Outside candidate", progress.categories.unmapped)}
-              {compactMetric("Total tracked", progress.total)}
             </div>
           ) : null}
 
@@ -1316,8 +1288,8 @@ export function ArtifactIntakeReviewWorkspace({
         <div className="space-y-6">
           <CollapsibleReviewPanel
             defaultOpen
-            description="Review the imported candidate at a glance instead of scanning every governed field in full."
-            title="Structured candidate view"
+            description="Inspect the current imported object exactly as it would be promoted."
+            title="Imported object"
           >
             <div className="space-y-4" id="candidate-panel">
               {fileCandidates.length > 0 ? (
@@ -1379,17 +1351,7 @@ export function ArtifactIntakeReviewWorkspace({
 
                   {attentionItems.length > 0 ? (
                     <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-amber-950">What still needs attention</p>
-                          <p className="mt-1 text-sm text-amber-900">
-                            These are the remaining gaps that still matter before this import can be approved.
-                          </p>
-                        </div>
-                        <span className="inline-flex rounded-full border border-amber-200 bg-background px-2.5 py-1 text-xs font-semibold text-amber-900">
-                          {attentionItems.length} open item(s)
-                        </span>
-                      </div>
+                      <p className="font-medium text-amber-950">Open items</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {attentionItems.map((item) => (
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${item.tone}`} key={item.id}>
@@ -1400,18 +1362,21 @@ export function ArtifactIntakeReviewWorkspace({
                     </div>
                   ) : null}
 
-                  <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
-                    {candidateFields({
+                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current object snapshot</p>
+                    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    {buildObjectSnapshot({
                       candidate: selectedCandidate,
                       selectedProjectOutcome,
                       selectedProjectEpic,
                       suggestedStoryKey
-                    }).map(([fieldLabel, fieldValue, tone]) => (
-                      <div className={`rounded-2xl border p-4 ${fieldTone(tone)}`} key={fieldLabel}>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">{fieldLabel}</p>
-                        <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 font-sans">{value(fieldValue)}</pre>
+                    }).map(([fieldLabel, fieldValue]) => (
+                      <div className="space-y-2" key={fieldLabel}>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{fieldLabel}</p>
+                        <pre className="whitespace-pre-wrap text-sm leading-6 font-sans text-foreground">{value(fieldValue)}</pre>
                       </div>
                     ))}
+                    </div>
                   </div>
 
                   {selectedCandidate.relationshipNote ? (
@@ -1440,8 +1405,7 @@ export function ArtifactIntakeReviewWorkspace({
                 <CardHeader>
                   <CardTitle>Save and approve import</CardTitle>
                   <CardDescription>
-                    This is the same correction workspace used by the queue above. Finish the remaining fields here, then
-                    save or approve the import into the project branch.
+                    Edit only the fields that are still needed, then save or approve.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

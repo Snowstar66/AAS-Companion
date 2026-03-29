@@ -286,6 +286,13 @@ describe("artifact intake helpers", () => {
       "user can edit baseline definition"
     ]);
     expect(mapping.candidates[0]?.testNotes).toEqual(["unit", "integration", "e2e"]);
+    expect(mapping.candidates[0]?.draftRecord?.storyType).toBe("outcome_delivery");
+    expect(mapping.candidates[0]?.draftRecord?.aiUsageScope).toEqual(["CODE", "TEST"]);
+    expect(mapping.candidates[0]?.draftRecord?.testDefinition).toBe("unit\nintegration\ne2e");
+    expect(mapping.candidates[0]?.draftRecord?.definitionOfDone).toEqual([
+      "validation is enforced server-side",
+      "blocked and valid states are both demonstrable"
+    ]);
   });
 
   it("maps escaped structured story spec markdown into one story candidate", () => {
@@ -349,6 +356,11 @@ describe("artifact intake helpers", () => {
       "review actions are persisted"
     ]);
     expect(mapping.candidates[0]?.testNotes).toEqual(["unit", "integration", "e2e"]);
+    expect(mapping.candidates[0]?.draftRecord?.aiUsageScope).toEqual(["CODE", "TEST"]);
+    expect(mapping.candidates[0]?.draftRecord?.definitionOfDone).toEqual([
+      "human review queue is usable in end-to-end flow",
+      "confirmed and rejected paths are both demonstrable"
+    ]);
   });
 
   it("creates unique candidate ids across different files with the same section structure", () => {

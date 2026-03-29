@@ -435,7 +435,7 @@ describe("Import page", () => {
     expect(screen.getByText("Open import help")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Structured candidate view" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Imported object" })).toBeDefined();
     expect(screen.getAllByText("Imported Story").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
     expect(screen.getAllByText("Leave promotion outside this story.").length).toBeGreaterThan(0);
