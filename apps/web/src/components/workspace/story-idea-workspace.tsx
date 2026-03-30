@@ -155,12 +155,12 @@ export function StoryIdeaWorkspace({ blockers, data, isArchived }: StoryIdeaWork
             </CardContent>
           </Card>
 
-          <SecondaryPanel
-            defaultOpen={false}
-            description="These delivery details can wait until the story idea is approved for later handoff work."
-            id="story-handoff-inputs"
-            title="Delivery details later"
-          >
+        <SecondaryPanel
+          defaultOpen={false}
+          description="These delivery details can wait until the story idea is turned into a Delivery Story for later build work."
+          id="story-handoff-inputs"
+          title="Delivery details later"
+        >
             <div className="grid gap-4">
               <label className="space-y-2" id="story-acceptance-criteria">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -299,8 +299,8 @@ export function StoryIdeaWorkspace({ blockers, data, isArchived }: StoryIdeaWork
           <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">This is still a Story Idea.</p>
             <p className="mt-2 leading-6">
-              Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, readiness and handoff
-              controls appear after this idea is transformed into a Delivery Story.
+              Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build
+              start controls appear after this idea is transformed into a Delivery Story.
             </p>
             {blockers.length > 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">

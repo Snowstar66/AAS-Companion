@@ -6,7 +6,7 @@ const termHelp = {
   "Value Spine":
     "Value Spine is the scoped chain from Framing to Epics to Stories, so the team can see how delivery work stays tied to one business case.",
   Readiness:
-    "Readiness means the Story has the minimum handoff inputs needed to move into human review and later delivery.",
+    "Readiness means the Story has the minimum inputs needed to move into human review and later build work.",
   Tollgate:
     "A Tollgate is the governed checkpoint where named humans review or approve whether the work can progress."
 } as const;

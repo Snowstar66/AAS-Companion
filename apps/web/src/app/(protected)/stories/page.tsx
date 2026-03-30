@@ -37,7 +37,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Story readiness overview</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-            Open a Story to complete required AAS fields, remove readiness blockers, and prepare build handoff.
+            Open a Story to complete required AAS fields, remove blockers, and prepare build start.
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
                       </Button>
                       <Button asChild className="gap-2">
                         <Link href={`/handoff/${story.id}`}>
-                          Open Handoff
+                          Open Build Start
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>

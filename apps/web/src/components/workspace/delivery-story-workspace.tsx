@@ -86,7 +86,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   <CardDescription className="mt-2 max-w-4xl">{storyUx.statusDetail}</CardDescription>
                   <p className="mt-3 max-w-4xl text-sm leading-6 text-muted-foreground">
                     This record is an execution unit for design and build. Keep Value Spine integrity, delivery inputs and
-                    handoff clarity explicit.
+                    build-start clarity explicit.
                   </p>
                 </div>
               </div>
@@ -94,7 +94,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               {!isArchived ? (
                 <Button asChild className="gap-2" variant={blockers.length === 0 ? "default" : "secondary"}>
                   <Link href={`/handoff/${story.id}`}>
-                    Open handoff package
+                    Open build package
                     <FileJson2 className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -120,7 +120,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               <p className="mt-2 text-xs text-muted-foreground">
                 {valueSpineBlockers.length > 1
                   ? `${valueSpineBlockers.length - 1} more Value Spine blocker${valueSpineBlockers.length - 1 === 1 ? "" : "s"} remain.`
-                  : "This check stays informational until the Story moves into build handoff."}
+                  : "This check stays informational until the Story moves into active build."}
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
@@ -141,7 +141,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>Delivery Story definition</CardTitle>
-              <CardDescription>Keep this focused on one testable delivery unit and the inputs needed before build handoff.</CardDescription>
+              <CardDescription>Keep this focused on one testable delivery unit and the inputs needed before build starts.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-ai-level">
@@ -386,8 +386,8 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
       <div className="space-y-6">
         <SecondaryPanel
           defaultOpen
-          description="Server-backed delivery review, sign-off and escalation trail before handoff."
-          title="Delivery review"
+          description="Lightweight human checks and sign-off trail before build starts."
+          title="Build review"
         >
           <div id="story-signoff-history">
             <div id="story-signoff">
@@ -398,7 +398,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 blockers={blockers}
                 blockedActions={tollgateReview?.blockedActions ?? []}
                 comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
-                description="Server-backed delivery review, sign-off and escalation trail before handoff."
+                description="Lightweight human checks and sign-off trail before build starts."
                 entityId={story.id}
                 entityType="story"
                 formAction={recordStoryTollgateDecisionAction}
@@ -424,7 +424,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   })) ?? []
                 }
                 status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
-                title="Delivery review"
+                title="Build review"
                 tollgateType="story_readiness"
               />
             </div>
@@ -435,10 +435,10 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           <Card className="border-border/70 shadow-sm" id="story-readiness">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Start delivery review
+                Start build review
                 <InlineTermHelp term="Readiness" />
               </CardTitle>
-              <CardDescription>Freeze the current blockers and open the formal delivery review for this Delivery Story.</CardDescription>
+              <CardDescription>Freeze the current blockers and open the lightweight human review for this Delivery Story.</CardDescription>
             </CardHeader>
             <CardContent>
               <form action={submitStoryReadinessAction} className="space-y-4">
@@ -456,7 +456,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 <PendingFormButton
                   className="gap-2"
                   icon={<ShieldCheck className="h-4 w-4" />}
-                  label="Start delivery review"
+                  label="Start build review"
                   pendingLabel="Starting review..."
                 />
               </form>
