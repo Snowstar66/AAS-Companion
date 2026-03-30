@@ -27,7 +27,7 @@ type StoryIdeaWorkspaceProps = {
 };
 
 export function StoryIdeaWorkspace({ blockers, data, isArchived }: StoryIdeaWorkspaceProps) {
-  const { activities, removal, story } = data;
+  const { activities, derivedDeliveryStories = [], originStoryIdea, removal, story } = data;
   const readinessFields = getReadinessFieldStatus(story);
   const epicAlignmentText =
     story.epic.purpose?.trim() ||
@@ -261,6 +261,46 @@ export function StoryIdeaWorkspace({ blockers, data, isArchived }: StoryIdeaWork
             </Button>
           </div>
         </form>
+
+        <SecondaryPanel
+          defaultOpen={false}
+          description="See how this Story Idea is being realized in delivery without turning the framing view into delivery workflow."
+          title="Delivery realization"
+        >
+          {derivedDeliveryStories.length > 0 ? (
+            <div className="space-y-3">
+              {derivedDeliveryStories.map((deliveryStory) => (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/45 p-4 text-sm" key={deliveryStory.id}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Delivery Story</p>
+                      <p className="mt-2 font-semibold text-foreground">
+                        {deliveryStory.key} {deliveryStory.title}
+                      </p>
+                      <p className="mt-2 leading-6 text-muted-foreground">
+                        {deliveryStory.valueIntent?.trim() || "This Delivery Story still needs a clearer value intent."}
+                      </p>
+                    </div>
+                    <Button asChild className="gap-2" size="sm" variant="secondary">
+                      <Link href={`/stories/${deliveryStory.id}`}>
+                        Open Delivery Story
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : originStoryIdea ? (
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
+              This Story Idea has traceability through a linked seed, but no Delivery Stories have been created from it yet.
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
+              No Delivery Stories are linked to this Story Idea yet.
+            </div>
+          )}
+        </SecondaryPanel>
 
         <SecondaryPanel
           defaultOpen={false}

@@ -3,12 +3,12 @@ import { getStoryReadinessBlockers } from "@aas-companion/domain";
 import { getStoryWorkspaceService } from "@aas-companion/api";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
-import { DeliveryStoryWorkspace } from "@/components/workspace/delivery-story-workspace";
+import { StoryIdeaWorkspace } from "@/components/workspace/story-idea-workspace";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 
-type StoryWorkspacePageProps = {
+type StoryIdeaWorkspacePageProps = {
   params: Promise<{
-    storyId: string;
+    storyIdeaId: string;
   }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -37,18 +37,16 @@ function buildQueryString(query: Record<string, string | string[] | undefined>) 
   return serialized ? `?${serialized}` : "";
 }
 
-export default async function StoryWorkspacePage({ params, searchParams }: StoryWorkspacePageProps) {
+export default async function StoryIdeaWorkspacePage({ params, searchParams }: StoryIdeaWorkspacePageProps) {
   const organization = await requireOrganizationContext();
-  const { storyId } = await params;
+  const { storyIdeaId } = await params;
   const query = searchParams ? await searchParams : {};
   const created = getParamValue(query.created) === "1";
   const saveState = getParamValue(query.save);
-  const readyState = getParamValue(query.ready);
   const lifecycleState = getParamValue(query.lifecycle);
-  const createdAs = getParamValue(query.createdAs);
   const saveMessage = getParamValue(query.message);
   const blockersFromQuery = getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [];
-  const storyResult = await getStoryWorkspaceService(organization.organizationId, storyId);
+  const storyResult = await getStoryWorkspaceService(organization.organizationId, storyIdeaId);
 
   if (!storyResult.ok) {
     notFound();
@@ -65,8 +63,8 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
   const isDeliveryMode = Boolean(story.sourceDirectionSeedId) || tollgateStatus === "approved" || story.status === "in_progress";
 
-  if (!isDeliveryMode) {
-    redirect(`/story-ideas/${story.id}${buildQueryString(query)}`);
+  if (isDeliveryMode) {
+    redirect(`/stories/${story.id}${buildQueryString(query)}`);
   }
 
   return (
@@ -75,12 +73,12 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
       topbarProps={{
         eyebrow: "AAS Companion",
         projectName: organization.organizationName,
-        sectionLabel: "Delivery Story",
+        sectionLabel: "Story Idea",
         badge: story.key
       }}
     >
       <PageViewAnalytics
-        eventName="story_workspace_viewed"
+        eventName="story_idea_workspace_viewed"
         properties={{
           storyId: story.id,
           storyKey: story.key
@@ -89,45 +87,25 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
       <section className="space-y-6">
         {created ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {createdAs === "delivery" ? "Delivery Story created from the selected Story Idea." : "Native Delivery Story created and ready for design work."}
+            Native Story Idea created inside the current Framing.
           </div>
         ) : null}
         {saveState === "success" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Story changes were saved successfully.
+            Story Idea changes were saved successfully.
           </div>
         ) : null}
         {saveState === "error" && saveMessage ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{saveMessage}</div>
         ) : null}
-        {readyState === "blocked" ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Build review is blocked. Fill the missing fields listed below and try again.
-          </div>
-        ) : null}
-        {readyState === "success" ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Build review opened. This Delivery Story is now ready for human review.
-          </div>
-        ) : null}
-        {readyState === "duplicate" ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            This approval was already recorded. Duplicate sign-offs are blocked so the Story status stays trustworthy.
-          </div>
-        ) : null}
-        {readyState === "approved" ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Required sign-offs are complete. This Delivery Story is now ready to start build.
-          </div>
-        ) : null}
         {lifecycleState === "archived" ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-            Story archived. It is now removed from active working views but remains traceable.
+            Story Idea archived. It is now removed from active working views but remains traceable.
           </div>
         ) : null}
         {lifecycleState === "restored" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Story restored to active work.
+            Story Idea restored to active work.
           </div>
         ) : null}
         {lifecycleState === "error" && saveMessage ? (
@@ -135,11 +113,11 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
         ) : null}
         {isArchived ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-            This Story is archived and currently read-only. Restore it to continue active design work.
+            This Story Idea is archived and currently read-only. Restore it to continue active framing work.
           </div>
         ) : null}
 
-        <DeliveryStoryWorkspace blockers={blockers} data={storyResult.data} isArchived={isArchived} />
+        <StoryIdeaWorkspace blockers={blockers} data={storyResult.data} isArchived={isArchived} />
       </section>
     </AppShell>
   );

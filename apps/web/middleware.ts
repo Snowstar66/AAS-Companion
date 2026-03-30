@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
     console.warn(`[request] ${request.method} ${pathname}`);
   }
 
-  const protectedPrefixes = ["/workspace", "/intake", "/review", "/framing", "/outcomes", "/epics", "/stories", "/handoff"];
+  const protectedPrefixes = ["/workspace", "/intake", "/review", "/framing", "/outcomes", "/epics", "/stories", "/story-ideas", "/handoff"];
   const isProtectedRoute = protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
   if (!isProtectedRoute) {

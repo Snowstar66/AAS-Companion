@@ -112,7 +112,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       ...selectedLegacyStoryIdeas.map((story) => ({
         id: story.id,
         epicId: story.epicId,
-        href: `/stories/${story.id}`,
+        href: `/story-ideas/${story.id}`,
         ready: isStoryIdeaReadyForFraming({
           valueIntent: story.valueIntent,
           expectedBehavior: story.expectedBehavior
@@ -269,7 +269,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     id: story.id,
                     key: story.key,
                     title: story.title,
-                    href: `/stories/${story.id}`,
+                    href: story.sourceDirectionSeedId ? `/stories/${story.id}` : `/story-ideas/${story.id}`,
                     isCurrent: false,
                     sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
                     valueIntent: story.valueIntent ?? null,

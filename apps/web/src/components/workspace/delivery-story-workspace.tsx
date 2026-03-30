@@ -27,7 +27,7 @@ type DeliveryStoryWorkspaceProps = {
 };
 
 export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryStoryWorkspaceProps) {
-  const { activities, importedBuildBlockers, removal, story, tollgate, tollgateReview, valueSpineValidation } = data;
+  const { activities, importedBuildBlockers, originStoryIdea, removal, story, tollgate, tollgateReview, valueSpineValidation } = data;
   const valueSpineBlockers = valueSpineValidation.reasons.map((reason) => reason.message);
   const storyUx = getStoryUxModel({
     id: story.id,
@@ -311,6 +311,49 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             </Button>
           </div>
         </form>
+
+        <SecondaryPanel
+          defaultOpen={false}
+          description="Keep the connection back to the framing-level Story Idea visible, but secondary to delivery execution."
+          title="Origin Story Idea"
+        >
+          {originStoryIdea ? (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/55 p-4 text-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story Idea</p>
+                  <p className="mt-2 font-semibold text-foreground">
+                    {originStoryIdea.key} {originStoryIdea.title}
+                  </p>
+                  <p className="mt-2 text-foreground">
+                    <span className="font-medium">Value intent:</span>{" "}
+                    {originStoryIdea.valueIntent || "No framing-level value intent is currently stored."}
+                  </p>
+                  <p className="mt-2 text-foreground">
+                    <span className="font-medium">Expected behavior:</span>{" "}
+                    {originStoryIdea.expectedBehavior || "No framing-level expected behavior is currently stored."}
+                  </p>
+                </div>
+                <Button asChild className="gap-2" size="sm" variant="secondary">
+                  <Link
+                    href={
+                      originStoryIdea.storyId
+                        ? `/story-ideas/${originStoryIdea.storyId}`
+                        : `/epics/${originStoryIdea.epicId}#seed-${originStoryIdea.seedId}`
+                    }
+                  >
+                    {originStoryIdea.storyId ? "Open Story Idea" : "Open Story Idea in Epic"}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
+              No direct Story Idea link is recorded for this Delivery Story. It still remains valid as long as Outcome and Epic links are present.
+            </div>
+          )}
+        </SecondaryPanel>
 
         <SecondaryPanel
           defaultOpen={false}

@@ -605,7 +605,7 @@ export function FramingOutcomeSection({
                       id: story.id,
                       key: story.key,
                       title: story.title,
-                      href: `/stories/${story.id}`,
+                      href: story.sourceDirectionSeedId ? `/stories/${story.id}` : `/story-ideas/${story.id}`,
                       isCurrent: false,
                       sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
                       valueIntent: story.valueIntent ?? null,

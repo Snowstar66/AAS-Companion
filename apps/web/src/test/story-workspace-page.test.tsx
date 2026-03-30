@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import StoryWorkspacePage from "@/app/(protected)/stories/[storyId]/page";
+import StoryIdeaWorkspacePage from "@/app/(protected)/story-ideas/[storyIdeaId]/page";
 
 vi.mock("@/lib/auth/guards", () => ({
   requireOrganizationContext: vi.fn(async () => ({
@@ -247,13 +247,13 @@ vi.mock("@/app/(protected)/stories/[storyId]/actions", () => ({
 describe("Story Workspace page", () => {
   it("keeps pre-approval story work focused on framing clarity instead of delivery workflow", async () => {
     render(
-      await StoryWorkspacePage({
-        params: Promise.resolve({ storyId: "story-native-1" }),
+      await StoryIdeaWorkspacePage({
+        params: Promise.resolve({ storyIdeaId: "story-native-1" }),
         searchParams: Promise.resolve({ created: "1" })
       })
     );
 
-    expect(screen.getByText("Native Story idea created inside the current Framing.")).toBeDefined();
+    expect(screen.getByText("Native Story Idea created inside the current Framing.")).toBeDefined();
     expect(screen.getAllByText("Scoped native Story").length).toBeGreaterThan(0);
     expect(screen.getByText("Story Idea")).toBeDefined();
     expect(screen.getByText("Story idea definition")).toBeDefined();

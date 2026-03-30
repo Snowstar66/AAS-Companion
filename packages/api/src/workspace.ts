@@ -1,6 +1,10 @@
 import {
   appendActivityEvent,
+  getDirectionSeedById,
+  getStoryById,
   listOrganizationUsers,
+  listDirectionSeeds,
+  listStoriesByDirectionSeedId,
   getOutcomeWorkspaceSnapshot,
   reviewOutcomeFramingWithAi,
   getStoryWorkspaceSnapshot,
@@ -369,7 +373,7 @@ export async function submitOutcomeTollgateService(input: {
 
 export async function getStoryWorkspaceService(organizationId: string, storyId: string) {
   return withDevTiming("api.getStoryWorkspaceService", async () => {
-    const snapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
+  const snapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
 
     if (!snapshot) {
       return failure({
@@ -384,6 +388,29 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
       lineageSourceType: snapshot.story.lineageSourceType,
       lineageSourceId: snapshot.story.lineageSourceId
     });
+    const linkedSeed = snapshot.story.sourceDirectionSeedId
+      ? await getDirectionSeedById(organizationId, snapshot.story.sourceDirectionSeedId)
+      : null;
+    const originStoryIdea = linkedSeed
+      ? {
+          seedId: linkedSeed.id,
+          storyId: linkedSeed.sourceStoryId ?? null,
+          key: linkedSeed.key,
+          title: linkedSeed.title,
+          epicId: linkedSeed.epicId,
+          outcomeId: linkedSeed.outcomeId,
+          valueIntent: linkedSeed.shortDescription?.trim() || null,
+          expectedBehavior: linkedSeed.expectedBehavior?.trim() || null
+        }
+      : null;
+    const relatedSeed = snapshot.story.sourceDirectionSeedId
+      ? linkedSeed
+      : (await listDirectionSeeds(organizationId, { includeArchived: true })).find(
+          (seed) => seed.sourceStoryId === snapshot.story.id
+        ) ?? null;
+    const derivedDeliveryStories = relatedSeed
+      ? await listStoriesByDirectionSeedId(organizationId, relatedSeed.id)
+      : [];
     const valueSpineValidation = validateStoryAgainstValueSpine(snapshot.story);
     const baseReadinessBlockers = getStoryHandoffReadiness(snapshot.story).reasons.map((reason) => reason.message);
     const tollgateReview = await getTollgateReviewWorkspaceService({
@@ -399,6 +426,8 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
 
     return success({
       ...snapshot,
+      originStoryIdea,
+      derivedDeliveryStories,
       valueSpineValidation,
       readiness: getStoryHandoffReadiness(snapshot.story),
       importedBuildBlockers,
