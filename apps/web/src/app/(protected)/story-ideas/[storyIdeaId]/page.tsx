@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getStoryReadinessBlockers } from "@aas-companion/domain";
 import { getDirectionSeedWorkspaceService, getStoryWorkspaceService } from "@aas-companion/api";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
@@ -22,26 +22,6 @@ type StoryIdeaWorkspacePageProps = {
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function buildQueryString(query: Record<string, string | string[] | undefined>) {
-  const params = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(query)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        params.append(key, item);
-      }
-      continue;
-    }
-
-    if (typeof value === "string") {
-      params.set(key, value);
-    }
-  }
-
-  const serialized = params.toString();
-  return serialized ? `?${serialized}` : "";
 }
 
 export default async function StoryIdeaWorkspacePage({ params, searchParams }: StoryIdeaWorkspacePageProps) {
@@ -137,11 +117,7 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
       : tollgateReview?.blockers ?? [...new Set([...(tollgate?.blockers ?? computedBlockers), ...importedBuildBlockers])];
   const isArchived = story.lifecycleState === "archived";
   const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
-  const isDeliveryMode = Boolean(story.sourceDirectionSeedId) || tollgateStatus === "approved" || story.status === "in_progress";
-
-  if (isDeliveryMode) {
-    redirect(`/stories/${story.id}${buildQueryString(query)}`);
-  }
+  const canAlsoOpenDeliveryView = Boolean(story.sourceDirectionSeedId) || tollgateStatus === "approved" || story.status === "in_progress";
 
   return (
     <AppShell
@@ -192,8 +168,18 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
             This Story Idea is archived and currently read-only. Restore it to continue active framing work.
           </div>
         ) : null}
+        {canAlsoOpenDeliveryView ? (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+            You opened the Story Idea view. This record also has a Delivery Story view for later design and build work.
+          </div>
+        ) : null}
 
-        <StoryIdeaWorkspace blockers={blockers} data={storyResult.data} isArchived={isArchived} />
+        <StoryIdeaWorkspace
+          blockers={blockers}
+          data={storyResult.data}
+          deliveryViewHref={canAlsoOpenDeliveryView ? `/stories/${story.id}` : null}
+          isArchived={isArchived}
+        />
       </section>
     </AppShell>
   );

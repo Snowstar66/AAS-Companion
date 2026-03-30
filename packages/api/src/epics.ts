@@ -218,6 +218,7 @@ export async function createNativeDirectionSeedFromEpicService(input: {
       uxSketchName: null,
       uxSketchContentType: null,
       uxSketchDataUrl: null,
+      uxSketches: null,
       originType: "native",
       createdMode: "clean",
       actorId: input.actorId ?? null
@@ -235,6 +236,12 @@ export async function saveDirectionSeedService(input: {
   uxSketchName?: string | null;
   uxSketchContentType?: string | null;
   uxSketchDataUrl?: string | null;
+  uxSketches?: Array<{
+    id: string;
+    name: string;
+    contentType: string;
+    dataUrl: string;
+  }> | null;
 }) {
   const existing = await getDirectionSeedById(input.organizationId, input.id);
 
@@ -254,7 +261,8 @@ export async function saveDirectionSeedService(input: {
     expectedBehavior: input.expectedBehavior,
     uxSketchName: input.uxSketchName,
     uxSketchContentType: input.uxSketchContentType,
-    uxSketchDataUrl: input.uxSketchDataUrl
+    uxSketchDataUrl: input.uxSketchDataUrl,
+    uxSketches: input.uxSketches
   });
 
   return success(result);

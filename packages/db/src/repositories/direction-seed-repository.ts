@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "../../generated/client";
+import { Prisma } from "../../generated/client";
 import { directionSeedCreateInputSchema, directionSeedUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
@@ -53,6 +53,7 @@ export async function createDirectionSeed(input: unknown, db: Prisma.Transaction
         uxSketchName: parsed.uxSketchName ?? null,
         uxSketchContentType: parsed.uxSketchContentType ?? null,
         uxSketchDataUrl: parsed.uxSketchDataUrl ?? null,
+        uxSketches: parsed.uxSketches ?? Prisma.JsonNull,
         lifecycleState: "active",
         archivedAt: null,
         archiveReason: null,
@@ -153,6 +154,10 @@ export async function updateDirectionSeed(input: unknown) {
 
     if (parsed.uxSketchDataUrl !== undefined) {
       data.uxSketchDataUrl = parsed.uxSketchDataUrl;
+    }
+
+    if (parsed.uxSketches !== undefined) {
+      data.uxSketches = parsed.uxSketches ?? Prisma.JsonNull;
     }
 
     if (parsed.importedReadinessState !== undefined) {

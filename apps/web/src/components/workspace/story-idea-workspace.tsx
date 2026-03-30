@@ -24,9 +24,10 @@ type StoryIdeaWorkspaceProps = {
   blockers: string[];
   data: StoryWorkspaceData;
   isArchived: boolean;
+  deliveryViewHref?: string | null;
 };
 
-export function StoryIdeaWorkspace({ blockers, data, isArchived }: StoryIdeaWorkspaceProps) {
+export function StoryIdeaWorkspace({ blockers, data, isArchived, deliveryViewHref = null }: StoryIdeaWorkspaceProps) {
   const { activities, derivedDeliveryStories = [], originStoryIdea, removal, story } = data;
   const readinessFields = getReadinessFieldStatus(story);
   const epicAlignmentText =
@@ -259,6 +260,11 @@ export function StoryIdeaWorkspace({ blockers, data, isArchived }: StoryIdeaWork
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/framing?outcomeId=${story.outcomeId}`}>Open current Framing</Link>
             </Button>
+            {deliveryViewHref ? (
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href={deliveryViewHref}>Open Delivery Story view</Link>
+              </Button>
+            ) : null}
           </div>
         </form>
 

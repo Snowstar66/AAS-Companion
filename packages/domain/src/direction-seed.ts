@@ -7,6 +7,13 @@ import {
 } from "./enums";
 import { governedLineageReferenceSchema, governedObjectProvenanceInputSchema } from "./governed-object";
 
+export const directionSeedSketchSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  contentType: z.string().min(1),
+  dataUrl: z.string().min(1)
+});
+
 export const directionSeedRecordSchema = z.object({
   id: z.string().min(1),
   organizationId: z.string().min(1),
@@ -19,6 +26,7 @@ export const directionSeedRecordSchema = z.object({
   uxSketchName: z.string().nullish(),
   uxSketchContentType: z.string().nullish(),
   uxSketchDataUrl: z.string().nullish(),
+  uxSketches: z.array(directionSeedSketchSchema).nullish(),
   sourceStoryId: z.string().nullish(),
   originType: governedObjectOriginTypeSchema,
   createdMode: governedObjectCreatedModeSchema,

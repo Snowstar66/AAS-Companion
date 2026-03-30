@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -9,7 +10,8 @@ import {
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
-const MAX_UX_SKETCH_BYTES = 5 * 1024 * 1024;
+const MAX_UX_SKETCH_BYTES = 2 * 1024 * 1024;
+const MAX_UX_SKETCH_FILES = 4;
 const SUPPORTED_UX_SKETCH_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 async function readOptionalUxSketchUpload(formData: FormData) {
@@ -19,30 +21,50 @@ async function readOptionalUxSketchUpload(formData: FormData) {
     return {
       uxSketchName: null,
       uxSketchContentType: null,
-      uxSketchDataUrl: null
+      uxSketchDataUrl: null,
+      uxSketches: []
     };
   }
 
-  const file = formData.get("uxSketchFile");
+  const files = [...formData.getAll("uxSketchFiles"), formData.get("uxSketchFile")]
+    .filter((value): value is File => value instanceof File && value.size > 0);
 
-  if (!(file instanceof File) || file.size === 0) {
+  if (files.length === 0) {
     return null;
   }
 
-  if (!SUPPORTED_UX_SKETCH_TYPES.has(file.type)) {
-    throw new Error("UX Sketch must be a PNG, JPEG, WEBP, or GIF image.");
+  if (files.length > MAX_UX_SKETCH_FILES) {
+    throw new Error(`You can attach up to ${MAX_UX_SKETCH_FILES} UX sketches per Story Idea.`);
   }
 
-  if (file.size > MAX_UX_SKETCH_BYTES) {
-    throw new Error("UX Sketch must be 5 MB or smaller.");
-  }
+  const sketches = await Promise.all(
+    files.map(async (file) => {
+      if (!SUPPORTED_UX_SKETCH_TYPES.has(file.type)) {
+        throw new Error("UX Sketch must be a PNG, JPEG, WEBP, or GIF image.");
+      }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
+      if (file.size > MAX_UX_SKETCH_BYTES) {
+        throw new Error("Each UX Sketch must be 2 MB or smaller.");
+      }
+
+      const bytes = Buffer.from(await file.arrayBuffer());
+
+      return {
+        id: randomUUID(),
+        name: file.name || "ux-sketch",
+        contentType: file.type,
+        dataUrl: `data:${file.type};base64,${bytes.toString("base64")}`
+      };
+    })
+  );
+
+  const primarySketch = sketches[0] ?? null;
 
   return {
-    uxSketchName: file.name || "ux-sketch",
-    uxSketchContentType: file.type,
-    uxSketchDataUrl: `data:${file.type};base64,${bytes.toString("base64")}`
+    uxSketchName: primarySketch?.name ?? null,
+    uxSketchContentType: primarySketch?.contentType ?? null,
+    uxSketchDataUrl: primarySketch?.dataUrl ?? null,
+    uxSketches: sketches
   };
 }
 
@@ -63,7 +85,8 @@ function toOptionalSketchSaveInput(
   return {
     uxSketchName: uxSketchUpdate.uxSketchName,
     uxSketchContentType: uxSketchUpdate.uxSketchContentType,
-    uxSketchDataUrl: uxSketchUpdate.uxSketchDataUrl
+    uxSketchDataUrl: uxSketchUpdate.uxSketchDataUrl,
+    uxSketches: uxSketchUpdate.uxSketches
   };
 }
 
