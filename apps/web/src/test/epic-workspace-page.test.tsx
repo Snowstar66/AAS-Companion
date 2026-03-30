@@ -130,6 +130,7 @@ vi.mock("@/app/(protected)/epics/[epicId]/actions", () => ({
   createDirectionSeedFromEpicAction: vi.fn(),
   hardDeleteEpicAction: vi.fn(),
   restoreEpicAction: vi.fn(),
+  saveDirectionSeedInlineAction: vi.fn(),
   saveDirectionSeedAction: vi.fn(),
   saveEpicWorkspaceAction: vi.fn(),
   validateDirectionSeedExpectedBehaviorAiAction: vi.fn()

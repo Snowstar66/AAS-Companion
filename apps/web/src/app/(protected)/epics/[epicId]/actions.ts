@@ -40,6 +40,16 @@ export type StoryExpectedBehaviorAiActionState =
       error: string;
     };
 
+export type DirectionSeedInlineSaveActionState =
+  | {
+      status: "success";
+      message: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
 export async function validateDirectionSeedExpectedBehaviorAiAction(
   formData: FormData
 ): Promise<StoryExpectedBehaviorAiActionState> {
@@ -210,6 +220,42 @@ export async function saveDirectionSeedAction(formData: FormData) {
       save: "success"
     }) + `#seed-${seedId}`
   );
+}
+
+export async function saveDirectionSeedInlineAction(formData: FormData): Promise<DirectionSeedInlineSaveActionState> {
+  const session = await requireActiveProjectSession();
+  const epicId = String(formData.get("epicId") ?? "");
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const seedId = String(formData.get("seedId") ?? "");
+
+  const result = await saveDirectionSeedService({
+    organizationId: session.organization.organizationId,
+    id: seedId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    shortDescription: String(formData.get("shortDescription") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
+  });
+
+  revalidatePath(`/epics/${epicId}`);
+  if (outcomeId) {
+    revalidatePath(`/outcomes/${outcomeId}`);
+    revalidatePath("/framing");
+  }
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      message: result.errors[0]?.message ?? "Story Idea could not be saved."
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Suggestion saved to the Story Idea."
+  };
 }
 
 export async function hardDeleteEpicAction(formData: FormData) {

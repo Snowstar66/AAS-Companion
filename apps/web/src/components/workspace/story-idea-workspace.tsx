@@ -8,6 +8,7 @@ import {
   archiveStoryAction,
   hardDeleteStoryAction,
   restoreStoryAction,
+  saveStoryWorkspaceInlineAction,
   saveStoryWorkspaceAction,
   validateStoryExpectedBehaviorAiAction
 } from "@/app/(protected)/stories/[storyId]/actions";
@@ -141,6 +142,7 @@ export function StoryIdeaWorkspace({ blockers, data, isArchived }: StoryIdeaWork
                 initialValue={story.expectedBehavior ?? ""}
                 label="Expected behavior"
                 name="expectedBehavior"
+                saveAction={saveStoryWorkspaceInlineAction}
                 validateAction={validateStoryExpectedBehaviorAiAction}
               />
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">

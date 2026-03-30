@@ -107,6 +107,53 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
   );
 }
 
+export type OutcomeInlineSaveActionState =
+  | {
+      status: "success";
+      message: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
+export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Promise<OutcomeInlineSaveActionState> {
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+
+  const result = await saveOutcomeWorkspaceService({
+    organizationId: session.organization.organizationId,
+    id: outcomeId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    problemStatement: String(formData.get("problemStatement") ?? "") || null,
+    outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
+    baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
+    baselineSource: String(formData.get("baselineSource") ?? "") || null,
+    timeframe: String(formData.get("timeframe") ?? "") || null,
+    valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
+    riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",
+    aiAccelerationLevel:
+      (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
+  });
+
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath("/framing");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      message: result.errors[0]?.message ?? "Outcome could not be saved."
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Suggestion saved to the Framing."
+  };
+}
+
 export type OutcomeFieldAiActionState =
   | {
       status: "success";

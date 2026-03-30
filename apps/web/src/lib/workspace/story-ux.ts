@@ -48,18 +48,18 @@ export type StoryUxModel = {
 const lifecycleStepDefinitions = [
   {
     key: "draft",
-    label: "Draft",
+    label: "Draft delivery story",
     description: "Core delivery inputs are still being written."
   },
   {
     key: "review_ready",
-    label: "Ready for review",
-    description: "The Story is ready for human review and approval."
+    label: "Delivery review",
+    description: "The Delivery Story is going through the human checks needed before handoff."
   },
   {
-    key: "design_ready",
-    label: "Ready for design",
-    description: "Required approval is complete and design can now move forward."
+    key: "handoff_ready",
+    label: "Ready for handoff",
+    description: "Required delivery checks are complete and the handoff package can be finalized."
   }
 ] as const;
 
@@ -116,8 +116,8 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
   const isReadyForHandoff = hasTollgateStatus ? isApproved : isApproved || input.status === "ready_for_handoff";
   const isReviewReady = readiness.state === "ready" && !hasTollgateStatus && !isReadyForHandoff;
 
-  let statusLabel = "Draft";
-  let statusDetail = "This Story still needs key delivery inputs before review can start.";
+  let statusLabel = "Draft delivery story";
+  let statusDetail = "This Delivery Story still needs key delivery inputs before review can start.";
   let tone: StoryUxTone = "neutral";
 
   if (isArchived) {
@@ -125,54 +125,54 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     statusDetail = "This Story is currently out of the active workflow until it is restored.";
     tone = "archived";
   } else if (isInDelivery) {
-    statusLabel = "In delivery";
+    statusLabel = "In build";
     statusDetail = "Handoff is complete and active implementation work can proceed.";
     tone = "progress";
   } else if (isReadyForHandoff) {
-    statusLabel = "Ready for design";
-    statusDetail = "Required approval is complete and the Story can now move into design and delivery handoff.";
+    statusLabel = "Ready for handoff";
+    statusDetail = "Required delivery checks are complete and the handoff package can now be finalized.";
     tone = "success";
   } else if (isUnderSignoff) {
-    statusLabel = "Ready for review";
+    statusLabel = "Delivery review in progress";
     statusDetail =
       missingSignoffCount > 0
-        ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before approval.`
-        : "Human review is in progress for this Story.";
+        ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before handoff.`
+        : "Human review is in progress for this Delivery Story.";
     tone = "progress";
   } else if (isReviewReady) {
-    statusLabel = "Ready for review";
-    statusDetail = "All required design inputs are present. Submit the Story to begin human review.";
+    statusLabel = "Ready for delivery review";
+    statusDetail = "All required design inputs are present. Submit the Delivery Story to begin human review.";
     tone = "progress";
   } else if (input.status === "in_progress") {
-    statusLabel = "In delivery";
-    statusDetail = "The Story has already moved beyond planning into active implementation work.";
+    statusLabel = "In build";
+    statusDetail = "The Delivery Story has already moved beyond planning into active implementation work.";
     tone = "progress";
   } else if (blockers.length > 0) {
     statusLabel = "Needs updates";
-    statusDetail = blockers[0] ?? "Important handoff inputs are still missing.";
+    statusDetail = blockers[0] ?? "Important delivery inputs are still missing.";
     tone = "warning";
   }
 
   const readinessLabel = isInDelivery
-    ? "Design handoff completed"
+    ? "Handoff completed"
     : isReadyForHandoff
-      ? "Ready for design"
+      ? "Ready for handoff"
       : isUnderSignoff
-        ? "Review in progress"
+        ? "Delivery review in progress"
         : readiness.state === "ready"
-          ? "Ready to review"
+          ? "Ready for delivery review"
           : "Needs design inputs";
   const readinessDetail = isInDelivery
-    ? "The Story has already been handed off and moved into active delivery."
+    ? "The Delivery Story has already been handed off and moved into active implementation."
     : isReadyForHandoff
-      ? "Required approval is complete and all design inputs needed for progression are present."
+      ? "Required delivery checks are complete and all inputs needed for handoff are present."
       : isUnderSignoff
         ? missingSignoffCount > 0
-          ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before approval.`
-          : "Human review is in progress for this Story."
+          ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before handoff.`
+          : "Human review is in progress for this Delivery Story."
         : readiness.state === "ready"
           ? "Test definition, acceptance criteria and definition of done are all present."
-          : blockers[0] ?? "Complete the missing design inputs before submitting the Story.";
+          : blockers[0] ?? "Complete the missing design inputs before submitting the Delivery Story.";
 
   const currentStepIndex = isReadyForHandoff || isInDelivery ? 2 : isUnderSignoff || isReviewReady ? 1 : 0;
   const lifecycleSteps = lifecycleStepDefinitions.map((step, index) => {
@@ -214,8 +214,8 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     : isInDelivery
       ? [
           {
-            label: "Continue delivery coordination",
-            description: "Track implementation progress, blockers and any follow-up decisions that still need to be recorded.",
+          label: "Continue delivery coordination",
+          description: "Track implementation progress, blockers and any follow-up decisions that still need to be recorded.",
             href: input.id ? `/stories/${input.id}` : "#story-value-spine"
           },
           {
@@ -236,8 +236,8 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
             ...(input.id
               ? [
                   {
-                    label: "Complete delivery handoff",
-                    description: "Open the handoff page and finalize the approved package for delivery.",
+                    label: "Finalize handoff package",
+                    description: "Open the handoff page and finalize the approved package for build.",
                     href: `/handoff/${input.id}`
                   }
                 ]
@@ -259,8 +259,8 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
                 label: "Record remaining sign-offs",
                 description:
                   missingSignoffCount > 0
-                    ? `${missingSignoffCount} review or approval action${missingSignoffCount === 1 ? "" : "s"} still remain.`
-                    : "Continue recording the human decisions that move this Story forward.",
+                    ? `${missingSignoffCount} review or approval action${missingSignoffCount === 1 ? "" : "s"} still remain before handoff.`
+                    : "Continue recording the human decisions that move this Delivery Story forward.",
                 href: "#story-signoff"
               },
               ...(blockedActionCount > 0
@@ -280,8 +280,8 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
             ]
           : [
               {
-                label: "Submit for sign-off",
-                description: "Freeze the current readiness state and start human review.",
+                label: "Start delivery review",
+                description: "Freeze the current readiness state and start human review for this Delivery Story.",
                 href: "#story-readiness"
               },
               {

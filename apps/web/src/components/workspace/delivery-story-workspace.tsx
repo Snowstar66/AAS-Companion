@@ -13,6 +13,7 @@ import {
   hardDeleteStoryAction,
   recordStoryTollgateDecisionAction,
   restoreStoryAction,
+  saveStoryWorkspaceInlineAction,
   saveStoryWorkspaceAction,
   submitStoryReadinessAction,
   validateStoryExpectedBehaviorAiAction
@@ -93,7 +94,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               {!isArchived ? (
                 <Button asChild className="gap-2" variant={blockers.length === 0 ? "default" : "secondary"}>
                   <Link href={`/handoff/${story.id}`}>
-                    Preview Execution Contract
+                    Open handoff package
                     <FileJson2 className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -139,8 +140,8 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           <input name="epicScopeBoundary" type="hidden" value={story.epic.scopeBoundary ?? ""} />
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Delivery Story design</CardTitle>
-              <CardDescription>Keep Story focused on one testable delivery unit and its explicit handoff inputs.</CardDescription>
+              <CardTitle>Delivery Story definition</CardTitle>
+              <CardDescription>Keep this focused on one testable delivery unit and the inputs needed before build handoff.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-ai-level">
@@ -187,6 +188,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 initialValue={story.expectedBehavior ?? ""}
                 label="Expected behavior"
                 name="expectedBehavior"
+                saveAction={saveStoryWorkspaceInlineAction}
                 validateAction={validateStoryExpectedBehaviorAiAction}
               />
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
@@ -384,8 +386,8 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
       <div className="space-y-6">
         <SecondaryPanel
           defaultOpen
-          description="Server-backed readiness, review, approval and escalation trail for Story handoff."
-          title="Story readiness review and approval"
+          description="Server-backed delivery review, sign-off and escalation trail before handoff."
+          title="Delivery review"
         >
           <div id="story-signoff-history">
             <div id="story-signoff">
@@ -396,7 +398,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 blockers={blockers}
                 blockedActions={tollgateReview?.blockedActions ?? []}
                 comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
-                description="Server-backed readiness, review, approval and escalation trail for Story handoff."
+                description="Server-backed delivery review, sign-off and escalation trail before handoff."
                 entityId={story.id}
                 entityType="story"
                 formAction={recordStoryTollgateDecisionAction}
@@ -422,7 +424,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   })) ?? []
                 }
                 status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
-                title="Story readiness review and approval"
+                title="Delivery review"
                 tollgateType="story_readiness"
               />
             </div>
@@ -433,10 +435,10 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           <Card className="border-border/70 shadow-sm" id="story-readiness">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Submit Story readiness
+                Start delivery review
                 <InlineTermHelp term="Readiness" />
               </CardTitle>
-              <CardDescription>Readiness submission freezes the current blockers before human sign-off continues.</CardDescription>
+              <CardDescription>Freeze the current blockers and open the formal delivery review for this Delivery Story.</CardDescription>
             </CardHeader>
             <CardContent>
               <form action={submitStoryReadinessAction} className="space-y-4">
@@ -454,8 +456,8 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 <PendingFormButton
                   className="gap-2"
                   icon={<ShieldCheck className="h-4 w-4" />}
-                  label="Record readiness"
-                  pendingLabel="Recording readiness..."
+                  label="Start delivery review"
+                  pendingLabel="Starting review..."
                 />
               </form>
             </CardContent>

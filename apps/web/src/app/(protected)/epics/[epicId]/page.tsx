@@ -21,6 +21,7 @@ import {
   hardDeleteEpicAction,
   restoreEpicAction,
   saveDirectionSeedAction,
+  saveDirectionSeedInlineAction,
   saveEpicWorkspaceAction,
   validateDirectionSeedExpectedBehaviorAiAction
 } from "./actions";
@@ -437,6 +438,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                             label="Expected behavior"
                             minHeightClassName="min-h-20"
                             name="expectedBehavior"
+                            saveAction={saveDirectionSeedInlineAction}
                             validateAction={validateDirectionSeedExpectedBehaviorAiAction}
                           />
                         </div>

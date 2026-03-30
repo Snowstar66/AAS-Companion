@@ -15,6 +15,7 @@ import {
   hardDeleteOutcomeAction,
   reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
+  saveOutcomeWorkspaceInlineAction,
   saveOutcomeWorkspaceAction,
   submitOutcomeTollgateAction,
   validateBaselineDefinitionAiAction,
@@ -99,6 +100,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                 hardDeleteAction={hardDeleteOutcomeAction}
                 restoreAction={restoreOutcomeAction}
                 saveAction={saveOutcomeWorkspaceAction}
+                saveInlineAction={saveOutcomeWorkspaceInlineAction}
                 search={{
                   aiConfidence: (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | null) ?? null,
                   aiError: getParamValue(query.aiError) ?? null,

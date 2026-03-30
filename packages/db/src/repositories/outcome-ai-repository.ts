@@ -262,6 +262,7 @@ General rules:
 - Do not nitpick or optimize text that is already good enough.
 - Suggest a rewrite only when the text is clearly wrong, too vague to trust, or missing the essential idea.
 - If the text is acceptable, return verdict "good" and leave suggestedRewrite null.
+- If the field text is empty but the surrounding context is sufficient, propose a conservative starting draft in suggestedRewrite.
 - Keep rationale short and concrete.
 
 Field guidance:
@@ -381,6 +382,7 @@ Rules:
 - Flag if the description is too vague or if the Epic connection is weak.
 - Do not nitpick text that is already good enough.
 - If the text is acceptable, return verdict "good" and leave suggestedRewrite null.
+- If expectedBehavior is empty but the Value Intent and Epic give enough context, suggest a concise framing-level starting text.
 
 Verdicts:
 - good = acceptable as written for framing
@@ -426,18 +428,6 @@ export async function validateOutcomeFieldWithAi(input: {
   baselineSource?: string | null;
   timeframe?: string | null;
 }) {
-  const fieldText = input.field === "outcome_statement" ? input.outcomeStatement : input.baselineDefinition;
-
-  if (!fieldText?.trim()) {
-    return parseOutcomeFieldAiValidation({
-      field: input.field,
-      verdict: "needs_revision",
-      confidence: "high",
-      rationale: "Field is empty, so there is nothing to validate yet.",
-      suggestedRewrite: null
-    });
-  }
-
   const env = readRequiredLlmEnv();
   const response = await fetch(new URL("responses", env.endpoint), {
     method: "POST",
@@ -527,16 +517,6 @@ export async function validateStoryExpectedBehaviorWithAi(input: {
   epicPurpose?: string | null;
   epicScopeBoundary?: string | null;
 }) {
-  if (!input.expectedBehavior?.trim()) {
-    return parseStoryExpectedBehaviorAiValidation({
-      field: "story_expected_behavior",
-      verdict: "needs_revision",
-      confidence: "high",
-      rationale: "Expected behavior is empty, so there is nothing to validate yet.",
-      suggestedRewrite: null
-    });
-  }
-
   const env = readRequiredLlmEnv();
   const response = await fetch(new URL("responses", env.endpoint), {
     method: "POST",

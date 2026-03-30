@@ -71,6 +71,16 @@ export type StoryExpectedBehaviorAiActionState =
       error: string;
     };
 
+export type StoryInlineSaveActionState =
+  | {
+      status: "success";
+      message: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
 export async function validateStoryExpectedBehaviorAiAction(
   formData: FormData
 ): Promise<StoryExpectedBehaviorAiActionState> {
@@ -148,6 +158,50 @@ export async function saveStoryWorkspaceAction(formData: FormData) {
       save: "success"
     })
   );
+}
+
+export async function saveStoryWorkspaceInlineAction(formData: FormData): Promise<StoryInlineSaveActionState> {
+  const session = await requireActiveProjectSession();
+  const storyId = String(formData.get("storyId") ?? "");
+  const epicId = String(formData.get("epicId") ?? "");
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const result = await saveStoryWorkspaceService({
+    organizationId: session.organization.organizationId,
+    id: storyId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    storyType: String(formData.get("storyType") ?? "outcome_delivery") as "outcome_delivery" | "governance" | "enablement",
+    valueIntent: String(formData.get("valueIntent") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    acceptanceCriteria: readMultilineValues(formData, "acceptanceCriteria"),
+    aiUsageScope: readCommaValues(formData, "aiUsageScope"),
+    testDefinition: String(formData.get("testDefinition") ?? "") || null,
+    definitionOfDone: readMultilineValues(formData, "definitionOfDone")
+  });
+
+  revalidatePath(`/stories/${storyId}`);
+  if (epicId) {
+    revalidatePath(`/epics/${epicId}`);
+  }
+  if (outcomeId) {
+    revalidatePath(`/outcomes/${outcomeId}`);
+    revalidatePath("/framing");
+  }
+  revalidatePath("/stories");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      message: result.errors[0]?.message ?? "Story could not be saved."
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Suggestion saved to the Story."
+  };
 }
 
 export async function submitStoryReadinessAction(formData: FormData) {

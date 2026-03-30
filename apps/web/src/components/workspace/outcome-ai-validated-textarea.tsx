@@ -15,6 +15,7 @@ type OutcomeAiValidatedTextareaProps = {
   guidance?: ReactNode;
   minHeightClassName?: string;
   validateAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
+  saveAction?: (formData: FormData) => Promise<{ status: "success" | "error"; message: string }>;
   initialFeedback?:
     | {
         field: "outcome_statement" | "baseline_definition";
@@ -36,6 +37,7 @@ export function OutcomeAiValidatedTextarea({
   guidance,
   minHeightClassName = "min-h-28",
   validateAction,
+  saveAction,
   initialFeedback = null,
   initialError = null
 }: OutcomeAiValidatedTextareaProps) {
@@ -59,7 +61,10 @@ export function OutcomeAiValidatedTextarea({
           }
         : null
   );
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isSaving, startSavingTransition] = useTransition();
 
   useEffect(() => {
     setValue(initialValue);
@@ -125,7 +130,49 @@ export function OutcomeAiValidatedTextarea({
       setValue(feedback.suggestedRewrite);
       textareaRef.current?.focus();
       textareaRef.current?.setSelectionRange(feedback.suggestedRewrite.length, feedback.suggestedRewrite.length);
+      setSaveMessage(null);
+      setSaveError(null);
     }
+  }
+
+  function applySuggestionAndSave() {
+    if (!feedback?.suggestedRewrite || !saveAction) {
+      applySuggestion();
+      return;
+    }
+
+    const form = textareaRef.current?.closest("form");
+
+    setValue(feedback.suggestedRewrite);
+    textareaRef.current?.focus();
+    textareaRef.current?.setSelectionRange(feedback.suggestedRewrite.length, feedback.suggestedRewrite.length);
+    setSaveMessage(null);
+    setSaveError(null);
+
+    if (!form) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    formData.set(name, feedback.suggestedRewrite);
+
+    startSavingTransition(async () => {
+      try {
+        const saveResult = await saveAction(formData);
+
+        if (saveResult.status === "error") {
+          setSaveError(saveResult.message);
+          setSaveMessage(null);
+          return;
+        }
+
+        setSaveMessage(saveResult.message);
+        setSaveError(null);
+      } catch (error) {
+        setSaveError(error instanceof Error ? error.message : "Suggestion could not be saved.");
+        setSaveMessage(null);
+      }
+    });
   }
 
   return (
@@ -149,9 +196,21 @@ export function OutcomeAiValidatedTextarea({
       />
       {guidance}
       <OutcomeFieldAiFeedback error={error} feedback={feedback} field={field} />
+      {saveError ? <p className="text-sm text-red-700">{saveError}</p> : null}
+      {saveMessage ? <p className="text-sm text-emerald-700">{saveMessage}</p> : null}
       {feedback?.suggestedRewrite ? (
         <div className="flex flex-wrap gap-2">
-          <Button className="gap-2" onClick={applySuggestion} size="sm" type="button" variant="secondary">
+          <Button
+            className="gap-2"
+            disabled={isSaving}
+            onClick={applySuggestionAndSave}
+            size="sm"
+            type="button"
+            variant="default"
+          >
+            {isSaving ? "Applying and saving..." : "Use suggestion and save"}
+          </Button>
+          <Button className="gap-2" disabled={isSaving} onClick={applySuggestion} size="sm" type="button" variant="secondary">
             Use suggestion in editor
           </Button>
         </div>

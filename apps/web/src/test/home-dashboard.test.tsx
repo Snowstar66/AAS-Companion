@@ -92,6 +92,7 @@ describe("Home dashboard", () => {
     expect(screen.getByRole("heading", { name: "Project access" })).toBeDefined();
     expect(screen.getByText("Create project")).toBeDefined();
     expect(screen.getAllByText("Demo access").length).toBeGreaterThan(0);
+    expect(screen.getByText("Current project")).toBeDefined();
     expect(screen.queryByText("Outcome spread")).toBeNull();
   });
 });

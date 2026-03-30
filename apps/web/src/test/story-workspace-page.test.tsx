@@ -238,6 +238,7 @@ vi.mock("@/app/(protected)/stories/[storyId]/actions", () => ({
   hardDeleteStoryAction: vi.fn(),
   recordStoryTollgateDecisionAction: vi.fn(),
   restoreStoryAction: vi.fn(),
+  saveStoryWorkspaceInlineAction: vi.fn(),
   saveStoryWorkspaceAction: vi.fn(),
   submitStoryReadinessAction: vi.fn(),
   validateStoryExpectedBehaviorAiAction: vi.fn()

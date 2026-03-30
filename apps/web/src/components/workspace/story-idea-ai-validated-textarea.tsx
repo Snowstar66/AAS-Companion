@@ -27,6 +27,7 @@ type StoryIdeaAiValidatedTextareaProps = {
   disabled?: boolean;
   minHeightClassName?: string;
   validateAction: (formData: FormData) => Promise<StoryIdeaExpectedBehaviorAiActionState>;
+  saveAction?: (formData: FormData) => Promise<{ status: "success" | "error"; message: string }>;
 };
 
 export function StoryIdeaAiValidatedTextarea({
@@ -35,12 +36,16 @@ export function StoryIdeaAiValidatedTextarea({
   initialValue,
   disabled = false,
   minHeightClassName = "min-h-24",
-  validateAction
+  validateAction,
+  saveAction
 }: StoryIdeaAiValidatedTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [value, setValue] = useState(initialValue);
   const [result, setResult] = useState<StoryIdeaExpectedBehaviorAiActionState | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isSaving, startSavingTransition] = useTransition();
 
   useEffect(() => {
     setValue(initialValue);
@@ -73,7 +78,49 @@ export function StoryIdeaAiValidatedTextarea({
       setValue(result.suggestedRewrite);
       textareaRef.current?.focus();
       textareaRef.current?.setSelectionRange(result.suggestedRewrite.length, result.suggestedRewrite.length);
+      setSaveMessage(null);
+      setSaveError(null);
     }
+  }
+
+  function applySuggestionAndSave() {
+    if (result?.status !== "success" || !result.suggestedRewrite || !saveAction) {
+      applySuggestion();
+      return;
+    }
+
+    const form = textareaRef.current?.closest("form");
+
+    setValue(result.suggestedRewrite);
+    textareaRef.current?.focus();
+    textareaRef.current?.setSelectionRange(result.suggestedRewrite.length, result.suggestedRewrite.length);
+    setSaveMessage(null);
+    setSaveError(null);
+
+    if (!form) {
+      return;
+    }
+
+    const formData = new FormData(form);
+    formData.set(name, result.suggestedRewrite);
+
+    startSavingTransition(async () => {
+      try {
+        const saveResult = await saveAction(formData);
+
+        if (saveResult.status === "error") {
+          setSaveError(saveResult.message);
+          setSaveMessage(null);
+          return;
+        }
+
+        setSaveMessage(saveResult.message);
+        setSaveError(null);
+      } catch (error) {
+        setSaveError(error instanceof Error ? error.message : "Suggestion could not be saved.");
+        setSaveMessage(null);
+      }
+    });
   }
 
   return (
@@ -110,9 +157,21 @@ export function StoryIdeaAiValidatedTextarea({
         }
         field="story_expected_behavior"
       />
+      {saveError ? <p className="text-sm text-red-700">{saveError}</p> : null}
+      {saveMessage ? <p className="text-sm text-emerald-700">{saveMessage}</p> : null}
       {result?.status === "success" && result.suggestedRewrite ? (
         <div className="flex flex-wrap gap-2">
-          <Button className="gap-2" onClick={applySuggestion} size="sm" type="button" variant="secondary">
+          <Button
+            className="gap-2"
+            disabled={isSaving}
+            onClick={applySuggestionAndSave}
+            size="sm"
+            type="button"
+            variant="default"
+          >
+            {isSaving ? "Applying and saving..." : "Use suggestion and save"}
+          </Button>
+          <Button className="gap-2" disabled={isSaving} onClick={applySuggestion} size="sm" type="button" variant="secondary">
             Use suggestion in editor
           </Button>
         </div>

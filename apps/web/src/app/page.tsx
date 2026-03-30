@@ -24,6 +24,7 @@ import {
 import { ViewerSessionProvider } from "@/components/auth/viewer-session-provider";
 import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { AppShell } from "@/components/layout/app-shell";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
 
 type HomePageProps = {
@@ -133,6 +134,66 @@ function CompactProjectCount(props: { label: string; value: number | string }) {
     <div className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-xs font-medium text-muted-foreground">
       <span className="uppercase tracking-[0.18em]">{props.label}</span>
       <span className="ml-2 font-semibold text-foreground">{props.value}</span>
+    </div>
+  );
+}
+
+function ProjectToneCard(props: {
+  active?: boolean | undefined;
+  title: string;
+  slug: string;
+  counts: {
+    outcomes: number;
+    epics: number;
+    stories: number;
+    activityEvents: number;
+  };
+  organizationId: string;
+}) {
+  return (
+    <div
+      className={`rounded-3xl border p-5 shadow-sm transition ${
+        props.active
+          ? "border-sky-200 bg-[linear-gradient(180deg,rgba(239,246,255,0.96),rgba(255,255,255,0.98))]"
+          : "border-border/70 bg-background/95"
+      }`}
+    >
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-base font-semibold text-foreground">{props.title}</p>
+            {props.active ? (
+              <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800">
+                Current project
+              </span>
+            ) : null}
+            <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              {props.slug}
+            </span>
+          </div>
+          <p className="text-sm leading-6 text-muted-foreground">
+            {props.active
+              ? "This project is already active. Continue straight back into its current Framing and operational work."
+              : "Open this project to scope the dashboard, Framing, Value Spine, Import and Review to this branch of work."}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <CompactProjectCount label="Outcomes" value={props.counts.outcomes} />
+            <CompactProjectCount label="Epics" value={props.counts.epics} />
+            <CompactProjectCount label="Stories" value={props.counts.stories} />
+            <CompactProjectCount label="Events" value={props.counts.activityEvents} />
+          </div>
+        </div>
+        <form action={openProjectAction} className="lg:min-w-[170px]">
+          <input name="organizationId" type="hidden" value={props.organizationId} />
+          <PendingFormButton
+            className="w-full gap-2"
+            label={props.active ? "Continue in project" : "Open project"}
+            pendingLabel={props.active ? "Opening project..." : "Opening project..."}
+            size="sm"
+            variant={props.active ? "default" : "secondary"}
+          />
+        </form>
+      </div>
     </div>
   );
 }
@@ -423,7 +484,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
                     {isDemoSession
                       ? "Sign in with your account to manage normal projects, or leave Demo to return to a clean Home."
-                      : "Sign in before opening or creating a normal project."}
+                      : "Sign in first to choose a normal project or create a new one. The sign-in page lets you pick direct sign-in, email login, or Demo when available."}
                   </div>
                 ) : projects.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
@@ -431,41 +492,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     <p className="mt-2">Create the first project here, or open Demo explicitly if you need reference material.</p>
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-3xl border border-border/70 bg-background/90 shadow-sm">
+                  <div className="space-y-3">
                     {projects.map((project) => (
-                      <div
-                        className="border-b border-border/70 px-4 py-4 last:border-b-0 sm:px-5"
+                      <ProjectToneCard
+                        active={project.isActive}
+                        counts={project.counts}
                         key={project.organizationId}
-                      >
-                        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                          <div className="space-y-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-semibold text-foreground">{project.organizationName}</p>
-                              {project.isActive ? (
-                                <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                                  Active
-                                </span>
-                              ) : null}
-                              <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                {project.organizationSlug}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <CompactProjectCount label="Outcomes" value={project.counts.outcomes} />
-                              <CompactProjectCount label="Epics" value={project.counts.epics} />
-                              <CompactProjectCount label="Stories" value={project.counts.stories} />
-                              <CompactProjectCount label="Events" value={project.counts.activityEvents} />
-                            </div>
-                          </div>
-                          <form action={openProjectAction}>
-                            <input name="organizationId" type="hidden" value={project.organizationId} />
-                            <Button className="gap-2 w-full lg:w-auto" size="sm" type="submit" variant={project.isActive ? "default" : "secondary"}>
-                              {project.isActive ? "Continue" : "Open"}
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </Button>
-                          </form>
-                        </div>
-                      </div>
+                        organizationId={project.organizationId}
+                        slug={project.organizationSlug}
+                        title={project.organizationName}
+                      />
                     ))}
                   </div>
                 )}
@@ -502,7 +538,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       ) : (
                         <Button asChild className="gap-2">
                           <Link href="/login?redirectTo=%2F">
-                            Sign in to create
+                            Open sign-in options
                             <ArrowRight className="h-4 w-4" />
                           </Link>
                         </Button>

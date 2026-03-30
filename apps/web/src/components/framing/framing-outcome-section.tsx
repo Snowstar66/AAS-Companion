@@ -5,6 +5,7 @@ import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import { getOutcomeFramingBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type {
+  OutcomeInlineSaveActionState,
   OutcomeFieldAiActionState,
   reviewOutcomeFramingWithAiAction
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
@@ -45,6 +46,7 @@ type FramingOutcomeSectionProps = {
   };
   embeddedInFraming?: boolean;
   saveAction: (formData: FormData) => void | Promise<void>;
+  saveInlineAction: (formData: FormData) => Promise<OutcomeInlineSaveActionState>;
   createEpicAction: (formData: FormData) => void | Promise<void>;
   archiveAction: (formData: FormData) => void | Promise<void>;
   hardDeleteAction: (formData: FormData) => void | Promise<void>;
@@ -112,6 +114,7 @@ export function FramingOutcomeSection({
   search,
   embeddedInFraming = false,
   saveAction,
+  saveInlineAction,
   createEpicAction,
   archiveAction,
   hardDeleteAction,
@@ -433,6 +436,7 @@ export function FramingOutcomeSection({
                     initialValue={draftOutcomeStatement}
                     label="Outcome statement"
                     name="outcomeStatement"
+                    saveAction={saveInlineAction}
                     validateAction={validateOutcomeStatementAiAction}
                   />
                 </div>
@@ -454,6 +458,7 @@ export function FramingOutcomeSection({
                   initialValue={draftBaselineDefinition}
                   label="Baseline definition"
                   name="baselineDefinition"
+                  saveAction={saveInlineAction}
                   validateAction={validateBaselineDefinitionAiAction}
                 />
                 <label className="space-y-2">
