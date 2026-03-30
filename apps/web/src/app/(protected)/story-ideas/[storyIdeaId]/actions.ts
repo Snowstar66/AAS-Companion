@@ -9,11 +9,62 @@ import {
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
+const MAX_UX_SKETCH_BYTES = 5 * 1024 * 1024;
+const SUPPORTED_UX_SKETCH_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+
+async function readOptionalUxSketchUpload(formData: FormData) {
+  const clearUxSketch = String(formData.get("clearUxSketch") ?? "") === "1";
+
+  if (clearUxSketch) {
+    return {
+      uxSketchName: null,
+      uxSketchContentType: null,
+      uxSketchDataUrl: null
+    };
+  }
+
+  const file = formData.get("uxSketchFile");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return null;
+  }
+
+  if (!SUPPORTED_UX_SKETCH_TYPES.has(file.type)) {
+    throw new Error("UX Sketch must be a PNG, JPEG, WEBP, or GIF image.");
+  }
+
+  if (file.size > MAX_UX_SKETCH_BYTES) {
+    throw new Error("UX Sketch must be 5 MB or smaller.");
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  return {
+    uxSketchName: file.name || "ux-sketch",
+    uxSketchContentType: file.type,
+    uxSketchDataUrl: `data:${file.type};base64,${bytes.toString("base64")}`
+  };
+}
+
 function buildStoryIdeaRedirect(storyIdeaId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
   const query = params.toString();
 
   return `/story-ideas/${storyIdeaId}${query ? `?${query}` : ""}`;
+}
+
+function toOptionalSketchSaveInput(
+  uxSketchUpdate: Awaited<ReturnType<typeof readOptionalUxSketchUpload>> | null
+) {
+  if (!uxSketchUpdate) {
+    return {};
+  }
+
+  return {
+    uxSketchName: uxSketchUpdate.uxSketchName,
+    uxSketchContentType: uxSketchUpdate.uxSketchContentType,
+    uxSketchDataUrl: uxSketchUpdate.uxSketchDataUrl
+  };
 }
 
 export type StoryIdeaSeedExpectedBehaviorAiActionState =
@@ -78,6 +129,18 @@ export async function saveStoryIdeaSeedWorkspaceAction(formData: FormData) {
   const storyIdeaId = String(formData.get("storyIdeaId") ?? "");
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
+  let uxSketchUpdate: Awaited<ReturnType<typeof readOptionalUxSketchUpload>> | null = null;
+
+  try {
+    uxSketchUpdate = await readOptionalUxSketchUpload(formData);
+  } catch (error) {
+    redirect(
+      buildStoryIdeaRedirect(storyIdeaId, {
+        save: "error",
+        message: error instanceof Error ? error.message : "UX Sketch could not be uploaded."
+      })
+    );
+  }
 
   const result = await saveDirectionSeedService({
     organizationId: session.organization.organizationId,
@@ -85,7 +148,8 @@ export async function saveStoryIdeaSeedWorkspaceAction(formData: FormData) {
     actorId: session.userId,
     title: String(formData.get("title") ?? ""),
     shortDescription: String(formData.get("shortDescription") ?? ""),
-    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    ...toOptionalSketchSaveInput(uxSketchUpdate)
   });
 
   revalidatePath(`/story-ideas/${storyIdeaId}`);
@@ -118,6 +182,16 @@ export async function saveStoryIdeaSeedWorkspaceInlineAction(
   const storyIdeaId = String(formData.get("storyIdeaId") ?? "");
   const epicId = String(formData.get("epicId") ?? "");
   const outcomeId = String(formData.get("outcomeId") ?? "");
+  let uxSketchUpdate: Awaited<ReturnType<typeof readOptionalUxSketchUpload>> | null = null;
+
+  try {
+    uxSketchUpdate = await readOptionalUxSketchUpload(formData);
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "UX Sketch could not be uploaded."
+    };
+  }
 
   const result = await saveDirectionSeedService({
     organizationId: session.organization.organizationId,
@@ -125,7 +199,8 @@ export async function saveStoryIdeaSeedWorkspaceInlineAction(
     actorId: session.userId,
     title: String(formData.get("title") ?? ""),
     shortDescription: String(formData.get("shortDescription") ?? ""),
-    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    ...toOptionalSketchSaveInput(uxSketchUpdate)
   });
 
   revalidatePath(`/story-ideas/${storyIdeaId}`);

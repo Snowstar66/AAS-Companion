@@ -46,6 +46,8 @@ type TreeDirectionSeed = {
   isCurrent?: boolean;
   shortDescription?: string | null;
   expectedBehavior?: string | null;
+  uxSketchName?: string | null;
+  uxSketchDataUrl?: string | null;
   sourceStoryId?: string | null;
   lifecycleState?: string | null;
   originType?: string | null;
@@ -360,6 +362,11 @@ function DirectionSeedRow({
                 Needs refinement
               </span>
             ) : null}
+            {seed.uxSketchDataUrl?.trim() ? (
+              <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-medium text-sky-900">
+                UX Sketch Attached
+              </span>
+            ) : null}
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{seed.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -650,14 +657,13 @@ function EpicRow({
   const directionSeeds = epic.directionSeeds ?? [];
   const stories = epic.stories ?? [];
   const mappedSourceStoryIds = new Set(directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
-  const hasExplicitStoryIdeas = directionSeeds.length > 0;
   const additionalDeliveryStories = stories.filter(
-    (story) => !story.sourceDirectionSeedId && hasExplicitStoryIdeas && isLikelyDeliveryStory(story, mappedSourceStoryIds)
+    (story) => !story.sourceDirectionSeedId && isLikelyDeliveryStory(story, mappedSourceStoryIds)
   );
   const framingStories = stories.filter(
     (story) =>
       !story.sourceDirectionSeedId &&
-      (!hasExplicitStoryIdeas || !isLikelyDeliveryStory(story, mappedSourceStoryIds))
+      !isLikelyDeliveryStory(story, mappedSourceStoryIds)
   );
   const itemCount = mode === "framing" ? directionSeeds.length + framingStories.length : stories.length;
   const framingNeedsAttention = directionSeeds.filter(

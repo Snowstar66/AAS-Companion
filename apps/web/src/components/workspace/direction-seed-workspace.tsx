@@ -13,6 +13,9 @@ type DirectionSeedWorkspaceProps = {
       title: string;
       shortDescription: string | null;
       expectedBehavior: string | null;
+      uxSketchName: string | null;
+      uxSketchContentType: string | null;
+      uxSketchDataUrl: string | null;
       lifecycleState: string;
     };
     epic: {
@@ -78,6 +81,7 @@ export function DirectionSeedWorkspace({
     epic.purpose?.trim() ||
     epic.scopeBoundary?.trim() ||
     `This story idea should contribute clearly to Epic ${epic.key} ${epic.title}.`;
+  const hasUxSketch = Boolean(seed.uxSketchDataUrl?.trim());
 
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
@@ -175,6 +179,58 @@ export function DirectionSeedWorkspace({
                   name="shortDescription"
                 />
               </label>
+              <div className="space-y-3 rounded-2xl border border-sky-200 bg-sky-50/45 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">UX Sketch</span>
+                  {hasUxSketch ? (
+                    <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-xs font-semibold text-sky-900">
+                      UX Sketch Attached
+                    </span>
+                  ) : null}
+                  <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900">
+                    Conceptual - subject to change
+                  </span>
+                </div>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Add an early UX sketch here when it helps explain the idea. Keep it conceptual and framing-level rather than final design.
+                </p>
+                {hasUxSketch ? (
+                  <div className="space-y-3">
+                    <div className="overflow-hidden rounded-2xl border border-border/70 bg-white p-3">
+                      <img
+                        alt={seed.uxSketchName ? `UX sketch for ${seed.title}` : `UX sketch attached to ${seed.title}`}
+                        className="max-h-80 w-full rounded-xl object-contain"
+                        src={seed.uxSketchDataUrl ?? undefined}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {seed.uxSketchName ?? "Concept sketch attached"}
+                    </p>
+                    {!isArchived ? (
+                      <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <input className="rounded border-border" name="clearUxSketch" type="checkbox" value="1" />
+                        Remove current sketch on next save
+                      </label>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border/70 bg-white/70 p-4 text-sm text-muted-foreground">
+                    No UX sketch is attached yet.
+                  </div>
+                )}
+                {!isArchived ? (
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">Upload sketch</span>
+                    <input
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="block w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground file:mr-4 file:rounded-full file:border-0 file:bg-sky-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-sky-900 hover:file:bg-sky-200"
+                      name="uxSketchFile"
+                      type="file"
+                    />
+                    <p className="text-xs text-muted-foreground">PNG, JPEG, WEBP or GIF. Max 5 MB.</p>
+                  </label>
+                ) : null}
+              </div>
               <StoryIdeaAiValidatedTextarea
                 disabled={isArchived}
                 initialValue={seed.expectedBehavior ?? ""}

@@ -191,6 +191,8 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     isCurrent: false,
                     shortDescription: seed.shortDescription ?? null,
                     expectedBehavior: seed.expectedBehavior ?? null,
+                    uxSketchName: seed.uxSketchName ?? null,
+                    uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
                     sourceStoryId: seed.sourceStoryId ?? null,
                     originType: seed.originType,
                     lifecycleState: seed.lifecycleState,

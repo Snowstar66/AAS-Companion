@@ -50,6 +50,9 @@ export async function createDirectionSeed(input: unknown, db: Prisma.Transaction
         title: parsed.title,
         shortDescription: parsed.shortDescription,
         expectedBehavior: parsed.expectedBehavior ?? null,
+        uxSketchName: parsed.uxSketchName ?? null,
+        uxSketchContentType: parsed.uxSketchContentType ?? null,
+        uxSketchDataUrl: parsed.uxSketchDataUrl ?? null,
         lifecycleState: "active",
         archivedAt: null,
         archiveReason: null,
@@ -138,6 +141,18 @@ export async function updateDirectionSeed(input: unknown) {
 
     if (parsed.expectedBehavior !== undefined) {
       data.expectedBehavior = parsed.expectedBehavior;
+    }
+
+    if (parsed.uxSketchName !== undefined) {
+      data.uxSketchName = parsed.uxSketchName;
+    }
+
+    if (parsed.uxSketchContentType !== undefined) {
+      data.uxSketchContentType = parsed.uxSketchContentType;
+    }
+
+    if (parsed.uxSketchDataUrl !== undefined) {
+      data.uxSketchDataUrl = parsed.uxSketchDataUrl;
     }
 
     if (parsed.importedReadinessState !== undefined) {

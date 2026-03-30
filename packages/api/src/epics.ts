@@ -215,6 +215,9 @@ export async function createNativeDirectionSeedFromEpicService(input: {
       title: "New direction seed",
       shortDescription: "Describe the directional change this seed points toward.",
       expectedBehavior: null,
+      uxSketchName: null,
+      uxSketchContentType: null,
+      uxSketchDataUrl: null,
       originType: "native",
       createdMode: "clean",
       actorId: input.actorId ?? null
@@ -229,6 +232,9 @@ export async function saveDirectionSeedService(input: {
   title?: string;
   shortDescription?: string;
   expectedBehavior?: string | null;
+  uxSketchName?: string | null;
+  uxSketchContentType?: string | null;
+  uxSketchDataUrl?: string | null;
 }) {
   const existing = await getDirectionSeedById(input.organizationId, input.id);
 
@@ -245,7 +251,10 @@ export async function saveDirectionSeedService(input: {
     actorId: input.actorId ?? null,
     title: input.title,
     shortDescription: input.shortDescription,
-    expectedBehavior: input.expectedBehavior
+    expectedBehavior: input.expectedBehavior,
+    uxSketchName: input.uxSketchName,
+    uxSketchContentType: input.uxSketchContentType,
+    uxSketchDataUrl: input.uxSketchDataUrl
   });
 
   return success(result);

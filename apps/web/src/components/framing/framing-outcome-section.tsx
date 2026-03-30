@@ -183,9 +183,8 @@ export function FramingOutcomeSection({
 
     const epicSeeds = seedsByEpicId.get(story.epicId) ?? [];
     const mappedSourceStoryIds = new Set(epicSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
-    const hasExplicitStoryIdeas = epicSeeds.length > 0;
 
-    return !hasExplicitStoryIdeas || !isLikelyDeliveryStory(story, mappedSourceStoryIds);
+    return !isLikelyDeliveryStory(story, mappedSourceStoryIds);
   });
   const visibleStoryIdeaCount = outcome.directionSeeds.length + legacyStoryIdeas.length;
   const startedStoryIdeaCount =
@@ -590,6 +589,8 @@ export function FramingOutcomeSection({
                       isCurrent: false,
                       shortDescription: seed.shortDescription ?? null,
                       expectedBehavior: seed.expectedBehavior ?? null,
+                      uxSketchName: seed.uxSketchName ?? null,
+                      uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
                       sourceStoryId: seed.sourceStoryId ?? null,
                       originType: seed.originType,
                       lifecycleState: seed.lifecycleState,

@@ -85,14 +85,13 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     );
     const selectedLegacyStoryIdeas = selectedEpics.flatMap((epic) => {
       const mappedSourceStoryIds = new Set((epic.directionSeeds ?? []).map((seed) => seed.sourceStoryId).filter(Boolean));
-      const hasExplicitStoryIdeas = (epic.directionSeeds ?? []).length > 0;
 
       return (epic.stories ?? [])
         .filter(
           (story) =>
             story.lifecycleState === "active" &&
             !story.sourceDirectionSeedId &&
-            (!hasExplicitStoryIdeas || !isLikelyDeliveryStory(story, mappedSourceStoryIds))
+            !isLikelyDeliveryStory(story, mappedSourceStoryIds)
         )
         .map((story) => ({
           ...story,
@@ -254,6 +253,8 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     isCurrent: false,
                     shortDescription: seed.shortDescription ?? null,
                     expectedBehavior: seed.expectedBehavior ?? null,
+                    uxSketchName: seed.uxSketchName ?? null,
+                    uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
                     sourceStoryId: seed.sourceStoryId ?? null,
                     originType: seed.originType,
                     lifecycleState: seed.lifecycleState,
