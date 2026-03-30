@@ -165,10 +165,25 @@ export function FramingOutcomeSection({
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
-  const mappedSourceStoryIds = new Set(outcome.directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
-  const legacyStoryIdeas = outcome.stories.filter(
-    (story) => !story.sourceDirectionSeedId && !isLikelyDeliveryStory(story, mappedSourceStoryIds)
-  );
+  const seedsByEpicId = new Map<string, typeof outcome.directionSeeds>();
+
+  for (const seed of outcome.directionSeeds) {
+    const existing = seedsByEpicId.get(seed.epicId) ?? [];
+    existing.push(seed);
+    seedsByEpicId.set(seed.epicId, existing);
+  }
+
+  const legacyStoryIdeas = outcome.stories.filter((story) => {
+    if (story.sourceDirectionSeedId) {
+      return false;
+    }
+
+    const epicSeeds = seedsByEpicId.get(story.epicId) ?? [];
+    const mappedSourceStoryIds = new Set(epicSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+    const hasExplicitStoryIdeas = epicSeeds.length > 0;
+
+    return !hasExplicitStoryIdeas || !isLikelyDeliveryStory(story, mappedSourceStoryIds);
+  });
   const visibleStoryIdeaCount = outcome.directionSeeds.length + legacyStoryIdeas.length;
   const startedStoryIdeaCount =
     outcome.directionSeeds.filter((seed) =>

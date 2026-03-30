@@ -540,8 +540,11 @@ function EpicRow({
   const directionSeeds = epic.directionSeeds ?? [];
   const stories = epic.stories ?? [];
   const mappedSourceStoryIds = new Set(directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+  const hasExplicitStoryIdeas = directionSeeds.length > 0;
   const framingStories = stories.filter(
-    (story) => !story.sourceDirectionSeedId && !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+    (story) =>
+      !story.sourceDirectionSeedId &&
+      (!hasExplicitStoryIdeas || !isLikelyDeliveryStory(story, mappedSourceStoryIds))
   );
   const itemCount = mode === "framing" ? directionSeeds.length + framingStories.length : stories.length;
   const framingNeedsAttention = directionSeeds.filter(
