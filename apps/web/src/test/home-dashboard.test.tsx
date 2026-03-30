@@ -33,21 +33,6 @@ vi.mock("@/lib/home/dashboard", () => ({
         label: "Framing phase",
         detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
       },
-      summary: [
-        {
-          label: "Outcomes",
-          value: "2",
-          tone: "default",
-          description: "Tracked outcomes."
-        }
-      ],
-      outcomesByStatus: [
-        {
-          status: "draft",
-          count: 1,
-          label: "Draft"
-        }
-      ],
       topBlockers: [
         {
           id: "blocker-1",
@@ -64,19 +49,7 @@ vi.mock("@/lib/home/dashboard", () => ({
           detail: "Add a test definition before handoff.",
           href: "/stories"
         }
-      ],
-      recentActivity: [
-        {
-          id: "activity-1",
-          title: "Demo project prepared",
-          detail: "organization org_demo_control_plane",
-          timestamp: "Mar 23, 10:00"
-        }
-      ],
-      rightRail: {
-        blockers: [],
-        nextActions: []
-      }
+      ]
     }
   }))
 }));

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Lightbulb } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
+import { StoryIdeaInlineSaveButton } from "@/components/workspace/story-idea-inline-save-button";
 import { StoryIdeaUxSketchField } from "@/components/workspace/story-idea-ux-sketch-field";
 import { StoryIdeaAiValidatedTextarea } from "@/components/workspace/story-idea-ai-validated-textarea";
 import { formatAiLevel, SecondaryPanel } from "./story-workspace-shared";
@@ -211,11 +212,10 @@ export function DirectionSeedWorkspace({
 
           <div className="flex flex-col gap-3 sm:flex-row">
             {!isArchived ? (
-              <PendingFormButton
-                className="gap-2"
-                icon={<ArrowRight className="h-4 w-4" />}
+              <StoryIdeaInlineSaveButton
                 label="Save Story Idea"
                 pendingLabel="Saving Story Idea..."
+                saveAction={saveInlineAction}
               />
             ) : null}
             {!isArchived ? (

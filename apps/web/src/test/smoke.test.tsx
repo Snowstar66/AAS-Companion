@@ -18,15 +18,8 @@ vi.mock("@/lib/home/dashboard", () => ({
         label: "Framing phase",
         detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
       },
-      summary: [],
-      outcomesByStatus: [],
       topBlockers: [],
-      pendingActions: [],
-      recentActivity: [],
-      rightRail: {
-        blockers: [],
-        nextActions: []
-      }
+      pendingActions: []
     }
   }))
 }));

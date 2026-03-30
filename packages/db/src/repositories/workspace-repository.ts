@@ -12,13 +12,6 @@ export type HomeDashboardSnapshot = {
     id: string;
     name: string;
   };
-  counts: {
-    outcomes: number;
-    directionSeeds: number;
-    stories: number;
-    tollgates: number;
-    activityEvents: number;
-  };
   outcomeStatuses: Array<{
     status: string;
   }>;
@@ -53,13 +46,6 @@ export type HomeDashboardSnapshot = {
     tollgateType: string;
     status: string;
     blockers: string[];
-  }>;
-  activityEvents: Array<{
-    id: string;
-    entityType: string;
-    entityId: string;
-    eventType: string;
-    createdAt: Date;
   }>;
 };
 
@@ -507,28 +493,6 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
             status: true,
             blockers: true
           }
-        },
-        activityEvents: {
-          orderBy: {
-            createdAt: "desc"
-          },
-          take: 10,
-          select: {
-            id: true,
-            entityType: true,
-            entityId: true,
-            eventType: true,
-            createdAt: true
-          }
-        },
-        _count: {
-          select: {
-            outcomes: true,
-            directionSeeds: true,
-            stories: true,
-            tollgates: true,
-            activityEvents: true
-          }
         }
       }
     }),
@@ -603,19 +567,11 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
       id: organization.id,
       name: organization.name
     },
-    counts: {
-      outcomes: organization._count.outcomes,
-      directionSeeds: organization._count.directionSeeds,
-      stories: organization._count.stories,
-      tollgates: organization._count.tollgates,
-      activityEvents: organization._count.activityEvents
-    },
     outcomeStatuses: outcomeStatuses.map((item) => ({
       status: item.status
     })),
     directionSeeds,
     stories: attachStoryReadinessTollgateStatus(stories, storyTollgateStatuses),
-    tollgates: organization.tollgates,
-    activityEvents: organization.activityEvents
+    tollgates: organization.tollgates
   };
 }

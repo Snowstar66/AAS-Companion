@@ -60,15 +60,8 @@ export type HomeDashboardData =
       projectPhase: HomeProjectPhase;
       storyIdeaStats: HomeStoryIdeaStats;
       deliveryStoryStats: HomeDeliveryStoryStats;
-      summary: HomeSummaryMetric[];
-      outcomesByStatus: HomeOutcomeStatusStat[];
       topBlockers: HomeBlocker[];
       pendingActions: HomePendingAction[];
-      recentActivity: HomeActivityItem[];
-      rightRail: {
-        blockers: HomeBlocker[];
-        nextActions: HomePendingAction[];
-      };
     }
   | {
       state: "empty" | "unavailable";
@@ -77,36 +70,9 @@ export type HomeDashboardData =
       projectPhase: HomeProjectPhase;
       storyIdeaStats: HomeStoryIdeaStats;
       deliveryStoryStats: HomeDeliveryStoryStats;
-      summary: HomeSummaryMetric[];
-      outcomesByStatus: HomeOutcomeStatusStat[];
       topBlockers: HomeBlocker[];
       pendingActions: HomePendingAction[];
-      recentActivity: HomeActivityItem[];
-      rightRail: {
-        blockers: HomeBlocker[];
-        nextActions: HomePendingAction[];
-      };
     };
-
-const outcomeStatusLabels: Record<string, string> = {
-  draft: "Draft",
-  baseline_in_progress: "Baseline In Progress",
-  ready_for_tg1: "Ready For TG1",
-  active: "Active"
-};
-
-const activityLabels: Record<string, string> = {
-  demo_seeded: "Demo project prepared",
-  outcome_created: "Outcome created",
-  outcome_updated: "Outcome updated",
-  epic_created: "Epic created",
-  story_created: "Story created",
-  story_updated: "Story updated",
-  tollgate_recorded: "Tollgate updated",
-  artifact_candidate_promoted: "Imported candidate promoted",
-  imported_progression_blocked: "Imported build progression blocked",
-  imported_progression_allowed: "Imported build progression allowed"
-};
 
 function isStoryIdeaStarted(input: { valueIntent?: string | null; shortDescription?: string | null; expectedBehavior?: string | null }) {
   return Boolean(input.valueIntent?.trim() || input.shortDescription?.trim() || input.expectedBehavior?.trim());
@@ -185,15 +151,6 @@ function getDashboardStoryModel(input: {
   };
 }
 
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(value);
-}
-
 function createFallbackDashboard(
   state: "empty" | "unavailable",
   organizationName: string,
@@ -217,15 +174,8 @@ function createFallbackDashboard(
       total: 0,
       readyToStartBuild: 0
     },
-    summary: [],
-    outcomesByStatus: [],
     topBlockers: [],
-    pendingActions: [],
-    recentActivity: [],
-    rightRail: {
-      blockers: [],
-      nextActions: []
-    }
+    pendingActions: []
   };
 }
 
@@ -243,7 +193,7 @@ export async function getHomeDashboardData(
       );
     }
 
-    const { organization, counts } = snapshot;
+    const { organization } = snapshot;
     const blockedTollgates = snapshot.tollgates.filter((item) => item.status === "blocked");
     const pendingTollgates = snapshot.tollgates.filter((item) => item.status !== "approved");
     const storyModels = snapshot.stories.map((story) => ({
@@ -315,17 +265,6 @@ export async function getHomeDashboardData(
           detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
         };
 
-    const outcomesByStatus = Object.entries(
-      snapshot.outcomeStatuses.reduce<Record<string, number>>((accumulator, item) => {
-        accumulator[item.status] = (accumulator[item.status] ?? 0) + 1;
-        return accumulator;
-      }, {})
-    ).map(([status, count]) => ({
-      status,
-      count,
-      label: outcomeStatusLabels[status] ?? status
-    }));
-
     const topBlockers: HomeBlocker[] = blockedTollgates.flatMap((tollgate) =>
       tollgate.blockers.map((blocker, index) => ({
         id: `${tollgate.id}-${index}`,
@@ -367,41 +306,12 @@ export async function getHomeDashboardData(
         }))
     ];
 
-    const recentActivity: HomeActivityItem[] = snapshot.activityEvents.map((event) => ({
-      id: event.id,
-      title: activityLabels[event.eventType] ?? event.eventType,
-      detail: `${event.entityType} ${event.entityId}`,
-      timestamp: formatDate(event.createdAt)
-    }));
-
-    const summary: HomeSummaryMetric[] = [
-      {
-        label: "Outcomes",
-        value: String(snapshot.outcomeStatuses.length),
-        tone: snapshot.outcomeStatuses.length > 0 ? "default" : "warning",
-        description: "Active outcomes in the current project scope."
-      },
-      {
-        label: "Stories Ready",
-        value: String(storyModels.filter(({ model }) => model.isReadyForHandoff).length),
-        tone: storyModels.some(({ model }) => model.isReadyForHandoff) ? "success" : "warning",
-        description: "Stories that can move toward execution handoff."
-      },
-      {
-        label: "Blocked Items",
-        value: String(topBlockers.length + storyDefinitionBlockers.length),
-        tone: topBlockers.length + storyDefinitionBlockers.length > 0 ? "warning" : "success",
-        description: "Tollgate blockers and story readiness gaps."
-      },
-      {
-        label: "Recent Events",
-        value: String(counts.activityEvents),
-        tone: counts.activityEvents > 0 ? "default" : "warning",
-        description: "Append-only activity entries available for review."
-      }
-    ];
-
-    if (snapshot.outcomeStatuses.length === 0 && snapshot.stories.length === 0 && counts.tollgates === 0 && counts.activityEvents === 0) {
+    if (
+      snapshot.outcomeStatuses.length === 0 &&
+      snapshot.directionSeeds.length === 0 &&
+      snapshot.stories.length === 0 &&
+      snapshot.tollgates.length === 0
+    ) {
       return {
         ...createFallbackDashboard(
           "empty",
@@ -409,8 +319,7 @@ export async function getHomeDashboardData(
           "The dashboard is connected, but no M1 records were returned yet."
         ),
         storyIdeaStats,
-        deliveryStoryStats,
-        summary
+        deliveryStoryStats
       };
     }
 
@@ -420,15 +329,8 @@ export async function getHomeDashboardData(
       projectPhase,
       storyIdeaStats,
       deliveryStoryStats,
-      summary,
-      outcomesByStatus,
       topBlockers: [...topBlockers, ...storyDefinitionBlockers],
-      pendingActions,
-      recentActivity,
-      rightRail: {
-        blockers: [...topBlockers, ...storyDefinitionBlockers].slice(0, 3),
-        nextActions: pendingActions.slice(0, 3)
-      }
+      pendingActions
     };
   } catch (error) {
     return createFallbackDashboard(

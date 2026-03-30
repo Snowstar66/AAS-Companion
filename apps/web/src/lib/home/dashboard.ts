@@ -53,15 +53,8 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
             total: 0,
             readyToStartBuild: 0
           },
-          summary: [],
-          outcomesByStatus: [],
           topBlockers: [],
-          pendingActions: [],
-          recentActivity: [],
-          rightRail: {
-            blockers: [],
-            nextActions: []
-          }
+          pendingActions: []
         },
         projects: [],
         activeProject: null,
@@ -94,15 +87,8 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
             total: 0,
             readyToStartBuild: 0
           },
-          summary: [],
-          outcomesByStatus: [],
           topBlockers: [],
-          pendingActions: [],
-          recentActivity: [],
-          rightRail: {
-            blockers: [],
-            nextActions: []
-          }
+          pendingActions: []
         } satisfies HomeDashboardData);
     const projectsPromise = shouldLoadProjects
       ? listOrganizationProjectSummariesForUser(session.userId)
@@ -152,15 +138,8 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           total: 0,
           readyToStartBuild: 0
         },
-        summary: [],
-        outcomesByStatus: [],
         topBlockers: [],
-        pendingActions: [],
-        recentActivity: [],
-        rightRail: {
-          blockers: [],
-          nextActions: []
-        }
+        pendingActions: []
       },
       projects: [],
       activeProject: null,
