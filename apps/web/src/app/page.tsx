@@ -254,7 +254,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       >
         <section className="space-y-8">
           <div className="rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(246,248,252,0.94))] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   <FolderKanban className="h-3.5 w-3.5 text-primary" />
@@ -364,44 +364,41 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 />
               </div>
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                <Card className="border-border/70 shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Needs attention</CardTitle>
-                    <CardDescription>The clearest blockers and pending items in the active project.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {[...dashboard.topBlockers.slice(0, 3), ...dashboard.pendingActions.slice(0, 3)].length > 0 ? (
-                      [
-                        ...dashboard.topBlockers.slice(0, 3).map((item) => ({ ...item, attentionKind: "blocker" as const })),
-                        ...dashboard.pendingActions.slice(0, 3).map((item) => ({ ...item, attentionKind: "pending" as const }))
-                      ].map((item) => (
-                        <div className={`rounded-2xl border p-4 ${attentionTone(item.attentionKind)}`} key={item.id}>
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <p className="font-medium text-foreground">{item.title}</p>
-                              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-                            </div>
-                            {item.href ? (
-                              <Button asChild className="gap-2" size="sm" variant="secondary">
-                                <Link href={item.href}>
-                                  Open
-                                  <ArrowRight className="h-3.5 w-3.5" />
-                                </Link>
-                              </Button>
-                            ) : null}
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Needs attention</CardTitle>
+                  <CardDescription>The clearest blockers and pending items in the active project.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[...dashboard.topBlockers.slice(0, 3), ...dashboard.pendingActions.slice(0, 3)].length > 0 ? (
+                    [
+                      ...dashboard.topBlockers.slice(0, 3).map((item) => ({ ...item, attentionKind: "blocker" as const })),
+                      ...dashboard.pendingActions.slice(0, 3).map((item) => ({ ...item, attentionKind: "pending" as const }))
+                    ].map((item) => (
+                      <div className={`rounded-2xl border p-4 ${attentionTone(item.attentionKind)}`} key={item.id}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-foreground">{item.title}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
                           </div>
+                          {item.href ? (
+                            <Button asChild className="gap-2" size="sm" variant="secondary">
+                              <Link href={item.href}>
+                                Open
+                                <ArrowRight className="h-3.5 w-3.5" />
+                              </Link>
+                            </Button>
+                          ) : null}
                         </div>
-                      ))
-                    ) : (
-                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">
-                        No active blockers or pending review items are currently surfaced.
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-              </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">
+                      No active blockers or pending review items are currently surfaced.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </>
           ) : (
             <Card className="border-border/70 shadow-sm">
@@ -435,7 +432,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 Open, create, switch, leave or remove projects from one compact control surface.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            <CardContent className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="mr-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Available projects</p>
