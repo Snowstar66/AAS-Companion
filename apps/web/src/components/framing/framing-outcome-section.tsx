@@ -7,6 +7,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import type {
   OutcomeInlineSaveActionState,
   OutcomeFieldAiActionState,
+  ReviewOutcomeFramingAiActionState,
   reviewOutcomeFramingWithAiAction
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
@@ -55,22 +56,7 @@ type FramingOutcomeSectionProps = {
   validateOutcomeStatementAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   validateBaselineDefinitionAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   reviewFramingAction: typeof reviewOutcomeFramingWithAiAction;
-  initialReviewFramingState: {
-    status: "idle" | "success" | "error";
-    message: string | null;
-    report: {
-      overallVerdict: "good" | "needs_attention" | "blocked";
-      executiveSummary: string;
-      missingItems: string[];
-      suggestedChanges: string[];
-      nextAiLevel: {
-        canAdvance: boolean;
-        targetLevel: "level_2" | "level_3" | null;
-        rationale: string;
-        requirements: string[];
-      };
-    } | null;
-  };
+  initialReviewFramingState: ReviewOutcomeFramingAiActionState;
 };
 
 function getOriginLabel(originType: string) {

@@ -248,15 +248,38 @@ export type ReviewOutcomeFramingAiActionState = {
   message: string | null;
   report:
     | {
-        overallVerdict: "good" | "needs_attention" | "blocked";
-        executiveSummary: string;
-        missingItems: string[];
-        suggestedChanges: string[];
-        nextAiLevel: {
-          canAdvance: boolean;
-          targetLevel: "level_2" | "level_3" | null;
-          rationale: string;
-          requirements: string[];
+        outcomeQuality: {
+          status: "ok" | "needs_improvement";
+          comment: string;
+          suggestedImprovement: string;
+        };
+        problemAlignment: {
+          status: "strong" | "weak";
+          comment: string;
+        };
+        epicCoverage: {
+          status: "complete" | "partial";
+          comment: string;
+          missingAreas: string[];
+        };
+        storyCoverage: {
+          status: "good" | "partial";
+          comment: string;
+          gapsOrOverlaps: string[];
+        };
+        riskOverview: {
+          topRisks: string[];
+          expansionRisk: "low" | "medium" | "high";
+          misalignmentRisk: "low" | "medium" | "high";
+        };
+        aiLevel: {
+          assessment: "appropriate" | "too_high" | "too_low";
+          suggestedLevel: "level_1" | "level_2" | "level_3" | null;
+          comment: string;
+        };
+        framingReadiness: {
+          score: number;
+          interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
         };
       }
     | null;

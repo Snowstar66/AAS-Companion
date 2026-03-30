@@ -15,15 +15,38 @@ export type StoryExpectedBehaviorAiValidation = {
 };
 
 export type OutcomeFramingAiReview = {
-  overallVerdict: "good" | "needs_attention" | "blocked";
-  executiveSummary: string;
-  missingItems: string[];
-  suggestedChanges: string[];
-  nextAiLevel: {
-    canAdvance: boolean;
-    targetLevel: "level_2" | "level_3" | null;
-    rationale: string;
-    requirements: string[];
+  outcomeQuality: {
+    status: "ok" | "needs_improvement";
+    comment: string;
+    suggestedImprovement: string;
+  };
+  problemAlignment: {
+    status: "strong" | "weak";
+    comment: string;
+  };
+  epicCoverage: {
+    status: "complete" | "partial";
+    comment: string;
+    missingAreas: string[];
+  };
+  storyCoverage: {
+    status: "good" | "partial";
+    comment: string;
+    gapsOrOverlaps: string[];
+  };
+  riskOverview: {
+    topRisks: string[];
+    expansionRisk: "low" | "medium" | "high";
+    misalignmentRisk: "low" | "medium" | "high";
+  };
+  aiLevel: {
+    assessment: "appropriate" | "too_high" | "too_low";
+    suggestedLevel: "level_1" | "level_2" | "level_3" | null;
+    comment: string;
+  };
+  framingReadiness: {
+    score: number;
+    interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
   };
 };
 
@@ -74,64 +97,171 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
   }
 
   const candidate = input as Record<string, unknown>;
-  const overallVerdict = candidate.overallVerdict;
-  const executiveSummary = candidate.executiveSummary;
-  const missingItems = candidate.missingItems;
-  const suggestedChanges = candidate.suggestedChanges;
-  const nextAiLevel = candidate.nextAiLevel;
+  const outcomeQuality = candidate.outcomeQuality;
+  const problemAlignment = candidate.problemAlignment;
+  const epicCoverage = candidate.epicCoverage;
+  const storyCoverage = candidate.storyCoverage;
+  const riskOverview = candidate.riskOverview;
+  const aiLevel = candidate.aiLevel;
+  const framingReadiness = candidate.framingReadiness;
 
-  if (overallVerdict !== "good" && overallVerdict !== "needs_attention" && overallVerdict !== "blocked") {
-    throw new Error("AI framing review returned an invalid verdict.");
+  if (!outcomeQuality || typeof outcomeQuality !== "object") {
+    throw new Error("AI framing review returned invalid outcome quality.");
   }
 
-  if (typeof executiveSummary !== "string" || !executiveSummary.trim()) {
-    throw new Error("AI framing review returned an invalid summary.");
+  if (!problemAlignment || typeof problemAlignment !== "object") {
+    throw new Error("AI framing review returned invalid problem alignment.");
   }
 
-  if (!Array.isArray(missingItems) || !missingItems.every((item) => typeof item === "string")) {
-    throw new Error("AI framing review returned invalid missing items.");
+  if (!epicCoverage || typeof epicCoverage !== "object") {
+    throw new Error("AI framing review returned invalid epic coverage.");
   }
 
-  if (!Array.isArray(suggestedChanges) || !suggestedChanges.every((item) => typeof item === "string")) {
-    throw new Error("AI framing review returned invalid suggested changes.");
+  if (!storyCoverage || typeof storyCoverage !== "object") {
+    throw new Error("AI framing review returned invalid story coverage.");
   }
 
-  if (!nextAiLevel || typeof nextAiLevel !== "object") {
-    throw new Error("AI framing review returned an invalid next AI level section.");
+  if (!riskOverview || typeof riskOverview !== "object") {
+    throw new Error("AI framing review returned invalid risk overview.");
   }
 
-  const next = nextAiLevel as Record<string, unknown>;
-  const targetLevel = next.targetLevel;
-  const canAdvance = next.canAdvance;
-  const rationale = next.rationale;
-  const requirements = next.requirements;
-
-  if (targetLevel !== null && targetLevel !== "level_2" && targetLevel !== "level_3") {
-    throw new Error("AI framing review returned an invalid target AI level.");
+  if (!aiLevel || typeof aiLevel !== "object") {
+    throw new Error("AI framing review returned invalid AI level section.");
   }
 
-  if (typeof canAdvance !== "boolean") {
-    throw new Error("AI framing review returned an invalid canAdvance flag.");
+  if (!framingReadiness || typeof framingReadiness !== "object") {
+    throw new Error("AI framing review returned invalid framing readiness.");
   }
 
-  if (typeof rationale !== "string" || !rationale.trim()) {
-    throw new Error("AI framing review returned an invalid next-level rationale.");
+  const parsedOutcomeQuality = outcomeQuality as Record<string, unknown>;
+  const parsedProblemAlignment = problemAlignment as Record<string, unknown>;
+  const parsedEpicCoverage = epicCoverage as Record<string, unknown>;
+  const parsedStoryCoverage = storyCoverage as Record<string, unknown>;
+  const parsedRiskOverview = riskOverview as Record<string, unknown>;
+  const parsedAiLevel = aiLevel as Record<string, unknown>;
+  const parsedFramingReadiness = framingReadiness as Record<string, unknown>;
+
+  if (parsedOutcomeQuality.status !== "ok" && parsedOutcomeQuality.status !== "needs_improvement") {
+    throw new Error("AI framing review returned an invalid outcome quality status.");
   }
 
-  if (!Array.isArray(requirements) || !requirements.every((item) => typeof item === "string")) {
-    throw new Error("AI framing review returned invalid next-level requirements.");
+  if (parsedProblemAlignment.status !== "strong" && parsedProblemAlignment.status !== "weak") {
+    throw new Error("AI framing review returned an invalid problem alignment status.");
+  }
+
+  if (parsedEpicCoverage.status !== "complete" && parsedEpicCoverage.status !== "partial") {
+    throw new Error("AI framing review returned an invalid epic coverage status.");
+  }
+
+  if (parsedStoryCoverage.status !== "good" && parsedStoryCoverage.status !== "partial") {
+    throw new Error("AI framing review returned an invalid story coverage status.");
+  }
+
+  if (
+    parsedRiskOverview.expansionRisk !== "low" &&
+    parsedRiskOverview.expansionRisk !== "medium" &&
+    parsedRiskOverview.expansionRisk !== "high"
+  ) {
+    throw new Error("AI framing review returned an invalid expansion risk.");
+  }
+
+  if (
+    parsedRiskOverview.misalignmentRisk !== "low" &&
+    parsedRiskOverview.misalignmentRisk !== "medium" &&
+    parsedRiskOverview.misalignmentRisk !== "high"
+  ) {
+    throw new Error("AI framing review returned an invalid misalignment risk.");
+  }
+
+  if (
+    parsedAiLevel.assessment !== "appropriate" &&
+    parsedAiLevel.assessment !== "too_high" &&
+    parsedAiLevel.assessment !== "too_low"
+  ) {
+    throw new Error("AI framing review returned an invalid AI level assessment.");
+  }
+
+  if (
+    parsedAiLevel.suggestedLevel !== null &&
+    parsedAiLevel.suggestedLevel !== "level_1" &&
+    parsedAiLevel.suggestedLevel !== "level_2" &&
+    parsedAiLevel.suggestedLevel !== "level_3"
+  ) {
+    throw new Error("AI framing review returned an invalid suggested AI level.");
+  }
+
+  if (
+    parsedFramingReadiness.interpretation !== "ready_for_tollgate" &&
+    parsedFramingReadiness.interpretation !== "needs_refinement" &&
+    parsedFramingReadiness.interpretation !== "not_ready"
+  ) {
+    throw new Error("AI framing review returned an invalid readiness interpretation.");
+  }
+
+  if (
+    typeof parsedOutcomeQuality.comment !== "string" ||
+    typeof parsedOutcomeQuality.suggestedImprovement !== "string" ||
+    typeof parsedProblemAlignment.comment !== "string" ||
+    typeof parsedEpicCoverage.comment !== "string" ||
+    typeof parsedStoryCoverage.comment !== "string" ||
+    typeof parsedAiLevel.comment !== "string"
+  ) {
+    throw new Error("AI framing review returned invalid comments.");
+  }
+
+  if (
+    !Array.isArray(parsedEpicCoverage.missingAreas) ||
+    !parsedEpicCoverage.missingAreas.every((item) => typeof item === "string") ||
+    !Array.isArray(parsedStoryCoverage.gapsOrOverlaps) ||
+    !parsedStoryCoverage.gapsOrOverlaps.every((item) => typeof item === "string") ||
+    !Array.isArray(parsedRiskOverview.topRisks) ||
+    !parsedRiskOverview.topRisks.every((item) => typeof item === "string")
+  ) {
+    throw new Error("AI framing review returned invalid lists.");
+  }
+
+  if (
+    typeof parsedFramingReadiness.score !== "number" ||
+    Number.isNaN(parsedFramingReadiness.score) ||
+    parsedFramingReadiness.score < 0 ||
+    parsedFramingReadiness.score > 100
+  ) {
+    throw new Error("AI framing review returned an invalid readiness score.");
   }
 
   return {
-    overallVerdict,
-    executiveSummary: executiveSummary.trim(),
-    missingItems: missingItems.map((item) => item.trim()).filter(Boolean),
-    suggestedChanges: suggestedChanges.map((item) => item.trim()).filter(Boolean),
-    nextAiLevel: {
-      canAdvance,
-      targetLevel,
-      rationale: rationale.trim(),
-      requirements: requirements.map((item) => item.trim()).filter(Boolean)
+    outcomeQuality: {
+      status: parsedOutcomeQuality.status,
+      comment: parsedOutcomeQuality.comment.trim(),
+      suggestedImprovement: parsedOutcomeQuality.suggestedImprovement.trim()
+    },
+    problemAlignment: {
+      status: parsedProblemAlignment.status,
+      comment: String(parsedProblemAlignment.comment).trim()
+    },
+    epicCoverage: {
+      status: parsedEpicCoverage.status,
+      comment: parsedEpicCoverage.comment.trim(),
+      missingAreas: parsedEpicCoverage.missingAreas.map((item) => item.trim()).filter(Boolean)
+    },
+    storyCoverage: {
+      status: parsedStoryCoverage.status,
+      comment: parsedStoryCoverage.comment.trim(),
+      gapsOrOverlaps: parsedStoryCoverage.gapsOrOverlaps.map((item) => item.trim()).filter(Boolean)
+    },
+    riskOverview: {
+      topRisks: parsedRiskOverview.topRisks.map((item) => item.trim()).filter(Boolean),
+      expansionRisk: parsedRiskOverview.expansionRisk,
+      misalignmentRisk: parsedRiskOverview.misalignmentRisk
+    },
+    aiLevel: {
+      assessment: parsedAiLevel.assessment,
+      suggestedLevel: parsedAiLevel.suggestedLevel,
+      comment: parsedAiLevel.comment.trim()
+    },
+    framingReadiness: {
+      score: Math.round(parsedFramingReadiness.score),
+      interpretation: parsedFramingReadiness.interpretation
     }
   };
 }
@@ -317,44 +447,115 @@ function buildFramingReviewPrompt(input: {
     expectedBehavior?: string | null;
   }>;
 }) {
-  const nextAiLevel =
-    input.outcome.aiAccelerationLevel === "level_1"
-      ? "level_2"
-      : input.outcome.aiAccelerationLevel === "level_2"
-        ? "level_3"
-        : null;
-
   return `
-You review a whole governed Framing conservatively.
+You are validating a full AAS Framing Brief.
+
+Your goal is NOT to rewrite the content, but to evaluate its quality and readiness for Tollgate 1.
+
+Use a critical but constructive approach.
+
+You will receive:
+- Problem Statement
+- Outcome (including baseline and owner context)
+- Epics
+- Story Ideas (with Value Intent and Expected Behavior)
+- Selected AI Acceleration Level
+
+Evaluate the framing across five dimensions:
+1. Outcome Quality
+2. Problem -> Outcome Alignment
+3. Epic Coverage
+4. Story Idea Coverage
+5. Risk & Complexity
+6. AI Level Appropriateness
 
 Rules:
-- Only report material gaps, not stylistic preferences.
-- If the framing is already good enough, say so plainly.
-- Suggested changes should be limited to the few changes that would most improve clarity or readiness.
-- "nextAiLevel" should explain what would be required to move one level higher than the current AI level.
-- Treat direction seeds as lightweight directional hints, not delivery stories.
+- Do NOT rewrite everything.
+- Do NOT generate new full content.
+- Do NOT overcomplicate.
+- Do identify gaps, risks, assumption problems and the smallest useful improvements.
+- Keep Story Ideas at framing level, not delivery level.
+- Be concise, critical and useful.
 
-What to evaluate:
-- whether the Outcome framing reads like a real framing, not just a delivery task
-- whether the baseline is sufficiently grounded
-- whether the current Epic direction and Direction Seeds are defined enough to support the current AI level
-- what is still missing in general
-- what would be additionally required for the next AI level
+Evaluation details:
+1. Outcome Quality
+- Check if the outcome is measurable, baseline is defined and value is clear.
+- Return status OK or Needs improvement.
+- Include one short suggested improvement sentence.
 
-Current AI level: ${input.outcome.aiAccelerationLevel}
-Next higher level to consider: ${nextAiLevel ?? "none"}
+2. Problem -> Outcome Alignment
+- Check whether the outcome actually addresses the stated problem.
+- Return status Strong or Weak with a short explanation.
 
-Required output JSON:
+3. Epic Coverage
+- Check whether the epics cover the outcome, whether areas are missing, and whether epics overlap.
+- Return status Complete or Partial.
+
+4. Story Idea Coverage
+- Check whether the story ideas support the epics, whether ideas are redundant, and whether important ideas are missing.
+- Return status Good or Partial.
+
+5. Risk & Complexity
+- Identify product, technical, data/privacy and AI-related risks.
+- Also identify likely expansion and misalignment risk.
+- Return top 3-5 risks, plus Expansion Risk and Misalignment Risk as Low/Medium/High.
+
+6. AI Level Validation
+- Check whether the selected AI level is appropriate for risk, clarity and structure.
+- Return Appropriate, Too high or Too low.
+- If not appropriate, suggest a better level.
+
+Readiness score:
+- Start at 100
+- Deduct:
+  -15 if outcome unclear
+  -15 if alignment weak
+  -10 if epic gaps
+  -10 if story gaps
+  -20 if high risk
+  -10 if AI level mismatch
+
+Interpretation:
+- 80-100 -> Ready for Tollgate
+- 60-79 -> Needs refinement
+- below 60 -> Not ready
+
+Required output:
+- Return JSON only.
+- Use exactly this shape:
 {
-  "overallVerdict": "good" | "needs_attention" | "blocked",
-  "executiveSummary": "short report summary",
-  "missingItems": ["..."],
-  "suggestedChanges": ["..."],
-  "nextAiLevel": {
-    "canAdvance": true | false,
-    "targetLevel": "level_2" | "level_3" | null,
-    "rationale": "short explanation",
-    "requirements": ["..."]
+  "outcomeQuality": {
+    "status": "ok" | "needs_improvement",
+    "comment": "short explanation",
+    "suggestedImprovement": "one sentence"
+  },
+  "problemAlignment": {
+    "status": "strong" | "weak",
+    "comment": "short explanation"
+  },
+  "epicCoverage": {
+    "status": "complete" | "partial",
+    "comment": "short explanation",
+    "missingAreas": ["..."]
+  },
+  "storyCoverage": {
+    "status": "good" | "partial",
+    "comment": "short explanation",
+    "gapsOrOverlaps": ["..."]
+  },
+  "riskOverview": {
+    "topRisks": ["risk 1", "risk 2", "risk 3"],
+    "expansionRisk": "low" | "medium" | "high",
+    "misalignmentRisk": "low" | "medium" | "high"
+  },
+  "aiLevel": {
+    "assessment": "appropriate" | "too_high" | "too_low",
+    "suggestedLevel": "level_1" | "level_2" | "level_3" | null,
+    "comment": "short explanation"
+  },
+  "framingReadiness": {
+    "score": 0,
+    "interpretation": "ready_for_tollgate" | "needs_refinement" | "not_ready"
   }
 }
 

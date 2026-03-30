@@ -14,31 +14,82 @@ type OutcomeAiReviewDialogProps = {
     message: string | null;
     report:
       | {
-          overallVerdict: "good" | "needs_attention" | "blocked";
-          executiveSummary: string;
-          missingItems: string[];
-          suggestedChanges: string[];
-          nextAiLevel: {
-            canAdvance: boolean;
-            targetLevel: "level_2" | "level_3" | null;
-            rationale: string;
-            requirements: string[];
+          outcomeQuality: {
+            status: "ok" | "needs_improvement";
+            comment: string;
+            suggestedImprovement: string;
+          };
+          problemAlignment: {
+            status: "strong" | "weak";
+            comment: string;
+          };
+          epicCoverage: {
+            status: "complete" | "partial";
+            comment: string;
+            missingAreas: string[];
+          };
+          storyCoverage: {
+            status: "good" | "partial";
+            comment: string;
+            gapsOrOverlaps: string[];
+          };
+          riskOverview: {
+            topRisks: string[];
+            expansionRisk: "low" | "medium" | "high";
+            misalignmentRisk: "low" | "medium" | "high";
+          };
+          aiLevel: {
+            assessment: "appropriate" | "too_high" | "too_low";
+            suggestedLevel: "level_1" | "level_2" | "level_3" | null;
+            comment: string;
+          };
+          framingReadiness: {
+            score: number;
+            interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
           };
         }
       | null;
   };
 };
 
-function getVerdictTone(verdict: "good" | "needs_attention" | "blocked") {
-  if (verdict === "good") {
+function getReadinessTone(interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready") {
+  if (interpretation === "ready_for_tollgate") {
     return "border-emerald-200 bg-emerald-50 text-emerald-950";
   }
 
-  if (verdict === "needs_attention") {
+  if (interpretation === "needs_refinement") {
     return "border-sky-200 bg-sky-50 text-sky-950";
   }
 
-  return "border-amber-200 bg-amber-50 text-amber-950";
+  return "border-rose-200 bg-rose-50 text-rose-950";
+}
+
+function formatInterpretation(value: "ready_for_tollgate" | "needs_refinement" | "not_ready") {
+  if (value === "ready_for_tollgate") {
+    return "Ready for Tollgate";
+  }
+
+  if (value === "needs_refinement") {
+    return "Needs refinement";
+  }
+
+  return "Not ready";
+}
+
+function formatAiLevel(level: "level_1" | "level_2" | "level_3" | null) {
+  if (!level) {
+    return "No change suggested";
+  }
+
+  return level.replaceAll("_", " ");
+}
+
+function formatStatus(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function formatRisk(value: "low" | "medium" | "high") {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export function OutcomeAiReviewDialog({
@@ -106,7 +157,7 @@ export function OutcomeAiReviewDialog({
             type="button"
           />
           <div
-            className="absolute inset-y-0 right-0 flex w-full max-w-3xl flex-col border-l border-border bg-background shadow-[-24px_0_80px_rgba(15,23,42,0.18)]"
+            className="absolute inset-4 flex flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
             ref={panelRef}
             tabIndex={-1}
           >
@@ -136,73 +187,117 @@ export function OutcomeAiReviewDialog({
 
               {state.status === "success" && state.report ? (
                 <>
-                  <div className={`rounded-2xl border px-4 py-4 ${getVerdictTone(state.report.overallVerdict)}`}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em]">Overall verdict</p>
-                    <p className="mt-2 text-lg font-semibold">{state.report.overallVerdict.replaceAll("_", " ")}</p>
-                    <p className="mt-2 text-sm leading-6">{state.report.executiveSummary}</p>
+                  <div className={`rounded-2xl border px-5 py-5 ${getReadinessTone(state.report.framingReadiness.interpretation)}`}>
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Framing Validation Summary</p>
+                        <p className="mt-2 text-xl font-semibold">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
+                        <p className="mt-2 text-sm leading-6">
+                          Outcome Quality: {formatStatus(state.report.outcomeQuality.status)}. Problem Alignment: {formatStatus(state.report.problemAlignment.status)}.
+                          {" "}
+                          Epic Coverage: {formatStatus(state.report.epicCoverage.status)}. Story Coverage: {formatStatus(state.report.storyCoverage.status)}.
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-current/15 bg-white/60 px-5 py-4 text-center">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Framing Readiness</p>
+                        <p className="mt-2 text-3xl font-semibold">{state.report.framingReadiness.score}%</p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid gap-6 xl:grid-cols-2">
                     <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
-                      <h4 className="text-sm font-semibold text-foreground">What is missing</h4>
-                      {state.report.missingItems.length === 0 ? (
-                        <p className="mt-3 text-sm text-muted-foreground">No material gaps were identified.</p>
-                      ) : (
-                        <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-                          {state.report.missingItems.map((item) => (
+                      <h4 className="text-sm font-semibold text-foreground">Outcome Quality</h4>
+                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.outcomeQuality.status)}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.outcomeQuality.comment}</p>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        Suggested improvement: {state.report.outcomeQuality.suggestedImprovement}
+                      </p>
+                    </section>
+
+                    <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
+                      <h4 className="text-sm font-semibold text-foreground">Problem Alignment</h4>
+                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.problemAlignment.status)}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.problemAlignment.comment}</p>
+                    </section>
+                  </div>
+
+                  <div className="grid gap-6 xl:grid-cols-2">
+                    <section className="rounded-2xl border border-border/70 bg-background p-5">
+                      <h4 className="text-sm font-semibold text-foreground">Epic Coverage</h4>
+                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.epicCoverage.status)}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.epicCoverage.comment}</p>
+                      {state.report.epicCoverage.missingAreas.length > 0 ? (
+                        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                          {state.report.epicCoverage.missingAreas.map((item) => (
                             <li className="flex gap-2" key={item}>
                               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                               <span>{item}</span>
                             </li>
                           ))}
                         </ul>
+                      ) : (
+                        <p className="mt-4 text-sm text-muted-foreground">No missing Epic areas were identified.</p>
                       )}
                     </section>
 
-                    <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
-                      <h4 className="text-sm font-semibold text-foreground">Suggested changes</h4>
-                      {state.report.suggestedChanges.length === 0 ? (
-                        <p className="mt-3 text-sm text-muted-foreground">No immediate changes were recommended.</p>
-                      ) : (
-                        <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-                          {state.report.suggestedChanges.map((item) => (
+                    <section className="rounded-2xl border border-border/70 bg-background p-5">
+                      <h4 className="text-sm font-semibold text-foreground">Story Coverage</h4>
+                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.storyCoverage.status)}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.storyCoverage.comment}</p>
+                      {state.report.storyCoverage.gapsOrOverlaps.length > 0 ? (
+                        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                          {state.report.storyCoverage.gapsOrOverlaps.map((item) => (
                             <li className="flex gap-2" key={item}>
-                              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" />
+                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                               <span>{item}</span>
                             </li>
                           ))}
                         </ul>
+                      ) : (
+                        <p className="mt-4 text-sm text-muted-foreground">No material gaps or overlaps were identified.</p>
                       )}
                     </section>
                   </div>
 
-                  <section className="rounded-2xl border border-border/70 bg-background p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h4 className="text-sm font-semibold text-foreground">Next AI level</h4>
-                      <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-                          state.report.nextAiLevel.canAdvance
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                            : "border-border/70 bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {state.report.nextAiLevel.targetLevel
-                          ? `Toward ${state.report.nextAiLevel.targetLevel.replaceAll("_", " ")}`
-                          : "No higher level defined"}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{state.report.nextAiLevel.rationale}</p>
-                    {state.report.nextAiLevel.requirements.length > 0 ? (
-                      <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
-                        {state.report.nextAiLevel.requirements.map((item) => (
-                          <li className="flex gap-2" key={item}>
-                            <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/55" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </section>
+                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+                    <section className="rounded-2xl border border-border/70 bg-background p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <h4 className="text-sm font-semibold text-foreground">Risk Overview</h4>
+                        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                          <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-muted-foreground">
+                            Expansion Risk: {formatRisk(state.report.riskOverview.expansionRisk)}
+                          </span>
+                          <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-muted-foreground">
+                            Misalignment Risk: {formatRisk(state.report.riskOverview.misalignmentRisk)}
+                          </span>
+                        </div>
+                      </div>
+                      {state.report.riskOverview.topRisks.length > 0 ? (
+                        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                          {state.report.riskOverview.topRisks.map((item) => (
+                            <li className="flex gap-2" key={item}>
+                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-4 text-sm text-muted-foreground">No top risks were returned.</p>
+                      )}
+                    </section>
+
+                    <section className="rounded-2xl border border-border/70 bg-background p-5">
+                      <h4 className="text-sm font-semibold text-foreground">AI Level</h4>
+                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.aiLevel.assessment)}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.aiLevel.comment}</p>
+                      {state.report.aiLevel.suggestedLevel ? (
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                          Suggested level: {formatAiLevel(state.report.aiLevel.suggestedLevel)}
+                        </p>
+                      ) : null}
+                    </section>
+                  </div>
                 </>
               ) : null}
             </div>
