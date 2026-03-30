@@ -224,7 +224,8 @@ vi.mock("@/app/(protected)/stories/[storyId]/actions", () => ({
   recordStoryTollgateDecisionAction: vi.fn(),
   restoreStoryAction: vi.fn(),
   saveStoryWorkspaceAction: vi.fn(),
-  submitStoryReadinessAction: vi.fn()
+  submitStoryReadinessAction: vi.fn(),
+  validateStoryExpectedBehaviorAiAction: vi.fn()
 }));
 
 describe("Story Workspace page", () => {
@@ -241,6 +242,7 @@ describe("Story Workspace page", () => {
     expect(screen.getByText("Story idea")).toBeDefined();
     expect(screen.getByText("Story idea definition")).toBeDefined();
     expect(screen.getAllByText("Expected behavior").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "AI validate" })).toBeDefined();
     expect(screen.getAllByText("Epic alignment").length).toBeGreaterThan(0);
     expect(screen.getByText("Branch context")).toBeDefined();
     expect(screen.getAllByText(/OUT-010\s+Scoped native Framing/i).length).toBeGreaterThan(0);

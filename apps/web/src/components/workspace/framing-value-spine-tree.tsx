@@ -9,6 +9,12 @@ import {
   TestTube2
 } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import {
+  getStoryIdeaIntentText,
+  getStoryIdeaStatusText,
+  isStoryIdeaReadyForFraming,
+  isStoryIdeaStarted
+} from "@/lib/framing/story-idea-status";
 import { getStoryUxModel } from "@/lib/workspace/story-ux";
 
 type TreeOutcome = {
@@ -194,13 +200,28 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
 }
 
 function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
-  const needsAttention = !seed.shortDescription?.trim();
-  const framingStatus = needsAttention ? "Needs refinement" : "Clear enough for framing";
-  const nextImprovement = needsAttention
-    ? "Add a short directional description so the seed explains what kind of change it points toward."
-    : seed.expectedBehavior?.trim()
-      ? "No immediate framing changes are required."
-      : "Optionally add expected behavior if you want sharper AI guidance later.";
+  const intentText = getStoryIdeaIntentText({
+    shortDescription: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior
+  });
+  const isReady = isStoryIdeaReadyForFraming({
+    shortDescription: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior
+  });
+  const isStarted = isStoryIdeaStarted({
+    shortDescription: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior
+  });
+  const needsAttention = !isReady;
+  const framingStatus = getStoryIdeaStatusText({
+    shortDescription: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior
+  });
+  const nextImprovement = !intentText
+    ? "Add Value Intent so the story idea explains why it matters."
+    : !seed.expectedBehavior?.trim()
+      ? "Add Expected Behavior so the story idea better guides design and AI refinement."
+      : "No immediate framing changes are required.";
 
   return (
     <div
@@ -212,12 +233,23 @@ function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Direction seed</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story idea</p>
             <h5 className="text-sm font-semibold text-foreground">{seed.key}</h5>
+            {isReady ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Ready for framing
+              </span>
+            ) : isStarted ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
+                <CircleAlert className="h-3.5 w-3.5" />
+                Needs refinement
+              </span>
+            ) : null}
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{seed.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {seed.shortDescription?.trim() || "Add a short directional description so the seed explains what kind of change it points toward."}
+            {intentText || "Add Value Intent so this story idea explains what user or business value it should create."}
           </p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">Framing status:</span> {framingStatus}
@@ -248,7 +280,7 @@ function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={seed.href}>
-              Open seed
+              Open Story idea
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -259,8 +291,19 @@ function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
 }
 
 function StoryIdeaRow({ story }: { story: TreeStory }) {
-  const needsAttention = !story.valueIntent?.trim() || !story.expectedBehavior?.trim();
-  const framingStatus = needsAttention ? "Needs refinement" : "Clear enough for framing";
+  const isReady = isStoryIdeaReadyForFraming({
+    valueIntent: story.valueIntent,
+    expectedBehavior: story.expectedBehavior
+  });
+  const isStarted = isStoryIdeaStarted({
+    valueIntent: story.valueIntent,
+    expectedBehavior: story.expectedBehavior
+  });
+  const needsAttention = !isReady;
+  const framingStatus = getStoryIdeaStatusText({
+    valueIntent: story.valueIntent,
+    expectedBehavior: story.expectedBehavior
+  });
   const nextImprovement = !story.valueIntent?.trim()
     ? "Add Value Intent so the story idea explains why it matters."
     : !story.expectedBehavior?.trim()
@@ -279,6 +322,17 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story idea</p>
             <h5 className="text-sm font-semibold text-foreground">{story.key}</h5>
+            {isReady ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Ready for framing
+              </span>
+            ) : isStarted ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
+                <CircleAlert className="h-3.5 w-3.5" />
+                Needs refinement
+              </span>
+            ) : null}
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -439,10 +493,20 @@ function EpicRow({
   const mappedSourceStoryIds = new Set(directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
   const framingStories = stories.filter((story) => !mappedSourceStoryIds.has(story.id));
   const itemCount = mode === "framing" ? directionSeeds.length + framingStories.length : stories.length;
-  const framingNeedsAttention = directionSeeds.filter((seed) => !seed.shortDescription?.trim()).length;
+  const framingNeedsAttention = directionSeeds.filter(
+    (seed) =>
+      !isStoryIdeaReadyForFraming({
+        shortDescription: seed.shortDescription,
+        expectedBehavior: seed.expectedBehavior
+      })
+  ).length;
   const deliveryNeedsAttention = stories.filter((story) => getMissingStoryInputs(story).length > 0).length;
   const framingStoryNeedsAttention = framingStories.filter(
-    (story) => !story.valueIntent?.trim() || !story.expectedBehavior?.trim()
+    (story) =>
+      !isStoryIdeaReadyForFraming({
+        valueIntent: story.valueIntent,
+        expectedBehavior: story.expectedBehavior
+      })
   ).length;
 
   return (
@@ -464,7 +528,7 @@ function EpicRow({
                 getOriginLabel(epic.originType),
                 formatLabel(epic.lifecycleState),
                 mode === "framing"
-                  ? `${itemCount} direction seed${itemCount === 1 ? "" : "s"}`
+                  ? `${itemCount} story idea${itemCount === 1 ? "" : "s"}`
                   : `${itemCount} stor${itemCount === 1 ? "y" : "ies"} in branch`,
                 mode === "framing"
                   ? framingNeedsAttention + framingStoryNeedsAttention > 0

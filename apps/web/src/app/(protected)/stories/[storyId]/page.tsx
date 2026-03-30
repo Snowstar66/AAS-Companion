@@ -9,6 +9,7 @@ import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import { InlineTermHelp } from "@/components/shared/inline-term-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
+import { StoryIdeaAiValidatedTextarea } from "@/components/workspace/story-idea-ai-validated-textarea";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
@@ -20,7 +21,8 @@ import {
   recordStoryTollgateDecisionAction,
   restoreStoryAction,
   saveStoryWorkspaceAction,
-  submitStoryReadinessAction
+  submitStoryReadinessAction,
+  validateStoryExpectedBehaviorAiAction
 } from "./actions";
 
 type StoryWorkspacePageProps = {
@@ -333,6 +335,9 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
               <input name="storyId" type="hidden" value={story.id} />
               <input name="epicId" type="hidden" value={story.epicId} />
               <input name="outcomeId" type="hidden" value={story.outcomeId} />
+              <input name="epicTitle" type="hidden" value={story.epic.title} />
+              <input name="epicPurpose" type="hidden" value={story.epic.purpose ?? ""} />
+              <input name="epicScopeBoundary" type="hidden" value={story.epic.scopeBoundary ?? ""} />
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>{isDeliveryMode ? "Story design" : "Story idea definition"}</CardTitle>
@@ -386,15 +391,13 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                       name="valueIntent"
                     />
                   </label>
-                  <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Expected behavior</span>
-                    <textarea
-                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                      defaultValue={story.expectedBehavior ?? ""}
-                      disabled={isArchived}
-                      name="expectedBehavior"
-                    />
-                  </label>
+                  <StoryIdeaAiValidatedTextarea
+                    disabled={isArchived}
+                    initialValue={story.expectedBehavior ?? ""}
+                    label="Expected behavior"
+                    name="expectedBehavior"
+                    validateAction={validateStoryExpectedBehaviorAiAction}
+                  />
                   <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic alignment</p>
                     <p className="mt-2 font-semibold text-foreground">

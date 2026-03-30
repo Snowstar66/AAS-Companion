@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { withDevTiming } from "@/lib/dev-timing";
+import { isStoryIdeaReadyForFraming } from "@/lib/framing/story-idea-status";
 
 type WorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -81,7 +82,38 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     const selectedDirectionSeeds = selectedEpics.flatMap((epic) =>
       (epic.directionSeeds ?? []).filter((seed) => seed.lifecycleState === "active")
     );
-    const attentionSeeds = selectedDirectionSeeds.filter((seed) => !seed.shortDescription?.trim());
+    const selectedLegacyStoryIdeas = selectedEpics.flatMap((epic) => {
+      const mappedSourceStoryIds = new Set((epic.directionSeeds ?? []).map((seed) => seed.sourceStoryId).filter(Boolean));
+
+      return (epic.stories ?? [])
+        .filter((story) => story.lifecycleState === "active" && !mappedSourceStoryIds.has(story.id))
+        .map((story) => ({
+          ...story,
+          epicId: epic.id
+        }));
+    });
+    const selectedStoryIdeas = [
+      ...selectedDirectionSeeds.map((seed) => ({
+        id: seed.id,
+        epicId: seed.epicId,
+        href: `/epics/${seed.epicId}#seed-${seed.id}`,
+        ready: isStoryIdeaReadyForFraming({
+          shortDescription: seed.shortDescription,
+          expectedBehavior: seed.expectedBehavior
+        })
+      })),
+      ...selectedLegacyStoryIdeas.map((story) => ({
+        id: story.id,
+        epicId: story.epicId,
+        href: `/stories/${story.id}`,
+        ready: isStoryIdeaReadyForFraming({
+          valueIntent: story.valueIntent,
+          expectedBehavior: story.expectedBehavior
+        })
+      }))
+    ];
+    const readyStoryIdeas = selectedStoryIdeas.filter((idea) => idea.ready);
+    const attentionStoryIdeas = selectedStoryIdeas.filter((idea) => !idea.ready);
     const lineageTargets = [
       ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
         ? [{ href: `/review?candidateId=${selectedOutcome.lineageSourceId}`, label: `Open ${selectedOutcome.key} lineage` }]
@@ -97,10 +129,17 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         .map((seed) => ({
           href: `/review?candidateId=${seed.lineageSourceId}`,
           label: `Open ${seed.key} lineage`
+        })),
+      ...selectedLegacyStoryIdeas
+        .filter((story) => story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId)
+        .map((story) => ({
+          href: `/review?candidateId=${story.lineageSourceId}`,
+          label: `Open ${story.key} lineage`
         }))
     ];
-    const firstVisibleSeed = selectedDirectionSeeds[0] ?? null;
-    const firstAttentionSeed = attentionSeeds[0] ?? null;
+    const firstVisibleStoryIdea = selectedStoryIdeas[0] ?? null;
+    const firstAttentionStoryIdea = attentionStoryIdeas[0] ?? null;
+    const firstReadyStoryIdea = readyStoryIdeas[0] ?? null;
     const firstLineageTarget = lineageTargets[0] ?? null;
 
     return (
@@ -128,12 +167,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
-                actionHref={firstVisibleSeed ? `/epics/${firstVisibleSeed.epicId}#seed-${firstVisibleSeed.id}` : undefined}
-                actionLabel={firstVisibleSeed ? "Open first seed" : undefined}
+                actionHref={firstVisibleStoryIdea?.href}
+                actionLabel={firstVisibleStoryIdea ? "Open first Story Idea" : undefined}
                 className="border-border/70 bg-background/90 text-foreground"
-                count={selectedDirectionSeeds.length}
+                count={selectedStoryIdeas.length}
                 description={`${selectedEpics.length} epic${selectedEpics.length === 1 ? "" : "s"} visible in the active Framing.`}
-                label="Visible seeds"
+                label="Visible Story Ideas"
               />
               <StatCard
                 actionHref={firstLineageTarget?.href}
@@ -144,11 +183,19 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 label="Imported lineage"
               />
               <StatCard
-                actionHref={firstAttentionSeed ? `/epics/${firstAttentionSeed.epicId}#seed-${firstAttentionSeed.id}` : undefined}
-                actionLabel={firstAttentionSeed ? "Open next attention seed" : undefined}
+                actionHref={firstReadyStoryIdea?.href}
+                actionLabel={firstReadyStoryIdea ? "Open framing-ready idea" : undefined}
+                className="border-emerald-200 bg-emerald-50/85 text-emerald-950"
+                count={readyStoryIdeas.length}
+                description="Story Ideas that already have both value intent and expected behavior."
+                label="Ready for framing"
+              />
+              <StatCard
+                actionHref={firstAttentionStoryIdea?.href}
+                actionLabel={firstAttentionStoryIdea ? "Open next Story Idea" : undefined}
                 className="border-amber-200 bg-amber-50/85 text-amber-950"
-                count={attentionSeeds.length}
-                description="Direction seeds that still need clearer framing before the branch feels clear."
+                count={attentionStoryIdeas.length}
+                description="Story Ideas that still need clearer framing before the branch feels clear."
                 label="Needs attention"
               />
             </div>
@@ -171,9 +218,9 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
             ) : null}
 
             <FramingValueSpineTree
-              description="The active branch is listed from Framing into Epics and Direction Seeds using the same framing model shown elsewhere."
+              description="The active branch is listed from Framing into Epics and Story Ideas using the same framing model shown elsewhere."
               emptyEpicMessage="No active Epics are currently visible in this branch."
-              emptyStoryMessage="No active Direction Seeds are currently visible in this Epic."
+              emptyStoryMessage="No active Story Ideas are currently visible in this Epic."
               mode="framing"
               epics={selectedEpics.map((epic) => ({
                 id: epic.id,

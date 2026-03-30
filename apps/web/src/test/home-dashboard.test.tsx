@@ -28,6 +28,11 @@ vi.mock("@/lib/home/dashboard", () => ({
     dashboard: {
       state: "live",
       organizationName: "AAS Demo Organization",
+      projectPhase: {
+        key: "framing",
+        label: "Framing phase",
+        detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+      },
       summary: [
         {
           label: "Outcomes",
@@ -82,6 +87,7 @@ describe("Home dashboard", () => {
 
     expect(screen.getByRole("heading", { name: "Project dashboard", level: 1 })).toBeDefined();
     expect(screen.getAllByText("Needs attention").length).toBeGreaterThan(0);
+    expect(screen.getByText("Framing phase")).toBeDefined();
     expect(screen.getAllByRole("link", { name: "Open Framing" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Project access" })).toBeDefined();
     expect(screen.getByText("Create project")).toBeDefined();

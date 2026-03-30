@@ -4,6 +4,7 @@ import {
   getOutcomeWorkspaceSnapshot,
   reviewOutcomeFramingWithAi,
   getStoryWorkspaceSnapshot,
+  validateStoryExpectedBehaviorWithAi,
   validateOutcomeFieldWithAi,
   updateOutcome,
   updateStory,
@@ -432,6 +433,36 @@ export async function saveStoryWorkspaceService(input: {
   });
 
   return success(result);
+}
+
+export async function validateStoryExpectedBehaviorWithAiService(input: {
+  organizationId: string;
+  title?: string | null;
+  valueIntent?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  return withDevTiming("api.validateStoryExpectedBehaviorWithAiService", async () => {
+    try {
+      const result = await validateStoryExpectedBehaviorWithAi({
+        title: input.title ?? null,
+        valueIntent: input.valueIntent ?? null,
+        expectedBehavior: input.expectedBehavior ?? null,
+        epicTitle: input.epicTitle ?? null,
+        epicPurpose: input.epicPurpose ?? null,
+        epicScopeBoundary: input.epicScopeBoundary ?? null
+      });
+
+      return success(result);
+    } catch (error) {
+      return failure({
+        code: "ai_validation_failed",
+        message: error instanceof Error ? error.message : "AI expected behavior validation failed."
+      });
+    }
+  }, `organizationId=${input.organizationId} field=story_expected_behavior`);
 }
 
 export async function submitStoryReadinessService(input: {

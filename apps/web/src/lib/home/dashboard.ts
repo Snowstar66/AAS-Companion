@@ -39,6 +39,11 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           state: "empty",
           organizationName: "No project selected",
           message: "Choose a project or Demo explicitly before operational data is shown.",
+          projectPhase: {
+            key: "framing",
+            label: "Framing phase",
+            detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+          },
           summary: [],
           outcomesByStatus: [],
           topBlockers: [],
@@ -66,6 +71,11 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           state: "empty",
           organizationName: "No project selected",
           message: "Choose an existing project, create a new one, or open Demo explicitly before entering operational work.",
+          projectPhase: {
+            key: "framing",
+            label: "Framing phase",
+            detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+          },
           summary: [],
           outcomesByStatus: [],
           topBlockers: [],
@@ -110,6 +120,11 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           error instanceof Error
             ? `Dashboard data is unavailable right now: ${error.message}`
             : "Dashboard data is unavailable right now.",
+        projectPhase: {
+          key: "framing",
+          label: "Framing phase",
+          detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+        },
         summary: [],
         outcomesByStatus: [],
         topBlockers: [],

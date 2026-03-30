@@ -56,9 +56,11 @@ export {
 } from "./repositories/outcome-repository";
 export {
   reviewOutcomeFramingWithAi,
+  validateStoryExpectedBehaviorWithAi,
   validateOutcomeFieldWithAi,
   type OutcomeFieldAiValidation,
-  type OutcomeFramingAiReview
+  type OutcomeFramingAiReview,
+  type StoryExpectedBehaviorAiValidation
 } from "./repositories/outcome-ai-repository";
 export {
   createDirectionSeed,

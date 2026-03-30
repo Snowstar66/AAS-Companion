@@ -7,6 +7,7 @@ import {
   getOutcomeById,
   listDirectionSeeds,
   listEpics,
+  validateStoryExpectedBehaviorWithAi,
   updateEpic
 } from "@aas-companion/db";
 import { updateDirectionSeed } from "@aas-companion/db";
@@ -209,6 +210,34 @@ export async function saveDirectionSeedService(input: {
   });
 
   return success(result);
+}
+
+export async function validateDirectionSeedExpectedBehaviorWithAiService(input: {
+  organizationId: string;
+  title?: string | null;
+  shortDescription?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  try {
+    const result = await validateStoryExpectedBehaviorWithAi({
+      title: input.title ?? null,
+      valueIntent: input.shortDescription ?? null,
+      expectedBehavior: input.expectedBehavior ?? null,
+      epicTitle: input.epicTitle ?? null,
+      epicPurpose: input.epicPurpose ?? null,
+      epicScopeBoundary: input.epicScopeBoundary ?? null
+    });
+
+    return success(result);
+  } catch (error) {
+    return failure({
+      code: "ai_validation_failed",
+      message: error instanceof Error ? error.message : "AI expected behavior validation failed."
+    });
+  }
 }
 
 export async function saveEpicWorkspaceService(input: {

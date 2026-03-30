@@ -129,12 +129,13 @@ vi.mock("@/app/(protected)/epics/[epicId]/actions", () => ({
   hardDeleteEpicAction: vi.fn(),
   restoreEpicAction: vi.fn(),
   saveDirectionSeedAction: vi.fn(),
-  saveEpicWorkspaceAction: vi.fn()
+  saveEpicWorkspaceAction: vi.fn(),
+  validateDirectionSeedExpectedBehaviorAiAction: vi.fn()
 }));
 
 describe("Epic page", () => {
   it(
-    "shows a clean epic page with native direction seeding",
+    "shows a clean epic page with Story Ideas",
     async () => {
     render(
       await EpicWorkspacePage({
@@ -143,14 +144,14 @@ describe("Epic page", () => {
       })
     );
 
-    expect(screen.getByText("Native Epic created and ready for direction seeding.")).toBeDefined();
+    expect(screen.getByText("Native Epic created and ready for Story Ideas.")).toBeDefined();
     expect(screen.getByText("Active Framing context")).toBeDefined();
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("Origin")).toBeDefined();
     expect(screen.getByText("Clean")).toBeDefined();
-    expect(screen.getByText("Direction seeds")).toBeDefined();
-    expect(screen.getByText("No direction seeds exist for this Epic yet.")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Create Direction Seed" })).toBeDefined();
+    expect(screen.getByText("Story ideas")).toBeDefined();
+    expect(screen.getByText("No story ideas exist for this Epic yet.")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Create Story Idea" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Back to current Framing" })).toBeDefined();
     expect(screen.getByText("epic created")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();

@@ -19,6 +19,7 @@ import { FramingValueSpineTree } from "@/components/workspace/framing-value-spin
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
+import { isStoryIdeaReadyForFraming, isStoryIdeaStarted } from "@/lib/framing/story-idea-status";
 import { getInlineGuidance } from "@/lib/help/aas-help";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
@@ -163,7 +164,35 @@ export function FramingOutcomeSection({
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
-  const directionSeedCount = outcome.directionSeeds.length;
+  const mappedSourceStoryIds = new Set(outcome.directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+  const legacyStoryIdeas = outcome.stories.filter((story) => !mappedSourceStoryIds.has(story.id));
+  const visibleStoryIdeaCount = outcome.directionSeeds.length + legacyStoryIdeas.length;
+  const startedStoryIdeaCount =
+    outcome.directionSeeds.filter((seed) =>
+      isStoryIdeaStarted({
+        shortDescription: seed.shortDescription,
+        expectedBehavior: seed.expectedBehavior
+      })
+    ).length +
+    legacyStoryIdeas.filter((story) =>
+      isStoryIdeaStarted({
+        valueIntent: story.valueIntent,
+        expectedBehavior: story.expectedBehavior
+      })
+    ).length;
+  const readyStoryIdeaCount =
+    outcome.directionSeeds.filter((seed) =>
+      isStoryIdeaReadyForFraming({
+        shortDescription: seed.shortDescription,
+        expectedBehavior: seed.expectedBehavior
+      })
+    ).length +
+    legacyStoryIdeas.filter((story) =>
+      isStoryIdeaReadyForFraming({
+        valueIntent: story.valueIntent,
+        expectedBehavior: story.expectedBehavior
+      })
+    ).length;
 
   return (
     <section className="space-y-6">
@@ -299,11 +328,11 @@ export function FramingOutcomeSection({
             </CardContent>
           </Card>
 
-          <FramingContextCard
+        <FramingContextCard
             epic={null}
             outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref }}
-            summary="Opening this Framing establishes the active business context. Only Epics and Direction Seeds attached to this case are shown by default."
-          />
+          summary="Opening this Framing establishes the active business context. Only Epics and Story Ideas attached to this case are shown by default."
+        />
         </>
       ) : null}
 
@@ -432,9 +461,9 @@ export function FramingOutcomeSection({
                 <CardHeader>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <CardTitle>Design direction seeds</CardTitle>
+                      <CardTitle>Story Ideas</CardTitle>
                       <CardDescription>
-                        Capture epics and lightweight direction seeds here. Keep them directional, not operational.
+                        Capture epics and lightweight story ideas here. Keep them directional, not operational.
                       </CardDescription>
                     </div>
                     {!isArchived ? (
@@ -449,7 +478,7 @@ export function FramingOutcomeSection({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current Epics</p>
                       <p className="mt-2 text-2xl font-semibold text-foreground">{outcome.epics.length}</p>
@@ -460,10 +489,24 @@ export function FramingOutcomeSection({
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Direction Seeds</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{directionSeedCount}</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story Ideas</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{visibleStoryIdeaCount}</p>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Direction seeds stay nested under their Epic and only capture intent, not delivery workflow.
+                        Story ideas stay nested under their Epic and only capture framing intent, not delivery workflow.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Started</p>
+                      <p className="mt-2 text-2xl font-semibold text-foreground">{startedStoryIdeaCount}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        Story ideas with at least value intent or expected behavior captured.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Ready for framing</p>
+                      <p className="mt-2 text-2xl font-semibold text-emerald-950">{readyStoryIdeaCount}</p>
+                      <p className="mt-2 text-sm leading-6 text-emerald-900">
+                        Story ideas that already have both value intent and expected behavior.
                       </p>
                     </div>
                   </div>
@@ -483,11 +526,11 @@ export function FramingOutcomeSection({
 
             <CollapsibleFramingPanel
               defaultOpen
-              description="Scan the framing brief, epics and direction seeds together in one compact branch."
+              description="Scan the framing brief, epics and story ideas together in one compact branch."
               title="Framing value spine"
             >
               <FramingValueSpineTree
-                description="Read the active branch as one framing brief with epics and direction seeds."
+                description="Read the active branch as one framing brief with epics and story ideas."
                 emptyEpicMessage={
                   isArchived
                     ? "Archived Outcomes no longer surface active Epic work in this branch."
@@ -495,8 +538,8 @@ export function FramingOutcomeSection({
                 }
                 emptyStoryMessage={
                   isArchived
-                    ? "Archived Outcomes no longer surface active direction seeds."
-                    : "Create direction seeds from the relevant Epic so the hierarchy stays scoped to this Framing."
+                    ? "Archived Outcomes no longer surface active story ideas."
+                    : "Create story ideas from the relevant Epic so the hierarchy stays scoped to this Framing."
                 }
                 mode="framing"
                 epics={outcome.epics.map((epic) => ({

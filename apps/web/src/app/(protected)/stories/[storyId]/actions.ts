@@ -8,7 +8,8 @@ import {
   recordTollgateDecisionService,
   restoreGovernedObjectService,
   saveStoryWorkspaceService,
-  submitStoryReadinessService
+  submitStoryReadinessService,
+  validateStoryExpectedBehaviorWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
@@ -53,6 +54,53 @@ function readCommaValues(formData: FormData, fieldName: string) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+export type StoryExpectedBehaviorAiActionState =
+  | {
+      status: "success";
+      field: "story_expected_behavior";
+      verdict: "good" | "needs_revision" | "unclear";
+      confidence: "high" | "medium" | "low";
+      rationale: string;
+      suggestedRewrite: string | null;
+    }
+  | {
+      status: "error";
+      field: "story_expected_behavior";
+      error: string;
+    };
+
+export async function validateStoryExpectedBehaviorAiAction(
+  formData: FormData
+): Promise<StoryExpectedBehaviorAiActionState> {
+  const session = await requireActiveProjectSession();
+  const result = await validateStoryExpectedBehaviorWithAiService({
+    organizationId: session.organization.organizationId,
+    title: String(formData.get("title") ?? "") || null,
+    valueIntent: String(formData.get("valueIntent") ?? "") || null,
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    epicTitle: String(formData.get("epicTitle") ?? "") || null,
+    epicPurpose: String(formData.get("epicPurpose") ?? "") || null,
+    epicScopeBoundary: String(formData.get("epicScopeBoundary") ?? "") || null
+  });
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      field: "story_expected_behavior",
+      error: result.errors[0]?.message ?? "AI validation failed."
+    };
+  }
+
+  return {
+    status: "success",
+    field: result.data.field,
+    verdict: result.data.verdict,
+    confidence: result.data.confidence,
+    rationale: result.data.rationale,
+    suggestedRewrite: result.data.suggestedRewrite ?? null
+  };
 }
 
 export async function saveStoryWorkspaceAction(formData: FormData) {

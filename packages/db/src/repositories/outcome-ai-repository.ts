@@ -6,6 +6,14 @@ export type OutcomeFieldAiValidation = {
   suggestedRewrite: string | null;
 };
 
+export type StoryExpectedBehaviorAiValidation = {
+  field: "story_expected_behavior";
+  verdict: "good" | "needs_revision" | "unclear";
+  confidence: "high" | "medium" | "low";
+  rationale: string;
+  suggestedRewrite: string | null;
+};
+
 export type OutcomeFramingAiReview = {
   overallVerdict: "good" | "needs_attention" | "blocked";
   executiveSummary: string;
@@ -125,6 +133,47 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
       rationale: rationale.trim(),
       requirements: requirements.map((item) => item.trim()).filter(Boolean)
     }
+  };
+}
+
+function parseStoryExpectedBehaviorAiValidation(input: unknown): StoryExpectedBehaviorAiValidation {
+  if (!input || typeof input !== "object") {
+    throw new Error("AI validation response was not an object.");
+  }
+
+  const candidate = input as Record<string, unknown>;
+  const field = candidate.field;
+  const verdict = candidate.verdict;
+  const confidence = candidate.confidence;
+  const rationale = candidate.rationale;
+  const suggestedRewrite = candidate.suggestedRewrite;
+
+  if (field !== "story_expected_behavior") {
+    throw new Error("AI validation returned an invalid field.");
+  }
+
+  if (verdict !== "good" && verdict !== "needs_revision" && verdict !== "unclear") {
+    throw new Error("AI validation returned an invalid verdict.");
+  }
+
+  if (confidence !== "high" && confidence !== "medium" && confidence !== "low") {
+    throw new Error("AI validation returned an invalid confidence.");
+  }
+
+  if (typeof rationale !== "string" || !rationale.trim()) {
+    throw new Error("AI validation returned an invalid rationale.");
+  }
+
+  if (suggestedRewrite !== null && suggestedRewrite !== undefined && typeof suggestedRewrite !== "string") {
+    throw new Error("AI validation returned an invalid suggested rewrite.");
+  }
+
+  return {
+    field,
+    verdict,
+    confidence,
+    rationale: rationale.trim(),
+    suggestedRewrite: typeof suggestedRewrite === "string" && suggestedRewrite.trim() ? suggestedRewrite.trim() : null
   };
 }
 
@@ -313,6 +362,61 @@ ${JSON.stringify(input, null, 2)}
   `.trim();
 }
 
+function buildStoryExpectedBehaviorPrompt(input: {
+  title?: string | null;
+  valueIntent?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  return `
+You improve and validate Story Idea expected behavior for AAS-style Framing.
+
+Rules:
+- Improve this Story Idea expected behavior so it is clear, concise, and suitable for Framing.
+- Use the Value Intent and Epic as context.
+- Keep it at framing level.
+- Do not add acceptance criteria, test cases, implementation detail, or technical design.
+- Flag if the description is too vague or if the Epic connection is weak.
+- Do not nitpick text that is already good enough.
+- If the text is acceptable, return verdict "good" and leave suggestedRewrite null.
+
+Verdicts:
+- good = acceptable as written for framing
+- needs_revision = clearly too vague, too detailed, or weakly connected to the epic/value intent
+- unclear = borderline or hard to judge from the available context
+
+Required output:
+- Return JSON only.
+- Shape:
+  {
+    "field": "story_expected_behavior",
+    "verdict": "good" | "needs_revision" | "unclear",
+    "confidence": "high" | "medium" | "low",
+    "rationale": "short explanation",
+    "suggestedRewrite": "optional replacement text or null"
+  }
+
+Payload:
+${JSON.stringify(
+  {
+    field: "story_expected_behavior",
+    title: input.title ?? null,
+    valueIntent: input.valueIntent ?? null,
+    expectedBehavior: input.expectedBehavior ?? null,
+    epic: {
+      title: input.epicTitle ?? null,
+      purpose: input.epicPurpose ?? null,
+      scopeBoundary: input.epicScopeBoundary ?? null
+    }
+  },
+  null,
+  2
+)}
+  `.trim();
+}
+
 export async function validateOutcomeFieldWithAi(input: {
   field: "outcome_statement" | "baseline_definition";
   title?: string | null;
@@ -413,4 +517,49 @@ export async function reviewOutcomeFramingWithAi(input: {
   const parsed = JSON.parse(jsonText) as OutcomeFramingAiReview;
 
   return parseOutcomeFramingAiReview(parsed);
+}
+
+export async function validateStoryExpectedBehaviorWithAi(input: {
+  title?: string | null;
+  valueIntent?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  if (!input.expectedBehavior?.trim()) {
+    return parseStoryExpectedBehaviorAiValidation({
+      field: "story_expected_behavior",
+      verdict: "needs_revision",
+      confidence: "high",
+      rationale: "Expected behavior is empty, so there is nothing to validate yet.",
+      suggestedRewrite: null
+    });
+  }
+
+  const env = readRequiredLlmEnv();
+  const response = await fetch(new URL("responses", env.endpoint), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${env.apiKey}`,
+      "api-key": env.apiKey
+    },
+    body: JSON.stringify({
+      model: env.model,
+      input: buildStoryExpectedBehaviorPrompt(input)
+    }),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI validation failed with HTTP ${response.status}.`);
+  }
+
+  const responseBody = await response.json();
+  const outputText = extractOutputText(responseBody);
+  const jsonText = extractJsonObject(outputText);
+  const parsed = JSON.parse(jsonText) as StoryExpectedBehaviorAiValidation;
+
+  return parseStoryExpectedBehaviorAiValidation(parsed);
 }

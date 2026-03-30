@@ -236,6 +236,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current project</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">{currentProjectName}</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentProjectDescription}</p>
+                {hasActiveProject ? (
+                  <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Current phase</p>
+                    <p className="mt-2 text-lg font-semibold text-sky-950">{dashboard.projectPhase.label}</p>
+                    <p className="mt-2 text-sm leading-6 text-sky-900">{dashboard.projectPhase.detail}</p>
+                  </div>
+                ) : null}
                 <div className="mt-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current posture</p>
                   <p className="mt-2 text-lg font-semibold text-foreground">{status.label}</p>

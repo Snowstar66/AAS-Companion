@@ -140,7 +140,7 @@ describe("Value Spine page", () => {
     expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
     expect(screen.getAllByRole("link", { name: /Open lineage/i }).length).toBeGreaterThan(0);
-    expect(screen.getByText("Visible seeds")).toBeDefined();
+    expect(screen.getByText("Visible Story Ideas")).toBeDefined();
     expect(screen.getByText(/Framing status:/i)).toBeDefined();
     expect(screen.getByText(/Needs refinement/i)).toBeDefined();
   });
@@ -155,7 +155,8 @@ describe("Value Spine page", () => {
 
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
-    expect(screen.getByText("Visible seeds")).toBeDefined();
+    expect(screen.getByText("Visible Story Ideas")).toBeDefined();
+    expect(screen.getByText("Ready for framing")).toBeDefined();
     expect(screen.getByText(/Expected behavior:/i)).toBeDefined();
     expect(screen.queryByText("Short description is still missing.")).toBeNull();
   });

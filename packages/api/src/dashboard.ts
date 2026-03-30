@@ -36,10 +36,17 @@ export type HomeActivityItem = {
   timestamp: string;
 };
 
+export type HomeProjectPhase = {
+  key: "framing" | "design";
+  label: string;
+  detail: string;
+};
+
 export type HomeDashboardData =
   | {
       state: "live";
       organizationName: string;
+      projectPhase: HomeProjectPhase;
       summary: HomeSummaryMetric[];
       outcomesByStatus: HomeOutcomeStatusStat[];
       topBlockers: HomeBlocker[];
@@ -54,6 +61,7 @@ export type HomeDashboardData =
       state: "empty" | "unavailable";
       organizationName: string;
       message: string;
+      projectPhase: HomeProjectPhase;
       summary: HomeSummaryMetric[];
       outcomesByStatus: HomeOutcomeStatusStat[];
       topBlockers: HomeBlocker[];
@@ -161,6 +169,11 @@ function createFallbackDashboard(
     state,
     organizationName,
     message,
+    projectPhase: {
+      key: "framing",
+      label: "Framing phase",
+      detail: "The project stays in framing until Tollgate 1 for the framing brief is approved."
+    },
     summary: [],
     outcomesByStatus: [],
     topBlockers: [],
@@ -202,6 +215,20 @@ export async function getHomeDashboardData(
         tollgateStatus: story.tollgateStatus ?? null
       })
     }));
+    const hasApprovedFramingTollgate = snapshot.tollgates.some(
+      (item) => item.entityType === "outcome" && item.tollgateType === "tg1_baseline" && item.status === "approved"
+    );
+    const projectPhase: HomeProjectPhase = hasApprovedFramingTollgate
+      ? {
+          key: "design",
+          label: "Design phase",
+          detail: "At least one framing brief has passed Tollgate 1, so the project can now move into design work."
+        }
+      : {
+          key: "framing",
+          label: "Framing phase",
+          detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+        };
 
     const outcomesByStatus = Object.entries(
       snapshot.outcomeStatuses.reduce<Record<string, number>>((accumulator, item) => {
@@ -303,6 +330,7 @@ export async function getHomeDashboardData(
     return {
       state: "live",
       organizationName: organization.name,
+      projectPhase,
       summary,
       outcomesByStatus,
       topBlockers: [...topBlockers, ...storyDefinitionBlockers],
