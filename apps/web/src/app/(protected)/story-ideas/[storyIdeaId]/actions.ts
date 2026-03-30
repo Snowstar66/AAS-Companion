@@ -228,7 +228,6 @@ export async function saveStoryIdeaSeedWorkspaceAction(formData: FormData) {
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
-  revalidatePath("/");
 
   if (!result.ok) {
     redirect(
@@ -289,7 +288,6 @@ export async function saveLegacyStoryIdeaWorkspaceAction(formData: FormData) {
     revalidatePath("/framing");
   }
   revalidatePath("/workspace");
-  revalidatePath("/");
 
   if (!result.ok) {
     redirect(
@@ -340,7 +338,6 @@ export async function saveStoryIdeaSeedWorkspaceInlineAction(
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
-  revalidatePath("/");
 
   if (!result.ok) {
     return {
@@ -398,7 +395,6 @@ export async function saveLegacyStoryIdeaWorkspaceInlineAction(
     revalidatePath("/framing");
   }
   revalidatePath("/workspace");
-  revalidatePath("/");
 
   if (!result.ok) {
     return {

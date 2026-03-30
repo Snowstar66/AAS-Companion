@@ -173,14 +173,9 @@ export function OutcomeAiReviewDialog({
 
       {open ? (
         <div className={`fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 ${pending ? "cursor-wait" : ""}`.trim()}>
-          <button
-            aria-label="Close framing report"
-            className="absolute inset-0 h-full w-full cursor-default"
-            onClick={() => setOpen(false)}
-            type="button"
-          />
+          <div aria-hidden="true" className="absolute inset-0" onClick={() => setOpen(false)} />
           <div
-            className="relative mx-4 my-4 flex min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+            className="relative z-10 mx-4 my-4 flex min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
             ref={panelRef}
             tabIndex={-1}
           >
