@@ -184,11 +184,12 @@ export function OutcomeAiReviewDialog({
       </form>
 
       {open ? (
-        <div className={`fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 ${pending ? "cursor-wait" : ""}`.trim()}>
-          <div aria-hidden="true" className="absolute inset-0" onClick={() => setOpen(false)} />
+        <div className={`fixed inset-0 z-50 p-4 ${pending ? "cursor-wait" : ""}`.trim()}>
+          <div aria-hidden="true" className="absolute inset-0 bg-slate-950/55" onClick={() => setOpen(false)} />
           <div
-            className="relative z-10 mx-4 my-4 flex min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+            className="relative z-10 flex h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
             ref={panelRef}
+            role="dialog"
             tabIndex={-1}
           >
             <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-border bg-background/95 px-6 py-5 backdrop-blur">
@@ -208,161 +209,165 @@ export function OutcomeAiReviewDialog({
               </Button>
             </div>
 
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-scroll overscroll-contain px-6 py-6 [scrollbar-gutter:stable]">
-              {pending ? (
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-                  AI framing review is running. The report will refresh when the response is ready.
-                </div>
-              ) : null}
-
-              {state.status === "error" ? (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
-                  AI framing review could not run: {state.message}
-                </div>
-              ) : null}
-
-              {state.status === "success" && state.report ? (
-                <>
-                  <div className={`rounded-2xl border px-5 py-5 ${getReadinessTone(state.report.framingReadiness.interpretation)}`}>
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Framing Validation Summary</p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <StatusIcon
-                            tone={
-                              state.report.framingReadiness.interpretation === "ready_for_tollgate"
-                                ? "good"
-                                : state.report.framingReadiness.interpretation === "needs_refinement"
-                                  ? "warning"
-                                  : "danger"
-                            }
-                          />
-                          <p className="text-xl font-semibold">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
-                        </div>
-                        <p className="mt-2 text-sm leading-6">
-                          Outcome Quality: {formatStatus(state.report.outcomeQuality.status)}. Problem Alignment: {formatStatus(state.report.problemAlignment.status)}.
-                          {" "}
-                          Epic Coverage: {formatStatus(state.report.epicCoverage.status)}. Story Coverage: {formatStatus(state.report.storyCoverage.status)}.
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-current/15 bg-white/60 px-5 py-4 text-center">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Framing Readiness</p>
-                        <p className="mt-2 text-3xl font-semibold">{getReadinessBand(state.report.framingReadiness.interpretation)}</p>
-                        <p className="mt-2 text-xs font-medium opacity-80">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
-                      </div>
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <div className="h-full overflow-y-auto overscroll-contain px-6 py-6 [scrollbar-gutter:stable]">
+                <div className="space-y-6">
+                  {pending ? (
+                    <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                      AI framing review is running. The report will refresh when the response is ready.
                     </div>
-                  </div>
+                  ) : null}
 
-                  <div className="grid gap-6 xl:grid-cols-2">
-                    <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
-                      <h4 className="text-sm font-semibold text-foreground">Outcome Quality</h4>
-                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                        <StatusIcon tone={state.report.outcomeQuality.status === "ok" ? "good" : "warning"} />
-                        <span>{formatStatus(state.report.outcomeQuality.status)}</span>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.outcomeQuality.comment}</p>
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                        Suggested improvement: {state.report.outcomeQuality.suggestedImprovement}
-                      </p>
-                    </section>
+                  {state.status === "error" ? (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
+                      AI framing review could not run: {state.message}
+                    </div>
+                  ) : null}
 
-                    <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
-                      <h4 className="text-sm font-semibold text-foreground">Problem Alignment</h4>
-                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                        <StatusIcon tone={state.report.problemAlignment.status === "strong" ? "good" : "warning"} />
-                        <span>{formatStatus(state.report.problemAlignment.status)}</span>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.problemAlignment.comment}</p>
-                    </section>
-                  </div>
-
-                  <div className="grid gap-6 xl:grid-cols-2">
-                    <section className="rounded-2xl border border-border/70 bg-background p-5">
-                      <h4 className="text-sm font-semibold text-foreground">Epic Coverage</h4>
-                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                        <StatusIcon tone={state.report.epicCoverage.status === "complete" ? "good" : "warning"} />
-                        <span>{formatStatus(state.report.epicCoverage.status)}</span>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.epicCoverage.comment}</p>
-                      {state.report.epicCoverage.missingAreas.length > 0 ? (
-                        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
-                          {state.report.epicCoverage.missingAreas.map((item) => (
-                            <li className="flex gap-2" key={item}>
-                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="mt-4 text-sm text-muted-foreground">No missing Epic areas were identified.</p>
-                      )}
-                    </section>
-
-                    <section className="rounded-2xl border border-border/70 bg-background p-5">
-                      <h4 className="text-sm font-semibold text-foreground">Story Coverage</h4>
-                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                        <StatusIcon tone={state.report.storyCoverage.status === "good" ? "good" : "warning"} />
-                        <span>{formatStatus(state.report.storyCoverage.status)}</span>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.storyCoverage.comment}</p>
-                      {state.report.storyCoverage.gapsOrOverlaps.length > 0 ? (
-                        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
-                          {state.report.storyCoverage.gapsOrOverlaps.map((item) => (
-                            <li className="flex gap-2" key={item}>
-                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="mt-4 text-sm text-muted-foreground">No material gaps or overlaps were identified.</p>
-                      )}
-                    </section>
-                  </div>
-
-                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-                    <section className="rounded-2xl border border-border/70 bg-background p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h4 className="text-sm font-semibold text-foreground">Risk Overview</h4>
-                        <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                          <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-muted-foreground">
-                            Expansion Risk: {formatRisk(state.report.riskOverview.expansionRisk)}
-                          </span>
-                          <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-muted-foreground">
-                            Misalignment Risk: {formatRisk(state.report.riskOverview.misalignmentRisk)}
-                          </span>
+                  {state.status === "success" && state.report ? (
+                    <>
+                      <div className={`rounded-2xl border px-5 py-5 ${getReadinessTone(state.report.framingReadiness.interpretation)}`}>
+                        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em]">Framing Validation Summary</p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <StatusIcon
+                                tone={
+                                  state.report.framingReadiness.interpretation === "ready_for_tollgate"
+                                    ? "good"
+                                    : state.report.framingReadiness.interpretation === "needs_refinement"
+                                      ? "warning"
+                                      : "danger"
+                                }
+                              />
+                              <p className="text-xl font-semibold">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
+                            </div>
+                            <p className="mt-2 text-sm leading-6">
+                              Outcome Quality: {formatStatus(state.report.outcomeQuality.status)}. Problem Alignment: {formatStatus(state.report.problemAlignment.status)}.
+                              {" "}
+                              Epic Coverage: {formatStatus(state.report.epicCoverage.status)}. Story Coverage: {formatStatus(state.report.storyCoverage.status)}.
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border border-current/15 bg-white/60 px-5 py-4 text-center">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Framing Readiness</p>
+                            <p className="mt-2 text-3xl font-semibold">{getReadinessBand(state.report.framingReadiness.interpretation)}</p>
+                            <p className="mt-2 text-xs font-medium opacity-80">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
+                          </div>
                         </div>
                       </div>
-                      {state.report.riskOverview.topRisks.length > 0 ? (
-                        <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
-                          {state.report.riskOverview.topRisks.map((item) => (
-                            <li className="flex gap-2" key={item}>
-                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="mt-4 text-sm text-muted-foreground">No top risks were returned.</p>
-                      )}
-                    </section>
 
-                    <section className="rounded-2xl border border-border/70 bg-background p-5">
-                      <h4 className="text-sm font-semibold text-foreground">AI Level</h4>
-                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                        <StatusIcon tone={state.report.aiLevel.assessment === "appropriate" ? "good" : "warning"} />
-                        <span>{formatStatus(state.report.aiLevel.assessment)}</span>
+                      <div className="grid gap-6 xl:grid-cols-2">
+                        <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
+                          <h4 className="text-sm font-semibold text-foreground">Outcome Quality</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={state.report.outcomeQuality.status === "ok" ? "good" : "warning"} />
+                            <span>{formatStatus(state.report.outcomeQuality.status)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.outcomeQuality.comment}</p>
+                          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                            Suggested improvement: {state.report.outcomeQuality.suggestedImprovement}
+                          </p>
+                        </section>
+
+                        <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
+                          <h4 className="text-sm font-semibold text-foreground">Problem Alignment</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={state.report.problemAlignment.status === "strong" ? "good" : "warning"} />
+                            <span>{formatStatus(state.report.problemAlignment.status)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.problemAlignment.comment}</p>
+                        </section>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.aiLevel.comment}</p>
-                      {state.report.aiLevel.suggestedLevel ? (
-                        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                          Suggested level: {formatAiLevel(state.report.aiLevel.suggestedLevel)}
-                        </p>
-                      ) : null}
-                    </section>
-                  </div>
-                </>
-              ) : null}
+
+                      <div className="grid gap-6 xl:grid-cols-2">
+                        <section className="rounded-2xl border border-border/70 bg-background p-5">
+                          <h4 className="text-sm font-semibold text-foreground">Epic Coverage</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={state.report.epicCoverage.status === "complete" ? "good" : "warning"} />
+                            <span>{formatStatus(state.report.epicCoverage.status)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.epicCoverage.comment}</p>
+                          {state.report.epicCoverage.missingAreas.length > 0 ? (
+                            <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                              {state.report.epicCoverage.missingAreas.map((item) => (
+                                <li className="flex gap-2" key={item}>
+                                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-4 text-sm text-muted-foreground">No missing Epic areas were identified.</p>
+                          )}
+                        </section>
+
+                        <section className="rounded-2xl border border-border/70 bg-background p-5">
+                          <h4 className="text-sm font-semibold text-foreground">Story Coverage</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={state.report.storyCoverage.status === "good" ? "good" : "warning"} />
+                            <span>{formatStatus(state.report.storyCoverage.status)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.storyCoverage.comment}</p>
+                          {state.report.storyCoverage.gapsOrOverlaps.length > 0 ? (
+                            <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                              {state.report.storyCoverage.gapsOrOverlaps.map((item) => (
+                                <li className="flex gap-2" key={item}>
+                                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-4 text-sm text-muted-foreground">No material gaps or overlaps were identified.</p>
+                          )}
+                        </section>
+                      </div>
+
+                      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+                        <section className="rounded-2xl border border-border/70 bg-background p-5">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h4 className="text-sm font-semibold text-foreground">Risk Overview</h4>
+                            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                              <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-muted-foreground">
+                                Expansion Risk: {formatRisk(state.report.riskOverview.expansionRisk)}
+                              </span>
+                              <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-muted-foreground">
+                                Misalignment Risk: {formatRisk(state.report.riskOverview.misalignmentRisk)}
+                              </span>
+                            </div>
+                          </div>
+                          {state.report.riskOverview.topRisks.length > 0 ? (
+                            <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                              {state.report.riskOverview.topRisks.map((item) => (
+                                <li className="flex gap-2" key={item}>
+                                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-4 text-sm text-muted-foreground">No top risks were returned.</p>
+                          )}
+                        </section>
+
+                        <section className="rounded-2xl border border-border/70 bg-background p-5">
+                          <h4 className="text-sm font-semibold text-foreground">AI Level</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={state.report.aiLevel.assessment === "appropriate" ? "good" : "warning"} />
+                            <span>{formatStatus(state.report.aiLevel.assessment)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.aiLevel.comment}</p>
+                          {state.report.aiLevel.suggestedLevel ? (
+                            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                              Suggested level: {formatAiLevel(state.report.aiLevel.suggestedLevel)}
+                            </p>
+                          ) : null}
+                        </section>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              </div>
             </div>
           </div>
         </div>
