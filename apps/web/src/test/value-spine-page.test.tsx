@@ -199,7 +199,9 @@ describe("Value Spine page", () => {
     expect(screen.getByText(/Delivery feedback: Expanded/i)).toBeDefined();
     expect(screen.getByText(/Derived Delivery Stories: 0/i)).toBeDefined();
     expect(screen.getByText(/Additional: 1/i)).toBeDefined();
-    expect(screen.queryByText("Extra delivery scope")).toBeNull();
+    expect(screen.getByText("Additional Delivery Stories")).toBeDefined();
+    expect(screen.getByText("Extra delivery scope")).toBeDefined();
+    expect(screen.getByText(/Additional in this Epic/i)).toBeDefined();
   });
 
   it("keeps legacy seedless stories visible as story ideas in framing views", async () => {
