@@ -228,8 +228,8 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                       <p className="font-semibold text-slate-950">Story Idea content</p>
                       <p className="mt-2">Title, linked epic, value intent and expected behavior. Not acceptance criteria, tests or DoD.</p>
                     </div>
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
-                      <p className="font-semibold text-emerald-950">Framing ready</p>
+                    <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+                      <p className="font-semibold text-sky-950">Framing ready</p>
                       <p className="mt-2">A Story Idea is framing ready when value intent, epic link and expected behavior exist.</p>
                     </div>
                   </div>

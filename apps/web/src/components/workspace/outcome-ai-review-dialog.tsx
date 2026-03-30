@@ -92,6 +92,18 @@ function formatRisk(value: "low" | "medium" | "high") {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function getReadinessBand(interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready") {
+  if (interpretation === "ready_for_tollgate") {
+    return "80-100";
+  }
+
+  if (interpretation === "needs_refinement") {
+    return "60-79";
+  }
+
+  return "<60";
+}
+
 export function OutcomeAiReviewDialog({
   outcomeId,
   currentAiLevel,
@@ -189,7 +201,7 @@ export function OutcomeAiReviewDialog({
               </Button>
             </div>
 
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-6 py-6">
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-scroll overscroll-contain px-6 py-6 [scrollbar-gutter:stable]">
               {pending ? (
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
                   AI framing review is running. The report will refresh when the response is ready.
@@ -217,7 +229,8 @@ export function OutcomeAiReviewDialog({
                       </div>
                       <div className="rounded-2xl border border-current/15 bg-white/60 px-5 py-4 text-center">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Framing Readiness</p>
-                        <p className="mt-2 text-3xl font-semibold">{state.report.framingReadiness.score}%</p>
+                        <p className="mt-2 text-3xl font-semibold">{getReadinessBand(state.report.framingReadiness.interpretation)}</p>
+                        <p className="mt-2 text-xs font-medium opacity-80">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
                       </div>
                     </div>
                   </div>

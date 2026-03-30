@@ -508,10 +508,10 @@ export function FramingOutcomeSection({
                         Story ideas with at least value intent or expected behavior captured.
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Ready for framing</p>
-                      <p className="mt-2 text-2xl font-semibold text-emerald-950">{readyStoryIdeaCount}</p>
-                      <p className="mt-2 text-sm leading-6 text-emerald-900">
+                    <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Ready for framing</p>
+                      <p className="mt-2 text-2xl font-semibold text-sky-950">{readyStoryIdeaCount}</p>
+                      <p className="mt-2 text-sm leading-6 text-sky-900">
                         Story ideas that already have both value intent and expected behavior.
                       </p>
                     </div>
@@ -536,31 +536,31 @@ export function FramingOutcomeSection({
                       </div>
                       <div className="space-y-3">
                         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] lg:items-end">
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Story idea title</span>
-                          <input
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                            defaultValue="New story idea"
-                            disabled={!canCreateStoryIdea}
-                            name="quickStoryIdeaTitle"
-                            type="text"
-                          />
-                        </label>
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Epic</span>
-                          <select
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                            disabled={!canCreateStoryIdea}
-                            name="quickStoryIdeaEpicId"
-                            defaultValue={outcome.epics[0]?.id ?? ""}
-                          >
-                            {outcome.epics.map((epic) => (
-                              <option key={epic.id} value={epic.id}>
-                                {epic.key} {epic.title}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Story idea title</span>
+                            <input
+                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                              defaultValue="New story idea"
+                              disabled={!canCreateStoryIdea}
+                              name="quickStoryIdeaTitle"
+                              type="text"
+                            />
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Epic</span>
+                            <select
+                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                              disabled={!canCreateStoryIdea}
+                              name="quickStoryIdeaEpicId"
+                              defaultValue={outcome.epics[0]?.id ?? ""}
+                            >
+                              {outcome.epics.map((epic) => (
+                                <option key={epic.id} value={epic.id}>
+                                  {epic.key} {epic.title}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
                         </div>
                         <PendingFormButton
                           className="gap-2 self-start px-5"
