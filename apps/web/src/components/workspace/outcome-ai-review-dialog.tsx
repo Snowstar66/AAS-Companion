@@ -160,7 +160,7 @@ export function OutcomeAiReviewDialog({
       </form>
 
       {open ? (
-        <div className={`fixed inset-0 z-50 bg-slate-950/55 ${pending ? "cursor-wait" : ""}`.trim()}>
+        <div className={`fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 ${pending ? "cursor-wait" : ""}`.trim()}>
           <button
             aria-label="Close framing report"
             className="absolute inset-0 h-full w-full cursor-default"
@@ -168,7 +168,7 @@ export function OutcomeAiReviewDialog({
             type="button"
           />
           <div
-            className="absolute inset-4 flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+            className="relative mx-4 my-4 flex min-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
             ref={panelRef}
             tabIndex={-1}
           >
