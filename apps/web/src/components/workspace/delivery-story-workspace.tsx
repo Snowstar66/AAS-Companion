@@ -339,10 +339,10 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                     href={
                       originStoryIdea.storyId
                         ? `/story-ideas/${originStoryIdea.storyId}`
-                        : `/epics/${originStoryIdea.epicId}#seed-${originStoryIdea.seedId}`
+                        : `/story-ideas/${originStoryIdea.seedId}`
                     }
                   >
-                    {originStoryIdea.storyId ? "Open Story Idea" : "Open Story Idea in Epic"}
+                    Open Story Idea
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>

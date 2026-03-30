@@ -1,8 +1,15 @@
 import { notFound, redirect } from "next/navigation";
 import { getStoryReadinessBlockers } from "@aas-companion/domain";
-import { getStoryWorkspaceService } from "@aas-companion/api";
+import { getDirectionSeedWorkspaceService, getStoryWorkspaceService } from "@aas-companion/api";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
+import {
+  createDeliveryStoryFromStoryIdeaSeedAction,
+  saveStoryIdeaSeedWorkspaceAction,
+  saveStoryIdeaSeedWorkspaceInlineAction,
+  validateStoryIdeaSeedExpectedBehaviorAiAction
+} from "@/app/(protected)/story-ideas/[storyIdeaId]/actions";
+import { DirectionSeedWorkspace } from "@/components/workspace/direction-seed-workspace";
 import { StoryIdeaWorkspace } from "@/components/workspace/story-idea-workspace";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 
@@ -49,7 +56,76 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
   const storyResult = await getStoryWorkspaceService(organization.organizationId, storyIdeaId);
 
   if (!storyResult.ok) {
-    notFound();
+    const directionSeedResult = await getDirectionSeedWorkspaceService(organization.organizationId, storyIdeaId);
+
+    if (!directionSeedResult.ok) {
+      notFound();
+    }
+
+    const isArchived = directionSeedResult.data.seed.lifecycleState === "archived";
+
+    return (
+      <AppShell
+        hideRightRail
+        topbarProps={{
+          eyebrow: "AAS Companion",
+          projectName: organization.organizationName,
+          sectionLabel: "Story Idea",
+          badge: directionSeedResult.data.seed.key
+        }}
+      >
+        <PageViewAnalytics
+          eventName="story_idea_workspace_viewed"
+          properties={{
+            storyIdeaId: directionSeedResult.data.seed.id,
+            storyIdeaKey: directionSeedResult.data.seed.key,
+            storyIdeaSource: "direction_seed"
+          }}
+        />
+        <section className="space-y-6">
+          {created ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              Native Story Idea created inside the current Framing.
+            </div>
+          ) : null}
+          {saveState === "success" ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              Story Idea changes were saved successfully.
+            </div>
+          ) : null}
+          {saveState === "error" && saveMessage ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{saveMessage}</div>
+          ) : null}
+          {lifecycleState === "archived" ? (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+              Story Idea archived. It is now removed from active working views but remains traceable.
+            </div>
+          ) : null}
+          {lifecycleState === "restored" ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              Story Idea restored to active work.
+            </div>
+          ) : null}
+          {lifecycleState === "error" && saveMessage ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{saveMessage}</div>
+          ) : null}
+          {isArchived ? (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+              This Story Idea is archived and currently read-only. Restore it to continue active framing work.
+            </div>
+          ) : null}
+
+          <DirectionSeedWorkspace
+            createDeliveryStoryAction={createDeliveryStoryFromStoryIdeaSeedAction}
+            data={directionSeedResult.data}
+            isArchived={isArchived}
+            saveAction={saveStoryIdeaSeedWorkspaceAction}
+            saveInlineAction={saveStoryIdeaSeedWorkspaceInlineAction}
+            validateAction={validateStoryIdeaSeedExpectedBehaviorAiAction}
+          />
+        </section>
+      </AppShell>
+    );
   }
 
   const { story, tollgate, tollgateReview } = storyResult.data;

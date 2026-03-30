@@ -121,6 +121,40 @@ export async function getEpicWorkspaceService(
   });
 }
 
+export async function getDirectionSeedWorkspaceService(
+  organizationId: string,
+  directionSeedId: string
+) {
+  const seed = await getDirectionSeedById(organizationId, directionSeedId);
+
+  if (!seed) {
+    return failure({
+      code: "direction_seed_not_found",
+      message: "Story Idea was not found in the current organization."
+    });
+  }
+
+  const [epic, outcome, derivedDeliveryStories] = await Promise.all([
+    getEpicById(organizationId, seed.epicId),
+    getOutcomeById(organizationId, seed.outcomeId),
+    listStoriesByDirectionSeedId(organizationId, seed.id)
+  ]);
+
+  if (!epic || !outcome) {
+    return failure({
+      code: "direction_seed_context_missing",
+      message: "Story Idea context could not be resolved."
+    });
+  }
+
+  return success({
+    seed,
+    epic,
+    outcome,
+    derivedDeliveryStories
+  });
+}
+
 export async function createNativeEpicFromOutcomeService(input: {
   organizationId: string;
   outcomeId: string;

@@ -103,7 +103,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       ...selectedDirectionSeeds.map((seed) => ({
         id: seed.id,
         epicId: seed.epicId,
-        href: `/epics/${seed.epicId}#seed-${seed.id}`,
+        href: `/story-ideas/${seed.id}`,
         ready: isStoryIdeaReadyForFraming({
           shortDescription: seed.shortDescription,
           expectedBehavior: seed.expectedBehavior
@@ -250,7 +250,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     id: seed.id,
                     key: seed.key,
                     title: seed.title,
-                    href: `/epics/${epic.id}#seed-${seed.id}`,
+                    href: `/story-ideas/${seed.id}`,
                     isCurrent: false,
                     shortDescription: seed.shortDescription ?? null,
                     expectedBehavior: seed.expectedBehavior ?? null,

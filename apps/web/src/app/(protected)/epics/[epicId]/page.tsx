@@ -187,7 +187,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     id: seed.id,
                     key: seed.key,
                     title: seed.title,
-                    href: `/epics/${epic.id}#seed-${seed.id}`,
+                    href: `/story-ideas/${seed.id}`,
                     isCurrent: false,
                     shortDescription: seed.shortDescription ?? null,
                     expectedBehavior: seed.expectedBehavior ?? null,
