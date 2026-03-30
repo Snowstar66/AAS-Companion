@@ -183,8 +183,11 @@ export function FramingOutcomeSection({
 
     const epicSeeds = seedsByEpicId.get(story.epicId) ?? [];
     const mappedSourceStoryIds = new Set(epicSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+    const hasExplicitStoryIdeas = epicSeeds.length > 0;
 
-    return !isLikelyDeliveryStory(story, mappedSourceStoryIds);
+    return !hasExplicitStoryIdeas
+      ? story.status === "draft" || story.status === "definition_blocked" || !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+      : !isLikelyDeliveryStory(story, mappedSourceStoryIds);
   });
   const visibleStoryIdeaCount = outcome.directionSeeds.length + legacyStoryIdeas.length;
   const startedStoryIdeaCount =

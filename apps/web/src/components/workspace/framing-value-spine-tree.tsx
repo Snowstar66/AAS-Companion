@@ -657,13 +657,17 @@ function EpicRow({
   const directionSeeds = epic.directionSeeds ?? [];
   const stories = epic.stories ?? [];
   const mappedSourceStoryIds = new Set(directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
-  const additionalDeliveryStories = stories.filter(
-    (story) => !story.sourceDirectionSeedId && isLikelyDeliveryStory(story, mappedSourceStoryIds)
-  );
+  const hasExplicitStoryIdeas = directionSeeds.length > 0;
   const framingStories = stories.filter(
     (story) =>
       !story.sourceDirectionSeedId &&
-      !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+      (!hasExplicitStoryIdeas
+        ? story.status === "draft" || story.status === "definition_blocked" || !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+        : !isLikelyDeliveryStory(story, mappedSourceStoryIds))
+  );
+  const framingStoryIds = new Set(framingStories.map((story) => story.id));
+  const additionalDeliveryStories = stories.filter(
+    (story) => !story.sourceDirectionSeedId && !framingStoryIds.has(story.id) && isLikelyDeliveryStory(story, mappedSourceStoryIds)
   );
   const itemCount = mode === "framing" ? directionSeeds.length + framingStories.length : stories.length;
   const framingNeedsAttention = directionSeeds.filter(
@@ -736,7 +740,9 @@ function EpicRow({
       </div>
 
       <div className="border-t border-border/70">
-        {itemCount === 0 ? (
+        {mode === "framing" && storyIdeaCount === 0 && additionalDeliveryStories.length === 0 ? (
+          <div className="px-5 py-4 text-sm text-muted-foreground">{emptyStoryMessage}</div>
+        ) : mode !== "framing" && itemCount === 0 ? (
           <div className="px-5 py-4 text-sm text-muted-foreground">{emptyStoryMessage}</div>
         ) : (
           <div className="space-y-4 p-4">
