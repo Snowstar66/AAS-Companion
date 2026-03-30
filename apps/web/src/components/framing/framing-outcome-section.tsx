@@ -534,7 +534,7 @@ export function FramingOutcomeSection({
                           Create a new Story Idea directly from Framing and assign its Epic now, without opening the Epic first.
                         </p>
                       </div>
-                      <div className="grid gap-3 md:grid-cols-[minmax(0,1.2fr)_minmax(220px,320px)_auto] md:items-end">
+                      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] lg:items-end xl:grid-cols-[minmax(280px,1.2fr)_minmax(240px,320px)_auto]">
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Story idea title</span>
                           <input
@@ -561,7 +561,7 @@ export function FramingOutcomeSection({
                           </select>
                         </label>
                         <PendingFormButton
-                          className="gap-2 md:h-11 md:px-5"
+                          className="gap-2 lg:w-fit lg:px-5 lg:py-0 xl:h-11"
                           disabled={!canCreateStoryIdea}
                           formAction={createStoryIdeaAction}
                           icon={<ArrowRight className="h-4 w-4" />}

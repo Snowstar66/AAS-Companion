@@ -109,6 +109,12 @@ export function OutcomeAiReviewDialog({
   }, [state.status]);
 
   useEffect(() => {
+    if (pending) {
+      setOpen(true);
+    }
+  }, [pending]);
+
+  useEffect(() => {
     if (!open) {
       return;
     }
@@ -140,16 +146,21 @@ export function OutcomeAiReviewDialog({
 
   return (
     <>
-      <form action={formAction}>
+      <form
+        action={formAction}
+        onSubmit={() => {
+          setOpen(true);
+        }}
+      >
         <input name="outcomeId" type="hidden" value={outcomeId} />
-        <Button className="gap-2" disabled={pending} type="submit" variant="secondary">
+        <Button aria-busy={pending} className={`gap-2 ${pending ? "cursor-wait" : ""}`.trim()} disabled={pending} type="submit" variant="secondary">
           <Sparkles className="h-4 w-4" />
           {pending ? "Reviewing framing..." : "AI review framing"}
         </Button>
       </form>
 
       {open ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/55">
+        <div className={`fixed inset-0 z-50 bg-slate-950/55 ${pending ? "cursor-wait" : ""}`.trim()}>
           <button
             aria-label="Close framing report"
             className="absolute inset-0 h-full w-full cursor-default"
@@ -157,7 +168,7 @@ export function OutcomeAiReviewDialog({
             type="button"
           />
           <div
-            className="absolute inset-4 flex flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
+            className="absolute inset-4 flex min-h-0 flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-[0_24px_80px_rgba(15,23,42,0.18)]"
             ref={panelRef}
             tabIndex={-1}
           >
@@ -178,7 +189,13 @@ export function OutcomeAiReviewDialog({
               </Button>
             </div>
 
-            <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-6 py-6">
+              {pending ? (
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                  AI framing review is running. The report will refresh when the response is ready.
+                </div>
+              ) : null}
+
               {state.status === "error" ? (
                 <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
                   AI framing review could not run: {state.message}
