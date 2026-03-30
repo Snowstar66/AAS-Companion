@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { AlertTriangle, PanelRightOpen, Sparkles, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleAlert, ShieldAlert, Sparkles, X } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import type { reviewOutcomeFramingWithAiAction } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 
@@ -104,6 +104,18 @@ function getReadinessBand(interpretation: "ready_for_tollgate" | "needs_refineme
   return "<60";
 }
 
+function StatusIcon(props: { tone: "good" | "warning" | "danger" }) {
+  if (props.tone === "good") {
+    return <CheckCircle2 className="h-4 w-4 text-emerald-700" />;
+  }
+
+  if (props.tone === "warning") {
+    return <CircleAlert className="h-4 w-4 text-amber-600" />;
+  }
+
+  return <ShieldAlert className="h-4 w-4 text-rose-700" />;
+}
+
 export function OutcomeAiReviewDialog({
   outcomeId,
   currentAiLevel,
@@ -182,7 +194,7 @@ export function OutcomeAiReviewDialog({
             <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-border bg-background/95 px-6 py-5 backdrop-blur">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  <PanelRightOpen className="h-3.5 w-3.5" />
+                  <Sparkles className="h-3.5 w-3.5" />
                   AI framing review
                 </div>
                 <h3 className="text-xl font-semibold text-foreground">Framing review report</h3>
@@ -215,7 +227,18 @@ export function OutcomeAiReviewDialog({
                     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.18em]">Framing Validation Summary</p>
-                        <p className="mt-2 text-xl font-semibold">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <StatusIcon
+                            tone={
+                              state.report.framingReadiness.interpretation === "ready_for_tollgate"
+                                ? "good"
+                                : state.report.framingReadiness.interpretation === "needs_refinement"
+                                  ? "warning"
+                                  : "danger"
+                            }
+                          />
+                          <p className="text-xl font-semibold">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
+                        </div>
                         <p className="mt-2 text-sm leading-6">
                           Outcome Quality: {formatStatus(state.report.outcomeQuality.status)}. Problem Alignment: {formatStatus(state.report.problemAlignment.status)}.
                           {" "}
@@ -233,7 +256,10 @@ export function OutcomeAiReviewDialog({
                   <div className="grid gap-6 xl:grid-cols-2">
                     <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
                       <h4 className="text-sm font-semibold text-foreground">Outcome Quality</h4>
-                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.outcomeQuality.status)}</p>
+                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                        <StatusIcon tone={state.report.outcomeQuality.status === "ok" ? "good" : "warning"} />
+                        <span>{formatStatus(state.report.outcomeQuality.status)}</span>
+                      </div>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.outcomeQuality.comment}</p>
                       <p className="mt-3 text-sm leading-6 text-muted-foreground">
                         Suggested improvement: {state.report.outcomeQuality.suggestedImprovement}
@@ -242,7 +268,10 @@ export function OutcomeAiReviewDialog({
 
                     <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
                       <h4 className="text-sm font-semibold text-foreground">Problem Alignment</h4>
-                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.problemAlignment.status)}</p>
+                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                        <StatusIcon tone={state.report.problemAlignment.status === "strong" ? "good" : "warning"} />
+                        <span>{formatStatus(state.report.problemAlignment.status)}</span>
+                      </div>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.problemAlignment.comment}</p>
                     </section>
                   </div>
@@ -250,7 +279,10 @@ export function OutcomeAiReviewDialog({
                   <div className="grid gap-6 xl:grid-cols-2">
                     <section className="rounded-2xl border border-border/70 bg-background p-5">
                       <h4 className="text-sm font-semibold text-foreground">Epic Coverage</h4>
-                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.epicCoverage.status)}</p>
+                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                        <StatusIcon tone={state.report.epicCoverage.status === "complete" ? "good" : "warning"} />
+                        <span>{formatStatus(state.report.epicCoverage.status)}</span>
+                      </div>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.epicCoverage.comment}</p>
                       {state.report.epicCoverage.missingAreas.length > 0 ? (
                         <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
@@ -268,7 +300,10 @@ export function OutcomeAiReviewDialog({
 
                     <section className="rounded-2xl border border-border/70 bg-background p-5">
                       <h4 className="text-sm font-semibold text-foreground">Story Coverage</h4>
-                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.storyCoverage.status)}</p>
+                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                        <StatusIcon tone={state.report.storyCoverage.status === "good" ? "good" : "warning"} />
+                        <span>{formatStatus(state.report.storyCoverage.status)}</span>
+                      </div>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.storyCoverage.comment}</p>
                       {state.report.storyCoverage.gapsOrOverlaps.length > 0 ? (
                         <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
@@ -314,7 +349,10 @@ export function OutcomeAiReviewDialog({
 
                     <section className="rounded-2xl border border-border/70 bg-background p-5">
                       <h4 className="text-sm font-semibold text-foreground">AI Level</h4>
-                      <p className="mt-3 text-sm font-medium text-foreground">{formatStatus(state.report.aiLevel.assessment)}</p>
+                      <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                        <StatusIcon tone={state.report.aiLevel.assessment === "appropriate" ? "good" : "warning"} />
+                        <span>{formatStatus(state.report.aiLevel.assessment)}</span>
+                      </div>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.aiLevel.comment}</p>
                       {state.report.aiLevel.suggestedLevel ? (
                         <p className="mt-3 text-sm leading-6 text-muted-foreground">
