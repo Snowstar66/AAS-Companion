@@ -208,6 +208,29 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                       seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
                         ? `/review?candidateId=${seed.lineageSourceId}`
                         : null
+                  })),
+                stories: (epic.stories ?? [])
+                  .filter((story) => story.lifecycleState === "active")
+                  .map((story) => ({
+                    id: story.id,
+                    key: story.key,
+                    title: story.title,
+                    href: `/stories/${story.id}`,
+                    isCurrent: false,
+                    valueIntent: story.valueIntent ?? null,
+                    expectedBehavior: story.expectedBehavior ?? null,
+                    testDefinition: story.testDefinition ?? null,
+                    acceptanceCriteria: story.acceptanceCriteria,
+                    definitionOfDone: story.definitionOfDone,
+                    status: story.status,
+                    originType: story.originType,
+                    lifecycleState: story.lifecycleState,
+                    tollgateStatus: story.tollgateStatus ?? null,
+                    importedReadinessState: story.importedReadinessState ?? null,
+                    lineageHref:
+                      story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                        ? `/review?candidateId=${story.lineageSourceId}`
+                        : null
                   }))
               }))}
               outcome={{

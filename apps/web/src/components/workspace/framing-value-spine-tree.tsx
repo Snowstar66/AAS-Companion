@@ -46,6 +46,7 @@ type TreeStory = {
   href: string;
   isCurrent?: boolean;
   valueIntent?: string | null | undefined;
+  expectedBehavior?: string | null | undefined;
   testDefinition: string | null;
   acceptanceCriteria?: string[] | undefined;
   definitionOfDone?: string[] | undefined;
@@ -257,6 +258,71 @@ function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
   );
 }
 
+function StoryIdeaRow({ story }: { story: TreeStory }) {
+  const needsAttention = !story.valueIntent?.trim() || !story.expectedBehavior?.trim();
+  const framingStatus = needsAttention ? "Needs refinement" : "Clear enough for framing";
+  const nextImprovement = !story.valueIntent?.trim()
+    ? "Add Value Intent so the story idea explains why it matters."
+    : !story.expectedBehavior?.trim()
+      ? "Add Expected Behavior so the story idea better guides design and AI refinement."
+      : "No immediate framing changes are required.";
+
+  return (
+    <div
+      className={`border-l-4 px-5 py-4 ${
+        needsAttention ? "border-l-amber-400 border-amber-200 bg-amber-50/35" : "border-l-transparent border-border/70 bg-background"
+      }`}
+      id={`story-idea-${story.id}`}
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story idea</p>
+            <h5 className="text-sm font-semibold text-foreground">{story.key}</h5>
+          </div>
+          <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {story.valueIntent?.trim() || "Add Value Intent so this story idea explains what user or business value it should create."}
+          </p>
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">Framing status:</span> {framingStatus}
+          </p>
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">Expected behavior:</span> {story.expectedBehavior?.trim() || "Not described yet."}
+          </p>
+          <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
+            <span className="font-medium">Next improvement:</span> {nextImprovement}
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {joinMeta([
+              getOriginLabel(story.originType),
+              formatLabel(story.lifecycleState),
+              "Legacy story source",
+              formatLabel(story.importedReadinessState)
+            ])}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {story.lineageHref ? (
+            <Button asChild size="sm" variant="secondary">
+              <Link href={story.lineageHref}>
+                <FileSearch className="mr-2 h-3.5 w-3.5" />
+                Open lineage
+              </Link>
+            </Button>
+          ) : null}
+          <Button asChild size="sm" variant="secondary">
+            <Link href={story.href}>
+              Open Story idea
+              <ArrowRight className="ml-2 h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StoryRow({ story }: { story: TreeStory }) {
   const storyUx = getStoryUxModel({
     id: story.id,
@@ -370,9 +436,14 @@ function EpicRow({
 }) {
   const directionSeeds = epic.directionSeeds ?? [];
   const stories = epic.stories ?? [];
-  const itemCount = mode === "framing" ? directionSeeds.length : stories.length;
+  const mappedSourceStoryIds = new Set(directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+  const framingStories = stories.filter((story) => !mappedSourceStoryIds.has(story.id));
+  const itemCount = mode === "framing" ? directionSeeds.length + framingStories.length : stories.length;
   const framingNeedsAttention = directionSeeds.filter((seed) => !seed.shortDescription?.trim()).length;
   const deliveryNeedsAttention = stories.filter((story) => getMissingStoryInputs(story).length > 0).length;
+  const framingStoryNeedsAttention = framingStories.filter(
+    (story) => !story.valueIntent?.trim() || !story.expectedBehavior?.trim()
+  ).length;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/55">
@@ -396,8 +467,8 @@ function EpicRow({
                   ? `${itemCount} direction seed${itemCount === 1 ? "" : "s"}`
                   : `${itemCount} stor${itemCount === 1 ? "y" : "ies"} in branch`,
                 mode === "framing"
-                  ? framingNeedsAttention > 0
-                    ? `${framingNeedsAttention} need clearer descriptions`
+                  ? framingNeedsAttention + framingStoryNeedsAttention > 0
+                    ? `${framingNeedsAttention + framingStoryNeedsAttention} need clearer descriptions`
                     : null
                   : deliveryNeedsAttention > 0
                     ? `${deliveryNeedsAttention} need attention`
@@ -431,7 +502,10 @@ function EpicRow({
         ) : (
           <div className="divide-y divide-border/70">
             {mode === "framing"
-              ? directionSeeds.map((seed) => <DirectionSeedRow key={seed.id} seed={seed} />)
+              ? [
+                  ...directionSeeds.map((seed) => <DirectionSeedRow key={`seed-${seed.id}`} seed={seed} />),
+                  ...framingStories.map((story) => <StoryIdeaRow key={`legacy-story-${story.id}`} story={story} />)
+                ]
               : stories.map((story) => <StoryRow key={story.id} story={story} />)}
           </div>
         )}

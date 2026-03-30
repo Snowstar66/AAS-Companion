@@ -240,6 +240,7 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
               title: true,
               storyType: true,
               valueIntent: true,
+              expectedBehavior: true,
               acceptanceCriteria: true,
               aiUsageScope: true,
               aiAccelerationLevel: true,

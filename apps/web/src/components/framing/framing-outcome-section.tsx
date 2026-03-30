@@ -532,6 +532,28 @@ export function FramingOutcomeSection({
                         seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
                           ? `/review?candidateId=${seed.lineageSourceId}`
                       : null
+                    })),
+                  stories: outcome.stories
+                    .filter((story) => story.epicId === epic.id)
+                    .map((story) => ({
+                      id: story.id,
+                      key: story.key,
+                      title: story.title,
+                      href: `/stories/${story.id}`,
+                      isCurrent: false,
+                      valueIntent: story.valueIntent ?? null,
+                      expectedBehavior: story.expectedBehavior ?? null,
+                      testDefinition: story.testDefinition ?? null,
+                      acceptanceCriteria: story.acceptanceCriteria,
+                      definitionOfDone: story.definitionOfDone,
+                      status: story.status,
+                      originType: story.originType,
+                      lifecycleState: story.lifecycleState,
+                      importedReadinessState: story.importedReadinessState ?? null,
+                      lineageHref:
+                        story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                          ? `/review?candidateId=${story.lineageSourceId}`
+                          : null
                     }))
                 }))}
                 outcome={{
