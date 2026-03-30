@@ -339,11 +339,11 @@ function getOperationalBadgeClasses(status: OperationalReviewItem["status"]) {
 
 function getOperationalStatusLabel(status: OperationalReviewItem["status"]) {
   if (status === "approved") {
-    return "Ready now";
+    return "Ready to start build";
   }
 
   if (status === "ready") {
-    return "In progress";
+    return "Needs human review";
   }
 
   return "Blocked";
@@ -351,14 +351,10 @@ function getOperationalStatusLabel(status: OperationalReviewItem["status"]) {
 
 function getOperationalSectionLabel(workflow: OperationalReviewItem["workflow"]) {
   if (workflow === "outcome_tollgate") {
-    return "Framing review";
+    return "Framing brief";
   }
 
-  if (workflow === "story_handoff") {
-    return "Delivery handoff";
-  }
-
-  return "Delivery review";
+  return "Delivery Story";
 }
 
 function ReviewSummaryCard(props: {
@@ -453,20 +449,20 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   }> = [
     {
       title: "Framing review",
-      description: "Outcome tollgates and framing decisions that still need a human reviewer.",
+      description: "Framing briefs and related framing decisions that still need a human reviewer. Story Ideas stay in Framing and Import, not in Delivery review.",
       items: operationalReview.items.filter((item) => item.workflow === "outcome_tollgate"),
       defaultOpen: true
     },
     {
       title: "Delivery review",
-      description: "Delivery Stories that still need human review before handoff can continue.",
-      items: operationalReview.items.filter((item) => item.workflow === "story_review" || item.workflow === "story_handoff"),
+      description: "Only Delivery Stories appear here. Use this lane when a Delivery Story still needs human review or is ready to start build.",
+      items: operationalReview.items.filter((item) => item.workflow === "story_review" || item.workflow === "delivery_start"),
       defaultOpen: true
     }
   ];
   const framingReviewItems = operationalReview.items.filter((item) => item.workflow === "outcome_tollgate");
   const deliveryReviewItems = operationalReview.items.filter(
-    (item) => item.workflow === "story_review" || item.workflow === "story_handoff"
+    (item) => item.workflow === "story_review" || item.workflow === "delivery_start"
   );
   const projectName =
     operationalReview.organizationName && operationalReview.organizationName !== "Unknown project"
@@ -474,7 +470,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
       : queue.organizationName;
   const firstBlockedOperational = operationalReview.items.find((item) => item.status === "blocked") ?? null;
   const firstInProgressOperational = operationalReview.items.find((item) => item.status === "ready") ?? null;
-  const firstReadyHandoff = operationalReview.items.find((item) => item.workflow === "story_handoff") ?? null;
+  const firstReadyToStart = operationalReview.items.find((item) => item.workflow === "delivery_start") ?? null;
   const firstImportedCandidate =
     queue.items.find((candidate) => {
       const state = getBacklogState(candidate);
@@ -517,7 +513,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-semibold text-foreground">Delivery review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Delivery Stories, Value Spine validation and handoffs belong here. This is where execution readiness is checked.
+                Only Delivery Stories belong here. This is where execution readiness is checked before build starts.
               </p>
             </div>
           </div>
@@ -540,19 +536,19 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ReviewSummaryCard
-            actionHref={firstBlockedOperational?.href ?? firstInProgressOperational?.href ?? firstReadyHandoff?.href}
+            actionHref={firstBlockedOperational?.href ?? firstInProgressOperational?.href ?? firstReadyToStart?.href}
             actionLabel={
               firstBlockedOperational
                 ? "Open first blocked review"
                 : firstInProgressOperational
                   ? "Open next review"
-                  : firstReadyHandoff
-                    ? "Open ready handoff"
+                  : firstReadyToStart
+                    ? "Open ready Delivery Story"
                     : undefined
             }
             className="border-border/70 bg-background text-foreground"
             count={operationalReview.summary.total}
-            description="All framing reviews, delivery reviews and handoff completions that still need human attention."
+            description="All framing reviews and Delivery Story reviews that still need human attention."
             label="Needs human action now"
           />
           <ReviewSummaryCard
@@ -568,7 +564,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             actionLabel={deliveryReviewItems[0] ? "Open delivery review" : undefined}
             className="border-indigo-200 bg-indigo-50 text-indigo-950"
             count={deliveryReviewItems.length}
-            description="Delivery Stories and handoffs that still need a human decision or completion step."
+            description="Delivery Stories that still need a human decision or are ready to start build."
             label="Delivery review"
           />
           <ReviewSummaryCard
@@ -616,7 +612,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           <CardHeader>
             <CardTitle>Human review lanes</CardTitle>
             <CardDescription>
-              This page is split into Framing review and Delivery review. Open the linked item, record the human decision in its own workspace, then return here for the next checkpoint.
+              This page is split into Framing review and Delivery review. Story Ideas stay in Framing or Import. Delivery review only shows Delivery Stories that need a human decision before build can start.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -626,7 +622,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </div>
             ) : operationalReview.items.length === 0 ? (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                No framing reviews, delivery reviews or handoffs are currently waiting for human action.
+                No framing reviews or Delivery Story reviews are currently waiting for human action.
               </div>
             ) : (
               operationalGroups.map((group) => (

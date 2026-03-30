@@ -121,11 +121,11 @@ vi.mock("@/lib/review/operational-review", () => ({
       total: 3,
       blocked: 1,
       inProgress: 1,
-      handoffReady: 1,
+      deliveryStartReady: 1,
       outcomeTollgates: 1,
       storyReviews: 1
     },
-    message: "Stories, handoffs and tollgates with human work are collected here.",
+    message: "Framing reviews and Delivery Story reviews with human work are collected here.",
     items: [
       {
         id: "outcome-1",
@@ -155,7 +155,7 @@ vi.mock("@/lib/review/operational-review", () => ({
         tone: "progress",
         actionLabel: "Open Delivery Story review",
         href: "/stories/story-1#story-signoff",
-        description: "1 sign-off lane still remains before this Delivery Story is ready for handoff.",
+        description: "1 sign-off lane still remains before this Delivery Story is ready to start build.",
         context: "OUT-001 / EPC-001",
         blocker: null,
         pendingLaneCount: 1,
@@ -163,16 +163,16 @@ vi.mock("@/lib/review/operational-review", () => ({
       },
       {
         id: "handoff-1",
-        workflow: "story_handoff",
+        workflow: "delivery_start",
         entityType: "story",
         entityId: "story-2",
         key: "STR-004",
-        title: "Ready handoff story",
+        title: "Ready Delivery Story",
         status: "approved",
         tone: "success",
-        actionLabel: "Open handoff",
+        actionLabel: "Open delivery start",
         href: "/handoff/story-2",
-        description: "Approval is complete. Open the handoff page to finalize delivery handoff.",
+        description: "Delivery review is complete. Open the delivery start page to finalize the build package.",
         context: "OUT-001 / EPC-001",
         blocker: null,
         pendingLaneCount: 0,
@@ -204,7 +204,7 @@ describe("Review queue page", () => {
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate review")).toBeDefined();
     expect(screen.getByText("Delivery Story review")).toBeDefined();
-    expect(screen.getAllByRole("link", { name: "Open handoff" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Open delivery start" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });
