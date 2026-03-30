@@ -351,14 +351,14 @@ function getOperationalStatusLabel(status: OperationalReviewItem["status"]) {
 
 function getOperationalSectionLabel(workflow: OperationalReviewItem["workflow"]) {
   if (workflow === "outcome_tollgate") {
-    return "Outcome tollgates";
+    return "Framing review";
   }
 
   if (workflow === "story_handoff") {
-    return "Ready handoffs";
+    return "Delivery handoff";
   }
 
-  return "Story approvals";
+  return "Delivery review";
 }
 
 function ReviewSummaryCard(props: {
@@ -452,24 +452,22 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     defaultOpen: boolean;
   }> = [
     {
-      title: "Outcome tollgates",
-      description: "Formal TG1 review and approval work that still needs human progress.",
+      title: "Framing review",
+      description: "Outcome tollgates and framing decisions that still need a human reviewer.",
       items: operationalReview.items.filter((item) => item.workflow === "outcome_tollgate"),
       defaultOpen: true
     },
     {
-      title: "Story approvals",
-      description: "Story review and approval lanes that still need human action.",
-      items: operationalReview.items.filter((item) => item.workflow === "story_review"),
-      defaultOpen: true
-    },
-    {
-      title: "Ready handoffs",
-      description: "Stories that are already approved and are waiting for handoff completion.",
-      items: operationalReview.items.filter((item) => item.workflow === "story_handoff"),
+      title: "Delivery review",
+      description: "Delivery Stories that still need human review before handoff can continue.",
+      items: operationalReview.items.filter((item) => item.workflow === "story_review" || item.workflow === "story_handoff"),
       defaultOpen: true
     }
   ];
+  const framingReviewItems = operationalReview.items.filter((item) => item.workflow === "outcome_tollgate");
+  const deliveryReviewItems = operationalReview.items.filter(
+    (item) => item.workflow === "story_review" || item.workflow === "story_handoff"
+  );
   const projectName =
     operationalReview.organizationName && operationalReview.organizationName !== "Unknown project"
       ? operationalReview.organizationName
@@ -500,26 +498,26 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">Human Review dashboard</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
             Use this page whenever you want one answer to the question: what still needs a human decision right now?
-            Framing and Value Spine hold the working context, while Human Review collects every review, approval and
-            handoff checkpoint that still needs a person.
+            Framing and Value Spine hold the working context, while Human Review separates framing decisions from
+            delivery checkpoints so you do not have to guess what kind of review you are looking at.
           </p>
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-semibold text-foreground">Human Review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Start here when you want to know what a human must review, approve, confirm or hand off next.
+                Start here when you want to know what a human must review, clarify or hand off next.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <p className="text-sm font-semibold text-foreground">Framing</p>
+              <p className="text-sm font-semibold text-foreground">Framing review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Use Framing to define the business case, baseline, owner and outcome tollgate context.
+                Story Ideas, baseline decisions and Tollgate 1 belong here. This is about intent and direction, not delivery execution.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <p className="text-sm font-semibold text-foreground">Value Spine</p>
+              <p className="text-sm font-semibold text-foreground">Delivery review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Use Value Spine to inspect the branch, understand story paths and see what each Story still needs.
+                Delivery Stories, Value Spine validation and handoffs belong here. This is where execution readiness is checked.
               </p>
             </div>
           </div>
@@ -554,8 +552,24 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             }
             className="border-border/70 bg-background text-foreground"
             count={operationalReview.summary.total}
-            description="All live outcome tollgates, story approvals and handoff completions that still need human attention."
+            description="All framing reviews, delivery reviews and handoff completions that still need human attention."
             label="Needs human action now"
+          />
+          <ReviewSummaryCard
+            actionHref={framingReviewItems[0]?.href}
+            actionLabel={framingReviewItems[0] ? "Open framing review" : undefined}
+            className="border-sky-200 bg-sky-50 text-sky-950"
+            count={framingReviewItems.length}
+            description="Outcome tollgates and framing decisions that still need a human reviewer."
+            label="Framing review"
+          />
+          <ReviewSummaryCard
+            actionHref={deliveryReviewItems[0]?.href}
+            actionLabel={deliveryReviewItems[0] ? "Open delivery review" : undefined}
+            className="border-indigo-200 bg-indigo-50 text-indigo-950"
+            count={deliveryReviewItems.length}
+            description="Delivery Stories and handoffs that still need a human decision or completion step."
+            label="Delivery review"
           />
           <ReviewSummaryCard
             actionHref={firstBlockedOperational?.href}
@@ -564,22 +578,6 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             count={operationalReview.summary.blocked}
             description="Human work cannot continue until these blockers are cleared in the linked workspace."
             label="Blocked reviews"
-          />
-          <ReviewSummaryCard
-            actionHref={firstInProgressOperational?.href}
-            actionLabel={firstInProgressOperational ? "Continue review" : undefined}
-            className="border-sky-200 bg-sky-50 text-sky-950"
-            count={operationalReview.summary.inProgress}
-            description="The review exists and humans are involved, but final approval is still not complete."
-            label="Reviews in progress"
-          />
-          <ReviewSummaryCard
-            actionHref={firstReadyHandoff?.href}
-            actionLabel={firstReadyHandoff ? "Open handoff" : undefined}
-            className="border-emerald-200 bg-emerald-50 text-emerald-950"
-            count={operationalReview.summary.handoffReady}
-            description="Stories that are already approved and only need the final human handoff completion step."
-            label="Ready handoffs"
           />
         </div>
 
@@ -618,7 +616,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           <CardHeader>
             <CardTitle>Human review lanes</CardTitle>
             <CardDescription>
-              This is the fast lane for project-side approvals and handoffs. Open the linked item, record the human decision in its own workspace, then return here for the next checkpoint.
+              This page is split into Framing review and Delivery review. Open the linked item, record the human decision in its own workspace, then return here for the next checkpoint.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -628,7 +626,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </div>
             ) : operationalReview.items.length === 0 ? (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                No story approvals, handoffs or outcome tollgates are currently waiting for human action.
+                No framing reviews, delivery reviews or handoffs are currently waiting for human action.
               </div>
             ) : (
               operationalGroups.map((group) => (

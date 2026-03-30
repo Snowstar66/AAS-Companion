@@ -150,12 +150,12 @@ vi.mock("@/lib/review/operational-review", () => ({
         entityType: "story",
         entityId: "story-1",
         key: "STR-003",
-        title: "Story approval review",
+        title: "Delivery Story review",
         status: "ready",
         tone: "progress",
-        actionLabel: "Open Story approval",
+        actionLabel: "Open Delivery Story review",
         href: "/stories/story-1#story-signoff",
-        description: "1 sign-off lane still remains before this Story is approved.",
+        description: "1 sign-off lane still remains before this Delivery Story is ready for handoff.",
         context: "OUT-001 / EPC-001",
         blocker: null,
         pendingLaneCount: 1,
@@ -196,11 +196,14 @@ describe("Review queue page", () => {
 
     expect(screen.getByRole("heading", { name: "Human Review dashboard", level: 1 })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Human review lanes" })).toBeDefined();
+    expect(screen.getAllByText("Framing review").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Delivery review").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Imported review backlog" })).toBeDefined();
     expect(screen.getByText(/Use this page whenever you want one answer to the question/i)).toBeDefined();
     expect(screen.getByText("Needs human action now")).toBeDefined();
-    expect(screen.getAllByText("Needs confirmation").length).toBeGreaterThan(0);
+    expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate review")).toBeDefined();
+    expect(screen.getByText("Delivery Story review")).toBeDefined();
     expect(screen.getAllByRole("link", { name: "Open handoff" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();

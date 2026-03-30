@@ -149,7 +149,7 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           title: outcome.title,
           status: summary.status,
           tone: getTone(summary.status),
-          actionLabel: "Open Outcome tollgate",
+          actionLabel: "Open Framing review",
           href: `/outcomes/${outcome.id}`,
           description:
             summary.status === "blocked"
@@ -228,12 +228,12 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           title: story.title,
           status: summary.status,
           tone: getTone(summary.status),
-          actionLabel: "Open Story approval",
+          actionLabel: "Open Delivery Story review",
           href: `/stories/${story.id}#story-signoff`,
           description:
             summary.status === "blocked"
-              ? blocker ?? "Story review still has blockers before approval can continue."
-              : `${summary.pendingRequirements.length} sign-off lane${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before this Story is approved.`,
+              ? blocker ?? "Delivery review still has blockers before handoff can continue."
+              : `${summary.pendingRequirements.length} sign-off lane${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before this Delivery Story is ready for handoff.`,
           context,
           blocker,
           pendingLaneCount: summary.pendingRequirements.length,

@@ -31,8 +31,8 @@ export async function loadOperationalReviewDashboard() {
       summary: result.data.summary,
       message:
         result.data.items.length > 0
-          ? "Stories, handoffs and tollgates with human work are collected here."
-          : "No story approvals, handoffs or tollgates are currently waiting for human action."
+          ? "Framing reviews, delivery reviews and handoffs with human work are collected here."
+          : "No framing reviews, delivery reviews or handoffs are currently waiting for human action."
     };
   } catch (error) {
     unstable_rethrow(error);
