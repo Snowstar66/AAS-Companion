@@ -36,6 +36,21 @@ vi.mock("@aas-companion/api", async () => {
           {
             id: "party-2",
             organizationId: "org_demo_control_plane",
+            fullName: "Demo Delivery Lead",
+            email: "delivery.lead@aas-companion.local",
+            phoneNumber: null,
+            avatarUrl: null,
+            organizationSide: "supplier",
+            roleType: "delivery_lead",
+            roleTitle: "Delivery Lead",
+            mandateNotes: "Owns delivery coordination.",
+            isActive: true,
+            createdAt: new Date("2026-03-24T10:00:00.000Z"),
+            updatedAt: new Date("2026-03-24T10:00:00.000Z")
+          },
+          {
+            id: "party-3",
+            organizationId: "org_demo_control_plane",
             fullName: "Demo Architect",
             email: "architect@aas-companion.local",
             phoneNumber: null,
@@ -59,35 +74,21 @@ vi.mock("@aas-companion/api", async () => {
             scopeOfWork: "Review-only checks.",
             allowedArtifactTypes: ["story"],
             allowedActions: ["review"],
-            supervisingPartyRoleId: "party-2",
+            supervisingPartyRoleId: "party-3",
             isActive: true,
             createdAt: new Date("2026-03-24T10:00:00.000Z"),
             updatedAt: new Date("2026-03-24T10:00:00.000Z"),
             supervisingPartyRole: {
-              id: "party-2",
+              id: "party-3",
               fullName: "Demo Architect",
+              roleType: "architect",
               isActive: true
             }
           }
         ],
         requirements: [],
         riskRules: [],
-        signoffRecords: [
-          {
-            id: "signoff-1",
-            entityType: "story",
-            entityId: "story-1",
-            decisionKind: "approval",
-            requiredRoleType: "delivery_lead",
-            actualPersonName: "Demo Delivery Lead",
-            actualRoleTitle: "Delivery Lead",
-            organizationSide: "supplier",
-            decisionStatus: "approved",
-            note: "Ready to proceed.",
-            evidenceReference: "demo://story-1/approval",
-            createdAt: new Date("2026-03-24T12:00:00.000Z")
-          }
-        ],
+        signoffRecords: [],
         sourceContext: {
           entityType: "story",
           entityId: "story-1",
@@ -96,81 +97,108 @@ vi.mock("@aas-companion/api", async () => {
           aiAccelerationLevel: "level_3"
         },
         selectedAiLevel: "level_3",
-        readiness: {
-          summaryStatus: "missing",
-          coverage: [
+        adaptive: {
+          levelDefinition: {
+            title: "Level 3 - Agentic",
+            description: "High AI automation with explicit supervision and traceability."
+          },
+          cockpit: {
+            selectedAiLevel: "level_3",
+            readiness: "partial",
+            readinessLabel: "Partial",
+            readinessDetail: "Required roles are covered, but some governance warnings still need attention.",
+            keyMissingItems: [
+              "AI Governance Lead is recommended for level 3 but not yet named."
+            ]
+          },
+          roleBuckets: [
             {
-              aiAccelerationLevel: "level_3",
-              organizationSide: "supplier",
-              roleType: "ai_governance_lead",
-              minimumCount: 1,
-              matchedCount: 0,
-              totalActiveRoleCount: 0,
-              status: "missing",
-              rationale: "Level 3 work requires a named AI governance lead.",
-              message: "ai governance lead is missing for supplier coverage.",
-              matchedPeople: []
+              category: "required",
+              title: "Required",
+              items: [
+                {
+                  roleType: "value_owner",
+                  organizationSide: "customer",
+                  category: "required",
+                  label: "Value Owner",
+                  assignedPeople: [{ id: "party-1", fullName: "Demo Value Owner", email: "value.owner@aas-companion.local", roleTitle: "Value Owner" }],
+                  status: "covered"
+                },
+                {
+                  roleType: "delivery_lead",
+                  organizationSide: "supplier",
+                  category: "required",
+                  label: "Delivery Lead",
+                  assignedPeople: [{ id: "party-2", fullName: "Demo Delivery Lead", email: "delivery.lead@aas-companion.local", roleTitle: "Delivery Lead" }],
+                  status: "covered"
+                }
+              ]
+            },
+            {
+              category: "recommended",
+              title: "Recommended",
+              items: [
+                {
+                  roleType: "ai_governance_lead",
+                  organizationSide: "supplier",
+                  category: "recommended",
+                  label: "AI Governance Lead",
+                  assignedPeople: [],
+                  status: "warning"
+                }
+              ]
+            },
+            {
+              category: "optional",
+              title: "Optional",
+              items: []
             }
           ],
+          agentGuidance: {
+            allowedAgents: [
+              {
+                label: "Agent workflows",
+                purpose: "Coordinates multi-step governed AI work."
+              }
+            ],
+            rules: [
+              "Every active agent must be registered",
+              "Each active agent needs a named supervisor"
+            ]
+          },
+          readinessGaps: [
+            {
+              id: "recommended-role-supplier-ai_governance_lead",
+              status: "warning",
+              message: "AI Governance Lead is recommended for level 3 but not yet named.",
+              guidance: "Add this role if you want clearer governance coverage.",
+              targetSection: "human_roles"
+            }
+          ]
+        },
+        readiness: {
+          summaryStatus: "partially_covered",
+          coverage: [],
           riskFlags: [],
           supervisionGaps: [],
           validation: {
             selectedAiLevel: "level_3",
-            status: "does_not_support_selected_level",
-            summaryTitle: "Staffing does not support selected AI level",
-            summaryMessage: "Missing roles, risky combinations or weak supervision mean the current staffing does not yet support level 3.",
+            status: "needs_attention",
+            summaryTitle: "Staffing still needs attention",
+            summaryMessage: "The selected AI level has some coverage, but gaps still need to be closed before trusting the staffing picture.",
             staffingSupportsSelectedLevel: false,
-            missingRoleCount: 1,
+            missingRoleCount: 0,
             riskyCombinationCount: 0,
             supervisionGapCount: 0,
             furtherGovernanceRequired: true,
-            recommendations: [
-              {
-                kind: "assign_missing_role",
-                priority: "high",
-                title: "Assign supplier ai governance lead",
-                description: "The selected AI level still needs a named supplier ai governance lead."
-              },
-              {
-                kind: "keep_level_blocked",
-                priority: "high",
-                title: "Keep level_3 blocked for now",
-                description: "Current staffing and separation do not yet justify a green light for this AI level."
-              },
-              {
-                kind: "downgrade_ai_level",
-                priority: "medium",
-                title: "Consider downgrading to level_2",
-                description: "Until the missing roles, risky combinations or supervision gaps are resolved, level 2 is the safer AAS-aligned fallback."
-              }
-            ]
+            recommendations: []
           }
         },
-        authorityMatrix: [
-          {
-            responsibilityArea: "tollgate_approval",
-            summaryLabel: "Tollgate approval",
-            description: "Human authority required to move through formal tollgates.",
-            customerAssignment: "approver",
-            customerRoleTypes: ["customer_sponsor", "value_owner"],
-            supplierAssignment: "reviewer",
-            supplierRoleTypes: ["architect", "aqa"],
-            aiGovernanceAssignment: "reviewer",
-            aiGovernanceRoleTypes: ["ai_governance_lead"],
-            customerAssignments: [],
-            supplierAssignments: [
-              {
-                fullName: "Demo Architect"
-              }
-            ],
-            aiGovernanceAssignments: [],
-            isCovered: false
-          }
-        ],
+        authorityMatrix: [],
         summaries: {
-          activePeople: 2,
+          activePeople: 3,
           customerPeople: 1,
-          supplierPeople: 1,
+          supplierPeople: 2,
           activeAgents: 1,
           supervisedAgents: 1
         }
@@ -187,11 +215,10 @@ vi.mock("@/app/(protected)/governance/actions", () => ({
 }));
 
 describe("Governance page", () => {
-  it("shows compact grouped directory rows with progressive editing and identity markers", async () => {
+  it("shows the simplified governance cockpit with level-aware summary and gaps", async () => {
     render(
       await GovernancePage({
         searchParams: Promise.resolve({
-          view: "directory",
           sourceEntity: "story",
           sourceId: "story-1",
           level: "level_3"
@@ -199,26 +226,19 @@ describe("Governance page", () => {
       })
     );
 
-    expect(screen.getByText("Customer")).toBeDefined();
-    expect(screen.getByText("Supplier")).toBeDefined();
-    expect(screen.getByText("Who is named in the human role model?")).toBeDefined();
-    expect(
-      screen.getByText(/Which named people are carrying the required roles on the customer and supplier sides\?/)
-    ).toBeDefined();
-    expect(screen.getByText("Demo Value Owner")).toBeDefined();
-    expect(screen.getByText("Demo Architect")).toBeDefined();
-    expect(screen.getAllByText("Add role").length).toBeGreaterThan(0);
-
-    fireEvent.click(screen.getByText("Demo Value Owner"));
-    expect(screen.getByDisplayValue("Demo Value Owner")).toBeDefined();
-    expect(screen.getByDisplayValue("Value Owner")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Governance cockpit", level: 1 })).toBeDefined();
+    expect(screen.getAllByText("Selected AI level").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Level 3 - Agentic").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Overall readiness").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Partial").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Key missing items").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("AI Governance Lead is recommended for level 3 but not yet named.").length).toBeGreaterThan(0);
   });
 
-  it("shows compact agent registry rows with expandable editing", async () => {
+  it("shows level-aware role categories and keeps directory editing available", async () => {
     render(
       await GovernancePage({
         searchParams: Promise.resolve({
-          view: "agents",
           sourceEntity: "story",
           sourceId: "story-1",
           level: "level_3"
@@ -226,20 +246,23 @@ describe("Governance page", () => {
       })
     );
 
-    expect(screen.getByText("Agent registry")).toBeDefined();
-    expect(screen.getByText("Governance Review Agent")).toBeDefined();
-    expect(screen.getByText("Supervisor: Demo Architect")).toBeDefined();
+    expect(screen.getAllByText("Human roles").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Required").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Recommended").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Optional").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Value Owner").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Delivery Lead").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("AI Governance Lead").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Party and role directory").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByText("Governance Review Agent"));
-    expect(screen.getByDisplayValue("Governance Review Agent")).toBeDefined();
-    expect(screen.getByDisplayValue("Flags governance gaps.")).toBeDefined();
+    fireEvent.click(screen.getAllByText("Demo Value Owner")[0]!);
+    expect(screen.getAllByDisplayValue("Demo Value Owner").length).toBeGreaterThan(0);
   });
 
-  it("shows readiness gaps and linked source context for the active project", async () => {
+  it("shows level-aware AI agent setup and supervisor visibility", async () => {
     render(
       await GovernancePage({
         searchParams: Promise.resolve({
-          view: "readiness",
           sourceEntity: "story",
           sourceId: "story-1",
           level: "level_3"
@@ -247,31 +270,22 @@ describe("Governance page", () => {
       })
     );
 
-    expect(screen.getAllByRole("heading", { name: "Governance cockpit", level: 1 }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Context linked from story M3-STORY-007").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Named people for required roles").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Separation of duties").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Human supervision of agents").length).toBeGreaterThan(0);
-    expect(screen.getByText("What currently blocks this AI level from being governance-ready?")).toBeDefined();
-    expect(
-      screen.getAllByText("Higher AI acceleration raises the governance bar, even when the rest of the screen looks familiar.").length
-    ).toBeGreaterThan(0);
-    expect(screen.getAllByText("Level 1").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Level 2").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Level 3").length).toBeGreaterThan(0);
-    expect(screen.getByText("AI level staffing validation")).toBeDefined();
-    expect(screen.getByText("Staffing does not support selected AI level")).toBeDefined();
-    expect(screen.getByText("ai governance lead is missing for supplier coverage.")).toBeDefined();
-    expect(screen.getByText("Assign supplier ai governance lead")).toBeDefined();
-    expect(screen.getByText("Staffing validation is distinct from final approval")).toBeDefined();
-    expect(screen.getByText("No risky role combinations are currently detected for level 3.")).toBeDefined();
+    expect(screen.getAllByText("AI agent setup").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Allowed for this level").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Agent workflows").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Current setup").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Agent registry").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Governance Review Agent").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Supervisor: Demo Architect").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getAllByText("Governance Review Agent")[0]!);
+    expect(screen.getAllByDisplayValue("Governance Review Agent").length).toBeGreaterThan(0);
   });
 
-  it("shows sign-off traceability with evidence references", async () => {
+  it("shows plain-language readiness gaps with direct section links", async () => {
     render(
       await GovernancePage({
         searchParams: Promise.resolve({
-          view: "signoffs",
           sourceEntity: "story",
           sourceId: "story-1",
           level: "level_3"
@@ -279,9 +293,9 @@ describe("Governance page", () => {
       })
     );
 
-    expect(screen.getByText("Sign-off traceability")).toBeDefined();
-    expect(screen.getByText("Approval and review history")).toBeDefined();
-    expect(screen.getByText("Signed by: Demo Delivery Lead (Delivery Lead)")).toBeDefined();
-    expect(screen.getByText("Evidence: demo://story-1/approval")).toBeDefined();
+    expect(screen.getAllByText("Readiness gaps").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Auto-generated, plain-language gaps for the currently selected AI level.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Open relevant section").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Add this role if you want clearer governance coverage.").length).toBeGreaterThan(0);
   });
 });
