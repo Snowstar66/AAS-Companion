@@ -379,6 +379,7 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
+  revalidatePath("/review");
   revalidatePath("/");
 
   if (!result.ok) {

@@ -251,6 +251,8 @@ describe("Outcome page", () => {
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
     expect(screen.getByText("Submit to Tollgate")).toBeDefined();
     expect(screen.getByRole("button", { name: "Submit to Tollgate" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText("Tollgate 1 decision workspace")).toBeDefined();
+    expect(screen.getByText("Record approval or review")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
     },
     15000

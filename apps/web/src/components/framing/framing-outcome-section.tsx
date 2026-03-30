@@ -19,6 +19,7 @@ import { FramingContextCard } from "@/components/workspace/framing-context-card"
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
+import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { isStoryIdeaReadyForFraming, isStoryIdeaStarted } from "@/lib/framing/story-idea-status";
@@ -53,6 +54,7 @@ type FramingOutcomeSectionProps = {
   hardDeleteAction: (formData: FormData) => void | Promise<void>;
   restoreAction: (formData: FormData) => void | Promise<void>;
   submitTollgateAction: (formData: FormData) => void | Promise<void>;
+  recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
   validateOutcomeStatementAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   validateBaselineDefinitionAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   reviewFramingAction: typeof reviewOutcomeFramingWithAiAction;
@@ -107,6 +109,7 @@ export function FramingOutcomeSection({
   hardDeleteAction,
   restoreAction,
   submitTollgateAction,
+  recordTollgateDecisionAction,
   validateOutcomeStatementAiAction,
   validateBaselineDefinitionAiAction,
   reviewFramingAction,
@@ -785,6 +788,45 @@ export function FramingOutcomeSection({
           ) : null}
         </CardContent>
       </Card>
+
+      {tollgate?.id || tollgateReview?.signoffRecords.length ? (
+        <div id="tollgate-review">
+          <TollgateDecisionCard
+            aiAccelerationLevel={outcome.aiAccelerationLevel}
+            approvalActions={tollgateReview?.approvalActions ?? []}
+            availablePeople={tollgateReview?.availablePeople ?? []}
+            blockers={tollgateReview?.blockers ?? blockers}
+            blockedActions={tollgateReview?.blockedActions ?? []}
+            comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
+            description="Record the required human review and approval decisions for Tollgate 1 here."
+            entityId={outcome.id}
+            entityType="outcome"
+            formAction={recordTollgateDecisionAction}
+            hiddenFields={[
+              { name: "outcomeId", value: outcome.id }
+            ]}
+            pendingActions={tollgateReview?.pendingActions ?? []}
+            reviewActions={tollgateReview?.reviewActions ?? []}
+            signoffRecords={
+              tollgateReview?.signoffRecords.map((record) => ({
+                id: record.id,
+                decisionKind: record.decisionKind,
+                requiredRoleType: record.requiredRoleType,
+                actualPersonName: record.actualPersonName,
+                actualRoleTitle: record.actualRoleTitle,
+                organizationSide: record.organizationSide,
+                decisionStatus: record.decisionStatus,
+                note: record.note,
+                evidenceReference: record.evidenceReference,
+                createdAt: record.createdAt
+              })) ?? []
+            }
+            status={tollgateReview?.status ?? (framingComplete ? "ready" : "blocked")}
+            title="Tollgate 1 decision workspace"
+            tollgateType="tg1_baseline"
+          />
+        </div>
+      ) : null}
 
       {removal?.decision ? (
         <CollapsibleFramingPanel

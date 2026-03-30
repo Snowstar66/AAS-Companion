@@ -137,7 +137,7 @@ vi.mock("@/lib/review/operational-review", () => ({
         status: "blocked",
         tone: "blocked",
         actionLabel: "Open Outcome tollgate",
-        href: "/outcomes/outcome-1",
+        href: "/outcomes/outcome-1#tollgate-review",
         description: "Value owner is not assigned on the customer side.",
         context: "Outcome framing tollgate",
         blocker: "Value owner is not assigned on the customer side.",

@@ -9,6 +9,7 @@ import {
   createEpicFromOutcomeAction,
   createStoryIdeaFromOutcomeAction,
   hardDeleteOutcomeAction,
+  recordOutcomeTollgateDecisionAction,
   reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
   saveOutcomeWorkspaceInlineAction,
@@ -57,6 +58,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
           createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
           data={outcomeResult.data}
         hardDeleteAction={hardDeleteOutcomeAction}
+        recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
         restoreAction={restoreOutcomeAction}
         saveAction={saveOutcomeWorkspaceAction}
         saveInlineAction={saveOutcomeWorkspaceInlineAction}
