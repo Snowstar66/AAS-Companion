@@ -44,6 +44,15 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
             label: "Framing phase",
             detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
           },
+          storyIdeaStats: {
+            total: 0,
+            started: 0,
+            framingReady: 0
+          },
+          deliveryStoryStats: {
+            total: 0,
+            readyToStartBuild: 0
+          },
           summary: [],
           outcomesByStatus: [],
           topBlockers: [],
@@ -75,6 +84,15 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
             key: "framing",
             label: "Framing phase",
             detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+          },
+          storyIdeaStats: {
+            total: 0,
+            started: 0,
+            framingReady: 0
+          },
+          deliveryStoryStats: {
+            total: 0,
+            readyToStartBuild: 0
           },
           summary: [],
           outcomesByStatus: [],
@@ -124,6 +142,15 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           key: "framing",
           label: "Framing phase",
           detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+        },
+        storyIdeaStats: {
+          total: 0,
+          started: 0,
+          framingReady: 0
+        },
+        deliveryStoryStats: {
+          total: 0,
+          readyToStartBuild: 0
         },
         summary: [],
         outcomesByStatus: [],

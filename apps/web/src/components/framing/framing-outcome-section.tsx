@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
-import { getOutcomeFramingBlockers } from "@aas-companion/domain";
+import { getOutcomeFramingBlockers, getTollgateDecisionProfile } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type {
   OutcomeInlineSaveActionState,
@@ -10,7 +10,6 @@ import type {
   reviewOutcomeFramingWithAiAction
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
-import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
@@ -125,7 +124,7 @@ export function FramingOutcomeSection({
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
-  const { outcome, tollgate, activities, removal, availableOwners, tollgateReview } = data;
+  const { outcome, tollgate, removal, availableOwners, tollgateReview } = data;
   const computedBlockers = getOutcomeFramingBlockers({
     title: outcome.title,
     outcomeStatement: outcome.outcomeStatement ?? null,
@@ -144,11 +143,6 @@ export function FramingOutcomeSection({
   const statusLabel = outcome.status.replaceAll("_", " ");
   const originLabel = getOriginLabel(outcome.originType);
   const workspaceLabel = getWorkspaceLabel(outcome);
-  const tollgateStatusLabel = tollgateReview?.status
-    ? tollgateReview.status.replaceAll("_", " ")
-    : tollgate?.status
-      ? tollgate.status.replaceAll("_", " ")
-      : "not started";
   const isArchived = outcome.lifecycleState === "archived";
   const framingHref = `/framing?outcomeId=${outcome.id}`;
   const framingBriefExport = buildFramingBriefExport({
@@ -168,6 +162,12 @@ export function FramingOutcomeSection({
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
+  const tollgateProfile = getTollgateDecisionProfile({
+    tollgateType: "tg1_baseline",
+    aiAccelerationLevel: outcome.aiAccelerationLevel
+  });
+  const tollgateReviewLabels = tollgateProfile.reviewRequirements.map((requirement) => requirement.label);
+  const tollgateApprovalLabels = tollgateProfile.approvalRequirements.map((requirement) => requirement.label);
   const seedsByEpicId = new Map<string, typeof outcome.directionSeeds>();
 
   for (const seed of outcome.directionSeeds) {
@@ -295,13 +295,7 @@ export function FramingOutcomeSection({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 2xl:grid-cols-6">
-          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 2xl:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value owner</p>
-            <p className="mt-2 text-base font-semibold">
-              {outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? "Unassigned"}
-            </p>
-          </div>
+        <CardContent className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
           <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
             <p className="mt-2 text-base font-semibold capitalize">{outcome.aiAccelerationLevel.replaceAll("_", " ")}</p>
@@ -309,10 +303,6 @@ export function FramingOutcomeSection({
           <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Risk profile</p>
             <p className="mt-2 text-base font-semibold capitalize">{outcome.riskProfile}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tollgate</p>
-            <p className="mt-2 text-base font-semibold capitalize">{tollgateStatusLabel}</p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Baseline readiness</p>
@@ -666,183 +656,90 @@ export function FramingOutcomeSection({
             ) : null}
       </form>
 
-      <div className="grid items-start gap-6 xl:grid-cols-12">
-          <div className="xl:col-span-4">
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>Framing blockers</CardTitle>
-              <CardDescription>These are the missing framing fields that still prevent Tollgate submission.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {blockers.length === 0 ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
-                  No framing blockers are currently visible.
-                </div>
-              ) : (
-                blockers.map((blocker) => (
-                  <div
-                    className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm leading-6 text-amber-900"
-                    key={blocker}
-                  >
-                    {blocker}
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-          </div>
-          <div className="xl:col-span-4">
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>Governance coverage</CardTitle>
-              <CardDescription>Check named roles and authority only when you need deeper governance context.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="gap-2" variant="secondary">
-                <Link
-                  href={`/governance?view=readiness&sourceEntity=outcome&sourceId=${outcome.id}&level=${outcome.aiAccelerationLevel}`}
-                >
-                  Open Governance readiness
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-          </div>
-          <div className="xl:col-span-4">
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>After submit</CardTitle>
-              <CardDescription>Framing uses one submit step here. Human sign-off continues in the review workspace.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm leading-6 text-muted-foreground">
-                When the framing brief is complete, submit it once. The detailed human decisions are then handled from Human Review, not inside this authoring form.
-              </p>
-              <Button asChild className="gap-2" variant="secondary">
-                <Link href="/review">Open Human Review</Link>
-              </Button>
-            </CardContent>
-          </Card>
-          </div>
-          <div className={outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? "xl:col-span-4" : "xl:col-span-8"}>
-          <HomeActivityCard
-            defaultOpen={false}
-            description="Recent outcome-specific audit entries."
-            emptyMessage="No activity has been recorded yet for this outcome."
-            items={activities.map((activity) => ({
-              id: activity.id,
-              title: activity.eventType.replaceAll("_", " "),
-              timestamp: new Date(activity.createdAt).toLocaleString("en-US")
-            }))}
-          />
-          </div>
-          {outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId ? (
-            <div className="xl:col-span-4">
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Imported lineage</CardTitle>
-                <CardDescription>Trace this governed Outcome back to its reviewed import candidate.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild className="gap-2" variant="secondary">
-                  <Link href={`/review?candidateId=${outcome.lineageSourceId}`}>Open source candidate review</Link>
-                </Button>
-              </CardContent>
-            </Card>
-            </div>
-          ) : null}
-      </div>
-
-      <CollapsibleFramingPanel
-        defaultOpen
-        description="This panel only shows framing submit status. Detailed sign-off handling happens in Human Review."
-        title="Framing tollgate"
-      >
-        <div className="space-y-4">
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>{tollgateReview?.status === "ready" || tollgateReview?.status === "approved" ? "Tollgate follow-up" : "Submit to Tollgate"}</CardTitle>
+          <CardDescription>
+            Tollgate 1 is the framing decision gate. It applies to the framing brief, not to individual Story Ideas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div
             className={`rounded-2xl border px-4 py-4 text-sm ${
               tollgateReview?.status === "approved"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-900"
                 : tollgateReview?.status === "ready"
                   ? "border-sky-200 bg-sky-50 text-sky-900"
-                  : "border-amber-200 bg-amber-50 text-amber-900"
+                  : framingComplete
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
             }`}
           >
             <p className="font-medium">
               {tollgateReview?.status === "approved"
-                ? "Tollgate approved"
+                ? "Tollgate 1 is already approved."
                 : tollgateReview?.status === "ready"
-                  ? "Submitted and waiting for human review"
-                  : "Not ready for submit yet"}
+                  ? "This framing brief is already submitted and waiting for human decision."
+                  : framingComplete
+                    ? "This framing brief is ready to submit."
+                    : "This framing brief is not ready to submit yet."}
             </p>
             <p className="mt-2 leading-6">
               {tollgateReview?.status === "approved"
-                ? "The framing brief is approved and traceable for the next phase."
+                ? "Continue from Human Review only if you need to inspect the recorded sign-offs."
                 : tollgateReview?.status === "ready"
-                  ? "The framing brief has been submitted. Record the human decision from Human Review when people are ready."
-                  : blockers[0] ?? "Complete the missing framing fields before submitting."}
+                  ? "Open Human Review to record the remaining TG1 decision and approvals."
+                  : blockers[0] ?? "Complete the framing brief and then submit it once to start TG1 review."}
             </p>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Open blockers</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{blockers.length}</p>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required review roles</p>
+              <p className="mt-2 leading-6 text-foreground">{tollgateReviewLabels.join(" | ")}</p>
             </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pending sign-off lanes</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{tollgateReview?.pendingActions.length ?? 0}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Recorded sign-offs</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{tollgateReview?.signoffRecords.length ?? 0}</p>
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required approval roles</p>
+              <p className="mt-2 leading-6 text-foreground">{tollgateApprovalLabels.join(" | ")}</p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild className="gap-2" variant="secondary">
-              <Link href="/review">Open Human Review</Link>
-            </Button>
-            {tollgateReview?.status === "ready" || tollgateReview?.status === "approved" ? (
+          {tollgateReview?.status === "ready" || tollgateReview?.status === "approved" ? (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href="/review">Open Human Review</Link>
+              </Button>
               <p className="self-center text-sm text-muted-foreground">
-                Continue human sign-off from the review workspace when needed.
+                Human Review is where the actual TG1 sign-off is recorded.
               </p>
-            ) : null}
-          </div>
-        </div>
-      </CollapsibleFramingPanel>
-
-      {!isArchived ? (
-        <CollapsibleFramingPanel
-          defaultOpen={false}
-          description="Submit only when the framing brief is complete enough for Tollgate review."
-          title="Submit to Tollgate"
-        >
-          <form action={submitTollgateAction} className="space-y-4">
-            <input name="outcomeId" type="hidden" value={outcome.id} />
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Submission note</span>
-              <textarea
-                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                defaultValue={tollgate?.comments ?? ""}
-                name="comments"
+            </div>
+          ) : !isArchived ? (
+            <form action={submitTollgateAction} className="space-y-4">
+              <input name="outcomeId" type="hidden" value={outcome.id} />
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Submission note</span>
+                <textarea
+                  className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  defaultValue={tollgate?.comments ?? ""}
+                  name="comments"
+                />
+              </label>
+              <PendingFormButton
+                className="gap-2"
+                disabled={!framingComplete}
+                icon={<ShieldCheck className="h-4 w-4" />}
+                label="Submit to Tollgate"
+                pendingLabel="Submitting to Tollgate..."
               />
-            </label>
-            <PendingFormButton
-              className="gap-2"
-              disabled={!framingComplete}
-              icon={<ShieldCheck className="h-4 w-4" />}
-              label="Submit to Tollgate"
-              pendingLabel="Submitting to Tollgate..."
-            />
-            {!framingComplete ? (
-              <p className="text-sm text-muted-foreground">
-                Submit unlocks as soon as the outcome statement, baseline, value owner, AI level, risk profile and at least one epic are in place.
-              </p>
-            ) : null}
-          </form>
-        </CollapsibleFramingPanel>
-      ) : null}
+              {!framingComplete ? (
+                <p className="text-sm text-muted-foreground">
+                  Submit unlocks as soon as the outcome statement, baseline, value owner, AI level, risk profile and at least one epic are in place.
+                </p>
+              ) : null}
+            </form>
+          ) : null}
+        </CardContent>
+      </Card>
 
       {removal?.decision ? (
         <CollapsibleFramingPanel

@@ -42,11 +42,24 @@ export type HomeProjectPhase = {
   detail: string;
 };
 
+export type HomeStoryIdeaStats = {
+  total: number;
+  started: number;
+  framingReady: number;
+};
+
+export type HomeDeliveryStoryStats = {
+  total: number;
+  readyToStartBuild: number;
+};
+
 export type HomeDashboardData =
   | {
       state: "live";
       organizationName: string;
       projectPhase: HomeProjectPhase;
+      storyIdeaStats: HomeStoryIdeaStats;
+      deliveryStoryStats: HomeDeliveryStoryStats;
       summary: HomeSummaryMetric[];
       outcomesByStatus: HomeOutcomeStatusStat[];
       topBlockers: HomeBlocker[];
@@ -62,6 +75,8 @@ export type HomeDashboardData =
       organizationName: string;
       message: string;
       projectPhase: HomeProjectPhase;
+      storyIdeaStats: HomeStoryIdeaStats;
+      deliveryStoryStats: HomeDeliveryStoryStats;
       summary: HomeSummaryMetric[];
       outcomesByStatus: HomeOutcomeStatusStat[];
       topBlockers: HomeBlocker[];
@@ -92,6 +107,14 @@ const activityLabels: Record<string, string> = {
   imported_progression_blocked: "Imported build progression blocked",
   imported_progression_allowed: "Imported build progression allowed"
 };
+
+function isStoryIdeaStarted(input: { valueIntent?: string | null; shortDescription?: string | null; expectedBehavior?: string | null }) {
+  return Boolean(input.valueIntent?.trim() || input.shortDescription?.trim() || input.expectedBehavior?.trim());
+}
+
+function isStoryIdeaReady(input: { valueIntent?: string | null; shortDescription?: string | null; expectedBehavior?: string | null }) {
+  return Boolean((input.valueIntent?.trim() || input.shortDescription?.trim()) && input.expectedBehavior?.trim());
+}
 
 function getDashboardStoryModel(input: {
   key: string;
@@ -185,6 +208,15 @@ function createFallbackDashboard(
       label: "Framing phase",
       detail: "The project stays in framing until Tollgate 1 for the framing brief is approved."
     },
+    storyIdeaStats: {
+      total: 0,
+      started: 0,
+      framingReady: 0
+    },
+    deliveryStoryStats: {
+      total: 0,
+      readyToStartBuild: 0
+    },
     summary: [],
     outcomesByStatus: [],
     topBlockers: [],
@@ -228,6 +260,46 @@ export async function getHomeDashboardData(
         tollgateStatus: story.tollgateStatus ?? null
       })
     }));
+    const explicitSourceStoryIds = new Set(snapshot.directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+    const legacyStoryIdeas = snapshot.stories.filter(
+      (story) =>
+        !story.sourceDirectionSeedId &&
+        !explicitSourceStoryIds.has(story.id) &&
+        (story.status === "draft" || story.status === "definition_blocked")
+    );
+    const storyIdeaStats: HomeStoryIdeaStats = {
+      total: snapshot.directionSeeds.length + legacyStoryIdeas.length,
+      started:
+        snapshot.directionSeeds.filter((seed) =>
+          isStoryIdeaStarted({
+            shortDescription: seed.shortDescription,
+            expectedBehavior: seed.expectedBehavior
+          })
+        ).length +
+        legacyStoryIdeas.filter((story) =>
+          isStoryIdeaStarted({
+            valueIntent: story.valueIntent,
+            expectedBehavior: story.expectedBehavior
+          })
+        ).length,
+      framingReady:
+        snapshot.directionSeeds.filter((seed) =>
+          isStoryIdeaReady({
+            shortDescription: seed.shortDescription,
+            expectedBehavior: seed.expectedBehavior
+          })
+        ).length +
+        legacyStoryIdeas.filter((story) =>
+          isStoryIdeaReady({
+            valueIntent: story.valueIntent,
+            expectedBehavior: story.expectedBehavior
+          })
+        ).length
+    };
+    const deliveryStoryStats: HomeDeliveryStoryStats = {
+      total: storyModels.length,
+      readyToStartBuild: storyModels.filter(({ model }) => model.isReadyForHandoff).length
+    };
     const hasApprovedFramingTollgate = snapshot.tollgates.some(
       (item) => item.entityType === "outcome" && item.tollgateType === "tg1_baseline" && item.status === "approved"
     );
@@ -336,6 +408,8 @@ export async function getHomeDashboardData(
           organization.name,
           "The dashboard is connected, but no M1 records were returned yet."
         ),
+        storyIdeaStats,
+        deliveryStoryStats,
         summary
       };
     }
@@ -344,6 +418,8 @@ export async function getHomeDashboardData(
       state: "live",
       organizationName: organization.name,
       projectPhase,
+      storyIdeaStats,
+      deliveryStoryStats,
       summary,
       outcomesByStatus,
       topBlockers: [...topBlockers, ...storyDefinitionBlockers],

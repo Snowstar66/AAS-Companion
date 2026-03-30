@@ -22,7 +22,6 @@ import {
   openProjectAction
 } from "@/app/project-actions";
 import { ViewerSessionProvider } from "@/components/auth/viewer-session-provider";
-import { HomeActivityCard } from "@/components/home/home-activity-card";
 import { AppShell } from "@/components/layout/app-shell";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
@@ -198,10 +197,6 @@ function ProjectToneCard(props: {
   );
 }
 
-function getSummaryMetricValue(summary: Array<{ label: string; value: string }>, label: string) {
-  return Number.parseInt(summary.find((item) => item.label === label)?.value ?? "0", 10) || 0;
-}
-
 export default async function HomePage({ searchParams }: HomePageProps) {
   const query = searchParams ? await searchParams : {};
   const {
@@ -216,8 +211,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const flashError = getParamValue(query.error);
   const flashMessage = getParamValue(query.message);
-  const readyStoriesMetric = getSummaryMetricValue(dashboard.summary, "Stories Ready");
-  const recentEventsMetric = getSummaryMetricValue(dashboard.summary, "Recent Events");
+  const readyStoriesMetric =
+    dashboard.projectPhase.key === "framing"
+      ? dashboard.storyIdeaStats.framingReady
+      : dashboard.deliveryStoryStats.readyToStartBuild;
   const blockedCount = dashboard.topBlockers.length;
   const pendingCount = dashboard.pendingActions.length;
   const hasActiveProject = Boolean(activeProject?.organizationId);
@@ -242,7 +239,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     { href: "/review", label: "Open Review", icon: ShieldCheck },
     { href: "/intake", label: "Open Import", icon: ClipboardList }
   ];
-  const activeProjectSummary = projects.find((project) => project.isActive) ?? null;
   const managedProjectCount = projects.length;
 
   return (
@@ -270,7 +266,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   </h1>
                   <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
                     {hasActiveProject
-                      ? "This screen should tell you what matters now: current posture, blockers, pending work, recent movement and the fastest route back into the right part of the project."
+                      ? "This screen should tell you what matters now: current phase, blockers, pending work and the fastest route back into the right part of the project."
                       : "Open an existing project, create a new one, or open Demo explicitly. Operational views stay empty until you choose a project on purpose."}
                   </p>
                 </div>
@@ -331,40 +327,41 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard
-                  actionLabel={readyStoriesMetric > 0 ? "Open ready stories" : undefined}
+                  actionLabel={
+                    readyStoriesMetric > 0
+                      ? dashboard.projectPhase.key === "framing"
+                        ? "Open Framing"
+                        : "Open ready Delivery Stories"
+                      : undefined
+                  }
                   className="border-emerald-200 bg-emerald-50/75 text-emerald-950"
-                  description="Stories that can move toward handoff or delivery."
-                  href={readyStoriesMetric > 0 ? "/stories?state=ready" : undefined}
+                  description={
+                    dashboard.projectPhase.key === "framing"
+                      ? "Story Ideas with both Value Intent and Expected Behavior captured."
+                      : `Delivery Stories ready to start build. Story Ideas ready for framing: ${dashboard.storyIdeaStats.framingReady}.`
+                  }
+                  href={readyStoriesMetric > 0 ? (dashboard.projectPhase.key === "framing" ? "/framing" : "/stories?state=ready") : undefined}
                   icon={GitBranch}
-                  label="Ready stories"
+                  label={dashboard.projectPhase.key === "framing" ? "Framing-ready Story Ideas" : "Ready Delivery Stories"}
                   value={readyStoriesMetric}
                 />
                 <MetricCard
-                  actionLabel={blockedCount > 0 ? "Open blockers" : undefined}
+                  actionLabel={blockedCount > 0 ? "Open first blocker" : undefined}
                   className="border-rose-200 bg-rose-50/75 text-rose-950"
-                  description="Framing or Story gaps currently blocking progress."
+                  description="Blocked Tollgates or Value Spine gaps that currently stop the next meaningful step."
                   href={dashboard.topBlockers[0]?.href}
                   icon={AlertTriangle}
                   label="Open blockers"
                   value={blockedCount}
                 />
                 <MetricCard
-                  actionLabel={pendingCount > 0 ? "Open pending work" : undefined}
+                  actionLabel={pendingCount > 0 ? "Open first pending item" : undefined}
                   className="border-amber-200 bg-amber-50/75 text-amber-950"
-                  description="Review or follow-up items still waiting for human action."
+                  description="Submitted framing or delivery items still waiting on named human review or follow-up."
                   href={dashboard.pendingActions[0]?.href}
                   icon={Clock3}
                   label="Pending work"
                   value={pendingCount}
-                />
-                <MetricCard
-                  actionLabel={recentEventsMetric > 0 ? "Open project activity" : undefined}
-                  className="border-border/70 bg-background/90 text-foreground"
-                  description="Recent movement visible in the active project trail."
-                  href={recentEventsMetric > 0 ? "/workspace" : undefined}
-                  icon={ClipboardList}
-                  label="Recent events"
-                  value={recentEventsMetric}
                 />
               </div>
 
@@ -405,39 +402,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   </CardContent>
                 </Card>
 
-                <div className="space-y-5">
-                  <Card className="border-border/70 shadow-sm">
-                    <CardHeader>
-                      <CardTitle>Project pulse</CardTitle>
-                      <CardDescription>Compact project facts that are still useful at a glance.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Active project</p>
-                        <p className="mt-2 text-sm font-semibold text-foreground">{currentProjectName}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Stories ready</p>
-                        <p className="mt-2 text-sm font-semibold text-foreground">{readyStoriesMetric}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocked items</p>
-                        <p className="mt-2 text-sm font-semibold text-foreground">{blockedCount}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pending actions</p>
-                        <p className="mt-2 text-sm font-semibold text-foreground">{pendingCount}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <HomeActivityCard
-                    defaultOpen={false}
-                    description="Latest append-only project events."
-                    emptyMessage="No recent project activity is available yet."
-                    items={dashboard.recentActivity.slice(0, 4)}
-                  />
-                </div>
               </div>
             </>
           ) : (
@@ -604,27 +568,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Active project snapshot</p>
-                        {activeProjectSummary ? (
-                          <>
-                            <CompactProjectCount label="Outcomes" value={activeProjectSummary.counts.outcomes} />
-                            <CompactProjectCount label="Stories" value={activeProjectSummary.counts.stories} />
-                            <CompactProjectCount label="Epics" value={activeProjectSummary.counts.epics} />
-                          </>
-                        ) : (
-                          <CompactProjectCount label="Status" value={hasActiveProject ? "Scoped" : "No active project"} />
-                        )}
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                        {activeProjectSummary
-                          ? "The dashboard is already scoped to this project, so these counts stay close to the access controls instead of taking over the main dashboard."
-                          : hasActiveProject
-                            ? "The dashboard is already scoped to the active project even when the project list is empty, for example in Demo or in a freshly selected project."
-                            : "When a project becomes active, this panel turns into a compact snapshot instead of another landing page."}
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>

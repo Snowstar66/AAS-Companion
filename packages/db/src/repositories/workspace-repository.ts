@@ -14,6 +14,7 @@ export type HomeDashboardSnapshot = {
   };
   counts: {
     outcomes: number;
+    directionSeeds: number;
     stories: number;
     tollgates: number;
     activityEvents: number;
@@ -21,11 +22,23 @@ export type HomeDashboardSnapshot = {
   outcomeStatuses: Array<{
     status: string;
   }>;
+  directionSeeds: Array<{
+    id: string;
+    outcomeId: string;
+    epicId: string;
+    shortDescription: string;
+    expectedBehavior: string | null;
+    lifecycleState: string;
+    sourceStoryId: string | null;
+  }>;
   stories: Array<{
     id: string;
     key: string;
     outcomeId: string;
     epicId: string;
+    valueIntent: string | null;
+    expectedBehavior: string | null;
+    sourceDirectionSeedId: string | null;
     status: StoryRecord["status"];
     lifecycleState: StoryRecord["lifecycleState"];
     testDefinition: string | null;
@@ -474,7 +487,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
 }
 
 export async function getHomeDashboardSnapshot(organizationId: string): Promise<HomeDashboardSnapshot | null> {
-  const [organization, outcomeStatuses, stories, storyTollgates] = await prisma.$transaction([
+  const [organization, outcomeStatuses, directionSeeds, stories, storyTollgates] = await prisma.$transaction([
     prisma.organization.findUnique({
       where: {
         id: organizationId
@@ -511,6 +524,7 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
         _count: {
           select: {
             outcomes: true,
+            directionSeeds: true,
             stories: true,
             tollgates: true,
             activityEvents: true
@@ -527,6 +541,21 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
         status: true
       }
     }),
+    prisma.directionSeed.findMany({
+      where: {
+        organizationId,
+        lifecycleState: "active"
+      },
+      select: {
+        id: true,
+        outcomeId: true,
+        epicId: true,
+        shortDescription: true,
+        expectedBehavior: true,
+        lifecycleState: true,
+        sourceStoryId: true
+      }
+    }),
     prisma.story.findMany({
       where: {
         organizationId,
@@ -540,6 +569,9 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
         key: true,
         outcomeId: true,
         epicId: true,
+        valueIntent: true,
+        expectedBehavior: true,
+        sourceDirectionSeedId: true,
         status: true,
         lifecycleState: true,
         testDefinition: true,
@@ -573,6 +605,7 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
     },
     counts: {
       outcomes: organization._count.outcomes,
+      directionSeeds: organization._count.directionSeeds,
       stories: organization._count.stories,
       tollgates: organization._count.tollgates,
       activityEvents: organization._count.activityEvents
@@ -580,6 +613,7 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
     outcomeStatuses: outcomeStatuses.map((item) => ({
       status: item.status
     })),
+    directionSeeds,
     stories: attachStoryReadinessTollgateStatus(stories, storyTollgateStatuses),
     tollgates: organization.tollgates,
     activityEvents: organization.activityEvents
