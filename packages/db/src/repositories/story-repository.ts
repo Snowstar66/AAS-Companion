@@ -36,6 +36,18 @@ export async function getStoryById(organizationId: string, id: string) {
   });
 }
 
+export async function listStoriesByDirectionSeedId(organizationId: string, directionSeedId: string) {
+  return prisma.story.findMany({
+    where: {
+      organizationId,
+      sourceDirectionSeedId: directionSeedId
+    },
+    orderBy: {
+      createdAt: "asc"
+    }
+  });
+}
+
 export async function getStoryWorkspaceSnapshot(organizationId: string, id: string) {
   const [story, tollgate, activities] = await prisma.$transaction([
     prisma.story.findFirst({
@@ -104,6 +116,7 @@ export async function createStory(input: unknown, db: Prisma.TransactionClient |
         aiAccelerationLevel: parsed.aiAccelerationLevel,
         testDefinition: parsed.testDefinition ?? null,
         definitionOfDone: parsed.definitionOfDone,
+        sourceDirectionSeedId: parsed.sourceDirectionSeedId ?? null,
         status: parsed.status,
         lifecycleState: "active",
         archivedAt: null,
@@ -218,6 +231,10 @@ export async function updateStory(input: unknown) {
 
     if (parsed.definitionOfDone !== undefined) {
       data.definitionOfDone = parsed.definitionOfDone;
+    }
+
+    if (parsed.sourceDirectionSeedId !== undefined) {
+      data.sourceDirectionSeedId = parsed.sourceDirectionSeedId;
     }
 
     if (parsed.status !== undefined) {

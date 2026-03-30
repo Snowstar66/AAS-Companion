@@ -72,6 +72,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               purpose: null,
               storyType: "outcome_delivery",
               valueIntent: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+              expectedBehavior: null,
               acceptanceCriteria: ["Candidate objects show source lineage"],
               aiUsageScope: [],
               testDefinition: null,
@@ -89,22 +90,16 @@ vi.mock("@/lib/intake/workspace", () => ({
             complianceResult: {
               findings: [
                 {
-                  code: "story_test_definition_missing",
+                  code: "story_expected_behavior_missing",
                   category: "missing",
-                  message: "Test Definition is missing.",
-                  fieldLabel: "Test Definition"
-                },
-                {
-                  code: "risk_acceptance_human_only",
-                  category: "human_only",
-                  message: "Risk acceptance status must be confirmed by a human reviewer.",
-                  fieldLabel: "Risk acceptance status"
+                  message: "Expected behavior is missing.",
+                  fieldLabel: "Expected behavior"
                 }
               ],
               summary: {
                 missing: 1,
                 uncertain: 1,
-                humanOnly: 1,
+                humanOnly: 0,
                 blocked: 0
               },
               promotionBlocked: true,
@@ -149,6 +144,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               riskNote: null,
               storyType: null,
               valueIntent: null,
+              expectedBehavior: null,
               acceptanceCriteria: [],
               aiUsageScope: [],
               testDefinition: null,
@@ -213,6 +209,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               riskNote: null,
               storyType: null,
               valueIntent: null,
+              expectedBehavior: null,
               acceptanceCriteria: [],
               aiUsageScope: [],
               testDefinition: null,
@@ -275,6 +272,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               purpose: null,
               storyType: "outcome_delivery",
               valueIntent: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+              expectedBehavior: null,
               acceptanceCriteria: ["Candidate objects show source lineage"],
               aiUsageScope: [],
               testDefinition: null,
@@ -292,22 +290,16 @@ vi.mock("@/lib/intake/workspace", () => ({
             complianceResult: {
               findings: [
                 {
-                  code: "story_test_definition_missing",
+                  code: "story_expected_behavior_missing",
                   category: "missing",
-                  message: "Test Definition is missing.",
-                  fieldLabel: "Test Definition"
-                },
-                {
-                  code: "risk_acceptance_human_only",
-                  category: "human_only",
-                  message: "Risk acceptance status must be confirmed by a human reviewer.",
-                  fieldLabel: "Risk acceptance status"
+                  message: "Expected behavior is missing.",
+                  fieldLabel: "Expected behavior"
                 }
               ],
               summary: {
                 missing: 1,
                 uncertain: 1,
-                humanOnly: 1,
+                humanOnly: 0,
                 blocked: 0
               },
               promotionBlocked: true,

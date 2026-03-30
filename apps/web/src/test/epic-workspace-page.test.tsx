@@ -49,7 +49,8 @@ vi.mock("@aas-companion/api", async () => {
             lineageSourceType: null,
             lineageSourceId: null
           },
-          directionSeeds: []
+          directionSeeds: [],
+          stories: []
         },
         activities: [
           {
@@ -125,6 +126,7 @@ vi.mock("@aas-companion/api", async () => {
 
 vi.mock("@/app/(protected)/epics/[epicId]/actions", () => ({
   archiveEpicAction: vi.fn(),
+  createDeliveryStoryFromDirectionSeedAction: vi.fn(),
   createDirectionSeedFromEpicAction: vi.fn(),
   hardDeleteEpicAction: vi.fn(),
   restoreEpicAction: vi.fn(),
@@ -149,7 +151,7 @@ describe("Epic page", () => {
     expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
     expect(screen.getByText("Origin")).toBeDefined();
     expect(screen.getByText("Clean")).toBeDefined();
-    expect(screen.getByText("Story ideas")).toBeDefined();
+    expect(screen.getByText("Story Ideas")).toBeDefined();
     expect(screen.getByText("No story ideas exist for this Epic yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Story Idea" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Back to current Framing" })).toBeDefined();

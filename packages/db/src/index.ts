@@ -79,6 +79,7 @@ export {
   createStory,
   getStoryById,
   getStoryWorkspaceSnapshot,
+  listStoriesByDirectionSeedId,
   listStories,
   updateStory
 } from "./repositories/story-repository";

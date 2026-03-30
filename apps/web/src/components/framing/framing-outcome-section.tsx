@@ -19,6 +19,7 @@ import { FramingValueSpineTree } from "@/components/workspace/framing-value-spin
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
+import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { isStoryIdeaReadyForFraming, isStoryIdeaStarted } from "@/lib/framing/story-idea-status";
 import { getInlineGuidance } from "@/lib/help/aas-help";
 
@@ -165,7 +166,9 @@ export function FramingOutcomeSection({
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
   const mappedSourceStoryIds = new Set(outcome.directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
-  const legacyStoryIdeas = outcome.stories.filter((story) => !mappedSourceStoryIds.has(story.id));
+  const legacyStoryIdeas = outcome.stories.filter(
+    (story) => !story.sourceDirectionSeedId && !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+  );
   const visibleStoryIdeaCount = outcome.directionSeeds.length + legacyStoryIdeas.length;
   const startedStoryIdeaCount =
     outcome.directionSeeds.filter((seed) =>
@@ -584,6 +587,7 @@ export function FramingOutcomeSection({
                       title: story.title,
                       href: `/stories/${story.id}`,
                       isCurrent: false,
+                      sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
                       valueIntent: story.valueIntent ?? null,
                       expectedBehavior: story.expectedBehavior ?? null,
                       testDefinition: story.testDefinition ?? null,

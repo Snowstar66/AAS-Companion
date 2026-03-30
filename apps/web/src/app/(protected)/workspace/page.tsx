@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { withDevTiming } from "@/lib/dev-timing";
+import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { isStoryIdeaReadyForFraming } from "@/lib/framing/story-idea-status";
 
 type WorkspacePageProps = {
@@ -86,7 +87,12 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       const mappedSourceStoryIds = new Set((epic.directionSeeds ?? []).map((seed) => seed.sourceStoryId).filter(Boolean));
 
       return (epic.stories ?? [])
-        .filter((story) => story.lifecycleState === "active" && !mappedSourceStoryIds.has(story.id))
+        .filter(
+          (story) =>
+            story.lifecycleState === "active" &&
+            !story.sourceDirectionSeedId &&
+            !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+        )
         .map((story) => ({
           ...story,
           epicId: epic.id
@@ -264,6 +270,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                     title: story.title,
                     href: `/stories/${story.id}`,
                     isCurrent: false,
+                    sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
                     valueIntent: story.valueIntent ?? null,
                     expectedBehavior: story.expectedBehavior ?? null,
                     testDefinition: story.testDefinition ?? null,

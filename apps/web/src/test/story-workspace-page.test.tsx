@@ -147,7 +147,22 @@ vi.mock("@aas-companion/api", async () => {
           reasons: [
             {
               code: "test_definition_missing",
-              message: "Test Definition is required before handoff.",
+              message: "Test Definition is required before build progression.",
+              severity: "high"
+            }
+          ]
+        },
+        valueSpineValidation: {
+          state: "blocked",
+          reasons: [
+            {
+              code: "test_definition_missing",
+              message: "Test Definition is required before build progression.",
+              severity: "high"
+            },
+            {
+              code: "acceptance_criteria_missing",
+              message: "At least one acceptance criterion is required.",
               severity: "high"
             }
           ]
@@ -259,5 +274,6 @@ describe("Story Workspace page", () => {
     expect(screen.getAllByText("Level 2").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Capture a mushroom find quickly enough to guide later design decisions.").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Make it easier to capture findings while still in the forest.").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Value Spine validation")).toBeNull();
   });
 });

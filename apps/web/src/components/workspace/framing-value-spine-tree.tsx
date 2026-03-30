@@ -15,6 +15,13 @@ import {
   isStoryIdeaReadyForFraming,
   isStoryIdeaStarted
 } from "@/lib/framing/story-idea-status";
+import {
+  getStoryIdeaDeliveryFeedback,
+  getStoryIdeaDeliveryFeedbackLabel,
+  getStoryIdeaDeliveryFeedbackSummary,
+  isLikelyDeliveryStory,
+  type StoryIdeaDeliveryFeedbackStatus
+} from "@/lib/framing/story-idea-delivery-feedback";
 import { getStoryUxModel } from "@/lib/workspace/story-ux";
 
 type TreeOutcome = {
@@ -51,6 +58,7 @@ type TreeStory = {
   title: string;
   href: string;
   isCurrent?: boolean;
+  sourceDirectionSeedId?: string | null | undefined;
   valueIntent?: string | null | undefined;
   expectedBehavior?: string | null | undefined;
   testDefinition: string | null;
@@ -90,6 +98,13 @@ type FramingValueSpineTreeProps = {
   mode?: "delivery" | "framing";
   title?: string | undefined;
   description?: string | undefined;
+};
+
+type StoryIdeaFeedback = {
+  status: StoryIdeaDeliveryFeedbackStatus;
+  deliveryStoryCount: number;
+  completedDeliveryStoryCount: number;
+  additionalStoryCount: number;
 };
 
 function formatLabel(value: string | null | undefined) {
@@ -154,6 +169,19 @@ function getStorySurfaceClasses(story: TreeStory, needsAttention: boolean, isRev
   return "border-border/70 bg-background";
 }
 
+function getFeedbackToneClasses(status: StoryIdeaDeliveryFeedbackStatus) {
+  switch (status) {
+    case "stable":
+      return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    case "expanded":
+      return "border-amber-200 bg-amber-50 text-amber-900";
+    case "misaligned":
+      return "border-rose-200 bg-rose-50 text-rose-900";
+    default:
+      return "border-border/70 bg-muted/30 text-muted-foreground";
+  }
+}
+
 function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" | "framing" }) {
   return (
     <div className={`rounded-2xl border px-5 py-4 ${outcome.isCurrent ? "border-sky-200 bg-sky-50/55" : "border-border/70 bg-background"}`}>
@@ -199,7 +227,7 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
   );
 }
 
-function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
+function DirectionSeedRow({ seed, feedback }: { seed: TreeDirectionSeed; feedback: StoryIdeaFeedback }) {
   const intentText = getStoryIdeaIntentText({
     shortDescription: seed.shortDescription,
     expectedBehavior: seed.expectedBehavior
@@ -256,6 +284,27 @@ function DirectionSeedRow({ seed }: { seed: TreeDirectionSeed }) {
           </p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">Expected behavior:</span> {seed.expectedBehavior?.trim() || "Optional and not captured yet."}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+            <span className={`inline-flex rounded-full border px-2.5 py-1 font-medium ${getFeedbackToneClasses(feedback.status)}`}>
+              Delivery feedback: {getStoryIdeaDeliveryFeedbackLabel(feedback.status)}
+            </span>
+            <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+              Derived Delivery Stories: {feedback.deliveryStoryCount}
+            </span>
+            <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+              Completed: {feedback.completedDeliveryStoryCount}
+            </span>
+            <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+              Additional: {feedback.additionalStoryCount}
+            </span>
+          </div>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {getStoryIdeaDeliveryFeedbackSummary({
+              status: feedback.status,
+              deliveryStoryCount: feedback.deliveryStoryCount,
+              additionalStoryCount: feedback.additionalStoryCount
+            })}
           </p>
           <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
             <span className="font-medium">Next improvement:</span> {nextImprovement}
@@ -491,7 +540,9 @@ function EpicRow({
   const directionSeeds = epic.directionSeeds ?? [];
   const stories = epic.stories ?? [];
   const mappedSourceStoryIds = new Set(directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
-  const framingStories = stories.filter((story) => !mappedSourceStoryIds.has(story.id));
+  const framingStories = stories.filter(
+    (story) => !story.sourceDirectionSeedId && !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+  );
   const itemCount = mode === "framing" ? directionSeeds.length + framingStories.length : stories.length;
   const framingNeedsAttention = directionSeeds.filter(
     (seed) =>
@@ -508,6 +559,7 @@ function EpicRow({
         expectedBehavior: story.expectedBehavior
       })
   ).length;
+  const allSeedSourceStoryIds = directionSeeds.map((seed) => seed.sourceStoryId);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/55">
@@ -567,7 +619,17 @@ function EpicRow({
           <div className="divide-y divide-border/70">
             {mode === "framing"
               ? [
-                  ...directionSeeds.map((seed) => <DirectionSeedRow key={`seed-${seed.id}`} seed={seed} />),
+                  ...directionSeeds.map((seed) => (
+                    <DirectionSeedRow
+                      feedback={getStoryIdeaDeliveryFeedback({
+                        seedId: seed.id,
+                        stories,
+                        allSeedSourceStoryIds
+                      })}
+                      key={`seed-${seed.id}`}
+                      seed={seed}
+                    />
+                  )),
                   ...framingStories.map((story) => <StoryIdeaRow key={`legacy-story-${story.id}`} story={story} />)
                 ]
               : stories.map((story) => <StoryRow key={story.id} story={story} />)}

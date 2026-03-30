@@ -1,4 +1,4 @@
-import { getStoryHandoffReadiness } from "@aas-companion/domain";
+import { getStoryHandoffReadiness, validateStoryAgainstValueSpine } from "@aas-companion/domain";
 import { getHomeDashboardSnapshot } from "@aas-companion/db";
 
 export type HomeSummaryMetric = {
@@ -95,6 +95,8 @@ const activityLabels: Record<string, string> = {
 
 function getDashboardStoryModel(input: {
   key: string;
+  outcomeId: string;
+  epicId: string;
   status: string;
   lifecycleState: string;
   testDefinition: string | null;
@@ -104,13 +106,22 @@ function getDashboardStoryModel(input: {
 }) {
   const readiness = getStoryHandoffReadiness({
     key: input.key,
+    outcomeId: input.outcomeId,
+    epicId: input.epicId,
     testDefinition: input.testDefinition,
     definitionOfDone: input.definitionOfDone,
     acceptanceCriteria: input.acceptanceCriteria,
     status: input.status as "draft" | "definition_blocked" | "ready_for_handoff" | "in_progress"
   });
+  const valueSpine = validateStoryAgainstValueSpine({
+    outcomeId: input.outcomeId,
+    epicId: input.epicId,
+    testDefinition: input.testDefinition,
+    acceptanceCriteria: input.acceptanceCriteria
+  });
 
   const blockers = readiness.reasons.map((reason) => reason.message);
+  const valueSpineBlockers = valueSpine.reasons.map((reason) => reason.message);
   const hasTollgateStatus =
     input.tollgateStatus === "blocked" || input.tollgateStatus === "ready" || input.tollgateStatus === "approved";
   const isReadyForHandoff = hasTollgateStatus ? input.tollgateStatus === "approved" : input.status === "ready_for_handoff";
@@ -147,7 +158,7 @@ function getDashboardStoryModel(input: {
             : isReviewReady
               ? "Submit for sign-off"
               : blockers[0] ?? "Complete story readiness",
-    needsAttention: blockers.length > 0 || isReviewReady
+    needsAttention: blockers.length > 0 || valueSpineBlockers.length > 0 || isReviewReady
   };
 }
 
@@ -207,6 +218,8 @@ export async function getHomeDashboardData(
       story,
       model: getDashboardStoryModel({
         key: story.key,
+        outcomeId: story.outcomeId,
+        epicId: story.epicId,
         status: story.status,
         lifecycleState: story.lifecycleState,
         testDefinition: story.testDefinition,

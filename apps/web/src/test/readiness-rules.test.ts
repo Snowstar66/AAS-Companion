@@ -9,9 +9,11 @@ import {
   getOutcomeBaselineReadiness,
   getStoryHandoffReadiness,
   getStoryReadinessBlockers,
+  getStoryValueSpineBlockers,
   governedObjectProvenanceSchema,
   isOutcomeReadyForTollgateOne,
-  isStoryReadyForHandoff
+  isStoryReadyForHandoff,
+  isStoryValidAgainstValueSpine
 } from "@aas-companion/domain";
 
 describe("M1 readiness rules", () => {
@@ -35,18 +37,22 @@ describe("M1 readiness rules", () => {
   it("flags missing story readiness inputs", () => {
     const blockers = getStoryReadinessBlockers({
       key: "M1-STORY-007",
+      outcomeId: "outcome-1",
+      epicId: "epic-1",
       acceptanceCriteria: [],
       testDefinition: null,
       definitionOfDone: [],
       status: "definition_blocked"
     });
 
-    expect(blockers).toContain("Test Definition is required before handoff.");
+    expect(blockers).toContain("Test Definition is required before build progression.");
     expect(blockers).toContain("Definition of Done is required before handoff.");
     expect(blockers).toContain("At least one acceptance criterion is required.");
     expect(
       isStoryReadyForHandoff({
         key: "M1-STORY-007",
+        outcomeId: "outcome-1",
+        epicId: "epic-1",
         acceptanceCriteria: ["A valid criterion"],
         testDefinition: "Smoke plus regression plan",
         definitionOfDone: ["Demo reviewed"],
@@ -67,12 +73,23 @@ describe("M1 readiness rules", () => {
     expect(
       getStoryHandoffReadiness({
         key: "M2-STORY-001",
+        outcomeId: "outcome-2",
+        epicId: "epic-2",
         acceptanceCriteria: ["One criterion"],
         testDefinition: "Run smoke coverage",
         definitionOfDone: ["Reviewed"],
         status: "ready_for_handoff"
       }).state
     ).toBe("ready");
+
+    expect(
+      isStoryValidAgainstValueSpine({
+        outcomeId: "outcome-2",
+        epicId: "epic-2",
+        acceptanceCriteria: ["One criterion"],
+        testDefinition: "Run smoke coverage"
+      })
+    ).toBe(true);
 
     expect(
       createReadinessAssessment({
@@ -85,6 +102,20 @@ describe("M1 readiness rules", () => {
         ]
       }).state
     ).toBe("blocked");
+  });
+
+  it("validates delivery stories directly against the Value Spine", () => {
+    const blockers = getStoryValueSpineBlockers({
+      outcomeId: "",
+      epicId: "",
+      acceptanceCriteria: [],
+      testDefinition: null
+    });
+
+    expect(blockers).toContain("Outcome link is required for Value Spine traceability.");
+    expect(blockers).toContain("Epic link is required for Value Spine traceability.");
+    expect(blockers).toContain("At least one acceptance criterion is required.");
+    expect(blockers).toContain("Test Definition is required before build progression.");
   });
 
   it("creates governed provenance with required lineage rules", () => {

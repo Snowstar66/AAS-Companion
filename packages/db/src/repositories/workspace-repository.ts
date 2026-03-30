@@ -24,6 +24,8 @@ export type HomeDashboardSnapshot = {
   stories: Array<{
     id: string;
     key: string;
+    outcomeId: string;
+    epicId: string;
     status: StoryRecord["status"];
     lifecycleState: StoryRecord["lifecycleState"];
     testDefinition: string | null;
@@ -123,6 +125,7 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                       title: true,
                       valueIntent: true,
                       expectedBehavior: true,
+                      sourceDirectionSeedId: true,
                       status: true,
                       originType: true,
                       lifecycleState: true,
@@ -169,6 +172,7 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                   epicId: true,
                   valueIntent: true,
                   expectedBehavior: true,
+                  sourceDirectionSeedId: true,
                   status: true,
                   originType: true,
                   lifecycleState: true,
@@ -305,6 +309,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
                   title: true,
                   valueIntent: true,
                   expectedBehavior: true,
+                  sourceDirectionSeedId: true,
                   status: true,
                   originType: true,
                   lifecycleState: true,
@@ -351,6 +356,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
               epicId: true,
               valueIntent: true,
               expectedBehavior: true,
+              sourceDirectionSeedId: true,
               status: true,
               originType: true,
               lifecycleState: true,
@@ -374,6 +380,8 @@ export async function getWorkspaceSnapshot(organizationId: string) {
         select: {
           id: true,
           key: true,
+          outcomeId: true,
+          epicId: true,
           status: true,
           lifecycleState: true,
           testDefinition: true,
@@ -518,6 +526,8 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
       select: {
         id: true,
         key: true,
+        outcomeId: true,
+        epicId: true,
         status: true,
         lifecycleState: true,
         testDefinition: true,

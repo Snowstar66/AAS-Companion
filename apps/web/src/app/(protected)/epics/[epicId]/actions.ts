@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   archiveGovernedObjectService,
+  createDeliveryStoryFromDirectionSeedService,
   createNativeDirectionSeedFromEpicService,
   hardDeleteGovernedObjectService,
   restoreGovernedObjectService,
@@ -142,6 +143,34 @@ export async function createDirectionSeedFromEpicAction(formData: FormData) {
       save: "success"
     }) + `#seed-${result.data.id}`
   );
+}
+
+export async function createDeliveryStoryFromDirectionSeedAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const epicId = String(formData.get("epicId") ?? "");
+  const seedId = String(formData.get("seedId") ?? "");
+  const result = await createDeliveryStoryFromDirectionSeedService({
+    organizationId: session.organization.organizationId,
+    directionSeedId: seedId,
+    actorId: session.userId
+  });
+
+  revalidatePath(`/epics/${epicId}`);
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/stories");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildEpicRedirect(epicId, {
+        save: "error",
+        message: result.errors[0]?.message ?? "Delivery Story could not be created."
+      }) + `#seed-${seedId}`
+    );
+  }
+
+  redirect(`/stories/${result.data.story.id}?created=1&createdAs=delivery`);
 }
 
 export async function saveDirectionSeedAction(formData: FormData) {

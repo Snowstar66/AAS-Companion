@@ -11,7 +11,12 @@ import { FramingValueSpineTree } from "@/components/workspace/framing-value-spin
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
+  getStoryIdeaDeliveryFeedback,
+  getStoryIdeaDeliveryFeedbackLabel
+} from "@/lib/framing/story-idea-delivery-feedback";
+import {
   archiveEpicAction,
+  createDeliveryStoryFromDirectionSeedAction,
   createDirectionSeedFromEpicAction,
   hardDeleteEpicAction,
   restoreEpicAction,
@@ -200,6 +205,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     title: story.title,
                     href: `/stories/${story.id}`,
                     isCurrent: false,
+                    sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
                     valueIntent: story.valueIntent ?? null,
                     expectedBehavior: story.expectedBehavior ?? null,
                     testDefinition: story.testDefinition ?? null,
@@ -340,59 +346,103 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     </p>
                   </div>
                 ) : (
-                  epic.directionSeeds.map((seed) => (
-                    <form action={saveDirectionSeedAction} className="rounded-2xl border border-border/70 bg-background p-4" id={`seed-${seed.id}`} key={seed.id}>
-                      <input name="epicId" type="hidden" value={epic.id} />
-                      <input name="outcomeId" type="hidden" value={epic.outcomeId} />
-                      <input name="seedId" type="hidden" value={seed.id} />
-                      <input name="epicTitle" type="hidden" value={epic.title} />
-                      <input name="epicPurpose" type="hidden" value={epic.purpose ?? ""} />
-                      <input name="epicScopeBoundary" type="hidden" value={epic.scopeBoundary ?? ""} />
-                      <div className="grid gap-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{seed.key}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {seed.sourceStoryId ? `Legacy source available: ${seed.sourceStoryId}` : "Native story idea"}
-                            </p>
+                  epic.directionSeeds.map((seed) => {
+                    const linkedDeliveryStories = epic.stories.filter(
+                      (story) => story.sourceDirectionSeedId === seed.id
+                    );
+                    const latestLinkedDeliveryStory = linkedDeliveryStories[linkedDeliveryStories.length - 1] ?? null;
+                    const deliveryFeedback = getStoryIdeaDeliveryFeedback({
+                      seedId: seed.id,
+                      stories: epic.stories,
+                      allSeedSourceStoryIds: epic.directionSeeds.map((candidate) => candidate.sourceStoryId)
+                    });
+
+                    return (
+                      <form action={saveDirectionSeedAction} className="rounded-2xl border border-border/70 bg-background p-4" id={`seed-${seed.id}`} key={seed.id}>
+                        <input name="epicId" type="hidden" value={epic.id} />
+                        <input name="outcomeId" type="hidden" value={epic.outcomeId} />
+                        <input name="seedId" type="hidden" value={seed.id} />
+                        <input name="epicTitle" type="hidden" value={epic.title} />
+                        <input name="epicPurpose" type="hidden" value={epic.purpose ?? ""} />
+                        <input name="epicScopeBoundary" type="hidden" value={epic.scopeBoundary ?? ""} />
+                        <div className="grid gap-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">{seed.key}</p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {seed.sourceStoryId ? `Legacy source available: ${seed.sourceStoryId}` : "Native story idea"}
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Delivery feedback: {getStoryIdeaDeliveryFeedbackLabel(deliveryFeedback.status)}.
+                                {" "}
+                                {deliveryFeedback.deliveryStoryCount} derived, {deliveryFeedback.completedDeliveryStoryCount} completed,
+                                {" "}
+                                {deliveryFeedback.additionalStoryCount} additional.
+                              </p>
+                              {linkedDeliveryStories.length > 0 ? (
+                                <p className="mt-1 text-xs text-emerald-700">
+                                  Linked Delivery Stories: {linkedDeliveryStories.map((story) => story.key).join(", ")}
+                                </p>
+                              ) : null}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <PendingFormButton
+                                className="gap-2"
+                                icon={<ArrowRight className="h-4 w-4" />}
+                                label="Save Story Idea"
+                                pendingLabel="Saving Story Idea..."
+                              />
+                              {latestLinkedDeliveryStory ? (
+                                <Button asChild className="gap-2" variant="secondary">
+                                  <Link href={`/stories/${latestLinkedDeliveryStory.id}`}>
+                                    Open latest Delivery Story
+                                    <ArrowRight className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              ) : null}
+                              {!isArchived ? (
+                                <PendingFormButton
+                                  className="gap-2"
+                                  formAction={createDeliveryStoryFromDirectionSeedAction}
+                                  icon={<ArrowRight className="h-4 w-4" />}
+                                  label={linkedDeliveryStories.length > 0 ? "Create another Delivery Story" : "Create Delivery Story"}
+                                  pendingLabel="Creating Delivery Story..."
+                                  variant="secondary"
+                                />
+                              ) : null}
+                            </div>
                           </div>
-                          <PendingFormButton
-                            className="gap-2"
-                            icon={<ArrowRight className="h-4 w-4" />}
-                            label="Save Story Idea"
-                            pendingLabel="Saving Story Idea..."
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Story idea title</span>
+                            <input
+                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                              defaultValue={seed.title}
+                              disabled={isArchived}
+                              name="title"
+                              type="text"
+                            />
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Value intent</span>
+                            <textarea
+                              className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                              defaultValue={seed.shortDescription ?? ""}
+                              disabled={isArchived}
+                              name="shortDescription"
+                            />
+                          </label>
+                          <StoryIdeaAiValidatedTextarea
+                            disabled={isArchived}
+                            initialValue={seed.expectedBehavior ?? ""}
+                            label="Expected behavior"
+                            minHeightClassName="min-h-20"
+                            name="expectedBehavior"
+                            validateAction={validateDirectionSeedExpectedBehaviorAiAction}
                           />
                         </div>
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Story idea title</span>
-                          <input
-                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                            defaultValue={seed.title}
-                            disabled={isArchived}
-                            name="title"
-                            type="text"
-                          />
-                        </label>
-                        <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Value intent</span>
-                          <textarea
-                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                            defaultValue={seed.shortDescription ?? ""}
-                            disabled={isArchived}
-                            name="shortDescription"
-                          />
-                        </label>
-                        <StoryIdeaAiValidatedTextarea
-                          disabled={isArchived}
-                          initialValue={seed.expectedBehavior ?? ""}
-                          label="Expected behavior"
-                          minHeightClassName="min-h-20"
-                          name="expectedBehavior"
-                          validateAction={validateDirectionSeedExpectedBehaviorAiAction}
-                        />
-                      </div>
-                    </form>
-                  ))
+                      </form>
+                    );
+                  })
                 )}
               </CardContent>
             </Card>

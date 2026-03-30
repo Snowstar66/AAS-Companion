@@ -17,7 +17,8 @@ import {
   executionContractToMarkdown,
   type GovernedChildImpact,
   getOutcomeFramingReadiness,
-  getStoryHandoffReadiness
+  getStoryHandoffReadiness,
+  validateStoryAgainstValueSpine
 } from "@aas-companion/domain";
 import { getArtifactCandidateById } from "@aas-companion/db";
 import { withDevTiming } from "./dev-timing";
@@ -383,6 +384,7 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
       lineageSourceType: snapshot.story.lineageSourceType,
       lineageSourceId: snapshot.story.lineageSourceId
     });
+    const valueSpineValidation = validateStoryAgainstValueSpine(snapshot.story);
     const baseReadinessBlockers = getStoryHandoffReadiness(snapshot.story).reasons.map((reason) => reason.message);
     const tollgateReview = await getTollgateReviewWorkspaceService({
       organizationId,
@@ -397,6 +399,7 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
 
     return success({
       ...snapshot,
+      valueSpineValidation,
       readiness: getStoryHandoffReadiness(snapshot.story),
       importedBuildBlockers,
       tollgateReview: tollgateReview.ok ? tollgateReview.data : null,

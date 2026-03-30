@@ -246,6 +246,7 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
               aiAccelerationLevel: true,
               testDefinition: true,
               definitionOfDone: true,
+              sourceDirectionSeedId: true,
               status: true,
               originType: true,
               createdMode: true,

@@ -473,6 +473,7 @@ model DirectionSeed {
   organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   outcome               Outcome             @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
   epic                  Epic                @relation(fields: [epicId], references: [id], onDelete: Cascade)
+  deliveryStories       Story[]             @relation("DirectionSeedToStoryIdeaSource")
 
   @@unique([organizationId, key])
   @@index([organizationId, outcomeId, lifecycleState])
@@ -497,6 +498,7 @@ model Story {
   aiAccelerationLevel AiAccelerationLevel @default(level_2)
   testDefinition      String?
   definitionOfDone    String[]            @default([])
+  sourceDirectionSeedId String?
   status              StoryStatus         @default(draft)
   originType          GovernedObjectOriginType @default(native)
   createdMode         GovernedObjectCreatedMode @default(clean)
@@ -512,6 +514,7 @@ model Story {
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   outcome             Outcome             @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
   epic                Epic                @relation(fields: [epicId], references: [id], onDelete: Cascade)
+  sourceDirectionSeed DirectionSeed?      @relation("DirectionSeedToStoryIdeaSource", fields: [sourceDirectionSeedId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, key])
   @@index([organizationId, originType])
@@ -519,6 +522,7 @@ model Story {
   @@index([organizationId, createdAt])
   @@index([organizationId, outcomeId, lifecycleState])
   @@index([organizationId, epicId, lifecycleState])
+  @@index([organizationId, sourceDirectionSeedId])
 }
 
 model Tollgate {

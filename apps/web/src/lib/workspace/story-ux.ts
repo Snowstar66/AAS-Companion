@@ -3,6 +3,8 @@ import { getStoryHandoffReadiness } from "@aas-companion/domain/story";
 type StoryUxInput = {
   id?: string | null;
   key: string;
+  outcomeId?: string | null;
+  epicId?: string | null;
   status: string;
   lifecycleState: string;
   testDefinition: string | null;
@@ -94,6 +96,8 @@ function getMissingInputActions(input: StoryUxInput) {
 export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
   const readiness = getStoryHandoffReadiness({
     key: input.key,
+    outcomeId: input.outcomeId ?? "linked-outcome",
+    epicId: input.epicId ?? "linked-epic",
     testDefinition: input.testDefinition,
     definitionOfDone: input.definitionOfDone,
     acceptanceCriteria: input.acceptanceCriteria,

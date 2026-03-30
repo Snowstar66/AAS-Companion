@@ -27,6 +27,14 @@ function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function getPromotedEntityLabel(candidateType: string, promotedEntityType: string | null | undefined) {
+  if (candidateType === "story" || promotedEntityType === "story") {
+    return "Story Idea";
+  }
+
+  return promotedEntityType ? formatLabel(promotedEntityType) : "record";
+}
+
 function getFindingClasses(category: "missing" | "uncertain" | "human_only" | "blocked") {
   if (category === "blocked") {
     return "border-rose-200 bg-rose-50 text-rose-900";
@@ -245,6 +253,9 @@ function getCandidatePreviewRows(candidate: ReviewCandidate) {
     }
     if (candidate.draftRecord?.valueIntent) {
       rows.push({ label: "Value intent", value: candidate.draftRecord.valueIntent });
+    }
+    if (candidate.draftRecord?.expectedBehavior) {
+      rows.push({ label: "Expected behavior", value: candidate.draftRecord.expectedBehavior });
     }
     if (acceptanceCriteria.length > 0) {
       rows.push({ label: "Acceptance criteria", value: acceptanceCriteria.join(" | ") });
@@ -1020,6 +1031,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.valueIntent ?? ""} name="valueIntent" />
                                 </label>
                                 <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.expectedBehavior ?? ""} name="expectedBehavior" />
+                                </label>
+                                <label className="space-y-2">
                                   <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
                                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={(selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")} name="acceptanceCriteria" />
                                 </label>
@@ -1127,7 +1142,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
                         {selectedCandidate.promotedEntityId ? (
                           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                            Approved and promoted into project {selectedCandidate.promotedEntityType} with ID {selectedCandidate.promotedEntityId}.
+                            Approved and promoted into project {getPromotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType)} with ID {selectedCandidate.promotedEntityId}.
                           </div>
                         ) : null}
                       </CardContent>

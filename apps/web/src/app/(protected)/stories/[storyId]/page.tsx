@@ -110,6 +110,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   const saveState = getParamValue(query.save);
   const readyState = getParamValue(query.ready);
   const lifecycleState = getParamValue(query.lifecycle);
+  const createdAs = getParamValue(query.createdAs);
   const saveMessage = getParamValue(query.message);
   const blockersFromQuery = getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [];
   const storyResult = await getStoryWorkspaceService(organization.organizationId, storyId);
@@ -122,6 +123,8 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   const tollgateReview = storyResult.data.tollgateReview;
   const computedBlockers = getStoryReadinessBlockers(story);
   const importedBuildBlockers = storyResult.data.importedBuildBlockers ?? [];
+  const valueSpineValidation = storyResult.data.valueSpineValidation;
+  const valueSpineBlockers = valueSpineValidation.reasons.map((reason) => reason.message);
   const blockers =
     blockersFromQuery.length > 0
       ? blockersFromQuery
@@ -143,7 +146,7 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   const readinessFields = getReadinessFieldStatus(story);
   const missingReadinessFields = readinessFields.filter((field) => !field.complete);
   const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
-  const isDeliveryMode = tollgateStatus === "approved" || story.status === "in_progress";
+  const isDeliveryMode = Boolean(story.sourceDirectionSeedId) || tollgateStatus === "approved" || story.status === "in_progress";
   const ideaBlockers = [
     !story.valueIntent?.trim() ? "Value Intent still needs to be described." : null,
     !story.expectedBehavior?.trim() ? "Expected Behavior still needs to be described." : null
@@ -185,7 +188,11 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
       <section className="space-y-6">
         {created ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {isDeliveryMode ? "Native Story created and ready for design work." : "Native Story idea created inside the current Framing."}
+            {createdAs === "delivery"
+              ? "Delivery Story created from the selected Story Idea."
+              : isDeliveryMode
+                ? "Native Story created and ready for design work."
+                : "Native Story idea created inside the current Framing."}
           </div>
         ) : null}
         {saveState === "success" ? (
@@ -281,20 +288,27 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
                   <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Value Spine validation
+                  </p>
+                  <p className="mt-2 font-semibold text-foreground">
+                    {valueSpineValidation.state === "ready" ? "Valid against Value Spine" : "Value Spine still blocked"}
+                  </p>
+                  <p className="mt-2 leading-6 text-muted-foreground">
+                    {valueSpineBlockers.length === 0
+                      ? "Outcome link, Epic link, Acceptance Criteria, and Test Definition are all present."
+                      : valueSpineBlockers[0]}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {valueSpineBlockers.length > 1
+                      ? `${valueSpineBlockers.length - 1} more Value Spine blocker${valueSpineBlockers.length - 1 === 1 ? "" : "s"} remain.`
+                      : "This check stays informational until the Story moves into build handoff."}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
                   <p className="mt-2 font-semibold text-foreground">{primaryNextStepLabel}</p>
                   <p className="mt-2 leading-6 text-muted-foreground">{primaryNextStepDetail}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm" id="story-blockers">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current blocker</p>
-                  <p className="mt-2 font-semibold text-foreground">
-                    {blockers.length === 0 ? "No visible blockers" : blockers[0]}
-                  </p>
-                  <p className="mt-2 leading-6 text-muted-foreground">
-                    {blockers.length > 1
-                      ? `${blockers.length - 1} more blocker${blockers.length - 1 === 1 ? "" : "s"} are listed below in approvals.`
-                      : "Use the sections below to continue the Story."}
-                  </p>
                 </div>
               </>
             ) : (

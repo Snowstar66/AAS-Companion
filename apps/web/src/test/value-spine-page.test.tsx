@@ -28,6 +28,7 @@ function createWorkspaceSnapshot(options?: {
   seedDescription?: string | null;
   expectedBehavior?: string | null;
   tollgateStatus?: "blocked" | "ready" | "approved" | null;
+  includeAdditionalDeliveryStory?: boolean;
 }) {
   return {
     ok: true,
@@ -88,7 +89,26 @@ function createWorkspaceSnapshot(options?: {
                     acceptanceCriteria: ["Accepted"],
                     testDefinition: "Regression test",
                     definitionOfDone: ["Human review complete"]
-                  }
+                  },
+                  ...(options?.includeAdditionalDeliveryStory
+                    ? [
+                        {
+                          id: "story-extra-1",
+                          key: "STR-099",
+                          title: "Extra delivery scope",
+                          status: "ready_for_handoff",
+                          tollgateStatus: "ready",
+                          originType: "native",
+                          lifecycleState: "active",
+                          importedReadinessState: null,
+                          lineageSourceType: null,
+                          lineageSourceId: null,
+                          acceptanceCriteria: ["Extra acceptance"],
+                          testDefinition: "Extra verification",
+                          definitionOfDone: ["Extra done condition"]
+                        }
+                      ]
+                    : [])
                 ]
               }
             ],
@@ -169,5 +189,22 @@ describe("Value Spine page", () => {
     expect(screen.getAllByText("Project Value Spine").length).toBeGreaterThan(0);
     expect(screen.queryByText("Ready for design")).toBeNull();
     expect(screen.queryByText("This Story still needs key delivery inputs before review can start.")).toBeNull();
+  });
+
+  it("shows lightweight delivery feedback on story ideas without surfacing unlinked delivery stories as framing ideas", async () => {
+    getValueSpineServiceMock.mockResolvedValue(
+      createWorkspaceSnapshot({
+        seedDescription: "Keep the imported branch as an AI-usable framing seed.",
+        expectedBehavior: "Imported lineage stays visible during framing export.",
+        includeAdditionalDeliveryStory: true
+      })
+    );
+
+    render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
+
+    expect(screen.getByText(/Delivery feedback: Expanded/i)).toBeDefined();
+    expect(screen.getByText(/Derived Delivery Stories: 0/i)).toBeDefined();
+    expect(screen.getByText(/Additional: 1/i)).toBeDefined();
+    expect(screen.queryByText("Extra delivery scope")).toBeNull();
   });
 });

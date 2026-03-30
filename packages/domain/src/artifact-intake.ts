@@ -135,6 +135,7 @@ export const artifactCandidateDraftRecordSchema = z.object({
   riskNote: z.string().nullish(),
   storyType: storyTypeSchema.nullish(),
   valueIntent: z.string().nullish(),
+  expectedBehavior: z.string().nullish(),
   acceptanceCriteria: z.array(z.string()).default([]),
   aiUsageScope: z.array(z.string()).default([]),
   testDefinition: z.string().nullish(),
@@ -1112,6 +1113,7 @@ function buildDraftRecordFromParsedSection(input: {
       riskNote: null,
       storyType: null,
       valueIntent: null,
+      expectedBehavior: null,
       acceptanceCriteria: [],
       aiUsageScope: [],
       testDefinition: null,
@@ -1141,6 +1143,7 @@ function buildDraftRecordFromParsedSection(input: {
       riskNote: extractTaggedLineValue(input.section.text, "Risk Note") || null,
       storyType: null,
       valueIntent: null,
+      expectedBehavior: null,
       acceptanceCriteria: [],
       aiUsageScope: [],
       testDefinition: null,
@@ -1151,6 +1154,10 @@ function buildDraftRecordFromParsedSection(input: {
   }
 
   const valueIntent = extractTaggedLineValue(input.section.text, "Value Intent");
+  const expectedBehavior =
+    extractTaggedLineValue(input.section.text, "Expected Behavior") ||
+    extractTaggedLineValue(input.section.text, "Summary") ||
+    null;
   const aiUsageScope = extractTaggedLineList(input.section.text, "AI Usage Scope");
   const definitionOfDone = extractTaggedLineList(input.section.text, "Definition of Done");
   const rawStoryType = extractTaggedLineValue(input.section.text, "Story Type");
@@ -1168,6 +1175,7 @@ function buildDraftRecordFromParsedSection(input: {
     riskNote: null,
     storyType: normalizeImportedStoryType(rawStoryType, input.section.text),
     valueIntent: valueIntent || summarizeText(input.section.text),
+    expectedBehavior,
     acceptanceCriteria: input.acceptanceCriteria,
     aiUsageScope,
     testDefinition: input.testNotes.length > 0 ? input.testNotes.join("\n") : null,
@@ -1451,6 +1459,7 @@ export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandida
       purpose: null,
       storyType: null,
       valueIntent: null,
+      expectedBehavior: null,
       acceptanceCriteria: [],
       aiUsageScope: [],
       testDefinition: null,
@@ -1474,6 +1483,7 @@ export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandida
       riskNote: null,
       storyType: null,
       valueIntent: null,
+      expectedBehavior: null,
       acceptanceCriteria: [],
       aiUsageScope: [],
       testDefinition: null,
@@ -1498,6 +1508,7 @@ export function createArtifactCandidateDraftRecord(candidate: ArtifactAasCandida
     riskNote: null,
     storyType: "outcome_delivery",
     valueIntent: candidate.summary,
+    expectedBehavior: null,
     acceptanceCriteria: candidate.acceptanceCriteria,
     aiUsageScope: [],
     testDefinition: candidate.testNotes.length > 0 ? candidate.testNotes.join("\n") : null,
@@ -1743,64 +1754,43 @@ export function analyzeArtifactCandidateCompliance(input: {
   }
 
   if (input.candidate.type === "story") {
-    if (!draftRecord.key?.trim()) {
+    if (!draftRecord.valueIntent?.trim()) {
       findings.push({
-        code: "story_key_missing",
+        code: "story_value_intent_missing",
         category: "missing",
-        message: "Story-ID is missing.",
-        fieldLabel: "Story-ID"
-      });
-    }
-
-    if (!draftRecord.acceptanceCriteria.length) {
-      findings.push({
-        code: "story_acceptance_criteria_missing",
-        category: "missing",
-        message: "Acceptance criteria are missing.",
-        fieldLabel: "Acceptance criteria"
+        message: "Value intent is missing.",
+        fieldLabel: "Value intent"
       });
     } else if (
       shouldSurfaceUncertainty(input.candidate, reviewStatus) &&
-      (draftRecord.acceptanceCriteria.length < 2 && listItemsNeedStrengthening(draftRecord.acceptanceCriteria))
+      countMeaningfulWords(draftRecord.valueIntent) < 6
     ) {
       findings.push({
-        code: "story_acceptance_criteria_weak",
+        code: "story_value_intent_too_thin",
         category: "uncertain",
         message:
-          "Acceptance criteria exist but are still weak as verification anchors. Rewrite them as concrete, testable checks that let a reviewer tell when the Story is actually complete.",
-        fieldLabel: "Acceptance criteria"
+          "Value intent exists but is too thin to explain why the Story matters. Strengthen it with who benefits, what change is expected, and why the work is valuable.",
+        fieldLabel: "Value intent"
       });
     }
 
-    if (!draftRecord.testDefinition?.trim()) {
+    if (!draftRecord.expectedBehavior?.trim()) {
       findings.push({
-        code: "story_test_definition_missing",
+        code: "story_expected_behavior_missing",
         category: "missing",
-        message: "Test Definition is missing.",
-        fieldLabel: "Test Definition"
+        message: "Expected behavior is missing.",
+        fieldLabel: "Expected behavior"
       });
+    } else if (
+      shouldSurfaceUncertainty(input.candidate, reviewStatus) &&
+      countMeaningfulWords(draftRecord.expectedBehavior) < 6
+    ) {
       findings.push({
-        code: "story_test_link_missing",
-        category: "blocked",
-        message: "Story -> Test-related definition linkage is missing.",
-        fieldLabel: "Test linkage"
-      });
-    }
-
-    if (!draftRecord.definitionOfDone.length) {
-      findings.push({
-        code: "story_definition_of_done_missing",
-        category: "missing",
-        message: "Definition of Done is missing.",
-        fieldLabel: "Definition of Done"
-      });
-    } else if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && listItemsNeedStrengthening(draftRecord.definitionOfDone)) {
-      findings.push({
-        code: "story_definition_of_done_weak",
+        code: "story_expected_behavior_too_thin",
         category: "uncertain",
         message:
-          "Definition of Done is present but too weak to serve as a handoff guardrail. Strengthen it with concrete completion signals such as review, verification, documentation, or evidence expectations.",
-        fieldLabel: "Definition of Done"
+          "Expected behavior exists but is still too thin to guide design and AI refinement. Describe roughly what should happen when this idea is implemented without turning it into detailed delivery requirements.",
+        fieldLabel: "Expected behavior"
       });
     }
 
@@ -1822,37 +1812,6 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!humanDecisions.aiAccelerationLevel) {
-      findings.push({
-        code: "story_ai_level_human_only",
-        category: "human_only",
-        message: "AI level must be confirmed by a human reviewer.",
-        fieldLabel: "AI level"
-      });
-    }
-
-    if (!humanDecisions.riskAcceptanceStatus) {
-      findings.push({
-        code: "risk_acceptance_human_only",
-        category: "human_only",
-        message: "Risk acceptance status must be confirmed by a human reviewer.",
-        fieldLabel: "Risk acceptance status"
-      });
-    }
-
-    if (
-      shouldSurfaceUncertainty(input.candidate, reviewStatus) &&
-      draftRecord.valueIntent?.trim() &&
-      countMeaningfulWords(draftRecord.valueIntent) < 6
-    ) {
-      findings.push({
-        code: "story_value_intent_too_thin",
-        category: "uncertain",
-        message:
-          "Value intent exists but is too thin to explain why the Story matters. Strengthen it with who benefits, what change is expected, and why the work is valuable.",
-        fieldLabel: "Value intent"
-      });
-    }
   }
 
   const summary = {
@@ -2011,7 +1970,7 @@ export function inferImportedReadinessState(input: {
     return "imported_human_review_needed";
   }
 
-  return input.type === "story" ? "imported_design_ready" : "imported_framing_ready";
+  return "imported_framing_ready";
 }
 
 export function mapParsedArtifactsToAasCandidates(input: {
