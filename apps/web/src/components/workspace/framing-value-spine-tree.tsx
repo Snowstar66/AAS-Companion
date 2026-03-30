@@ -197,7 +197,7 @@ function DeliveryStoryChildRow({ story, emphasis = "linked" }: { story: TreeStor
     blockedActionCount: story.blockedActionCount ?? 0
   });
   const missingInputs = getMissingStoryInputs(story);
-  const storySummary = story.valueIntent?.trim() || storyUx.statusDetail;
+  const deliveryDescription = story.expectedBehavior?.trim() || storyUx.statusDetail;
   const structureMeta = joinMeta([
     `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`,
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
@@ -226,7 +226,13 @@ function DeliveryStoryChildRow({ story, emphasis = "linked" }: { story: TreeStor
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{storySummary}</p>
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">Value intent:</span>{" "}
+            {story.valueIntent?.trim() || "This Delivery Story still needs a clearer value intent."}
+          </p>
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">Delivery description:</span> {deliveryDescription}
+          </p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">Delivery status:</span> {storyUx.statusLabel}
           </p>
@@ -419,19 +425,26 @@ function DirectionSeedRow({
         <div className="mt-4 space-y-3 rounded-2xl border border-emerald-200/70 bg-white/80 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Delivery Stories from this Story Idea
+              Delivery Stories
             </p>
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
               {derivedStories.length}
             </span>
           </div>
+          <p className="text-sm leading-6 text-muted-foreground">
+            These Delivery Stories realize this Story Idea in design and build.
+          </p>
           <div className="space-y-3">
             {derivedStories.map((story) => (
               <DeliveryStoryChildRow key={story.id} story={story} />
             ))}
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-4 rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
+          No Delivery Stories have been created from this Story Idea yet.
+        </div>
+      )}
     </div>
   );
 }
@@ -663,6 +676,7 @@ function EpicRow({
       })
   ).length;
   const allSeedSourceStoryIds = directionSeeds.map((seed) => seed.sourceStoryId);
+  const storyIdeaCount = directionSeeds.length + framingStories.length;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/55">
@@ -719,48 +733,72 @@ function EpicRow({
         {itemCount === 0 ? (
           <div className="px-5 py-4 text-sm text-muted-foreground">{emptyStoryMessage}</div>
         ) : (
-          <div className="divide-y divide-border/70">
-            {mode === "framing"
-              ? [
-                  ...directionSeeds.map((seed) => (
-                    <DirectionSeedRow
-                      derivedStories={stories.filter((story) => story.sourceDirectionSeedId === seed.id)}
-                      feedback={getStoryIdeaDeliveryFeedback({
-                        seedId: seed.id,
-                        stories,
-                        allSeedSourceStoryIds
-                      })}
-                      key={`seed-${seed.id}`}
-                      seed={seed}
-                    />
-                  )),
-                  ...framingStories.map((story) => <StoryIdeaRow key={`legacy-story-${story.id}`} story={story} />),
-                  ...(additionalDeliveryStories.length > 0
-                    ? [
-                        <div className="px-5 py-4" key={`additional-delivery-${epic.id}`}>
-                          <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                Additional Delivery Stories
-                              </p>
-                              <span className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-medium text-amber-900">
-                                {additionalDeliveryStories.length}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                              These Delivery Stories belong to the same Epic, but they are not directly traced to one Story Idea.
-                            </p>
-                            <div className="mt-4 space-y-3">
-                              {additionalDeliveryStories.map((story) => (
-                                <DeliveryStoryChildRow emphasis="additional" key={`additional-${story.id}`} story={story} />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      ]
-                    : [])
-                ]
-              : stories.map((story) => <StoryRow key={story.id} story={story} />)}
+          <div className="space-y-4 p-4">
+            {mode === "framing" ? (
+              <>
+                <div className="rounded-2xl border border-border/70 bg-background/90">
+                  <div className="border-b border-border/70 px-5 py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story Ideas</p>
+                      <span className="rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                        {storyIdeaCount}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.
+                    </p>
+                  </div>
+                  {storyIdeaCount === 0 ? (
+                    <div className="px-5 py-4 text-sm text-muted-foreground">No Story Ideas are currently visible in this Epic.</div>
+                  ) : (
+                    <div className="divide-y divide-border/70">
+                      {directionSeeds.map((seed) => (
+                        <DirectionSeedRow
+                          derivedStories={stories.filter((story) => story.sourceDirectionSeedId === seed.id)}
+                          feedback={getStoryIdeaDeliveryFeedback({
+                            seedId: seed.id,
+                            stories,
+                            allSeedSourceStoryIds
+                          })}
+                          key={`seed-${seed.id}`}
+                          seed={seed}
+                        />
+                      ))}
+                      {framingStories.map((story) => (
+                        <StoryIdeaRow key={`legacy-story-${story.id}`} story={story} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {additionalDeliveryStories.length > 0 ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Additional Delivery Stories
+                      </p>
+                      <span className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-medium text-amber-900">
+                        {additionalDeliveryStories.length}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      {additionalDeliveryStories.map((story) => (
+                        <DeliveryStoryChildRow emphasis="additional" key={`additional-${story.id}`} story={story} />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="divide-y divide-border/70 rounded-2xl border border-border/70 bg-background/90">
+                {stories.map((story) => (
+                  <StoryRow key={story.id} story={story} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
