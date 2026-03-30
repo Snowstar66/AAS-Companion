@@ -50,6 +50,34 @@ export type OutcomeFramingAiReview = {
   };
 };
 
+type OutcomeFramingAiReviewInput = {
+  outcome: {
+    key: string;
+    title: string;
+    problemStatement?: string | null;
+    outcomeStatement?: string | null;
+    baselineDefinition?: string | null;
+    baselineSource?: string | null;
+    timeframe?: string | null;
+    aiAccelerationLevel: "level_1" | "level_2" | "level_3";
+    riskProfile: "low" | "medium" | "high";
+  };
+  epics: Array<{
+    key: string;
+    title: string;
+    purpose?: string | null;
+    scopeBoundary?: string | null;
+    seedCount: number;
+  }>;
+  directionSeeds: Array<{
+    seedId: string;
+    title: string;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
+  }>;
+};
+
 function parseOutcomeFieldAiValidation(input: unknown): OutcomeFieldAiValidation {
   if (!input || typeof input !== "object") {
     throw new Error("AI validation response was not an object.");
@@ -266,6 +294,144 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
   };
 }
 
+function prependUnique(referenceFindings: string[], existing: string[]) {
+  const normalized = new Set(existing.map((item) => item.trim().toLowerCase()));
+  const additions = referenceFindings.filter((item) => {
+    const key = item.trim().toLowerCase();
+
+    if (!key || normalized.has(key)) {
+      return false;
+    }
+
+    normalized.add(key);
+    return true;
+  });
+
+  return [...additions, ...existing];
+}
+
+function deriveDeterministicFramingAdjustments(
+  input: OutcomeFramingAiReviewInput,
+  report: OutcomeFramingAiReview
+): OutcomeFramingAiReview {
+  const epicKeys = new Set(input.epics.map((epic) => epic.key));
+  const epicCoverageFindings: string[] = [];
+  const storyCoverageFindings: string[] = [];
+  const riskFindings: string[] = [];
+
+  if (!input.outcome.outcomeStatement?.trim()) {
+    report.outcomeQuality.status = "needs_improvement";
+    report.outcomeQuality.comment = "Outcome statement is missing, so the intended business effect is still unclear.";
+    report.outcomeQuality.suggestedImprovement = "Add one measurable outcome statement before Tollgate 1.";
+    riskFindings.push(`[${input.outcome.key}] Outcome statement is missing, which increases the risk of solving the wrong problem.`);
+  }
+
+  if (!input.outcome.baselineDefinition?.trim()) {
+    report.outcomeQuality.status = "needs_improvement";
+    report.outcomeQuality.comment = "Baseline is not defined clearly enough to judge progress from the current state.";
+    report.outcomeQuality.suggestedImprovement = "Add a concrete baseline definition that describes the current state.";
+    riskFindings.push(`[${input.outcome.key}] Baseline definition is missing, which weakens measurement and decision confidence.`);
+  }
+
+  if (input.epics.length === 0) {
+    report.epicCoverage.status = "partial";
+    epicCoverageFindings.push(`[${input.outcome.key}] No Epics are defined yet.`);
+  }
+
+  for (const epic of input.epics) {
+    if (!epic.purpose?.trim() && !epic.scopeBoundary?.trim()) {
+      report.epicCoverage.status = "partial";
+      epicCoverageFindings.push(`[${epic.key}] Epic direction is too thin to judge coverage cleanly.`);
+    }
+  }
+
+  if (input.directionSeeds.length === 0) {
+    report.storyCoverage.status = "partial";
+    storyCoverageFindings.push(`[${input.outcome.key}] No Story Ideas are defined yet.`);
+  }
+
+  for (const seed of input.directionSeeds) {
+    if (!seed.epicKey || !epicKeys.has(seed.epicKey)) {
+      report.storyCoverage.status = "partial";
+      storyCoverageFindings.push(`[${seed.seedId}] Story Idea is missing a valid Epic link.`);
+      riskFindings.push(`[${seed.seedId}] Story Idea lacks a reliable Epic link, which increases misalignment risk.`);
+    }
+
+    if (!seed.shortDescription?.trim()) {
+      report.storyCoverage.status = "partial";
+      storyCoverageFindings.push(`[${seed.seedId}] Value Intent is missing or too thin.`);
+    }
+
+    if (!seed.expectedBehavior?.trim()) {
+      report.storyCoverage.status = "partial";
+      storyCoverageFindings.push(`[${seed.seedId}] Expected Behavior is missing.`);
+      riskFindings.push(`[${seed.seedId}] Missing Expected Behavior increases the risk of scope expansion during design.`);
+    }
+  }
+
+  report.epicCoverage.missingAreas = prependUnique(epicCoverageFindings, report.epicCoverage.missingAreas);
+  report.storyCoverage.gapsOrOverlaps = prependUnique(storyCoverageFindings, report.storyCoverage.gapsOrOverlaps);
+  report.riskOverview.topRisks = prependUnique(riskFindings, report.riskOverview.topRisks).slice(0, 5);
+
+  if (storyCoverageFindings.length > 0 && report.storyCoverage.comment.length > 0) {
+    const referencedSeeds = storyCoverageFindings
+      .map((item) => item.match(/\[([^\]]+)\]/)?.[1] ?? null)
+      .filter(Boolean)
+      .join(", ");
+
+    if (referencedSeeds) {
+      report.storyCoverage.comment = `${report.storyCoverage.comment} Referenced Story Ideas: ${referencedSeeds}.`;
+    }
+  }
+
+  if (epicCoverageFindings.length > 0 && report.epicCoverage.comment.length > 0) {
+    const referencedEpics = epicCoverageFindings
+      .map((item) => item.match(/\[([^\]]+)\]/)?.[1] ?? null)
+      .filter(Boolean)
+      .join(", ");
+
+    if (referencedEpics) {
+      report.epicCoverage.comment = `${report.epicCoverage.comment} Referenced Epics: ${referencedEpics}.`;
+    }
+  }
+
+  let readinessScore = 100;
+
+  if (report.outcomeQuality.status === "needs_improvement") {
+    readinessScore -= 15;
+  }
+
+  if (report.problemAlignment.status === "weak") {
+    readinessScore -= 15;
+  }
+
+  if (report.epicCoverage.status === "partial") {
+    readinessScore -= 10;
+  }
+
+  if (report.storyCoverage.status === "partial") {
+    readinessScore -= 10;
+  }
+
+  if (report.riskOverview.expansionRisk === "high" || report.riskOverview.misalignmentRisk === "high") {
+    readinessScore -= 20;
+  }
+
+  if (report.aiLevel.assessment !== "appropriate") {
+    readinessScore -= 10;
+  }
+
+  readinessScore = Math.max(0, Math.min(100, readinessScore));
+
+  report.framingReadiness = {
+    score: readinessScore,
+    interpretation:
+      readinessScore >= 80 ? "ready_for_tollgate" : readinessScore >= 60 ? "needs_refinement" : "not_ready"
+  };
+
+  return report;
+}
+
 function parseStoryExpectedBehaviorAiValidation(input: unknown): StoryExpectedBehaviorAiValidation {
   if (!input || typeof input !== "object") {
     throw new Error("AI validation response was not an object.");
@@ -421,31 +587,9 @@ ${JSON.stringify(payload, null, 2)}
 }
 
 function buildFramingReviewPrompt(input: {
-  outcome: {
-    key: string;
-    title: string;
-    problemStatement?: string | null;
-    outcomeStatement?: string | null;
-    baselineDefinition?: string | null;
-    baselineSource?: string | null;
-    timeframe?: string | null;
-    aiAccelerationLevel: "level_1" | "level_2" | "level_3";
-    riskProfile: "low" | "medium" | "high";
-  };
-  epics: Array<{
-    key: string;
-    title: string;
-    purpose?: string | null;
-    scopeBoundary?: string | null;
-    seedCount: number;
-  }>;
-  directionSeeds: Array<{
-    seedId: string;
-    title: string;
-    epicKey?: string | null;
-    shortDescription?: string | null;
-    expectedBehavior?: string | null;
-  }>;
+  outcome: OutcomeFramingAiReviewInput["outcome"];
+  epics: OutcomeFramingAiReviewInput["epics"];
+  directionSeeds: OutcomeFramingAiReviewInput["directionSeeds"];
 }) {
   return `
 You are validating a full AAS Framing Brief.
@@ -476,6 +620,9 @@ Rules:
 - Do identify gaps, risks, assumption problems and the smallest useful improvements.
 - Keep Story Ideas at framing level, not delivery level.
 - Be concise, critical and useful.
+- Be deterministic. The same input should lead to the same statuses and the same referenced items.
+- When a gap or risk refers to a specific Epic or Story Idea, include its key in square brackets, for example [EPC-001] or [SEED-002].
+- Do not mention an Epic or Story Idea without its reference key when one is available.
 
 Evaluation details:
 1. Outcome Quality
@@ -693,6 +840,7 @@ export async function reviewOutcomeFramingWithAi(input: {
     },
     body: JSON.stringify({
       model: env.model,
+      temperature: 0,
       input: buildFramingReviewPrompt(input)
     }),
     cache: "no-store"
@@ -707,7 +855,7 @@ export async function reviewOutcomeFramingWithAi(input: {
   const jsonText = extractJsonObject(outputText);
   const parsed = JSON.parse(jsonText) as OutcomeFramingAiReview;
 
-  return parseOutcomeFramingAiReview(parsed);
+  return deriveDeterministicFramingAdjustments(input, parseOutcomeFramingAiReview(parsed));
 }
 
 export async function validateStoryExpectedBehaviorWithAi(input: {
