@@ -1,7 +1,6 @@
 import {
   appendActivityEvent,
   getDirectionSeedById,
-  getStoryById,
   listOrganizationUsers,
   listDirectionSeeds,
   listStoriesByDirectionSeedId,
@@ -445,6 +444,15 @@ export async function saveStoryWorkspaceService(input: {
   storyType?: "outcome_delivery" | "governance" | "enablement";
   valueIntent?: string;
   expectedBehavior?: string | null;
+  uxSketchName?: string | null;
+  uxSketchContentType?: string | null;
+  uxSketchDataUrl?: string | null;
+  uxSketches?: Array<{
+    id: string;
+    name: string;
+    contentType: string;
+    dataUrl: string;
+  }> | null;
   acceptanceCriteria?: string[];
   aiUsageScope?: string[];
   testDefinition?: string | null;
@@ -458,6 +466,10 @@ export async function saveStoryWorkspaceService(input: {
     storyType: input.storyType,
     valueIntent: input.valueIntent,
     expectedBehavior: input.expectedBehavior,
+    uxSketchName: input.uxSketchName,
+    uxSketchContentType: input.uxSketchContentType,
+    uxSketchDataUrl: input.uxSketchDataUrl,
+    uxSketches: input.uxSketches,
     acceptanceCriteria: input.acceptanceCriteria,
     aiUsageScope: input.aiUsageScope,
     testDefinition: input.testDefinition,

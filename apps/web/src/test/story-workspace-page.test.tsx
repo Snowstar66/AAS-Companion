@@ -27,6 +27,17 @@ vi.mock("@aas-companion/api", async () => {
           storyType: "outcome_delivery",
           valueIntent: "Keep Story work inside the active Framing branch.",
           expectedBehavior: "Capture a mushroom find quickly enough to guide later design decisions.",
+          uxSketchName: "story-idea-sketch.png",
+          uxSketchContentType: "image/png",
+          uxSketchDataUrl: "data:image/png;base64,abc123",
+          uxSketches: [
+            {
+              id: "sketch-1",
+              name: "story-idea-sketch.png",
+              contentType: "image/png",
+              dataUrl: "data:image/png;base64,abc123"
+            }
+          ],
           acceptanceCriteria: [],
           aiUsageScope: [],
           aiAccelerationLevel: "level_2",
@@ -255,7 +266,7 @@ describe("Story Workspace page", () => {
 
     expect(screen.getByText("Native Story Idea created inside the current Framing.")).toBeDefined();
     expect(screen.getAllByText("Scoped native Story").length).toBeGreaterThan(0);
-    expect(screen.getByText("Story Idea")).toBeDefined();
+    expect(screen.getAllByText("Story Idea").length).toBeGreaterThan(0);
     expect(screen.getByText("Story idea definition")).toBeDefined();
     expect(screen.getByText(/This record is still framing-level intent\./i)).toBeDefined();
     expect(screen.getAllByText("Expected behavior").length).toBeGreaterThan(0);
@@ -265,6 +276,10 @@ describe("Story Workspace page", () => {
     expect(screen.getAllByText(/OUT-010\s+Scoped native Framing/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/EPC-010\s+Scoped native Epic/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Keep Story work inside the active Framing branch.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("UX Sketch").length).toBeGreaterThan(0);
+    expect(screen.getByText("UX Sketch Attached")).toBeDefined();
+    expect(screen.getByText("Conceptual - subject to change")).toBeDefined();
+    expect(screen.getByText("story-idea-sketch.png")).toBeDefined();
     expect(screen.queryByText(/Story path:/i)).toBeNull();
     expect(screen.queryByRole("link", { name: "Preview Execution Contract" })).toBeNull();
     expect(screen.getByRole("link", { name: "Back to current Epic" })).toBeDefined();

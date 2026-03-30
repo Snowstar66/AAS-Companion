@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "../../generated/client";
+import { Prisma } from "../../generated/client";
 import { storyCreateInputSchema, storyUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
@@ -111,6 +111,10 @@ export async function createStory(input: unknown, db: Prisma.TransactionClient |
         storyType: parsed.storyType,
         valueIntent: parsed.valueIntent,
         expectedBehavior: parsed.expectedBehavior ?? null,
+        uxSketchName: parsed.uxSketchName ?? null,
+        uxSketchContentType: parsed.uxSketchContentType ?? null,
+        uxSketchDataUrl: parsed.uxSketchDataUrl ?? null,
+        uxSketches: parsed.uxSketches ?? Prisma.JsonNull,
         acceptanceCriteria: parsed.acceptanceCriteria,
         aiUsageScope: parsed.aiUsageScope,
         aiAccelerationLevel: parsed.aiAccelerationLevel,
@@ -211,6 +215,22 @@ export async function updateStory(input: unknown) {
 
     if (parsed.expectedBehavior !== undefined) {
       data.expectedBehavior = parsed.expectedBehavior;
+    }
+
+    if (parsed.uxSketchName !== undefined) {
+      data.uxSketchName = parsed.uxSketchName;
+    }
+
+    if (parsed.uxSketchContentType !== undefined) {
+      data.uxSketchContentType = parsed.uxSketchContentType;
+    }
+
+    if (parsed.uxSketchDataUrl !== undefined) {
+      data.uxSketchDataUrl = parsed.uxSketchDataUrl;
+    }
+
+    if (parsed.uxSketches !== undefined) {
+      data.uxSketches = parsed.uxSketches ?? Prisma.JsonNull;
     }
 
     if (parsed.acceptanceCriteria !== undefined) {

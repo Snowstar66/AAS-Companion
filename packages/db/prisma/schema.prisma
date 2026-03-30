@@ -497,6 +497,10 @@ model Story {
   storyType           StoryType
   valueIntent         String
   expectedBehavior    String?
+  uxSketchName        String?
+  uxSketchContentType String?
+  uxSketchDataUrl     String?
+  uxSketches          Json?
   acceptanceCriteria  String[]            @default([])
   aiUsageScope        String[]            @default([])
   aiAccelerationLevel AiAccelerationLevel @default(level_2)

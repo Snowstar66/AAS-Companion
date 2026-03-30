@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   createDeliveryStoryFromDirectionSeedService,
+  saveStoryWorkspaceService,
   saveDirectionSeedService,
+  validateStoryExpectedBehaviorWithAiService,
   validateDirectionSeedExpectedBehaviorWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
@@ -90,6 +92,20 @@ function toOptionalSketchSaveInput(
   };
 }
 
+function readMultilineValues(formData: FormData, fieldName: string) {
+  return String(formData.get(fieldName) ?? "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function readCommaValues(formData: FormData, fieldName: string) {
+  return String(formData.get(fieldName) ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export type StoryIdeaSeedExpectedBehaviorAiActionState =
   | {
       status: "success";
@@ -123,6 +139,38 @@ export async function validateStoryIdeaSeedExpectedBehaviorAiAction(
     organizationId: session.organization.organizationId,
     title: String(formData.get("title") ?? "") || null,
     shortDescription: String(formData.get("shortDescription") ?? "") || null,
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    epicTitle: String(formData.get("epicTitle") ?? "") || null,
+    epicPurpose: String(formData.get("epicPurpose") ?? "") || null,
+    epicScopeBoundary: String(formData.get("epicScopeBoundary") ?? "") || null
+  });
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      field: "story_expected_behavior",
+      error: result.errors[0]?.message ?? "AI validation failed."
+    };
+  }
+
+  return {
+    status: "success",
+    field: result.data.field,
+    verdict: result.data.verdict,
+    confidence: result.data.confidence,
+    rationale: result.data.rationale,
+    suggestedRewrite: result.data.suggestedRewrite ?? null
+  };
+}
+
+export async function validateLegacyStoryIdeaExpectedBehaviorAiAction(
+  formData: FormData
+): Promise<StoryIdeaSeedExpectedBehaviorAiActionState> {
+  const session = await requireActiveProjectSession();
+  const result = await validateStoryExpectedBehaviorWithAiService({
+    organizationId: session.organization.organizationId,
+    title: String(formData.get("title") ?? "") || null,
+    valueIntent: String(formData.get("valueIntent") ?? "") || null,
     expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
     epicTitle: String(formData.get("epicTitle") ?? "") || null,
     epicPurpose: String(formData.get("epicPurpose") ?? "") || null,
@@ -198,6 +246,67 @@ export async function saveStoryIdeaSeedWorkspaceAction(formData: FormData) {
   );
 }
 
+export async function saveLegacyStoryIdeaWorkspaceAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const storyIdeaId = String(formData.get("storyId") ?? "");
+  const epicId = String(formData.get("epicId") ?? "");
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  let uxSketchUpdate: Awaited<ReturnType<typeof readOptionalUxSketchUpload>> | null = null;
+
+  try {
+    uxSketchUpdate = await readOptionalUxSketchUpload(formData);
+  } catch (error) {
+    redirect(
+      buildStoryIdeaRedirect(storyIdeaId, {
+        save: "error",
+        message: error instanceof Error ? error.message : "UX Sketch could not be uploaded."
+      })
+    );
+  }
+
+  const result = await saveStoryWorkspaceService({
+    organizationId: session.organization.organizationId,
+    id: storyIdeaId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    storyType: String(formData.get("storyType") ?? "outcome_delivery") as "outcome_delivery" | "governance" | "enablement",
+    valueIntent: String(formData.get("valueIntent") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    acceptanceCriteria: readMultilineValues(formData, "acceptanceCriteria"),
+    aiUsageScope: readCommaValues(formData, "aiUsageScope"),
+    testDefinition: String(formData.get("testDefinition") ?? "") || null,
+    definitionOfDone: readMultilineValues(formData, "definitionOfDone"),
+    ...toOptionalSketchSaveInput(uxSketchUpdate)
+  });
+
+  revalidatePath(`/story-ideas/${storyIdeaId}`);
+  revalidatePath(`/stories/${storyIdeaId}`);
+  if (epicId) {
+    revalidatePath(`/epics/${epicId}`);
+  }
+  if (outcomeId) {
+    revalidatePath(`/outcomes/${outcomeId}`);
+    revalidatePath("/framing");
+  }
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildStoryIdeaRedirect(storyIdeaId, {
+        save: "error",
+        message: result.errors[0]?.message ?? "Story Idea could not be saved."
+      })
+    );
+  }
+
+  redirect(
+    buildStoryIdeaRedirect(storyIdeaId, {
+      save: "success"
+    })
+  );
+}
+
 export async function saveStoryIdeaSeedWorkspaceInlineAction(
   formData: FormData
 ): Promise<StoryIdeaSeedInlineSaveActionState> {
@@ -230,6 +339,64 @@ export async function saveStoryIdeaSeedWorkspaceInlineAction(
   revalidatePath(`/epics/${epicId}`);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      message: result.errors[0]?.message ?? "Story Idea could not be saved."
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Suggestion saved to the Story Idea."
+  };
+}
+
+export async function saveLegacyStoryIdeaWorkspaceInlineAction(
+  formData: FormData
+): Promise<StoryIdeaSeedInlineSaveActionState> {
+  const session = await requireActiveProjectSession();
+  const storyIdeaId = String(formData.get("storyId") ?? "");
+  const epicId = String(formData.get("epicId") ?? "");
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  let uxSketchUpdate: Awaited<ReturnType<typeof readOptionalUxSketchUpload>> | null = null;
+
+  try {
+    uxSketchUpdate = await readOptionalUxSketchUpload(formData);
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "UX Sketch could not be uploaded."
+    };
+  }
+
+  const result = await saveStoryWorkspaceService({
+    organizationId: session.organization.organizationId,
+    id: storyIdeaId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    storyType: String(formData.get("storyType") ?? "outcome_delivery") as "outcome_delivery" | "governance" | "enablement",
+    valueIntent: String(formData.get("valueIntent") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    acceptanceCriteria: readMultilineValues(formData, "acceptanceCriteria"),
+    aiUsageScope: readCommaValues(formData, "aiUsageScope"),
+    testDefinition: String(formData.get("testDefinition") ?? "") || null,
+    definitionOfDone: readMultilineValues(formData, "definitionOfDone"),
+    ...toOptionalSketchSaveInput(uxSketchUpdate)
+  });
+
+  revalidatePath(`/story-ideas/${storyIdeaId}`);
+  revalidatePath(`/stories/${storyIdeaId}`);
+  if (epicId) {
+    revalidatePath(`/epics/${epicId}`);
+  }
+  if (outcomeId) {
+    revalidatePath(`/outcomes/${outcomeId}`);
+    revalidatePath("/framing");
+  }
   revalidatePath("/workspace");
   revalidatePath("/");
 

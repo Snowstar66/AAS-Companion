@@ -5,8 +5,11 @@ import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
 import {
   createDeliveryStoryFromStoryIdeaSeedAction,
+  saveLegacyStoryIdeaWorkspaceAction,
+  saveLegacyStoryIdeaWorkspaceInlineAction,
   saveStoryIdeaSeedWorkspaceAction,
   saveStoryIdeaSeedWorkspaceInlineAction,
+  validateLegacyStoryIdeaExpectedBehaviorAiAction,
   validateStoryIdeaSeedExpectedBehaviorAiAction
 } from "@/app/(protected)/story-ideas/[storyIdeaId]/actions";
 import { DirectionSeedWorkspace } from "@/components/workspace/direction-seed-workspace";
@@ -179,6 +182,9 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
           data={storyResult.data}
           deliveryViewHref={canAlsoOpenDeliveryView ? `/stories/${story.id}` : null}
           isArchived={isArchived}
+          saveAction={saveLegacyStoryIdeaWorkspaceAction}
+          saveInlineAction={saveLegacyStoryIdeaWorkspaceInlineAction}
+          validateAction={validateLegacyStoryIdeaExpectedBehaviorAiAction}
         />
       </section>
     </AppShell>

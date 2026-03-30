@@ -25,6 +25,19 @@ export const storyRecordSchema = z.object({
   storyType: storyTypeSchema,
   valueIntent: z.string().min(1),
   expectedBehavior: z.string().nullish(),
+  uxSketchName: z.string().nullish(),
+  uxSketchContentType: z.string().nullish(),
+  uxSketchDataUrl: z.string().nullish(),
+  uxSketches: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        contentType: z.string().min(1),
+        dataUrl: z.string().min(1)
+      })
+    )
+    .nullish(),
   acceptanceCriteria: z.array(z.string().min(1)).default([]),
   aiUsageScope: z.array(z.string().min(1)).default([]),
   aiAccelerationLevel: aiAccelerationLevelSchema,
