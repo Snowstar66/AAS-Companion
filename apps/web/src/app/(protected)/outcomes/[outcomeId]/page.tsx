@@ -7,6 +7,7 @@ import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
+  createStoryIdeaFromOutcomeAction,
   hardDeleteOutcomeAction,
   reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
@@ -51,9 +52,10 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
         properties={{ outcomeId: outcomeResult.data.outcome.id, outcomeKey: outcomeResult.data.outcome.key }}
       />
       <FramingOutcomeSection
-        archiveAction={archiveOutcomeAction}
-        createEpicAction={createEpicFromOutcomeAction}
-        data={outcomeResult.data}
+          archiveAction={archiveOutcomeAction}
+          createEpicAction={createEpicFromOutcomeAction}
+          createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
+          data={outcomeResult.data}
         hardDeleteAction={hardDeleteOutcomeAction}
         restoreAction={restoreOutcomeAction}
         saveAction={saveOutcomeWorkspaceAction}

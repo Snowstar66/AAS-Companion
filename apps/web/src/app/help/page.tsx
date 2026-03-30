@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Bot,
   BrainCircuit,
   CheckCircle2,
   CircleHelp,
@@ -39,31 +38,26 @@ const processSteps = [
     title: "Framing",
     icon: Target,
     iconClass: "text-sky-700",
-    description: "Define the business effect, baseline, owner and intended AI direction before detailed delivery starts."
+    description: "Define the outcome, baseline, AI level, risk, epics and story ideas before delivery structure becomes detailed."
   },
   {
-    title: "Design",
+    title: "Delivery",
     icon: Layers3,
-    iconClass: "text-emerald-700",
-    description: "Turn intent into Epics, Stories, tests and explicit AI boundaries."
-  },
-  {
-    title: "Build (AI tools)",
-    icon: Bot,
     iconClass: "text-amber-700",
-    description: "Use Codex, BMAD or similar tools only after the work is structured and reviewable."
+    description: "Refine story ideas into delivery stories, then add acceptance criteria, tests and build-level structure."
   },
   {
-    title: "Transfer",
+    title: "Feedback loop",
     icon: LibraryBig,
-    iconClass: "text-violet-700",
-    description: "Hand over a solution that remains supportable, reproducible and measurable after release."
+    iconClass: "text-emerald-700",
+    description: "Learn from real delivery, extra stories and misalignment without turning feedback into a new gate."
   }
 ] as const;
 
 const quickTakeaways = [
   "AAS is an operating layer on top of agile, DevOps and ITIL. It adds control rather than replacing existing delivery models.",
   "Value Spine creates traceability from business effect to implementation: Outcome -> Epic -> Story -> Test.",
+  "Story Ideas live in Framing. Delivery Stories live later in Design/Build, even when they trace back to the same Epic and Outcome.",
   "No design should begin without a defined Outcome, and no implementation should begin without testable Delivery Stories.",
   "No AI-generated code should reach production without human review and formal approval."
 ] as const;
@@ -159,7 +153,7 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
             </div>
 
             <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
-              <p className="text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">Framing -&gt; Design -&gt; Build (AI tools)</p>
+              <p className="text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">Framing -&gt; Delivery -&gt; Feedback loop</p>
               <div className="mt-4 space-y-3">
                 {processSteps.map((step) => {
                   const Icon = step.icon;
@@ -217,14 +211,86 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
           <CollapsibleSection
             accentClassName="border-border/70 bg-background/95"
             defaultOpen
+            description="A compact visual sketch of how Framing, Story Ideas, Delivery Stories and feedback are meant to work together."
+            title="Framing roundtrip"
+          >
+            <div className="space-y-5">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_minmax(0,0.9fr)]">
+                <div className="rounded-3xl border border-sky-200 bg-sky-50/70 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">1. Framing</p>
+                  <p className="mt-2 text-lg font-semibold text-sky-950">Define direction and intent</p>
+                  <div className="mt-4 grid gap-3">
+                    <div className="rounded-2xl border border-sky-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                      <p className="font-semibold text-slate-950">What belongs here</p>
+                      <p className="mt-2">Outcome, problem, baseline, value owner, AI level, risk profile, epics and story ideas.</p>
+                    </div>
+                    <div className="rounded-2xl border border-sky-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                      <p className="font-semibold text-slate-950">Story Idea content</p>
+                      <p className="mt-2">Title, linked epic, value intent and expected behavior. Not acceptance criteria, tests or DoD.</p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+                      <p className="font-semibold text-emerald-950">Framing ready</p>
+                      <p className="mt-2">A Story Idea is framing ready when value intent, epic link and expected behavior exist.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-amber-200 bg-amber-50/70 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">2. Delivery</p>
+                  <p className="mt-2 text-lg font-semibold text-amber-950">Refine, build and verify</p>
+                  <div className="mt-4 grid gap-3">
+                    <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                      <p className="font-semibold text-slate-950">AI refinement</p>
+                      <p className="mt-2">A Story Idea can be split, merged or clarified by AI before becoming one or more Delivery Stories.</p>
+                    </div>
+                    <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                      <p className="font-semibold text-slate-950">Delivery Stories</p>
+                      <p className="mt-2">These are verifiable execution units with Value Spine validation, acceptance criteria and test definition.</p>
+                    </div>
+                    <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                      <p className="font-semibold text-slate-950">Minimal lifecycle</p>
+                      <p className="mt-2">Draft {"->"} Ready {"->"} In Progress {"->"} Done is the intended direction, with review kept separate from story state.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">3. Feedback loop</p>
+                  <p className="mt-2 text-lg font-semibold text-emerald-950">Learn without blocking delivery</p>
+                  <div className="mt-4 grid gap-3">
+                    {[
+                      "Stable: delivery followed the idea as planned.",
+                      "Expanded: additional delivery stories were needed.",
+                      "Misaligned: delivery moved away from the original value intent."
+                    ].map((item) => (
+                      <div className="rounded-2xl border border-emerald-200 bg-white p-4 text-sm leading-6 text-slate-700" key={item}>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-border/70 bg-muted/10 p-5">
+                <p className="font-semibold text-foreground">Roundtrip in plain language</p>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                  Start with a framing brief. Add Epics and Story Ideas. Use AI to refine structure, then turn one Story Idea into one or more Delivery Stories when the work becomes concrete enough to test and verify. After delivery, use the feedback counters in Value Spine to see whether the original Story Idea was stable, expanded or misaligned.
+                </p>
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            accentClassName="border-border/70 bg-background/95"
+            defaultOpen
             description="A tighter explanation of the four AAS phases and why the sequence matters."
             title="AAS method deep dive"
           >
             <div className="space-y-4">
               <p className="text-sm leading-7 text-muted-foreground">
-                AAS describes four connected phases: Framing, Design, Build and Transfer. The central idea is that teams should not jump
+                AAS describes connected phases, but the product flow here is intentionally simplified to Framing, Delivery and Feedback Loop. The central idea is that teams should not jump
                 straight from a vague need into AI-assisted implementation. First the effect is defined, then the work is structured, then
-                implementation is accelerated and finally the result is transferred into ongoing ownership.
+                implementation is accelerated and finally the result is learned from and fed back into the framing model.
               </p>
               <div className="grid gap-4 lg:grid-cols-2">
                 {processSteps.map((step) => {
@@ -318,7 +384,7 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                       <div className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium text-foreground">Epic</div>
                     </div>
                     <div className="pl-8">
-                      <div className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium text-foreground">Story</div>
+                    <div className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium text-foreground">Delivery Story</div>
                     </div>
                     <div className="pl-12">
                       <div className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm font-medium text-foreground">Test</div>
@@ -331,7 +397,7 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                 {[
                   "Outcome defines the business effect, owner and baseline.",
                   "Epic groups a meaningful value slice so scope and direction stay understandable.",
-                  "Story becomes the smallest governed delivery unit with acceptance criteria, tests and AI scope.",
+                  "Story Idea captures intent in Framing. Delivery Story becomes the smallest governed execution unit later.",
                   "Test provides evidence that the intended change actually happened."
                 ].map((item) => (
                   <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item}>

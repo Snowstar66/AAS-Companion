@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   archiveGovernedObjectService,
   createNativeEpicFromOutcomeService,
+  createNativeDirectionSeedFromEpicService,
   hardDeleteGovernedObjectService,
   recordTollgateDecisionService,
   reviewOutcomeFramingWithAiService,
@@ -397,6 +398,36 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
   }
 
   redirect(`/epics/${result.data.id}?created=1`);
+}
+
+export async function createStoryIdeaFromOutcomeAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const epicId = String(formData.get("quickStoryIdeaEpicId") ?? "");
+  const title = String(formData.get("quickStoryIdeaTitle") ?? "") || null;
+
+  const result = await createNativeDirectionSeedFromEpicService({
+    organizationId: session.organization.organizationId,
+    epicId,
+    actorId: session.userId,
+    title
+  });
+
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildFramingRedirect(outcomeId, {
+        save: "error",
+        message: result.errors[0]?.message ?? "Story Idea could not be created."
+      })
+    );
+  }
+
+  redirect(`/story-ideas/${result.data.id}?created=1`);
 }
 
 export async function hardDeleteOutcomeAction(formData: FormData) {

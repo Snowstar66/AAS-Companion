@@ -193,6 +193,9 @@ export async function createNativeDirectionSeedFromEpicService(input: {
   organizationId: string;
   epicId: string;
   actorId?: string | null;
+  title?: string | null;
+  shortDescription?: string | null;
+  expectedBehavior?: string | null;
 }) {
   const epic = await getEpicById(input.organizationId, input.epicId);
 
@@ -212,9 +215,10 @@ export async function createNativeDirectionSeedFromEpicService(input: {
       outcomeId: epic.outcomeId,
       epicId: epic.id,
       key,
-      title: "New direction seed",
-      shortDescription: "Describe the directional change this seed points toward.",
-      expectedBehavior: null,
+      title: input.title?.trim() || "New story idea",
+      shortDescription:
+        input.shortDescription?.trim() || "Describe the directional change this story idea points toward.",
+      expectedBehavior: input.expectedBehavior?.trim() || null,
       uxSketchName: null,
       uxSketchContentType: null,
       uxSketchDataUrl: null,

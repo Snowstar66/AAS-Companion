@@ -12,7 +12,8 @@ import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
   getStoryIdeaDeliveryFeedback,
-  getStoryIdeaDeliveryFeedbackLabel
+  getStoryIdeaDeliveryFeedbackLabel,
+  isLikelyDeliveryStory
 } from "@/lib/framing/story-idea-delivery-feedback";
 import {
   archiveEpicAction,
@@ -72,6 +73,17 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
   const workspaceLabel = getWorkspaceLabel(epic);
   const statusLabel = epic.status.replaceAll("_", " ");
   const isArchived = epic.lifecycleState === "archived";
+  const mappedSourceStoryIds = new Set(epic.directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+  const legacyStoryIdeas = epic.stories.filter((story) => {
+    if (story.sourceDirectionSeedId) {
+      return false;
+    }
+
+    return epic.directionSeeds.length > 0
+      ? !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+      : story.status === "draft" || story.status === "definition_blocked" || !isLikelyDeliveryStory(story, mappedSourceStoryIds);
+  });
+  const visibleStoryIdeaCount = epic.directionSeeds.length + legacyStoryIdeas.length;
 
   return (
     <AppShell
@@ -339,7 +351,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {epic.directionSeeds.length === 0 ? (
+                {visibleStoryIdeaCount === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
                     <p className="font-medium text-foreground">No story ideas exist for this Epic yet.</p>
                     <p className="mt-2">
@@ -349,7 +361,8 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     </p>
                   </div>
                 ) : (
-                  epic.directionSeeds.map((seed) => {
+                  <>
+                  {epic.directionSeeds.map((seed) => {
                     const linkedDeliveryStories = epic.stories.filter(
                       (story) => story.sourceDirectionSeedId === seed.id
                     );
@@ -446,7 +459,41 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                         </div>
                       </form>
                     );
-                  })
+                  })}
+                  {legacyStoryIdeas.length > 0 ? (
+                    <div className="rounded-2xl border border-sky-200 bg-sky-50/40 p-4">
+                      <p className="text-sm font-semibold text-sky-950">Legacy Story Ideas in this Epic</p>
+                      <p className="mt-2 text-sm leading-6 text-sky-900">
+                        These Story Ideas already exist in the Value Spine and stay visible here so the Epic view matches Framing.
+                      </p>
+                      <div className="mt-4 space-y-3">
+                        {legacyStoryIdeas.map((storyIdea) => (
+                          <div className="rounded-2xl border border-sky-200 bg-white p-4" key={storyIdea.id}>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">
+                                  {storyIdea.key} {storyIdea.title}
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                  {storyIdea.valueIntent?.trim() || "Value intent still needs to be described."}
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                  {storyIdea.expectedBehavior?.trim() || "Expected behavior still needs to be described."}
+                                </p>
+                              </div>
+                              <Button asChild className="gap-2" size="sm" variant="secondary">
+                                <Link href={`/story-ideas/${storyIdea.id}`}>
+                                  Open Story Idea
+                                  <ArrowRight className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  </>
                 )}
               </CardContent>
             </Card>

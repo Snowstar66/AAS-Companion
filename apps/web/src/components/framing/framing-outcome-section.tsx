@@ -47,6 +47,7 @@ type FramingOutcomeSectionProps = {
   saveAction: (formData: FormData) => void | Promise<void>;
   saveInlineAction: (formData: FormData) => Promise<OutcomeInlineSaveActionState>;
   createEpicAction: (formData: FormData) => void | Promise<void>;
+  createStoryIdeaAction: (formData: FormData) => void | Promise<void>;
   archiveAction: (formData: FormData) => void | Promise<void>;
   hardDeleteAction: (formData: FormData) => void | Promise<void>;
   restoreAction: (formData: FormData) => void | Promise<void>;
@@ -115,6 +116,7 @@ export function FramingOutcomeSection({
   saveAction,
   saveInlineAction,
   createEpicAction,
+  createStoryIdeaAction,
   archiveAction,
   hardDeleteAction,
   restoreAction,
@@ -216,6 +218,7 @@ export function FramingOutcomeSection({
         expectedBehavior: story.expectedBehavior
       })
     ).length;
+  const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
 
   return (
     <section className="space-y-6">
@@ -474,22 +477,24 @@ export function FramingOutcomeSection({
               />
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <CardTitle>Story Ideas</CardTitle>
                       <CardDescription>
                         Capture epics and lightweight story ideas here. Keep them directional, not operational.
                       </CardDescription>
                     </div>
-                    {!isArchived ? (
-                      <PendingFormButton
-                        className="w-full gap-2 self-start whitespace-nowrap sm:w-auto sm:shrink-0"
-                        formAction={createEpicAction}
-                        icon={<ArrowRight className="h-4 w-4" />}
-                        label="Create Epic"
-                        pendingLabel="Creating Epic..."
-                      />
-                    ) : null}
+                    <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">
+                      {!isArchived ? (
+                        <PendingFormButton
+                          className="w-full gap-2 self-start whitespace-nowrap"
+                          formAction={createEpicAction}
+                          icon={<ArrowRight className="h-4 w-4" />}
+                          label="Create Epic"
+                          pendingLabel="Creating Epic..."
+                        />
+                      ) : null}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -535,6 +540,56 @@ export function FramingOutcomeSection({
                       </p>
                     </div>
                   ) : null}
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50/45 p-4">
+                    <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(220px,240px)_auto] lg:items-end">
+                      <div className="space-y-2">
+                        <p className="font-medium text-foreground">Quick create Story Idea</p>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          Create a new Story Idea directly from Framing and assign its Epic now, without opening the Epic first.
+                        </p>
+                      </div>
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Story idea title</span>
+                        <input
+                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                          defaultValue="New story idea"
+                          disabled={!canCreateStoryIdea}
+                          name="quickStoryIdeaTitle"
+                          type="text"
+                        />
+                      </label>
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Epic</span>
+                        <select
+                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                          disabled={!canCreateStoryIdea}
+                          name="quickStoryIdeaEpicId"
+                          defaultValue={outcome.epics[0]?.id ?? ""}
+                        >
+                          {outcome.epics.map((epic) => (
+                            <option key={epic.id} value={epic.id}>
+                              {epic.key} {epic.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <PendingFormButton
+                        className="gap-2"
+                        disabled={!canCreateStoryIdea}
+                        formAction={createStoryIdeaAction}
+                        icon={<ArrowRight className="h-4 w-4" />}
+                        label="Create Story Idea"
+                        pendingLabel="Creating Story Idea..."
+                      />
+                    </div>
+                    {!canCreateStoryIdea ? (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {isArchived
+                          ? "Restore the framing brief before creating new Story Ideas."
+                          : "Create at least one Epic first, then you can assign a new Story Idea directly from Framing."}
+                      </p>
+                    ) : null}
+                  </div>
                 </CardContent>
               </Card>
             </div>

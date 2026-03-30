@@ -199,6 +199,7 @@ vi.mock("@aas-companion/api", async () => {
 vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   archiveOutcomeAction: vi.fn(),
   createEpicFromOutcomeAction: vi.fn(),
+  createStoryIdeaFromOutcomeAction: vi.fn(),
   hardDeleteOutcomeAction: vi.fn(),
   initialReviewOutcomeFramingAiActionState: {
     status: "idle",
@@ -243,11 +244,12 @@ describe("Outcome page", () => {
     expect(screen.getByRole("button", { name: "Copy Framing JSON" })).toBeDefined();
     expect(screen.getByText("AI and risk posture")).toBeDefined();
     expect(screen.getByRole("combobox", { name: /AI level/i })).toBeDefined();
-    expect(screen.getByText("Design direction seeds")).toBeDefined();
+    expect(screen.getByText("Story Ideas")).toBeDefined();
     expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Create Story Idea" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
-    expect(screen.getByText("Framing tollgate")).toBeDefined();
+    expect(screen.getByText("Submit to Tollgate")).toBeDefined();
     expect(screen.getByRole("button", { name: "Submit to Tollgate" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
     },

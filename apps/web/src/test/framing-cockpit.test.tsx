@@ -165,6 +165,7 @@ vi.mock("@/app/(protected)/framing/actions", () => ({
 vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   archiveOutcomeAction: vi.fn(),
   createEpicFromOutcomeAction: vi.fn(),
+  createStoryIdeaFromOutcomeAction: vi.fn(),
   hardDeleteOutcomeAction: vi.fn(),
   initialReviewOutcomeFramingAiActionState: {
     status: "idle",
@@ -200,7 +201,8 @@ describe("Framing page", () => {
       expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
       expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
       expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
-      expect(screen.getByRole("heading", { name: "Framing tollgate" })).toBeDefined();
+      expect(screen.getByText("Submit to Tollgate")).toBeDefined();
+      expect(screen.getByText("Quick create Story Idea")).toBeDefined();
       expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
       expect(screen.queryByText("Framing Cockpit")).toBeNull();
     },

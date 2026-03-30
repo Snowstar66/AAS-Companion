@@ -12,6 +12,7 @@ import { createDraftOutcomeAction } from "./actions";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
+  createStoryIdeaFromOutcomeAction,
   hardDeleteOutcomeAction,
   reviewOutcomeFramingWithAiAction,
   restoreOutcomeAction,
@@ -95,6 +96,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
               <FramingOutcomeSection
                 archiveAction={archiveOutcomeAction}
                 createEpicAction={createEpicFromOutcomeAction}
+                createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
                 data={selectedOutcomeData}
                 embeddedInFraming
                 hardDeleteAction={hardDeleteOutcomeAction}
