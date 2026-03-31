@@ -914,6 +914,8 @@ async function DeferredOutcomeTollgateSection(props: {
   const hasApprovedDocument = Boolean(tollgateReview.approvalSnapshot);
   const approvedVersion = tollgateReview.approvedVersion ?? null;
   const currentFramingVersion = outcome.framingVersion;
+  const hasSubmittedTollgate = Boolean(tollgate?.id);
+  const canApproveHere = hasSubmittedTollgate || tollgateReview.signoffRecords.length > 0;
 
   return (
     <>
@@ -939,7 +941,7 @@ async function DeferredOutcomeTollgateSection(props: {
             <p className="font-medium">
               {tollgateReview.status === "approved"
                 ? "Tollgate 1 is already approved."
-                : tollgateReview.status === "ready"
+                : hasSubmittedTollgate
                   ? "This Framing is submitted and ready for approval below."
                   : framingComplete
                     ? "This Framing is ready to submit."
@@ -948,7 +950,7 @@ async function DeferredOutcomeTollgateSection(props: {
             <p className="mt-2 leading-6">
               {tollgateReview.status === "approved"
                 ? "The required roles have signed off. You can continue with Story Ideas, design and export."
-                : tollgateReview.status === "ready"
+                : hasSubmittedTollgate
                   ? "Record the required review and approval decisions directly in the approval section below."
                   : visibleBlockers[0] ?? "Complete the Framing and then submit it once to start Tollgate 1 approval."}
             </p>
@@ -987,7 +989,7 @@ async function DeferredOutcomeTollgateSection(props: {
             </div>
           ) : null}
 
-          {tollgateReview.status === "ready" || tollgateReview.status === "approved" ? (
+          {canApproveHere ? (
             <div className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-4 text-sm text-sky-950">
               Approve Tollgate 1 directly on this Framing page below. Human Review only mirrors this as a queue entry.
             </div>
@@ -1019,7 +1021,7 @@ async function DeferredOutcomeTollgateSection(props: {
         </CardContent>
       </Card>
 
-      {tollgate?.id || tollgateReview.signoffRecords.length ? (
+      {canApproveHere ? (
         <div id="tollgate-review">
           <TollgateDecisionCard
             aiAccelerationLevel={outcome.aiAccelerationLevel}
