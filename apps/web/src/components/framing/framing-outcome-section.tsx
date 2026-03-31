@@ -559,7 +559,11 @@ export function FramingOutcomeSection({
               </CardContent>
             </Card>
 
-            <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.05fr)]">
+            <CollapsibleFramingPanel
+              defaultOpen
+              description="Define AI usage intent, classify risk and record the framing-level AI decision before Tollgate 1."
+              title="AI and risk"
+            >
               <OutcomeAiRiskPostureCard
                 defaultAiLevelJustification={outcome.aiLevelJustification ?? null}
                 defaultAiLevel={outcome.aiAccelerationLevel}
@@ -588,6 +592,13 @@ export function FramingOutcomeSection({
                 disabled={isArchived}
                 valueOwnerLabel={valueOwnerLabel}
               />
+            </CollapsibleFramingPanel>
+
+            <CollapsibleFramingPanel
+              defaultOpen
+              description="Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational."
+              title="Epics and Story Ideas"
+            >
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -709,7 +720,7 @@ export function FramingOutcomeSection({
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </CollapsibleFramingPanel>
 
             <CollapsibleFramingPanel
               defaultOpen
