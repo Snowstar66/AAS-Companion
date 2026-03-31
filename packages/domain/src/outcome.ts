@@ -226,14 +226,6 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
   const reasons: ReadinessBlockReason[] = [];
   const derivedRiskProfile = deriveOutcomeRiskProfile(outcome);
 
-  if (!outcome.aiUsageRole) {
-    reasons.push({
-      code: "ai_usage_role_missing",
-      message: "Missing primary AI involvement pattern.",
-      severity: "high"
-    });
-  }
-
   if (!outcome.aiUsageIntent?.trim()) {
     reasons.push({
       code: "ai_usage_intent_missing",

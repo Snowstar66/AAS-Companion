@@ -9,12 +9,10 @@ import { formatAiLevelLabel, getInlineGuidance } from "@/lib/help/aas-help";
 
 type RiskLevel = "low" | "medium" | "high";
 type AiLevel = "level_1" | "level_2" | "level_3";
-type AiUsageRole = "support" | "generation" | "validation" | "decision_support" | "automation";
 
 type OutcomeAiRiskPostureCardProps = {
   defaultAiLevel: AiLevel;
   defaultRiskProfile: RiskLevel;
-  defaultAiUsageRole: AiUsageRole | null;
   defaultAiUsageIntent: string | null;
   defaultBusinessImpactLevel: RiskLevel | null;
   defaultBusinessImpactRationale: string | null;
@@ -32,21 +30,6 @@ type OutcomeAiRiskPostureCardProps = {
   embedded?: boolean | undefined;
   disabled?: boolean | undefined;
 };
-
-function getPrimaryAiInvolvementLabel(value: AiUsageRole) {
-  switch (value) {
-    case "support":
-      return "Light support";
-    case "generation":
-      return "Generation";
-    case "validation":
-      return "Validation";
-    case "decision_support":
-      return "Decision support";
-    case "automation":
-      return "Workflow automation";
-  }
-}
 
 function getAiLevelLifecycleExample(value: AiLevel) {
   if (value === "level_1") {
@@ -245,7 +228,6 @@ function RiskDimensionFields(props: {
 export function OutcomeAiRiskPostureCard({
   defaultAiLevel,
   defaultRiskProfile,
-  defaultAiUsageRole,
   defaultAiUsageIntent,
   defaultBusinessImpactLevel,
   defaultBusinessImpactRationale,
@@ -264,7 +246,6 @@ export function OutcomeAiRiskPostureCard({
   disabled = false
 }: OutcomeAiRiskPostureCardProps) {
   const [aiLevel, setAiLevel] = useState<AiLevel>(defaultAiLevel);
-  const [aiUsageRole, setAiUsageRole] = useState<AiUsageRole | null>(defaultAiUsageRole);
   const [aiUsageIntent, setAiUsageIntent] = useState(defaultAiUsageIntent ?? "");
   const [businessImpactLevel, setBusinessImpactLevel] = useState<RiskLevel | null>(defaultBusinessImpactLevel);
   const [businessImpactRationale, setBusinessImpactRationale] = useState(defaultBusinessImpactRationale ?? "");
@@ -290,10 +271,6 @@ export function OutcomeAiRiskPostureCard({
 
   const blockers = useMemo(() => {
     const items: string[] = [];
-
-    if (!aiUsageRole) {
-      items.push("Missing primary AI involvement pattern.");
-    }
 
     if (!aiUsageIntent.trim()) {
       items.push("Missing AI usage across lifecycle.");
@@ -354,7 +331,6 @@ export function OutcomeAiRiskPostureCard({
     aiLevel,
     aiLevelJustification,
     aiUsageIntent,
-    aiUsageRole,
     blastRadiusLevel,
     blastRadiusRationale,
     businessImpactLevel,
@@ -431,41 +407,27 @@ export function OutcomeAiRiskPostureCard({
         </div>
 
         <StepCard
-          title="Step 1 - Determine AI usage intent"
-          description="Describe the primary AI involvement pattern and how AI is expected to support the BMAD flow across later phases. Keep it broad and operational, not technical."
+          title="Step 1 - Define AI acceleration and expected use"
+          description="Choose the AI Acceleration Level first. Then describe, in one broad BMAD-oriented statement, how AI is expected to support later phases."
         >
-          <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
+          <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Primary AI involvement pattern</span>
+              <span className="text-sm font-medium text-foreground">AI Level</span>
               <select
                 className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                defaultValue={defaultAiUsageRole ?? ""}
+                defaultValue={defaultAiLevel}
                 disabled={disabled}
-                name="aiUsageRole"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setAiUsageRole(
-                    value === "support" ||
-                      value === "generation" ||
-                      value === "validation" ||
-                      value === "decision_support" ||
-                      value === "automation"
-                      ? value
-                      : null
-                  );
-                }}
+                name="aiAccelerationLevel"
+                onChange={(event) => setAiLevel(event.target.value as AiLevel)}
               >
-                <option value="">Select primary pattern</option>
-                <option value="support">{getPrimaryAiInvolvementLabel("support")}</option>
-                <option value="generation">{getPrimaryAiInvolvementLabel("generation")}</option>
-                <option value="validation">{getPrimaryAiInvolvementLabel("validation")}</option>
-                <option value="decision_support">{getPrimaryAiInvolvementLabel("decision_support")}</option>
-                <option value="automation">{getPrimaryAiInvolvementLabel("automation")}</option>
+                <option value="level_1">Level 1</option>
+                <option value="level_2">Level 2</option>
+                <option value="level_3">Level 3</option>
               </select>
-              <InlineFieldGuidance guidance="Choose the dominant AI involvement pattern for the case. This is not tool or model selection, and it does not need to describe every later AI activity." />
+              <InlineFieldGuidance guidance={getInlineGuidance("framing.ai_level")} />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">AI usage across lifecycle</span>
+              <span className="text-sm font-medium text-foreground">Expected AI use across lifecycle</span>
               <textarea
                 className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                 defaultValue={defaultAiUsageIntent ?? ""}
@@ -474,7 +436,7 @@ export function OutcomeAiRiskPostureCard({
                 onChange={(event) => setAiUsageIntent(event.target.value)}
                 placeholder={getAiUsageIntentPlaceholder(aiLevel)}
               />
-              <InlineFieldGuidance guidance="Describe how AI is expected to support the BMAD flow across framing, refinement, design, build or test at the selected acceleration level." />
+              <InlineFieldGuidance guidance="Describe how AI is expected to support the BMAD flow across framing, refinement, design, build or test at the selected acceleration level. Keep it broad, operational and non-technical." />
             </label>
           </div>
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 text-sm leading-6 text-sky-950">
@@ -535,8 +497,8 @@ export function OutcomeAiRiskPostureCard({
         </StepCard>
 
         <StepCard
-          title="Step 4 and 5 - Determine overall risk and AI level"
-          description="Overall risk must equal the highest classified dimension. Then select the AI level that does not exceed that risk posture."
+          title="Step 4 and 5 - Determine overall risk and validate AI level"
+          description="Overall risk must equal the highest classified dimension. Check that the selected AI level stays within that risk posture."
         >
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
             <div className="rounded-2xl border border-border/70 bg-background p-4">
@@ -548,21 +510,13 @@ export function OutcomeAiRiskPostureCard({
               <p className="mt-4 text-lg font-semibold text-foreground">{formatRiskLevel(derivedRisk)}</p>
             </div>
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">AI Level</span>
-              <select
-                className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                defaultValue={defaultAiLevel}
-                disabled={disabled}
-                name="aiAccelerationLevel"
-                onChange={(event) => setAiLevel(event.target.value as AiLevel)}
-              >
-                <option value="level_1">Level 1</option>
-                <option value="level_2">Level 2</option>
-                <option value="level_3">Level 3</option>
-              </select>
-              <InlineFieldGuidance guidance={getInlineGuidance("framing.ai_level")} />
-            </label>
+            <div className="rounded-2xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Selected AI level</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{formatAiLevel(aiLevel)}</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                The AI level is chosen in Step 1 and validated here against the derived overall risk.
+              </p>
+            </div>
           </div>
           <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
             {getAiLevelLifecycleExample(aiLevel)}

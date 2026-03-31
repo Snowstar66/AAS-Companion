@@ -568,15 +568,6 @@ export function FramingOutcomeSection({
                 defaultAiLevelJustification={outcome.aiLevelJustification ?? null}
                 defaultAiLevel={outcome.aiAccelerationLevel}
                 defaultAiUsageIntent={outcome.aiUsageIntent ?? null}
-                defaultAiUsageRole={
-                  outcome.aiUsageRole === "support" ||
-                  outcome.aiUsageRole === "generation" ||
-                  outcome.aiUsageRole === "validation" ||
-                  outcome.aiUsageRole === "decision_support" ||
-                  outcome.aiUsageRole === "automation"
-                    ? outcome.aiUsageRole
-                    : null
-                }
                 defaultBlastRadiusLevel={outcome.blastRadiusLevel ?? null}
                 defaultBlastRadiusRationale={outcome.blastRadiusRationale ?? null}
                 defaultBusinessImpactLevel={outcome.businessImpactLevel ?? null}

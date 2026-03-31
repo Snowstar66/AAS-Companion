@@ -119,10 +119,10 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
   },
   "framing.ai_level": {
     title: "AI acceleration level",
-    summary: "Choose the intended AI acceleration posture for the BMAD flow, then describe how AI will be used across later phases.",
+    summary: "Choose the intended AI acceleration posture for the BMAD flow first, then describe the expected AI use across later phases at that level.",
     purpose: "Set the expected level of AI support, automation and governance early in the project.",
-    belongs: "The expected degree of AI involvement across refinement, design, build and test under human governance.",
-    avoid: "Tool shopping, model selection or pretending one field can capture every detailed later AI activity.",
+    belongs: "The expected degree of AI involvement across refinement, design, build and test under human governance, plus one broad BMAD-aligned description of how AI will be used.",
+    avoid: "A second competing AI role taxonomy, tool shopping, model selection or pretending one field can capture every detailed later AI activity.",
     aiLevelNotes
   },
   "framing.design_direction": {

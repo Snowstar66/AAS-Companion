@@ -95,13 +95,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
-    aiUsageRole:
-      (String(formData.get("aiUsageRole") ?? "") as
-        | "support"
-        | "generation"
-        | "validation"
-        | "decision_support"
-        | "automation") || null,
+    aiUsageRole: null,
     aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
     businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
     businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,
@@ -175,13 +169,7 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
     solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
-    aiUsageRole:
-      (String(formData.get("aiUsageRole") ?? "") as
-        | "support"
-        | "generation"
-        | "validation"
-        | "decision_support"
-        | "automation") || null,
+    aiUsageRole: null,
     aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
     businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
     businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,
