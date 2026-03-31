@@ -20,6 +20,7 @@ export const outcomeRecordSchema = z.object({
   organizationId: z.string().min(1),
   key: z.string().min(1),
   title: z.string().min(1),
+  framingVersion: z.number().int().positive().default(1),
   problemStatement: z.string().nullish(),
   outcomeStatement: z.string().nullish(),
   baselineDefinition: z.string().nullish(),
@@ -60,6 +61,7 @@ export const outcomeRecordSchema = z.object({
 const outcomeCreateInputBaseSchema = outcomeRecordSchema
   .omit({
     id: true,
+    framingVersion: true,
     originType: true,
     createdMode: true,
     lifecycleState: true,

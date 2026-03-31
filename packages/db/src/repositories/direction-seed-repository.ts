@@ -8,6 +8,7 @@ import {
   toGovernedObjectProvenanceFields,
   toGovernedObjectProvenanceMetadata
 } from "./governed-object-provenance";
+import { advanceOutcomeFramingVersion } from "./outcome-repository";
 
 export async function listDirectionSeeds(organizationId: string, options?: { includeArchived?: boolean }) {
   const where: Prisma.DirectionSeedWhereInput = {
@@ -78,6 +79,11 @@ export async function createDirectionSeed(input: unknown, db: Prisma.Transaction
       tx
     );
 
+    await advanceOutcomeFramingVersion(tx, {
+      organizationId: parsed.organizationId,
+      outcomeId: parsed.outcomeId
+    });
+
     return seed;
   };
 
@@ -119,6 +125,17 @@ export async function updateDirectionSeed(input: unknown) {
             : null
           : parsed.lineageReference
     });
+    const framingContentChanged =
+      (parsed.outcomeId !== undefined && parsed.outcomeId !== existing.outcomeId) ||
+      (parsed.epicId !== undefined && parsed.epicId !== existing.epicId) ||
+      (parsed.key !== undefined && parsed.key !== existing.key) ||
+      (parsed.title !== undefined && parsed.title !== existing.title) ||
+      (parsed.shortDescription !== undefined && parsed.shortDescription !== existing.shortDescription) ||
+      (parsed.expectedBehavior !== undefined && parsed.expectedBehavior !== existing.expectedBehavior) ||
+      (parsed.uxSketchName !== undefined && parsed.uxSketchName !== existing.uxSketchName) ||
+      (parsed.uxSketchContentType !== undefined && parsed.uxSketchContentType !== existing.uxSketchContentType) ||
+      (parsed.uxSketchDataUrl !== undefined && parsed.uxSketchDataUrl !== existing.uxSketchDataUrl) ||
+      parsed.uxSketches !== undefined;
 
     if (parsed.outcomeId !== undefined) {
       data.outcomeId = parsed.outcomeId;
@@ -194,6 +211,13 @@ export async function updateDirectionSeed(input: unknown) {
       },
       tx
     );
+
+    if (framingContentChanged) {
+      await advanceOutcomeFramingVersion(tx, {
+        organizationId: parsed.organizationId,
+        outcomeId: seed.outcomeId
+      });
+    }
 
     return seed;
   });

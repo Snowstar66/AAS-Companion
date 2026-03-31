@@ -11,6 +11,92 @@ import {
   toGovernedObjectProvenanceMetadata
 } from "./governed-object-provenance";
 
+function hasScalarChanged<T>(nextValue: T | undefined, currentValue: T | null | undefined) {
+  if (nextValue === undefined) {
+    return false;
+  }
+
+  if (nextValue instanceof Date) {
+    return nextValue.getTime() !== (currentValue instanceof Date ? currentValue.getTime() : null);
+  }
+
+  return nextValue !== currentValue;
+}
+
+async function invalidateOutcomeTollgateForNewFramingVersion(
+  tx: Prisma.TransactionClient,
+  input: {
+    organizationId: string;
+    outcomeId: string;
+    framingVersion: number;
+  }
+) {
+  const tollgate = await tx.tollgate.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      entityType: "outcome",
+      entityId: input.outcomeId,
+      tollgateType: "tg1_baseline"
+    },
+    select: {
+      id: true,
+      status: true,
+      approvedVersion: true,
+      submissionVersion: true,
+      comments: true
+    }
+  });
+
+  if (!tollgate || (tollgate.status !== "approved" && tollgate.status !== "ready" && !tollgate.submissionVersion)) {
+    return;
+  }
+
+  const priorVersion = tollgate.approvedVersion ?? tollgate.submissionVersion ?? input.framingVersion - 1;
+
+  await tx.tollgate.update({
+    where: {
+      id: tollgate.id
+    },
+    data: {
+      status: "blocked",
+      blockers: [
+        `Framing changed after version ${priorVersion}. Submit version ${input.framingVersion} to Tollgate 1 for a new approval.`
+      ],
+      submissionVersion: null
+    }
+  });
+}
+
+export async function advanceOutcomeFramingVersion(
+  tx: Prisma.TransactionClient,
+  input: {
+    organizationId: string;
+    outcomeId: string;
+  }
+) {
+  const outcome = await tx.outcome.update({
+    where: {
+      id: input.outcomeId
+    },
+    data: {
+      framingVersion: {
+        increment: 1
+      }
+    },
+    select: {
+      framingVersion: true
+    }
+  });
+
+  await invalidateOutcomeTollgateForNewFramingVersion(tx, {
+    organizationId: input.organizationId,
+    outcomeId: input.outcomeId,
+    framingVersion: outcome.framingVersion
+  });
+
+  return outcome.framingVersion;
+}
+
 export async function listOutcomes(organizationId: string, options?: { includeArchived?: boolean }) {
   const where: Prisma.OutcomeWhereInput = {
     organizationId
@@ -159,6 +245,7 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           organizationId: true,
           key: true,
           title: true,
+          framingVersion: true,
           problemStatement: true,
           outcomeStatement: true,
           baselineDefinition: true,
@@ -282,6 +369,9 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           status: true,
           blockers: true,
           approverRoles: true,
+          submissionVersion: true,
+          approvedVersion: true,
+          approvalSnapshot: true,
           decidedBy: true,
           decidedAt: true,
           comments: true,
@@ -338,6 +428,7 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         organizationId: parsed.organizationId,
         key: parsed.key,
         title: parsed.title,
+        framingVersion: 1,
         problemStatement: parsed.problemStatement ?? null,
         outcomeStatement: parsed.outcomeStatement ?? null,
         baselineDefinition: parsed.baselineDefinition ?? null,
@@ -430,6 +521,33 @@ export async function updateOutcome(input: unknown) {
             : null
           : parsed.lineageReference
     });
+    const framingContentChanged =
+      hasScalarChanged(parsed.title, existing.title) ||
+      hasScalarChanged(parsed.problemStatement, existing.problemStatement) ||
+      hasScalarChanged(parsed.outcomeStatement, existing.outcomeStatement) ||
+      hasScalarChanged(parsed.baselineDefinition, existing.baselineDefinition) ||
+      hasScalarChanged(parsed.baselineSource, existing.baselineSource) ||
+      hasScalarChanged(parsed.solutionContext, existing.solutionContext) ||
+      hasScalarChanged(parsed.solutionConstraints, existing.solutionConstraints) ||
+      hasScalarChanged(parsed.dataSensitivity, existing.dataSensitivity) ||
+      hasScalarChanged(parsed.deliveryType, existing.deliveryType) ||
+      hasScalarChanged(parsed.aiUsageRole, existing.aiUsageRole) ||
+      hasScalarChanged(parsed.aiUsageIntent, existing.aiUsageIntent) ||
+      hasScalarChanged(parsed.businessImpactLevel, existing.businessImpactLevel) ||
+      hasScalarChanged(parsed.businessImpactRationale, existing.businessImpactRationale) ||
+      hasScalarChanged(parsed.dataSensitivityLevel, existing.dataSensitivityLevel) ||
+      hasScalarChanged(parsed.dataSensitivityRationale, existing.dataSensitivityRationale) ||
+      hasScalarChanged(parsed.blastRadiusLevel, existing.blastRadiusLevel) ||
+      hasScalarChanged(parsed.blastRadiusRationale, existing.blastRadiusRationale) ||
+      hasScalarChanged(parsed.decisionImpactLevel, existing.decisionImpactLevel) ||
+      hasScalarChanged(parsed.decisionImpactRationale, existing.decisionImpactRationale) ||
+      hasScalarChanged(parsed.aiLevelJustification, existing.aiLevelJustification) ||
+      hasScalarChanged(parsed.riskAcceptedAt, existing.riskAcceptedAt) ||
+      hasScalarChanged(parsed.riskAcceptedByValueOwnerId, existing.riskAcceptedByValueOwnerId) ||
+      hasScalarChanged(parsed.timeframe, existing.timeframe) ||
+      hasScalarChanged(parsed.valueOwnerId, existing.valueOwnerId) ||
+      hasScalarChanged(parsed.riskProfile, existing.riskProfile) ||
+      hasScalarChanged(parsed.aiAccelerationLevel, existing.aiAccelerationLevel);
 
     if (parsed.key !== undefined) {
       data.key = parsed.key;
@@ -557,8 +675,25 @@ export async function updateOutcome(input: unknown) {
 
     const outcome = await tx.outcome.update({
       where: { id: existing.id },
-      data
+      data: {
+        ...data,
+        ...(framingContentChanged
+          ? {
+              framingVersion: {
+                increment: 1
+              }
+            }
+          : {})
+      }
     });
+
+    if (framingContentChanged) {
+      await invalidateOutcomeTollgateForNewFramingVersion(tx, {
+        organizationId: parsed.organizationId,
+        outcomeId: outcome.id,
+        framingVersion: outcome.framingVersion
+      });
+    }
 
     await appendActivityEvent(
       {

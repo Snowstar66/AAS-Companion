@@ -65,6 +65,7 @@ export async function createSignoffRecord(input: unknown, db: DbClient = prisma)
           organizationId: parsed.organizationId,
           entityType: parsed.entityType,
           entityId: parsed.entityId,
+          entityVersion: parsed.entityVersion ?? null,
           tollgateId: parsed.tollgateId ?? null,
           decisionKind: parsed.decisionKind,
           requiredRoleType: parsed.requiredRoleType,
@@ -105,6 +106,7 @@ export async function createSignoffRecord(input: unknown, db: DbClient = prisma)
         organizationId: parsed.organizationId,
         entityType: parsed.entityType,
         entityId: parsed.entityId,
+        entityVersion: parsed.entityVersion ?? null,
         tollgateId: parsed.tollgateId ?? null,
         tollgateType: parsed.tollgateType ?? null,
         decisionKind: parsed.decisionKind,
@@ -134,6 +136,7 @@ export async function createSignoffRecord(input: unknown, db: DbClient = prisma)
         metadata: {
           entityType: parsed.entityType,
           entityId: parsed.entityId,
+          entityVersion: parsed.entityVersion ?? null,
           tollgateType: parsed.tollgateType ?? null,
           decisionKind: parsed.decisionKind,
           decisionStatus: parsed.decisionStatus,

@@ -29,6 +29,7 @@ type OutcomeAiRiskPostureCardProps = {
   defaultRiskAcceptedAt: string | null;
   defaultRiskAcceptedByValueOwnerId: string | null;
   valueOwnerLabel: string | null;
+  embedded?: boolean | undefined;
   disabled?: boolean | undefined;
 };
 
@@ -220,6 +221,7 @@ export function OutcomeAiRiskPostureCard({
   defaultRiskAcceptedAt,
   defaultRiskAcceptedByValueOwnerId,
   valueOwnerLabel,
+  embedded = false,
   disabled = false
 }: OutcomeAiRiskPostureCardProps) {
   const [aiLevel, setAiLevel] = useState<AiLevel>(defaultAiLevel);
@@ -335,8 +337,8 @@ export function OutcomeAiRiskPostureCard({
 
   const statusTone = getStatusTone(blockers.length, derivedRisk, aiLevel);
 
-  return (
-    <Card className="border-border/70 shadow-sm">
+  const content = (
+    <>
       <CardHeader>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -618,6 +620,16 @@ export function OutcomeAiRiskPostureCard({
           </div>
         </div>
       </CardContent>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-5">{content}</div>;
+  }
+
+  return (
+    <Card className="border-border/70 shadow-sm">
+      {content}
     </Card>
   );
 }

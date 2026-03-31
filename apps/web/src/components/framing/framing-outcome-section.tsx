@@ -590,6 +590,7 @@ export function FramingOutcomeSection({
                 defaultRiskAcceptedByValueOwnerId={outcome.riskAcceptedByValueOwnerId ?? null}
                 defaultRiskProfile={outcome.riskProfile}
                 disabled={isArchived}
+                embedded
                 valueOwnerLabel={valueOwnerLabel}
               />
             </CollapsibleFramingPanel>
@@ -599,29 +600,27 @@ export function FramingOutcomeSection({
               description="Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational."
               title="Epics and Story Ideas"
             >
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <CardTitle>Epics and Story Ideas</CardTitle>
-                      <CardDescription>
-                        Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational.
-                      </CardDescription>
-                    </div>
-                    <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">
-                      {!isArchived ? (
-                        <PendingFormButton
-                          className="w-full gap-2 self-start whitespace-nowrap"
-                          formAction={createEpicAction}
-                          icon={<ArrowRight className="h-4 w-4" />}
-                          label="Create Epic"
-                          pendingLabel="Creating Epic..."
-                        />
-                      ) : null}
-                    </div>
+              <div className="space-y-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Epics and Story Ideas</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational.
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">
+                    {!isArchived ? (
+                      <PendingFormButton
+                        className="w-full gap-2 self-start whitespace-nowrap"
+                        formAction={createEpicAction}
+                        icon={<ArrowRight className="h-4 w-4" />}
+                        label="Create Epic"
+                        pendingLabel="Creating Epic..."
+                      />
+                    ) : null}
+                  </div>
+                </div>
+                <div className="space-y-3 text-sm text-muted-foreground">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current Epics</p>
@@ -718,8 +717,8 @@ export function FramingOutcomeSection({
                       </p>
                     ) : null}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </CollapsibleFramingPanel>
 
             <CollapsibleFramingPanel
@@ -872,7 +871,7 @@ export function FramingOutcomeSection({
         description="Expand when you want to export the customer handshake into another AI tool or workflow."
         title="Export framing brief"
       >
-        <FramingBriefExportPanel disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
+        <FramingBriefExportPanel embedded disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
       </CollapsibleFramingPanel>
     </section>
   );
@@ -908,6 +907,9 @@ async function DeferredOutcomeTollgateSection(props: {
   const tollgateReviewLabels = tollgateReview.requiredReviewRoles.map((requirement) => requirement.label);
   const tollgateApprovalLabels = tollgateReview.requiredApprovalRoles.map((requirement) => requirement.label);
   const visibleBlockers = blockers.length > 0 ? blockers : props.defaultBlockers;
+  const hasApprovedDocument = Boolean(tollgateReview.approvalSnapshot);
+  const approvedVersion = tollgateReview.approvedVersion ?? null;
+  const currentFramingVersion = outcome.framingVersion;
 
   return (
     <>
@@ -948,7 +950,16 @@ async function DeferredOutcomeTollgateSection(props: {
             </p>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current framing version</p>
+              <p className="mt-2 leading-6 text-foreground">Version {currentFramingVersion}</p>
+              {approvedVersion && approvedVersion !== currentFramingVersion ? (
+                <p className="mt-2 text-muted-foreground">
+                  Latest approved version is {approvedVersion}. A new TG1 decision is required for the current brief.
+                </p>
+              ) : null}
+            </div>
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required review roles</p>
               <p className="mt-2 leading-6 text-foreground">{tollgateReviewLabels.join(" | ")}</p>
@@ -958,6 +969,19 @@ async function DeferredOutcomeTollgateSection(props: {
               <p className="mt-2 leading-6 text-foreground">{tollgateApprovalLabels.join(" | ")}</p>
             </div>
           </div>
+
+          {hasApprovedDocument ? (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href={`/outcomes/${props.outcomeId}/approval-document`}>
+                  {approvedVersion === currentFramingVersion ? "Open approved framing document" : "Open last approved framing document"}
+                </Link>
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Open the saved approval record and print it as a PDF with the full Framing, approvals and dates.
+              </p>
+            </div>
+          ) : null}
 
           {tollgateReview.status === "ready" || tollgateReview.status === "approved" ? (
             <div className="flex flex-col gap-3 sm:flex-row">

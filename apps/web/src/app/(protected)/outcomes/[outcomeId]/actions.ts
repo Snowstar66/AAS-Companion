@@ -128,6 +128,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/");
 
@@ -207,6 +208,7 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/");
 
@@ -395,6 +397,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/");
 
@@ -451,6 +454,7 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/review");
@@ -485,6 +489,7 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/");
@@ -518,6 +523,7 @@ export async function createStoryIdeaFromOutcomeAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/");
@@ -600,6 +606,7 @@ export async function archiveOutcomeAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/stories");

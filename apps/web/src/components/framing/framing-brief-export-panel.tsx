@@ -8,10 +8,16 @@ import type { FramingBriefExportPayload } from "@/lib/framing/framing-brief-expo
 type FramingBriefExportPanelProps = {
   payload: FramingBriefExportPayload;
   markdown: string;
+  embedded?: boolean | undefined;
   disabled?: boolean | undefined;
 };
 
-export function FramingBriefExportPanel({ payload, markdown, disabled = false }: FramingBriefExportPanelProps) {
+export function FramingBriefExportPanel({
+  payload,
+  markdown,
+  embedded = false,
+  disabled = false
+}: FramingBriefExportPanelProps) {
   const [copied, setCopied] = useState<"json" | "markdown" | null>(null);
   const json = JSON.stringify(payload, null, 2);
   const fileBaseName = payload.handshake.outcome_key.toLowerCase();
@@ -32,8 +38,8 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
     URL.revokeObjectURL(href);
   }
 
-  return (
-    <Card className="border-border/70 shadow-sm">
+  const content = (
+    <>
       <CardHeader>
         <CardTitle>Export framing brief</CardTitle>
         <CardDescription>
@@ -108,6 +114,16 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
           </Card>
         </div>
       </CardContent>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-5">{content}</div>;
+  }
+
+  return (
+    <Card className="border-border/70 shadow-sm">
+      {content}
     </Card>
   );
 }

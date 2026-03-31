@@ -240,7 +240,8 @@ export async function getOutcomeTollgateReviewService(organizationId: string, ou
     return success({
       outcome: {
         id: snapshot.outcome.id,
-        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel
+        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+        framingVersion: snapshot.outcome.framingVersion
       },
       tollgate: snapshot.tollgate,
       blockers,
@@ -465,6 +466,9 @@ export async function submitOutcomeTollgateService(input: {
     status: isReady ? "ready" : "blocked",
     blockers,
     approverRoles: ["value_owner", "architect"],
+    submissionVersion: snapshot.outcome.framingVersion,
+    approvedVersion: snapshot.tollgate?.approvedVersion ?? null,
+    approvalSnapshot: snapshot.tollgate?.approvalSnapshot ?? null,
     comments: input.comments ?? null,
     actorId: input.actorId ?? null
   });

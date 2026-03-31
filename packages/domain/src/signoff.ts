@@ -13,6 +13,7 @@ export const signoffRecordSchema = z.object({
   organizationId: z.string().min(1),
   entityType: tollgateEntityTypeSchema,
   entityId: z.string().min(1),
+  entityVersion: z.number().int().positive().nullish(),
   tollgateId: z.string().min(1).nullish(),
   tollgateType: tollgateTypeSchema.nullish(),
   decisionKind: signoffDecisionKindSchema,
