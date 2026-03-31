@@ -15,6 +15,7 @@ import {
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import {
   revalidateFramingCockpitCache,
+  revalidateOutcomeTollgateReviewCache,
   revalidateOutcomeWorkspaceCache
 } from "@/lib/cache/project-data";
 
@@ -102,6 +103,7 @@ export async function saveEpicWorkspaceAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -139,6 +141,7 @@ export async function createDirectionSeedFromEpicAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -209,6 +212,7 @@ export async function saveDirectionSeedAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -294,6 +298,7 @@ export async function hardDeleteEpicAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/workspace");
   revalidatePath("/stories");
@@ -336,6 +341,7 @@ export async function archiveEpicAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -384,6 +390,7 @@ export async function restoreEpicAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);

@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
-import { getOutcomeFramingBlockers, getTollgateDecisionProfile } from "@aas-companion/domain";
+import { getOutcomeFramingBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type {
   OutcomeInlineSaveActionState,
@@ -20,6 +20,8 @@ import { FramingValueSpineTree } from "@/components/workspace/framing-value-spin
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
+import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { isStoryIdeaReadyForFraming, isStoryIdeaStarted } from "@/lib/framing/story-idea-status";
@@ -115,7 +117,7 @@ export function FramingOutcomeSection({
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
-  const { outcome, tollgate, removal, availableOwners, tollgateReview } = data;
+  const { outcome, tollgate, removal, availableOwners } = data;
   const computedBlockers = getOutcomeFramingBlockers({
     title: outcome.title,
     outcomeStatement: outcome.outcomeStatement ?? null,
@@ -129,7 +131,7 @@ export function FramingOutcomeSection({
   const blockers =
     search.blockersFromQuery && search.blockersFromQuery.length > 0
       ? search.blockersFromQuery
-      : tollgateReview?.blockers ?? tollgate?.blockers ?? computedBlockers;
+      : tollgate?.blockers ?? computedBlockers;
   const framingComplete = computedBlockers.length === 0;
   const statusLabel = outcome.status.replaceAll("_", " ");
   const originLabel = getOriginLabel(outcome.originType);
@@ -153,12 +155,6 @@ export function FramingOutcomeSection({
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
-  const tollgateProfile = getTollgateDecisionProfile({
-    tollgateType: "tg1_baseline",
-    aiAccelerationLevel: outcome.aiAccelerationLevel
-  });
-  const tollgateReviewLabels = tollgateProfile.reviewRequirements.map((requirement) => requirement.label);
-  const tollgateApprovalLabels = tollgateProfile.approvalRequirements.map((requirement) => requirement.label);
   const seedsByEpicId = new Map<string, typeof outcome.directionSeeds>();
 
   for (const seed of outcome.directionSeeds) {
@@ -704,129 +700,15 @@ export function FramingOutcomeSection({
             ) : null}
       </form>
 
-      <Card className="border-border/70 shadow-sm">
-        <CardHeader>
-          <CardTitle>{tollgateReview?.status === "ready" || tollgateReview?.status === "approved" ? "Tollgate follow-up" : "Submit to Tollgate"}</CardTitle>
-          <CardDescription>
-            Tollgate 1 is the framing decision gate. It applies to the framing brief, not to individual Story Ideas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            className={`rounded-2xl border px-4 py-4 text-sm ${
-              tollgateReview?.status === "approved"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : tollgateReview?.status === "ready"
-                  ? "border-sky-200 bg-sky-50 text-sky-900"
-                  : framingComplete
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                    : "border-amber-200 bg-amber-50 text-amber-900"
-            }`}
-          >
-            <p className="font-medium">
-              {tollgateReview?.status === "approved"
-                ? "Tollgate 1 is already approved."
-                : tollgateReview?.status === "ready"
-                  ? "This framing brief is already submitted and waiting for human decision."
-                  : framingComplete
-                    ? "This framing brief is ready to submit."
-                    : "This framing brief is not ready to submit yet."}
-            </p>
-            <p className="mt-2 leading-6">
-              {tollgateReview?.status === "approved"
-                ? "Continue from Human Review only if you need to inspect the recorded sign-offs."
-                : tollgateReview?.status === "ready"
-                  ? "Open Human Review to record the remaining TG1 decision and approvals."
-                  : blockers[0] ?? "Complete the framing brief and then submit it once to start TG1 review."}
-            </p>
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-2">
-            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required review roles</p>
-              <p className="mt-2 leading-6 text-foreground">{tollgateReviewLabels.join(" | ")}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required approval roles</p>
-              <p className="mt-2 leading-6 text-foreground">{tollgateApprovalLabels.join(" | ")}</p>
-            </div>
-          </div>
-
-          {tollgateReview?.status === "ready" || tollgateReview?.status === "approved" ? (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="gap-2" variant="secondary">
-                <Link href="/review">Open Human Review</Link>
-              </Button>
-              <p className="self-center text-sm text-muted-foreground">
-                Human Review is where the actual TG1 sign-off is recorded.
-              </p>
-            </div>
-          ) : !isArchived ? (
-            <form action={submitTollgateAction} className="space-y-4">
-              <input name="outcomeId" type="hidden" value={outcome.id} />
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Submission note</span>
-                <textarea
-                  className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                  defaultValue={tollgate?.comments ?? ""}
-                  name="comments"
-                />
-              </label>
-              <PendingFormButton
-                className="gap-2"
-                disabled={!framingComplete}
-                icon={<ShieldCheck className="h-4 w-4" />}
-                label="Submit to Tollgate"
-                pendingLabel="Submitting to Tollgate..."
-              />
-              {!framingComplete ? (
-                <p className="text-sm text-muted-foreground">
-                  Submit unlocks as soon as the outcome statement, baseline, value owner, AI level, risk profile and at least one epic are in place.
-                </p>
-              ) : null}
-            </form>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      {tollgate?.id || tollgateReview?.signoffRecords.length ? (
-        <div id="tollgate-review">
-          <TollgateDecisionCard
-            aiAccelerationLevel={outcome.aiAccelerationLevel}
-            approvalActions={tollgateReview?.approvalActions ?? []}
-            availablePeople={tollgateReview?.availablePeople ?? []}
-            blockers={tollgateReview?.blockers ?? blockers}
-            blockedActions={tollgateReview?.blockedActions ?? []}
-            comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
-            description="Record the required human review and approval decisions for Tollgate 1 here."
-            entityId={outcome.id}
-            entityType="outcome"
-            formAction={recordTollgateDecisionAction}
-            hiddenFields={[
-              { name: "outcomeId", value: outcome.id }
-            ]}
-            pendingActions={tollgateReview?.pendingActions ?? []}
-            reviewActions={tollgateReview?.reviewActions ?? []}
-            signoffRecords={
-              tollgateReview?.signoffRecords.map((record) => ({
-                id: record.id,
-                decisionKind: record.decisionKind,
-                requiredRoleType: record.requiredRoleType,
-                actualPersonName: record.actualPersonName,
-                actualRoleTitle: record.actualRoleTitle,
-                organizationSide: record.organizationSide,
-                decisionStatus: record.decisionStatus,
-                note: record.note,
-                evidenceReference: record.evidenceReference,
-                createdAt: record.createdAt
-              })) ?? []
-            }
-            status={tollgateReview?.status ?? (framingComplete ? "ready" : "blocked")}
-            title="Tollgate 1 decision workspace"
-            tollgateType="tg1_baseline"
-          />
-        </div>
-      ) : null}
+      <Suspense fallback={<OutcomeTollgateSectionFallback />}>
+        <DeferredOutcomeTollgateSection
+          defaultBlockers={blockers}
+          isArchived={isArchived}
+          outcomeId={outcome.id}
+          recordTollgateDecisionAction={recordTollgateDecisionAction}
+          submitTollgateAction={submitTollgateAction}
+        />
+      </Suspense>
 
       {removal?.decision ? (
         <CollapsibleFramingPanel
@@ -854,5 +736,178 @@ export function FramingOutcomeSection({
         <FramingBriefExportPanel disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
       </CollapsibleFramingPanel>
     </section>
+  );
+}
+
+async function DeferredOutcomeTollgateSection(props: {
+  outcomeId: string;
+  isArchived: boolean;
+  defaultBlockers: string[];
+  submitTollgateAction: (formData: FormData) => void | Promise<void>;
+  recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
+}) {
+  const session = await requireActiveProjectSession();
+  const tollgateResult = await getCachedOutcomeTollgateReviewData(
+    session.organization.organizationId,
+    props.outcomeId
+  );
+
+  if (!tollgateResult.ok) {
+    return (
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>Tollgate follow-up is unavailable</CardTitle>
+          <CardDescription>
+            {tollgateResult.errors[0]?.message ?? "The Tollgate workspace could not be loaded right now."}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const { outcome, tollgate, blockers, framingComplete, tollgateReview } = tollgateResult.data;
+  const tollgateReviewLabels = tollgateReview.requiredReviewRoles.map((requirement) => requirement.label);
+  const tollgateApprovalLabels = tollgateReview.requiredApprovalRoles.map((requirement) => requirement.label);
+  const visibleBlockers = blockers.length > 0 ? blockers : props.defaultBlockers;
+
+  return (
+    <>
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>{tollgateReview.status === "ready" || tollgateReview.status === "approved" ? "Tollgate follow-up" : "Submit to Tollgate"}</CardTitle>
+          <CardDescription>
+            Tollgate 1 is the framing decision gate. It applies to the framing brief, not to individual Story Ideas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div
+            className={`rounded-2xl border px-4 py-4 text-sm ${
+              tollgateReview.status === "approved"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : tollgateReview.status === "ready"
+                  ? "border-sky-200 bg-sky-50 text-sky-900"
+                  : framingComplete
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
+            <p className="font-medium">
+              {tollgateReview.status === "approved"
+                ? "Tollgate 1 is already approved."
+                : tollgateReview.status === "ready"
+                  ? "This framing brief is already submitted and waiting for human decision."
+                  : framingComplete
+                    ? "This framing brief is ready to submit."
+                    : "This framing brief is not ready to submit yet."}
+            </p>
+            <p className="mt-2 leading-6">
+              {tollgateReview.status === "approved"
+                ? "Continue from Human Review only if you need to inspect the recorded sign-offs."
+                : tollgateReview.status === "ready"
+                  ? "Open Human Review to record the remaining TG1 decision and approvals."
+                  : visibleBlockers[0] ?? "Complete the framing brief and then submit it once to start TG1 review."}
+            </p>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required review roles</p>
+              <p className="mt-2 leading-6 text-foreground">{tollgateReviewLabels.join(" | ")}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required approval roles</p>
+              <p className="mt-2 leading-6 text-foreground">{tollgateApprovalLabels.join(" | ")}</p>
+            </div>
+          </div>
+
+          {tollgateReview.status === "ready" || tollgateReview.status === "approved" ? (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href="/review">Open Human Review</Link>
+              </Button>
+              <p className="self-center text-sm text-muted-foreground">
+                Human Review is where the actual TG1 sign-off is recorded.
+              </p>
+            </div>
+          ) : !props.isArchived ? (
+            <form action={props.submitTollgateAction} className="space-y-4">
+              <input name="outcomeId" type="hidden" value={props.outcomeId} />
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Submission note</span>
+                <textarea
+                  className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  defaultValue={tollgate?.comments ?? ""}
+                  name="comments"
+                />
+              </label>
+              <PendingFormButton
+                className="gap-2"
+                disabled={!framingComplete}
+                icon={<ShieldCheck className="h-4 w-4" />}
+                label="Submit to Tollgate"
+                pendingLabel="Submitting to Tollgate..."
+              />
+              {!framingComplete ? (
+                <p className="text-sm text-muted-foreground">
+                  Submit unlocks as soon as the outcome statement, baseline, value owner, AI level, risk profile and at least one epic are in place.
+                </p>
+              ) : null}
+            </form>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      {tollgate?.id || tollgateReview.signoffRecords.length ? (
+        <div id="tollgate-review">
+          <TollgateDecisionCard
+            aiAccelerationLevel={outcome.aiAccelerationLevel}
+            approvalActions={tollgateReview.approvalActions}
+            availablePeople={tollgateReview.availablePeople}
+            blockers={visibleBlockers}
+            blockedActions={tollgateReview.blockedActions}
+            comments={tollgateReview.comments ?? tollgate?.comments ?? null}
+            description="Record the required human review and approval decisions for Tollgate 1 here."
+            entityId={props.outcomeId}
+            entityType="outcome"
+            formAction={props.recordTollgateDecisionAction}
+            hiddenFields={[
+              { name: "outcomeId", value: props.outcomeId }
+            ]}
+            pendingActions={tollgateReview.pendingActions}
+            reviewActions={tollgateReview.reviewActions}
+            signoffRecords={tollgateReview.signoffRecords.map((record) => ({
+              id: record.id,
+              decisionKind: record.decisionKind,
+              requiredRoleType: record.requiredRoleType,
+              actualPersonName: record.actualPersonName,
+              actualRoleTitle: record.actualRoleTitle,
+              organizationSide: record.organizationSide,
+              decisionStatus: record.decisionStatus,
+              note: record.note,
+              evidenceReference: record.evidenceReference,
+              createdAt: record.createdAt
+            }))}
+            status={tollgateReview.status ?? (framingComplete ? "ready" : "blocked")}
+            title="Tollgate 1 decision workspace"
+            tollgateType="tg1_baseline"
+          />
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function OutcomeTollgateSectionFallback() {
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <CardTitle>Loading tollgate follow-up</CardTitle>
+        <CardDescription>Review roles, submission state and decision lanes are loading separately.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 xl:grid-cols-2">
+        <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
+        <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
+      </CardContent>
+    </Card>
   );
 }

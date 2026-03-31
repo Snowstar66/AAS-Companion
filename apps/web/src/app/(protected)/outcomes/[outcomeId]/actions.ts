@@ -17,6 +17,7 @@ import {
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import {
   revalidateFramingCockpitCache,
+  revalidateOutcomeTollgateReviewCache,
   revalidateOutcomeWorkspaceCache
 } from "@/lib/cache/project-data";
 
@@ -94,6 +95,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -146,6 +148,7 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -333,6 +336,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -388,6 +392,7 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -421,6 +426,7 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -453,6 +459,7 @@ export async function createStoryIdeaFromOutcomeAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -492,6 +499,7 @@ export async function hardDeleteOutcomeAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/stories");
@@ -533,6 +541,7 @@ export async function archiveOutcomeAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -577,6 +586,7 @@ export async function restoreOutcomeAction(formData: FormData) {
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");

@@ -206,6 +206,52 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
   }, `organizationId=${organizationId} outcomeId=${outcomeId}`);
 }
 
+export async function getOutcomeTollgateReviewService(organizationId: string, outcomeId: string) {
+  return withDevTiming("api.getOutcomeTollgateReviewService", async () => {
+    const snapshot = await getOutcomeWorkspaceSnapshot(organizationId, outcomeId);
+
+    if (!snapshot) {
+      return failure({
+        code: "outcome_not_found",
+        message: "Outcome was not found in the current organization."
+      });
+    }
+
+    const blockers =
+      snapshot.tollgate?.blockers ??
+      getOutcomeFramingReadiness({
+        ...snapshot.outcome,
+        epicCount: snapshot.outcome.epics.length
+      }).reasons.map((reason) => reason.message);
+
+    const tollgateReview = await getTollgateReviewWorkspaceService({
+      organizationId,
+      entityType: "outcome",
+      entityId: outcomeId,
+      tollgateType: "tg1_baseline",
+      aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+      fallbackBlockers: blockers,
+      fallbackComments: snapshot.tollgate?.comments ?? null,
+      existingTollgate: snapshot.tollgate
+    });
+
+    if (!tollgateReview.ok) {
+      return tollgateReview;
+    }
+
+    return success({
+      outcome: {
+        id: snapshot.outcome.id,
+        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel
+      },
+      tollgate: snapshot.tollgate,
+      blockers,
+      framingComplete: blockers.length === 0,
+      tollgateReview: tollgateReview.data
+    });
+  }, `organizationId=${organizationId} outcomeId=${outcomeId}`);
+}
+
 export async function saveOutcomeWorkspaceService(input: {
   organizationId: string;
   id: string;

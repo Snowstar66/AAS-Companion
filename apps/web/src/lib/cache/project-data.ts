@@ -1,5 +1,6 @@
 import { revalidateTag, unstable_cache } from "next/cache";
 import { getOutcomeWorkspaceService } from "@aas-companion/api";
+import { getOutcomeTollgateReviewService } from "@aas-companion/api";
 import { getFramingCockpitData } from "@aas-companion/api/framing";
 
 export function getFramingCockpitTag(organizationId: string) {
@@ -8,6 +9,10 @@ export function getFramingCockpitTag(organizationId: string) {
 
 export function getOutcomeWorkspaceTag(organizationId: string, outcomeId: string) {
   return `outcome-workspace:${organizationId}:${outcomeId}`;
+}
+
+export function getOutcomeTollgateReviewTag(organizationId: string, outcomeId: string) {
+  return `outcome-tollgate-review:${organizationId}:${outcomeId}`;
 }
 
 export function getCachedFramingCockpitData(organizationId: string, organizationName: string) {
@@ -30,6 +35,16 @@ export function getCachedOutcomeWorkspaceData(organizationId: string, outcomeId:
   )();
 }
 
+export function getCachedOutcomeTollgateReviewData(organizationId: string, outcomeId: string) {
+  return unstable_cache(
+    async () => getOutcomeTollgateReviewService(organizationId, outcomeId),
+    ["outcome-tollgate-review", organizationId, outcomeId],
+    {
+      tags: [getOutcomeTollgateReviewTag(organizationId, outcomeId)]
+    }
+  )();
+}
+
 export function revalidateFramingCockpitCache(organizationId: string) {
   revalidateTag(getFramingCockpitTag(organizationId));
 }
@@ -40,4 +55,12 @@ export function revalidateOutcomeWorkspaceCache(organizationId: string, outcomeI
   }
 
   revalidateTag(getOutcomeWorkspaceTag(organizationId, outcomeId));
+}
+
+export function revalidateOutcomeTollgateReviewCache(organizationId: string, outcomeId: string | null | undefined) {
+  if (!outcomeId) {
+    return;
+  }
+
+  revalidateTag(getOutcomeTollgateReviewTag(organizationId, outcomeId));
 }
