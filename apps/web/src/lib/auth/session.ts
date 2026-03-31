@@ -71,19 +71,25 @@ export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentit
       return null;
     }
 
-    await withDevTiming("web.auth.ensureAppUser", () =>
-      ensureAppUser({
-        userId: user.id,
-        email: user.email ?? "unknown@supabase.local",
-        fullName: user.user_metadata.full_name ?? null
-      })
-    );
+    let appUser = await withDevTiming("web.auth.getAppUserById", () => getAppUserById(user.id));
+
+    if (!appUser) {
+      await withDevTiming("web.auth.ensureAppUser", () =>
+        ensureAppUser({
+          userId: user.id,
+          email: user.email ?? "unknown@supabase.local",
+          fullName: user.user_metadata.full_name ?? null
+        })
+      );
+
+      appUser = await withDevTiming("web.auth.getAppUserById.afterEnsure", () => getAppUserById(user.id));
+    }
 
     return {
       authMode: "supabase",
-      userId: user.id,
-      email: user.email ?? "unknown@supabase.local",
-      displayName: user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "Operator"
+      userId: appUser?.userId ?? user.id,
+      email: appUser?.email ?? user.email ?? "unknown@supabase.local",
+      displayName: appUser?.fullName ?? user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "Operator"
     };
   })
 );
