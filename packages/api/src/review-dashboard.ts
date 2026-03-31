@@ -149,13 +149,13 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           title: outcome.title,
           status: summary.status,
           tone: getTone(summary.status),
-          actionLabel: "Open Tollgate 1 review",
-          href: `/outcomes/${outcome.id}#tollgate-review`,
+          actionLabel: "Open Framing approval",
+          href: `/framing?outcomeId=${outcome.id}#tollgate-review`,
           description:
             summary.status === "blocked"
               ? blocker ?? "Tollgate 1 still has blockers before approval can continue."
-              : `${summary.pendingRequirements.length} sign-off lane${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before Tollgate 1 approval.`,
-          context: "Outcome framing tollgate",
+              : `${summary.pendingRequirements.length} required role${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before Tollgate 1 is approved.`,
+          context: "Framing / Tollgate 1",
           blocker,
           pendingLaneCount: summary.pendingRequirements.length,
           updatedAt: tollgate.updatedAt

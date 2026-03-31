@@ -140,7 +140,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
         </CardHeader>
       )}
       <CardContent className="space-y-6">
-        <div className={`rounded-2xl border px-4 py-4 text-sm ${statusTone}`}>
+          <div className={`rounded-2xl border px-4 py-4 text-sm ${statusTone}`}>
           <div className="flex items-center gap-2 font-medium">
             {props.status === "approved" ? (
               <CircleCheckBig className="h-4 w-4" />
@@ -161,11 +161,15 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
           {props.comments ? <p className="mt-3 text-sm">Current note: {props.comments}</p> : null}
         </div>
 
-        {pendingCount > 0 || blockedCount > 0 ? (
+          {pendingCount > 0 || blockedCount > 0 ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-4 text-sm text-sky-950">
-            <p className="font-medium">Approval and review are recorded here</p>
+            <p className="font-medium">
+              {props.entityType === "outcome" ? "Approve Tollgate 1 here" : "Record the required delivery decisions here"}
+            </p>
             <p className="mt-2 leading-6">
-              Open the approval lanes and the record section below to capture the named human decisions before build starts.
+              {props.entityType === "outcome"
+                ? "Use the role lanes and the form below to record the required Framing review and approval decisions."
+                : "Use the role lanes and the form below to record the required delivery review and approval decisions before build starts."}
             </p>
           </div>
         ) : null}

@@ -919,7 +919,7 @@ async function DeferredOutcomeTollgateSection(props: {
     <>
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>{tollgateReview.status === "ready" || tollgateReview.status === "approved" ? "Tollgate follow-up" : "Submit to Tollgate"}</CardTitle>
+          <CardTitle>{tollgateReview.status === "ready" || tollgateReview.status === "approved" ? "Tollgate 1 approval" : "Submit to Tollgate 1"}</CardTitle>
           <CardDescription>
             Tollgate 1 is the framing decision gate. It applies to the framing brief, not to individual Story Ideas.
           </CardDescription>
@@ -940,17 +940,17 @@ async function DeferredOutcomeTollgateSection(props: {
               {tollgateReview.status === "approved"
                 ? "Tollgate 1 is already approved."
                 : tollgateReview.status === "ready"
-                  ? "This framing brief is already submitted and waiting for human decision."
+                  ? "This Framing is submitted and ready for approval below."
                   : framingComplete
-                    ? "This framing brief is ready to submit."
-                    : "This framing brief is not ready to submit yet."}
+                    ? "This Framing is ready to submit."
+                    : "This Framing is not ready to submit yet."}
             </p>
             <p className="mt-2 leading-6">
               {tollgateReview.status === "approved"
-                ? "Continue from Human Review only if you need to inspect the recorded sign-offs."
+                ? "The required roles have signed off. You can continue with Story Ideas, design and export."
                 : tollgateReview.status === "ready"
-                  ? "Open Human Review to record the remaining TG1 decision and approvals."
-                  : visibleBlockers[0] ?? "Complete the framing brief and then submit it once to start TG1 review."}
+                  ? "Record the required review and approval decisions directly in the approval section below."
+                  : visibleBlockers[0] ?? "Complete the Framing and then submit it once to start Tollgate 1 approval."}
             </p>
           </div>
 
@@ -965,11 +965,11 @@ async function DeferredOutcomeTollgateSection(props: {
               ) : null}
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required review roles</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required reviewers for current AI level</p>
               <p className="mt-2 leading-6 text-foreground">{tollgateReviewLabels.join(" | ")}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required approval roles</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required approvers for current AI level</p>
               <p className="mt-2 leading-6 text-foreground">{tollgateApprovalLabels.join(" | ")}</p>
             </div>
           </div>
@@ -988,13 +988,8 @@ async function DeferredOutcomeTollgateSection(props: {
           ) : null}
 
           {tollgateReview.status === "ready" || tollgateReview.status === "approved" ? (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="gap-2" variant="secondary">
-                <Link href="/review">Open Human Review</Link>
-              </Button>
-              <p className="self-center text-sm text-muted-foreground">
-                Human Review is where the actual TG1 sign-off is recorded.
-              </p>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-4 text-sm text-sky-950">
+              Approve Tollgate 1 directly on this Framing page below. Human Review only mirrors this as a queue entry.
             </div>
           ) : !props.isArchived ? (
             <form action={props.submitTollgateAction} className="space-y-4">
@@ -1033,7 +1028,7 @@ async function DeferredOutcomeTollgateSection(props: {
             blockers={visibleBlockers}
             blockedActions={tollgateReview.blockedActions}
             comments={tollgateReview.comments ?? tollgate?.comments ?? null}
-            description="Record the required human review and approval decisions for Tollgate 1 here."
+            description="Record the required reviewer and approver decisions for Tollgate 1 here. The required roles are determined by the current AI Acceleration Level."
             entityId={props.outcomeId}
             entityType="outcome"
             formAction={props.recordTollgateDecisionAction}
@@ -1055,7 +1050,7 @@ async function DeferredOutcomeTollgateSection(props: {
               createdAt: record.createdAt
             }))}
             status={tollgateReview.status ?? (framingComplete ? "ready" : "blocked")}
-            title="Tollgate 1 decision workspace"
+            title="Approve Tollgate 1 here"
             tollgateType="tg1_baseline"
           />
         </div>

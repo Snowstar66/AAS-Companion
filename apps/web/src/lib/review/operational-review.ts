@@ -31,8 +31,8 @@ export async function loadOperationalReviewDashboard() {
       summary: result.data.summary,
       message:
         result.data.items.length > 0
-          ? "Framing reviews and Delivery Story reviews with human work are collected here."
-          : "No framing reviews or Delivery Story reviews are currently waiting for human action."
+          ? "Framing approvals and Delivery Story reviews with human work are collected here."
+          : "No Framing approvals or Delivery Story reviews are currently waiting for human action."
     };
   } catch (error) {
     unstable_rethrow(error);
