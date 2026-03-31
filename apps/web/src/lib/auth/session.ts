@@ -10,6 +10,7 @@ import {
   ORG_CONTEXT_COOKIE_NAME
 } from "@aas-companion/domain/session-constants";
 import { ensureAppUser, getAppUserById, getOrganizationContextForUser } from "@aas-companion/db/organization-repository";
+import { parseOrganizationContextCookie } from "@/lib/org-context";
 import { createServerSupabaseClient } from "@/lib/auth/supabase/server";
 import { withDevTiming } from "@/lib/dev-timing";
 
@@ -28,8 +29,12 @@ const getRequestAuthCookieState = cache(async () => {
   const cookieStore = await cookies();
   const allCookies = cookieStore.getAll();
 
+  const rawOrganizationCookie = cookieStore.get(ORG_CONTEXT_COOKIE_NAME)?.value ?? null;
+  const parsedOrganization = parseOrganizationContextCookie(rawOrganizationCookie);
+
   return {
-    organizationId: cookieStore.get(ORG_CONTEXT_COOKIE_NAME)?.value ?? null,
+    organizationId: parsedOrganization?.organizationId ?? rawOrganizationCookie,
+    organizationContext: parsedOrganization,
     hasDemoSession: cookieStore.get(DEMO_SESSION_COOKIE_NAME)?.value === "demo",
     localUserId: cookieStore.get(LOCAL_SESSION_COOKIE_NAME)?.value ?? null,
     hasSupabaseCookies: allCookies.some((cookie) => cookie.name.startsWith("sb-"))
@@ -96,7 +101,7 @@ export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentit
 
 export const getAppSession = cache(async (): Promise<ViewerSession | null> =>
   withDevTiming("web.auth.getAppSession", async () => {
-    const [{ organizationId, hasDemoSession }, account] = await Promise.all([
+    const [{ organizationId, organizationContext, hasDemoSession }, account] = await Promise.all([
       getRequestAuthCookieState(),
       getSignedInAccountIdentity()
     ]);
@@ -121,11 +126,13 @@ export const getAppSession = cache(async (): Promise<ViewerSession | null> =>
     }
 
     const organization =
-      organizationId && organizationId !== DEMO_ORGANIZATION.organizationId
-        ? await withDevTiming("web.auth.getOrganizationContextForUser", () =>
-            getOrganizationContextForUser(account.userId, organizationId)
-          )
-        : null;
+      organizationContext && organizationContext.organizationId !== DEMO_ORGANIZATION.organizationId
+        ? organizationContext
+        : organizationId && organizationId !== DEMO_ORGANIZATION.organizationId
+          ? await withDevTiming("web.auth.getOrganizationContextForUser", () =>
+              getOrganizationContextForUser(account.userId, organizationId)
+            )
+          : null;
 
     return {
       mode: account.authMode,
