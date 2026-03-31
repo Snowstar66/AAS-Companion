@@ -88,11 +88,11 @@ vi.mock("@/app/(protected)/handoff/[storyId]/actions", () => ({
 }));
 
 describe("Handoff page", () => {
-  it("shows concrete export and handoff actions once the contract is ready", async () => {
+  it("shows concrete export and build start actions once the contract is ready", async () => {
     render(await HandoffPage({ params: Promise.resolve({ storyId: "story-native-1" }) }));
 
-    expect(screen.getByText("Next step")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Mark handoff complete" })).toBeDefined();
+    expect(screen.getByText("Start build")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Mark build started" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Download JSON" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Download Markdown" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Back to Story" })).toBeDefined();

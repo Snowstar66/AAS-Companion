@@ -11,7 +11,12 @@ import {
   updateAgentRegistryEntry,
   updatePartyRoleEntry
 } from "@aas-companion/db";
-import { authorityMatrixRules, buildGovernanceCoverageAssessment, type AiAccelerationLevel } from "@aas-companion/domain";
+import {
+  authorityMatrixRules,
+  buildAdaptiveGovernanceAssessment,
+  buildGovernanceCoverageAssessment,
+  type AiAccelerationLevel
+} from "@aas-companion/domain";
 import { failure, success } from "./shared";
 
 type GovernanceSourceEntity = "outcome" | "story";
@@ -103,11 +108,16 @@ export async function getGovernanceWorkspaceService(input: {
     getGovernanceSourceContext(input)
   ]);
 
-  const selectedAiLevel = input.aiAccelerationLevel ?? sourceContext?.aiAccelerationLevel ?? "level_3";
+  const selectedAiLevel = input.aiAccelerationLevel ?? sourceContext?.aiAccelerationLevel ?? "level_1";
   const readiness = buildGovernanceCoverageAssessment({
     aiAccelerationLevel: selectedAiLevel,
     requirements,
     riskRules,
+    people,
+    agents
+  });
+  const adaptive = buildAdaptiveGovernanceAssessment({
+    aiAccelerationLevel: selectedAiLevel,
     people,
     agents
   });
@@ -127,6 +137,7 @@ export async function getGovernanceWorkspaceService(input: {
     sourceContext,
     selectedAiLevel,
     readiness,
+    adaptive,
     authorityMatrix,
     summaries: {
       activePeople: people.filter((person) => person.isActive).length,

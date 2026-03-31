@@ -44,7 +44,7 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
       topbarProps={{
         eyebrow: "AAS Companion",
         projectName: session.organization.organizationName,
-        sectionLabel: "Build Handoff",
+        sectionLabel: "Build Start",
         badge: storyResult.data.story.key
       }}
     >
@@ -59,12 +59,12 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
       <section className="space-y-6">
         {handoffState === "success" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Handoff recorded. This Story is now marked as in delivery.
+            Build start recorded. This Delivery Story is now marked as in progress.
           </div>
         ) : null}
         {handoffState === "already" ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-            Handoff was already recorded for this Story. Delivery can continue.
+            Build was already started for this Delivery Story. Work can continue.
           </div>
         ) : null}
         {handoffState === "error" && message ? (
@@ -74,11 +74,11 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <FileJson2 className="h-3.5 w-3.5 text-primary" />
-            Execution Contract preview
+            Build package preview
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">{storyResult.data.story.key}</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-            Governed handoff preview built from the persisted Story, Outcome, and Epic records.
+            Governed build package preview built from the persisted Story, Outcome, and Epic records.
           </p>
           {storyResult.data.story.originType === "imported" ? (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -107,7 +107,7 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
             </CardHeader>
             <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-sky-950">
-                If you want explicit human approval before delivery starts, open the Story page and use the approval section there.
+                If you want explicit human approval before build starts, open the Story page and use the approval section there.
               </p>
               <Button asChild className="gap-2" variant="secondary">
                 <Link href={`/stories/${storyId}#story-signoff`}>
@@ -146,19 +146,19 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Rocket className="h-5 w-5 text-primary" />
-                  Next step
+                  Start build
                 </CardTitle>
-                <CardDescription>Export the handoff package below, then explicitly record that delivery has started.</CardDescription>
+                <CardDescription>Export the build package below, then explicitly record that build has started.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
                 <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
                   <p className="font-medium text-foreground">
-                    {storyResult.data.story.status === "in_progress" ? "Delivery is active" : "Delivery can start now"}
+                    {storyResult.data.story.status === "in_progress" ? "Build is active" : "Build can start now"}
                   </p>
                   <p className="mt-2 leading-6 text-muted-foreground">
                     {storyResult.data.story.status === "in_progress"
-                      ? "This Story has already been handed off. Reuse the contract whenever the delivery team needs the package again."
-                      : "The contract below is ready. Export it, then record the handoff so the Story moves from planning into active delivery."}
+                      ? "This Delivery Story has already moved into build. Reuse the package whenever the delivery team needs it again."
+                      : "The package below is ready. Export it, then record build start so the Story moves from planning into active implementation."}
                   </p>
                 </div>
                 {storyResult.data.story.status === "in_progress" ? (
@@ -176,8 +176,8 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
                     <PendingFormButton
                       className="gap-2"
                       icon={<ArrowRight className="h-4 w-4" />}
-                      label="Mark handoff complete"
-                      pendingLabel="Recording handoff..."
+                      label="Mark build started"
+                      pendingLabel="Starting build..."
                     />
                   </form>
                 )}

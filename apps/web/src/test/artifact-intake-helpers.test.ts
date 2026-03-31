@@ -575,6 +575,7 @@ describe("artifact intake helpers", () => {
         title: "Imported Story",
         storyType: "outcome_delivery",
         valueIntent: "Keep imported work reviewable",
+        expectedBehavior: null,
         acceptanceCriteria: ["Candidate is traceable"],
         aiUsageScope: ["Summarization only"],
         testDefinition: "Regression covers promotion gating",
@@ -588,12 +589,13 @@ describe("artifact intake helpers", () => {
       }
     });
 
-    expect(compliance.summary.humanOnly).toBe(2);
-    expect(compliance.humanReviewRequired).toBe(true);
-    expect(inferImportedReadinessState({ type: "story", complianceResult: compliance })).toBe("imported_human_review_needed");
+    expect(compliance.summary.humanOnly).toBe(0);
+    expect(compliance.summary.missing).toBe(1);
+    expect(compliance.findings.some((finding) => finding.code === "story_expected_behavior_missing")).toBe(true);
+    expect(inferImportedReadinessState({ type: "story", complianceResult: compliance })).toBe("imported_incomplete");
   });
 
-  it("marks imported stories as design-ready once required fields and decisions are confirmed", () => {
+  it("marks imported stories as framing-ready once required framing fields are confirmed", () => {
     const compliance = analyzeArtifactCandidateCompliance({
       candidate: {
         id: "candidate-story-2",
@@ -623,6 +625,7 @@ describe("artifact intake helpers", () => {
         title: "Ready Imported Story",
         storyType: "outcome_delivery",
         valueIntent: "Progress into build handoff safely",
+        expectedBehavior: "Capture the imported story idea clearly enough that it can guide later delivery design.",
         acceptanceCriteria: ["Story stays linked to lineage"],
         aiUsageScope: ["Drafting"],
         testDefinition: "Contract preview remains gated",
@@ -645,7 +648,7 @@ describe("artifact intake helpers", () => {
         complianceResult: compliance,
         reviewStatus: "confirmed"
       })
-    ).toBe("imported_design_ready");
+    ).toBe("imported_framing_ready");
   });
 
   it("tracks explicit issue dispositions and progress for import readiness", () => {
@@ -678,6 +681,7 @@ describe("artifact intake helpers", () => {
         title: "Disposition Story",
         storyType: "outcome_delivery",
         valueIntent: "Work issues off explicitly",
+        expectedBehavior: "Keep the imported story idea clear while issue dispositions are worked off.",
         acceptanceCriteria: ["Candidate keeps lineage"],
         aiUsageScope: ["Drafting"],
         testDefinition: "Review captures issue state",
@@ -759,6 +763,7 @@ describe("artifact intake helpers", () => {
         title: "Imported Story",
         storyType: "outcome_delivery",
         valueIntent: "Keep linkage explicit",
+        expectedBehavior: "Keep the story idea aligned to one epic and one outcome before design starts.",
         acceptanceCriteria: ["Candidate is traceable"],
         aiUsageScope: ["Drafting"],
         testDefinition: null,

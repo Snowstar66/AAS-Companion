@@ -40,6 +40,14 @@ function readCsv(formData: FormData, name: string) {
     .filter(Boolean);
 }
 
+function getPromotionLabel(candidateType: string, promotedEntityType: string) {
+  if (candidateType === "story" || promotedEntityType === "story") {
+    return "Story Idea";
+  }
+
+  return promotedEntityType.replaceAll("_", " ");
+}
+
 function redirectDemoIntakeBlocked() {
   redirect(
     buildRedirect("/intake", {
@@ -171,6 +179,7 @@ export async function submitArtifactCandidateFromIntakeAction(formData: FormData
           ? ((String(formData.get("storyType") ?? "") || null) as "outcome_delivery" | "governance" | "enablement" | null)
           : null,
       valueIntent: String(formData.get("valueIntent") ?? "") || null,
+      expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
       acceptanceCriteria: readLines(formData, "acceptanceCriteria"),
       aiUsageScope: readCsv(formData, "aiUsageScope"),
       testDefinition: String(formData.get("testDefinition") ?? "") || null,
@@ -242,7 +251,7 @@ export async function submitArtifactCandidateFromIntakeAction(formData: FormData
         sessionId,
         fileId,
         candidateId,
-        message: `${reviewResult.data.title ?? "Candidate"} was promoted into governed ${promoteResult.data.promotedEntityType} work.`
+        message: `${reviewResult.data.title ?? "Candidate"} was promoted into governed ${getPromotionLabel(candidateType, promoteResult.data.promotedEntityType)} work.`
       })
     );
   }

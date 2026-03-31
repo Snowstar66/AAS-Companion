@@ -5,6 +5,7 @@ import {
   LOCAL_SESSION_COOKIE_NAME,
   ORG_CONTEXT_COOKIE_NAME
 } from "@aas-companion/domain/session-constants";
+import { ensureAppUser } from "@aas-companion/db";
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase/server";
 import { normalizeRedirectPath, redirectWithSearch } from "@/lib/auth/route-helpers";
 
@@ -35,8 +36,27 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await ensureAppUser({
+      userId: user.id,
+      email: user.email ?? "unknown@supabase.local",
+      fullName: user.user_metadata.full_name ?? null
+    });
+
+    response.cookies.set(LOCAL_SESSION_COOKIE_NAME, user.id, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7
+    });
+  }
+
   response.cookies.delete(DEMO_SESSION_COOKIE_NAME);
-  response.cookies.delete(LOCAL_SESSION_COOKIE_NAME);
   response.cookies.delete(ORG_CONTEXT_COOKIE_NAME);
   response.cookies.delete("aas-post-auth-redirect");
 

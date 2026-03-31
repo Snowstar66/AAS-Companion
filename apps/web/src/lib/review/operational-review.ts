@@ -16,7 +16,7 @@ export async function loadOperationalReviewDashboard() {
           total: 0,
           blocked: 0,
           inProgress: 0,
-          handoffReady: 0,
+          deliveryStartReady: 0,
           outcomeTollgates: 0,
           storyReviews: 0
         },
@@ -31,8 +31,8 @@ export async function loadOperationalReviewDashboard() {
       summary: result.data.summary,
       message:
         result.data.items.length > 0
-          ? "Stories, handoffs and tollgates with human work are collected here."
-          : "No story approvals, handoffs or tollgates are currently waiting for human action."
+          ? "Framing reviews and Delivery Story reviews with human work are collected here."
+          : "No framing reviews or Delivery Story reviews are currently waiting for human action."
     };
   } catch (error) {
     unstable_rethrow(error);
@@ -45,7 +45,7 @@ export async function loadOperationalReviewDashboard() {
         total: 0,
         blocked: 0,
         inProgress: 0,
-        handoffReady: 0,
+        deliveryStartReady: 0,
         outcomeTollgates: 0,
         storyReviews: 0
       },

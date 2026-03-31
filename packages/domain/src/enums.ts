@@ -38,7 +38,7 @@ export const tollgateStatuses = ["blocked", "ready", "approved"] as const;
 export const governedObjectOriginTypes = ["seeded", "native", "imported"] as const;
 export const governedObjectCreatedModes = ["demo", "clean", "promotion"] as const;
 export const governedLifecycleStates = ["active", "archived"] as const;
-export const governedValueSpineObjectTypes = ["outcome", "epic", "story", "test"] as const;
+export const governedValueSpineObjectTypes = ["outcome", "epic", "story", "direction_seed", "test"] as const;
 export const governedRemovalActionKinds = ["hard_delete", "archive", "restore", "blocked"] as const;
 export const lineageSourceTypes = ["artifact_intake_session", "artifact_intake_file", "artifact_aas_candidate"] as const;
 export const readinessStates = ["blocked", "in_progress", "ready"] as const;
@@ -98,6 +98,7 @@ export const activityEntityTypes = [
   "organization",
   "outcome",
   "epic",
+  "direction_seed",
   "story",
   "tollgate",
   "signoff_record",
@@ -113,6 +114,8 @@ export const activityEventTypes = [
   "outcome_updated",
   "epic_created",
   "epic_updated",
+  "direction_seed_created",
+  "direction_seed_updated",
   "story_created",
   "story_updated",
   "tollgate_recorded",

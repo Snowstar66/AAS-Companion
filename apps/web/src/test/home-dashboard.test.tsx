@@ -28,21 +28,11 @@ vi.mock("@/lib/home/dashboard", () => ({
     dashboard: {
       state: "live",
       organizationName: "AAS Demo Organization",
-      summary: [
-        {
-          label: "Outcomes",
-          value: "2",
-          tone: "default",
-          description: "Tracked outcomes."
-        }
-      ],
-      outcomesByStatus: [
-        {
-          status: "draft",
-          count: 1,
-          label: "Draft"
-        }
-      ],
+      projectPhase: {
+        key: "framing",
+        label: "Framing phase",
+        detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+      },
       topBlockers: [
         {
           id: "blocker-1",
@@ -59,19 +49,7 @@ vi.mock("@/lib/home/dashboard", () => ({
           detail: "Add a test definition before handoff.",
           href: "/stories"
         }
-      ],
-      recentActivity: [
-        {
-          id: "activity-1",
-          title: "Demo project prepared",
-          detail: "organization org_demo_control_plane",
-          timestamp: "Mar 23, 10:00"
-        }
-      ],
-      rightRail: {
-        blockers: [],
-        nextActions: []
-      }
+      ]
     }
   }))
 }));
@@ -82,10 +60,12 @@ describe("Home dashboard", () => {
 
     expect(screen.getByRole("heading", { name: "Project dashboard", level: 1 })).toBeDefined();
     expect(screen.getAllByText("Needs attention").length).toBeGreaterThan(0);
+    expect(screen.getByText("Framing phase")).toBeDefined();
     expect(screen.getAllByRole("link", { name: "Open Framing" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Project access" })).toBeDefined();
     expect(screen.getByText("Create project")).toBeDefined();
     expect(screen.getAllByText("Demo access").length).toBeGreaterThan(0);
+    expect(screen.getByText("Current project")).toBeDefined();
     expect(screen.queryByText("Outcome spread")).toBeNull();
   });
 });

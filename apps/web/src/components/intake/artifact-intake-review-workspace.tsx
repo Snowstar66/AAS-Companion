@@ -158,6 +158,14 @@ function label(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function promotedEntityLabel(candidateType: string, promotedEntityType: string | null | undefined) {
+  if (candidateType === "story" || promotedEntityType === "story") {
+    return "Story Idea";
+  }
+
+  return promotedEntityType ? label(promotedEntityType) : "record";
+}
+
 function confidenceTone(confidence: "high" | "medium" | "low") {
   if (confidence === "high") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -299,43 +307,39 @@ function resolveFieldValidationNotes(candidate: IntakeArtifactCandidate | null):
           ? [{ fieldName: "epicCandidateId", label: "Epic destination" }]
           : finding.code === "epic_outcome_link_missing"
             ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
-            : finding.code === "candidate_relationship_uncertain"
-              ? candidate.type === "story"
-                ? [{ fieldName: "epicCandidateId", label: "Epic destination" }]
-                : candidate.type === "epic"
-                  ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
-                  : []
-              : finding.code === "story_test_definition_missing"
-                ? [{ fieldName: "testDefinition", label: "Test Definition" }]
-                : finding.code === "story_definition_of_done_missing"
-                  ? [{ fieldName: "definitionOfDone", label: "Definition of Done" }]
-                  : finding.code === "story_acceptance_criteria_missing"
-                    ? [{ fieldName: "acceptanceCriteria", label: "Acceptance criteria" }]
-                    : finding.code === "story_value_intent_missing"
-                      ? [{ fieldName: "valueIntent", label: "Value intent" }]
-                      : finding.code === "story_key_missing"
-                        ? [{ fieldName: "key", label: "Key" }]
-                        : finding.code === "outcome_statement_missing"
-                          ? [{ fieldName: "outcomeStatement", label: "Outcome statement" }]
-                          : finding.code === "baseline_definition_missing"
-                            ? [{ fieldName: "baselineDefinition", label: "Baseline definition" }]
-                            : finding.code === "baseline_source_missing"
-                              ? [{ fieldName: "baselineSource", label: "Baseline source" }]
-                              : finding.code === "epic_purpose_missing"
-                                ? [{ fieldName: "purpose", label: "Purpose" }]
-                                : finding.code === "epic_scope_boundary_missing"
-                                  ? [{ fieldName: "scopeBoundary", label: "Scope boundary" }]
-                                  : finding.code === "ai_acceleration_human_only"
-                                    ? [{ fieldName: "aiAccelerationLevel", label: "AI level" }]
-                                    : finding.code === "risk_acceptance_human_only"
-                                      ? [{ fieldName: "riskAcceptanceStatus", label: "Risk acceptance status" }]
-                                      : finding.code === "risk_profile_human_only"
-                                        ? [{ fieldName: "riskProfile", label: "Risk profile" }]
-                                        : finding.code === "baseline_validity_human_only"
-                                          ? [{ fieldName: "baselineValidity", label: "Baseline validity" }]
-                                          : finding.code === "value_owner_human_only"
-                                            ? [{ fieldName: "valueOwnerId", label: "Value owner" }]
-                                            : [];
+              : finding.code === "candidate_relationship_uncertain"
+                ? candidate.type === "story"
+                  ? [{ fieldName: "epicCandidateId", label: "Epic destination" }]
+                  : candidate.type === "epic"
+                    ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
+                    : []
+              : finding.code === "story_value_intent_missing" || finding.code === "story_value_intent_too_thin"
+                ? [{ fieldName: "valueIntent", label: "Value intent" }]
+                : finding.code === "story_expected_behavior_missing" || finding.code === "story_expected_behavior_too_thin"
+                  ? [{ fieldName: "expectedBehavior", label: "Expected behavior" }]
+                  : finding.code === "story_key_missing"
+                    ? [{ fieldName: "key", label: "Key" }]
+                    : finding.code === "outcome_statement_missing"
+                      ? [{ fieldName: "outcomeStatement", label: "Outcome statement" }]
+                      : finding.code === "baseline_definition_missing"
+                        ? [{ fieldName: "baselineDefinition", label: "Baseline definition" }]
+                        : finding.code === "baseline_source_missing"
+                          ? [{ fieldName: "baselineSource", label: "Baseline source" }]
+                          : finding.code === "epic_purpose_missing"
+                            ? [{ fieldName: "purpose", label: "Purpose" }]
+                            : finding.code === "epic_scope_boundary_missing"
+                              ? [{ fieldName: "scopeBoundary", label: "Scope boundary" }]
+                              : finding.code === "ai_acceleration_human_only"
+                                ? [{ fieldName: "aiAccelerationLevel", label: "AI level" }]
+                                : finding.code === "risk_acceptance_human_only"
+                                  ? [{ fieldName: "riskAcceptanceStatus", label: "Risk acceptance status" }]
+                                  : finding.code === "risk_profile_human_only"
+                                    ? [{ fieldName: "riskProfile", label: "Risk profile" }]
+                                    : finding.code === "baseline_validity_human_only"
+                                      ? [{ fieldName: "baselineValidity", label: "Baseline validity" }]
+                                      : finding.code === "value_owner_human_only"
+                                        ? [{ fieldName: "valueOwnerId", label: "Value owner" }]
+                                        : [];
 
     for (const mappedField of mappedFields) {
       notes.push({
@@ -894,6 +898,19 @@ export function ArtifactIntakeReviewWorkspace({
                           <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
                             {note.message}
                           </p>
+                          ))}
+                      </label>
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                        <textarea
+                          className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "expectedBehavior")}
+                          defaultValue={selectedCandidate.draftRecord?.expectedBehavior ?? ""}
+                          name="expectedBehavior"
+                        />
+                        {fieldNotes("expectedBehavior").map((note) => (
+                          <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
+                            {note.message}
+                          </p>
                         ))}
                       </label>
                       {!quickEditFieldNames.has("acceptanceCriteria") ? (
@@ -1134,7 +1151,8 @@ export function ArtifactIntakeReviewWorkspace({
 
                   {selectedCandidate.promotedEntityId ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                      Imported into the project as governed {selectedCandidate.promotedEntityType} with ID{" "}
+                      Imported into the project as governed{" "}
+                      {promotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType)} with ID{" "}
                       {selectedCandidate.promotedEntityId}. It now continues like native project work.
                     </div>
                   ) : null}

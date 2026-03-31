@@ -12,18 +12,26 @@ export type HomeDashboardSnapshot = {
     id: string;
     name: string;
   };
-  counts: {
-    outcomes: number;
-    stories: number;
-    tollgates: number;
-    activityEvents: number;
-  };
   outcomeStatuses: Array<{
     status: string;
+  }>;
+  directionSeeds: Array<{
+    id: string;
+    outcomeId: string;
+    epicId: string;
+    shortDescription: string;
+    expectedBehavior: string | null;
+    lifecycleState: string;
+    sourceStoryId: string | null;
   }>;
   stories: Array<{
     id: string;
     key: string;
+    outcomeId: string;
+    epicId: string;
+    valueIntent: string | null;
+    expectedBehavior: string | null;
+    sourceDirectionSeedId: string | null;
     status: StoryRecord["status"];
     lifecycleState: StoryRecord["lifecycleState"];
     testDefinition: string | null;
@@ -38,13 +46,6 @@ export type HomeDashboardSnapshot = {
     tollgateType: string;
     status: string;
     blockers: string[];
-  }>;
-  activityEvents: Array<{
-    id: string;
-    entityType: string;
-    entityId: string;
-    eventType: string;
-    createdAt: Date;
   }>;
 };
 
@@ -97,12 +98,36 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                   importedReadinessState: true,
                   lineageSourceType: true,
                   lineageSourceId: true,
+                  directionSeeds: {
+                    select: {
+                      id: true,
+                      epicId: true,
+                      key: true,
+                      title: true,
+                      shortDescription: true,
+                      expectedBehavior: true,
+                      uxSketchName: true,
+                      uxSketchContentType: true,
+                      uxSketchDataUrl: true,
+                      sourceStoryId: true,
+                      originType: true,
+                      lifecycleState: true,
+                      importedReadinessState: true,
+                      lineageSourceType: true,
+                      lineageSourceId: true
+                    },
+                    orderBy: {
+                      createdAt: "asc"
+                    }
+                  },
                   stories: {
                     select: {
                       id: true,
                       key: true,
                       title: true,
                       valueIntent: true,
+                      expectedBehavior: true,
+                      sourceDirectionSeedId: true,
                       status: true,
                       originType: true,
                       lifecycleState: true,
@@ -122,6 +147,28 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                   createdAt: "asc"
                 }
               },
+              directionSeeds: {
+                select: {
+                  id: true,
+                  key: true,
+                  title: true,
+                  epicId: true,
+                  shortDescription: true,
+                  expectedBehavior: true,
+                  uxSketchName: true,
+                  uxSketchContentType: true,
+                  uxSketchDataUrl: true,
+                  sourceStoryId: true,
+                  originType: true,
+                  lifecycleState: true,
+                  importedReadinessState: true,
+                  lineageSourceType: true,
+                  lineageSourceId: true
+                },
+                orderBy: {
+                  createdAt: "asc"
+                }
+              },
               stories: {
                 select: {
                   id: true,
@@ -129,6 +176,8 @@ export async function getProjectSpineSnapshot(organizationId: string) {
                   title: true,
                   epicId: true,
                   valueIntent: true,
+                  expectedBehavior: true,
+                  sourceDirectionSeedId: true,
                   status: true,
                   originType: true,
                   lifecycleState: true,
@@ -181,9 +230,11 @@ export async function getProjectSpineSnapshot(organizationId: string) {
           epics: outcome.epics.map((epic) =>
             withEpicShape({
               ...epic,
+              directionSeeds: epic.directionSeeds,
               stories: attachStoryReadinessTollgateStatus(epic.stories, storyTollgateStatuses)
             })
-          )
+          ),
+          directionSeeds: outcome.directionSeeds
         }))
       }
     };
@@ -237,12 +288,36 @@ export async function getWorkspaceSnapshot(organizationId: string) {
               importedReadinessState: true,
               lineageSourceType: true,
               lineageSourceId: true,
+              directionSeeds: {
+                select: {
+                  id: true,
+                  epicId: true,
+                  key: true,
+                  title: true,
+                  shortDescription: true,
+                  expectedBehavior: true,
+                  uxSketchName: true,
+                  uxSketchContentType: true,
+                  uxSketchDataUrl: true,
+                  sourceStoryId: true,
+                  originType: true,
+                  lifecycleState: true,
+                  importedReadinessState: true,
+                  lineageSourceType: true,
+                  lineageSourceId: true
+                },
+                orderBy: {
+                  createdAt: "asc"
+                }
+              },
               stories: {
                 select: {
                   id: true,
                   key: true,
                   title: true,
                   valueIntent: true,
+                  expectedBehavior: true,
+                  sourceDirectionSeedId: true,
                   status: true,
                   originType: true,
                   lifecycleState: true,
@@ -262,6 +337,28 @@ export async function getWorkspaceSnapshot(organizationId: string) {
               createdAt: "asc"
             }
           },
+          directionSeeds: {
+            select: {
+              id: true,
+              key: true,
+              title: true,
+              epicId: true,
+              shortDescription: true,
+              expectedBehavior: true,
+              uxSketchName: true,
+              uxSketchContentType: true,
+              uxSketchDataUrl: true,
+              sourceStoryId: true,
+              originType: true,
+              lifecycleState: true,
+              importedReadinessState: true,
+              lineageSourceType: true,
+              lineageSourceId: true
+            },
+            orderBy: {
+              createdAt: "asc"
+            }
+          },
           stories: {
             select: {
               id: true,
@@ -269,6 +366,8 @@ export async function getWorkspaceSnapshot(organizationId: string) {
               title: true,
               epicId: true,
               valueIntent: true,
+              expectedBehavior: true,
+              sourceDirectionSeedId: true,
               status: true,
               originType: true,
               lifecycleState: true,
@@ -292,6 +391,8 @@ export async function getWorkspaceSnapshot(organizationId: string) {
         select: {
           id: true,
           key: true,
+          outcomeId: true,
+          epicId: true,
           status: true,
           lifecycleState: true,
           testDefinition: true,
@@ -351,9 +452,11 @@ export async function getWorkspaceSnapshot(organizationId: string) {
       ...organization,
       outcomes: organization.outcomes.map((outcome) => ({
         ...outcome,
+        directionSeeds: outcome.directionSeeds,
         epics: outcome.epics.map((epic) =>
           withEpicShape({
             ...epic,
+            directionSeeds: epic.directionSeeds,
             stories: epic.stories
           })
         )
@@ -370,7 +473,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
 }
 
 export async function getHomeDashboardSnapshot(organizationId: string): Promise<HomeDashboardSnapshot | null> {
-  const [organization, outcomeStatuses, stories, storyTollgates] = await prisma.$transaction([
+  const [organization, outcomeStatuses, directionSeeds, stories, storyTollgates] = await prisma.$transaction([
     prisma.organization.findUnique({
       where: {
         id: organizationId
@@ -390,27 +493,6 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
             status: true,
             blockers: true
           }
-        },
-        activityEvents: {
-          orderBy: {
-            createdAt: "desc"
-          },
-          take: 10,
-          select: {
-            id: true,
-            entityType: true,
-            entityId: true,
-            eventType: true,
-            createdAt: true
-          }
-        },
-        _count: {
-          select: {
-            outcomes: true,
-            stories: true,
-            tollgates: true,
-            activityEvents: true
-          }
         }
       }
     }),
@@ -421,6 +503,21 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
       },
       select: {
         status: true
+      }
+    }),
+    prisma.directionSeed.findMany({
+      where: {
+        organizationId,
+        lifecycleState: "active"
+      },
+      select: {
+        id: true,
+        outcomeId: true,
+        epicId: true,
+        shortDescription: true,
+        expectedBehavior: true,
+        lifecycleState: true,
+        sourceStoryId: true
       }
     }),
     prisma.story.findMany({
@@ -434,6 +531,11 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
       select: {
         id: true,
         key: true,
+        outcomeId: true,
+        epicId: true,
+        valueIntent: true,
+        expectedBehavior: true,
+        sourceDirectionSeedId: true,
         status: true,
         lifecycleState: true,
         testDefinition: true,
@@ -465,17 +567,11 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
       id: organization.id,
       name: organization.name
     },
-    counts: {
-      outcomes: organization._count.outcomes,
-      stories: organization._count.stories,
-      tollgates: organization._count.tollgates,
-      activityEvents: organization._count.activityEvents
-    },
     outcomeStatuses: outcomeStatuses.map((item) => ({
       status: item.status
     })),
+    directionSeeds,
     stories: attachStoryReadinessTollgateStatus(stories, storyTollgateStatuses),
-    tollgates: organization.tollgates,
-    activityEvents: organization.activityEvents
+    tollgates: organization.tollgates
   };
 }

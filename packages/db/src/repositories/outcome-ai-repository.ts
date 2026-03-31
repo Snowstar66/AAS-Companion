@@ -6,17 +6,76 @@ export type OutcomeFieldAiValidation = {
   suggestedRewrite: string | null;
 };
 
+export type StoryExpectedBehaviorAiValidation = {
+  field: "story_expected_behavior";
+  verdict: "good" | "needs_revision" | "unclear";
+  confidence: "high" | "medium" | "low";
+  rationale: string;
+  suggestedRewrite: string | null;
+};
+
 export type OutcomeFramingAiReview = {
-  overallVerdict: "good" | "needs_attention" | "blocked";
-  executiveSummary: string;
-  missingItems: string[];
-  suggestedChanges: string[];
-  nextAiLevel: {
-    canAdvance: boolean;
-    targetLevel: "level_2" | "level_3" | null;
-    rationale: string;
-    requirements: string[];
+  outcomeQuality: {
+    status: "ok" | "needs_improvement";
+    comment: string;
+    suggestedImprovement: string;
   };
+  problemAlignment: {
+    status: "strong" | "weak";
+    comment: string;
+  };
+  epicCoverage: {
+    status: "complete" | "partial";
+    comment: string;
+    missingAreas: string[];
+  };
+  storyCoverage: {
+    status: "good" | "partial";
+    comment: string;
+    gapsOrOverlaps: string[];
+  };
+  riskOverview: {
+    topRisks: string[];
+    expansionRisk: "low" | "medium" | "high";
+    misalignmentRisk: "low" | "medium" | "high";
+  };
+  aiLevel: {
+    assessment: "appropriate" | "too_high" | "too_low";
+    suggestedLevel: "level_1" | "level_2" | "level_3" | null;
+    comment: string;
+  };
+  framingReadiness: {
+    score: number;
+    interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
+  };
+};
+
+type OutcomeFramingAiReviewInput = {
+  outcome: {
+    key: string;
+    title: string;
+    problemStatement?: string | null;
+    outcomeStatement?: string | null;
+    baselineDefinition?: string | null;
+    baselineSource?: string | null;
+    timeframe?: string | null;
+    aiAccelerationLevel: "level_1" | "level_2" | "level_3";
+    riskProfile: "low" | "medium" | "high";
+  };
+  epics: Array<{
+    key: string;
+    title: string;
+    purpose?: string | null;
+    scopeBoundary?: string | null;
+    seedCount: number;
+  }>;
+  directionSeeds: Array<{
+    seedId: string;
+    title: string;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
+  }>;
 };
 
 function parseOutcomeFieldAiValidation(input: unknown): OutcomeFieldAiValidation {
@@ -66,65 +125,351 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
   }
 
   const candidate = input as Record<string, unknown>;
-  const overallVerdict = candidate.overallVerdict;
-  const executiveSummary = candidate.executiveSummary;
-  const missingItems = candidate.missingItems;
-  const suggestedChanges = candidate.suggestedChanges;
-  const nextAiLevel = candidate.nextAiLevel;
+  const outcomeQuality = candidate.outcomeQuality;
+  const problemAlignment = candidate.problemAlignment;
+  const epicCoverage = candidate.epicCoverage;
+  const storyCoverage = candidate.storyCoverage;
+  const riskOverview = candidate.riskOverview;
+  const aiLevel = candidate.aiLevel;
+  const framingReadiness = candidate.framingReadiness;
 
-  if (overallVerdict !== "good" && overallVerdict !== "needs_attention" && overallVerdict !== "blocked") {
-    throw new Error("AI framing review returned an invalid verdict.");
+  if (!outcomeQuality || typeof outcomeQuality !== "object") {
+    throw new Error("AI framing review returned invalid outcome quality.");
   }
 
-  if (typeof executiveSummary !== "string" || !executiveSummary.trim()) {
-    throw new Error("AI framing review returned an invalid summary.");
+  if (!problemAlignment || typeof problemAlignment !== "object") {
+    throw new Error("AI framing review returned invalid problem alignment.");
   }
 
-  if (!Array.isArray(missingItems) || !missingItems.every((item) => typeof item === "string")) {
-    throw new Error("AI framing review returned invalid missing items.");
+  if (!epicCoverage || typeof epicCoverage !== "object") {
+    throw new Error("AI framing review returned invalid epic coverage.");
   }
 
-  if (!Array.isArray(suggestedChanges) || !suggestedChanges.every((item) => typeof item === "string")) {
-    throw new Error("AI framing review returned invalid suggested changes.");
+  if (!storyCoverage || typeof storyCoverage !== "object") {
+    throw new Error("AI framing review returned invalid story coverage.");
   }
 
-  if (!nextAiLevel || typeof nextAiLevel !== "object") {
-    throw new Error("AI framing review returned an invalid next AI level section.");
+  if (!riskOverview || typeof riskOverview !== "object") {
+    throw new Error("AI framing review returned invalid risk overview.");
   }
 
-  const next = nextAiLevel as Record<string, unknown>;
-  const targetLevel = next.targetLevel;
-  const canAdvance = next.canAdvance;
-  const rationale = next.rationale;
-  const requirements = next.requirements;
-
-  if (targetLevel !== null && targetLevel !== "level_2" && targetLevel !== "level_3") {
-    throw new Error("AI framing review returned an invalid target AI level.");
+  if (!aiLevel || typeof aiLevel !== "object") {
+    throw new Error("AI framing review returned invalid AI level section.");
   }
 
-  if (typeof canAdvance !== "boolean") {
-    throw new Error("AI framing review returned an invalid canAdvance flag.");
+  if (!framingReadiness || typeof framingReadiness !== "object") {
+    throw new Error("AI framing review returned invalid framing readiness.");
   }
 
-  if (typeof rationale !== "string" || !rationale.trim()) {
-    throw new Error("AI framing review returned an invalid next-level rationale.");
+  const parsedOutcomeQuality = outcomeQuality as Record<string, unknown>;
+  const parsedProblemAlignment = problemAlignment as Record<string, unknown>;
+  const parsedEpicCoverage = epicCoverage as Record<string, unknown>;
+  const parsedStoryCoverage = storyCoverage as Record<string, unknown>;
+  const parsedRiskOverview = riskOverview as Record<string, unknown>;
+  const parsedAiLevel = aiLevel as Record<string, unknown>;
+  const parsedFramingReadiness = framingReadiness as Record<string, unknown>;
+
+  if (parsedOutcomeQuality.status !== "ok" && parsedOutcomeQuality.status !== "needs_improvement") {
+    throw new Error("AI framing review returned an invalid outcome quality status.");
   }
 
-  if (!Array.isArray(requirements) || !requirements.every((item) => typeof item === "string")) {
-    throw new Error("AI framing review returned invalid next-level requirements.");
+  if (parsedProblemAlignment.status !== "strong" && parsedProblemAlignment.status !== "weak") {
+    throw new Error("AI framing review returned an invalid problem alignment status.");
+  }
+
+  if (parsedEpicCoverage.status !== "complete" && parsedEpicCoverage.status !== "partial") {
+    throw new Error("AI framing review returned an invalid epic coverage status.");
+  }
+
+  if (parsedStoryCoverage.status !== "good" && parsedStoryCoverage.status !== "partial") {
+    throw new Error("AI framing review returned an invalid story coverage status.");
+  }
+
+  if (
+    parsedRiskOverview.expansionRisk !== "low" &&
+    parsedRiskOverview.expansionRisk !== "medium" &&
+    parsedRiskOverview.expansionRisk !== "high"
+  ) {
+    throw new Error("AI framing review returned an invalid expansion risk.");
+  }
+
+  if (
+    parsedRiskOverview.misalignmentRisk !== "low" &&
+    parsedRiskOverview.misalignmentRisk !== "medium" &&
+    parsedRiskOverview.misalignmentRisk !== "high"
+  ) {
+    throw new Error("AI framing review returned an invalid misalignment risk.");
+  }
+
+  if (
+    parsedAiLevel.assessment !== "appropriate" &&
+    parsedAiLevel.assessment !== "too_high" &&
+    parsedAiLevel.assessment !== "too_low"
+  ) {
+    throw new Error("AI framing review returned an invalid AI level assessment.");
+  }
+
+  if (
+    parsedAiLevel.suggestedLevel !== null &&
+    parsedAiLevel.suggestedLevel !== "level_1" &&
+    parsedAiLevel.suggestedLevel !== "level_2" &&
+    parsedAiLevel.suggestedLevel !== "level_3"
+  ) {
+    throw new Error("AI framing review returned an invalid suggested AI level.");
+  }
+
+  if (
+    parsedFramingReadiness.interpretation !== "ready_for_tollgate" &&
+    parsedFramingReadiness.interpretation !== "needs_refinement" &&
+    parsedFramingReadiness.interpretation !== "not_ready"
+  ) {
+    throw new Error("AI framing review returned an invalid readiness interpretation.");
+  }
+
+  if (
+    typeof parsedOutcomeQuality.comment !== "string" ||
+    typeof parsedOutcomeQuality.suggestedImprovement !== "string" ||
+    typeof parsedProblemAlignment.comment !== "string" ||
+    typeof parsedEpicCoverage.comment !== "string" ||
+    typeof parsedStoryCoverage.comment !== "string" ||
+    typeof parsedAiLevel.comment !== "string"
+  ) {
+    throw new Error("AI framing review returned invalid comments.");
+  }
+
+  if (
+    !Array.isArray(parsedEpicCoverage.missingAreas) ||
+    !parsedEpicCoverage.missingAreas.every((item) => typeof item === "string") ||
+    !Array.isArray(parsedStoryCoverage.gapsOrOverlaps) ||
+    !parsedStoryCoverage.gapsOrOverlaps.every((item) => typeof item === "string") ||
+    !Array.isArray(parsedRiskOverview.topRisks) ||
+    !parsedRiskOverview.topRisks.every((item) => typeof item === "string")
+  ) {
+    throw new Error("AI framing review returned invalid lists.");
+  }
+
+  if (
+    typeof parsedFramingReadiness.score !== "number" ||
+    Number.isNaN(parsedFramingReadiness.score) ||
+    parsedFramingReadiness.score < 0 ||
+    parsedFramingReadiness.score > 100
+  ) {
+    throw new Error("AI framing review returned an invalid readiness score.");
   }
 
   return {
-    overallVerdict,
-    executiveSummary: executiveSummary.trim(),
-    missingItems: missingItems.map((item) => item.trim()).filter(Boolean),
-    suggestedChanges: suggestedChanges.map((item) => item.trim()).filter(Boolean),
-    nextAiLevel: {
-      canAdvance,
-      targetLevel,
-      rationale: rationale.trim(),
-      requirements: requirements.map((item) => item.trim()).filter(Boolean)
+    outcomeQuality: {
+      status: parsedOutcomeQuality.status,
+      comment: parsedOutcomeQuality.comment.trim(),
+      suggestedImprovement: parsedOutcomeQuality.suggestedImprovement.trim()
+    },
+    problemAlignment: {
+      status: parsedProblemAlignment.status,
+      comment: String(parsedProblemAlignment.comment).trim()
+    },
+    epicCoverage: {
+      status: parsedEpicCoverage.status,
+      comment: parsedEpicCoverage.comment.trim(),
+      missingAreas: parsedEpicCoverage.missingAreas.map((item) => item.trim()).filter(Boolean)
+    },
+    storyCoverage: {
+      status: parsedStoryCoverage.status,
+      comment: parsedStoryCoverage.comment.trim(),
+      gapsOrOverlaps: parsedStoryCoverage.gapsOrOverlaps.map((item) => item.trim()).filter(Boolean)
+    },
+    riskOverview: {
+      topRisks: parsedRiskOverview.topRisks.map((item) => item.trim()).filter(Boolean),
+      expansionRisk: parsedRiskOverview.expansionRisk,
+      misalignmentRisk: parsedRiskOverview.misalignmentRisk
+    },
+    aiLevel: {
+      assessment: parsedAiLevel.assessment,
+      suggestedLevel: parsedAiLevel.suggestedLevel,
+      comment: parsedAiLevel.comment.trim()
+    },
+    framingReadiness: {
+      score: Math.round(parsedFramingReadiness.score),
+      interpretation: parsedFramingReadiness.interpretation
     }
+  };
+}
+
+function prependUnique(referenceFindings: string[], existing: string[]) {
+  const normalized = new Set(existing.map((item) => item.trim().toLowerCase()));
+  const additions = referenceFindings.filter((item) => {
+    const key = item.trim().toLowerCase();
+
+    if (!key || normalized.has(key)) {
+      return false;
+    }
+
+    normalized.add(key);
+    return true;
+  });
+
+  return [...additions, ...existing];
+}
+
+function deriveDeterministicFramingAdjustments(
+  input: OutcomeFramingAiReviewInput,
+  report: OutcomeFramingAiReview
+): OutcomeFramingAiReview {
+  const epicKeys = new Set(input.epics.map((epic) => epic.key));
+  const epicCoverageFindings: string[] = [];
+  const storyCoverageFindings: string[] = [];
+  const riskFindings: string[] = [];
+
+  if (!input.outcome.outcomeStatement?.trim()) {
+    report.outcomeQuality.status = "needs_improvement";
+    report.outcomeQuality.comment = "Outcome statement is missing, so the intended business effect is still unclear.";
+    report.outcomeQuality.suggestedImprovement = "Add one measurable outcome statement before Tollgate 1.";
+    riskFindings.push(`[${input.outcome.key}] Outcome statement is missing, which increases the risk of solving the wrong problem.`);
+  }
+
+  if (!input.outcome.baselineDefinition?.trim()) {
+    report.outcomeQuality.status = "needs_improvement";
+    report.outcomeQuality.comment = "Baseline is not defined clearly enough to judge progress from the current state.";
+    report.outcomeQuality.suggestedImprovement = "Add a concrete baseline definition that describes the current state.";
+    riskFindings.push(`[${input.outcome.key}] Baseline definition is missing, which weakens measurement and decision confidence.`);
+  }
+
+  if (input.epics.length === 0) {
+    report.epicCoverage.status = "partial";
+    epicCoverageFindings.push(`[${input.outcome.key}] No Epics are defined yet.`);
+  }
+
+  for (const epic of input.epics) {
+    if (!epic.purpose?.trim() && !epic.scopeBoundary?.trim()) {
+      report.epicCoverage.status = "partial";
+      epicCoverageFindings.push(`[${epic.key}] Epic direction is too thin to judge coverage cleanly.`);
+    }
+  }
+
+  if (input.directionSeeds.length === 0) {
+    report.storyCoverage.status = "partial";
+    storyCoverageFindings.push(`[${input.outcome.key}] No Story Ideas are defined yet.`);
+  }
+
+  for (const seed of input.directionSeeds) {
+    if (!seed.epicKey || !epicKeys.has(seed.epicKey)) {
+      report.storyCoverage.status = "partial";
+      storyCoverageFindings.push(`[${seed.seedId}] Story Idea is missing a valid Epic link.`);
+      riskFindings.push(`[${seed.seedId}] Story Idea lacks a reliable Epic link, which increases misalignment risk.`);
+    }
+
+    if (!seed.shortDescription?.trim()) {
+      report.storyCoverage.status = "partial";
+      storyCoverageFindings.push(`[${seed.seedId}] Value Intent is missing or too thin.`);
+    }
+
+    if (!seed.expectedBehavior?.trim()) {
+      report.storyCoverage.status = "partial";
+      storyCoverageFindings.push(`[${seed.seedId}] Expected Behavior is missing.`);
+      riskFindings.push(`[${seed.seedId}] Missing Expected Behavior increases the risk of scope expansion during design.`);
+    }
+  }
+
+  report.epicCoverage.missingAreas = prependUnique(epicCoverageFindings, report.epicCoverage.missingAreas);
+  report.storyCoverage.gapsOrOverlaps = prependUnique(storyCoverageFindings, report.storyCoverage.gapsOrOverlaps);
+  report.riskOverview.topRisks = prependUnique(riskFindings, report.riskOverview.topRisks).slice(0, 5);
+
+  if (storyCoverageFindings.length > 0 && report.storyCoverage.comment.length > 0) {
+    const referencedSeeds = storyCoverageFindings
+      .map((item) => item.match(/\[([^\]]+)\]/)?.[1] ?? null)
+      .filter(Boolean)
+      .join(", ");
+
+    if (referencedSeeds) {
+      report.storyCoverage.comment = `${report.storyCoverage.comment} Referenced Story Ideas: ${referencedSeeds}.`;
+    }
+  }
+
+  if (epicCoverageFindings.length > 0 && report.epicCoverage.comment.length > 0) {
+    const referencedEpics = epicCoverageFindings
+      .map((item) => item.match(/\[([^\]]+)\]/)?.[1] ?? null)
+      .filter(Boolean)
+      .join(", ");
+
+    if (referencedEpics) {
+      report.epicCoverage.comment = `${report.epicCoverage.comment} Referenced Epics: ${referencedEpics}.`;
+    }
+  }
+
+  let readinessScore = 100;
+
+  if (report.outcomeQuality.status === "needs_improvement") {
+    readinessScore -= 15;
+  }
+
+  if (report.problemAlignment.status === "weak") {
+    readinessScore -= 15;
+  }
+
+  if (report.epicCoverage.status === "partial") {
+    readinessScore -= 10;
+  }
+
+  if (report.storyCoverage.status === "partial") {
+    readinessScore -= 10;
+  }
+
+  if (report.riskOverview.expansionRisk === "high" || report.riskOverview.misalignmentRisk === "high") {
+    readinessScore -= 20;
+  }
+
+  if (report.aiLevel.assessment !== "appropriate") {
+    readinessScore -= 10;
+  }
+
+  readinessScore = Math.max(0, Math.min(100, readinessScore));
+
+  report.framingReadiness = {
+    score: readinessScore,
+    interpretation:
+      readinessScore >= 80 ? "ready_for_tollgate" : readinessScore >= 60 ? "needs_refinement" : "not_ready"
+  };
+
+  return report;
+}
+
+function parseStoryExpectedBehaviorAiValidation(input: unknown): StoryExpectedBehaviorAiValidation {
+  if (!input || typeof input !== "object") {
+    throw new Error("AI validation response was not an object.");
+  }
+
+  const candidate = input as Record<string, unknown>;
+  const field = candidate.field;
+  const verdict = candidate.verdict;
+  const confidence = candidate.confidence;
+  const rationale = candidate.rationale;
+  const suggestedRewrite = candidate.suggestedRewrite;
+
+  if (field !== "story_expected_behavior") {
+    throw new Error("AI validation returned an invalid field.");
+  }
+
+  if (verdict !== "good" && verdict !== "needs_revision" && verdict !== "unclear") {
+    throw new Error("AI validation returned an invalid verdict.");
+  }
+
+  if (confidence !== "high" && confidence !== "medium" && confidence !== "low") {
+    throw new Error("AI validation returned an invalid confidence.");
+  }
+
+  if (typeof rationale !== "string" || !rationale.trim()) {
+    throw new Error("AI validation returned an invalid rationale.");
+  }
+
+  if (suggestedRewrite !== null && suggestedRewrite !== undefined && typeof suggestedRewrite !== "string") {
+    throw new Error("AI validation returned an invalid suggested rewrite.");
+  }
+
+  return {
+    field,
+    verdict,
+    confidence,
+    rationale: rationale.trim(),
+    suggestedRewrite: typeof suggestedRewrite === "string" && suggestedRewrite.trim() ? suggestedRewrite.trim() : null
   };
 }
 
@@ -213,6 +558,7 @@ General rules:
 - Do not nitpick or optimize text that is already good enough.
 - Suggest a rewrite only when the text is clearly wrong, too vague to trust, or missing the essential idea.
 - If the text is acceptable, return verdict "good" and leave suggestedRewrite null.
+- If the field text is empty but the surrounding context is sufficient, propose a conservative starting draft in suggestedRewrite.
 - Keep rationale short and concrete.
 
 Field guidance:
@@ -241,75 +587,183 @@ ${JSON.stringify(payload, null, 2)}
 }
 
 function buildFramingReviewPrompt(input: {
-  outcome: {
-    key: string;
-    title: string;
-    problemStatement?: string | null;
-    outcomeStatement?: string | null;
-    baselineDefinition?: string | null;
-    baselineSource?: string | null;
-    timeframe?: string | null;
-    aiAccelerationLevel: "level_1" | "level_2" | "level_3";
-    riskProfile: "low" | "medium" | "high";
-  };
-  epics: Array<{
-    key: string;
-    title: string;
-    purpose?: string | null;
-    scopeBoundary?: string | null;
-    storyCount: number;
-  }>;
-  stories: Array<{
-    key: string;
-    title: string;
-    status: string;
-    acceptanceCriteriaCount: number;
-    hasTestDefinition: boolean;
-    definitionOfDoneCount: number;
-  }>;
+  outcome: OutcomeFramingAiReviewInput["outcome"];
+  epics: OutcomeFramingAiReviewInput["epics"];
+  directionSeeds: OutcomeFramingAiReviewInput["directionSeeds"];
 }) {
-  const nextAiLevel =
-    input.outcome.aiAccelerationLevel === "level_1"
-      ? "level_2"
-      : input.outcome.aiAccelerationLevel === "level_2"
-        ? "level_3"
-        : null;
-
   return `
-You review a whole governed Framing conservatively.
+You are validating a full AAS Framing Brief.
+
+Your goal is NOT to rewrite the content, but to evaluate its quality and readiness for Tollgate 1.
+
+Use a critical but constructive approach.
+
+You will receive:
+- Problem Statement
+- Outcome (including baseline and owner context)
+- Epics
+- Story Ideas (with Value Intent and Expected Behavior)
+- Selected AI Acceleration Level
+
+Evaluate the framing across five dimensions:
+1. Outcome Quality
+2. Problem -> Outcome Alignment
+3. Epic Coverage
+4. Story Idea Coverage
+5. Risk & Complexity
+6. AI Level Appropriateness
 
 Rules:
-- Only report material gaps, not stylistic preferences.
-- If the framing is already good enough, say so plainly.
-- Suggested changes should be limited to the few changes that would most improve clarity or readiness.
-- "nextAiLevel" should explain what would be required to move one level higher than the current AI level.
+- Do NOT rewrite everything.
+- Do NOT generate new full content.
+- Do NOT overcomplicate.
+- Do identify gaps, risks, assumption problems and the smallest useful improvements.
+- Keep Story Ideas at framing level, not delivery level.
+- Be concise, critical and useful.
+- Be deterministic. The same input should lead to the same statuses and the same referenced items.
+- When a gap or risk refers to a specific Epic or Story Idea, include its key in square brackets, for example [EPC-001] or [SEED-002].
+- Do not mention an Epic or Story Idea without its reference key when one is available.
 
-What to evaluate:
-- whether the Outcome framing reads like a real framing, not just a delivery task
-- whether the baseline is sufficiently grounded
-- whether the current Epic and Story structure is defined enough to support the current AI level
-- what is still missing in general
-- what would be additionally required for the next AI level
+Evaluation details:
+1. Outcome Quality
+- Check if the outcome is measurable, baseline is defined and value is clear.
+- Return status OK or Needs improvement.
+- Include one short suggested improvement sentence.
 
-Current AI level: ${input.outcome.aiAccelerationLevel}
-Next higher level to consider: ${nextAiLevel ?? "none"}
+2. Problem -> Outcome Alignment
+- Check whether the outcome actually addresses the stated problem.
+- Return status Strong or Weak with a short explanation.
 
-Required output JSON:
+3. Epic Coverage
+- Check whether the epics cover the outcome, whether areas are missing, and whether epics overlap.
+- Return status Complete or Partial.
+
+4. Story Idea Coverage
+- Check whether the story ideas support the epics, whether ideas are redundant, and whether important ideas are missing.
+- Return status Good or Partial.
+
+5. Risk & Complexity
+- Identify product, technical, data/privacy and AI-related risks.
+- Also identify likely expansion and misalignment risk.
+- Return top 3-5 risks, plus Expansion Risk and Misalignment Risk as Low/Medium/High.
+
+6. AI Level Validation
+- Check whether the selected AI level is appropriate for risk, clarity and structure.
+- Return Appropriate, Too high or Too low.
+- If not appropriate, suggest a better level.
+
+Readiness score:
+- Start at 100
+- Deduct:
+  -15 if outcome unclear
+  -15 if alignment weak
+  -10 if epic gaps
+  -10 if story gaps
+  -20 if high risk
+  -10 if AI level mismatch
+
+Interpretation:
+- 80-100 -> Ready for Tollgate
+- 60-79 -> Needs refinement
+- below 60 -> Not ready
+
+Required output:
+- Return JSON only.
+- Use exactly this shape:
 {
-  "overallVerdict": "good" | "needs_attention" | "blocked",
-  "executiveSummary": "short report summary",
-  "missingItems": ["..."],
-  "suggestedChanges": ["..."],
-  "nextAiLevel": {
-    "canAdvance": true | false,
-    "targetLevel": "level_2" | "level_3" | null,
-    "rationale": "short explanation",
-    "requirements": ["..."]
+  "outcomeQuality": {
+    "status": "ok" | "needs_improvement",
+    "comment": "short explanation",
+    "suggestedImprovement": "one sentence"
+  },
+  "problemAlignment": {
+    "status": "strong" | "weak",
+    "comment": "short explanation"
+  },
+  "epicCoverage": {
+    "status": "complete" | "partial",
+    "comment": "short explanation",
+    "missingAreas": ["..."]
+  },
+  "storyCoverage": {
+    "status": "good" | "partial",
+    "comment": "short explanation",
+    "gapsOrOverlaps": ["..."]
+  },
+  "riskOverview": {
+    "topRisks": ["risk 1", "risk 2", "risk 3"],
+    "expansionRisk": "low" | "medium" | "high",
+    "misalignmentRisk": "low" | "medium" | "high"
+  },
+  "aiLevel": {
+    "assessment": "appropriate" | "too_high" | "too_low",
+    "suggestedLevel": "level_1" | "level_2" | "level_3" | null,
+    "comment": "short explanation"
+  },
+  "framingReadiness": {
+    "score": 0,
+    "interpretation": "ready_for_tollgate" | "needs_refinement" | "not_ready"
   }
 }
 
 Payload:
 ${JSON.stringify(input, null, 2)}
+  `.trim();
+}
+
+function buildStoryExpectedBehaviorPrompt(input: {
+  title?: string | null;
+  valueIntent?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  return `
+You improve and validate Story Idea expected behavior for AAS-style Framing.
+
+Rules:
+- Improve this Story Idea expected behavior so it is clear, concise, and suitable for Framing.
+- Use the Value Intent and Epic as context.
+- Keep it at framing level.
+- Do not add acceptance criteria, test cases, implementation detail, or technical design.
+- Flag if the description is too vague or if the Epic connection is weak.
+- Do not nitpick text that is already good enough.
+- If the text is acceptable, return verdict "good" and leave suggestedRewrite null.
+- If expectedBehavior is empty but the Value Intent and Epic give enough context, suggest a concise framing-level starting text.
+
+Verdicts:
+- good = acceptable as written for framing
+- needs_revision = clearly too vague, too detailed, or weakly connected to the epic/value intent
+- unclear = borderline or hard to judge from the available context
+
+Required output:
+- Return JSON only.
+- Shape:
+  {
+    "field": "story_expected_behavior",
+    "verdict": "good" | "needs_revision" | "unclear",
+    "confidence": "high" | "medium" | "low",
+    "rationale": "short explanation",
+    "suggestedRewrite": "optional replacement text or null"
+  }
+
+Payload:
+${JSON.stringify(
+  {
+    field: "story_expected_behavior",
+    title: input.title ?? null,
+    valueIntent: input.valueIntent ?? null,
+    expectedBehavior: input.expectedBehavior ?? null,
+    epic: {
+      title: input.epicTitle ?? null,
+      purpose: input.epicPurpose ?? null,
+      scopeBoundary: input.epicScopeBoundary ?? null
+    }
+  },
+  null,
+  2
+)}
   `.trim();
 }
 
@@ -322,18 +776,6 @@ export async function validateOutcomeFieldWithAi(input: {
   baselineSource?: string | null;
   timeframe?: string | null;
 }) {
-  const fieldText = input.field === "outcome_statement" ? input.outcomeStatement : input.baselineDefinition;
-
-  if (!fieldText?.trim()) {
-    return parseOutcomeFieldAiValidation({
-      field: input.field,
-      verdict: "needs_revision",
-      confidence: "high",
-      rationale: "Field is empty, so there is nothing to validate yet.",
-      suggestedRewrite: null
-    });
-  }
-
   const env = readRequiredLlmEnv();
   const response = await fetch(new URL("responses", env.endpoint), {
     method: "POST",
@@ -378,15 +820,14 @@ export async function reviewOutcomeFramingWithAi(input: {
     title: string;
     purpose?: string | null;
     scopeBoundary?: string | null;
-    storyCount: number;
+    seedCount: number;
   }>;
-  stories: Array<{
-    key: string;
+  directionSeeds: Array<{
+    seedId: string;
     title: string;
-    status: string;
-    acceptanceCriteriaCount: number;
-    hasTestDefinition: boolean;
-    definitionOfDoneCount: number;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
   }>;
 }) {
   const env = readRequiredLlmEnv();
@@ -399,6 +840,7 @@ export async function reviewOutcomeFramingWithAi(input: {
     },
     body: JSON.stringify({
       model: env.model,
+      temperature: 0,
       input: buildFramingReviewPrompt(input)
     }),
     cache: "no-store"
@@ -413,5 +855,40 @@ export async function reviewOutcomeFramingWithAi(input: {
   const jsonText = extractJsonObject(outputText);
   const parsed = JSON.parse(jsonText) as OutcomeFramingAiReview;
 
-  return parseOutcomeFramingAiReview(parsed);
+  return deriveDeterministicFramingAdjustments(input, parseOutcomeFramingAiReview(parsed));
+}
+
+export async function validateStoryExpectedBehaviorWithAi(input: {
+  title?: string | null;
+  valueIntent?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  const env = readRequiredLlmEnv();
+  const response = await fetch(new URL("responses", env.endpoint), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${env.apiKey}`,
+      "api-key": env.apiKey
+    },
+    body: JSON.stringify({
+      model: env.model,
+      input: buildStoryExpectedBehaviorPrompt(input)
+    }),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI validation failed with HTTP ${response.status}.`);
+  }
+
+  const responseBody = await response.json();
+  const outputText = extractOutputText(responseBody);
+  const jsonText = extractJsonObject(outputText);
+  const parsed = JSON.parse(jsonText) as StoryExpectedBehaviorAiValidation;
+
+  return parseStoryExpectedBehaviorAiValidation(parsed);
 }

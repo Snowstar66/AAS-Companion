@@ -1,4 +1,4 @@
-import { getOutcomeBaselineReadiness } from "@aas-companion/domain";
+import { getOutcomeFramingReadiness } from "@aas-companion/domain";
 import { createOutcome, getPreferredFramingOutcomeId, listOutcomeCockpitEntries, listOutcomes } from "@aas-companion/db";
 import { logDevTiming, withDevTiming } from "./dev-timing";
 import { success, type ApiResult } from "./shared";
@@ -23,7 +23,7 @@ export type FramingOutcomeItem = {
   ownerLabel: string;
   timeframe: string | null;
   epicCount: number;
-  storyCount: number;
+  directionSeedCount: number;
   updatedAtLabel: string;
   detailHref: string;
 };
@@ -125,7 +125,16 @@ export async function getFramingCockpitData(
       const entries = await listOutcomeCockpitEntries(organizationId);
       const mapStartedAt = Date.now();
       const items: FramingOutcomeItem[] = entries.map((entry) => {
-        const readiness = getOutcomeBaselineReadiness(entry);
+        const readiness = getOutcomeFramingReadiness({
+          title: entry.title,
+          outcomeStatement: entry.outcomeStatement ?? null,
+          baselineDefinition: entry.baselineDefinition ?? null,
+          valueOwnerId: entry.valueOwnerId ?? null,
+          riskProfile: entry.riskProfile,
+          aiAccelerationLevel: entry.aiAccelerationLevel,
+          status: entry.status,
+          epicCount: entry._count.epics
+        });
         const tollgateBlockers = entry.tollgates
           .filter((tollgate) => tollgate.status === "blocked")
           .flatMap((tollgate) => tollgate.blockers);
@@ -135,7 +144,7 @@ export async function getFramingCockpitData(
 
         let readinessLabel = "Ready for framing review";
         let readinessTone: FramingReadinessTone = "ready";
-        let readinessDetail = "Baseline fields are present and the outcome can continue toward TG1.";
+        let readinessDetail = "Framing brief is complete enough to continue toward Tollgate review.";
 
         if (isBlocked) {
           readinessLabel = "Blocked";
@@ -146,7 +155,7 @@ export async function getFramingCockpitData(
         } else if (readiness.state === "in_progress") {
           readinessLabel = "In progress";
           readinessTone = "progress";
-          readinessDetail = "Framing has started, but the outcome is not yet marked ready for TG1.";
+          readinessDetail = "Framing has started, but the brief is not yet complete enough for Tollgate submission.";
         }
 
         return {
@@ -170,7 +179,7 @@ export async function getFramingCockpitData(
           ownerLabel: entry.valueOwner?.fullName ?? entry.valueOwner?.email ?? "Unassigned",
           timeframe: entry.timeframe,
           epicCount: entry._count.epics,
-          storyCount: entry._count.stories,
+          directionSeedCount: entry._count.directionSeeds,
           updatedAtLabel: formatUpdatedAt(entry.updatedAt),
           detailHref: `/framing?outcomeId=${entry.id}`
         };

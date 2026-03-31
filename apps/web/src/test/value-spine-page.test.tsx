@@ -24,12 +24,32 @@ afterEach(() => {
   cleanup();
 });
 
-function createWorkspaceSnapshot(
-  storyStatus: "definition_blocked" | "ready_for_handoff" | "draft",
-  options?: {
-    tollgateStatus?: "blocked" | "ready" | "approved" | null;
-  }
-) {
+function createWorkspaceSnapshot(options?: {
+  seedDescription?: string | null;
+  expectedBehavior?: string | null;
+  tollgateStatus?: "blocked" | "ready" | "approved" | null;
+  includeAdditionalDeliveryStory?: boolean;
+  omitDirectionSeeds?: boolean;
+}) {
+  const directionSeeds = options?.omitDirectionSeeds
+    ? []
+    : [
+        {
+          id: "seed-imported",
+          epicId: "epic-imported",
+          key: "IMP-SEED-1",
+          title: "Imported Direction Seed",
+          shortDescription: options?.seedDescription ?? null,
+          expectedBehavior: options?.expectedBehavior ?? null,
+          sourceStoryId: "story-imported",
+          originType: "imported",
+          lifecycleState: "active",
+          importedReadinessState: "imported_framing_ready",
+          lineageSourceType: "artifact_aas_candidate",
+          lineageSourceId: "candidate-story-1"
+        }
+      ];
+
   return {
     ok: true,
     data: {
@@ -58,25 +78,50 @@ function createWorkspaceSnapshot(
                 importedReadinessState: "imported_framing_ready",
                 lineageSourceType: "artifact_aas_candidate",
                 lineageSourceId: "candidate-epic-1",
+                directionSeeds,
                 stories: [
                   {
                     id: "story-imported",
                     key: "IMP-STORY-1",
                     title: "Imported Story",
-                    status: storyStatus,
+                    valueIntent: "Keep the imported branch as an AI-usable framing seed.",
+                    expectedBehavior: "Imported lineage stays visible during framing export.",
+                    status: "draft",
                     tollgateStatus: options?.tollgateStatus ?? null,
                     originType: "imported",
                     lifecycleState: "active",
                     importedReadinessState: "imported_design_ready",
                     lineageSourceType: "artifact_aas_candidate",
                     lineageSourceId: "candidate-story-1",
-                    acceptanceCriteria: storyStatus === "ready_for_handoff" ? ["Accepted"] : [],
-                    testDefinition: storyStatus === "ready_for_handoff" ? "Regression test" : null,
+                    acceptanceCriteria: ["Accepted"],
+                    testDefinition: "Regression test",
                     definitionOfDone: ["Human review complete"]
-                  }
+                  },
+                  ...(options?.includeAdditionalDeliveryStory
+                    ? [
+                        {
+                          id: "story-extra-1",
+                          key: "STR-099",
+                          title: "Extra delivery scope",
+                          valueIntent: "Handle extra delivery scope outside the original idea.",
+                          expectedBehavior: "An extra delivery slice is added when design uncovers more implementation work.",
+                          status: "ready_for_handoff",
+                          tollgateStatus: "ready",
+                          originType: "native",
+                          lifecycleState: "active",
+                          importedReadinessState: null,
+                          lineageSourceType: null,
+                          lineageSourceId: null,
+                          acceptanceCriteria: ["Extra acceptance"],
+                          testDefinition: "Extra verification",
+                          definitionOfDone: ["Extra done condition"]
+                        }
+                      ]
+                    : [])
                 ]
               }
-            ]
+            ],
+            directionSeeds
           },
           {
             id: "outcome-native",
@@ -88,7 +133,8 @@ function createWorkspaceSnapshot(
             importedReadinessState: null,
             lineageSourceType: null,
             lineageSourceId: null,
-            epics: []
+            epics: [],
+            directionSeeds: []
           }
         ]
       }
@@ -98,7 +144,7 @@ function createWorkspaceSnapshot(
 
 describe("Value Spine page", () => {
   it("renders the current project through one selected Framing branch", async () => {
-    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot("definition_blocked"));
+    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot());
 
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
@@ -108,25 +154,66 @@ describe("Value Spine page", () => {
     expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
     expect(screen.getAllByRole("link", { name: /Open lineage/i }).length).toBeGreaterThan(0);
-    expect(screen.getByText("Test path missing")).toBeDefined();
+    expect(screen.getByText("Visible Story Ideas")).toBeDefined();
+    expect(screen.getAllByText(/Framing status:/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Not started/i).length).toBeGreaterThan(0);
   });
 
-  it("shows approved handoff stories as ready in the Value Spine summary and story card", async () => {
-    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot("ready_for_handoff"));
+  it("shows direction seeds as clear when framing descriptions and expected behavior exist", async () => {
+    getValueSpineServiceMock.mockResolvedValue(
+      createWorkspaceSnapshot({
+        seedDescription: "Keep the imported branch as an AI-usable framing seed.",
+        expectedBehavior: "Imported lineage stays visible during framing export."
+      })
+    );
 
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
-    expect(screen.getAllByText("Ready for design").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Ready for design")[0]?.parentElement?.textContent).toContain("1");
-    expect(screen.queryByText("Missing Test Definition")).toBeNull();
+    expect(screen.getByText("Visible Story Ideas")).toBeDefined();
+    expect(screen.getAllByText("Ready for framing").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Expected behavior:/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Short description is still missing.")).toBeNull();
   });
 
-  it("prefers the shared tollgate approval status over a stale story status", async () => {
-    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot("draft", { tollgateStatus: "approved" }));
+  it("keeps the framing value spine free from delivery readiness language even if stories exist underneath", async () => {
+    getValueSpineServiceMock.mockResolvedValue(createWorkspaceSnapshot({ tollgateStatus: "approved" }));
 
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
-    expect(screen.getAllByText("Ready for design").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Project Value Spine").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Ready for design")).toBeNull();
     expect(screen.queryByText("This Story still needs key delivery inputs before review can start.")).toBeNull();
+  });
+
+  it("shows lightweight delivery feedback on story ideas without surfacing unlinked delivery stories as framing ideas", async () => {
+    getValueSpineServiceMock.mockResolvedValue(
+      createWorkspaceSnapshot({
+        seedDescription: "Keep the imported branch as an AI-usable framing seed.",
+        expectedBehavior: "Imported lineage stays visible during framing export.",
+        includeAdditionalDeliveryStory: true
+      })
+    );
+
+    render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
+
+    expect(screen.getByText(/Delivery feedback: Expanded/i)).toBeDefined();
+    expect(screen.getByText(/Derived Delivery Stories: 0/i)).toBeDefined();
+    expect(screen.getByText(/Additional: 1/i)).toBeDefined();
+    expect(screen.getByText("Additional Delivery Stories")).toBeDefined();
+    expect(screen.getByText("Extra delivery scope")).toBeDefined();
+    expect(screen.getByText(/Additional in this Epic/i)).toBeDefined();
+  });
+
+  it("keeps legacy seedless stories visible as story ideas in framing views", async () => {
+    getValueSpineServiceMock.mockResolvedValue(
+      createWorkspaceSnapshot({
+        omitDirectionSeeds: true
+      })
+    );
+
+    render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
+
+    expect(screen.getByText("Imported Story")).toBeDefined();
+    expect(screen.getByText(/Keep the imported branch as an AI-usable framing seed\./i)).toBeDefined();
   });
 });

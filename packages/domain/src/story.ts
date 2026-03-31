@@ -24,11 +24,26 @@ export const storyRecordSchema = z.object({
   title: z.string().min(1),
   storyType: storyTypeSchema,
   valueIntent: z.string().min(1),
+  expectedBehavior: z.string().nullish(),
+  uxSketchName: z.string().nullish(),
+  uxSketchContentType: z.string().nullish(),
+  uxSketchDataUrl: z.string().nullish(),
+  uxSketches: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        contentType: z.string().min(1),
+        dataUrl: z.string().min(1)
+      })
+    )
+    .nullish(),
   acceptanceCriteria: z.array(z.string().min(1)).default([]),
   aiUsageScope: z.array(z.string().min(1)).default([]),
   aiAccelerationLevel: aiAccelerationLevelSchema,
   testDefinition: z.string().nullish(),
   definitionOfDone: z.array(z.string().min(1)).default([]),
+  sourceDirectionSeedId: z.string().nullish(),
   status: storyStatusSchema,
   originType: governedObjectOriginTypeSchema,
   createdMode: governedObjectCreatedModeSchema,
@@ -103,16 +118,34 @@ export type StoryUpdateInput = z.infer<typeof storyUpdateInputSchema>;
 
 type StoryReadinessFields = Pick<
   StoryRecord,
-  "key" | "testDefinition" | "definitionOfDone" | "acceptanceCriteria" | "status"
+  "key" | "outcomeId" | "epicId" | "testDefinition" | "definitionOfDone" | "acceptanceCriteria" | "status"
 >;
 
-export function getStoryHandoffReadiness(story: StoryReadinessFields) {
+type StoryValueSpineFields = Pick<StoryRecord, "outcomeId" | "epicId" | "acceptanceCriteria" | "testDefinition">;
+
+export function validateStoryAgainstValueSpine(story: StoryValueSpineFields) {
   const reasons: ReadinessBlockReason[] = [];
 
-  if (!story.key?.trim()) {
+  if (!story.outcomeId?.trim()) {
     reasons.push({
-      code: "story_key_missing",
-      message: "Story-ID is missing.",
+      code: "outcome_link_missing",
+      message: "Outcome link is required for Value Spine traceability.",
+      severity: "high"
+    });
+  }
+
+  if (!story.epicId?.trim()) {
+    reasons.push({
+      code: "epic_link_missing",
+      message: "Epic link is required for Value Spine traceability.",
+      severity: "high"
+    });
+  }
+
+  if (!story.acceptanceCriteria.length) {
+    reasons.push({
+      code: "acceptance_criteria_missing",
+      message: "At least one acceptance criterion is required.",
       severity: "high"
     });
   }
@@ -120,7 +153,24 @@ export function getStoryHandoffReadiness(story: StoryReadinessFields) {
   if (!story.testDefinition?.trim()) {
     reasons.push({
       code: "test_definition_missing",
-      message: "Test Definition is required before handoff.",
+      message: "Test Definition is required before build progression.",
+      severity: "high"
+    });
+  }
+
+  return createReadinessAssessment({
+    reasons,
+    isReadyForProgression: reasons.length === 0
+  });
+}
+
+export function getStoryHandoffReadiness(story: StoryReadinessFields) {
+  const reasons = [...validateStoryAgainstValueSpine(story).reasons];
+
+  if (!story.key?.trim()) {
+    reasons.push({
+      code: "story_key_missing",
+      message: "Story-ID is missing.",
       severity: "high"
     });
   }
@@ -133,18 +183,18 @@ export function getStoryHandoffReadiness(story: StoryReadinessFields) {
     });
   }
 
-  if (!story.acceptanceCriteria.length) {
-    reasons.push({
-      code: "acceptance_criteria_missing",
-      message: "At least one acceptance criterion is required.",
-      severity: "high"
-    });
-  }
-
   return createReadinessAssessment({
     reasons,
     isReadyForProgression: story.status === "ready_for_handoff"
   });
+}
+
+export function getStoryValueSpineBlockers(story: StoryValueSpineFields) {
+  return validateStoryAgainstValueSpine(story).reasons.map((reason) => reason.message);
+}
+
+export function isStoryValidAgainstValueSpine(story: StoryValueSpineFields) {
+  return validateStoryAgainstValueSpine(story).state === "ready";
 }
 
 export function getStoryReadinessBlockers(story: StoryReadinessFields) {

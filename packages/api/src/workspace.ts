@@ -1,9 +1,13 @@
 import {
   appendActivityEvent,
+  getDirectionSeedById,
   listOrganizationUsers,
+  listDirectionSeeds,
+  listStoriesByDirectionSeedId,
   getOutcomeWorkspaceSnapshot,
   reviewOutcomeFramingWithAi,
   getStoryWorkspaceSnapshot,
+  validateStoryExpectedBehaviorWithAi,
   validateOutcomeFieldWithAi,
   updateOutcome,
   updateStory,
@@ -15,8 +19,9 @@ import {
   executionContractSchema,
   executionContractToMarkdown,
   type GovernedChildImpact,
-  getOutcomeBaselineReadiness,
-  getStoryHandoffReadiness
+  getOutcomeFramingReadiness,
+  getStoryHandoffReadiness,
+  validateStoryAgainstValueSpine
 } from "@aas-companion/domain";
 import { getArtifactCandidateById } from "@aas-companion/db";
 import { withDevTiming } from "./dev-timing";
@@ -55,6 +60,7 @@ function toGovernedChildImpact(
 function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getOutcomeWorkspaceSnapshot>>>) {
   const activeChildren = [
     ...snapshot.outcome.epics.map((epic) => toGovernedChildImpact("epic", epic)),
+    ...snapshot.outcome.directionSeeds.map((seed) => toGovernedChildImpact("direction_seed", seed)),
     ...snapshot.outcome.stories.map((story) => toGovernedChildImpact("story", story))
   ];
 
@@ -74,7 +80,7 @@ function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnTyp
       status: snapshot.outcome.status,
       lineageReference: toLineageReference(snapshot.outcome),
       importedReadinessState: snapshot.outcome.importedReadinessState,
-      activityEventCount: snapshot.activities.length,
+      activityEventCount: snapshot.activityEventCount,
       tollgateCount: snapshot.tollgate ? 1 : 0,
       activeChildren
     })
@@ -168,27 +174,65 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
       });
     }
 
-    const [tollgateReview, availableOwners] = await Promise.all([
-      getTollgateReviewWorkspaceService({
-        organizationId,
-        entityType: "outcome",
-        entityId: outcomeId,
-        tollgateType: "tg1_baseline",
-        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
-        fallbackBlockers:
-          snapshot.tollgate?.blockers ?? getOutcomeBaselineReadiness(snapshot.outcome).reasons.map((reason) => reason.message),
-        fallbackComments: snapshot.tollgate?.comments ?? null,
-        existingTollgate: snapshot.tollgate
-      }),
-      listOrganizationUsers(organizationId)
-    ]);
-
     return success({
       ...snapshot,
-      availableOwners,
-      readiness: getOutcomeBaselineReadiness(snapshot.outcome),
-      tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
+      readiness: getOutcomeFramingReadiness({
+        ...snapshot.outcome,
+        epicCount: snapshot.outcome.epics.length
+      }),
       removal: buildOutcomeRemovalFromSnapshot(snapshot)
+    });
+  }, `organizationId=${organizationId} outcomeId=${outcomeId}`);
+}
+
+export async function getOrganizationUsersService(organizationId: string) {
+  return withDevTiming("api.getOrganizationUsersService", async () => {
+    return success(await listOrganizationUsers(organizationId));
+  }, `organizationId=${organizationId}`);
+}
+
+export async function getOutcomeTollgateReviewService(organizationId: string, outcomeId: string) {
+  return withDevTiming("api.getOutcomeTollgateReviewService", async () => {
+    const snapshot = await getOutcomeWorkspaceSnapshot(organizationId, outcomeId);
+
+    if (!snapshot) {
+      return failure({
+        code: "outcome_not_found",
+        message: "Outcome was not found in the current organization."
+      });
+    }
+
+    const blockers =
+      snapshot.tollgate?.blockers ??
+      getOutcomeFramingReadiness({
+        ...snapshot.outcome,
+        epicCount: snapshot.outcome.epics.length
+      }).reasons.map((reason) => reason.message);
+
+    const tollgateReview = await getTollgateReviewWorkspaceService({
+      organizationId,
+      entityType: "outcome",
+      entityId: outcomeId,
+      tollgateType: "tg1_baseline",
+      aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+      fallbackBlockers: blockers,
+      fallbackComments: snapshot.tollgate?.comments ?? null,
+      existingTollgate: snapshot.tollgate
+    });
+
+    if (!tollgateReview.ok) {
+      return tollgateReview;
+    }
+
+    return success({
+      outcome: {
+        id: snapshot.outcome.id,
+        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel
+      },
+      tollgate: snapshot.tollgate,
+      blockers,
+      framingComplete: blockers.length === 0,
+      tollgateReview: tollgateReview.data
     });
   }, `organizationId=${organizationId} outcomeId=${outcomeId}`);
 }
@@ -289,15 +333,14 @@ export async function reviewOutcomeFramingWithAiService(input: {
           title: epic.title,
           purpose: epic.purpose ?? null,
           scopeBoundary: epic.scopeBoundary ?? null,
-          storyCount: epic.stories.length
+          seedCount: epic.directionSeeds.length
         })),
-        stories: snapshot.outcome.stories.map((story) => ({
-          key: story.key,
-          title: story.title,
-          status: story.status,
-          acceptanceCriteriaCount: story.acceptanceCriteria.length,
-          hasTestDefinition: Boolean(story.testDefinition?.trim()),
-          definitionOfDoneCount: story.definitionOfDone.length
+        directionSeeds: snapshot.outcome.directionSeeds.map((seed) => ({
+          seedId: seed.key,
+          title: seed.title,
+          epicKey: snapshot.outcome.epics.find((epic) => epic.id === seed.epicId)?.key ?? null,
+          shortDescription: seed.shortDescription?.trim() || null,
+          expectedBehavior: seed.expectedBehavior?.trim() || null
         }))
       });
 
@@ -326,7 +369,10 @@ export async function submitOutcomeTollgateService(input: {
     });
   }
 
-  const readiness = getOutcomeBaselineReadiness(snapshot.outcome);
+  const readiness = getOutcomeFramingReadiness({
+    ...snapshot.outcome,
+    epicCount: snapshot.outcome.epics.length
+  });
   const blockers = readiness.reasons.map((reason) => reason.message);
   const isReady = readiness.state === "ready";
 
@@ -357,7 +403,7 @@ export async function submitOutcomeTollgateService(input: {
 
 export async function getStoryWorkspaceService(organizationId: string, storyId: string) {
   return withDevTiming("api.getStoryWorkspaceService", async () => {
-    const snapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
+  const snapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
 
     if (!snapshot) {
       return failure({
@@ -372,6 +418,30 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
       lineageSourceType: snapshot.story.lineageSourceType,
       lineageSourceId: snapshot.story.lineageSourceId
     });
+    const linkedSeed = snapshot.story.sourceDirectionSeedId
+      ? await getDirectionSeedById(organizationId, snapshot.story.sourceDirectionSeedId)
+      : null;
+    const originStoryIdea = linkedSeed
+      ? {
+          seedId: linkedSeed.id,
+          storyId: linkedSeed.sourceStoryId ?? null,
+          key: linkedSeed.key,
+          title: linkedSeed.title,
+          epicId: linkedSeed.epicId,
+          outcomeId: linkedSeed.outcomeId,
+          valueIntent: linkedSeed.shortDescription?.trim() || null,
+          expectedBehavior: linkedSeed.expectedBehavior?.trim() || null
+        }
+      : null;
+    const relatedSeed = snapshot.story.sourceDirectionSeedId
+      ? linkedSeed
+      : (await listDirectionSeeds(organizationId, { includeArchived: true })).find(
+          (seed) => seed.sourceStoryId === snapshot.story.id
+        ) ?? null;
+    const derivedDeliveryStories = relatedSeed
+      ? await listStoriesByDirectionSeedId(organizationId, relatedSeed.id)
+      : [];
+    const valueSpineValidation = validateStoryAgainstValueSpine(snapshot.story);
     const baseReadinessBlockers = getStoryHandoffReadiness(snapshot.story).reasons.map((reason) => reason.message);
     const tollgateReview = await getTollgateReviewWorkspaceService({
       organizationId,
@@ -386,6 +456,9 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
 
     return success({
       ...snapshot,
+      originStoryIdea,
+      derivedDeliveryStories,
+      valueSpineValidation,
       readiness: getStoryHandoffReadiness(snapshot.story),
       importedBuildBlockers,
       tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
@@ -401,6 +474,16 @@ export async function saveStoryWorkspaceService(input: {
   title?: string;
   storyType?: "outcome_delivery" | "governance" | "enablement";
   valueIntent?: string;
+  expectedBehavior?: string | null;
+  uxSketchName?: string | null;
+  uxSketchContentType?: string | null;
+  uxSketchDataUrl?: string | null;
+  uxSketches?: Array<{
+    id: string;
+    name: string;
+    contentType: string;
+    dataUrl: string;
+  }> | null;
   acceptanceCriteria?: string[];
   aiUsageScope?: string[];
   testDefinition?: string | null;
@@ -413,6 +496,11 @@ export async function saveStoryWorkspaceService(input: {
     title: input.title,
     storyType: input.storyType,
     valueIntent: input.valueIntent,
+    expectedBehavior: input.expectedBehavior,
+    uxSketchName: input.uxSketchName,
+    uxSketchContentType: input.uxSketchContentType,
+    uxSketchDataUrl: input.uxSketchDataUrl,
+    uxSketches: input.uxSketches,
     acceptanceCriteria: input.acceptanceCriteria,
     aiUsageScope: input.aiUsageScope,
     testDefinition: input.testDefinition,
@@ -420,6 +508,36 @@ export async function saveStoryWorkspaceService(input: {
   });
 
   return success(result);
+}
+
+export async function validateStoryExpectedBehaviorWithAiService(input: {
+  organizationId: string;
+  title?: string | null;
+  valueIntent?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  return withDevTiming("api.validateStoryExpectedBehaviorWithAiService", async () => {
+    try {
+      const result = await validateStoryExpectedBehaviorWithAi({
+        title: input.title ?? null,
+        valueIntent: input.valueIntent ?? null,
+        expectedBehavior: input.expectedBehavior ?? null,
+        epicTitle: input.epicTitle ?? null,
+        epicPurpose: input.epicPurpose ?? null,
+        epicScopeBoundary: input.epicScopeBoundary ?? null
+      });
+
+      return success(result);
+    } catch (error) {
+      return failure({
+        code: "ai_validation_failed",
+        message: error instanceof Error ? error.message : "AI expected behavior validation failed."
+      });
+    }
+  }, `organizationId=${input.organizationId} field=story_expected_behavior`);
 }
 
 export async function submitStoryReadinessService(input: {

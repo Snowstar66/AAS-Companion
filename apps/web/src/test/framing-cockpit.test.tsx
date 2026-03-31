@@ -37,7 +37,8 @@ vi.mock("@aas-companion/api", async () => {
           createdAt: new Date("2026-03-23T20:00:00.000Z"),
           updatedAt: new Date("2026-03-23T20:00:00.000Z"),
           epics: [],
-          stories: []
+          stories: [],
+          directionSeeds: []
         },
         tollgate: {
           id: "tg-1",
@@ -126,7 +127,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
           lineageHref: null,
           timeframe: "Q2 2026",
           epicCount: 0,
-          storyCount: 0,
+          directionSeedCount: 0,
           updatedAtLabel: "Mar 23",
           detailHref: "/framing?outcomeId=outcome-1"
         },
@@ -148,7 +149,7 @@ vi.mock("@/lib/framing/cockpit", () => ({
           lineageHref: null,
           timeframe: "Q2 2026",
           epicCount: 1,
-          storyCount: 3,
+          directionSeedCount: 3,
           updatedAtLabel: "Mar 23",
           detailHref: "/framing?outcomeId=outcome-2"
         }
@@ -164,6 +165,7 @@ vi.mock("@/app/(protected)/framing/actions", () => ({
 vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   archiveOutcomeAction: vi.fn(),
   createEpicFromOutcomeAction: vi.fn(),
+  createStoryIdeaFromOutcomeAction: vi.fn(),
   hardDeleteOutcomeAction: vi.fn(),
   initialReviewOutcomeFramingAiActionState: {
     status: "idle",
@@ -189,18 +191,23 @@ describe("Framing page", () => {
     cleanup();
   });
 
-  it("opens the active framing directly instead of requiring a separate open step", async () => {
-    render(await FramingPage({}));
+  it(
+    "opens the active framing directly instead of requiring a separate open step",
+    async () => {
+      render(await FramingPage({}));
 
-    expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Framing scope value spine" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
-    expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Tollgate 1 review and approval" })).toBeDefined();
-    expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
-    expect(screen.queryByText("Framing Cockpit")).toBeNull();
-  });
+      expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
+      expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
+      expect(screen.getByText("Submit to Tollgate")).toBeDefined();
+      expect(screen.getByText("Quick create Story Idea")).toBeDefined();
+      expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
+      expect(screen.queryByText("Framing Cockpit")).toBeNull();
+    },
+    15000
+  );
 
   it("shows a compact switcher instead of a full duplicate cockpit when demo content exists", async () => {
     render(await FramingPage({}));

@@ -66,7 +66,7 @@ export function ExecutionContractPreview({ contract, markdown }: ExecutionContra
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>JSON preview</CardTitle>
-            <CardDescription>Machine-usable handoff payload generated from persisted Story data.</CardDescription>
+            <CardDescription>Machine-usable build package generated from persisted Story data.</CardDescription>
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">
@@ -78,7 +78,7 @@ export function ExecutionContractPreview({ contract, markdown }: ExecutionContra
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>Markdown preview</CardTitle>
-            <CardDescription>Human-readable handoff contract for review or copy/paste into tooling.</CardDescription>
+            <CardDescription>Human-readable build package for review or copy/paste into tooling.</CardDescription>
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">

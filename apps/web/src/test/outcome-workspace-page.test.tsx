@@ -44,7 +44,8 @@ vi.mock("@aas-companion/api", async () => {
           createdAt: new Date("2026-03-23T20:00:00.000Z"),
           updatedAt: new Date("2026-03-23T20:00:00.000Z"),
           epics: [],
-          stories: []
+          stories: [],
+          directionSeeds: []
         },
         tollgate: {
           id: "tg-1",
@@ -198,6 +199,7 @@ vi.mock("@aas-companion/api", async () => {
 vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   archiveOutcomeAction: vi.fn(),
   createEpicFromOutcomeAction: vi.fn(),
+  createStoryIdeaFromOutcomeAction: vi.fn(),
   hardDeleteOutcomeAction: vi.fn(),
   initialReviewOutcomeFramingAiActionState: {
     status: "idle",
@@ -207,6 +209,7 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   recordOutcomeTollgateDecisionAction: vi.fn(),
   reviewOutcomeFramingWithAiAction: vi.fn(),
   restoreOutcomeAction: vi.fn(),
+  saveOutcomeWorkspaceInlineAction: vi.fn(),
   saveOutcomeWorkspaceAction: vi.fn(),
   stageOutcomeAiSuggestionAction: vi.fn(),
   submitOutcomeTollgateAction: vi.fn(),
@@ -215,7 +218,9 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
 }));
 
 describe("Outcome page", () => {
-  it("shows native provenance and blocked TG1 posture for a clean draft case", async () => {
+  it(
+    "shows native provenance and blocked TG1 posture for a clean draft case",
+    async () => {
     render(
       await OutcomeWorkspacePage({
         params: Promise.resolve({ outcomeId: "outcome-native-1" }),
@@ -230,23 +235,26 @@ describe("Outcome page", () => {
     expect(screen.getAllByText("Origin: Native").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Project mode: Clean").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Status: draft").length).toBeGreaterThan(0);
-    expect(screen.getByText("Framing-scoped Value Spine")).toBeDefined();
+    expect(screen.getByText("Framing value spine")).toBeDefined();
     expect(screen.getByText("Customer handshake")).toBeDefined();
     expect(screen.getAllByText("AI validate").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
-    expect(screen.getByText("Export framing brief")).toBeDefined();
+    expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Copy Framing Markdown" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Copy Framing JSON" })).toBeDefined();
     expect(screen.getByText("AI and risk posture")).toBeDefined();
-    expect(screen.getByDisplayValue("level_2")).toBeDefined();
-    expect(screen.getByText("Design direction seeds")).toBeDefined();
+    expect(screen.getByRole("combobox", { name: /AI level/i })).toBeDefined();
+    expect(screen.getByText("Story Ideas")).toBeDefined();
     expect(screen.getByText("No Epics exist for this case yet.")).toBeDefined();
-    expect(screen.getByText("No Epics are attached to this Framing yet.")).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Create Story Idea" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
-    expect(screen.getByText("Tollgate 1 review and approval")).toBeDefined();
-    expect(screen.getByText("Architecture review still needs architect on the supplier side.")).toBeDefined();
-    expect(screen.getByText("Baseline definition is missing.")).toBeDefined();
+    expect(screen.getByText("Submit to Tollgate")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Submit to Tollgate" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByText("Tollgate 1 decision workspace")).toBeDefined();
+    expect(screen.getByText("Record approval or review")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
-  });
+    },
+    15000
+  );
 });

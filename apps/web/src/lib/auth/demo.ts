@@ -22,7 +22,7 @@ export async function createDemoSession() {
     maxAge: oneWeekInSeconds
   });
 
-  await setOrganizationContextCookie(DEMO_SESSION.organization.organizationId);
+  await setOrganizationContextCookie(DEMO_SESSION.organization);
 }
 
 export async function clearDemoSession() {

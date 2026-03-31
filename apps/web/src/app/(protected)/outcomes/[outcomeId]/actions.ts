@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   archiveGovernedObjectService,
   createNativeEpicFromOutcomeService,
+  createNativeDirectionSeedFromEpicService,
   hardDeleteGovernedObjectService,
   recordTollgateDecisionService,
   reviewOutcomeFramingWithAiService,
@@ -14,6 +15,11 @@ import {
   validateOutcomeFieldWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import {
+  revalidateFramingCockpitCache,
+  revalidateOutcomeTollgateReviewCache,
+  revalidateOutcomeWorkspaceCache
+} from "@/lib/cache/project-data";
 
 function buildFramingRedirect(outcomeId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -87,6 +93,9 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
       (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -105,6 +114,56 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
       save: "success"
     })
   );
+}
+
+export type OutcomeInlineSaveActionState =
+  | {
+      status: "success";
+      message: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
+export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Promise<OutcomeInlineSaveActionState> {
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+
+  const result = await saveOutcomeWorkspaceService({
+    organizationId: session.organization.organizationId,
+    id: outcomeId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    problemStatement: String(formData.get("problemStatement") ?? "") || null,
+    outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
+    baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
+    baselineSource: String(formData.get("baselineSource") ?? "") || null,
+    timeframe: String(formData.get("timeframe") ?? "") || null,
+    valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
+    riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",
+    aiAccelerationLevel:
+      (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
+  });
+
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath("/framing");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      message: result.errors[0]?.message ?? "Outcome could not be saved."
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Suggestion saved to the Framing."
+  };
 }
 
 export type OutcomeFieldAiActionState =
@@ -200,15 +259,38 @@ export type ReviewOutcomeFramingAiActionState = {
   message: string | null;
   report:
     | {
-        overallVerdict: "good" | "needs_attention" | "blocked";
-        executiveSummary: string;
-        missingItems: string[];
-        suggestedChanges: string[];
-        nextAiLevel: {
-          canAdvance: boolean;
-          targetLevel: "level_2" | "level_3" | null;
-          rationale: string;
-          requirements: string[];
+        outcomeQuality: {
+          status: "ok" | "needs_improvement";
+          comment: string;
+          suggestedImprovement: string;
+        };
+        problemAlignment: {
+          status: "strong" | "weak";
+          comment: string;
+        };
+        epicCoverage: {
+          status: "complete" | "partial";
+          comment: string;
+          missingAreas: string[];
+        };
+        storyCoverage: {
+          status: "good" | "partial";
+          comment: string;
+          gapsOrOverlaps: string[];
+        };
+        riskOverview: {
+          topRisks: string[];
+          expansionRisk: "low" | "medium" | "high";
+          misalignmentRisk: "low" | "medium" | "high";
+        };
+        aiLevel: {
+          assessment: "appropriate" | "too_high" | "too_low";
+          suggestedLevel: "level_1" | "level_2" | "level_3" | null;
+          comment: string;
+        };
+        framingReadiness: {
+          score: number;
+          interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
         };
       }
     | null;
@@ -252,6 +334,9 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
     comments
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -305,9 +390,13 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
     createdBy: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
+  revalidatePath("/review");
   revalidatePath("/");
 
   if (!result.ok) {
@@ -335,6 +424,9 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -350,6 +442,39 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
   }
 
   redirect(`/epics/${result.data.id}?created=1`);
+}
+
+export async function createStoryIdeaFromOutcomeAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const epicId = String(formData.get("quickStoryIdeaEpicId") ?? "");
+  const title = String(formData.get("quickStoryIdeaTitle") ?? "") || null;
+
+  const result = await createNativeDirectionSeedFromEpicService({
+    organizationId: session.organization.organizationId,
+    epicId,
+    actorId: session.userId,
+    title
+  });
+
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildFramingRedirect(outcomeId, {
+        save: "error",
+        message: result.errors[0]?.message ?? "Story Idea could not be created."
+      })
+    );
+  }
+
+  redirect(`/story-ideas/${result.data.id}?created=1`);
 }
 
 export async function hardDeleteOutcomeAction(formData: FormData) {
@@ -372,6 +497,9 @@ export async function hardDeleteOutcomeAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/stories");
@@ -411,6 +539,9 @@ export async function archiveOutcomeAction(formData: FormData) {
     reason
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -453,6 +584,9 @@ export async function restoreOutcomeAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");

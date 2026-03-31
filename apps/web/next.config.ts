@@ -7,6 +7,11 @@ const configDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(configDir, "../..");
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb"
+    }
+  },
   turbopack: {
     root: repoRoot
   },

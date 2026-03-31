@@ -1,14 +1,22 @@
 import {
-  createEpic,
   createStory,
+  createDirectionSeed,
+  getArtifactCandidateById,
+  createEpic,
+  getDirectionSeedById,
   getEpicById,
   getEpicWorkspaceSnapshot,
   getOutcomeById,
+  listDirectionSeeds,
   listEpics,
+  listStoriesByDirectionSeedId,
   listStories,
+  validateStoryExpectedBehaviorWithAi,
   updateEpic
 } from "@aas-companion/db";
+import { updateDirectionSeed } from "@aas-companion/db";
 import {
+  artifactCandidateDraftRecordSchema,
   buildGovernedRemovalDecision,
   type GovernedChildImpact
 } from "@aas-companion/domain";
@@ -35,9 +43,9 @@ function toGovernedChildImpact(record: {
   key: string;
   title: string;
   lifecycleState: "active" | "archived";
-}): GovernedChildImpact {
+}, objectType: GovernedChildImpact["objectType"] = "story"): GovernedChildImpact {
   return {
-    objectType: "story",
+    objectType,
     id: record.id,
     key: record.key,
     title: record.title,
@@ -46,7 +54,10 @@ function toGovernedChildImpact(record: {
 }
 
 function buildEpicRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getEpicWorkspaceSnapshot>>>) {
-  const activeChildren = snapshot.epic.stories.map((story) => toGovernedChildImpact(story));
+  const activeChildren = [
+    ...snapshot.epic.directionSeeds.map((seed) => toGovernedChildImpact(seed, "direction_seed")),
+    ...snapshot.epic.stories.map((story) => toGovernedChildImpact(story))
+  ];
   const archivedAncestorLabels =
     snapshot.epic.lifecycleState === "archived" && snapshot.epic.outcome.lifecycleState === "archived"
       ? [`Outcome ${snapshot.epic.outcome.key}`]
@@ -110,6 +121,40 @@ export async function getEpicWorkspaceService(
   });
 }
 
+export async function getDirectionSeedWorkspaceService(
+  organizationId: string,
+  directionSeedId: string
+) {
+  const seed = await getDirectionSeedById(organizationId, directionSeedId);
+
+  if (!seed) {
+    return failure({
+      code: "direction_seed_not_found",
+      message: "Story Idea was not found in the current organization."
+    });
+  }
+
+  const [epic, outcome, derivedDeliveryStories] = await Promise.all([
+    getEpicById(organizationId, seed.epicId),
+    getOutcomeById(organizationId, seed.outcomeId),
+    listStoriesByDirectionSeedId(organizationId, seed.id)
+  ]);
+
+  if (!epic || !outcome) {
+    return failure({
+      code: "direction_seed_context_missing",
+      message: "Story Idea context could not be resolved."
+    });
+  }
+
+  return success({
+    seed,
+    epic,
+    outcome,
+    derivedDeliveryStories
+  });
+}
+
 export async function createNativeEpicFromOutcomeService(input: {
   organizationId: string;
   outcomeId: string;
@@ -144,10 +189,13 @@ export async function createNativeEpicFromOutcomeService(input: {
   );
 }
 
-export async function createNativeStoryFromEpicService(input: {
+export async function createNativeDirectionSeedFromEpicService(input: {
   organizationId: string;
   epicId: string;
   actorId?: string | null;
+  title?: string | null;
+  shortDescription?: string | null;
+  expectedBehavior?: string | null;
 }) {
   const epic = await getEpicById(input.organizationId, input.epicId);
 
@@ -158,30 +206,171 @@ export async function createNativeStoryFromEpicService(input: {
     });
   }
 
-  const stories = await listStories(input.organizationId, { includeArchived: true });
-  const key = buildNextKey(stories.map((story) => story.key), "STR");
-  const outcome = await getOutcomeById(input.organizationId, epic.outcomeId);
+  const directionSeeds = await listDirectionSeeds(input.organizationId, { includeArchived: true });
+  const key = buildNextKey(directionSeeds.map((seed) => seed.key), "SEED");
 
   return success(
-    await createStory({
+    await createDirectionSeed({
       organizationId: input.organizationId,
       outcomeId: epic.outcomeId,
       epicId: epic.id,
       key,
-      title: "New story",
-      storyType: "outcome_delivery",
-      valueIntent: "Describe the intended value for this story.",
-      acceptanceCriteria: [],
-      aiUsageScope: [],
-      aiAccelerationLevel: outcome?.aiAccelerationLevel ?? "level_2",
-      testDefinition: null,
-      definitionOfDone: [],
-      status: "draft",
+      title: input.title?.trim() || "New story idea",
+      shortDescription:
+        input.shortDescription?.trim() || "Describe the directional change this story idea points toward.",
+      expectedBehavior: input.expectedBehavior?.trim() || null,
+      uxSketchName: null,
+      uxSketchContentType: null,
+      uxSketchDataUrl: null,
+      uxSketches: null,
       originType: "native",
       createdMode: "clean",
       actorId: input.actorId ?? null
     })
   );
+}
+
+export async function saveDirectionSeedService(input: {
+  organizationId: string;
+  id: string;
+  actorId?: string | null;
+  title?: string;
+  shortDescription?: string;
+  expectedBehavior?: string | null;
+  uxSketchName?: string | null;
+  uxSketchContentType?: string | null;
+  uxSketchDataUrl?: string | null;
+  uxSketches?: Array<{
+    id: string;
+    name: string;
+    contentType: string;
+    dataUrl: string;
+  }> | null;
+}) {
+  const existing = await getDirectionSeedById(input.organizationId, input.id);
+
+  if (!existing) {
+    return failure({
+      code: "direction_seed_not_found",
+      message: "Direction seed was not found in the current organization."
+    });
+  }
+
+  const result = await updateDirectionSeed({
+    organizationId: input.organizationId,
+    id: input.id,
+    actorId: input.actorId ?? null,
+    title: input.title,
+    shortDescription: input.shortDescription,
+    expectedBehavior: input.expectedBehavior,
+    uxSketchName: input.uxSketchName,
+    uxSketchContentType: input.uxSketchContentType,
+    uxSketchDataUrl: input.uxSketchDataUrl,
+    uxSketches: input.uxSketches
+  });
+
+  return success(result);
+}
+
+export async function createDeliveryStoryFromDirectionSeedService(input: {
+  organizationId: string;
+  directionSeedId: string;
+  actorId?: string | null;
+}) {
+  const seed = await getDirectionSeedById(input.organizationId, input.directionSeedId);
+
+  if (!seed) {
+    return failure({
+      code: "direction_seed_not_found",
+      message: "Story Idea was not found in the current organization."
+    });
+  }
+
+  const [outcome, stories, linkedStories] = await Promise.all([
+    getOutcomeById(input.organizationId, seed.outcomeId),
+    listStories(input.organizationId, { includeArchived: true }),
+    listStoriesByDirectionSeedId(input.organizationId, seed.id)
+  ]);
+
+  if (!outcome) {
+    return failure({
+      code: "outcome_not_found",
+      message: "Parent Outcome for this Story Idea could not be resolved."
+    });
+  }
+
+  const sourceImportDraftRecord =
+    seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
+      ? await getArtifactCandidateById(input.organizationId, seed.lineageSourceId)
+      : null;
+  const importedStoryDraft =
+    sourceImportDraftRecord?.type === "story"
+      ? artifactCandidateDraftRecordSchema.parse(sourceImportDraftRecord.draftRecord ?? {})
+      : null;
+  const key = buildNextKey(stories.map((story) => story.key), "STR");
+  const createdStory = await createStory({
+    organizationId: input.organizationId,
+    outcomeId: seed.outcomeId,
+    epicId: seed.epicId,
+    key,
+    title: seed.title,
+    storyType: importedStoryDraft?.storyType ?? "outcome_delivery",
+    valueIntent: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior ?? null,
+    acceptanceCriteria: importedStoryDraft?.acceptanceCriteria ?? [],
+    aiUsageScope: importedStoryDraft?.aiUsageScope ?? [],
+    aiAccelerationLevel: outcome.aiAccelerationLevel,
+    testDefinition: importedStoryDraft?.testDefinition ?? null,
+    definitionOfDone: importedStoryDraft?.definitionOfDone ?? [],
+    sourceDirectionSeedId: seed.id,
+    status: "draft",
+    originType: seed.originType,
+    createdMode: seed.createdMode,
+    lineageReference:
+      seed.lineageSourceType && seed.lineageSourceId
+        ? {
+            sourceType: seed.lineageSourceType,
+            sourceId: seed.lineageSourceId,
+            note: seed.lineageNote
+          }
+        : null,
+    importedReadinessState: seed.importedReadinessState ?? null,
+    actorId: input.actorId ?? null
+  });
+
+  return success({
+    story: createdStory,
+    created: true,
+    existingLinkedStoryCount: linkedStories.length
+  });
+}
+
+export async function validateDirectionSeedExpectedBehaviorWithAiService(input: {
+  organizationId: string;
+  title?: string | null;
+  shortDescription?: string | null;
+  expectedBehavior?: string | null;
+  epicTitle?: string | null;
+  epicPurpose?: string | null;
+  epicScopeBoundary?: string | null;
+}) {
+  try {
+    const result = await validateStoryExpectedBehaviorWithAi({
+      title: input.title ?? null,
+      valueIntent: input.shortDescription ?? null,
+      expectedBehavior: input.expectedBehavior ?? null,
+      epicTitle: input.epicTitle ?? null,
+      epicPurpose: input.epicPurpose ?? null,
+      epicScopeBoundary: input.epicScopeBoundary ?? null
+    });
+
+    return success(result);
+  } catch (error) {
+    return failure({
+      code: "ai_validation_failed",
+      message: error instanceof Error ? error.message : "AI expected behavior validation failed."
+    });
+  }
 }
 
 export async function saveEpicWorkspaceService(input: {

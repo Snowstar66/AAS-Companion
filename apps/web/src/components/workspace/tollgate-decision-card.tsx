@@ -202,7 +202,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
           <div className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-4 text-sm text-sky-950">
             <p className="font-medium">Approval and review are recorded here</p>
             <p className="mt-2 leading-6">
-              Open the approval lanes and the record section below to capture the named human decisions before handoff.
+              Open the approval lanes and the record section below to capture the named human decisions before build starts.
             </p>
           </div>
         ) : null}

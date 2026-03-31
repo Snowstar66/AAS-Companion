@@ -25,7 +25,10 @@ args.push(prismaCli, ...argsFromUser, "--schema", schemaPath);
 const child = spawn(process.execPath, args, {
   cwd: repoRoot,
   stdio: "inherit",
-  env: process.env
+  env: {
+    ...process.env,
+    DIRECT_URL: process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim() || process.env.DIRECT_URL
+  }
 });
 
 child.on("exit", (code, signal) => {

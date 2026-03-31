@@ -39,15 +39,22 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           state: "empty",
           organizationName: "No project selected",
           message: "Choose a project or Demo explicitly before operational data is shown.",
-          summary: [],
-          outcomesByStatus: [],
+          projectPhase: {
+            key: "framing",
+            label: "Framing phase",
+            detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+          },
+          storyIdeaStats: {
+            total: 0,
+            started: 0,
+            framingReady: 0
+          },
+          deliveryStoryStats: {
+            total: 0,
+            readyToStartBuild: 0
+          },
           topBlockers: [],
-          pendingActions: [],
-          recentActivity: [],
-          rightRail: {
-            blockers: [],
-            nextActions: []
-          }
+          pendingActions: []
         },
         projects: [],
         activeProject: null,
@@ -66,15 +73,22 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           state: "empty",
           organizationName: "No project selected",
           message: "Choose an existing project, create a new one, or open Demo explicitly before entering operational work.",
-          summary: [],
-          outcomesByStatus: [],
+          projectPhase: {
+            key: "framing",
+            label: "Framing phase",
+            detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+          },
+          storyIdeaStats: {
+            total: 0,
+            started: 0,
+            framingReady: 0
+          },
+          deliveryStoryStats: {
+            total: 0,
+            readyToStartBuild: 0
+          },
           topBlockers: [],
-          pendingActions: [],
-          recentActivity: [],
-          rightRail: {
-            blockers: [],
-            nextActions: []
-          }
+          pendingActions: []
         } satisfies HomeDashboardData);
     const projectsPromise = shouldLoadProjects
       ? listOrganizationProjectSummariesForUser(session.userId)
@@ -110,15 +124,22 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
           error instanceof Error
             ? `Dashboard data is unavailable right now: ${error.message}`
             : "Dashboard data is unavailable right now.",
-        summary: [],
-        outcomesByStatus: [],
+        projectPhase: {
+          key: "framing",
+          label: "Framing phase",
+          detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+        },
+        storyIdeaStats: {
+          total: 0,
+          started: 0,
+          framingReady: 0
+        },
+        deliveryStoryStats: {
+          total: 0,
+          readyToStartBuild: 0
+        },
         topBlockers: [],
-        pendingActions: [],
-        recentActivity: [],
-        rightRail: {
-          blockers: [],
-          nextActions: []
-        }
+        pendingActions: []
       },
       projects: [],
       activeProject: null,

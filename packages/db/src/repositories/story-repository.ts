@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "../../generated/client";
+import { Prisma } from "../../generated/client";
 import { storyCreateInputSchema, storyUpdateInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
@@ -32,6 +32,18 @@ export async function getStoryById(organizationId: string, id: string) {
     where: {
       organizationId,
       id
+    }
+  });
+}
+
+export async function listStoriesByDirectionSeedId(organizationId: string, directionSeedId: string) {
+  return prisma.story.findMany({
+    where: {
+      organizationId,
+      sourceDirectionSeedId: directionSeedId
+    },
+    orderBy: {
+      createdAt: "asc"
     }
   });
 }
@@ -98,11 +110,17 @@ export async function createStory(input: unknown, db: Prisma.TransactionClient |
         title: parsed.title,
         storyType: parsed.storyType,
         valueIntent: parsed.valueIntent,
+        expectedBehavior: parsed.expectedBehavior ?? null,
+        uxSketchName: parsed.uxSketchName ?? null,
+        uxSketchContentType: parsed.uxSketchContentType ?? null,
+        uxSketchDataUrl: parsed.uxSketchDataUrl ?? null,
+        uxSketches: parsed.uxSketches ?? Prisma.JsonNull,
         acceptanceCriteria: parsed.acceptanceCriteria,
         aiUsageScope: parsed.aiUsageScope,
         aiAccelerationLevel: parsed.aiAccelerationLevel,
         testDefinition: parsed.testDefinition ?? null,
         definitionOfDone: parsed.definitionOfDone,
+        sourceDirectionSeedId: parsed.sourceDirectionSeedId ?? null,
         status: parsed.status,
         lifecycleState: "active",
         archivedAt: null,
@@ -195,6 +213,26 @@ export async function updateStory(input: unknown) {
       data.valueIntent = parsed.valueIntent;
     }
 
+    if (parsed.expectedBehavior !== undefined) {
+      data.expectedBehavior = parsed.expectedBehavior;
+    }
+
+    if (parsed.uxSketchName !== undefined) {
+      data.uxSketchName = parsed.uxSketchName;
+    }
+
+    if (parsed.uxSketchContentType !== undefined) {
+      data.uxSketchContentType = parsed.uxSketchContentType;
+    }
+
+    if (parsed.uxSketchDataUrl !== undefined) {
+      data.uxSketchDataUrl = parsed.uxSketchDataUrl;
+    }
+
+    if (parsed.uxSketches !== undefined) {
+      data.uxSketches = parsed.uxSketches ?? Prisma.JsonNull;
+    }
+
     if (parsed.acceptanceCriteria !== undefined) {
       data.acceptanceCriteria = parsed.acceptanceCriteria;
     }
@@ -213,6 +251,10 @@ export async function updateStory(input: unknown) {
 
     if (parsed.definitionOfDone !== undefined) {
       data.definitionOfDone = parsed.definitionOfDone;
+    }
+
+    if (parsed.sourceDirectionSeedId !== undefined) {
+      data.sourceDirectionSeedId = parsed.sourceDirectionSeedId;
     }
 
     if (parsed.status !== undefined) {

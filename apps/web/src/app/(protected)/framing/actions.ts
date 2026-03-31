@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createCleanDraftOutcomeFromFramingService } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { revalidateFramingCockpitCache } from "@/lib/cache/project-data";
 import { type CreateOutcomeActionState } from "@/lib/framing/create-outcome";
 
 export async function createDraftOutcomeAction(
@@ -25,6 +26,7 @@ export async function createDraftOutcomeAction(
     };
   }
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
   revalidatePath("/framing");
   revalidatePath("/");
   redirect(`/framing?outcomeId=${result.data.id}&created=1`);

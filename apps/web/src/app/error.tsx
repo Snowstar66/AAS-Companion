@@ -18,16 +18,16 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
     <AppShell
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Home",
-        badge: "Project selector"
+        title: "Application error",
+        badge: "Unexpected response"
       }}
     >
       <section className="flex min-h-[50vh] items-center justify-center">
         <Card className="max-w-2xl border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Home error state</CardTitle>
+            <CardTitle>Application error state</CardTitle>
             <CardDescription>
-              Home hit an unexpected error. This route exposes the failure instead of failing silently.
+              The current route hit an unexpected error. This view exposes the failure instead of failing silently.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

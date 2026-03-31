@@ -1,0 +1,1229 @@
+{
+  "metadata": {
+    "package_name": "OrderFlow_AAS_Seed_Package",
+    "package_version": "1.0",
+    "aas_framework_version": "2026-03-13",
+    "system_name": "OrderFlow",
+    "domain": "Retail Order Management",
+    "language": "sv-SE",
+    "ai_acceleration_level": 2,
+    "ai_acceleration_level_name": "Structured Acceleration",
+    "created_at": "2026-03-26",
+    "status": "framing_design_ready"
+  },
+  "principles": {
+    "outcome_before_output": true,
+    "value_spine_required": true,
+    "human_mandate_required": true,
+    "ai_is_a_level_not_a_tool": true,
+    "test_and_quality_from_start": true,
+    "traceability_required": true,
+    "reproducibility_required": true
+  },
+  "governance": {
+    "value_owner": {
+      "role_id": "VO-001",
+      "role_name": "Value Owner",
+      "person_name": "Head of Digital Commerce",
+      "organization": "Customer",
+      "mandate": [
+        "approve_outcome",
+        "accept_risk",
+        "approve_release"
+      ]
+    },
+    "delivery_lead": {
+      "role_id": "DL-001",
+      "role_name": "Delivery Lead",
+      "organization": "Supplier"
+    },
+    "ai_delivery_architect": {
+      "role_id": "AIDA-001",
+      "role_name": "AI Delivery Architect",
+      "organization": "Supplier"
+    },
+    "ai_quality_authority": {
+      "role_id": "AQA-001",
+      "role_name": "AI Quality Authority",
+      "organization": "Supplier",
+      "mandate": [
+        "review_ai_generated_artifacts",
+        "stop_release_on_quality_risk"
+      ]
+    },
+    "customer_architect": {
+      "role_id": "CA-001",
+      "role_name": "Customer Architect",
+      "organization": "Customer"
+    },
+    "governance_risk_owner": {
+      "role_id": "GRO-001",
+      "role_name": "Governance / Risk Owner",
+      "organization": "Customer"
+    }
+  },
+  "risk_profile": {
+    "business_criticality": "high",
+    "technical_risk": "medium_high",
+    "ai_risk": "medium",
+    "operational_impact": "high",
+    "risk_acceptance_owner_role_id": "VO-001"
+  },
+  "outcomes": [
+    {
+      "outcome_id": "O-001",
+      "title": "Reduce change lead time and production incidents in OrderFlow",
+      "statement": "Minska change lead time för OrderFlow från 20 dagar till 8 dagar inom 9 månader, samtidigt som produktionsincidenter minskas med 30 procent och testautomatiseringen ökas till 70 procent.",
+      "baseline": {
+        "change_lead_time_days_median": 20,
+        "production_incidents_per_month": 35,
+        "test_automation_percent": 20,
+        "deployment_frequency_per_month": 2
+      },
+      "targets": {
+        "change_lead_time_days_median": 8,
+        "production_incidents_reduction_percent": 30,
+        "test_automation_percent": 70,
+        "deployment_frequency_per_month_min": 4
+      },
+      "measurement_method": [
+        "commit_to_production_lead_time",
+        "monthly_production_incident_count",
+        "ci_cd_test_coverage_report",
+        "release_log_frequency"
+      ],
+      "timebox_months": 9,
+      "owner_role_id": "VO-001"
+    }
+  ],
+  "phases": [
+    {
+      "phase_id": "P-1",
+      "phase_name": "Framing",
+      "purpose": "Definiera varför vi agerar, vilket Outcome som ska uppnås, vilken riskprofil som accepteras och vilken AI-nivå som är tillåten.",
+      "outputs": [
+        "problem_statement",
+        "outcome_statement",
+        "scope",
+        "ai_level_decision",
+        "risk_acceptance_input",
+        "epic_candidates"
+      ],
+      "tollgate_id": "TG-1"
+    },
+    {
+      "phase_id": "P-2",
+      "phase_name": "Design",
+      "purpose": "Definiera lösningsarkitektur, teststrategi, Delivery Stories och AI-reviewkrav innan implementation.",
+      "outputs": [
+        "architecture",
+        "delivery_stories",
+        "test_strategy",
+        "doD_updates",
+        "ai_delivery_blueprint"
+      ],
+      "tollgate_id": "TG-2"
+    },
+    {
+      "phase_id": "P-3",
+      "phase_name": "Build",
+      "purpose": "Leverera kontrollerat, spårbart och reproducerbart med definierade reviews och tests.",
+      "outputs": [
+        "implemented_changes",
+        "test_evidence",
+        "ai_usage_logs",
+        "release_candidate",
+        "evidence_pack"
+      ],
+      "tollgate_id": "TG-3"
+    },
+    {
+      "phase_id": "P-4",
+      "phase_name": "Transfer",
+      "purpose": "Överlämna till förvaltning, säkra operativ ägandeskap och fortsätt effektmätning mot Outcome.",
+      "outputs": [
+        "handover_package",
+        "operational_readiness",
+        "baseline_remeasurement",
+        "ownership_transfer",
+        "outcome_followup"
+      ],
+      "tollgate_id": "TG-4"
+    }
+  ],
+  "tollgates": [
+    {
+      "tollgate_id": "TG-1",
+      "name": "Commit to Design",
+      "entry_criteria": [
+        "problem_statement_defined",
+        "outcome_defined_with_baseline",
+        "scope_defined",
+        "ai_level_decided",
+        "risk_profile_documented",
+        "value_owner_identified"
+      ],
+      "exit_decision": "design_approved"
+    },
+    {
+      "tollgate_id": "TG-2",
+      "name": "Design Approved",
+      "entry_criteria": [
+        "architecture_defined",
+        "delivery_stories_testable",
+        "test_strategy_defined",
+        "ai_review_defined_for_level_2",
+        "doD_updated"
+      ],
+      "exit_decision": "build_authorized"
+    },
+    {
+      "tollgate_id": "TG-3",
+      "name": "Accept & Release",
+      "entry_criteria": [
+        "acceptance_criteria_verified",
+        "tests_passed",
+        "ai_review_completed",
+        "security_and_architecture_checks_passed",
+        "release_evidence_pack_complete"
+      ],
+      "exit_decision": "release_authorized"
+    },
+    {
+      "tollgate_id": "TG-4",
+      "name": "Ownership Transfer",
+      "entry_criteria": [
+        "operational_runbook_approved",
+        "ownership_named",
+        "monitoring_transfer_completed",
+        "baseline_remeasured",
+        "handover_signoff_captured"
+      ],
+      "exit_decision": "operational_ownership_transferred"
+    }
+  ],
+  "epics": [
+    {
+      "epic_id": "E-001",
+      "outcome_id": "O-001",
+      "title": "Stabilize core order domain and reduce coupling",
+      "purpose": "Minska teknisk skuld och skapa tydliga gränser i kärnflödet för att möjliggöra snabbare och säkrare förändringar.",
+      "scope_in": [
+        "core_domain_boundary_analysis",
+        "payment_orchestration_extraction",
+        "inventory_dependency_decoupling",
+        "api_contract_definition"
+      ],
+      "scope_out": [
+        "full_erp_replacement",
+        "frontend_redesign"
+      ],
+      "risk_note": "Core business logic and integration risk is medium to high."
+    },
+    {
+      "epic_id": "E-002",
+      "outcome_id": "O-001",
+      "title": "Automate build, deploy and rollback",
+      "purpose": "Kortare väg från godkänd kod till driftsatt förändring och lägre release-risk.",
+      "scope_in": [
+        "build_pipeline",
+        "staging_deployment_automation",
+        "production_deployment_path",
+        "rollback_mechanism"
+      ],
+      "scope_out": [
+        "infrastructure_procurement",
+        "platform_replacement"
+      ],
+      "risk_note": "Operational rollout risk during first automation cycle."
+    },
+    {
+      "epic_id": "E-003",
+      "outcome_id": "O-001",
+      "title": "Increase test automation and regression safety",
+      "purpose": "Förbättra testtäckning och minska regressionsrisk utan att bromsa leveransförmågan.",
+      "scope_in": [
+        "unit_test_expansion",
+        "integration_test_harness",
+        "regression_suite",
+        "coverage_thresholds"
+      ],
+      "scope_out": [
+        "manual_uat_process_redesign",
+        "non_order_domain_tests"
+      ],
+      "risk_note": "Effort intensive but high value for speed and quality."
+    },
+    {
+      "epic_id": "E-004",
+      "outcome_id": "O-001",
+      "title": "Improve observability and incident response",
+      "purpose": "Snabbare felupptäckt, bättre felsökning och kortare incidenthanteringstid.",
+      "scope_in": [
+        "central_logging",
+        "alerting",
+        "incident_classification",
+        "root_cause_tagging"
+      ],
+      "scope_out": [
+        "soc_replacement",
+        "observability_outside_orderflow"
+      ],
+      "risk_note": "Low to medium implementation risk."
+    },
+    {
+      "epic_id": "E-005",
+      "outcome_id": "O-001",
+      "title": "Introduce controlled AI support in development and testing",
+      "purpose": "Använd AI för att accelerera kod, test och dokumentation med kontrollerad governance och spårbarhet.",
+      "scope_in": [
+        "prompt_library",
+        "ai_assisted_refactor_workflow",
+        "ai_assisted_test_generation",
+        "ai_usage_logging"
+      ],
+      "scope_out": [
+        "autonomous_production_deployment",
+        "unsupervised_agentic_execution"
+      ],
+      "risk_note": "AI-generated artifacts require reproducibility and mandatory review."
+    },
+    {
+      "epic_id": "E-006",
+      "outcome_id": "O-001",
+      "title": "Ensure security, compliance and auditability",
+      "purpose": "Skydda data, uppfylla säkerhetskrav och göra leveransen revisionsbar.",
+      "scope_in": [
+        "data_classification",
+        "masking_for_test_and_logs",
+        "audit_trail",
+        "release_evidence_pack"
+      ],
+      "scope_out": [
+        "enterprise_wide_security_program",
+        "customer_policy_redesign"
+      ],
+      "risk_note": "Security and compliance issues can block release."
+    },
+    {
+      "epic_id": "E-007",
+      "outcome_id": "O-001",
+      "title": "Operationalize handover and value measurement",
+      "purpose": "Säkra förvaltning, ägandeskap och fortsatt mätning av affärseffekten efter leverans.",
+      "scope_in": [
+        "operational_runbook",
+        "handover_package",
+        "baseline_remeasurement",
+        "ownership_transfer"
+      ],
+      "scope_out": [
+        "organizational_restructuring",
+        "service_desk_transformation"
+      ],
+      "risk_note": "Critical for sustainability of the outcome."
+    },
+    {
+      "epic_id": "E-008",
+      "outcome_id": "O-001",
+      "title": "AAS governance and evidence chain",
+      "purpose": "Göra leveransen styrbar, granskbar och mätbar genom AAS evidenskedja.",
+      "scope_in": [
+        "ai_review_checklist",
+        "release_stop_criteria",
+        "evidence_pack_generation",
+        "review_and_approval_records"
+      ],
+      "scope_out": [
+        "customer_governance_framework_replacement",
+        "portfolio_program_setup"
+      ],
+      "risk_note": "Required to operate at Level 2 safely."
+    }
+  ],
+  "stories": [
+    {
+      "story_id": "S-001",
+      "epic_id": "E-001",
+      "outcome_id": "O-001",
+      "title": "Identify and freeze core order domain boundaries",
+      "story_type": "Analysis",
+      "value_intent": "Create a stable domain boundary for safe modularization.",
+      "ai_usage_scope": ["DESIGN"],
+      "ai_acceleration_level": 1,
+      "acceptance_criteria": [
+        "core domain boundaries are documented",
+        "dependencies to surrounding modules are identified",
+        "interfaces to preserve are listed"
+      ],
+      "test_id": "T-001",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "architecture_validation",
+        "automation": "low"
+      },
+      "definition_of_done": [
+        "documented domain boundary",
+        "reviewed by architect",
+        "traceability to outcome registered",
+        "review protocol stored"
+      ]
+    },
+    {
+      "story_id": "S-002",
+      "epic_id": "E-001",
+      "outcome_id": "O-001",
+      "title": "Extract payment orchestration into a separate module",
+      "story_type": "Refactor",
+      "value_intent": "Reduce coupling and allow independent change in payment flow.",
+      "ai_usage_scope": ["CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "payment orchestration runs in a separate module",
+        "existing order flow remains functionally equivalent",
+        "no unintended cross-module data writes remain"
+      ],
+      "test_id": "T-002",
+      "test_definition": {
+        "test_level": "regression",
+        "test_type": "contract_and_regression_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "module extracted",
+        "regression suite green",
+        "architecture review completed",
+        "AQA review completed",
+        "commit history traceable to story id"
+      ]
+    },
+    {
+      "story_id": "S-003",
+      "epic_id": "E-001",
+      "outcome_id": "O-001",
+      "title": "Define versioned API contract for order service",
+      "story_type": "Feature",
+      "value_intent": "Stabilize integration boundaries and reduce change risk.",
+      "ai_usage_scope": ["DESIGN", "CONTENT"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "OpenAPI contract published",
+        "contract version is numbered",
+        "backward compatibility rules are documented"
+      ],
+      "test_id": "T-003",
+      "test_definition": {
+        "test_level": "integration",
+        "test_type": "contract_test",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "contract published",
+        "consumer impact assessed",
+        "signoff captured"
+      ]
+    },
+    {
+      "story_id": "S-004",
+      "epic_id": "E-002",
+      "outcome_id": "O-001",
+      "title": "Implement automated build pipeline",
+      "story_type": "Feature",
+      "value_intent": "Eliminate manual build steps and reduce lead time.",
+      "ai_usage_scope": ["CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "build starts on commit",
+        "artifact is produced automatically",
+        "failed build blocks further progression"
+      ],
+      "test_id": "T-004",
+      "test_definition": {
+        "test_level": "integration",
+        "test_type": "pipeline_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "pipeline live",
+        "build reproducible",
+        "monitoring enabled"
+      ]
+    },
+    {
+      "story_id": "S-005",
+      "epic_id": "E-002",
+      "outcome_id": "O-001",
+      "title": "Automate deployment to staging",
+      "story_type": "Feature",
+      "value_intent": "Shorten the path from validated build to deployable package.",
+      "ai_usage_scope": ["CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "deployment to staging is automatic",
+        "deployment logs are retained",
+        "staging environment is updated from pipeline"
+      ],
+      "test_id": "T-005",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "deployment_smoke_test",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "staging deployment working",
+        "smoke tests passing",
+        "AQA review completed"
+      ]
+    },
+    {
+      "story_id": "S-006",
+      "epic_id": "E-002",
+      "outcome_id": "O-001",
+      "title": "Introduce rollback mechanism for releases",
+      "story_type": "Feature",
+      "value_intent": "Reduce operational risk when deploys fail or create regressions.",
+      "ai_usage_scope": ["CODE", "TEST"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "previous release can be restored",
+        "rollback can be executed within agreed time window",
+        "rollback does not corrupt order data"
+      ],
+      "test_id": "T-006",
+      "test_definition": {
+        "test_level": "recovery",
+        "test_type": "recovery_test",
+        "automation": "medium"
+      },
+      "definition_of_done": [
+        "rollback documented",
+        "recovery test passed",
+        "operational approval captured"
+      ]
+    },
+    {
+      "story_id": "S-007",
+      "epic_id": "E-003",
+      "outcome_id": "O-001",
+      "title": "Expand unit test coverage for critical business rules",
+      "story_type": "Feature",
+      "value_intent": "Reduce defects by increasing the safety net around core business rules.",
+      "ai_usage_scope": ["TEST"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "critical order rules have unit tests",
+        "coverage target is documented",
+        "tests run automatically in pipeline"
+      ],
+      "test_id": "T-007",
+      "test_definition": {
+        "test_level": "unit",
+        "test_type": "coverage_and_correctness",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "coverage target achieved",
+        "tests integrated in CI",
+        "result traceable to story id"
+      ]
+    },
+    {
+      "story_id": "S-008",
+      "epic_id": "E-003",
+      "outcome_id": "O-001",
+      "title": "Build integration test harness for order-to-cash flow",
+      "story_type": "Feature",
+      "value_intent": "Validate end-to-end business behavior across services.",
+      "ai_usage_scope": ["TEST", "CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "integration harness executes automatically",
+        "test data is created in a controlled way",
+        "service dependencies are mocked or isolated"
+      ],
+      "test_id": "T-008",
+      "test_definition": {
+        "test_level": "integration",
+        "test_type": "flow_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "harness live",
+        "tests repeatable",
+        "AQA review completed"
+      ]
+    },
+    {
+      "story_id": "S-009",
+      "epic_id": "E-003",
+      "outcome_id": "O-001",
+      "title": "Define regression coverage thresholds",
+      "story_type": "AT-task",
+      "value_intent": "Make release safety measurable and enforceable.",
+      "ai_usage_scope": ["CONTENT"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "coverage threshold is documented",
+        "release is blocked below threshold",
+        "threshold is approved by Value Owner and Delivery Lead"
+      ],
+      "test_id": "T-009",
+      "test_definition": {
+        "test_level": "regression",
+        "test_type": "policy_gate_test",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "threshold approved",
+        "pipeline gate active",
+        "trace recorded"
+      ]
+    },
+    {
+      "story_id": "S-010",
+      "epic_id": "E-004",
+      "outcome_id": "O-001",
+      "title": "Centralize logging with correlation IDs",
+      "story_type": "Feature",
+      "value_intent": "Enable faster diagnosis and traceability across services.",
+      "ai_usage_scope": ["CODE"],
+      "ai_acceleration_level": 1,
+      "acceptance_criteria": [
+        "all main services log to central platform",
+        "logs are searchable by correlation ID",
+        "retention policy is defined"
+      ],
+      "test_id": "T-010",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "observability_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "logging verified",
+        "searchability confirmed",
+        "driftteam informed"
+      ]
+    },
+    {
+      "story_id": "S-011",
+      "epic_id": "E-004",
+      "outcome_id": "O-001",
+      "title": "Configure alerting and incident classification",
+      "story_type": "Feature",
+      "value_intent": "Reduce time to detect and respond to failures.",
+      "ai_usage_scope": ["CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "alert triggers on defined failure threshold",
+        "alert reaches the correct channel",
+        "test alert reaches on-call within one minute"
+      ],
+      "test_id": "T-011",
+      "test_definition": {
+        "test_level": "integration",
+        "test_type": "alert_and_classification_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "alerting live",
+        "classification tested",
+        "observability evidence archived"
+      ]
+    },
+    {
+      "story_id": "S-012",
+      "epic_id": "E-004",
+      "outcome_id": "O-001",
+      "title": "Implement automated root cause tagging for incidents",
+      "story_type": "Feature",
+      "value_intent": "Improve incident classification and trend analysis.",
+      "ai_usage_scope": ["CODE", "TEST"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "incident records receive a root cause tag",
+        "tagging supports manual correction",
+        "tag distribution is reportable"
+      ],
+      "test_id": "T-012",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "classification_accuracy_test",
+        "automation": "medium"
+      },
+      "definition_of_done": [
+        "tagging deployed",
+        "accuracy validated",
+        "report generated"
+      ]
+    },
+    {
+      "story_id": "S-013",
+      "epic_id": "E-005",
+      "outcome_id": "O-001",
+      "title": "Create prompt library for AI-assisted test generation",
+      "story_type": "Feature",
+      "value_intent": "Standardize AI input so test generation becomes repeatable and reviewable.",
+      "ai_usage_scope": ["CONTENT", "TEST"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "at least five prompts exist",
+        "each prompt has version number",
+        "prompts are linked to Story IDs"
+      ],
+      "test_id": "T-013",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "repository_and_reproducibility_validation",
+        "automation": "medium"
+      },
+      "definition_of_done": [
+        "prompt repository established",
+        "versioning active",
+        "traceability verified"
+      ]
+    },
+    {
+      "story_id": "S-014",
+      "epic_id": "E-005",
+      "outcome_id": "O-001",
+      "title": "Implement AI-assisted refactor workflow with mandatory human review",
+      "story_type": "Feature",
+      "value_intent": "Use AI to accelerate refactoring while preserving human accountability.",
+      "ai_usage_scope": ["CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "AI produces refactor proposal",
+        "human reviewer approves before merge",
+        "AI output is logged with model version"
+      ],
+      "test_id": "T-014",
+      "test_definition": {
+        "test_level": "code_review",
+        "test_type": "review_validation",
+        "automation": "medium"
+      },
+      "definition_of_done": [
+        "workflow documented",
+        "logging active",
+        "AQA review completed"
+      ]
+    },
+    {
+      "story_id": "S-015",
+      "epic_id": "E-005",
+      "outcome_id": "O-001",
+      "title": "Log all AI usage by story and model version",
+      "story_type": "Feature",
+      "value_intent": "Make AI usage auditable and reproducible.",
+      "ai_usage_scope": ["CONTENT", "CODE", "TEST"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "AI usage is logged per story",
+        "model or accelerator version is recorded",
+        "log is searchable by Story ID"
+      ],
+      "test_id": "T-015",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "log_query_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "logging operational",
+        "search validated",
+        "audit reviewed"
+      ]
+    },
+    {
+      "story_id": "S-016",
+      "epic_id": "E-006",
+      "outcome_id": "O-001",
+      "title": "Implement data classification and masking for test and logs",
+      "story_type": "Feature",
+      "value_intent": "Protect sensitive data across test and operational logs.",
+      "ai_usage_scope": ["CODE"],
+      "ai_acceleration_level": 1,
+      "acceptance_criteria": [
+        "data is classified according to agreed model",
+        "sensitive fields are masked in test and logs",
+        "masking can be verified"
+      ],
+      "test_id": "T-016",
+      "test_definition": {
+        "test_level": "security",
+        "test_type": "data_protection_validation",
+        "automation": "medium"
+      },
+      "definition_of_done": [
+        "masking tested",
+        "no sensitive exposure in logs",
+        "security review documented"
+      ]
+    },
+    {
+      "story_id": "S-017",
+      "epic_id": "E-006",
+      "outcome_id": "O-001",
+      "title": "Establish audit trail for changes, approvals and AI usage",
+      "story_type": "Feature",
+      "value_intent": "Make changes and AI-assisted work fully auditable.",
+      "ai_usage_scope": ["CONTENT", "CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "changes, approvals and AI usage are traceable",
+        "audit trail can be exported",
+        "history is linked to Story ID and release"
+      ],
+      "test_id": "T-017",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "auditability_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "audit trail works in target environment",
+        "review completed",
+        "evidence stored"
+      ]
+    },
+    {
+      "story_id": "S-018",
+      "epic_id": "E-006",
+      "outcome_id": "O-001",
+      "title": "Define AI review checklist and release stop criteria",
+      "story_type": "Feature",
+      "value_intent": "Create a mandatory review gate for AI-generated artifacts and risky changes.",
+      "ai_usage_scope": ["CONTENT"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "checklist covers quality, security and reproducibility",
+        "stop criteria are defined",
+        "checklist is approved by AQA"
+      ],
+      "test_id": "T-018",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "governance_validation",
+        "automation": "low"
+      },
+      "definition_of_done": [
+        "checklist published",
+        "approval captured",
+        "team informed"
+      ]
+    },
+    {
+      "story_id": "S-019",
+      "epic_id": "E-007",
+      "outcome_id": "O-001",
+      "title": "Prepare operational runbook for support, deploy and rollback",
+      "story_type": "Feature",
+      "value_intent": "Make transfer to operations predictable and repeatable.",
+      "ai_usage_scope": ["CONTENT"],
+      "ai_acceleration_level": 1,
+      "acceptance_criteria": [
+        "runbook covers support, deploy and rollback",
+        "runbook is reviewed by operations",
+        "version is recorded"
+      ],
+      "test_id": "T-019",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "operational_readiness",
+        "automation": "low"
+      },
+      "definition_of_done": [
+        "runbook approved",
+        "handover conditions verified",
+        "operations signoff captured"
+      ]
+    },
+    {
+      "story_id": "S-020",
+      "epic_id": "E-007",
+      "outcome_id": "O-001",
+      "title": "Re-measure baseline and validate outcome progress",
+      "story_type": "AT-task",
+      "value_intent": "Confirm that realized changes are measured against the original baseline.",
+      "ai_usage_scope": ["CONTENT"],
+      "ai_acceleration_level": 1,
+      "acceptance_criteria": [
+        "lead time is re-measured",
+        "incident rate is re-measured",
+        "results are compared to baseline"
+      ],
+      "test_id": "T-020",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "measurement_validation",
+        "automation": "medium"
+      },
+      "definition_of_done": [
+        "metrics captured",
+        "comparison approved",
+        "results communicated"
+      ]
+    },
+    {
+      "story_id": "S-021",
+      "epic_id": "E-007",
+      "outcome_id": "O-001",
+      "title": "Transfer ownership and monitoring responsibilities to operations",
+      "story_type": "AT-task",
+      "value_intent": "Complete the move from project ownership to steady-state ownership.",
+      "ai_usage_scope": ["CONTENT"],
+      "ai_acceleration_level": 1,
+      "acceptance_criteria": [
+        "named owner is assigned in operations",
+        "monitoring and alerting responsibilities are transferred",
+        "handover is formally accepted"
+      ],
+      "test_id": "T-021",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "ownership_transfer_validation",
+        "automation": "low"
+      },
+      "definition_of_done": [
+        "ownership transferred",
+        "acceptance recorded",
+        "support model updated"
+      ]
+    },
+    {
+      "story_id": "S-022",
+      "epic_id": "E-008",
+      "outcome_id": "O-001",
+      "title": "Generate AAS evidence pack for release",
+      "story_type": "Feature",
+      "value_intent": "Make the delivery revision-safe through traceable evidence.",
+      "ai_usage_scope": ["CONTENT", "TEST", "CODE"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "evidence pack includes trace from Outcome to Story and Test",
+        "AI usage log is included when AI is used",
+        "review and approval record are included"
+      ],
+      "test_id": "T-022",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "evidence_completeness_validation",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "evidence pack can be generated from toolchain",
+        "content is complete",
+        "approval path is clear",
+        "version and date stored"
+      ]
+    },
+    {
+      "story_id": "S-023",
+      "epic_id": "E-008",
+      "outcome_id": "O-001",
+      "title": "Integrate AI review into Definition of Done",
+      "story_type": "Feature",
+      "value_intent": "Prevent AI-generated work from bypassing quality control.",
+      "ai_usage_scope": ["CONTENT"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "DoD explicitly includes AI review",
+        "merge is blocked without AI review evidence",
+        "DoD update is approved"
+      ],
+      "test_id": "T-023",
+      "test_definition": {
+        "test_level": "integration",
+        "test_type": "pipeline_gate",
+        "automation": "high"
+      },
+      "definition_of_done": [
+        "DoD updated",
+        "pipeline gate enforced",
+        "AQA review completed"
+      ]
+    },
+    {
+      "story_id": "S-024",
+      "epic_id": "E-008",
+      "outcome_id": "O-001",
+      "title": "Activate AQA role and release stop authority",
+      "story_type": "AT-task",
+      "value_intent": "Make quality governance operational and enforceable.",
+      "ai_usage_scope": ["CONTENT"],
+      "ai_acceleration_level": 2,
+      "acceptance_criteria": [
+        "AQA is formally assigned",
+        "stop-release authority is documented",
+        "escalation path is defined"
+      ],
+      "test_id": "T-024",
+      "test_definition": {
+        "test_level": "system",
+        "test_type": "governance_validation",
+        "automation": "low"
+      },
+      "definition_of_done": [
+        "role assigned",
+        "authority documented",
+        "governance communicated"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "test_id": "T-001",
+      "story_id": "S-001",
+      "test_level": "system",
+      "test_type": "architecture_validation",
+      "automation": "low"
+    },
+    {
+      "test_id": "T-002",
+      "story_id": "S-002",
+      "test_level": "regression",
+      "test_type": "contract_and_regression_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-003",
+      "story_id": "S-003",
+      "test_level": "integration",
+      "test_type": "contract_test",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-004",
+      "story_id": "S-004",
+      "test_level": "integration",
+      "test_type": "pipeline_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-005",
+      "story_id": "S-005",
+      "test_level": "system",
+      "test_type": "deployment_smoke_test",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-006",
+      "story_id": "S-006",
+      "test_level": "recovery",
+      "test_type": "recovery_test",
+      "automation": "medium"
+    },
+    {
+      "test_id": "T-007",
+      "story_id": "S-007",
+      "test_level": "unit",
+      "test_type": "coverage_and_correctness",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-008",
+      "story_id": "S-008",
+      "test_level": "integration",
+      "test_type": "flow_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-009",
+      "story_id": "S-009",
+      "test_level": "regression",
+      "test_type": "policy_gate_test",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-010",
+      "story_id": "S-010",
+      "test_level": "system",
+      "test_type": "observability_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-011",
+      "story_id": "S-011",
+      "test_level": "integration",
+      "test_type": "alert_and_classification_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-012",
+      "story_id": "S-012",
+      "test_level": "system",
+      "test_type": "classification_accuracy_test",
+      "automation": "medium"
+    },
+    {
+      "test_id": "T-013",
+      "story_id": "S-013",
+      "test_level": "system",
+      "test_type": "repository_and_reproducibility_validation",
+      "automation": "medium"
+    },
+    {
+      "test_id": "T-014",
+      "story_id": "S-014",
+      "test_level": "code_review",
+      "test_type": "review_validation",
+      "automation": "medium"
+    },
+    {
+      "test_id": "T-015",
+      "story_id": "S-015",
+      "test_level": "system",
+      "test_type": "log_query_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-016",
+      "story_id": "S-016",
+      "test_level": "security",
+      "test_type": "data_protection_validation",
+      "automation": "medium"
+    },
+    {
+      "test_id": "T-017",
+      "story_id": "S-017",
+      "test_level": "system",
+      "test_type": "auditability_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-018",
+      "story_id": "S-018",
+      "test_level": "system",
+      "test_type": "governance_validation",
+      "automation": "low"
+    },
+    {
+      "test_id": "T-019",
+      "story_id": "S-019",
+      "test_level": "system",
+      "test_type": "operational_readiness",
+      "automation": "low"
+    },
+    {
+      "test_id": "T-020",
+      "story_id": "S-020",
+      "test_level": "system",
+      "test_type": "measurement_validation",
+      "automation": "medium"
+    },
+    {
+      "test_id": "T-021",
+      "story_id": "S-021",
+      "test_level": "system",
+      "test_type": "ownership_transfer_validation",
+      "automation": "low"
+    },
+    {
+      "test_id": "T-022",
+      "story_id": "S-022",
+      "test_level": "system",
+      "test_type": "evidence_completeness_validation",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-023",
+      "story_id": "S-023",
+      "test_level": "integration",
+      "test_type": "pipeline_gate",
+      "automation": "high"
+    },
+    {
+      "test_id": "T-024",
+      "story_id": "S-024",
+      "test_level": "system",
+      "test_type": "governance_validation",
+      "automation": "low"
+    }
+  ],
+  "definition_of_done": {
+    "global_rules": [
+      "Story-ID exists in all relevant artifacts and commit history",
+      "Acceptance criteria are verified and binary",
+      "Applicable tests are green",
+      "Test results are stored and traceable",
+      "AI review is performed where AI is used",
+      "Reproducibility is documented for AI-assisted artifacts",
+      "Risks are recorded and either accepted or mitigated",
+      "AQA signoff exists where AI risk is present",
+      "Value Owner approval exists for release-affecting work"
+    ]
+  },
+  "acceptance_model": {
+    "rules": [
+      "Acceptance criteria must be measurable",
+      "Acceptance criteria must be binary",
+      "Acceptance criteria must be testable without interpretation",
+      "Every story must map to one epic",
+      "Every epic must map to one outcome",
+      "Every test must map to one story",
+      "AI usage must be declared when applicable"
+    ]
+  },
+  "evidence_pack": {
+    "required_elements": [
+      "trace_outcome_to_story_to_test",
+      "commits_and_builds",
+      "ai_usage_log",
+      "review_and_approval_records",
+      "risk_acceptance",
+      "reproducibility_material",
+      "release_version",
+      "timestamp"
+    ]
+  },
+  "traceability": {
+    "outcome_to_epics": {
+      "O-001": [
+        "E-001",
+        "E-002",
+        "E-003",
+        "E-004",
+        "E-005",
+        "E-006",
+        "E-007",
+        "E-008"
+      ]
+    },
+    "epic_to_stories": {
+      "E-001": ["S-001", "S-002", "S-003"],
+      "E-002": ["S-004", "S-005", "S-006"],
+      "E-003": ["S-007", "S-008", "S-009"],
+      "E-004": ["S-010", "S-011", "S-012"],
+      "E-005": ["S-013", "S-014", "S-015"],
+      "E-006": ["S-016", "S-017", "S-018"],
+      "E-007": ["S-019", "S-020", "S-021"],
+      "E-008": ["S-022", "S-023", "S-024"]
+    },
+    "story_to_test": {
+      "S-001": "T-001",
+      "S-002": "T-002",
+      "S-003": "T-003",
+      "S-004": "T-004",
+      "S-005": "T-005",
+      "S-006": "T-006",
+      "S-007": "T-007",
+      "S-008": "T-008",
+      "S-009": "T-009",
+      "S-010": "T-010",
+      "S-011": "T-011",
+      "S-012": "T-012",
+      "S-013": "T-013",
+      "S-014": "T-014",
+      "S-015": "T-015",
+      "S-016": "T-016",
+      "S-017": "T-017",
+      "S-018": "T-018",
+      "S-019": "T-019",
+      "S-020": "T-020",
+      "S-021": "T-021",
+      "S-022": "T-022",
+      "S-023": "T-023",
+      "S-024": "T-024"
+    }
+  }
+}

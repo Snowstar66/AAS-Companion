@@ -9,6 +9,7 @@ type PendingFormButtonProps = Omit<ComponentProps<typeof Button>, "children" | "
   label: string;
   pendingLabel: string;
   icon?: ReactNode;
+  showPendingCursor?: boolean;
 };
 
 export function PendingFormButton({
@@ -17,6 +18,7 @@ export function PendingFormButton({
   className,
   icon,
   disabled,
+  showPendingCursor = false,
   ...buttonProps
 }: PendingFormButtonProps) {
   const { pending } = useFormStatus();
@@ -24,7 +26,7 @@ export function PendingFormButton({
   return (
     <Button
       {...buttonProps}
-      className={`${className ?? ""} ${pending ? "cursor-wait" : ""}`.trim()}
+      className={`${className ?? ""} ${pending && showPendingCursor ? "cursor-wait" : ""}`.trim()}
       disabled={disabled || pending}
       type="submit"
     >

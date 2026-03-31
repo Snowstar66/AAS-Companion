@@ -49,7 +49,7 @@ export async function createProjectAction(formData: FormData) {
     organizationName: projectName
   });
 
-  await setOrganizationContextCookie(project.organizationId);
+  await setOrganizationContextCookie(project);
 
   revalidatePath("/");
   redirect(`/framing?projectCreated=1`);
@@ -74,7 +74,7 @@ export async function openProjectAction(formData: FormData) {
     redirect(buildHomeRedirect({ error: "That project is no longer available for this user." }));
   }
 
-  await setOrganizationContextCookie(organizationId);
+  await setOrganizationContextCookie(project);
   revalidatePath("/");
   redirect("/framing");
 }

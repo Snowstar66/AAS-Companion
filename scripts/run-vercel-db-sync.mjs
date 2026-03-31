@@ -8,6 +8,11 @@ const databaseUrl = process.env.DATABASE_URL?.trim() ?? "";
 const directUrl = process.env.DIRECT_URL?.trim() ?? "";
 const isSupabasePoolerUrl = /pooler\.supabase\.com/i.test(databaseUrl);
 
+if (!databaseUrl) {
+  console.log("Skipping Prisma db push during Vercel build because DATABASE_URL is not set.");
+  process.exit(0);
+}
+
 if (isSupabasePoolerUrl && !directUrl) {
   console.log(
     "Skipping Prisma db push during Vercel build because DATABASE_URL points to a Supabase pooler URL and DIRECT_URL is not set."

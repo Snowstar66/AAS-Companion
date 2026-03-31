@@ -6,7 +6,9 @@ import {
   authorityResponsibilityAreaSchema,
   governanceCoverageStatusSchema,
   organizationSideSchema,
-  partyRoleTypeSchema
+  partyRoleTypeSchema,
+  type OrganizationSide,
+  type PartyRoleType
 } from "./enums";
 
 export const partyRoleEntryRecordSchema = z.object({
@@ -159,6 +161,57 @@ export const governanceRecommendationSchema = z.object({
   description: z.string().min(1)
 });
 
+export const governanceRoleCategorySchema = z.enum(["required", "recommended", "optional"]);
+export const governanceAdaptiveReadinessSchema = z.enum(["ready", "partial", "not_ready"]);
+
+export const governanceAdaptiveRoleItemSchema = z.object({
+  roleType: partyRoleTypeSchema,
+  organizationSide: organizationSideSchema,
+  category: governanceRoleCategorySchema,
+  label: z.string().min(1),
+  assignedPeople: z.array(
+    z.object({
+      id: z.string().min(1),
+      fullName: z.string().min(1),
+      email: z.string().email(),
+      roleTitle: z.string().min(1)
+    })
+  ),
+  status: z.enum(["covered", "gap", "warning"])
+});
+
+export const governanceAdaptiveRoleBucketSchema = z.object({
+  category: governanceRoleCategorySchema,
+  title: z.string().min(1),
+  items: z.array(governanceAdaptiveRoleItemSchema)
+});
+
+export const governanceAgentExpectationSchema = z.object({
+  label: z.string().min(1),
+  purpose: z.string().min(1)
+});
+
+export const governanceAgentGuidanceSchema = z.object({
+  allowedAgents: z.array(governanceAgentExpectationSchema),
+  rules: z.array(z.string().min(1))
+});
+
+export const governanceReadinessGapSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(["gap", "warning"]),
+  message: z.string().min(1),
+  guidance: z.string().min(1),
+  targetSection: z.enum(["human_roles", "ai_agents"])
+});
+
+export const governanceAdaptiveCockpitSchema = z.object({
+  selectedAiLevel: aiAccelerationLevelSchema,
+  readiness: governanceAdaptiveReadinessSchema,
+  readinessLabel: z.string().min(1),
+  readinessDetail: z.string().min(1),
+  keyMissingItems: z.array(z.string().min(1))
+});
+
 export const governanceStaffingValidationSchema = z.object({
   selectedAiLevel: aiAccelerationLevelSchema,
   status: governanceStaffingValidationStatusSchema,
@@ -199,6 +252,14 @@ export type GovernanceStaffingValidationStatus = z.infer<typeof governanceStaffi
 export type GovernanceRecommendation = z.infer<typeof governanceRecommendationSchema>;
 export type GovernanceStaffingValidation = z.infer<typeof governanceStaffingValidationSchema>;
 export type AuthorityMatrixRule = z.infer<typeof authorityMatrixRuleSchema>;
+export type GovernanceRoleCategory = z.infer<typeof governanceRoleCategorySchema>;
+export type GovernanceAdaptiveReadiness = z.infer<typeof governanceAdaptiveReadinessSchema>;
+export type GovernanceAdaptiveRoleItem = z.infer<typeof governanceAdaptiveRoleItemSchema>;
+export type GovernanceAdaptiveRoleBucket = z.infer<typeof governanceAdaptiveRoleBucketSchema>;
+export type GovernanceAgentExpectation = z.infer<typeof governanceAgentExpectationSchema>;
+export type GovernanceAgentGuidance = z.infer<typeof governanceAgentGuidanceSchema>;
+export type GovernanceReadinessGap = z.infer<typeof governanceReadinessGapSchema>;
+export type GovernanceAdaptiveCockpit = z.infer<typeof governanceAdaptiveCockpitSchema>;
 
 export const authorityMatrixRules = authorityMatrixRuleSchema.array().parse([
   {
@@ -279,6 +340,307 @@ export const authorityMatrixRules = authorityMatrixRuleSchema.array().parse([
     aiGovernanceRoleTypes: ["ai_governance_lead"]
   }
 ]);
+
+const adaptiveGovernanceLevelDefinitions = {
+  level_1: {
+    title: "Level 1 - Assisted",
+    description: "Human-led delivery with light AI usage."
+  },
+  level_2: {
+    title: "Level 2 - Structured",
+    description: "Shared human and AI execution with clearer review coverage."
+  },
+  level_3: {
+    title: "Level 3 - Agentic",
+    description: "High AI automation with explicit supervision and traceability."
+  }
+} as const satisfies Record<
+  "level_1" | "level_2" | "level_3",
+  {
+    title: string;
+    description: string;
+  }
+>;
+
+const adaptiveRoleProfiles = {
+  level_1: [
+    { roleType: "value_owner", organizationSide: "customer", category: "required", label: "Value Owner" },
+    { roleType: "delivery_lead", organizationSide: "supplier", category: "required", label: "Delivery Lead" },
+    { roleType: "architect", organizationSide: "supplier", category: "recommended", label: "Architect" },
+    { roleType: "aida", organizationSide: "supplier", category: "optional", label: "AIDA (AI Delivery)" },
+    { roleType: "aqa", organizationSide: "supplier", category: "optional", label: "AQA (AI Quality Authority)" },
+    { roleType: "risk_owner", organizationSide: "customer", category: "optional", label: "Risk Owner" }
+  ],
+  level_2: [
+    { roleType: "value_owner", organizationSide: "customer", category: "required", label: "Value Owner" },
+    { roleType: "delivery_lead", organizationSide: "supplier", category: "required", label: "Delivery Lead" },
+    { roleType: "architect", organizationSide: "supplier", category: "required", label: "Architect" },
+    { roleType: "aqa", organizationSide: "supplier", category: "required", label: "AQA (AI Quality Authority)" },
+    { roleType: "aida", organizationSide: "supplier", category: "recommended", label: "AIDA (AI Delivery)" },
+    { roleType: "risk_owner", organizationSide: "customer", category: "optional", label: "Risk Owner" },
+    { roleType: "ai_governance_lead", organizationSide: "supplier", category: "optional", label: "AI Governance Lead" }
+  ],
+  level_3: [
+    { roleType: "value_owner", organizationSide: "customer", category: "required", label: "Value Owner" },
+    { roleType: "delivery_lead", organizationSide: "supplier", category: "required", label: "Delivery Lead" },
+    { roleType: "architect", organizationSide: "supplier", category: "required", label: "Architect" },
+    { roleType: "aqa", organizationSide: "supplier", category: "required", label: "AQA (AI Quality Authority)" },
+    { roleType: "aida", organizationSide: "supplier", category: "required", label: "AIDA (AI Delivery)" },
+    { roleType: "ai_governance_lead", organizationSide: "supplier", category: "recommended", label: "AI Governance Lead" },
+    { roleType: "risk_owner", organizationSide: "customer", category: "recommended", label: "Risk Owner" },
+    { roleType: "customer_domain_owner", organizationSide: "customer", category: "optional", label: "Domain Owner" }
+  ]
+} as const satisfies Record<
+  "level_1" | "level_2" | "level_3",
+  ReadonlyArray<{
+    roleType: PartyRoleType;
+    organizationSide: OrganizationSide;
+    category: GovernanceRoleCategory;
+    label: string;
+  }>
+>;
+
+const adaptiveAgentGuidanceProfiles = {
+  level_1: {
+    allowedAgents: [
+      { label: "Code assistant", purpose: "Supports human-led coding work." },
+      { label: "Text assistant", purpose: "Refines framing text and documentation." },
+      { label: "Basic test generation", purpose: "Suggests straightforward tests under direct supervision." }
+    ],
+    rules: ["Direct human supervision", "No structured AI workflow required"]
+  },
+  level_2: {
+    allowedAgents: [
+      { label: "Structured code generation", purpose: "Supports scoped delivery work with human review." },
+      { label: "Test generation", purpose: "Produces draft tests for human review." },
+      { label: "Story refinement", purpose: "Improves design and story definition clarity." },
+      { label: "Design assistance", purpose: "Supports design structure and documentation." }
+    ],
+    rules: ["AQA should review AI output", "Human supervision must be explicit", "Prompt and workflow awareness is expected"]
+  },
+  level_3: {
+    allowedAgents: [
+      { label: "Agent workflows", purpose: "Coordinates multi-step governed AI work." },
+      { label: "Multi-step automation", purpose: "Automates structured delivery activities." },
+      { label: "Semi-autonomous execution", purpose: "Runs bounded flows under named human supervision." }
+    ],
+    rules: ["Every active agent must be registered", "Each active agent needs a named supervisor", "Agent workflows must be documented", "Traceability must stay clear"]
+  }
+} as const satisfies Record<"level_1" | "level_2" | "level_3", GovernanceAgentGuidance>;
+
+const adaptiveConflictRules = {
+  level_1: [] as const,
+  level_2: [
+    {
+      primaryRoleType: "value_owner" as const,
+      conflictingRoleType: "aqa" as const,
+      message: "Same person holds Value Owner and AQA. Keep business ownership and AI quality review separated where possible."
+    },
+    {
+      primaryRoleType: "delivery_lead" as const,
+      conflictingRoleType: "aqa" as const,
+      message: "Same person holds Delivery Lead and AQA. Delivery control and independent quality review should not collapse."
+    }
+  ],
+  level_3: [
+    {
+      primaryRoleType: "value_owner" as const,
+      conflictingRoleType: "aqa" as const,
+      message: "Same person holds Value Owner and AQA. Level 3 should keep business ownership and AI quality review separated."
+    },
+    {
+      primaryRoleType: "delivery_lead" as const,
+      conflictingRoleType: "aqa" as const,
+      message: "Same person holds Delivery Lead and AQA. Level 3 needs stronger separation between execution and quality authority."
+    },
+    {
+      primaryRoleType: "architect" as const,
+      conflictingRoleType: "risk_owner" as const,
+      message: "Same person holds Architect and Risk Owner. Level 3 should separate design authority from final risk acceptance."
+    },
+    {
+      primaryRoleType: "aida" as const,
+      conflictingRoleType: "aqa" as const,
+      message: "Same person holds AIDA and AQA. Level 3 should separate AI delivery from AI quality authority."
+    }
+  ]
+} as const;
+
+function findMatchingPeople(
+  people: PartyRoleEntryRecord[],
+  roleType: PartyRoleType,
+  organizationSide: OrganizationSide
+) {
+  return people
+    .filter((person) => person.isActive && person.roleType === roleType && person.organizationSide === organizationSide)
+    .map((person) => ({
+      id: person.id,
+      fullName: person.fullName,
+      email: person.email,
+      roleTitle: person.roleTitle
+    }));
+}
+
+export function getAdaptiveGovernanceLevelDefinition(aiAccelerationLevel: "level_1" | "level_2" | "level_3") {
+  return adaptiveGovernanceLevelDefinitions[aiAccelerationLevel];
+}
+
+export function getAdaptiveGovernanceRoleProfile(aiAccelerationLevel: "level_1" | "level_2" | "level_3") {
+  return adaptiveRoleProfiles[aiAccelerationLevel];
+}
+
+export function getAdaptiveGovernanceAgentGuidance(aiAccelerationLevel: "level_1" | "level_2" | "level_3") {
+  return adaptiveAgentGuidanceProfiles[aiAccelerationLevel];
+}
+
+export function buildAdaptiveGovernanceAssessment(input: {
+  aiAccelerationLevel: "level_1" | "level_2" | "level_3";
+  people: PartyRoleEntryRecord[];
+  agents: Array<{
+    id: string;
+    agentName: string;
+    purpose: string;
+    scopeOfWork: string;
+    allowedArtifactTypes: string[];
+    allowedActions: string[];
+    isActive: boolean;
+    supervisingPartyRoleId: string;
+    supervisingPartyRole?: {
+      isActive: boolean;
+    } | null;
+  }>;
+}) {
+  const activePeople = input.people.filter((person) => person.isActive);
+  const roleProfile = getAdaptiveGovernanceRoleProfile(input.aiAccelerationLevel);
+  const agentGuidance = getAdaptiveGovernanceAgentGuidance(input.aiAccelerationLevel);
+  const roleItems = roleProfile.map((profile) =>
+    governanceAdaptiveRoleItemSchema.parse({
+      ...profile,
+      assignedPeople: findMatchingPeople(activePeople, profile.roleType, profile.organizationSide),
+      status:
+        findMatchingPeople(activePeople, profile.roleType, profile.organizationSide).length > 0
+          ? "covered"
+          : profile.category === "required"
+            ? "gap"
+            : "warning"
+    })
+  );
+  const roleBuckets = (["required", "recommended", "optional"] as const).map((category) =>
+    governanceAdaptiveRoleBucketSchema.parse({
+      category,
+      title: category === "required" ? "Required" : category === "recommended" ? "Recommended" : "Optional",
+      items: roleItems.filter((item) => item.category === category)
+    })
+  );
+
+  const readinessGaps: GovernanceReadinessGap[] = [];
+
+  for (const item of roleItems) {
+    if (item.category === "required" && item.assignedPeople.length === 0) {
+      readinessGaps.push(
+        governanceReadinessGapSchema.parse({
+          id: `missing-role-${item.organizationSide}-${item.roleType}`,
+          status: "gap",
+          message: `Missing ${item.label} for ${input.aiAccelerationLevel.replaceAll("_", " ")}.`,
+          guidance: "Assign a named active person to this required role.",
+          targetSection: "human_roles"
+        })
+      );
+    }
+  }
+
+  for (const item of roleItems) {
+    if (item.category === "recommended" && item.assignedPeople.length === 0) {
+      readinessGaps.push(
+        governanceReadinessGapSchema.parse({
+          id: `recommended-role-${item.organizationSide}-${item.roleType}`,
+          status: "warning",
+          message: `${item.label} is recommended for ${input.aiAccelerationLevel.replaceAll("_", " ")} but not yet named.`,
+          guidance: "Add this role if you want clearer governance coverage.",
+          targetSection: "human_roles"
+        })
+      );
+    }
+  }
+
+  for (const rule of adaptiveConflictRules[input.aiAccelerationLevel]) {
+    const riskyPeople = activePeople.filter(
+      (person) =>
+        person.roleType === rule.primaryRoleType &&
+        activePeople.some(
+          (candidate) => candidate.email === person.email && candidate.roleType === rule.conflictingRoleType
+        )
+    );
+
+    for (const person of riskyPeople) {
+      readinessGaps.push(
+        governanceReadinessGapSchema.parse({
+          id: `role-conflict-${rule.primaryRoleType}-${rule.conflictingRoleType}-${person.id}`,
+          status: "warning",
+          message: `Same person holds conflicting roles: ${person.fullName}.`,
+          guidance: rule.message,
+          targetSection: "human_roles"
+        })
+      );
+    }
+  }
+
+  const activeAgents = input.agents.filter((agent) => agent.isActive);
+
+  for (const agent of activeAgents) {
+    if (!agent.supervisingPartyRole || agent.supervisingPartyRole.isActive !== true) {
+      readinessGaps.push(
+        governanceReadinessGapSchema.parse({
+          id: `missing-supervisor-${agent.id}`,
+          status: "gap",
+          message: `Agent "${agent.agentName}" has no active human supervisor.`,
+          guidance: "Assign a named active supervisor before trusting this agent in live work.",
+          targetSection: "ai_agents"
+        })
+      );
+    }
+
+    if (
+      input.aiAccelerationLevel === "level_3" &&
+      (agent.allowedActions.length === 0 || agent.allowedArtifactTypes.length === 0)
+    ) {
+      readinessGaps.push(
+        governanceReadinessGapSchema.parse({
+          id: `agent-traceability-${agent.id}`,
+          status: "warning",
+          message: `Agent "${agent.agentName}" needs clearer Level 3 traceability.`,
+          guidance: "Document scope, allowed artifacts and allowed actions more explicitly.",
+          targetSection: "ai_agents"
+        })
+      );
+    }
+  }
+
+  const hardGapCount = readinessGaps.filter((gap) => gap.status === "gap").length;
+  const warningCount = readinessGaps.filter((gap) => gap.status === "warning").length;
+  const readiness: GovernanceAdaptiveReadiness =
+    hardGapCount > 0 ? "not_ready" : warningCount > 0 ? "partial" : "ready";
+  const cockpit = governanceAdaptiveCockpitSchema.parse({
+    selectedAiLevel: input.aiAccelerationLevel,
+    readiness,
+    readinessLabel: readiness === "ready" ? "Ready" : readiness === "partial" ? "Partial" : "Not ready",
+    readinessDetail:
+      readiness === "ready"
+        ? "Required roles and agent supervision are in place for the selected AI level."
+        : readiness === "partial"
+          ? "Required roles are covered, but some governance warnings still need attention."
+          : "Required roles or agent supervision are still missing for the selected AI level.",
+    keyMissingItems: readinessGaps.slice(0, 4).map((gap) => gap.message)
+  });
+
+  return {
+    levelDefinition: getAdaptiveGovernanceLevelDefinition(input.aiAccelerationLevel),
+    roleBuckets,
+    agentGuidance,
+    readinessGaps,
+    cockpit
+  };
+}
 
 export function buildGovernanceCoverageAssessment(input: {
   aiAccelerationLevel: "level_1" | "level_2" | "level_3";

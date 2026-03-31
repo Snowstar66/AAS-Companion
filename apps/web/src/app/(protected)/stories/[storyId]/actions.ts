@@ -8,9 +8,14 @@ import {
   recordTollgateDecisionService,
   restoreGovernedObjectService,
   saveStoryWorkspaceService,
-  submitStoryReadinessService
+  submitStoryReadinessService,
+  validateStoryExpectedBehaviorWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import {
+  revalidateFramingCockpitCache,
+  revalidateOutcomeWorkspaceCache
+} from "@/lib/cache/project-data";
 
 function buildStoryRedirect(storyId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -55,6 +60,63 @@ function readCommaValues(formData: FormData, fieldName: string) {
     .filter(Boolean);
 }
 
+export type StoryExpectedBehaviorAiActionState =
+  | {
+      status: "success";
+      field: "story_expected_behavior";
+      verdict: "good" | "needs_revision" | "unclear";
+      confidence: "high" | "medium" | "low";
+      rationale: string;
+      suggestedRewrite: string | null;
+    }
+  | {
+      status: "error";
+      field: "story_expected_behavior";
+      error: string;
+    };
+
+export type StoryInlineSaveActionState =
+  | {
+      status: "success";
+      message: string;
+    }
+  | {
+      status: "error";
+      message: string;
+    };
+
+export async function validateStoryExpectedBehaviorAiAction(
+  formData: FormData
+): Promise<StoryExpectedBehaviorAiActionState> {
+  const session = await requireActiveProjectSession();
+  const result = await validateStoryExpectedBehaviorWithAiService({
+    organizationId: session.organization.organizationId,
+    title: String(formData.get("title") ?? "") || null,
+    valueIntent: String(formData.get("valueIntent") ?? "") || null,
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    epicTitle: String(formData.get("epicTitle") ?? "") || null,
+    epicPurpose: String(formData.get("epicPurpose") ?? "") || null,
+    epicScopeBoundary: String(formData.get("epicScopeBoundary") ?? "") || null
+  });
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      field: "story_expected_behavior",
+      error: result.errors[0]?.message ?? "AI validation failed."
+    };
+  }
+
+  return {
+    status: "success",
+    field: result.data.field,
+    verdict: result.data.verdict,
+    confidence: result.data.confidence,
+    rationale: result.data.rationale,
+    suggestedRewrite: result.data.suggestedRewrite ?? null
+  };
+}
+
 export async function saveStoryWorkspaceAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const storyId = String(formData.get("storyId") ?? "");
@@ -67,12 +129,15 @@ export async function saveStoryWorkspaceAction(formData: FormData) {
     title: String(formData.get("title") ?? ""),
     storyType: String(formData.get("storyType") ?? "outcome_delivery") as "outcome_delivery" | "governance" | "enablement",
     valueIntent: String(formData.get("valueIntent") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
     acceptanceCriteria: readMultilineValues(formData, "acceptanceCriteria"),
     aiUsageScope: readCommaValues(formData, "aiUsageScope"),
     testDefinition: String(formData.get("testDefinition") ?? "") || null,
     definitionOfDone: readMultilineValues(formData, "definitionOfDone")
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -101,6 +166,52 @@ export async function saveStoryWorkspaceAction(formData: FormData) {
   );
 }
 
+export async function saveStoryWorkspaceInlineAction(formData: FormData): Promise<StoryInlineSaveActionState> {
+  const session = await requireActiveProjectSession();
+  const storyId = String(formData.get("storyId") ?? "");
+  const epicId = String(formData.get("epicId") ?? "");
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const result = await saveStoryWorkspaceService({
+    organizationId: session.organization.organizationId,
+    id: storyId,
+    actorId: session.userId,
+    title: String(formData.get("title") ?? ""),
+    storyType: String(formData.get("storyType") ?? "outcome_delivery") as "outcome_delivery" | "governance" | "enablement",
+    valueIntent: String(formData.get("valueIntent") ?? ""),
+    expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
+    acceptanceCriteria: readMultilineValues(formData, "acceptanceCriteria"),
+    aiUsageScope: readCommaValues(formData, "aiUsageScope"),
+    testDefinition: String(formData.get("testDefinition") ?? "") || null,
+    definitionOfDone: readMultilineValues(formData, "definitionOfDone")
+  });
+
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
+  revalidatePath(`/stories/${storyId}`);
+  if (epicId) {
+    revalidatePath(`/epics/${epicId}`);
+  }
+  if (outcomeId) {
+    revalidatePath(`/outcomes/${outcomeId}`);
+    revalidatePath("/framing");
+  }
+  revalidatePath("/stories");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      status: "error",
+      message: result.errors[0]?.message ?? "Story could not be saved."
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Suggestion saved to the Story."
+  };
+}
+
 export async function submitStoryReadinessAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const storyId = String(formData.get("storyId") ?? "");
@@ -114,6 +225,8 @@ export async function submitStoryReadinessAction(formData: FormData) {
     comments
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -174,6 +287,8 @@ export async function recordStoryTollgateDecisionAction(formData: FormData) {
     createdBy: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -225,6 +340,8 @@ export async function hardDeleteStoryAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
   }
@@ -272,6 +389,8 @@ export async function archiveStoryAction(formData: FormData) {
     reason
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -322,6 +441,8 @@ export async function restoreStoryAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);

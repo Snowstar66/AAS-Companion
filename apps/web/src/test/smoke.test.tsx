@@ -13,15 +13,13 @@ vi.mock("@/lib/home/dashboard", () => ({
       state: "unavailable",
       organizationName: "No project selected",
       message: "Dashboard data is unavailable right now.",
-      summary: [],
-      outcomesByStatus: [],
+      projectPhase: {
+        key: "framing",
+        label: "Framing phase",
+        detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+      },
       topBlockers: [],
-      pendingActions: [],
-      recentActivity: [],
-      rightRail: {
-        blockers: [],
-        nextActions: []
-      }
+      pendingActions: []
     }
   }))
 }));

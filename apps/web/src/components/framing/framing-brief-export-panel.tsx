@@ -37,16 +37,16 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
       <CardHeader>
         <CardTitle>Export framing brief</CardTitle>
         <CardDescription>
-          Export the current customer handshake as an AI-friendly brief for further refinement in tools such as BMAD.
-          Business content comes first. Internal IDs remain as metadata only.
+          Export the current framing brief, epics and direction seeds as an AI-friendly package for further refinement in tools such as BMAD.
+          Business content comes first. Internal IDs and any legacy migration references remain as metadata only.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
           <p className="font-medium">How to use this export</p>
           <p className="mt-2">
-            Use Markdown when you want to paste the brief into another AI tool. Use JSON when another system or workflow
-            should read the package structurally.
+            Use Markdown when you want to paste the framing brief into another AI tool. Use JSON when another system or workflow
+            should read the package structurally with epics and direction seeds intact.
           </p>
           {disabled ? <p className="mt-2">Restore the Outcome first if you want to update the framing before exporting again.</p> : null}
         </div>
@@ -98,7 +98,7 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>JSON preview</CardTitle>
-              <CardDescription>Structured payload with metadata retained for traceability.</CardDescription>
+              <CardDescription>Structured payload with metadata retained only for traceability and migration context.</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="max-h-[520px] overflow-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">

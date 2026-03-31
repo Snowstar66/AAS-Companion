@@ -162,6 +162,7 @@ enum ActivityEntityType {
   organization
   outcome
   epic
+  direction_seed
   story
   tollgate
   signoff_record
@@ -178,6 +179,8 @@ enum ActivityEventType {
   outcome_updated
   epic_created
   epic_updated
+  direction_seed_created
+  direction_seed_updated
   story_created
   story_updated
   tollgate_recorded
@@ -260,6 +263,7 @@ model Organization {
   memberships                  Membership[]
   outcomes                     Outcome[]
   epics                        Epic[]
+  directionSeeds               DirectionSeed[]
   stories                      Story[]
   tollgates                    Tollgate[]
   signoffRecords               SignoffRecord[]
@@ -403,6 +407,7 @@ model Outcome {
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   valueOwner          AppUser?            @relation("OutcomeValueOwner", fields: [valueOwnerId], references: [id], onDelete: SetNull)
   epics               Epic[]
+  directionSeeds      DirectionSeed[]
   stories             Story[]
 
   @@unique([organizationId, key])
@@ -434,12 +439,51 @@ model Epic {
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   outcome        Outcome      @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  directionSeeds DirectionSeed[]
   stories        Story[]
 
   @@unique([organizationId, key])
   @@index([organizationId, originType])
   @@index([organizationId, lifecycleState])
   @@index([organizationId, outcomeId, lifecycleState])
+  @@index([organizationId, createdAt])
+}
+
+model DirectionSeed {
+  id                    String              @id
+  organizationId        String
+  outcomeId             String
+  epicId                String
+  key                   String
+  title                 String
+  shortDescription      String
+  expectedBehavior      String?
+  uxSketchName          String?
+  uxSketchContentType   String?
+  uxSketchDataUrl       String?
+  uxSketches            Json?
+  sourceStoryId         String?
+  originType            GovernedObjectOriginType @default(native)
+  createdMode           GovernedObjectCreatedMode @default(clean)
+  lifecycleState        GovernedLifecycleState @default(active)
+  archivedAt            DateTime?
+  archiveReason         String?
+  lineageSourceType     LineageSourceType?
+  lineageSourceId       String?
+  lineageNote           String?
+  importedReadinessState ImportedGovernedReadinessState?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  outcome               Outcome             @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  epic                  Epic                @relation(fields: [epicId], references: [id], onDelete: Cascade)
+  deliveryStories       Story[]             @relation("DirectionSeedToStoryIdeaSource")
+
+  @@unique([organizationId, key])
+  @@index([organizationId, outcomeId, lifecycleState])
+  @@index([organizationId, epicId, lifecycleState])
+  @@index([organizationId, originType])
+  @@index([organizationId, lifecycleState])
   @@index([organizationId, createdAt])
 }
 
@@ -452,11 +496,17 @@ model Story {
   title               String
   storyType           StoryType
   valueIntent         String
+  expectedBehavior    String?
+  uxSketchName        String?
+  uxSketchContentType String?
+  uxSketchDataUrl     String?
+  uxSketches          Json?
   acceptanceCriteria  String[]            @default([])
   aiUsageScope        String[]            @default([])
   aiAccelerationLevel AiAccelerationLevel @default(level_2)
   testDefinition      String?
   definitionOfDone    String[]            @default([])
+  sourceDirectionSeedId String?
   status              StoryStatus         @default(draft)
   originType          GovernedObjectOriginType @default(native)
   createdMode         GovernedObjectCreatedMode @default(clean)
@@ -472,6 +522,7 @@ model Story {
   organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   outcome             Outcome             @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
   epic                Epic                @relation(fields: [epicId], references: [id], onDelete: Cascade)
+  sourceDirectionSeed DirectionSeed?      @relation("DirectionSeedToStoryIdeaSource", fields: [sourceDirectionSeedId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, key])
   @@index([organizationId, originType])
@@ -479,6 +530,7 @@ model Story {
   @@index([organizationId, createdAt])
   @@index([organizationId, outcomeId, lifecycleState])
   @@index([organizationId, epicId, lifecycleState])
+  @@index([organizationId, sourceDirectionSeedId])
 }
 
 model Tollgate {

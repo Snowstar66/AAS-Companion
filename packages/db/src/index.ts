@@ -56,10 +56,18 @@ export {
 } from "./repositories/outcome-repository";
 export {
   reviewOutcomeFramingWithAi,
+  validateStoryExpectedBehaviorWithAi,
   validateOutcomeFieldWithAi,
   type OutcomeFieldAiValidation,
-  type OutcomeFramingAiReview
+  type OutcomeFramingAiReview,
+  type StoryExpectedBehaviorAiValidation
 } from "./repositories/outcome-ai-repository";
+export {
+  createDirectionSeed,
+  getDirectionSeedById,
+  listDirectionSeeds,
+  updateDirectionSeed
+} from "./repositories/direction-seed-repository";
 export {
   createEpic,
   getEpicById,
@@ -71,6 +79,7 @@ export {
   createStory,
   getStoryById,
   getStoryWorkspaceSnapshot,
+  listStoriesByDirectionSeedId,
   listStories,
   updateStory
 } from "./repositories/story-repository";

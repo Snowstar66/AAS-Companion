@@ -9,7 +9,7 @@ import { failure, success } from "./shared";
 
 type HumanReviewDashboardItem = {
   id: string;
-  workflow: "outcome_tollgate" | "story_review" | "story_handoff";
+  workflow: "outcome_tollgate" | "story_review" | "delivery_start";
   entityType: "outcome" | "story";
   entityId: string;
   key: string;
@@ -149,8 +149,8 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           title: outcome.title,
           status: summary.status,
           tone: getTone(summary.status),
-          actionLabel: "Open Outcome tollgate",
-          href: `/outcomes/${outcome.id}`,
+          actionLabel: "Open Tollgate 1 review",
+          href: `/outcomes/${outcome.id}#tollgate-review`,
           description:
             summary.status === "blocked"
               ? blocker ?? "Tollgate 1 still has blockers before approval can continue."
@@ -193,16 +193,16 @@ export async function getHumanReviewDashboardService(organizationId: string) {
         return [
           {
             id: `handoff-${story.id}`,
-            workflow: "story_handoff",
+            workflow: "delivery_start",
             entityType: "story",
             entityId: story.id,
             key: story.key,
             title: story.title,
             status: "approved",
             tone: "success",
-            actionLabel: "Open handoff",
+            actionLabel: "Open delivery start",
             href: `/handoff/${story.id}`,
-            description: "Approval is complete. Open the handoff page to finalize delivery handoff.",
+            description: "Delivery review is complete. Open the delivery start page to finalize the build package.",
             context,
             blocker: null,
             pendingLaneCount: 0,
@@ -228,12 +228,12 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           title: story.title,
           status: summary.status,
           tone: getTone(summary.status),
-          actionLabel: "Open Story approval",
+          actionLabel: "Open Delivery Story review",
           href: `/stories/${story.id}#story-signoff`,
           description:
             summary.status === "blocked"
-              ? blocker ?? "Story review still has blockers before approval can continue."
-              : `${summary.pendingRequirements.length} sign-off lane${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before this Story is approved.`,
+              ? blocker ?? "Delivery review still has blockers before build can start."
+              : `${summary.pendingRequirements.length} sign-off lane${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before this Delivery Story is ready to start build.`,
           context,
           blocker,
           pendingLaneCount: summary.pendingRequirements.length,
@@ -259,7 +259,7 @@ export async function getHumanReviewDashboardService(organizationId: string) {
         total: items.length,
         blocked: items.filter((item) => item.status === "blocked").length,
         inProgress: items.filter((item) => item.status === "ready").length,
-        handoffReady: items.filter((item) => item.workflow === "story_handoff").length,
+        deliveryStartReady: items.filter((item) => item.workflow === "delivery_start").length,
         outcomeTollgates: items.filter((item) => item.workflow === "outcome_tollgate").length,
         storyReviews: items.filter((item) => item.workflow === "story_review").length
       }

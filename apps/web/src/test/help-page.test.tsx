@@ -45,7 +45,10 @@ describe("Help page", () => {
     );
 
     expect(screen.getAllByRole("heading", { name: "What is this tool?" }).length).toBeGreaterThan(0);
-    expect(screen.getByText("Framing -> Design -> Build (AI tools)")).toBeDefined();
+    expect(screen.getByText("Framing -> Delivery -> Feedback loop")).toBeDefined();
+    expect(screen.getByText("Framing roundtrip")).toBeDefined();
+    expect(screen.getByText("Story Idea content")).toBeDefined();
+    expect(screen.getByText("Roundtrip in plain language")).toBeDefined();
     expect(screen.getByText("Outcome before output")).toBeDefined();
     expect(screen.getByText("It does not generate code.")).toBeDefined();
     expect(screen.getByText("AAS method deep dive")).toBeDefined();

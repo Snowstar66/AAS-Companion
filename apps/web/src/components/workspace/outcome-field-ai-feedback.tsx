@@ -1,8 +1,8 @@
 type OutcomeFieldAiFeedbackProps = {
-  field: "outcome_statement" | "baseline_definition";
+  field: "outcome_statement" | "baseline_definition" | "story_expected_behavior";
   feedback:
     | {
-        field: "outcome_statement" | "baseline_definition";
+        field: "outcome_statement" | "baseline_definition" | "story_expected_behavior";
         verdict: "good" | "needs_revision" | "unclear";
         confidence: "high" | "medium" | "low";
         rationale: string;

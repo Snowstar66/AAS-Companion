@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,8 +8,23 @@ const repoRoot = path.resolve(scriptDir, "..");
 const sourceDir = path.join(repoRoot, "packages", "db", "generated", "client");
 const targetDirs = [
   path.join(repoRoot, "apps", "web", ".prisma", "client"),
-  path.join(repoRoot, "apps", "web", "generated", "client")
+  path.join(repoRoot, "apps", "web", "generated", "client"),
+  path.join(repoRoot, "apps", "web", "node_modules", ".prisma", "client")
 ];
+const schemaPath = path.join(repoRoot, "packages", "db", "prisma", "schema.prisma");
+const generatedIndexPath = path.join(sourceDir, "index.d.ts");
+
+function shouldRegenerateSourceClient() {
+  if (process.env.VERCEL === "1" || !existsSync(sourceDir) || !existsSync(generatedIndexPath)) {
+    return true;
+  }
+
+  try {
+    return statSync(schemaPath).mtimeMs > statSync(generatedIndexPath).mtimeMs;
+  } catch {
+    return true;
+  }
+}
 
 function syncDirectory(targetDir) {
   mkdirSync(path.dirname(targetDir), { recursive: true });
@@ -39,8 +54,8 @@ function syncDirectory(targetDir) {
   }
 }
 
-if (process.env.VERCEL === "1") {
-  const result = spawnSync("pnpm", ["--filter", "@aas-companion/db", "db:generate"], {
+if (shouldRegenerateSourceClient()) {
+  const result = spawnSync("pnpm", ["db:generate"], {
     cwd: repoRoot,
     stdio: "inherit",
     shell: true,
