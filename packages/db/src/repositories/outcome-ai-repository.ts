@@ -62,6 +62,19 @@ type OutcomeFramingAiReviewInput = {
     solutionConstraints?: string | null;
     dataSensitivity?: string | null;
     deliveryType?: "AD" | "AT" | "AM" | null;
+    aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+    aiUsageIntent?: string | null;
+    businessImpactLevel?: "low" | "medium" | "high" | null;
+    businessImpactRationale?: string | null;
+    dataSensitivityLevel?: "low" | "medium" | "high" | null;
+    dataSensitivityRationale?: string | null;
+    blastRadiusLevel?: "low" | "medium" | "high" | null;
+    blastRadiusRationale?: string | null;
+    decisionImpactLevel?: "low" | "medium" | "high" | null;
+    decisionImpactRationale?: string | null;
+    aiLevelJustification?: string | null;
+    riskAcceptedAt?: Date | null;
+    riskAcceptedBy?: string | null;
     timeframe?: string | null;
     aiAccelerationLevel: "level_1" | "level_2" | "level_3";
     riskProfile: "low" | "medium" | "high";
@@ -606,6 +619,7 @@ You will receive:
 - Problem Statement
 - Outcome (including baseline and owner context)
 - Solution Context & Constraints
+- AI usage intent and structured risk rationale
 - Epics
 - Story Ideas (with Value Intent and Expected Behavior)
 - Selected AI Acceleration Level
@@ -820,6 +834,19 @@ export async function reviewOutcomeFramingWithAi(input: {
     solutionConstraints?: string | null;
     dataSensitivity?: string | null;
     deliveryType?: "AD" | "AT" | "AM" | null;
+    aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+    aiUsageIntent?: string | null;
+    businessImpactLevel?: "low" | "medium" | "high" | null;
+    businessImpactRationale?: string | null;
+    dataSensitivityLevel?: "low" | "medium" | "high" | null;
+    dataSensitivityRationale?: string | null;
+    blastRadiusLevel?: "low" | "medium" | "high" | null;
+    blastRadiusRationale?: string | null;
+    decisionImpactLevel?: "low" | "medium" | "high" | null;
+    decisionImpactRationale?: string | null;
+    aiLevelJustification?: string | null;
+    riskAcceptedAt?: Date | null;
+    riskAcceptedBy?: string | null;
     timeframe?: string | null;
     aiAccelerationLevel: "level_1" | "level_2" | "level_3";
     riskProfile: "low" | "medium" | "high";

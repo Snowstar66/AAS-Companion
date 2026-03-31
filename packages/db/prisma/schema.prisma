@@ -392,6 +392,19 @@ model Outcome {
   solutionConstraints String?
   dataSensitivity     String?
   deliveryType        String?
+  aiUsageRole         String?
+  aiUsageIntent       String?
+  businessImpactLevel RiskProfile?
+  businessImpactRationale String?
+  dataSensitivityLevel RiskProfile?
+  dataSensitivityRationale String?
+  blastRadiusLevel    RiskProfile?
+  blastRadiusRationale String?
+  decisionImpactLevel RiskProfile?
+  decisionImpactRationale String?
+  aiLevelJustification String?
+  riskAcceptedAt      DateTime?
+  riskAcceptedByValueOwnerId String?
   timeframe           String?
   valueOwnerId        String?
   riskProfile         RiskProfile         @default(medium)

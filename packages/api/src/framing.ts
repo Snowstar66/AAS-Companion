@@ -130,6 +130,26 @@ export async function getFramingCockpitData(
           outcomeStatement: entry.outcomeStatement ?? null,
           baselineDefinition: entry.baselineDefinition ?? null,
           valueOwnerId: entry.valueOwnerId ?? null,
+          aiUsageRole:
+            entry.aiUsageRole === "support" ||
+            entry.aiUsageRole === "generation" ||
+            entry.aiUsageRole === "validation" ||
+            entry.aiUsageRole === "decision_support" ||
+            entry.aiUsageRole === "automation"
+              ? entry.aiUsageRole
+              : null,
+          aiUsageIntent: entry.aiUsageIntent ?? null,
+          businessImpactLevel: entry.businessImpactLevel ?? null,
+          businessImpactRationale: entry.businessImpactRationale ?? null,
+          dataSensitivityLevel: entry.dataSensitivityLevel ?? null,
+          dataSensitivityRationale: entry.dataSensitivityRationale ?? null,
+          blastRadiusLevel: entry.blastRadiusLevel ?? null,
+          blastRadiusRationale: entry.blastRadiusRationale ?? null,
+          decisionImpactLevel: entry.decisionImpactLevel ?? null,
+          decisionImpactRationale: entry.decisionImpactRationale ?? null,
+          aiLevelJustification: entry.aiLevelJustification ?? null,
+          riskAcceptedAt: entry.riskAcceptedAt ?? null,
+          riskAcceptedByValueOwnerId: entry.riskAcceptedByValueOwnerId ?? null,
           riskProfile: entry.riskProfile,
           aiAccelerationLevel: entry.aiAccelerationLevel,
           status: entry.status,

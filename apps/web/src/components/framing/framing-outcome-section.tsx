@@ -2,7 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
-import { getOutcomeFramingBlockers } from "@aas-companion/domain";
+import { deriveOutcomeRiskProfile, getOutcomeFramingBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type {
   OutcomeInlineSaveActionState,
@@ -124,6 +124,26 @@ export function FramingOutcomeSection({
     outcomeStatement: outcome.outcomeStatement ?? null,
     baselineDefinition: outcome.baselineDefinition ?? null,
     valueOwnerId: outcome.valueOwnerId ?? null,
+    aiUsageRole:
+      outcome.aiUsageRole === "support" ||
+      outcome.aiUsageRole === "generation" ||
+      outcome.aiUsageRole === "validation" ||
+      outcome.aiUsageRole === "decision_support" ||
+      outcome.aiUsageRole === "automation"
+        ? outcome.aiUsageRole
+        : null,
+    aiUsageIntent: outcome.aiUsageIntent ?? null,
+    businessImpactLevel: outcome.businessImpactLevel ?? null,
+    businessImpactRationale: outcome.businessImpactRationale ?? null,
+    dataSensitivityLevel: outcome.dataSensitivityLevel ?? null,
+    dataSensitivityRationale: outcome.dataSensitivityRationale ?? null,
+    blastRadiusLevel: outcome.blastRadiusLevel ?? null,
+    blastRadiusRationale: outcome.blastRadiusRationale ?? null,
+    decisionImpactLevel: outcome.decisionImpactLevel ?? null,
+    decisionImpactRationale: outcome.decisionImpactRationale ?? null,
+    aiLevelJustification: outcome.aiLevelJustification ?? null,
+    riskAcceptedAt: outcome.riskAcceptedAt ?? null,
+    riskAcceptedByValueOwnerId: outcome.riskAcceptedByValueOwnerId ?? null,
     riskProfile: outcome.riskProfile,
     aiAccelerationLevel: outcome.aiAccelerationLevel,
     status: outcome.status,
@@ -156,6 +176,13 @@ export function FramingOutcomeSection({
   const returnPath = embeddedInFraming ? "/framing" : `/outcomes/${outcome.id}`;
   const draftOutcomeStatement = search.draftOutcomeStatement ?? outcome.outcomeStatement ?? "";
   const draftBaselineDefinition = search.draftBaselineDefinition ?? outcome.baselineDefinition ?? "";
+  const derivedRiskProfile = deriveOutcomeRiskProfile({
+    businessImpactLevel: outcome.businessImpactLevel ?? null,
+    dataSensitivityLevel: outcome.dataSensitivityLevel ?? null,
+    blastRadiusLevel: outcome.blastRadiusLevel ?? null,
+    decisionImpactLevel: outcome.decisionImpactLevel ?? null
+  });
+  const valueOwnerLabel = outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null;
   const seedsByEpicId = new Map<string, typeof outcome.directionSeeds>();
 
   for (const seed of outcome.directionSeeds) {
@@ -209,8 +236,9 @@ export function FramingOutcomeSection({
     outcome.outcomeStatement?.trim() ? "Outcome statement is captured" : null,
     outcome.baselineDefinition?.trim() ? "Baseline is defined" : null,
     outcome.valueOwnerId ? "Value owner is assigned" : null,
-    outcome.aiAccelerationLevel ? "AI level is set" : null,
-    outcome.riskProfile ? "Risk profile is set" : null,
+    derivedRiskProfile && blockers.every((blocker) => !blocker.toLowerCase().includes("risk") && !blocker.toLowerCase().includes("ai "))
+      ? "AI and risk decision is structured"
+      : null,
     outcome.epics.length > 0 ? `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"} created` : null,
     tollgate?.status === "approved" ? "Tollgate 1 approval is complete" : null
   ].filter((value): value is string => Boolean(value));
@@ -368,9 +396,9 @@ export function FramingOutcomeSection({
             <input name="returnPath" type="hidden" value={returnPath} />
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>Customer handshake</CardTitle>
+                <CardTitle>Business case</CardTitle>
                 <CardDescription>
-                  Keep this form focused on business effect, baseline, ownership, solution context, intended AI level and early direction.
+                  Capture the case at framing level: business problem, intended outcome, owner and solution context. Keep baseline and AI/risk as separate decisions below.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
@@ -533,17 +561,40 @@ export function FramingOutcomeSection({
 
             <div className="grid gap-6 xl:grid-cols-[minmax(360px,0.95fr)_minmax(0,1.05fr)]">
               <OutcomeAiRiskPostureCard
+                defaultAiLevelJustification={outcome.aiLevelJustification ?? null}
                 defaultAiLevel={outcome.aiAccelerationLevel}
+                defaultAiUsageIntent={outcome.aiUsageIntent ?? null}
+                defaultAiUsageRole={
+                  outcome.aiUsageRole === "support" ||
+                  outcome.aiUsageRole === "generation" ||
+                  outcome.aiUsageRole === "validation" ||
+                  outcome.aiUsageRole === "decision_support" ||
+                  outcome.aiUsageRole === "automation"
+                    ? outcome.aiUsageRole
+                    : null
+                }
+                defaultBlastRadiusLevel={outcome.blastRadiusLevel ?? null}
+                defaultBlastRadiusRationale={outcome.blastRadiusRationale ?? null}
+                defaultBusinessImpactLevel={outcome.businessImpactLevel ?? null}
+                defaultBusinessImpactRationale={outcome.businessImpactRationale ?? null}
+                defaultDataSensitivityLevel={outcome.dataSensitivityLevel ?? null}
+                defaultDataSensitivityRationale={outcome.dataSensitivityRationale ?? null}
+                defaultDecisionImpactLevel={outcome.decisionImpactLevel ?? null}
+                defaultDecisionImpactRationale={outcome.decisionImpactRationale ?? null}
+                defaultRiskAccepted={Boolean(outcome.riskAcceptedAt && outcome.riskAcceptedByValueOwnerId === outcome.valueOwnerId)}
+                defaultRiskAcceptedAt={outcome.riskAcceptedAt ? new Date(outcome.riskAcceptedAt).toISOString() : null}
+                defaultRiskAcceptedByValueOwnerId={outcome.riskAcceptedByValueOwnerId ?? null}
                 defaultRiskProfile={outcome.riskProfile}
                 disabled={isArchived}
+                valueOwnerLabel={valueOwnerLabel}
               />
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <CardTitle>Story Ideas</CardTitle>
+                      <CardTitle>Epics and Story Ideas</CardTitle>
                       <CardDescription>
-                        Capture epics and lightweight story ideas here. Keep them directional, not operational.
+                        Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational.
                       </CardDescription>
                     </div>
                     <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">

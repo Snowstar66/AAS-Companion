@@ -10,6 +10,18 @@ type FramingBriefOutcome = {
   solutionConstraints: string | null;
   dataSensitivity: string | null;
   deliveryType: string | null;
+  aiUsageRole: string | null;
+  aiUsageIntent: string | null;
+  businessImpactLevel: "low" | "medium" | "high" | null;
+  businessImpactRationale: string | null;
+  dataSensitivityLevel: "low" | "medium" | "high" | null;
+  dataSensitivityRationale: string | null;
+  blastRadiusLevel: "low" | "medium" | "high" | null;
+  blastRadiusRationale: string | null;
+  decisionImpactLevel: "low" | "medium" | "high" | null;
+  decisionImpactRationale: string | null;
+  aiLevelJustification: string | null;
+  riskAcceptedAt: Date | null;
   timeframe: string | null;
   aiAccelerationLevel: "level_1" | "level_2" | "level_3";
   riskProfile: "low" | "medium" | "high";
@@ -59,6 +71,23 @@ export type FramingBriefExportPayload = {
     source: string | null;
     blockers: string[];
     readiness: "ready" | "blocked";
+  };
+  ai_and_risk: {
+    ai_usage_role: string | null;
+    ai_usage_intent: string | null;
+    ai_level: "level_1" | "level_2" | "level_3";
+    risk_profile: "low" | "medium" | "high";
+    risk_rationale: {
+      business_impact: string | null;
+      data_sensitivity: string | null;
+      blast_radius: string | null;
+      decision_impact: string | null;
+    };
+    level_3_justification: string | null;
+    risk_acceptance: {
+      accepted_by: string | null;
+      accepted_at: string | null;
+    };
   };
   direction_seeds: {
     epic_count: number;
@@ -115,6 +144,14 @@ function normalizeDeliveryType(value: string | null | undefined): "AD" | "AT" | 
   return value === "AD" || value === "AT" || value === "AM" ? value : null;
 }
 
+function formatRiskRationale(level: "low" | "medium" | "high" | null, rationale: string | null | undefined) {
+  if (!level && !hasText(rationale)) {
+    return null;
+  }
+
+  return `${level ? `${level}: ` : ""}${rationale?.trim() || "Not captured yet"}`;
+}
+
 export function buildFramingBriefExport(input: {
   outcome: FramingBriefOutcome;
   blockers: string[];
@@ -149,6 +186,23 @@ export function buildFramingBriefExport(input: {
       source: input.outcome.baselineSource,
       blockers: input.blockers,
       readiness: input.blockers.length === 0 ? "ready" : "blocked"
+    },
+    ai_and_risk: {
+      ai_usage_role: input.outcome.aiUsageRole,
+      ai_usage_intent: input.outcome.aiUsageIntent,
+      ai_level: input.outcome.aiAccelerationLevel,
+      risk_profile: input.outcome.riskProfile,
+      risk_rationale: {
+        business_impact: formatRiskRationale(input.outcome.businessImpactLevel, input.outcome.businessImpactRationale),
+        data_sensitivity: formatRiskRationale(input.outcome.dataSensitivityLevel, input.outcome.dataSensitivityRationale),
+        blast_radius: formatRiskRationale(input.outcome.blastRadiusLevel, input.outcome.blastRadiusRationale),
+        decision_impact: formatRiskRationale(input.outcome.decisionImpactLevel, input.outcome.decisionImpactRationale)
+      },
+      level_3_justification: input.outcome.aiLevelJustification,
+      risk_acceptance: {
+        accepted_by: valueOwner,
+        accepted_at: input.outcome.riskAcceptedAt ? input.outcome.riskAcceptedAt.toISOString() : null
+      }
     },
     direction_seeds: {
       epic_count: input.outcome.epics.length,
@@ -224,6 +278,19 @@ export function buildFramingBriefExport(input: {
     `- Readiness: ${payload.baseline.readiness === "ready" ? "Baseline ready" : "Baseline still blocked"}`,
     `- Definition: ${payload.baseline.definition ?? "Not captured yet"}`,
     `- Source: ${payload.baseline.source ?? "Not captured yet"}`,
+    "",
+    "## AI Level and Risk",
+    `- AI usage role: ${payload.ai_and_risk.ai_usage_role ?? "Not captured yet"}`,
+    `- AI usage intent: ${payload.ai_and_risk.ai_usage_intent ?? "Not captured yet"}`,
+    `- AI level: ${formatAiLevel(payload.ai_and_risk.ai_level)}`,
+    `- Risk profile: ${payload.ai_and_risk.risk_profile}`,
+    `- Business impact: ${payload.ai_and_risk.risk_rationale.business_impact ?? "Not captured yet"}`,
+    `- Data sensitivity: ${payload.ai_and_risk.risk_rationale.data_sensitivity ?? "Not captured yet"}`,
+    `- Blast radius: ${payload.ai_and_risk.risk_rationale.blast_radius ?? "Not captured yet"}`,
+    `- Decision impact: ${payload.ai_and_risk.risk_rationale.decision_impact ?? "Not captured yet"}`,
+    `- Level 3 justification: ${payload.ai_and_risk.level_3_justification ?? "Not captured yet"}`,
+    `- Risk accepted by: ${payload.ai_and_risk.risk_acceptance.accepted_by ?? "Not captured yet"}`,
+    `- Risk accepted at: ${payload.ai_and_risk.risk_acceptance.accepted_at ?? "Not captured yet"}`,
     "",
     "## Visible Blockers",
     ...(payload.baseline.blockers.length > 0

@@ -55,6 +55,11 @@ function requireExplicitConfirmation(formData: FormData) {
   return String(formData.get("confirmAction") ?? "") === "yes";
 }
 
+function parseOptionalRiskLevel(formData: FormData, key: string) {
+  const value = String(formData.get(key) ?? "");
+  return value === "low" || value === "medium" || value === "high" ? value : null;
+}
+
 function parseDecisionKey(value: string) {
   if (value === "escalation") {
     return {
@@ -90,6 +95,28 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
+    aiUsageRole:
+      (String(formData.get("aiUsageRole") ?? "") as
+        | "support"
+        | "generation"
+        | "validation"
+        | "decision_support"
+        | "automation") || null,
+    aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
+    businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
+    businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,
+    dataSensitivityLevel: parseOptionalRiskLevel(formData, "dataSensitivityLevel"),
+    dataSensitivityRationale: String(formData.get("dataSensitivityRationale") ?? "") || null,
+    blastRadiusLevel: parseOptionalRiskLevel(formData, "blastRadiusLevel"),
+    blastRadiusRationale: String(formData.get("blastRadiusRationale") ?? "") || null,
+    decisionImpactLevel: parseOptionalRiskLevel(formData, "decisionImpactLevel"),
+    decisionImpactRationale: String(formData.get("decisionImpactRationale") ?? "") || null,
+    aiLevelJustification: String(formData.get("aiLevelJustification") ?? "") || null,
+    riskAcceptanceConfirmed: String(formData.get("riskAcceptanceConfirmed") ?? "") === "yes",
+    existingRiskAcceptedAt: String(formData.get("existingRiskAcceptedAt") ?? "")
+      ? new Date(String(formData.get("existingRiskAcceptedAt")))
+      : null,
+    existingRiskAcceptedByValueOwnerId: String(formData.get("existingRiskAcceptedByValueOwnerId") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
     valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
     riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",
@@ -147,6 +174,28 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
     solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
+    aiUsageRole:
+      (String(formData.get("aiUsageRole") ?? "") as
+        | "support"
+        | "generation"
+        | "validation"
+        | "decision_support"
+        | "automation") || null,
+    aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
+    businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
+    businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,
+    dataSensitivityLevel: parseOptionalRiskLevel(formData, "dataSensitivityLevel"),
+    dataSensitivityRationale: String(formData.get("dataSensitivityRationale") ?? "") || null,
+    blastRadiusLevel: parseOptionalRiskLevel(formData, "blastRadiusLevel"),
+    blastRadiusRationale: String(formData.get("blastRadiusRationale") ?? "") || null,
+    decisionImpactLevel: parseOptionalRiskLevel(formData, "decisionImpactLevel"),
+    decisionImpactRationale: String(formData.get("decisionImpactRationale") ?? "") || null,
+    aiLevelJustification: String(formData.get("aiLevelJustification") ?? "") || null,
+    riskAcceptanceConfirmed: String(formData.get("riskAcceptanceConfirmed") ?? "") === "yes",
+    existingRiskAcceptedAt: String(formData.get("existingRiskAcceptedAt") ?? "")
+      ? new Date(String(formData.get("existingRiskAcceptedAt")))
+      : null,
+    existingRiskAcceptedByValueOwnerId: String(formData.get("existingRiskAcceptedByValueOwnerId") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
     valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
     riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",

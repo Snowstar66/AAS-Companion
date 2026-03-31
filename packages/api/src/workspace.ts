@@ -16,6 +16,7 @@ import {
 import {
   artifactComplianceResultSchema,
   buildGovernedRemovalDecision,
+  deriveOutcomeRiskProfile,
   executionContractSchema,
   executionContractToMarkdown,
   type GovernedChildImpact,
@@ -55,6 +56,16 @@ function toGovernedChildImpact(
     title: record.title,
     lifecycleState: record.lifecycleState
   };
+}
+
+function normalizeAiUsageRole(value: string | null | undefined) {
+  return value === "support" ||
+    value === "generation" ||
+    value === "validation" ||
+    value === "decision_support" ||
+    value === "automation"
+    ? value
+    : null;
 }
 
 function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getOutcomeWorkspaceSnapshot>>>) {
@@ -178,6 +189,7 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
       ...snapshot,
       readiness: getOutcomeFramingReadiness({
         ...snapshot.outcome,
+        aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
         epicCount: snapshot.outcome.epics.length
       }),
       removal: buildOutcomeRemovalFromSnapshot(snapshot)
@@ -206,6 +218,7 @@ export async function getOutcomeTollgateReviewService(organizationId: string, ou
       snapshot.tollgate?.blockers ??
       getOutcomeFramingReadiness({
         ...snapshot.outcome,
+        aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
         epicCount: snapshot.outcome.epics.length
       }).reasons.map((reason) => reason.message);
 
@@ -250,11 +263,32 @@ export async function saveOutcomeWorkspaceService(input: {
   solutionConstraints?: string | null;
   dataSensitivity?: string | null;
   deliveryType?: "AD" | "AT" | "AM" | null;
+  aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+  aiUsageIntent?: string | null;
+  businessImpactLevel?: "low" | "medium" | "high" | null;
+  businessImpactRationale?: string | null;
+  dataSensitivityLevel?: "low" | "medium" | "high" | null;
+  dataSensitivityRationale?: string | null;
+  blastRadiusLevel?: "low" | "medium" | "high" | null;
+  blastRadiusRationale?: string | null;
+  decisionImpactLevel?: "low" | "medium" | "high" | null;
+  decisionImpactRationale?: string | null;
+  aiLevelJustification?: string | null;
+  riskAcceptanceConfirmed?: boolean;
+  existingRiskAcceptedAt?: Date | null;
+  existingRiskAcceptedByValueOwnerId?: string | null;
   timeframe?: string | null;
   valueOwnerId?: string | null;
   riskProfile?: "low" | "medium" | "high";
   aiAccelerationLevel?: "level_1" | "level_2" | "level_3";
 }) {
+  const derivedRiskProfile = deriveOutcomeRiskProfile({
+    businessImpactLevel: input.businessImpactLevel ?? null,
+    dataSensitivityLevel: input.dataSensitivityLevel ?? null,
+    blastRadiusLevel: input.blastRadiusLevel ?? null,
+    decisionImpactLevel: input.decisionImpactLevel ?? null
+  });
+
   const result = await updateOutcome({
     organizationId: input.organizationId,
     id: input.id,
@@ -268,9 +302,28 @@ export async function saveOutcomeWorkspaceService(input: {
     solutionConstraints: input.solutionConstraints,
     dataSensitivity: input.dataSensitivity,
     deliveryType: input.deliveryType,
+    aiUsageRole: input.aiUsageRole,
+    aiUsageIntent: input.aiUsageIntent,
+    businessImpactLevel: input.businessImpactLevel,
+    businessImpactRationale: input.businessImpactRationale,
+    dataSensitivityLevel: input.dataSensitivityLevel,
+    dataSensitivityRationale: input.dataSensitivityRationale,
+    blastRadiusLevel: input.blastRadiusLevel,
+    blastRadiusRationale: input.blastRadiusRationale,
+    decisionImpactLevel: input.decisionImpactLevel,
+    decisionImpactRationale: input.decisionImpactRationale,
+    aiLevelJustification: input.aiLevelJustification,
+    riskAcceptedAt:
+      input.riskAcceptanceConfirmed && input.valueOwnerId
+        ? input.existingRiskAcceptedAt && input.existingRiskAcceptedByValueOwnerId === input.valueOwnerId
+          ? input.existingRiskAcceptedAt
+          : new Date()
+        : null,
+    riskAcceptedByValueOwnerId:
+      input.riskAcceptanceConfirmed && input.valueOwnerId ? input.valueOwnerId : null,
     timeframe: input.timeframe,
     valueOwnerId: input.valueOwnerId,
-    riskProfile: input.riskProfile,
+    riskProfile: derivedRiskProfile ?? input.riskProfile,
     aiAccelerationLevel: input.aiAccelerationLevel
   });
 
@@ -338,6 +391,19 @@ export async function reviewOutcomeFramingWithAiService(input: {
           deliveryType: snapshot.outcome.deliveryType === "AD" || snapshot.outcome.deliveryType === "AT" || snapshot.outcome.deliveryType === "AM"
             ? snapshot.outcome.deliveryType
             : null,
+          aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+          aiUsageIntent: snapshot.outcome.aiUsageIntent ?? null,
+          businessImpactLevel: snapshot.outcome.businessImpactLevel ?? null,
+          businessImpactRationale: snapshot.outcome.businessImpactRationale ?? null,
+          dataSensitivityLevel: snapshot.outcome.dataSensitivityLevel ?? null,
+          dataSensitivityRationale: snapshot.outcome.dataSensitivityRationale ?? null,
+          blastRadiusLevel: snapshot.outcome.blastRadiusLevel ?? null,
+          blastRadiusRationale: snapshot.outcome.blastRadiusRationale ?? null,
+          decisionImpactLevel: snapshot.outcome.decisionImpactLevel ?? null,
+          decisionImpactRationale: snapshot.outcome.decisionImpactRationale ?? null,
+          aiLevelJustification: snapshot.outcome.aiLevelJustification ?? null,
+          riskAcceptedAt: snapshot.outcome.riskAcceptedAt ?? null,
+          riskAcceptedBy: snapshot.outcome.valueOwner?.fullName ?? snapshot.outcome.valueOwner?.email ?? null,
           timeframe: snapshot.outcome.timeframe ?? null,
           aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
           riskProfile: snapshot.outcome.riskProfile
@@ -385,6 +451,7 @@ export async function submitOutcomeTollgateService(input: {
 
   const readiness = getOutcomeFramingReadiness({
     ...snapshot.outcome,
+    aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
     epicCount: snapshot.outcome.epics.length
   });
   const blockers = readiness.reasons.map((reason) => reason.message);

@@ -69,6 +69,19 @@ export async function listOutcomeCockpitEntries(organizationId: string) {
           lineageSourceId: true,
           baselineDefinition: true,
           baselineSource: true,
+          aiUsageRole: true,
+          aiUsageIntent: true,
+          businessImpactLevel: true,
+          businessImpactRationale: true,
+          dataSensitivityLevel: true,
+          dataSensitivityRationale: true,
+          blastRadiusLevel: true,
+          blastRadiusRationale: true,
+          decisionImpactLevel: true,
+          decisionImpactRationale: true,
+          aiLevelJustification: true,
+          riskAcceptedAt: true,
+          riskAcceptedByValueOwnerId: true,
           timeframe: true,
           valueOwnerId: true,
           riskProfile: true,
@@ -154,6 +167,19 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           solutionConstraints: true,
           dataSensitivity: true,
           deliveryType: true,
+          aiUsageRole: true,
+          aiUsageIntent: true,
+          businessImpactLevel: true,
+          businessImpactRationale: true,
+          dataSensitivityLevel: true,
+          dataSensitivityRationale: true,
+          blastRadiusLevel: true,
+          blastRadiusRationale: true,
+          decisionImpactLevel: true,
+          decisionImpactRationale: true,
+          aiLevelJustification: true,
+          riskAcceptedAt: true,
+          riskAcceptedByValueOwnerId: true,
           timeframe: true,
           valueOwnerId: true,
           riskProfile: true,
@@ -320,6 +346,19 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         solutionConstraints: parsed.solutionConstraints ?? null,
         dataSensitivity: parsed.dataSensitivity ?? null,
         deliveryType: parsed.deliveryType ?? null,
+        aiUsageRole: parsed.aiUsageRole ?? null,
+        aiUsageIntent: parsed.aiUsageIntent ?? null,
+        businessImpactLevel: parsed.businessImpactLevel ?? null,
+        businessImpactRationale: parsed.businessImpactRationale ?? null,
+        dataSensitivityLevel: parsed.dataSensitivityLevel ?? null,
+        dataSensitivityRationale: parsed.dataSensitivityRationale ?? null,
+        blastRadiusLevel: parsed.blastRadiusLevel ?? null,
+        blastRadiusRationale: parsed.blastRadiusRationale ?? null,
+        decisionImpactLevel: parsed.decisionImpactLevel ?? null,
+        decisionImpactRationale: parsed.decisionImpactRationale ?? null,
+        aiLevelJustification: parsed.aiLevelJustification ?? null,
+        riskAcceptedAt: parsed.riskAcceptedAt ?? null,
+        riskAcceptedByValueOwnerId: parsed.riskAcceptedByValueOwnerId ?? null,
         timeframe: parsed.timeframe ?? null,
         valueOwnerId: parsed.valueOwnerId ?? null,
         riskProfile: parsed.riskProfile,
@@ -430,6 +469,58 @@ export async function updateOutcome(input: unknown) {
 
     if (parsed.deliveryType !== undefined) {
       data.deliveryType = parsed.deliveryType;
+    }
+
+    if (parsed.aiUsageRole !== undefined) {
+      data.aiUsageRole = parsed.aiUsageRole;
+    }
+
+    if (parsed.aiUsageIntent !== undefined) {
+      data.aiUsageIntent = parsed.aiUsageIntent;
+    }
+
+    if (parsed.businessImpactLevel !== undefined) {
+      data.businessImpactLevel = parsed.businessImpactLevel;
+    }
+
+    if (parsed.businessImpactRationale !== undefined) {
+      data.businessImpactRationale = parsed.businessImpactRationale;
+    }
+
+    if (parsed.dataSensitivityLevel !== undefined) {
+      data.dataSensitivityLevel = parsed.dataSensitivityLevel;
+    }
+
+    if (parsed.dataSensitivityRationale !== undefined) {
+      data.dataSensitivityRationale = parsed.dataSensitivityRationale;
+    }
+
+    if (parsed.blastRadiusLevel !== undefined) {
+      data.blastRadiusLevel = parsed.blastRadiusLevel;
+    }
+
+    if (parsed.blastRadiusRationale !== undefined) {
+      data.blastRadiusRationale = parsed.blastRadiusRationale;
+    }
+
+    if (parsed.decisionImpactLevel !== undefined) {
+      data.decisionImpactLevel = parsed.decisionImpactLevel;
+    }
+
+    if (parsed.decisionImpactRationale !== undefined) {
+      data.decisionImpactRationale = parsed.decisionImpactRationale;
+    }
+
+    if (parsed.aiLevelJustification !== undefined) {
+      data.aiLevelJustification = parsed.aiLevelJustification;
+    }
+
+    if (parsed.riskAcceptedAt !== undefined) {
+      data.riskAcceptedAt = parsed.riskAcceptedAt;
+    }
+
+    if (parsed.riskAcceptedByValueOwnerId !== undefined) {
+      data.riskAcceptedByValueOwnerId = parsed.riskAcceptedByValueOwnerId;
     }
 
     if (parsed.timeframe !== undefined) {
