@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -36,27 +37,38 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
     const query = searchParams ? await searchParams : {};
     const requestedOutcomeId = getParamValue(query.outcomeId) ?? null;
-    const { cockpit, session, requestedOutcome, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);
+    const { cockpit, session, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);
     const originFilter = getParamValue(query.origin) ?? "native";
     const readinessFilter = getParamValue(query.readiness) ?? "all";
     const outcomeId =
       resolvedOutcomeId ??
       cockpit.items.find((item) => item.originType === "native")?.id ??
       cockpit.items[0]?.id;
-    const selectedOutcome =
-      requestedOutcome ??
-      (outcomeId ? await getOutcomeWorkspaceService(session.organization.organizationId, outcomeId) : null);
-    const selectedOutcomeData = selectedOutcome?.ok ? selectedOutcome.data : null;
-    const selectedOutcomeError = selectedOutcome && !selectedOutcome.ok ? selectedOutcome.errors[0]?.message : null;
     const operationalItems = cockpit.items.filter((item) => item.originType !== "seeded");
     const hasDemoItems = cockpit.items.some((item) => item.originType === "seeded");
     const showCompactSwitcher = cockpit.state === "live" && (operationalItems.length > 1 || hasDemoItems);
     const demoItem = cockpit.items.find((item) => item.originType === "seeded") ?? null;
+    const parsedSearch = {
+      aiConfidence: (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | null) ?? null,
+      aiError: getParamValue(query.aiError) ?? null,
+      aiField: (getParamValue(query.aiField) as "outcome_statement" | "baseline_definition" | null) ?? null,
+      aiReason: getParamValue(query.aiReason) ?? null,
+      aiSuggestion: getParamValue(query.aiSuggestion) ?? null,
+      aiVerdict: (getParamValue(query.aiVerdict) as "good" | "needs_revision" | "unclear" | null) ?? null,
+      draftBaselineDefinition: getParamValue(query.draftBaselineDefinition) ?? null,
+      draftOutcomeStatement: getParamValue(query.draftOutcomeStatement) ?? null,
+      blockersFromQuery: getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [],
+      created: getParamValue(query.created) === "1",
+      lifecycleState: getParamValue(query.lifecycle) ?? null,
+      saveMessage: getParamValue(query.message) ?? null,
+      saveState: getParamValue(query.save) ?? null,
+      submitState: getParamValue(query.submit) ?? null
+    };
 
     return (
       <AppShell
-        hideRightRail={Boolean(selectedOutcomeData)}
-        rightRail={selectedOutcomeData ? undefined : <FramingRightRail summary={cockpit.summary} />}
+        hideRightRail={Boolean(outcomeId)}
+        rightRail={outcomeId ? undefined : <FramingRightRail summary={cockpit.summary} />}
         topbarProps={{
           projectName: cockpit.organizationName,
           sectionLabel: "Framing",
@@ -85,50 +97,15 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
           </Card>
         ) : (
           <>
-            {selectedOutcomeError ? (
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Selected Framing could not be loaded</CardTitle>
-                  <CardDescription>{selectedOutcomeError}</CardDescription>
-                </CardHeader>
-              </Card>
-            ) : null}
-            {selectedOutcomeData ? (
-              <FramingOutcomeSection
-                archiveAction={archiveOutcomeAction}
-                createEpicAction={createEpicFromOutcomeAction}
-                createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
-                data={selectedOutcomeData}
-                embeddedInFraming
-                hardDeleteAction={hardDeleteOutcomeAction}
-                recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
-                restoreAction={restoreOutcomeAction}
-                saveAction={saveOutcomeWorkspaceAction}
-                saveInlineAction={saveOutcomeWorkspaceInlineAction}
-                search={{
-                  aiConfidence: (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | null) ?? null,
-                  aiError: getParamValue(query.aiError) ?? null,
-                  aiField: (getParamValue(query.aiField) as "outcome_statement" | "baseline_definition" | null) ?? null,
-                  aiReason: getParamValue(query.aiReason) ?? null,
-                  aiSuggestion: getParamValue(query.aiSuggestion) ?? null,
-                  aiVerdict: (getParamValue(query.aiVerdict) as "good" | "needs_revision" | "unclear" | null) ?? null,
-                  draftBaselineDefinition: getParamValue(query.draftBaselineDefinition) ?? null,
-                  draftOutcomeStatement: getParamValue(query.draftOutcomeStatement) ?? null,
-                  blockersFromQuery: getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [],
-                  created: getParamValue(query.created) === "1",
-                  lifecycleState: getParamValue(query.lifecycle) ?? null,
-                  saveMessage: getParamValue(query.message) ?? null,
-                  saveState: getParamValue(query.save) ?? null,
-                  submitState: getParamValue(query.submit) ?? null
-                }}
-                submitTollgateAction={submitOutcomeTollgateAction}
-                initialReviewFramingState={{ status: "idle", message: null, report: null }}
-                reviewFramingAction={reviewOutcomeFramingWithAiAction}
-                validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
-                validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
-              />
-            ) : null}
-            {!selectedOutcomeData ? (
+            {outcomeId ? (
+              <Suspense fallback={<FramingWorkspaceFallback />}>
+                <SelectedFramingOutcomeSection
+                  organizationId={session.organization.organizationId}
+                  outcomeId={outcomeId}
+                  search={parsedSearch}
+                />
+              </Suspense>
+            ) : (
               <FramingCockpit
                 createAction={createDraftOutcomeAction}
                 initialOriginFilter={originFilter}
@@ -137,7 +114,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                 message={cockpit.message}
                 state={cockpit.state}
               />
-            ) : null}
+            )}
             {showCompactSwitcher ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
@@ -184,4 +161,77 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
       </AppShell>
     );
   });
+}
+
+function FramingWorkspaceFallback() {
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <CardTitle>Loading current framing</CardTitle>
+        <CardDescription>The active framing brief is loading while the cockpit stays available.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
+          <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
+          <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function SelectedFramingOutcomeSection(props: {
+  organizationId: string;
+  outcomeId: string;
+  search: {
+    created?: boolean;
+    saveState?: string | null;
+    submitState?: string | null;
+    lifecycleState?: string | null;
+    saveMessage?: string | null;
+    blockersFromQuery?: string[];
+    aiField?: "outcome_statement" | "baseline_definition" | null;
+    aiVerdict?: "good" | "needs_revision" | "unclear" | null;
+    aiConfidence?: "high" | "medium" | "low" | null;
+    aiReason?: string | null;
+    aiSuggestion?: string | null;
+    aiError?: string | null;
+    draftOutcomeStatement?: string | null;
+    draftBaselineDefinition?: string | null;
+  };
+}) {
+  const selectedOutcome = await getOutcomeWorkspaceService(props.organizationId, props.outcomeId);
+
+  if (!selectedOutcome.ok) {
+    return (
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>Selected Framing could not be loaded</CardTitle>
+          <CardDescription>{selectedOutcome.errors[0]?.message ?? "The selected framing is unavailable right now."}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  return (
+    <FramingOutcomeSection
+      archiveAction={archiveOutcomeAction}
+      createEpicAction={createEpicFromOutcomeAction}
+      createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
+      data={selectedOutcome.data}
+      embeddedInFraming
+      hardDeleteAction={hardDeleteOutcomeAction}
+      initialReviewFramingState={{ status: "idle", message: null, report: null }}
+      recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
+      restoreAction={restoreOutcomeAction}
+      reviewFramingAction={reviewOutcomeFramingWithAiAction}
+      saveAction={saveOutcomeWorkspaceAction}
+      saveInlineAction={saveOutcomeWorkspaceInlineAction}
+      search={props.search}
+      submitTollgateAction={submitOutcomeTollgateAction}
+      validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
+      validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
+    />
+  );
 }
