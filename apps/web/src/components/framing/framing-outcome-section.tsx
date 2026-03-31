@@ -21,7 +21,7 @@ import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
-import { getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
+import { getCachedOrganizationUsersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { isStoryIdeaReadyForFraming, isStoryIdeaStarted } from "@/lib/framing/story-idea-status";
@@ -117,7 +117,7 @@ export function FramingOutcomeSection({
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
-  const { outcome, tollgate, removal, availableOwners } = data;
+  const { outcome, tollgate, removal } = data;
   const computedBlockers = getOutcomeFramingBlockers({
     title: outcome.title,
     outcomeStatement: outcome.outcomeStatement ?? null,
@@ -381,19 +381,22 @@ export function FramingOutcomeSection({
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">Value owner</span>
-                  <select
-                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                    defaultValue={outcome.valueOwnerId ?? ""}
-                    disabled={isArchived}
-                    name="valueOwnerId"
+                  <Suspense
+                    fallback={
+                      <ValueOwnerFieldFallback
+                        currentOwnerLabel={outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null}
+                        currentOwnerId={outcome.valueOwnerId ?? null}
+                        disabled={isArchived}
+                      />
+                    }
                   >
-                    <option value="">Unassigned</option>
-                    {availableOwners.map((owner) => (
-                      <option key={owner.userId} value={owner.userId}>
-                        {owner.fullName ?? owner.email}
-                      </option>
-                    ))}
-                  </select>
+                    <DeferredValueOwnerField
+                      currentOwnerId={outcome.valueOwnerId ?? null}
+                      currentOwnerLabel={outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null}
+                      disabled={isArchived}
+                      organizationId={outcome.organizationId}
+                    />
+                  </Suspense>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -909,5 +912,57 @@ function OutcomeTollgateSectionFallback() {
         <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
       </CardContent>
     </Card>
+  );
+}
+
+async function DeferredValueOwnerField(props: {
+  organizationId: string;
+  currentOwnerId: string | null;
+  currentOwnerLabel: string | null;
+  disabled: boolean;
+}) {
+  const ownersResult = await getCachedOrganizationUsersData(props.organizationId);
+
+  if (!ownersResult.ok) {
+    return (
+      <ValueOwnerFieldFallback
+        currentOwnerId={props.currentOwnerId}
+        currentOwnerLabel={props.currentOwnerLabel}
+        disabled={props.disabled}
+      />
+    );
+  }
+
+  return (
+    <select
+      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+      defaultValue={props.currentOwnerId ?? ""}
+      disabled={props.disabled}
+      name="valueOwnerId"
+    >
+      <option value="">Unassigned</option>
+      {ownersResult.data.map((owner) => (
+        <option key={owner.userId} value={owner.userId}>
+          {owner.fullName ?? owner.email}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ValueOwnerFieldFallback(props: {
+  currentOwnerId: string | null;
+  currentOwnerLabel: string | null;
+  disabled: boolean;
+}) {
+  return (
+    <select
+      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+      defaultValue={props.currentOwnerId ?? ""}
+      disabled
+      name="valueOwnerId"
+    >
+      <option value="">{props.currentOwnerLabel ? `Loading owners... Current: ${props.currentOwnerLabel}` : "Loading owners..."}</option>
+    </select>
   );
 }

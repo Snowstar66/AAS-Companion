@@ -174,36 +174,21 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
       });
     }
 
-    const [tollgateReview, availableOwners] = await Promise.all([
-      getTollgateReviewWorkspaceService({
-        organizationId,
-        entityType: "outcome",
-        entityId: outcomeId,
-        tollgateType: "tg1_baseline",
-        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
-        fallbackBlockers:
-          snapshot.tollgate?.blockers ??
-          getOutcomeFramingReadiness({
-            ...snapshot.outcome,
-            epicCount: snapshot.outcome.epics.length
-          }).reasons.map((reason) => reason.message),
-        fallbackComments: snapshot.tollgate?.comments ?? null,
-        existingTollgate: snapshot.tollgate
-      }),
-      listOrganizationUsers(organizationId)
-    ]);
-
     return success({
       ...snapshot,
-      availableOwners,
       readiness: getOutcomeFramingReadiness({
         ...snapshot.outcome,
         epicCount: snapshot.outcome.epics.length
       }),
-      tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
       removal: buildOutcomeRemovalFromSnapshot(snapshot)
     });
   }, `organizationId=${organizationId} outcomeId=${outcomeId}`);
+}
+
+export async function getOrganizationUsersService(organizationId: string) {
+  return withDevTiming("api.getOrganizationUsersService", async () => {
+    return success(await listOrganizationUsers(organizationId));
+  }, `organizationId=${organizationId}`);
 }
 
 export async function getOutcomeTollgateReviewService(organizationId: string, outcomeId: string) {

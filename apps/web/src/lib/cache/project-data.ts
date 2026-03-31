@@ -1,5 +1,6 @@
 import { revalidateTag, unstable_cache } from "next/cache";
 import { getOutcomeWorkspaceService } from "@aas-companion/api";
+import { getOrganizationUsersService } from "@aas-companion/api";
 import { getOutcomeTollgateReviewService } from "@aas-companion/api";
 import { getFramingCockpitData } from "@aas-companion/api/framing";
 
@@ -41,6 +42,16 @@ export function getCachedOutcomeTollgateReviewData(organizationId: string, outco
     ["outcome-tollgate-review", organizationId, outcomeId],
     {
       tags: [getOutcomeTollgateReviewTag(organizationId, outcomeId)]
+    }
+  )();
+}
+
+export function getCachedOrganizationUsersData(organizationId: string) {
+  return unstable_cache(
+    async () => getOrganizationUsersService(organizationId),
+    ["organization-users", organizationId],
+    {
+      revalidate: 300
     }
   )();
 }
