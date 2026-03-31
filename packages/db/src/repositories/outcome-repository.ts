@@ -6,10 +6,6 @@ import { logDevTiming, withDevTiming } from "../dev-timing";
 import { appendActivityEvent } from "./activity-repository";
 import { withEpicShape } from "./epic-shape";
 import {
-  attachStoryReadinessTollgateStatus,
-  mapStoryReadinessTollgateStatusByEntityId
-} from "./story-readiness-tollgate";
-import {
   resolveGovernedObjectProvenance,
   toGovernedObjectProvenanceFields,
   toGovernedObjectProvenanceMetadata
@@ -139,7 +135,7 @@ export async function getOutcomeById(organizationId: string, id: string) {
 
 export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: string) {
   return withDevTiming("db.getOutcomeWorkspaceSnapshot", async () => {
-    const [outcome, tollgate, activities] = await prisma.$transaction([
+    const [outcome, tollgate, activityEventCount] = await prisma.$transaction([
       prisma.outcome.findFirst({
         where: {
           organizationId,
@@ -162,14 +158,10 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           originType: true,
           createdMode: true,
           lifecycleState: true,
-          archivedAt: true,
-          archiveReason: true,
           lineageSourceType: true,
           lineageSourceId: true,
           lineageNote: true,
           importedReadinessState: true,
-          createdAt: true,
-          updatedAt: true,
           valueOwner: {
             select: {
               id: true,
@@ -186,18 +178,11 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
               title: true,
               purpose: true,
               summary: true,
-              status: true,
               originType: true,
-              createdMode: true,
               lifecycleState: true,
-              archivedAt: true,
-              archiveReason: true,
               lineageSourceType: true,
               lineageSourceId: true,
-              lineageNote: true,
-              importedReadinessState: true,
-              createdAt: true,
-              updatedAt: true
+              importedReadinessState: true
             },
             orderBy: {
               createdAt: "asc"
@@ -214,20 +199,13 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
               shortDescription: true,
               expectedBehavior: true,
               uxSketchName: true,
-              uxSketchContentType: true,
               uxSketchDataUrl: true,
               sourceStoryId: true,
               originType: true,
-              createdMode: true,
               lifecycleState: true,
-              archivedAt: true,
-              archiveReason: true,
               lineageSourceType: true,
               lineageSourceId: true,
-              lineageNote: true,
-              importedReadinessState: true,
-              createdAt: true,
-              updatedAt: true
+              importedReadinessState: true
             },
             orderBy: {
               createdAt: "asc"
@@ -236,32 +214,21 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           stories: {
             select: {
               id: true,
-              organizationId: true,
-              outcomeId: true,
               epicId: true,
               key: true,
               title: true,
-              storyType: true,
               valueIntent: true,
               expectedBehavior: true,
               acceptanceCriteria: true,
-              aiUsageScope: true,
-              aiAccelerationLevel: true,
               testDefinition: true,
               definitionOfDone: true,
               sourceDirectionSeedId: true,
               status: true,
               originType: true,
-              createdMode: true,
               lifecycleState: true,
-              archivedAt: true,
-              archiveReason: true,
               lineageSourceType: true,
               lineageSourceId: true,
-              lineageNote: true,
-              importedReadinessState: true,
-              createdAt: true,
-              updatedAt: true
+              importedReadinessState: true
             },
             orderBy: {
               createdAt: "asc"
@@ -292,20 +259,11 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           updatedAt: true
         }
       }),
-      prisma.activityEvent.findMany({
+      prisma.activityEvent.count({
         where: {
           organizationId,
           entityType: "outcome",
           entityId: id
-        },
-        orderBy: {
-          createdAt: "desc"
-        },
-        take: 10,
-        select: {
-          id: true,
-          createdAt: true,
-          eventType: true
         }
       })
     ]);
@@ -314,30 +272,8 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
       return null;
     }
 
-    const storyTollgates = await prisma.tollgate.findMany({
-      where: {
-        organizationId,
-        entityType: "story",
-        tollgateType: "story_readiness",
-        entityId: {
-          in: outcome.stories.map((story) => story.id)
-        }
-      },
-      orderBy: {
-        updatedAt: "desc"
-      },
-      select: {
-        entityId: true,
-        status: true
-      }
-    });
-
     const relatedLifecycleState = outcome.lifecycleState === "archived" ? "archived" : "active";
-    const storyTollgateStatuses = mapStoryReadinessTollgateStatusByEntityId(storyTollgates);
-    const scopedStories = attachStoryReadinessTollgateStatus(
-      outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState),
-      storyTollgateStatuses
-    );
+    const scopedStories = outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState);
 
     return {
       outcome: {
@@ -355,7 +291,8 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
         stories: scopedStories
       },
       tollgate,
-      activities
+      activities: [],
+      activityEventCount
     };
   }, `organizationId=${organizationId} outcomeId=${id}`);
 }

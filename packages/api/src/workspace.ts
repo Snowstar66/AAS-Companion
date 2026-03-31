@@ -80,7 +80,7 @@ function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnTyp
       status: snapshot.outcome.status,
       lineageReference: toLineageReference(snapshot.outcome),
       importedReadinessState: snapshot.outcome.importedReadinessState,
-      activityEventCount: snapshot.activities.length,
+      activityEventCount: snapshot.activityEventCount,
       tollgateCount: snapshot.tollgate ? 1 : 0,
       activeChildren
     })
