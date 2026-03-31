@@ -353,7 +353,7 @@ export function FramingOutcomeSection({
               <CardHeader>
                 <CardTitle>Customer handshake</CardTitle>
                 <CardDescription>
-                  Keep this form focused on business effect, baseline, ownership, intended AI level and early direction.
+                  Keep this form focused on business effect, baseline, ownership, solution context, intended AI level and early direction.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
@@ -423,6 +423,63 @@ export function FramingOutcomeSection({
                     validateAction={validateOutcomeStatementAiAction}
                   />
                 </div>
+                <div className="xl:col-span-2 rounded-2xl border border-border/70 bg-muted/20 p-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">Solution Context &amp; Constraints</p>
+                    <p className="text-sm text-muted-foreground">
+                      Keep this at framing level. Capture context, risk and constraints without defining architecture,
+                      technologies, APIs or implementation details.
+                    </p>
+                  </div>
+                </div>
+                <label className="space-y-2 xl:col-span-2">
+                  <span className="text-sm font-medium text-foreground">Solution context</span>
+                  <textarea
+                    className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    defaultValue={outcome.solutionContext ?? ""}
+                    disabled={isArchived}
+                    name="solutionContext"
+                    placeholder="Describe the system context, usage context and high-level integration expectations."
+                  />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context")} />
+                </label>
+                <label className="space-y-2 xl:col-span-2">
+                  <span className="text-sm font-medium text-foreground">Constraints</span>
+                  <textarea
+                    className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    defaultValue={outcome.solutionConstraints ?? ""}
+                    disabled={isArchived}
+                    name="solutionConstraints"
+                    placeholder="List the conditions the solution must satisfy."
+                  />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints")} />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Data sensitivity</span>
+                  <textarea
+                    className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    defaultValue={outcome.dataSensitivity ?? ""}
+                    disabled={isArchived}
+                    name="dataSensitivity"
+                    placeholder="List the data types involved and their sensitivity level."
+                  />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.data_sensitivity")} />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Delivery type</span>
+                  <select
+                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    defaultValue={outcome.deliveryType ?? ""}
+                    disabled={isArchived}
+                    name="deliveryType"
+                  >
+                    <option value="">Select delivery type</option>
+                    <option value="AD">AD</option>
+                    <option value="AT">AT</option>
+                    <option value="AM">AM</option>
+                  </select>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type")} />
+                </label>
               </CardContent>
             </Card>
 

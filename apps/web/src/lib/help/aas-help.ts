@@ -4,6 +4,10 @@ export type WorkspaceHelpKey =
   | "framing.outcome"
   | "framing.baseline_definition"
   | "framing.baseline_source"
+  | "framing.solution_context"
+  | "framing.solution_constraints"
+  | "framing.data_sensitivity"
+  | "framing.delivery_type"
   | "framing.value_owner"
   | "framing.timeframe"
   | "framing.ai_level"
@@ -69,6 +73,35 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
     purpose: "Keep the baseline trustworthy and reviewable.",
     belongs: "Named report, dashboard, stakeholder source or observed operational evidence.",
     avoid: "Unsupported guesses with no source trail."
+  },
+  "framing.solution_context": {
+    title: "Solution context",
+    summary: "Capture only the surrounding business, usage and system context that shapes scope and risk.",
+    purpose: "Make the framing conditions explicit without locking the solution design too early.",
+    belongs:
+      "Business context, usage context, existing landscape context, high-level integration expectations and compliance context.",
+    avoid: "Architecture structure, technology choices, API contracts or implementation detail."
+  },
+  "framing.solution_constraints": {
+    title: "Constraints",
+    summary: "List the conditions the solution must satisfy, not how the team should technically build it.",
+    purpose: "Hold onto the important boundaries while keeping design options open.",
+    belongs: "Operational constraints, business conditions, compliance limits and delivery-level constraints.",
+    avoid: "Prescriptive implementation steps, frameworks, components or detailed technical patterns."
+  },
+  "framing.data_sensitivity": {
+    title: "Data sensitivity",
+    summary: "Capture only the relevant data categories and their sensitivity level at a business-facing level.",
+    purpose: "Surface risk and governance needs early in framing.",
+    belongs: "Personal data, commercial data, regulated data, internal data and their sensitivity.",
+    avoid: "Schema design, storage details, field-by-field implementation or security architecture."
+  },
+  "framing.delivery_type": {
+    title: "Delivery type",
+    summary: "Classify the framing as AD, AT or AM so the case carries the right delivery posture from the start.",
+    purpose: "Make the expected delivery mode explicit without slipping into solution design.",
+    belongs: "The delivery classification only: AD, AT or AM.",
+    avoid: "Detailed delivery planning or execution workflow."
   },
   "framing.value_owner": {
     title: "Value owner",

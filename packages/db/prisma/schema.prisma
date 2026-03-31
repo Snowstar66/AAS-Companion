@@ -388,6 +388,10 @@ model Outcome {
   outcomeStatement    String?
   baselineDefinition  String?
   baselineSource      String?
+  solutionContext     String?
+  solutionConstraints String?
+  dataSensitivity     String?
+  deliveryType        String?
   timeframe           String?
   valueOwnerId        String?
   riskProfile         RiskProfile         @default(medium)

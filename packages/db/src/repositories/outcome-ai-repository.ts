@@ -58,6 +58,10 @@ type OutcomeFramingAiReviewInput = {
     outcomeStatement?: string | null;
     baselineDefinition?: string | null;
     baselineSource?: string | null;
+    solutionContext?: string | null;
+    solutionConstraints?: string | null;
+    dataSensitivity?: string | null;
+    deliveryType?: "AD" | "AT" | "AM" | null;
     timeframe?: string | null;
     aiAccelerationLevel: "level_1" | "level_2" | "level_3";
     riskProfile: "low" | "medium" | "high";
@@ -601,6 +605,7 @@ Use a critical but constructive approach.
 You will receive:
 - Problem Statement
 - Outcome (including baseline and owner context)
+- Solution Context & Constraints
 - Epics
 - Story Ideas (with Value Intent and Expected Behavior)
 - Selected AI Acceleration Level
@@ -811,6 +816,10 @@ export async function reviewOutcomeFramingWithAi(input: {
     outcomeStatement?: string | null;
     baselineDefinition?: string | null;
     baselineSource?: string | null;
+    solutionContext?: string | null;
+    solutionConstraints?: string | null;
+    dataSensitivity?: string | null;
+    deliveryType?: "AD" | "AT" | "AM" | null;
     timeframe?: string | null;
     aiAccelerationLevel: "level_1" | "level_2" | "level_3";
     riskProfile: "low" | "medium" | "high";

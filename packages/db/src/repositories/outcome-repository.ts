@@ -150,6 +150,10 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           outcomeStatement: true,
           baselineDefinition: true,
           baselineSource: true,
+          solutionContext: true,
+          solutionConstraints: true,
+          dataSensitivity: true,
+          deliveryType: true,
           timeframe: true,
           valueOwnerId: true,
           riskProfile: true,
@@ -312,6 +316,10 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         outcomeStatement: parsed.outcomeStatement ?? null,
         baselineDefinition: parsed.baselineDefinition ?? null,
         baselineSource: parsed.baselineSource ?? null,
+        solutionContext: parsed.solutionContext ?? null,
+        solutionConstraints: parsed.solutionConstraints ?? null,
+        dataSensitivity: parsed.dataSensitivity ?? null,
+        deliveryType: parsed.deliveryType ?? null,
         timeframe: parsed.timeframe ?? null,
         valueOwnerId: parsed.valueOwnerId ?? null,
         riskProfile: parsed.riskProfile,
@@ -406,6 +414,22 @@ export async function updateOutcome(input: unknown) {
 
     if (parsed.baselineSource !== undefined) {
       data.baselineSource = parsed.baselineSource;
+    }
+
+    if (parsed.solutionContext !== undefined) {
+      data.solutionContext = parsed.solutionContext;
+    }
+
+    if (parsed.solutionConstraints !== undefined) {
+      data.solutionConstraints = parsed.solutionConstraints;
+    }
+
+    if (parsed.dataSensitivity !== undefined) {
+      data.dataSensitivity = parsed.dataSensitivity;
+    }
+
+    if (parsed.deliveryType !== undefined) {
+      data.deliveryType = parsed.deliveryType;
     }
 
     if (parsed.timeframe !== undefined) {

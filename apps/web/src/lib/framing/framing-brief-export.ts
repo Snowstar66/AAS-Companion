@@ -6,6 +6,10 @@ type FramingBriefOutcome = {
   outcomeStatement: string | null;
   baselineDefinition: string | null;
   baselineSource: string | null;
+  solutionContext: string | null;
+  solutionConstraints: string | null;
+  dataSensitivity: string | null;
+  deliveryType: string | null;
   timeframe: string | null;
   aiAccelerationLevel: "level_1" | "level_2" | "level_3";
   riskProfile: "low" | "medium" | "high";
@@ -45,6 +49,10 @@ export type FramingBriefExportPayload = {
     value_owner: string | null;
     ai_level: "level_1" | "level_2" | "level_3";
     risk_profile: "low" | "medium" | "high";
+    solution_context: string | null;
+    constraints: string | null;
+    data_sensitivity: string | null;
+    delivery_type: "AD" | "AT" | "AM" | null;
   };
   baseline: {
     definition: string | null;
@@ -103,6 +111,10 @@ function formatSentence(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function normalizeDeliveryType(value: string | null | undefined): "AD" | "AT" | "AM" | null {
+  return value === "AD" || value === "AT" || value === "AM" ? value : null;
+}
+
 export function buildFramingBriefExport(input: {
   outcome: FramingBriefOutcome;
   blockers: string[];
@@ -126,7 +138,11 @@ export function buildFramingBriefExport(input: {
       timeframe: input.outcome.timeframe,
       value_owner: valueOwner,
       ai_level: input.outcome.aiAccelerationLevel,
-      risk_profile: input.outcome.riskProfile
+      risk_profile: input.outcome.riskProfile,
+      solution_context: input.outcome.solutionContext,
+      constraints: input.outcome.solutionConstraints,
+      data_sensitivity: input.outcome.dataSensitivity,
+      delivery_type: normalizeDeliveryType(input.outcome.deliveryType)
     },
     baseline: {
       definition: input.outcome.baselineDefinition,
@@ -197,6 +213,12 @@ export function buildFramingBriefExport(input: {
     "",
     "### Outcome Statement",
     hasText(payload.handshake.outcome_statement) ? payload.handshake.outcome_statement ?? "" : "Not captured yet.",
+    "",
+    "### Solution Context & Constraints",
+    `- Solution context: ${payload.handshake.solution_context ?? "Not captured yet"}`,
+    `- Constraints: ${payload.handshake.constraints ?? "Not captured yet"}`,
+    `- Data sensitivity: ${payload.handshake.data_sensitivity ?? "Not captured yet"}`,
+    `- Delivery type: ${payload.handshake.delivery_type ?? "Not captured yet"}`,
     "",
     "## Baseline",
     `- Readiness: ${payload.baseline.readiness === "ready" ? "Baseline ready" : "Baseline still blocked"}`,

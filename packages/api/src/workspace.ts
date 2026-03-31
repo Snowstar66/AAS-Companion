@@ -246,6 +246,10 @@ export async function saveOutcomeWorkspaceService(input: {
   outcomeStatement?: string | null;
   baselineDefinition?: string | null;
   baselineSource?: string | null;
+  solutionContext?: string | null;
+  solutionConstraints?: string | null;
+  dataSensitivity?: string | null;
+  deliveryType?: "AD" | "AT" | "AM" | null;
   timeframe?: string | null;
   valueOwnerId?: string | null;
   riskProfile?: "low" | "medium" | "high";
@@ -260,6 +264,10 @@ export async function saveOutcomeWorkspaceService(input: {
     outcomeStatement: input.outcomeStatement,
     baselineDefinition: input.baselineDefinition,
     baselineSource: input.baselineSource,
+    solutionContext: input.solutionContext,
+    solutionConstraints: input.solutionConstraints,
+    dataSensitivity: input.dataSensitivity,
+    deliveryType: input.deliveryType,
     timeframe: input.timeframe,
     valueOwnerId: input.valueOwnerId,
     riskProfile: input.riskProfile,
@@ -324,6 +332,12 @@ export async function reviewOutcomeFramingWithAiService(input: {
           outcomeStatement: snapshot.outcome.outcomeStatement ?? null,
           baselineDefinition: snapshot.outcome.baselineDefinition ?? null,
           baselineSource: snapshot.outcome.baselineSource ?? null,
+          solutionContext: snapshot.outcome.solutionContext ?? null,
+          solutionConstraints: snapshot.outcome.solutionConstraints ?? null,
+          dataSensitivity: snapshot.outcome.dataSensitivity ?? null,
+          deliveryType: snapshot.outcome.deliveryType === "AD" || snapshot.outcome.deliveryType === "AT" || snapshot.outcome.deliveryType === "AM"
+            ? snapshot.outcome.deliveryType
+            : null,
           timeframe: snapshot.outcome.timeframe ?? null,
           aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
           riskProfile: snapshot.outcome.riskProfile
