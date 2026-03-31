@@ -1,11 +1,11 @@
-import { getFramingCockpitData } from "@aas-companion/api/framing";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { getCachedFramingCockpitData } from "@/lib/cache/project-data";
 import { withDevTiming } from "@/lib/dev-timing";
 
 export async function loadFramingCockpit(requestedOutcomeId?: string | null) {
   return withDevTiming("web.framing.loadFramingCockpit", async () => {
     const session = await requireActiveProjectSession();
-    const cockpit = await getFramingCockpitData(
+    const cockpit = await getCachedFramingCockpitData(
       session.organization.organizationId,
       session.organization.organizationName
     );

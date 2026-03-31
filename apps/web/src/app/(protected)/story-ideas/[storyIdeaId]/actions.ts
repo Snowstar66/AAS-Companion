@@ -11,6 +11,10 @@ import {
   validateDirectionSeedExpectedBehaviorWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import {
+  revalidateFramingCockpitCache,
+  revalidateOutcomeWorkspaceCache
+} from "@/lib/cache/project-data";
 
 const MAX_UX_SKETCH_BYTES = 2 * 1024 * 1024;
 const MAX_UX_SKETCH_FILES = 4;
@@ -223,6 +227,8 @@ export async function saveStoryIdeaSeedWorkspaceAction(formData: FormData) {
     ...toOptionalSketchSaveInput(uxSketchUpdate)
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/story-ideas/${storyIdeaId}`);
   revalidatePath(`/epics/${epicId}`);
   revalidatePath(`/outcomes/${outcomeId}`);
@@ -278,6 +284,8 @@ export async function saveLegacyStoryIdeaWorkspaceAction(formData: FormData) {
     ...toOptionalSketchSaveInput(uxSketchUpdate)
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/story-ideas/${storyIdeaId}`);
   revalidatePath(`/stories/${storyIdeaId}`);
   if (epicId) {
@@ -333,6 +341,8 @@ export async function saveStoryIdeaSeedWorkspaceInlineAction(
     ...toOptionalSketchSaveInput(uxSketchUpdate)
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/story-ideas/${storyIdeaId}`);
   revalidatePath(`/epics/${epicId}`);
   revalidatePath(`/outcomes/${outcomeId}`);
@@ -385,6 +395,8 @@ export async function saveLegacyStoryIdeaWorkspaceInlineAction(
     ...toOptionalSketchSaveInput(uxSketchUpdate)
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/story-ideas/${storyIdeaId}`);
   revalidatePath(`/stories/${storyIdeaId}`);
   if (epicId) {
@@ -421,6 +433,8 @@ export async function createDeliveryStoryFromStoryIdeaSeedAction(formData: FormD
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/story-ideas/${storyIdeaId}`);
   revalidatePath(`/epics/${epicId}`);
   revalidatePath(`/outcomes/${outcomeId}`);

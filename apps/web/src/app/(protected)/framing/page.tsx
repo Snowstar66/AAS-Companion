@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { FramingOutcomeSection } from "@/components/framing/framing-outcome-section";
 import { AppShell } from "@/components/layout/app-shell";
+import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import { FramingCockpit } from "@/components/framing/framing-cockpit";
 import { FramingRightRail } from "@/components/framing/framing-right-rail";
 import { loadFramingCockpit } from "@/lib/framing/cockpit";
@@ -201,7 +201,7 @@ async function SelectedFramingOutcomeSection(props: {
     draftBaselineDefinition?: string | null;
   };
 }) {
-  const selectedOutcome = await getOutcomeWorkspaceService(props.organizationId, props.outcomeId);
+  const selectedOutcome = await getCachedOutcomeWorkspaceData(props.organizationId, props.outcomeId);
 
   if (!selectedOutcome.ok) {
     return (

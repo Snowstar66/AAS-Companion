@@ -15,6 +15,10 @@ import {
   validateOutcomeFieldWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import {
+  revalidateFramingCockpitCache,
+  revalidateOutcomeWorkspaceCache
+} from "@/lib/cache/project-data";
 
 function buildFramingRedirect(outcomeId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -88,6 +92,8 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
       (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -138,6 +144,8 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
       (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -323,6 +331,8 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
     comments
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/");
@@ -376,6 +386,8 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
     createdBy: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -407,6 +419,8 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -437,6 +451,8 @@ export async function createStoryIdeaFromOutcomeAction(formData: FormData) {
     title
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -474,6 +490,8 @@ export async function hardDeleteOutcomeAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/stories");
@@ -513,6 +531,8 @@ export async function archiveOutcomeAction(formData: FormData) {
     reason
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -555,6 +575,8 @@ export async function restoreOutcomeAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");

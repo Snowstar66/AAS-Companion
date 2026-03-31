@@ -12,6 +12,10 @@ import {
   validateStoryExpectedBehaviorWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import {
+  revalidateFramingCockpitCache,
+  revalidateOutcomeWorkspaceCache
+} from "@/lib/cache/project-data";
 
 function buildStoryRedirect(storyId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -132,6 +136,8 @@ export async function saveStoryWorkspaceAction(formData: FormData) {
     definitionOfDone: readMultilineValues(formData, "definitionOfDone")
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -179,6 +185,8 @@ export async function saveStoryWorkspaceInlineAction(formData: FormData): Promis
     definitionOfDone: readMultilineValues(formData, "definitionOfDone")
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -217,6 +225,8 @@ export async function submitStoryReadinessAction(formData: FormData) {
     comments
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -277,6 +287,8 @@ export async function recordStoryTollgateDecisionAction(formData: FormData) {
     createdBy: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -328,6 +340,8 @@ export async function hardDeleteStoryAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
   }
@@ -375,6 +389,8 @@ export async function archiveStoryAction(formData: FormData) {
     reason
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);
@@ -425,6 +441,8 @@ export async function restoreStoryAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/stories/${storyId}`);
   if (epicId) {
     revalidatePath(`/epics/${epicId}`);

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { FramingOutcomeSection } from "@/components/framing/framing-outcome-section";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
@@ -32,7 +32,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   const organization = await requireOrganizationContext();
   const { outcomeId } = await params;
   const query = searchParams ? await searchParams : {};
-  const outcomeResult = await getOutcomeWorkspaceService(organization.organizationId, outcomeId);
+  const outcomeResult = await getCachedOutcomeWorkspaceData(organization.organizationId, outcomeId);
 
   if (!outcomeResult.ok) {
     notFound();

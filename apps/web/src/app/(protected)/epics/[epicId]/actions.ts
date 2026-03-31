@@ -13,6 +13,10 @@ import {
   validateDirectionSeedExpectedBehaviorWithAiService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import {
+  revalidateFramingCockpitCache,
+  revalidateOutcomeWorkspaceCache
+} from "@/lib/cache/project-data";
 
 function buildEpicRedirect(epicId: string, search: Record<string, string>) {
   const params = new URLSearchParams(search);
@@ -96,6 +100,8 @@ export async function saveEpicWorkspaceAction(formData: FormData) {
     riskNote: String(formData.get("riskNote") ?? "") || null
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -131,6 +137,8 @@ export async function createDirectionSeedFromEpicAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -165,6 +173,7 @@ export async function createDeliveryStoryFromDirectionSeedAction(formData: FormD
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
   revalidatePath(`/epics/${epicId}`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
@@ -198,6 +207,8 @@ export async function saveDirectionSeedAction(formData: FormData) {
     expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -237,6 +248,8 @@ export async function saveDirectionSeedInlineAction(formData: FormData): Promise
     expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -279,6 +292,8 @@ export async function hardDeleteEpicAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/workspace");
   revalidatePath("/stories");
@@ -319,6 +334,8 @@ export async function archiveEpicAction(formData: FormData) {
     reason
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
@@ -365,6 +382,8 @@ export async function restoreEpicAction(formData: FormData) {
     actorId: session.userId
   });
 
+  revalidateFramingCockpitCache(session.organization.organizationId);
+  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/epics/${epicId}`);
   if (outcomeId) {
     revalidatePath(`/outcomes/${outcomeId}`);
