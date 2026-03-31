@@ -130,6 +130,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
   const approvalCount = props.approvalActions.length;
   const hasOpenReviewWork = props.reviewActions.some((action) => action.pending);
   const hasOpenApprovalWork = props.approvalActions.some((action) => action.pending);
+  const isOutcomeTollgate = props.entityType === "outcome" && props.tollgateType === "tg1_baseline";
 
   return (
     <Card className="border-border/70 shadow-sm">
@@ -196,6 +197,28 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
         </div>
 
         <div className="space-y-4">
+          {isOutcomeTollgate ? (
+            <div className="space-y-3 rounded-2xl border border-sky-200 bg-sky-50/60 p-4">
+              <div>
+                <p className="text-sm font-semibold text-sky-950">Record Tollgate 1 approval now</p>
+                <p className="mt-1 text-sm text-sky-900">
+                  Use the preselected lane and signer below. The required roles already match the current AI Acceleration Level.
+                </p>
+              </div>
+              <TollgateDecisionForm
+                aiAccelerationLevel={props.aiAccelerationLevel}
+                approvalActions={props.approvalActions}
+                availablePeople={props.availablePeople}
+                entityId={props.entityId}
+                entityType={props.entityType}
+                formAction={props.formAction}
+                hiddenFields={props.hiddenFields}
+                reviewActions={props.reviewActions}
+                tollgateType={props.tollgateType}
+              />
+            </div>
+          ) : null}
+
           <CollapsibleSection
             badge={`${reviewCount}`}
             defaultOpen={hasOpenReviewWork}
@@ -352,24 +375,26 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
             </CollapsibleSection>
           </div>
 
-          <CollapsibleSection
-            badge={props.availablePeople.length > 0 ? `${props.availablePeople.length} signers` : "No signers"}
-            defaultOpen={pendingCount > 0 || blockedCount > 0}
-            description="Capture one review, approval or escalation decision with the human signer and evidence trail."
-            title="Record approval or review"
-          >
-            <TollgateDecisionForm
-              aiAccelerationLevel={props.aiAccelerationLevel}
-              approvalActions={props.approvalActions}
-              availablePeople={props.availablePeople}
-              entityId={props.entityId}
-              entityType={props.entityType}
-              formAction={props.formAction}
-              hiddenFields={props.hiddenFields}
-              reviewActions={props.reviewActions}
-              tollgateType={props.tollgateType}
-            />
-          </CollapsibleSection>
+          {!isOutcomeTollgate ? (
+            <CollapsibleSection
+              badge={props.availablePeople.length > 0 ? `${props.availablePeople.length} signers` : "No signers"}
+              defaultOpen={pendingCount > 0 || blockedCount > 0}
+              description="Capture one review, approval or escalation decision with the human signer and evidence trail."
+              title="Record approval or review"
+            >
+              <TollgateDecisionForm
+                aiAccelerationLevel={props.aiAccelerationLevel}
+                approvalActions={props.approvalActions}
+                availablePeople={props.availablePeople}
+                entityId={props.entityId}
+                entityType={props.entityType}
+                formAction={props.formAction}
+                hiddenFields={props.hiddenFields}
+                reviewActions={props.reviewActions}
+                tollgateType={props.tollgateType}
+              />
+            </CollapsibleSection>
+          ) : null}
 
           <CollapsibleSection
             badge={`${signoffCount}`}
