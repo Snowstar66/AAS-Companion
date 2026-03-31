@@ -5,7 +5,8 @@ import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { StoryIdeaInlineSaveButton } from "@/components/workspace/story-idea-inline-save-button";
 import { StoryIdeaUxSketchField } from "@/components/workspace/story-idea-ux-sketch-field";
 import { StoryIdeaAiValidatedTextarea } from "@/components/workspace/story-idea-ai-validated-textarea";
-import { formatAiLevel, SecondaryPanel } from "./story-workspace-shared";
+import { getStoryIdeaBlockers, getStoryIdeaStatusText } from "@/lib/framing/story-idea-status";
+import { formatAiLevel, getSimplifiedStatusClasses, SecondaryPanel, WorkspaceStatusSummary } from "./story-workspace-shared";
 
 type DirectionSeedWorkspaceProps = {
   data: {
@@ -39,6 +40,7 @@ type DirectionSeedWorkspaceProps = {
       title: string;
       outcomeStatement: string | null;
       aiAccelerationLevel: string;
+      status: string;
     };
     derivedDeliveryStories: Array<{
       id: string;
@@ -78,13 +80,20 @@ export function DirectionSeedWorkspace({
   createDeliveryStoryAction
 }: DirectionSeedWorkspaceProps) {
   const { seed, epic, outcome, derivedDeliveryStories } = data;
-  const ideaBlockers = [
-    !seed.shortDescription?.trim() ? "Value Intent still needs to be described." : null,
-    !seed.expectedBehavior?.trim() ? "Expected Behavior still needs to be described." : null
-  ].filter((value): value is string => Boolean(value));
-  const primaryStatusLabel = ideaBlockers.length > 0 ? "Needs clarification" : "Framing ready";
-  const primaryStatusClasses =
-    ideaBlockers.length > 0 ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900";
+  const ideaBlockers = getStoryIdeaBlockers({
+    shortDescription: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior,
+    hasEpicLink: Boolean(epic.id),
+    parentApproved: outcome.status === "active"
+  });
+  const primaryStatusLabel = getStoryIdeaStatusText({
+    shortDescription: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior,
+    hasEpicLink: Boolean(epic.id),
+    parentApproved: outcome.status === "active"
+  });
+  const statusTone = ideaBlockers.length > 0 ? "needs_action" : outcome.status === "active" ? "approved" : "ready_for_review";
+  const primaryStatusClasses = getSimplifiedStatusClasses(statusTone);
   const epicAlignmentText =
     epic.purpose?.trim() ||
     epic.scopeBoundary?.trim() ||
@@ -102,6 +111,24 @@ export function DirectionSeedWorkspace({
             }
           ]
         : [];
+  const completeItems = [
+    seed.shortDescription?.trim() ? "Value intent is captured" : null,
+    seed.expectedBehavior?.trim() ? "Expected behavior is captured" : null,
+    epic.id ? `Linked to Epic ${epic.key}` : null,
+    outcome.status === "active" ? `Parent Framing ${outcome.key} is approved` : null
+  ].filter((value): value is string => Boolean(value));
+  const nextActionLabel =
+    ideaBlockers.length > 0
+      ? "Complete the Story Idea"
+      : outcome.status === "active"
+        ? "Create or refine Delivery Stories"
+        : "Review in Framing";
+  const nextActionDetail =
+    ideaBlockers.length > 0
+      ? "Clear the listed blockers so this Story Idea is complete enough for review."
+      : outcome.status === "active"
+        ? "This Story Idea already sits inside approved Framing and can now guide design and delivery decomposition."
+        : "This Story Idea is complete enough for Framing review and Tollgate conversation.";
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
       <div className="space-y-6">
@@ -131,31 +158,16 @@ export function DirectionSeedWorkspace({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value intent</p>
-              <p className="mt-2 font-semibold text-foreground">{seed.shortDescription?.trim() ? "Described" : "Still needs definition"}</p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {seed.shortDescription?.trim() || "Explain why this story idea matters and what user or business value it should create."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Expected behavior</p>
-              <p className="mt-2 font-semibold text-foreground">
-                {seed.expectedBehavior?.trim() ? "Described" : "Still needs definition"}
-              </p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {seed.expectedBehavior?.trim() ||
-                  "Describe roughly what should happen when this idea is implemented without turning it into detailed delivery requirements."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic alignment</p>
-              <p className="mt-2 font-semibold text-foreground">
-                {epic.key} {epic.title}
-              </p>
-              <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
-            </div>
+          <CardContent className="grid gap-4">
+            <WorkspaceStatusSummary
+              blockerEmptyText="No Story Idea blockers are visible right now."
+              blockers={ideaBlockers}
+              completeItems={completeItems}
+              nextActionDetail={nextActionDetail}
+              nextActionLabel={nextActionLabel}
+              statusLabel={primaryStatusLabel}
+              statusTone={statusTone}
+            />
           </CardContent>
         </Card>
 
@@ -207,6 +219,25 @@ export function DirectionSeedWorkspace({
                 saveAction={saveInlineAction}
                 validateAction={validateAction}
               />
+              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic alignment</p>
+                <p className="mt-2 font-semibold text-foreground">
+                  {epic.key} {epic.title}
+                </p>
+                <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocking items</p>
+                {ideaBlockers.length > 0 ? (
+                  <ul className="mt-2 space-y-2 text-foreground">
+                    {ideaBlockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 leading-6 text-muted-foreground">No blockers remain. This Story Idea is ready for review.</p>
+                )}
+              </div>
             </CardContent>
           </Card>
 

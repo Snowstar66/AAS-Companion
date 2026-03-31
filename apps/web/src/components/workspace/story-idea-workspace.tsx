@@ -6,12 +6,15 @@ import { StoryIdeaUxSketchField } from "@/components/workspace/story-idea-ux-ske
 import { StoryIdeaAiValidatedTextarea } from "@/components/workspace/story-idea-ai-validated-textarea";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { archiveStoryAction, hardDeleteStoryAction, restoreStoryAction } from "@/app/(protected)/stories/[storyId]/actions";
+import { getStoryIdeaBlockers, getStoryIdeaStatusText } from "@/lib/framing/story-idea-status";
 import {
   formatAiLevel,
   getReadinessFieldStatus,
+  getSimplifiedStatusClasses,
   SecondaryPanel,
   STORY_IDEA_GUIDANCE,
-  type StoryWorkspaceData
+  type StoryWorkspaceData,
+  WorkspaceStatusSummary
 } from "./story-workspace-shared";
 
 type StoryIdeaWorkspaceProps = {
@@ -53,13 +56,38 @@ export function StoryIdeaWorkspace({
     story.epic.purpose?.trim() ||
     story.epic.scopeBoundary?.trim() ||
     `This story idea should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`;
-  const ideaBlockers = [
-    !story.valueIntent?.trim() ? "Value Intent still needs to be described." : null,
-    !story.expectedBehavior?.trim() ? "Expected Behavior still needs to be described." : null
+  const ideaBlockers = getStoryIdeaBlockers({
+    valueIntent: story.valueIntent,
+    expectedBehavior: story.expectedBehavior,
+    hasEpicLink: Boolean(story.epicId),
+    parentApproved: story.outcome.status === "active"
+  });
+  const primaryStatusLabel = getStoryIdeaStatusText({
+    valueIntent: story.valueIntent,
+    expectedBehavior: story.expectedBehavior,
+    hasEpicLink: Boolean(story.epicId),
+    parentApproved: story.outcome.status === "active"
+  });
+  const statusTone = ideaBlockers.length > 0 ? "needs_action" : story.outcome.status === "active" ? "approved" : "ready_for_review";
+  const primaryStatusClasses = getSimplifiedStatusClasses(statusTone);
+  const completeItems = [
+    story.valueIntent?.trim() ? "Value intent is captured" : null,
+    story.expectedBehavior?.trim() ? "Expected behavior is captured" : null,
+    story.epicId ? `Linked to Epic ${story.epic.key}` : null,
+    story.outcome.status === "active" ? `Parent Framing ${story.outcome.key} is approved` : null
   ].filter((value): value is string => Boolean(value));
-  const primaryStatusLabel = ideaBlockers.length > 0 ? "Needs clarification" : "Framing ready";
-  const primaryStatusClasses =
-    ideaBlockers.length > 0 ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900";
+  const nextActionLabel =
+    ideaBlockers.length > 0
+      ? "Complete the Story Idea"
+      : story.outcome.status === "active"
+        ? "Create or refine Delivery Stories"
+        : "Review in Framing";
+  const nextActionDetail =
+    ideaBlockers.length > 0
+      ? "Clear the listed blockers so this Story Idea is complete enough for review."
+      : story.outcome.status === "active"
+        ? "This Story Idea already sits inside approved Framing and can now guide design and delivery decomposition."
+        : "This Story Idea is complete enough for Framing review and Tollgate conversation.";
   const uxSketches: Array<{
     id: string;
     name: string;
@@ -107,30 +135,15 @@ export function StoryIdeaWorkspace({
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value intent</p>
-              <p className="mt-2 font-semibold text-foreground">{story.valueIntent?.trim() ? "Described" : "Still needs definition"}</p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {story.valueIntent?.trim() || "Explain why this story idea matters and what user or business value it should create."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Expected behavior</p>
-              <p className="mt-2 font-semibold text-foreground">
-                {story.expectedBehavior?.trim() ? "Described" : "Still needs definition"}
-              </p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {story.expectedBehavior?.trim() ||
-                  "Describe roughly what should happen when this idea is implemented without turning it into detailed delivery requirements."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm" id="story-blockers">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic alignment</p>
-              <p className="mt-2 font-semibold text-foreground">
-                {story.epic.key} {story.epic.title}
-              </p>
-              <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
-            </div>
+            <WorkspaceStatusSummary
+              blockerEmptyText="No Story Idea blockers are visible right now."
+              blockers={ideaBlockers}
+              completeItems={completeItems}
+              nextActionDetail={nextActionDetail}
+              nextActionLabel={nextActionLabel}
+              statusLabel={primaryStatusLabel}
+              statusTone={statusTone}
+            />
           </CardContent>
         </Card>
 
@@ -189,6 +202,18 @@ export function StoryIdeaWorkspace({
                   {story.epic.key} {story.epic.title}
                 </p>
                 <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-blockers">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocking items</p>
+                {ideaBlockers.length > 0 ? (
+                  <ul className="mt-2 space-y-2 text-foreground">
+                    {ideaBlockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 leading-6 text-muted-foreground">No blockers remain. This Story Idea is ready for review.</p>
+                )}
               </div>
             </CardContent>
           </Card>

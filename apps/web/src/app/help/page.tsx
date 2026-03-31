@@ -229,7 +229,7 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                       <p className="mt-2">Title, linked epic, value intent and expected behavior. Not acceptance criteria, tests or DoD.</p>
                     </div>
                     <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
-                      <p className="font-semibold text-sky-950">Framing ready</p>
+                      <p className="font-semibold text-sky-950">Ready for review</p>
                       <p className="mt-2">A Story Idea is framing ready when value intent, epic link and expected behavior exist.</p>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                     </div>
                     <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
                       <p className="font-semibold text-slate-950">Minimal lifecycle</p>
-                      <p className="mt-2">Draft {"->"} Ready {"->"} In Progress {"->"} Done is the intended direction, with review kept separate from story state.</p>
+                      <p className="mt-2">Needs action {"->"} Ready for review {"->"} Approved is the user-facing status flow, with build progress tracked separately.</p>
                     </div>
                   </div>
                 </div>

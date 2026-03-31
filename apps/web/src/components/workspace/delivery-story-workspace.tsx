@@ -18,7 +18,13 @@ import {
   submitStoryReadinessAction,
   validateStoryExpectedBehaviorAiAction
 } from "@/app/(protected)/stories/[storyId]/actions";
-import { formatAiLevel, getReadinessFieldStatus, SecondaryPanel, type StoryWorkspaceData } from "./story-workspace-shared";
+import {
+  formatAiLevel,
+  getReadinessFieldStatus,
+  SecondaryPanel,
+  type StoryWorkspaceData,
+  WorkspaceStatusSummary
+} from "./story-workspace-shared";
 
 type DeliveryStoryWorkspaceProps = {
   blockers: string[];
@@ -51,6 +57,14 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
     story.epic.scopeBoundary?.trim() ||
     `This delivery story should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`;
   const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
+  const statusTone = storyUx.statusLabel === "Approved" ? "approved" : storyUx.statusLabel === "Ready for review" ? "ready_for_review" : "needs_action";
+  const completeItems = [
+    valueSpineValidation.state === "ready" ? "Value Spine validation is complete" : null,
+    story.acceptanceCriteria.length > 0 ? "Acceptance criteria are present" : null,
+    story.testDefinition?.trim() ? "Test definition is present" : null,
+    story.definitionOfDone.length > 0 ? "Definition of Done is present" : null,
+    tollgateStatus === "approved" || story.status === "in_progress" ? "Required human approval is complete" : null
+  ].filter((value): value is string => Boolean(value));
 
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
@@ -101,33 +115,16 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               ) : null}
             </div>
           </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-3">
-            <div className={`rounded-2xl border px-4 py-4 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Readiness</p>
-              <p className="mt-2 font-semibold">{storyUx.readinessLabel}</p>
-              <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value Spine validation</p>
-              <p className="mt-2 font-semibold text-foreground">
-                {valueSpineValidation.state === "ready" ? "Valid against Value Spine" : "Value Spine still blocked"}
-              </p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {valueSpineBlockers.length === 0
-                  ? "Outcome link, Epic link, Acceptance Criteria, and Test Definition are all present."
-                  : valueSpineBlockers[0]}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {valueSpineBlockers.length > 1
-                  ? `${valueSpineBlockers.length - 1} more Value Spine blocker${valueSpineBlockers.length - 1 === 1 ? "" : "s"} remain.`
-                  : "This check stays informational until the Story moves into active build."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
-              <p className="mt-2 font-semibold text-foreground">{primaryNextStepLabel}</p>
-              <p className="mt-2 leading-6 text-muted-foreground">{primaryNextStepDetail}</p>
-            </div>
+          <CardContent className="grid gap-4">
+            <WorkspaceStatusSummary
+              blockerEmptyText="No Delivery Story blockers are visible right now."
+              blockers={blockers}
+              completeItems={completeItems}
+              nextActionDetail={primaryNextStepDetail}
+              nextActionLabel={primaryNextStepLabel}
+              statusLabel={storyUx.statusLabel}
+              statusTone={statusTone}
+            />
           </CardContent>
         </Card>
 
@@ -197,6 +194,23 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   {story.epic.key} {story.epic.title}
                 </p>
                 <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-blockers">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocking items</p>
+                {blockers.length > 0 ? (
+                  <ul className="mt-2 space-y-2 text-foreground">
+                    {blockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 leading-6 text-muted-foreground">No blockers remain. This Delivery Story is ready for review.</p>
+                )}
+                {valueSpineBlockers.length > 0 ? (
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Value Spine: {valueSpineBlockers.join(" ")}
+                  </p>
+                ) : null}
               </div>
             </CardContent>
           </Card>

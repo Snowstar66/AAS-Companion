@@ -71,3 +71,66 @@ export function SecondaryPanel(props: {
     </details>
   );
 }
+
+export type SimplifiedStatusTone = "needs_action" | "ready_for_review" | "approved";
+
+export function getSimplifiedStatusClasses(tone: SimplifiedStatusTone) {
+  if (tone === "approved") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-900";
+  }
+
+  if (tone === "ready_for_review") {
+    return "border-sky-200 bg-sky-50 text-sky-900";
+  }
+
+  return "border-amber-200 bg-amber-50 text-amber-900";
+}
+
+export function WorkspaceStatusSummary(props: {
+  statusLabel: string;
+  statusTone: SimplifiedStatusTone;
+  completeItems: string[];
+  blockers: string[];
+  nextActionLabel: string;
+  nextActionDetail: string;
+  completeEmptyText?: string | undefined;
+  blockerEmptyText?: string | undefined;
+}) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-4">
+      <div className={`rounded-2xl border px-4 py-4 text-sm ${getSimplifiedStatusClasses(props.statusTone)}`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em]">Current status</p>
+        <p className="mt-2 font-semibold">{props.statusLabel}</p>
+      </div>
+      <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Complete now</p>
+        {props.completeItems.length > 0 ? (
+          <ul className="mt-2 space-y-2 text-foreground">
+            {props.completeItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 leading-6 text-muted-foreground">{props.completeEmptyText ?? "Nothing is complete yet."}</p>
+        )}
+      </div>
+      <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blockers</p>
+        {props.blockers.length > 0 ? (
+          <ul className="mt-2 space-y-2 text-foreground">
+            {props.blockers.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 leading-6 text-muted-foreground">{props.blockerEmptyText ?? "No blockers are visible right now."}</p>
+        )}
+      </div>
+      <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next best action</p>
+        <p className="mt-2 font-semibold text-foreground">{props.nextActionLabel}</p>
+        <p className="mt-2 leading-6 text-muted-foreground">{props.nextActionDetail}</p>
+      </div>
+    </div>
+  );
+}

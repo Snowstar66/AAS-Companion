@@ -20,6 +20,7 @@ import { FramingValueSpineTree } from "@/components/workspace/framing-value-spin
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
+import { WorkspaceStatusSummary } from "@/components/workspace/story-workspace-shared";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOrganizationUsersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
@@ -132,8 +133,8 @@ export function FramingOutcomeSection({
     search.blockersFromQuery && search.blockersFromQuery.length > 0
       ? search.blockersFromQuery
       : tollgate?.blockers ?? computedBlockers;
-  const framingComplete = computedBlockers.length === 0;
-  const statusLabel = outcome.status.replaceAll("_", " ");
+  const statusLabel = tollgate?.status === "approved" ? "Approved" : blockers.length > 0 ? "Needs action" : "Ready for review";
+  const statusTone = tollgate?.status === "approved" ? "approved" : blockers.length > 0 ? "needs_action" : "ready_for_review";
   const originLabel = getOriginLabel(outcome.originType);
   const workspaceLabel = getWorkspaceLabel(outcome);
   const isArchived = outcome.lifecycleState === "archived";
@@ -204,6 +205,27 @@ export function FramingOutcomeSection({
       })
     ).length;
   const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
+  const framingCompleteItems = [
+    outcome.outcomeStatement?.trim() ? "Outcome statement is captured" : null,
+    outcome.baselineDefinition?.trim() ? "Baseline is defined" : null,
+    outcome.valueOwnerId ? "Value owner is assigned" : null,
+    outcome.aiAccelerationLevel ? "AI level is set" : null,
+    outcome.riskProfile ? "Risk profile is set" : null,
+    outcome.epics.length > 0 ? `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"} created` : null,
+    tollgate?.status === "approved" ? "Tollgate 1 approval is complete" : null
+  ].filter((value): value is string => Boolean(value));
+  const framingNextActionLabel =
+    tollgate?.status === "approved"
+      ? "Continue with Story Ideas"
+      : blockers.length > 0
+        ? "Clear framing blockers"
+        : "Submit to Tollgate";
+  const framingNextActionDetail =
+    tollgate?.status === "approved"
+      ? "Use the approved Framing as the decision baseline for Story Ideas, design and delivery work."
+      : blockers.length > 0
+        ? "Complete the missing handshake items listed here so Framing can move into review."
+        : "Framing is complete enough for human review. Submit it to Tollgate 1 when you are ready.";
 
   return (
     <section className="space-y-6">
@@ -271,7 +293,7 @@ export function FramingOutcomeSection({
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
                 Project mode: {workspaceLabel}
               </span>
-              <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusTone === "approved" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : statusTone === "ready_for_review" ? "border-sky-200 bg-sky-50 text-sky-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
                 Status: {statusLabel}
               </span>
             </div>
@@ -283,21 +305,16 @@ export function FramingOutcomeSection({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
-            <p className="mt-2 text-base font-semibold capitalize">{outcome.aiAccelerationLevel.replaceAll("_", " ")}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Risk profile</p>
-            <p className="mt-2 text-base font-semibold capitalize">{outcome.riskProfile}</p>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Baseline readiness</p>
-            <p className="mt-2 text-base font-semibold">
-              {framingComplete ? "Framing complete for submit" : "Framing still incomplete"}
-            </p>
-          </div>
+        <CardContent className="grid gap-4">
+          <WorkspaceStatusSummary
+            blockerEmptyText="No framing blockers are visible right now."
+            blockers={blockers}
+            completeItems={framingCompleteItems}
+            nextActionDetail={framingNextActionDetail}
+            nextActionLabel={framingNextActionLabel}
+            statusLabel={statusLabel}
+            statusTone={statusTone}
+          />
         </CardContent>
       </Card>
 
@@ -568,7 +585,7 @@ export function FramingOutcomeSection({
                       </p>
                     </div>
                     <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Ready for framing</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Ready for review</p>
                       <p className="mt-2 text-2xl font-semibold text-sky-950">{readyStoryIdeaCount}</p>
                       <p className="mt-2 text-sm leading-6 text-sky-900">
                         Story ideas that already have both value intent and expected behavior.

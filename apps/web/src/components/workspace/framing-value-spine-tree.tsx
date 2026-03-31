@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import {
+  getStoryIdeaBlockers,
   getStoryIdeaIntentText,
   getStoryIdeaStatusText,
   isStoryIdeaReadyForFraming,
@@ -328,7 +329,13 @@ function DirectionSeedRow({
   const needsAttention = !isReady;
   const framingStatus = getStoryIdeaStatusText({
     shortDescription: seed.shortDescription,
-    expectedBehavior: seed.expectedBehavior
+    expectedBehavior: seed.expectedBehavior,
+    hasEpicLink: true
+  });
+  const ideaBlockers = getStoryIdeaBlockers({
+    shortDescription: seed.shortDescription,
+    expectedBehavior: seed.expectedBehavior,
+    hasEpicLink: true
   });
   const nextImprovement = !intentText
     ? "Add Value Intent so the story idea explains why it matters."
@@ -354,12 +361,12 @@ function DirectionSeedRow({
             {isReady ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Ready for framing
+                Ready for review
               </span>
             ) : isStarted ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
                 <CircleAlert className="h-3.5 w-3.5" />
-                Needs refinement
+                Needs action
               </span>
             ) : null}
             {seed.uxSketchDataUrl?.trim() ? (
@@ -400,8 +407,13 @@ function DirectionSeedRow({
             })}
           </p>
           <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
-            <span className="font-medium">Next improvement:</span> {nextImprovement}
+            <span className="font-medium">Next best action:</span> {nextImprovement}
           </p>
+          {ideaBlockers.length > 0 ? (
+            <p className="mt-1 text-sm text-amber-900">
+              <span className="font-medium">Blockers:</span> {ideaBlockers.join(" ")}
+            </p>
+          ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
             {joinMeta([
               getOriginLabel(seed.originType),
@@ -468,7 +480,13 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
   const needsAttention = !isReady;
   const framingStatus = getStoryIdeaStatusText({
     valueIntent: story.valueIntent,
-    expectedBehavior: story.expectedBehavior
+    expectedBehavior: story.expectedBehavior,
+    hasEpicLink: true
+  });
+  const ideaBlockers = getStoryIdeaBlockers({
+    valueIntent: story.valueIntent,
+    expectedBehavior: story.expectedBehavior,
+    hasEpicLink: true
   });
   const nextImprovement = !story.valueIntent?.trim()
     ? "Add Value Intent so the story idea explains why it matters."
@@ -491,12 +509,12 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
             {isReady ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Ready for framing
+                Ready for review
               </span>
             ) : isStarted ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
                 <CircleAlert className="h-3.5 w-3.5" />
-                Needs refinement
+                Needs action
               </span>
             ) : null}
           </div>
@@ -511,8 +529,13 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
             <span className="font-medium">Expected behavior:</span> {story.expectedBehavior?.trim() || "Not described yet."}
           </p>
           <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
-            <span className="font-medium">Next improvement:</span> {nextImprovement}
+            <span className="font-medium">Next best action:</span> {nextImprovement}
           </p>
+          {ideaBlockers.length > 0 ? (
+            <p className="mt-1 text-sm text-amber-900">
+              <span className="font-medium">Blockers:</span> {ideaBlockers.join(" ")}
+            </p>
+          ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
             {joinMeta([
               getOriginLabel(story.originType),
@@ -597,15 +620,15 @@ function StoryRow({ story }: { story: TreeStory }) {
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{storySummary}</p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Story path:</span> {storyUx.statusLabel}
+            <span className="font-medium">Current status:</span> {storyUx.statusLabel}
           </p>
           {needsAttention ? (
             <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">Attention:</span> {missingInputs.join(", ") || storyUx.blockers[0]}
+              <span className="font-medium">Blockers:</span> {missingInputs.join(", ") || storyUx.blockers[0]}
             </p>
           ) : null}
           <p className="mt-1 text-sm text-foreground">
-            <span className="font-medium">Next step:</span> {nextStep}
+            <span className="font-medium">Next best action:</span> {nextStep}
           </p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
           {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}

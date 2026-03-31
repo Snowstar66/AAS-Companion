@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { getStoryReadinessBlockers } from "@aas-companion/domain";
 import { getDirectionSeedWorkspaceService, getStoryWorkspaceService } from "@aas-companion/api";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
@@ -15,6 +14,7 @@ import {
 import { DirectionSeedWorkspace } from "@/components/workspace/direction-seed-workspace";
 import { StoryIdeaWorkspace } from "@/components/workspace/story-idea-workspace";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+import { getStoryIdeaBlockers } from "@/lib/framing/story-idea-status";
 
 type StoryIdeaWorkspacePageProps = {
   params: Promise<{
@@ -112,12 +112,15 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
   }
 
   const { story, tollgate, tollgateReview } = storyResult.data;
-  const computedBlockers = getStoryReadinessBlockers(story);
-  const importedBuildBlockers = storyResult.data.importedBuildBlockers ?? [];
   const blockers =
     blockersFromQuery.length > 0
       ? blockersFromQuery
-      : tollgateReview?.blockers ?? [...new Set([...(tollgate?.blockers ?? computedBlockers), ...importedBuildBlockers])];
+      : getStoryIdeaBlockers({
+          valueIntent: story.valueIntent,
+          expectedBehavior: story.expectedBehavior,
+          hasEpicLink: Boolean(story.epicId),
+          parentApproved: story.outcome.status === "active"
+        });
   const isArchived = story.lifecycleState === "archived";
   const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
   const canAlsoOpenDeliveryView = Boolean(story.sourceDirectionSeedId) || tollgateStatus === "approved" || story.status === "in_progress";

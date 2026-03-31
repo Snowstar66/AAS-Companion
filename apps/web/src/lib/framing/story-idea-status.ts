@@ -2,6 +2,8 @@ type StoryIdeaStatusInput = {
   valueIntent?: string | null | undefined;
   shortDescription?: string | null | undefined;
   expectedBehavior?: string | null | undefined;
+  hasEpicLink?: boolean | null | undefined;
+  parentApproved?: boolean | null | undefined;
 };
 
 function normalize(value: string | null | undefined) {
@@ -20,14 +22,34 @@ export function isStoryIdeaReadyForFraming(input: StoryIdeaStatusInput) {
   return Boolean(getStoryIdeaIntentText(input) && normalize(input.expectedBehavior));
 }
 
+export function getStoryIdeaBlockers(input: StoryIdeaStatusInput) {
+  const blockers: string[] = [];
+
+  if (input.hasEpicLink === false) {
+    blockers.push("Story Idea is not linked to an Epic.");
+  }
+
+  if (!getStoryIdeaIntentText(input)) {
+    blockers.push("Missing value intent.");
+  }
+
+  if (!normalize(input.expectedBehavior)) {
+    blockers.push("Missing expected behavior.");
+  }
+
+  return blockers;
+}
+
 export function getStoryIdeaStatusText(input: StoryIdeaStatusInput) {
-  if (isStoryIdeaReadyForFraming(input)) {
-    return "Ready for framing";
+  const blockers = getStoryIdeaBlockers(input);
+
+  if (blockers.length > 0) {
+    return "Needs action";
   }
 
-  if (isStoryIdeaStarted(input)) {
-    return "In progress";
+  if (input.parentApproved) {
+    return "Approved";
   }
 
-  return "Not started";
+  return "Ready for review";
 }
