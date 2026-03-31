@@ -5,14 +5,16 @@ import type { ReactNode } from "react";
 import { Bot, CheckCircle2, ShieldAlert, Sparkles, TriangleAlert } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
-import { formatAiLevelLabel, getInlineGuidance } from "@/lib/help/aas-help";
+import { formatAiLevelLabel } from "@/lib/help/aas-help";
 
 type RiskLevel = "low" | "medium" | "high";
 type AiLevel = "level_1" | "level_2" | "level_3";
+type AiExecutionPattern = "assisted" | "step_by_step" | "orchestrated";
 
 type OutcomeAiRiskPostureCardProps = {
   defaultAiLevel: AiLevel;
   defaultRiskProfile: RiskLevel;
+  defaultAiExecutionPattern: AiExecutionPattern | null;
   defaultAiUsageIntent: string | null;
   defaultBusinessImpactLevel: RiskLevel | null;
   defaultBusinessImpactRationale: string | null;
@@ -30,6 +32,66 @@ type OutcomeAiRiskPostureCardProps = {
   embedded?: boolean | undefined;
   disabled?: boolean | undefined;
 };
+
+function deriveAiLevelFromExecutionPattern(pattern: AiExecutionPattern | null) {
+  if (pattern === "assisted") {
+    return "level_1" as const;
+  }
+
+  if (pattern === "step_by_step") {
+    return "level_2" as const;
+  }
+
+  if (pattern === "orchestrated") {
+    return "level_3" as const;
+  }
+
+  return null;
+}
+
+function deriveExecutionPatternFromAiLevel(level: AiLevel) {
+  if (level === "level_1") {
+    return "assisted" as const;
+  }
+
+  if (level === "level_2") {
+    return "step_by_step" as const;
+  }
+
+  return "orchestrated" as const;
+}
+
+function formatExecutionPattern(value: AiExecutionPattern | null) {
+  if (value === "assisted") {
+    return "Assisted delivery";
+  }
+
+  if (value === "step_by_step") {
+    return "Structured acceleration";
+  }
+
+  if (value === "orchestrated") {
+    return "Orchestrated agentic delivery";
+  }
+
+  return "Not determined";
+}
+
+function getExecutionPatternGuidance(value: AiExecutionPattern | null) {
+  if (value === "assisted") {
+    return "AI supports a human interactively. No workflow automation. Human makes all decisions.";
+  }
+
+  if (value === "step_by_step") {
+    return "AI produces artifacts one step at a time. Human review happens between each step.";
+  }
+
+  if (value === "orchestrated") {
+    return "AI executes multiple chained steps through workflows or agents with stronger governance.";
+  }
+
+  return "Select the execution pattern that best describes how AI will actually be used.";
+}
 
 function getAiLevelLifecycleExample(value: AiLevel) {
   if (value === "level_1") {
@@ -79,34 +141,6 @@ function deriveRiskProfile(levels: Array<RiskLevel | null>) {
     (highest, current) => (getRiskWeight(current) > getRiskWeight(highest) ? current : highest),
     firstLevel
   );
-}
-
-function getMaxAiLevelForRisk(level: RiskLevel | null) {
-  if (level === "low") {
-    return "level_1";
-  }
-
-  if (level === "medium") {
-    return "level_2";
-  }
-
-  if (level === "high") {
-    return "level_3";
-  }
-
-  return null;
-}
-
-function isAiLevelAllowed(aiLevel: AiLevel, riskProfile: RiskLevel | null) {
-  const allowed = getMaxAiLevelForRisk(riskProfile);
-
-  if (!allowed) {
-    return false;
-  }
-
-  return getRiskWeight(
-    aiLevel === "level_3" ? "high" : aiLevel === "level_2" ? "medium" : "low"
-  ) <= getRiskWeight(allowed === "level_3" ? "high" : allowed === "level_2" ? "medium" : "low");
 }
 
 function formatRiskLevel(value: RiskLevel | null) {
@@ -228,6 +262,7 @@ function RiskDimensionFields(props: {
 export function OutcomeAiRiskPostureCard({
   defaultAiLevel,
   defaultRiskProfile,
+  defaultAiExecutionPattern,
   defaultAiUsageIntent,
   defaultBusinessImpactLevel,
   defaultBusinessImpactRationale,
@@ -245,7 +280,9 @@ export function OutcomeAiRiskPostureCard({
   embedded = false,
   disabled = false
 }: OutcomeAiRiskPostureCardProps) {
-  const [aiLevel, setAiLevel] = useState<AiLevel>(defaultAiLevel);
+  const [aiExecutionPattern, setAiExecutionPattern] = useState<AiExecutionPattern | null>(
+    defaultAiExecutionPattern ?? deriveExecutionPatternFromAiLevel(defaultAiLevel)
+  );
   const [aiUsageIntent, setAiUsageIntent] = useState(defaultAiUsageIntent ?? "");
   const [businessImpactLevel, setBusinessImpactLevel] = useState<RiskLevel | null>(defaultBusinessImpactLevel);
   const [businessImpactRationale, setBusinessImpactRationale] = useState(defaultBusinessImpactRationale ?? "");
@@ -257,6 +294,7 @@ export function OutcomeAiRiskPostureCard({
   const [decisionImpactRationale, setDecisionImpactRationale] = useState(defaultDecisionImpactRationale ?? "");
   const [aiLevelJustification, setAiLevelJustification] = useState(defaultAiLevelJustification ?? "");
   const [riskAccepted, setRiskAccepted] = useState(defaultRiskAccepted);
+  const aiLevel = deriveAiLevelFromExecutionPattern(aiExecutionPattern) ?? defaultAiLevel;
 
   const derivedRisk = useMemo(
     () =>
@@ -271,6 +309,10 @@ export function OutcomeAiRiskPostureCard({
 
   const blockers = useMemo(() => {
     const items: string[] = [];
+
+    if (!aiExecutionPattern) {
+      items.push("Missing AI execution pattern.");
+    }
 
     if (!aiUsageIntent.trim()) {
       items.push("Missing AI usage across lifecycle.");
@@ -312,10 +354,6 @@ export function OutcomeAiRiskPostureCard({
       items.push("Risk profile cannot be determined until all four risk dimensions are classified.");
     }
 
-    if (derivedRisk && !isAiLevelAllowed(aiLevel, derivedRisk)) {
-      items.push(`AI level exceeds the current risk profile. Highest allowed level is ${formatAiLevel(getMaxAiLevelForRisk(derivedRisk) ?? "level_1")}.`);
-    }
-
     if (aiLevel === "level_3" && !aiLevelJustification.trim()) {
       items.push("Level 3 requires explicit governance justification.");
     }
@@ -328,6 +366,7 @@ export function OutcomeAiRiskPostureCard({
 
     return items;
   }, [
+    aiExecutionPattern,
     aiLevel,
     aiLevelJustification,
     aiUsageIntent,
@@ -344,11 +383,38 @@ export function OutcomeAiRiskPostureCard({
     valueOwnerLabel
   ]);
 
+  const governanceWarnings = useMemo(() => {
+    const items: string[] = [];
+
+    if (derivedRisk === "high" && aiLevel === "level_2") {
+      items.push("High risk with Level 2 requires structured human validation after each step and reproducible outputs.");
+    }
+
+    if (derivedRisk === "high" && aiLevel === "level_3") {
+      items.push("High risk with Level 3 requires full traceability, logged orchestration and explicit human approval before autonomous decisions.");
+    }
+
+    if (derivedRisk === "medium" && aiLevel === "level_3") {
+      items.push("Medium risk with Level 3 should have explicit orchestration boundaries, human supervision and clear traceability.");
+    }
+
+    if (decisionImpactLevel === "high" && aiLevel !== "level_1") {
+      items.push("Human decision authority must stay explicit when AI influences or automates high-impact decisions.");
+    }
+
+    if (aiExecutionPattern === "orchestrated") {
+      items.push("Orchestrated agentic delivery requires logs and step traceability across the full execution chain.");
+    }
+
+    return [...new Set(items)];
+  }, [aiExecutionPattern, aiLevel, decisionImpactLevel, derivedRisk]);
+
   const nextBestAction =
     blockers[0] ??
-    (aiLevel === "level_3"
+    (governanceWarnings[0] ??
+      (aiLevel === "level_3"
       ? "Review the Level 3 justification and confirm the risk acceptance before Tollgate 1."
-      : "AI and risk posture is complete. Continue into Epics and Story Ideas or submit to Tollgate.");
+      : "AI and risk posture is complete. Continue into Epics and Story Ideas or submit to Tollgate."));
 
   const statusTone = getStatusTone(blockers.length, derivedRisk, aiLevel);
 
@@ -369,6 +435,7 @@ export function OutcomeAiRiskPostureCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
+        <input name="aiAccelerationLevel" type="hidden" value={aiLevel} />
         <input name="riskProfile" type="hidden" value={derivedRisk ?? defaultRiskProfile} />
         <input name="existingRiskAcceptedAt" type="hidden" value={defaultRiskAcceptedAt ?? ""} />
         <input name="existingRiskAcceptedByValueOwnerId" type="hidden" value={defaultRiskAcceptedByValueOwnerId ?? ""} />
@@ -407,24 +474,30 @@ export function OutcomeAiRiskPostureCard({
         </div>
 
         <StepCard
-          title="Step 1 - Define AI acceleration and expected use"
-          description="Choose the AI Acceleration Level first. Then describe, in one broad BMAD-oriented statement, how AI is expected to support later phases."
+          title="Step 1 - Determine execution pattern and AI level"
+          description="Choose the AAS execution pattern first. The AI Acceleration Level is then derived automatically from that pattern."
         >
           <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">AI Level</span>
+              <span className="text-sm font-medium text-foreground">Execution pattern</span>
               <select
                 className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                defaultValue={defaultAiLevel}
+                defaultValue={aiExecutionPattern ?? ""}
                 disabled={disabled}
-                name="aiAccelerationLevel"
-                onChange={(event) => setAiLevel(event.target.value as AiLevel)}
+                name="aiExecutionPattern"
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setAiExecutionPattern(
+                    value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null
+                  );
+                }}
               >
-                <option value="level_1">Level 1</option>
-                <option value="level_2">Level 2</option>
-                <option value="level_3">Level 3</option>
+                <option value="">Select execution pattern</option>
+                <option value="assisted">Assisted delivery</option>
+                <option value="step_by_step">Structured acceleration</option>
+                <option value="orchestrated">Orchestrated agentic delivery</option>
               </select>
-              <InlineFieldGuidance guidance={getInlineGuidance("framing.ai_level")} />
+              <InlineFieldGuidance guidance="Choose how AI will actually execute work: interactive support, one step at a time with human review, or orchestrated multi-step flow." />
             </label>
             <label className="space-y-2">
               <span className="text-sm font-medium text-foreground">Expected AI use across lifecycle</span>
@@ -440,7 +513,9 @@ export function OutcomeAiRiskPostureCard({
             </label>
           </div>
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 text-sm leading-6 text-sky-950">
-            {getAiLevelLifecycleExample(aiLevel)}
+            <p className="font-semibold">{formatExecutionPattern(aiExecutionPattern)} {"->"} {formatAiLevel(aiLevel)}</p>
+            <p className="mt-2">{getExecutionPatternGuidance(aiExecutionPattern)}</p>
+            <p className="mt-3">{getAiLevelLifecycleExample(aiLevel)}</p>
           </div>
         </StepCard>
 
@@ -497,8 +572,8 @@ export function OutcomeAiRiskPostureCard({
         </StepCard>
 
         <StepCard
-          title="Step 4 and 5 - Determine overall risk and validate AI level"
-          description="Overall risk must equal the highest classified dimension. Check that the selected AI level stays within that risk posture."
+          title="Step 4 and 5 - Determine overall risk and assess governance fit"
+          description="Overall risk must equal the highest classified dimension. Then check whether the derived AI level has the right governance for that risk."
         >
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
             <div className="rounded-2xl border border-border/70 bg-background p-4">
@@ -514,7 +589,7 @@ export function OutcomeAiRiskPostureCard({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Selected AI level</p>
               <p className="mt-2 text-lg font-semibold text-foreground">{formatAiLevel(aiLevel)}</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                The AI level is chosen in Step 1 and validated here against the derived overall risk.
+                The AI level is derived from the execution pattern in Step 1 and then checked here against the risk posture.
               </p>
             </div>
           </div>
@@ -611,11 +686,18 @@ export function OutcomeAiRiskPostureCard({
             )}
           </div>
           <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next best action</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Governance fit</p>
+            {governanceWarnings.length > 0 ? (
+              <ul className="mt-2 space-y-2 text-foreground">
+                {governanceWarnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 leading-6 text-muted-foreground">The current AI level and risk posture do not expose any additional governance warnings.</p>
+            )}
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next best action</p>
             <p className="mt-2 font-semibold text-foreground">{nextBestAction}</p>
-            <p className="mt-2 leading-6 text-muted-foreground">
-              This decision must be complete before Tollgate 1 can move into review.
-            </p>
           </div>
         </div>
       </CardContent>

@@ -29,9 +29,9 @@ export type HelpPattern = {
 };
 
 const aiLevelNotes: Record<AiLevelKey, string> = {
-  level_1: "Level 1 fits narrow automation with low-risk support and straightforward human checking.",
-  level_2: "Level 2 fits AI-assisted delivery where humans still own judgment, sign-off and customer accountability.",
-  level_3: "Level 3 needs stronger governance, explicit oversight and a clearer risk conversation before moving forward."
+  level_1: "Level 1 fits assisted delivery where AI supports a human interactively and humans make all decisions.",
+  level_2: "Level 2 fits structured acceleration where AI produces one artifact step at a time with human review between steps.",
+  level_3: "Level 3 fits orchestrated agentic delivery where multi-step flows are chained and must stay fully traceable."
 };
 
 const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
@@ -119,10 +119,10 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
   },
   "framing.ai_level": {
     title: "AI acceleration level",
-    summary: "Choose the intended AI acceleration posture for the BMAD flow first, then describe the expected AI use across later phases at that level.",
-    purpose: "Set the expected level of AI support, automation and governance early in the project.",
-    belongs: "The expected degree of AI involvement across refinement, design, build and test under human governance, plus one broad BMAD-aligned description of how AI will be used.",
-    avoid: "A second competing AI role taxonomy, tool shopping, model selection or pretending one field can capture every detailed later AI activity.",
+    summary: "Determine the execution pattern first, let that map to the AI Acceleration Level, then describe the expected AI use across later phases.",
+    purpose: "Classify AI use according to the AAS operating model before Tollgate 1.",
+    belongs: "Execution pattern, derived AI level, expected BMAD lifecycle support, explicit risk and retained human decision authority.",
+    avoid: "Tool-name classification, competing AI role taxonomies or treating risk as the thing that directly decides AI level.",
     aiLevelNotes
   },
   "framing.design_direction": {

@@ -156,6 +156,7 @@ export async function listOutcomeCockpitEntries(organizationId: string) {
           baselineDefinition: true,
           baselineSource: true,
           aiUsageRole: true,
+          aiExecutionPattern: true,
           aiUsageIntent: true,
           businessImpactLevel: true,
           businessImpactRationale: true,
@@ -255,6 +256,7 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           dataSensitivity: true,
           deliveryType: true,
           aiUsageRole: true,
+          aiExecutionPattern: true,
           aiUsageIntent: true,
           businessImpactLevel: true,
           businessImpactRationale: true,
@@ -438,6 +440,7 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         dataSensitivity: parsed.dataSensitivity ?? null,
         deliveryType: parsed.deliveryType ?? null,
         aiUsageRole: parsed.aiUsageRole ?? null,
+        aiExecutionPattern: parsed.aiExecutionPattern ?? null,
         aiUsageIntent: parsed.aiUsageIntent ?? null,
         businessImpactLevel: parsed.businessImpactLevel ?? null,
         businessImpactRationale: parsed.businessImpactRationale ?? null,
@@ -532,6 +535,7 @@ export async function updateOutcome(input: unknown) {
       hasScalarChanged(parsed.dataSensitivity, existing.dataSensitivity) ||
       hasScalarChanged(parsed.deliveryType, existing.deliveryType) ||
       hasScalarChanged(parsed.aiUsageRole, existing.aiUsageRole) ||
+      hasScalarChanged(parsed.aiExecutionPattern, existing.aiExecutionPattern) ||
       hasScalarChanged(parsed.aiUsageIntent, existing.aiUsageIntent) ||
       hasScalarChanged(parsed.businessImpactLevel, existing.businessImpactLevel) ||
       hasScalarChanged(parsed.businessImpactRationale, existing.businessImpactRationale) ||
@@ -591,6 +595,10 @@ export async function updateOutcome(input: unknown) {
 
     if (parsed.aiUsageRole !== undefined) {
       data.aiUsageRole = parsed.aiUsageRole;
+    }
+
+    if (parsed.aiExecutionPattern !== undefined) {
+      data.aiExecutionPattern = parsed.aiExecutionPattern;
     }
 
     if (parsed.aiUsageIntent !== undefined) {

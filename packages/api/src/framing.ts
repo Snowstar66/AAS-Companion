@@ -138,6 +138,12 @@ export async function getFramingCockpitData(
             entry.aiUsageRole === "automation"
               ? entry.aiUsageRole
               : null,
+          aiExecutionPattern:
+            entry.aiExecutionPattern === "assisted" ||
+            entry.aiExecutionPattern === "step_by_step" ||
+            entry.aiExecutionPattern === "orchestrated"
+              ? entry.aiExecutionPattern
+              : null,
           aiUsageIntent: entry.aiUsageIntent ?? null,
           businessImpactLevel: entry.businessImpactLevel ?? null,
           businessImpactRationale: entry.businessImpactRationale ?? null,

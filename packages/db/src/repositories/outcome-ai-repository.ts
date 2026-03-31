@@ -63,6 +63,7 @@ type OutcomeFramingAiReviewInput = {
     dataSensitivity?: string | null;
     deliveryType?: "AD" | "AT" | "AM" | null;
     aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+    aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
     aiUsageIntent?: string | null;
     businessImpactLevel?: "low" | "medium" | "high" | null;
     businessImpactRationale?: string | null;
@@ -619,7 +620,7 @@ You will receive:
 - Problem Statement
 - Outcome (including baseline and owner context)
 - Solution Context & Constraints
-- AI usage intent and structured risk rationale
+- AI execution pattern, lifecycle usage intent and structured risk rationale
 - Epics
 - Story Ideas (with Value Intent and Expected Behavior)
 - Selected AI Acceleration Level
@@ -835,6 +836,7 @@ export async function reviewOutcomeFramingWithAi(input: {
     dataSensitivity?: string | null;
     deliveryType?: "AD" | "AT" | "AM" | null;
     aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+    aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
     aiUsageIntent?: string | null;
     businessImpactLevel?: "low" | "medium" | "high" | null;
     businessImpactRationale?: string | null;

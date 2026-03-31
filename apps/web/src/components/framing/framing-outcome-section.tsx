@@ -132,6 +132,12 @@ export function FramingOutcomeSection({
       outcome.aiUsageRole === "automation"
         ? outcome.aiUsageRole
         : null,
+    aiExecutionPattern:
+      outcome.aiExecutionPattern === "assisted" ||
+      outcome.aiExecutionPattern === "step_by_step" ||
+      outcome.aiExecutionPattern === "orchestrated"
+        ? outcome.aiExecutionPattern
+        : null,
     aiUsageIntent: outcome.aiUsageIntent ?? null,
     businessImpactLevel: outcome.businessImpactLevel ?? null,
     businessImpactRationale: outcome.businessImpactRationale ?? null,
@@ -567,6 +573,13 @@ export function FramingOutcomeSection({
               <OutcomeAiRiskPostureCard
                 defaultAiLevelJustification={outcome.aiLevelJustification ?? null}
                 defaultAiLevel={outcome.aiAccelerationLevel}
+                defaultAiExecutionPattern={
+                  outcome.aiExecutionPattern === "assisted" ||
+                  outcome.aiExecutionPattern === "step_by_step" ||
+                  outcome.aiExecutionPattern === "orchestrated"
+                    ? outcome.aiExecutionPattern
+                    : null
+                }
                 defaultAiUsageIntent={outcome.aiUsageIntent ?? null}
                 defaultBlastRadiusLevel={outcome.blastRadiusLevel ?? null}
                 defaultBlastRadiusRationale={outcome.blastRadiusRationale ?? null}

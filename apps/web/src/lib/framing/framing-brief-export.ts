@@ -10,6 +10,7 @@ type FramingBriefOutcome = {
   solutionConstraints: string | null;
   dataSensitivity: string | null;
   deliveryType: string | null;
+  aiExecutionPattern: string | null;
   aiUsageIntent: string | null;
   businessImpactLevel: "low" | "medium" | "high" | null;
   businessImpactRationale: string | null;
@@ -72,6 +73,7 @@ export type FramingBriefExportPayload = {
     readiness: "ready" | "blocked";
   };
   ai_and_risk: {
+    execution_pattern: "assisted" | "step_by_step" | "orchestrated" | null;
     ai_usage_intent: string | null;
     ai_level: "level_1" | "level_2" | "level_3";
     risk_profile: "low" | "medium" | "high";
@@ -142,6 +144,10 @@ function normalizeDeliveryType(value: string | null | undefined): "AD" | "AT" | 
   return value === "AD" || value === "AT" || value === "AM" ? value : null;
 }
 
+function normalizeExecutionPattern(value: string | null | undefined): "assisted" | "step_by_step" | "orchestrated" | null {
+  return value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null;
+}
+
 function formatRiskRationale(level: "low" | "medium" | "high" | null, rationale: string | null | undefined) {
   if (!level && !hasText(rationale)) {
     return null;
@@ -186,6 +192,7 @@ export function buildFramingBriefExport(input: {
       readiness: input.blockers.length === 0 ? "ready" : "blocked"
     },
     ai_and_risk: {
+      execution_pattern: normalizeExecutionPattern(input.outcome.aiExecutionPattern),
       ai_usage_intent: input.outcome.aiUsageIntent,
       ai_level: input.outcome.aiAccelerationLevel,
       risk_profile: input.outcome.riskProfile,
@@ -277,6 +284,7 @@ export function buildFramingBriefExport(input: {
     `- Source: ${payload.baseline.source ?? "Not captured yet"}`,
     "",
     "## AI Level and Risk",
+    `- Execution pattern: ${payload.ai_and_risk.execution_pattern?.replaceAll("_", " ") ?? "Not captured yet"}`,
     `- Expected AI use across lifecycle: ${payload.ai_and_risk.ai_usage_intent ?? "Not captured yet"}`,
     `- AI level: ${formatAiLevel(payload.ai_and_risk.ai_level)}`,
     `- Risk profile: ${payload.ai_and_risk.risk_profile}`,

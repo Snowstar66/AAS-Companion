@@ -96,6 +96,8 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
     aiUsageRole: null,
+    aiExecutionPattern:
+      (String(formData.get("aiExecutionPattern") ?? "") as "assisted" | "step_by_step" | "orchestrated") || null,
     aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
     businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
     businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,
@@ -170,6 +172,8 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
     aiUsageRole: null,
+    aiExecutionPattern:
+      (String(formData.get("aiExecutionPattern") ?? "") as "assisted" | "step_by_step" | "orchestrated") || null,
     aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
     businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
     businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,

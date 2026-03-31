@@ -68,6 +68,10 @@ function normalizeAiUsageRole(value: string | null | undefined) {
     : null;
 }
 
+function normalizeAiExecutionPattern(value: string | null | undefined) {
+  return value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null;
+}
+
 function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getOutcomeWorkspaceSnapshot>>>) {
   const activeChildren = [
     ...snapshot.outcome.epics.map((epic) => toGovernedChildImpact("epic", epic)),
@@ -190,6 +194,7 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
       readiness: getOutcomeFramingReadiness({
         ...snapshot.outcome,
         aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+        aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
         epicCount: snapshot.outcome.epics.length
       }),
       removal: buildOutcomeRemovalFromSnapshot(snapshot)
@@ -219,6 +224,7 @@ export async function getOutcomeTollgateReviewService(organizationId: string, ou
       getOutcomeFramingReadiness({
         ...snapshot.outcome,
         aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+        aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
         epicCount: snapshot.outcome.epics.length
       }).reasons.map((reason) => reason.message);
 
@@ -265,6 +271,7 @@ export async function saveOutcomeWorkspaceService(input: {
   dataSensitivity?: string | null;
   deliveryType?: "AD" | "AT" | "AM" | null;
   aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+  aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
   aiUsageIntent?: string | null;
   businessImpactLevel?: "low" | "medium" | "high" | null;
   businessImpactRationale?: string | null;
@@ -304,6 +311,7 @@ export async function saveOutcomeWorkspaceService(input: {
     dataSensitivity: input.dataSensitivity,
     deliveryType: input.deliveryType,
     aiUsageRole: input.aiUsageRole,
+    aiExecutionPattern: input.aiExecutionPattern,
     aiUsageIntent: input.aiUsageIntent,
     businessImpactLevel: input.businessImpactLevel,
     businessImpactRationale: input.businessImpactRationale,
@@ -393,6 +401,7 @@ export async function reviewOutcomeFramingWithAiService(input: {
             ? snapshot.outcome.deliveryType
             : null,
           aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+          aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
           aiUsageIntent: snapshot.outcome.aiUsageIntent ?? null,
           businessImpactLevel: snapshot.outcome.businessImpactLevel ?? null,
           businessImpactRationale: snapshot.outcome.businessImpactRationale ?? null,
@@ -453,6 +462,7 @@ export async function submitOutcomeTollgateService(input: {
   const readiness = getOutcomeFramingReadiness({
     ...snapshot.outcome,
     aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+    aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
     epicCount: snapshot.outcome.epics.length
   });
   const blockers = readiness.reasons.map((reason) => reason.message);

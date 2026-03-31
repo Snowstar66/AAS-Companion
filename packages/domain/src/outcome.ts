@@ -30,6 +30,7 @@ export const outcomeRecordSchema = z.object({
   dataSensitivity: z.string().nullish(),
   deliveryType: z.enum(["AD", "AT", "AM"]).nullish(),
   aiUsageRole: z.enum(["support", "generation", "validation", "decision_support", "automation"]).nullish(),
+  aiExecutionPattern: z.enum(["assisted", "step_by_step", "orchestrated"]).nullish(),
   aiUsageIntent: z.string().nullish(),
   businessImpactLevel: riskProfileSchema.nullish(),
   businessImpactRationale: z.string().nullish(),
@@ -130,6 +131,7 @@ type OutcomeFramingFields = Pick<
   | "aiAccelerationLevel"
   | "status"
   | "aiUsageRole"
+  | "aiExecutionPattern"
   | "aiUsageIntent"
   | "businessImpactLevel"
   | "businessImpactRationale"
@@ -147,6 +149,7 @@ type OutcomeFramingFields = Pick<
 };
 
 type RiskDimensionLevel = z.infer<typeof riskProfileSchema>;
+export type AiExecutionPattern = NonNullable<OutcomeRecord["aiExecutionPattern"]>;
 
 function getRiskWeight(level: RiskDimensionLevel) {
   if (level === "high") {
@@ -174,22 +177,36 @@ function getHighestRiskProfile(levels: Array<RiskDimensionLevel | null | undefin
   );
 }
 
-function getMaxAiLevelForRisk(riskProfile: RiskDimensionLevel) {
-  if (riskProfile === "low") {
-    return "level_1";
+export function deriveAiLevelFromExecutionPattern(pattern: AiExecutionPattern | null | undefined) {
+  if (pattern === "assisted") {
+    return "level_1" as const;
   }
 
-  if (riskProfile === "medium") {
-    return "level_2";
+  if (pattern === "step_by_step") {
+    return "level_2" as const;
   }
 
-  return "level_3";
+  if (pattern === "orchestrated") {
+    return "level_3" as const;
+  }
+
+  return null;
 }
 
-function isAiLevelAllowedForRisk(aiLevel: OutcomeRecord["aiAccelerationLevel"], riskProfile: RiskDimensionLevel) {
-  return getRiskWeight(riskProfile) >= getRiskWeight(
-    aiLevel === "level_3" ? "high" : aiLevel === "level_2" ? "medium" : "low"
-  );
+export function deriveExecutionPatternFromAiLevel(level: OutcomeRecord["aiAccelerationLevel"] | null | undefined) {
+  if (level === "level_1") {
+    return "assisted" as const;
+  }
+
+  if (level === "level_2") {
+    return "step_by_step" as const;
+  }
+
+  if (level === "level_3") {
+    return "orchestrated" as const;
+  }
+
+  return null;
 }
 
 export function deriveOutcomeRiskProfile(outcome: Pick<
@@ -207,6 +224,7 @@ export function deriveOutcomeRiskProfile(outcome: Pick<
 export function getOutcomeAiAndRiskBlockers(outcome: Pick<
   OutcomeRecord,
   | "aiUsageRole"
+  | "aiExecutionPattern"
   | "aiUsageIntent"
   | "businessImpactLevel"
   | "businessImpactRationale"
@@ -225,6 +243,15 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
 >) {
   const reasons: ReadinessBlockReason[] = [];
   const derivedRiskProfile = deriveOutcomeRiskProfile(outcome);
+  const derivedAiLevel = deriveAiLevelFromExecutionPattern(outcome.aiExecutionPattern);
+
+  if (!outcome.aiExecutionPattern) {
+    reasons.push({
+      code: "ai_execution_pattern_missing",
+      message: "Missing AI execution pattern.",
+      severity: "high"
+    });
+  }
 
   if (!outcome.aiUsageIntent?.trim()) {
     reasons.push({
@@ -312,10 +339,10 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
     });
   }
 
-  if (derivedRiskProfile && !isAiLevelAllowedForRisk(outcome.aiAccelerationLevel, derivedRiskProfile)) {
+  if (derivedAiLevel && outcome.aiAccelerationLevel !== derivedAiLevel) {
     reasons.push({
-      code: "ai_level_exceeds_risk_profile",
-      message: `AI level exceeds the current risk profile. Highest allowed level is ${getMaxAiLevelForRisk(derivedRiskProfile).replaceAll("_", " ")}.`,
+      code: "ai_level_execution_pattern_mismatch",
+      message: `Selected AI level does not match the declared execution pattern. This case maps to ${derivedAiLevel.replaceAll("_", " ")}.`,
       severity: "high"
     });
   }
@@ -343,6 +370,41 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
   }
 
   return reasons;
+}
+
+export function getOutcomeAiAndRiskWarnings(outcome: Pick<
+  OutcomeRecord,
+  | "aiExecutionPattern"
+  | "businessImpactLevel"
+  | "dataSensitivityLevel"
+  | "blastRadiusLevel"
+  | "decisionImpactLevel"
+  | "aiAccelerationLevel"
+>) {
+  const warnings: string[] = [];
+  const derivedRiskProfile = deriveOutcomeRiskProfile(outcome);
+
+  if (derivedRiskProfile === "high" && outcome.aiAccelerationLevel === "level_2") {
+    warnings.push("High risk with Level 2 requires structured human validation after each step and reproducible outputs.");
+  }
+
+  if (derivedRiskProfile === "high" && outcome.aiAccelerationLevel === "level_3") {
+    warnings.push("High risk with Level 3 requires full traceability, logged orchestration and explicit human approval before autonomous decisions.");
+  }
+
+  if (derivedRiskProfile === "medium" && outcome.aiAccelerationLevel === "level_3") {
+    warnings.push("Medium risk with Level 3 should have explicit orchestration boundaries, human supervision and clear traceability.");
+  }
+
+  if (outcome.decisionImpactLevel === "high" && outcome.aiAccelerationLevel !== "level_1") {
+    warnings.push("Human decision authority must stay explicit when AI influences or automates high-impact decisions.");
+  }
+
+  if (outcome.aiExecutionPattern === "orchestrated") {
+    warnings.push("Orchestrated agentic delivery requires logs and step traceability across the full execution chain.");
+  }
+
+  return [...new Set(warnings)];
 }
 
 export function getOutcomeBaselineReadiness(outcome: OutcomeBaselineFields) {

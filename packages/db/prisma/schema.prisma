@@ -394,6 +394,7 @@ model Outcome {
   dataSensitivity     String?
   deliveryType        String?
   aiUsageRole         String?
+  aiExecutionPattern  String?
   aiUsageIntent       String?
   businessImpactLevel RiskProfile?
   businessImpactRationale String?
