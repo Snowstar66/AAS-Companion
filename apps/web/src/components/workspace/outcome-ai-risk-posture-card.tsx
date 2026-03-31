@@ -33,6 +33,45 @@ type OutcomeAiRiskPostureCardProps = {
   disabled?: boolean | undefined;
 };
 
+function getPrimaryAiInvolvementLabel(value: AiUsageRole) {
+  switch (value) {
+    case "support":
+      return "Light support";
+    case "generation":
+      return "Generation";
+    case "validation":
+      return "Validation";
+    case "decision_support":
+      return "Decision support";
+    case "automation":
+      return "Workflow automation";
+  }
+}
+
+function getAiLevelLifecycleExample(value: AiLevel) {
+  if (value === "level_1") {
+    return "Level 1 is light BMAD-style support: clarification, drafting, limited refinement and light validation under direct human control.";
+  }
+
+  if (value === "level_2") {
+    return "Level 2 fits structured BMAD support across story refinement, design support, code generation and test support under human governance.";
+  }
+
+  return "Level 3 fits agentic or semi-automated BMAD-style workflows where AI can drive multi-step refinement, design, build and test activities with stronger governance.";
+}
+
+function getAiUsageIntentPlaceholder(value: AiLevel) {
+  if (value === "level_1") {
+    return "Example: AI will be used lightly for framing support, clarification and limited refinement under direct human control.";
+  }
+
+  if (value === "level_2") {
+    return "Example: AI will be used across story refinement, design support, code generation and test support under human governance.";
+  }
+
+  return "Example: AI will support and partially automate refinement, design, code generation and test workflows with explicit human supervision and governance.";
+}
+
 function getRiskWeight(level: RiskLevel) {
   if (level === "high") {
     return 3;
@@ -253,11 +292,11 @@ export function OutcomeAiRiskPostureCard({
     const items: string[] = [];
 
     if (!aiUsageRole) {
-      items.push("Missing AI usage role.");
+      items.push("Missing primary AI involvement pattern.");
     }
 
     if (!aiUsageIntent.trim()) {
-      items.push("Missing intended AI usage classification.");
+      items.push("Missing AI usage across lifecycle.");
     }
 
     if (!businessImpactLevel) {
@@ -393,11 +432,11 @@ export function OutcomeAiRiskPostureCard({
 
         <StepCard
           title="Step 1 - Determine AI usage intent"
-          description="Classify what role AI will play in this case. Keep it broad and operational, not technical."
+          description="Describe the primary AI involvement pattern and how AI is expected to support the BMAD flow across later phases. Keep it broad and operational, not technical."
         >
           <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">AI role in this case</span>
+              <span className="text-sm font-medium text-foreground">Primary AI involvement pattern</span>
               <select
                 className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                 defaultValue={defaultAiUsageRole ?? ""}
@@ -416,27 +455,30 @@ export function OutcomeAiRiskPostureCard({
                   );
                 }}
               >
-                <option value="">Select AI role</option>
-                <option value="support">Support</option>
-                <option value="generation">Generation</option>
-                <option value="validation">Validation</option>
-                <option value="decision_support">Decision support</option>
-                <option value="automation">Automation</option>
+                <option value="">Select primary pattern</option>
+                <option value="support">{getPrimaryAiInvolvementLabel("support")}</option>
+                <option value="generation">{getPrimaryAiInvolvementLabel("generation")}</option>
+                <option value="validation">{getPrimaryAiInvolvementLabel("validation")}</option>
+                <option value="decision_support">{getPrimaryAiInvolvementLabel("decision_support")}</option>
+                <option value="automation">{getPrimaryAiInvolvementLabel("automation")}</option>
               </select>
-              <InlineFieldGuidance guidance="Choose the broad role AI plays in the case. Do not name tools, models or workflows here." />
+              <InlineFieldGuidance guidance="Choose the dominant AI involvement pattern for the case. This is not tool or model selection, and it does not need to describe every later AI activity." />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Intended AI usage</span>
+              <span className="text-sm font-medium text-foreground">AI usage across lifecycle</span>
               <textarea
                 className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                 defaultValue={defaultAiUsageIntent ?? ""}
                 disabled={disabled}
                 name="aiUsageIntent"
                 onChange={(event) => setAiUsageIntent(event.target.value)}
-                placeholder="Classify intended AI usage broadly, for example assisted drafting, structured validation or controlled automation."
+                placeholder={getAiUsageIntentPlaceholder(aiLevel)}
               />
-              <InlineFieldGuidance guidance={getInlineGuidance("framing.ai_level")} />
+              <InlineFieldGuidance guidance="Describe how AI is expected to support the BMAD flow across framing, refinement, design, build or test at the selected acceleration level." />
             </label>
+          </div>
+          <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 text-sm leading-6 text-sky-950">
+            {getAiLevelLifecycleExample(aiLevel)}
           </div>
         </StepCard>
 
@@ -519,8 +561,11 @@ export function OutcomeAiRiskPostureCard({
                 <option value="level_2">Level 2</option>
                 <option value="level_3">Level 3</option>
               </select>
-              <InlineFieldGuidance guidance="Level 1 = assisted use. Level 2 = structured AI with review. Level 3 = agentic or automated workflows and requires explicit justification." />
+              <InlineFieldGuidance guidance={getInlineGuidance("framing.ai_level")} />
             </label>
+          </div>
+          <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
+            {getAiLevelLifecycleExample(aiLevel)}
           </div>
 
           <label className="mt-4 block space-y-2">

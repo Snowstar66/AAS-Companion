@@ -229,7 +229,7 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
   if (!outcome.aiUsageRole) {
     reasons.push({
       code: "ai_usage_role_missing",
-      message: "Missing AI usage role.",
+      message: "Missing primary AI involvement pattern.",
       severity: "high"
     });
   }
@@ -237,7 +237,7 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
   if (!outcome.aiUsageIntent?.trim()) {
     reasons.push({
       code: "ai_usage_intent_missing",
-      message: "Missing intended AI usage classification.",
+      message: "Missing AI usage across lifecycle.",
       severity: "high"
     });
   }
