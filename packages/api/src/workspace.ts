@@ -247,7 +247,16 @@ export async function getOutcomeTollgateReviewService(organizationId: string, ou
       outcome: {
         id: snapshot.outcome.id,
         aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
-        framingVersion: snapshot.outcome.framingVersion
+        framingVersion: snapshot.outcome.framingVersion,
+        riskProfile: snapshot.outcome.riskProfile,
+        businessImpactLevel: snapshot.outcome.businessImpactLevel ?? null,
+        businessImpactRationale: snapshot.outcome.businessImpactRationale ?? null,
+        dataSensitivityLevel: snapshot.outcome.dataSensitivityLevel ?? null,
+        dataSensitivityRationale: snapshot.outcome.dataSensitivityRationale ?? null,
+        blastRadiusLevel: snapshot.outcome.blastRadiusLevel ?? null,
+        blastRadiusRationale: snapshot.outcome.blastRadiusRationale ?? null,
+        decisionImpactLevel: snapshot.outcome.decisionImpactLevel ?? null,
+        decisionImpactRationale: snapshot.outcome.decisionImpactRationale ?? null
       },
       tollgate: snapshot.tollgate,
       blockers,
@@ -282,9 +291,6 @@ export async function saveOutcomeWorkspaceService(input: {
   decisionImpactLevel?: "low" | "medium" | "high" | null;
   decisionImpactRationale?: string | null;
   aiLevelJustification?: string | null;
-  riskAcceptanceConfirmed?: boolean;
-  existingRiskAcceptedAt?: Date | null;
-  existingRiskAcceptedByValueOwnerId?: string | null;
   timeframe?: string | null;
   valueOwnerId?: string | null;
   riskProfile?: "low" | "medium" | "high";
@@ -322,14 +328,6 @@ export async function saveOutcomeWorkspaceService(input: {
     decisionImpactLevel: input.decisionImpactLevel,
     decisionImpactRationale: input.decisionImpactRationale,
     aiLevelJustification: input.aiLevelJustification,
-    riskAcceptedAt:
-      input.riskAcceptanceConfirmed && input.valueOwnerId
-        ? input.existingRiskAcceptedAt && input.existingRiskAcceptedByValueOwnerId === input.valueOwnerId
-          ? input.existingRiskAcceptedAt
-          : new Date()
-        : null,
-    riskAcceptedByValueOwnerId:
-      input.riskAcceptanceConfirmed && input.valueOwnerId ? input.valueOwnerId : null,
     timeframe: input.timeframe,
     valueOwnerId: input.valueOwnerId,
     riskProfile: derivedRiskProfile ?? input.riskProfile,
@@ -475,7 +473,12 @@ export async function submitOutcomeTollgateService(input: {
     tollgateType: "tg1_baseline",
     status: isReady ? "ready" : "blocked",
     blockers,
-    approverRoles: ["value_owner", "architect"],
+    approverRoles:
+      snapshot.outcome.aiAccelerationLevel === "level_1"
+        ? ["value_owner", "delivery_lead"]
+        : snapshot.outcome.aiAccelerationLevel === "level_2"
+          ? ["value_owner", "architect"]
+          : ["value_owner", "aqa"],
     submissionVersion: snapshot.outcome.framingVersion,
     approvedVersion: snapshot.tollgate?.approvedVersion ?? null,
     approvalSnapshot: snapshot.tollgate?.approvalSnapshot ?? null,

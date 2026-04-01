@@ -94,31 +94,6 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
           ) : null}
         </div>
 
-        {previewResult.ok &&
-        storyResult.data.tollgateReview &&
-        storyResult.data.tollgateReview.status !== "approved" &&
-        (storyResult.data.tollgateReview.pendingActions.length > 0 || storyResult.data.tollgateReview.blockedActions.length > 0) ? (
-          <Card className="border-sky-200 bg-sky-50/80 shadow-sm">
-            <CardHeader>
-              <CardTitle>Formal approval is still open</CardTitle>
-              <CardDescription>
-                This Story can generate an execution contract, but named review or approval lanes are still open on the Story page.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-sky-950">
-                If you want explicit human approval before build starts, open the Story page and use the approval section there.
-              </p>
-              <Button asChild className="gap-2" variant="secondary">
-                <Link href={`/stories/${storyId}#story-signoff`}>
-                  Open approvals on Story page
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
-
         {!previewResult.ok ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>

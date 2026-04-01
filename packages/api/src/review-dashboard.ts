@@ -166,86 +166,7 @@ export async function getHumanReviewDashboardService(organizationId: string) {
       ];
     });
 
-    const storyItems: HumanReviewDashboardItem[] = snapshot.stories.flatMap<HumanReviewDashboardItem>((story) => {
-      const tollgate = tollgatesByEntityKey.get(`story:${story.id}:story_readiness`);
-
-      if (!tollgate) {
-        return [];
-      }
-
-      const profile = getTollgateDecisionProfile({
-        tollgateType: "story_readiness",
-        aiAccelerationLevel: story.aiAccelerationLevel
-      });
-      const signoffs = (tollgate.id ? signoffsByTollgateId.get(tollgate.id) ?? [] : []).map((record) => ({
-        ...record,
-        tollgateType: record.tollgateType ?? undefined,
-        tollgateId: record.tollgateId ?? undefined,
-        note: record.note ?? undefined,
-        evidenceReference: record.evidenceReference ?? undefined,
-        createdBy: record.createdBy ?? undefined
-      }));
-      const summary = summarizeTollgateFromSignoffs({
-        blockers: tollgate.blockers,
-        profile,
-        signoffs
-      });
-      const context = `${story.outcome.key} / ${story.epic.key}`;
-
-      if (summary.status === "approved" && story.status !== "in_progress") {
-        return [
-          {
-            id: `handoff-${story.id}`,
-            workflow: "delivery_start",
-            entityType: "story",
-            entityId: story.id,
-            key: story.key,
-            title: story.title,
-            status: "approved",
-            tone: "success",
-            actionLabel: "Open delivery start",
-            href: `/handoff/${story.id}`,
-            description: "Delivery review is complete. Open the delivery start page to finalize the build package.",
-            context,
-            blocker: null,
-            pendingLaneCount: 0,
-            updatedAt: tollgate.updatedAt
-          }
-        ];
-      }
-
-      if (summary.status === "approved") {
-        return [];
-      }
-
-      const roleGap = getPendingRoleGap(summary.pendingRequirements, snapshot.partyRoleEntries);
-      const blocker = tollgate.blockers[0] ?? roleGap ?? null;
-
-      return [
-        {
-          id: `story-${story.id}`,
-          workflow: "story_review",
-          entityType: "story",
-          entityId: story.id,
-          key: story.key,
-          title: story.title,
-          status: summary.status,
-          tone: getTone(summary.status),
-          actionLabel: "Open Delivery Story review",
-          href: `/stories/${story.id}#story-signoff`,
-          description:
-            summary.status === "blocked"
-              ? blocker ?? "Delivery review still has blockers before build can start."
-              : `${summary.pendingRequirements.length} sign-off lane${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before this Delivery Story is ready to start build.`,
-          context,
-          blocker,
-          pendingLaneCount: summary.pendingRequirements.length,
-          updatedAt: tollgate.updatedAt
-        }
-      ];
-    });
-
-    const items = [...outcomeItems, ...storyItems].sort((left, right) => {
+    const items = [...outcomeItems].sort((left, right) => {
       const weightDifference = getSortWeight(left) - getSortWeight(right);
 
       if (weightDifference !== 0) {
@@ -262,9 +183,9 @@ export async function getHumanReviewDashboardService(organizationId: string) {
         total: items.length,
         blocked: items.filter((item) => item.status === "blocked").length,
         inProgress: items.filter((item) => item.status === "ready").length,
-        deliveryStartReady: items.filter((item) => item.workflow === "delivery_start").length,
+        deliveryStartReady: 0,
         outcomeTollgates: items.filter((item) => item.workflow === "outcome_tollgate").length,
-        storyReviews: items.filter((item) => item.workflow === "story_review").length
+        storyReviews: 0
       }
     });
   }, `organizationId=${organizationId}`);

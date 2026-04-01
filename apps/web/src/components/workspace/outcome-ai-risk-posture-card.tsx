@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { Bot, CheckCircle2, ShieldAlert, Sparkles, TriangleAlert } from "lucide-react";
+import { Bot, CheckCircle2, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
 import { formatAiLevelLabel } from "@/lib/help/aas-help";
@@ -25,10 +25,6 @@ type OutcomeAiRiskPostureCardProps = {
   defaultDecisionImpactLevel: RiskLevel | null;
   defaultDecisionImpactRationale: string | null;
   defaultAiLevelJustification: string | null;
-  defaultRiskAccepted: boolean;
-  defaultRiskAcceptedAt: string | null;
-  defaultRiskAcceptedByValueOwnerId: string | null;
-  valueOwnerLabel: string | null;
   embedded?: boolean | undefined;
   disabled?: boolean | undefined;
 };
@@ -155,24 +151,6 @@ function formatAiLevel(value: AiLevel) {
   return formatAiLevelLabel(value);
 }
 
-function formatAcceptanceDate(value: string | null) {
-  if (!value) {
-    return "Not captured yet";
-  }
-
-  const parsed = new Date(value);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return "Not captured yet";
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  }).format(parsed);
-}
-
 function getStatusTone(blockerCount: number, derivedRisk: RiskLevel | null, aiLevel: AiLevel) {
   if (blockerCount > 0) {
     return {
@@ -223,10 +201,11 @@ function RiskDimensionFields(props: {
   helper: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
-      <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="rounded-2xl border border-border/70 bg-muted/10 p-3.5">
+      <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{props.label}</p>
+      <div className="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)]">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-foreground">{props.label}</span>
+          <span className="text-sm font-medium text-foreground">Level</span>
           <select
             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
             defaultValue={props.defaultLevel ?? ""}
@@ -244,7 +223,8 @@ function RiskDimensionFields(props: {
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-foreground">{props.label} rationale</span>
+          <span className="text-sm font-medium text-foreground">Rationale</span>
+          <span className="block text-xs leading-5 text-muted-foreground">{props.helper}</span>
           <textarea
             className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
             defaultValue={props.defaultRationale ?? ""}
@@ -273,10 +253,6 @@ export function OutcomeAiRiskPostureCard({
   defaultDecisionImpactLevel,
   defaultDecisionImpactRationale,
   defaultAiLevelJustification,
-  defaultRiskAccepted,
-  defaultRiskAcceptedAt,
-  defaultRiskAcceptedByValueOwnerId,
-  valueOwnerLabel,
   embedded = false,
   disabled = false
 }: OutcomeAiRiskPostureCardProps) {
@@ -293,7 +269,6 @@ export function OutcomeAiRiskPostureCard({
   const [decisionImpactLevel, setDecisionImpactLevel] = useState<RiskLevel | null>(defaultDecisionImpactLevel);
   const [decisionImpactRationale, setDecisionImpactRationale] = useState(defaultDecisionImpactRationale ?? "");
   const [aiLevelJustification, setAiLevelJustification] = useState(defaultAiLevelJustification ?? "");
-  const [riskAccepted, setRiskAccepted] = useState(defaultRiskAccepted);
   const aiLevel = deriveAiLevelFromExecutionPattern(aiExecutionPattern) ?? defaultAiLevel;
 
   const derivedRisk = useMemo(
@@ -358,12 +333,6 @@ export function OutcomeAiRiskPostureCard({
       items.push("Level 3 requires explicit governance justification.");
     }
 
-    if (!valueOwnerLabel) {
-      items.push("Risk acceptance requires a named Value Owner.");
-    } else if (!riskAccepted) {
-      items.push("Risk not accepted by Value Owner.");
-    }
-
     return items;
   }, [
     aiExecutionPattern,
@@ -378,9 +347,7 @@ export function OutcomeAiRiskPostureCard({
     dataSensitivityRationale,
     decisionImpactLevel,
     decisionImpactRationale,
-    derivedRisk,
-    riskAccepted,
-    valueOwnerLabel
+    derivedRisk
   ]);
 
   const governanceWarnings = useMemo(() => {
@@ -413,8 +380,8 @@ export function OutcomeAiRiskPostureCard({
     blockers[0] ??
     (governanceWarnings[0] ??
       (aiLevel === "level_3"
-      ? "Review the Level 3 justification and confirm the risk acceptance before Tollgate 1."
-      : "AI and risk posture is complete. Continue into Epics and Story Ideas or submit to Tollgate."));
+      ? "Review the Level 3 justification and then continue toward Tollgate 1 approval."
+      : "AI and risk posture is complete. Continue into Epics and Story Ideas or move into Tollgate 1 approval."));
 
   const statusTone = getStatusTone(blockers.length, derivedRisk, aiLevel);
 
@@ -437,8 +404,6 @@ export function OutcomeAiRiskPostureCard({
       <CardContent className="space-y-5">
         <input name="aiAccelerationLevel" type="hidden" value={aiLevel} />
         <input name="riskProfile" type="hidden" value={derivedRisk ?? defaultRiskProfile} />
-        <input name="existingRiskAcceptedAt" type="hidden" value={defaultRiskAcceptedAt ?? ""} />
-        <input name="existingRiskAcceptedByValueOwnerId" type="hidden" value={defaultRiskAcceptedByValueOwnerId ?? ""} />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="rounded-3xl border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.94),rgba(255,255,255,0.94))] p-5">
@@ -452,8 +417,8 @@ export function OutcomeAiRiskPostureCard({
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-700">
-              Keep this at framing level. Capture why AI is used, what risk exists and who accepts that risk. Do not name tools,
-              models or technical solution design here.
+              Keep this at framing level. Capture how AI will be used, what risk exists and what control model is needed.
+              Do not name tools, models or technical solution design here.
             </p>
           </div>
 
@@ -539,7 +504,7 @@ export function OutcomeAiRiskPostureCard({
               defaultLevel={defaultDataSensitivityLevel}
               defaultRationale={defaultDataSensitivityRationale}
               disabled={disabled}
-              helper="What type of data is handled: no personal data, personal data or sensitive / regulated data?"
+              helper="What data category is involved: no personal data, personal data, or sensitive/regulated data?"
               label="Data sensitivity"
               levelName="dataSensitivityLevel"
               onLevelChange={setDataSensitivityLevel}
@@ -550,7 +515,7 @@ export function OutcomeAiRiskPostureCard({
               defaultLevel={defaultBlastRadiusLevel}
               defaultRationale={defaultBlastRadiusRationale}
               disabled={disabled}
-              helper="If something goes wrong, how many users, teams or systems are affected?"
+              helper="How widely would the impact spread if something goes wrong?"
               label="Blast radius"
               levelName="blastRadiusLevel"
               onLevelChange={setBlastRadiusLevel}
@@ -561,7 +526,7 @@ export function OutcomeAiRiskPostureCard({
               defaultLevel={defaultDecisionImpactLevel}
               defaultRationale={defaultDecisionImpactRationale}
               disabled={disabled}
-              helper="Does AI only assist, or does it influence or automate decisions?"
+              helper="Does AI only assist, or does it influence or automate meaningful decisions?"
               label="Decision impact"
               levelName="decisionImpactLevel"
               onLevelChange={setDecisionImpactLevel}
@@ -607,68 +572,6 @@ export function OutcomeAiRiskPostureCard({
               onChange={(event) => setAiLevelJustification(event.target.value)}
               placeholder="If Level 3 is selected, explain the governance and control rationale briefly."
             />
-          </label>
-        </StepCard>
-
-        <StepCard
-          title="Step 6 - Capture decision output"
-          description="This summary reflects what will be carried forward in Framing and checked before Tollgate 1."
-        >
-          <div className="rounded-3xl border border-sky-200 bg-sky-50/70 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-sky-950">
-              <Sparkles className="h-4 w-4" />
-              Completed AI Level and Risk section
-            </div>
-            <div className="mt-4 space-y-4 text-sm leading-6 text-slate-800">
-              <p>
-                <span className="font-semibold">AI Level:</span> {formatAiLevel(aiLevel)}
-              </p>
-              <p>
-                <span className="font-semibold">Risk profile:</span> {formatRiskLevel(derivedRisk)}
-              </p>
-              <div>
-                <p className="font-semibold">Risk rationale:</p>
-                <ul className="mt-2 space-y-1">
-                  <li>
-                    Business impact: {formatRiskLevel(businessImpactLevel)}{businessImpactRationale.trim() ? ` - ${businessImpactRationale.trim()}` : ""}
-                  </li>
-                  <li>
-                    Data sensitivity: {formatRiskLevel(dataSensitivityLevel)}{dataSensitivityRationale.trim() ? ` - ${dataSensitivityRationale.trim()}` : ""}
-                  </li>
-                  <li>
-                    Blast radius: {formatRiskLevel(blastRadiusLevel)}{blastRadiusRationale.trim() ? ` - ${blastRadiusRationale.trim()}` : ""}
-                  </li>
-                  <li>
-                    Decision impact: {formatRiskLevel(decisionImpactLevel)}{decisionImpactRationale.trim() ? ` - ${decisionImpactRationale.trim()}` : ""}
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <p className="font-semibold">Risk acceptance:</p>
-                <ul className="mt-2 space-y-1">
-                  <li>Accepted by: {valueOwnerLabel ?? "Value Owner not selected yet"}</li>
-                  <li>Date: {riskAccepted ? defaultRiskAcceptedAt ? formatAcceptanceDate(defaultRiskAcceptedAt) : "Captured on next save" : "Not captured yet"}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <label className="mt-4 flex items-start gap-3 rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm">
-            <input
-              checked={riskAccepted}
-              className="mt-1 h-4 w-4 rounded border-border"
-              disabled={disabled}
-              name="riskAcceptanceConfirmed"
-              onChange={(event) => setRiskAccepted(event.target.checked)}
-              type="checkbox"
-              value="yes"
-            />
-            <span className="leading-6 text-foreground">
-              Record risk acceptance from the current Value Owner.
-              <span className="block text-muted-foreground">
-                Accepted by: {valueOwnerLabel ?? "Select a Value Owner first"}.
-              </span>
-            </span>
           </label>
         </StepCard>
 

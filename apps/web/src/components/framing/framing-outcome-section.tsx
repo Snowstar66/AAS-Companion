@@ -191,7 +191,6 @@ export function FramingOutcomeSection({
     blastRadiusLevel: outcome.blastRadiusLevel ?? null,
     decisionImpactLevel: outcome.decisionImpactLevel ?? null
   });
-  const valueOwnerLabel = outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null;
   const seedsByEpicId = new Map<string, typeof outcome.directionSeeds>();
 
   for (const seed of outcome.directionSeeds) {
@@ -592,13 +591,9 @@ export function FramingOutcomeSection({
                 defaultDataSensitivityRationale={outcome.dataSensitivityRationale ?? null}
                 defaultDecisionImpactLevel={outcome.decisionImpactLevel ?? null}
                 defaultDecisionImpactRationale={outcome.decisionImpactRationale ?? null}
-                defaultRiskAccepted={Boolean(outcome.riskAcceptedAt && outcome.riskAcceptedByValueOwnerId === outcome.valueOwnerId)}
-                defaultRiskAcceptedAt={outcome.riskAcceptedAt ? new Date(outcome.riskAcceptedAt).toISOString() : null}
-                defaultRiskAcceptedByValueOwnerId={outcome.riskAcceptedByValueOwnerId ?? null}
                 defaultRiskProfile={outcome.riskProfile}
                 disabled={isArchived}
                 embedded
-                valueOwnerLabel={valueOwnerLabel}
               />
             </CollapsibleFramingPanel>
 
@@ -943,8 +938,42 @@ async function DeferredOutcomeTollgateSection(props: {
     : versionRecommendationVisible
       ? `Framing changed after version ${approvedVersion}. A fresh approval is recommended for version ${currentFramingVersion}.`
       : visibleBlockers.length > 0
-        ? "Approvals are still allowed, but the open blockers below should be cleared before you rely on this Framing as a stable baseline."
+      ? "Approvals are still allowed, but the open blockers below should be cleared before you rely on this Framing as a stable baseline."
         : "The Framing looks complete enough. Record the required approvals for the current AI level below.";
+  const riskSummaryRows = [
+    {
+      label: "AI Level",
+      value: outcome.aiAccelerationLevel.replaceAll("_", " ")
+    },
+    {
+      label: "Risk profile",
+      value: outcome.riskProfile ? outcome.riskProfile.charAt(0).toUpperCase() + outcome.riskProfile.slice(1) : "Not determined"
+    },
+    {
+      label: "Business impact",
+      value: outcome.businessImpactLevel
+        ? `${outcome.businessImpactLevel.charAt(0).toUpperCase() + outcome.businessImpactLevel.slice(1)}${outcome.businessImpactRationale ? ` - ${outcome.businessImpactRationale}` : ""}`
+        : "Not classified"
+    },
+    {
+      label: "Data sensitivity",
+      value: outcome.dataSensitivityLevel
+        ? `${outcome.dataSensitivityLevel.charAt(0).toUpperCase() + outcome.dataSensitivityLevel.slice(1)}${outcome.dataSensitivityRationale ? ` - ${outcome.dataSensitivityRationale}` : ""}`
+        : "Not classified"
+    },
+    {
+      label: "Blast radius",
+      value: outcome.blastRadiusLevel
+        ? `${outcome.blastRadiusLevel.charAt(0).toUpperCase() + outcome.blastRadiusLevel.slice(1)}${outcome.blastRadiusRationale ? ` - ${outcome.blastRadiusRationale}` : ""}`
+        : "Not classified"
+    },
+    {
+      label: "Decision impact",
+      value: outcome.decisionImpactLevel
+        ? `${outcome.decisionImpactLevel.charAt(0).toUpperCase() + outcome.decisionImpactLevel.slice(1)}${outcome.decisionImpactRationale ? ` - ${outcome.decisionImpactRationale}` : ""}`
+        : "Not classified"
+    }
+  ];
 
   return (
     <>
@@ -1005,6 +1034,18 @@ async function DeferredOutcomeTollgateSection(props: {
               </ul>
             </div>
           ) : null}
+
+          <div className="rounded-2xl border border-sky-200 bg-sky-50/55 p-4 text-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI and risk summary for approval</p>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              {riskSummaryRows.map((row) => (
+                <div className="rounded-2xl border border-border/70 bg-background px-4 py-3" key={row.label}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{row.label}</p>
+                  <p className="mt-2 leading-6 text-foreground">{row.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {hasApprovedDocument ? (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

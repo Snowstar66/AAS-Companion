@@ -118,14 +118,14 @@ vi.mock("@/lib/review/operational-review", () => ({
     state: "ready",
     organizationName: "AAS Demo Organization",
     summary: {
-      total: 3,
+      total: 1,
       blocked: 1,
-      inProgress: 1,
-      deliveryStartReady: 1,
+      inProgress: 0,
+      deliveryStartReady: 0,
       outcomeTollgates: 1,
-      storyReviews: 1
+      storyReviews: 0
     },
-    message: "Framing approvals and Delivery Story reviews with human work are collected here.",
+    message: "Framing approvals with human work are collected here.",
     items: [
       {
         id: "outcome-1",
@@ -143,40 +143,6 @@ vi.mock("@/lib/review/operational-review", () => ({
         blocker: "Value owner is not assigned on the customer side.",
         pendingLaneCount: 2,
         updatedAt: new Date("2026-03-27T08:00:00.000Z")
-      },
-      {
-        id: "story-1",
-        workflow: "story_review",
-        entityType: "story",
-        entityId: "story-1",
-        key: "STR-003",
-        title: "Delivery Story review",
-        status: "ready",
-        tone: "progress",
-        actionLabel: "Open Delivery Story review",
-        href: "/stories/story-1#story-signoff",
-        description: "1 sign-off lane still remains before this Delivery Story is ready to start build.",
-        context: "OUT-001 / EPC-001",
-        blocker: null,
-        pendingLaneCount: 1,
-        updatedAt: new Date("2026-03-27T08:05:00.000Z")
-      },
-      {
-        id: "handoff-1",
-        workflow: "delivery_start",
-        entityType: "story",
-        entityId: "story-2",
-        key: "STR-004",
-        title: "Ready Delivery Story",
-        status: "approved",
-        tone: "success",
-        actionLabel: "Open delivery start",
-        href: "/handoff/story-2",
-        description: "Delivery review is complete. Open the delivery start page to finalize the build package.",
-        context: "OUT-001 / EPC-001",
-        blocker: null,
-        pendingLaneCount: 0,
-        updatedAt: new Date("2026-03-27T08:10:00.000Z")
       }
     ]
   }))
@@ -203,8 +169,8 @@ describe("Review queue page", () => {
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
-    expect(screen.getByText("Delivery Story review")).toBeDefined();
-    expect(screen.getAllByRole("link", { name: "Open delivery start" }).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
+    expect(screen.getByText("No items are currently in this group.")).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });

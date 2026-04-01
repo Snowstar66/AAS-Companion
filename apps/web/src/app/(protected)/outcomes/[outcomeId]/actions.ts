@@ -108,11 +108,6 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     decisionImpactLevel: parseOptionalRiskLevel(formData, "decisionImpactLevel"),
     decisionImpactRationale: String(formData.get("decisionImpactRationale") ?? "") || null,
     aiLevelJustification: String(formData.get("aiLevelJustification") ?? "") || null,
-    riskAcceptanceConfirmed: String(formData.get("riskAcceptanceConfirmed") ?? "") === "yes",
-    existingRiskAcceptedAt: String(formData.get("existingRiskAcceptedAt") ?? "")
-      ? new Date(String(formData.get("existingRiskAcceptedAt")))
-      : null,
-    existingRiskAcceptedByValueOwnerId: String(formData.get("existingRiskAcceptedByValueOwnerId") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
     valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
     riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",
@@ -184,11 +179,6 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
     decisionImpactLevel: parseOptionalRiskLevel(formData, "decisionImpactLevel"),
     decisionImpactRationale: String(formData.get("decisionImpactRationale") ?? "") || null,
     aiLevelJustification: String(formData.get("aiLevelJustification") ?? "") || null,
-    riskAcceptanceConfirmed: String(formData.get("riskAcceptanceConfirmed") ?? "") === "yes",
-    existingRiskAcceptedAt: String(formData.get("existingRiskAcceptedAt") ?? "")
-      ? new Date(String(formData.get("existingRiskAcceptedAt")))
-      : null,
-    existingRiskAcceptedByValueOwnerId: String(formData.get("existingRiskAcceptedByValueOwnerId") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
     valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
     riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",

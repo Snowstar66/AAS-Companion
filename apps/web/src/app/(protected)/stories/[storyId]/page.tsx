@@ -43,7 +43,6 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   const query = searchParams ? await searchParams : {};
   const created = getParamValue(query.created) === "1";
   const saveState = getParamValue(query.save);
-  const readyState = getParamValue(query.ready);
   const lifecycleState = getParamValue(query.lifecycle);
   const createdAs = getParamValue(query.createdAs);
   const saveMessage = getParamValue(query.message);
@@ -99,26 +98,6 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
         ) : null}
         {saveState === "error" && saveMessage ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{saveMessage}</div>
-        ) : null}
-        {readyState === "blocked" ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Build review is blocked. Fill the missing fields listed below and try again.
-          </div>
-        ) : null}
-        {readyState === "success" ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Build review opened. This Delivery Story is now ready for human review.
-          </div>
-        ) : null}
-        {readyState === "duplicate" ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            This approval was already recorded. Duplicate sign-offs are blocked so the Story status stays trustworthy.
-          </div>
-        ) : null}
-        {readyState === "approved" ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Required sign-offs are complete. This Delivery Story is now ready to start build.
-          </div>
         ) : null}
         {lifecycleState === "archived" ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">

@@ -237,9 +237,6 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
   | "riskProfile"
   | "aiAccelerationLevel"
   | "aiLevelJustification"
-  | "valueOwnerId"
-  | "riskAcceptedAt"
-  | "riskAcceptedByValueOwnerId"
 >) {
   const reasons: ReadinessBlockReason[] = [];
   const derivedRiskProfile = deriveOutcomeRiskProfile(outcome);
@@ -351,20 +348,6 @@ export function getOutcomeAiAndRiskBlockers(outcome: Pick<
     reasons.push({
       code: "ai_level_justification_missing",
       message: "Level 3 requires explicit governance justification.",
-      severity: "high"
-    });
-  }
-
-  if (!outcome.valueOwnerId?.trim()) {
-    reasons.push({
-      code: "risk_acceptance_owner_missing",
-      message: "Risk acceptance requires a named Value Owner.",
-      severity: "high"
-    });
-  } else if (!outcome.riskAcceptedAt || outcome.riskAcceptedByValueOwnerId !== outcome.valueOwnerId) {
-    reasons.push({
-      code: "risk_not_accepted",
-      message: "Risk not accepted by Value Owner.",
       severity: "high"
     });
   }

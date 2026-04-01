@@ -64,14 +64,30 @@ export function getTollgateDecisionProfile(input: {
     return tollgateDecisionProfileSchema.parse({
       reviewRequirements: [],
       approvalRequirements: [
-        buildRequirement("approval", "architect", "supplier", "Architecture approval"),
-        buildRequirement("approval", "value_owner", "customer", "Business value approval"),
-        ...(input.aiAccelerationLevel === "level_3"
-          ? [
-              buildRequirement("approval", "ai_governance_lead", "supplier", "AI governance approval"),
-              buildRequirement("approval", "customer_sponsor", "customer", "Sponsor sign-off")
-            ]
-          : [])
+        buildRequirement(
+          "approval",
+          "value_owner",
+          "customer",
+          input.aiAccelerationLevel === "level_1"
+            ? "Customer value approval"
+            : input.aiAccelerationLevel === "level_2"
+              ? "Customer framing approval"
+              : "Customer risk and value approval"
+        ),
+        buildRequirement(
+          "approval",
+          input.aiAccelerationLevel === "level_1"
+            ? "delivery_lead"
+            : input.aiAccelerationLevel === "level_2"
+              ? "architect"
+              : "aqa",
+          "supplier",
+          input.aiAccelerationLevel === "level_1"
+            ? "Supplier delivery approval"
+            : input.aiAccelerationLevel === "level_2"
+              ? "Supplier architecture approval"
+              : "Supplier AI quality approval"
+        )
       ]
     });
   }

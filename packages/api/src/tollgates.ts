@@ -59,6 +59,34 @@ function normalizeAiExecutionPattern(value: string | null | undefined) {
   return value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null;
 }
 
+function mapFramingApproverRolesToMembershipRoles(
+  requirements: Array<{
+    roleType: string;
+  }>
+) {
+  return requirements
+    .map((requirement) => {
+      if (requirement.roleType === "value_owner") {
+        return "value_owner" as const;
+      }
+
+      if (requirement.roleType === "delivery_lead") {
+        return "delivery_lead" as const;
+      }
+
+      if (requirement.roleType === "architect") {
+        return "architect" as const;
+      }
+
+      if (requirement.roleType === "aqa") {
+        return "aqa" as const;
+      }
+
+      return null;
+    })
+    .filter((value): value is "value_owner" | "delivery_lead" | "architect" | "aqa" => Boolean(value));
+}
+
 function getRelevantSignoffRecords<T extends { entityVersion?: number | null }>(
   signoffRecords: T[],
   input: { entityType: "outcome" | "story"; submissionVersion?: number | null | undefined }
@@ -352,19 +380,7 @@ export async function recordTollgateDecisionService(input: unknown) {
       epicCount: snapshot.outcome.epics.length
     }).reasons.map((reason) => reason.message);
     const currentSubmissionVersion = snapshot.outcome.framingVersion;
-    const currentApproverRoles = profile.approvalRequirements
-      .map((requirement) => {
-        if (requirement.roleType === "value_owner") {
-          return "value_owner" as const;
-        }
-
-        if (requirement.roleType === "architect") {
-          return "architect" as const;
-        }
-
-        return null;
-      })
-      .filter((value): value is "value_owner" | "architect" => Boolean(value));
+    const currentApproverRoles = mapFramingApproverRolesToMembershipRoles(profile.approvalRequirements);
 
     if (!tollgate || tollgate.submissionVersion !== currentSubmissionVersion) {
       tollgate = await upsertTollgate({

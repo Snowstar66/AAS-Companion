@@ -455,7 +455,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     },
     {
       title: "Delivery review",
-      description: "Only Delivery Stories appear here. Use this lane when a Delivery Story still needs human review or is ready to start build.",
+      description: "Individual Delivery Stories no longer use human approval lanes here. This stays empty until a future design-wide checkpoint is introduced.",
       items: operationalReview.items.filter((item) => item.workflow === "story_review" || item.workflow === "delivery_start"),
       defaultOpen: true
     }
@@ -513,7 +513,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-semibold text-foreground">Delivery review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Only Delivery Stories belong here. This is where execution readiness is checked before build starts.
+                Individual Delivery Stories do not use approval lanes here anymore. Use the Story pages for design completeness and Value Spine checks instead.
               </p>
             </div>
           </div>
@@ -564,7 +564,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             actionLabel={deliveryReviewItems[0] ? "Open delivery review" : undefined}
             className="border-indigo-200 bg-indigo-50 text-indigo-950"
             count={deliveryReviewItems.length}
-            description="Delivery Stories that still need a human decision or are ready to start build."
+            description="Reserved for a future design-wide checkpoint. Individual Delivery Stories are no longer approved here."
             label="Delivery review"
           />
           <ReviewSummaryCard
@@ -612,7 +612,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           <CardHeader>
             <CardTitle>Human review lanes</CardTitle>
             <CardDescription>
-              This page is split into Framing approvals and Delivery review. Story Ideas stay in Framing or Import. Delivery review only shows Delivery Stories that need a human decision before build can start.
+              This page is split into Framing approvals and Delivery review. Story Ideas stay in Framing or Import. Individual Delivery Stories no longer require human approval lanes here.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -622,7 +622,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </div>
             ) : operationalReview.items.length === 0 ? (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                No framing reviews or Delivery Story reviews are currently waiting for human action.
+                No Framing approvals are currently waiting for human action.
               </div>
             ) : (
               operationalGroups.map((group) => (
