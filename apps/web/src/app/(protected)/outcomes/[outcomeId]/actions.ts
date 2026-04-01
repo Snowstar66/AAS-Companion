@@ -421,7 +421,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
 export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("entityId") ?? formData.get("outcomeId") ?? "");
-  const parsedDecision = parseDecisionKey(String(formData.get("decisionKey") ?? "review|architect|supplier"));
+  const parsedDecision = parseDecisionKey(String(formData.get("decisionKey") ?? "approval|value_owner|customer"));
   const actualPartyRoleEntryId = String(formData.get("actualPartyRoleEntryId") ?? "");
   const evidenceReference = String(formData.get("evidenceReference") ?? "") || null;
   const note = String(formData.get("note") ?? "") || null;

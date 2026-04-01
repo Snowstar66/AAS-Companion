@@ -62,16 +62,15 @@ export function getTollgateDecisionProfile(input: {
 }) {
   if (input.tollgateType === "tg1_baseline") {
     return tollgateDecisionProfileSchema.parse({
-      reviewRequirements: [
-        buildRequirement("review", "architect", "supplier", "Architecture review"),
-        ...(input.aiAccelerationLevel === "level_3"
-          ? [buildRequirement("review", "ai_governance_lead", "supplier", "AI governance review")]
-          : [])
-      ],
+      reviewRequirements: [],
       approvalRequirements: [
+        buildRequirement("approval", "architect", "supplier", "Architecture approval"),
         buildRequirement("approval", "value_owner", "customer", "Business value approval"),
         ...(input.aiAccelerationLevel === "level_3"
-          ? [buildRequirement("approval", "customer_sponsor", "customer", "Sponsor sign-off")]
+          ? [
+              buildRequirement("approval", "ai_governance_lead", "supplier", "AI governance approval"),
+              buildRequirement("approval", "customer_sponsor", "customer", "Sponsor sign-off")
+            ]
           : [])
       ]
     });
@@ -97,13 +96,14 @@ export function summarizeTollgateFromSignoffs(input: {
   blockers: string[];
   profile: TollgateDecisionProfile;
   signoffs: SignoffRecord[];
+  ignoreBlockers?: boolean;
 }) {
   const decisionRequirements = [...input.profile.reviewRequirements, ...input.profile.approvalRequirements];
   const rejectedOrChanged = input.signoffs.filter(
     (record) => record.decisionStatus === "rejected" || record.decisionStatus === "changes_requested"
   );
 
-  if (input.blockers.length > 0 || rejectedOrChanged.length > 0) {
+  if ((!input.ignoreBlockers && input.blockers.length > 0) || rejectedOrChanged.length > 0) {
     return {
       status: "blocked" as const,
       pendingRequirements: decisionRequirements

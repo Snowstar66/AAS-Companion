@@ -11,6 +11,7 @@ import {
 } from "@aas-companion/db";
 import {
   getTollgateDecisionProfile,
+  getOutcomeFramingReadiness,
   recordTollgateDecisionInputSchema,
   summarizeTollgateFromSignoffs,
   tollgateUpsertInputSchema
@@ -44,12 +45,30 @@ function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function normalizeAiUsageRole(value: string | null | undefined) {
+  return value === "support" ||
+    value === "generation" ||
+    value === "validation" ||
+    value === "decision_support" ||
+    value === "automation"
+    ? value
+    : null;
+}
+
+function normalizeAiExecutionPattern(value: string | null | undefined) {
+  return value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null;
+}
+
 function getRelevantSignoffRecords<T extends { entityVersion?: number | null }>(
   signoffRecords: T[],
   input: { entityType: "outcome" | "story"; submissionVersion?: number | null | undefined }
 ) {
-  if (input.entityType !== "outcome" || !input.submissionVersion) {
+  if (input.entityType !== "outcome") {
     return signoffRecords;
+  }
+
+  if (!input.submissionVersion) {
+    return [];
   }
 
   return signoffRecords.filter((record) => record.entityVersion === input.submissionVersion);
@@ -248,6 +267,7 @@ export async function getTollgateReviewWorkspaceService(input: {
     const tollgateSummary = summarizeTollgateFromSignoffs({
       blockers: tollgate?.blockers ?? input.fallbackBlockers ?? [],
       profile,
+      ignoreBlockers: input.entityType === "outcome" && input.tollgateType === "tg1_baseline",
       signoffs: relevantSignoffRecords.map((record) => ({
         ...record,
         tollgateType: record.tollgateType ?? undefined,
@@ -309,12 +329,79 @@ export async function recordTollgateDecisionService(input: unknown) {
     });
   }
 
-  const tollgate = await getTollgate(
-    parsed.data.organizationId,
-    parsed.data.entityType,
-    parsed.data.entityId,
-    tollgateType
-  );
+  const profile = getTollgateDecisionProfile({
+    tollgateType,
+    aiAccelerationLevel: parsed.data.aiAccelerationLevel
+  });
+  let tollgate = await getTollgate(parsed.data.organizationId, parsed.data.entityType, parsed.data.entityId, tollgateType);
+
+  if (parsed.data.entityType === "outcome" && tollgateType === "tg1_baseline") {
+    const snapshot = await getOutcomeWorkspaceSnapshot(parsed.data.organizationId, parsed.data.entityId);
+
+    if (!snapshot) {
+      return failure({
+        code: "outcome_not_found",
+        message: "Outcome was not found in the current organization."
+      });
+    }
+
+    const blockers = getOutcomeFramingReadiness({
+      ...snapshot.outcome,
+      aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+      aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
+      epicCount: snapshot.outcome.epics.length
+    }).reasons.map((reason) => reason.message);
+    const currentSubmissionVersion = snapshot.outcome.framingVersion;
+    const currentApproverRoles = profile.approvalRequirements
+      .map((requirement) => {
+        if (requirement.roleType === "value_owner") {
+          return "value_owner" as const;
+        }
+
+        if (requirement.roleType === "architect") {
+          return "architect" as const;
+        }
+
+        return null;
+      })
+      .filter((value): value is "value_owner" | "architect" => Boolean(value));
+
+    if (!tollgate || tollgate.submissionVersion !== currentSubmissionVersion) {
+      tollgate = await upsertTollgate({
+        organizationId: parsed.data.organizationId,
+        entityType: "outcome",
+        entityId: parsed.data.entityId,
+        tollgateType,
+        status: tollgate?.status === "approved" && tollgate.approvedVersion === currentSubmissionVersion ? "approved" : "ready",
+        blockers,
+        approverRoles: currentApproverRoles,
+        submissionVersion: currentSubmissionVersion,
+        approvedVersion: tollgate?.approvedVersion ?? null,
+        approvalSnapshot: tollgate?.approvalSnapshot ?? null,
+        comments: tollgate?.comments ?? null,
+        actorId: parsed.data.actorId ?? null,
+        decidedBy: tollgate?.decidedBy ?? null,
+        decidedAt: tollgate?.decidedAt ?? null
+      });
+    } else if (JSON.stringify(tollgate.blockers) !== JSON.stringify(blockers)) {
+      tollgate = await upsertTollgate({
+        organizationId: parsed.data.organizationId,
+        entityType: "outcome",
+        entityId: parsed.data.entityId,
+        tollgateType,
+        status: tollgate.status,
+        blockers,
+        approverRoles: tollgate.approverRoles,
+        submissionVersion: tollgate.submissionVersion ?? currentSubmissionVersion,
+        approvedVersion: tollgate.approvedVersion ?? null,
+        approvalSnapshot: tollgate.approvalSnapshot ?? null,
+        comments: tollgate.comments ?? null,
+        actorId: parsed.data.actorId ?? null,
+        decidedBy: tollgate.decidedBy ?? null,
+        decidedAt: tollgate.decidedAt ?? null
+      });
+    }
+  }
 
   if (!tollgate) {
     return failure({
@@ -322,11 +409,6 @@ export async function recordTollgateDecisionService(input: unknown) {
       message: "Submit the tollgate first before recording review or approval decisions."
     });
   }
-
-  const profile = getTollgateDecisionProfile({
-    tollgateType,
-    aiAccelerationLevel: parsed.data.aiAccelerationLevel
-  });
   const validRequirement = [...profile.reviewRequirements, ...profile.approvalRequirements].find(
     (requirement) =>
       requirement.decisionKind === parsed.data.decisionKind &&
@@ -390,6 +472,7 @@ export async function recordTollgateDecisionService(input: unknown) {
   const summary = summarizeTollgateFromSignoffs({
     blockers: tollgate.blockers,
     profile,
+    ignoreBlockers: parsed.data.entityType === "outcome" && tollgateType === "tg1_baseline",
     signoffs: relevantSignoffRecords.map((item) => ({
       ...item,
       tollgateType: item.tollgateType ?? undefined,

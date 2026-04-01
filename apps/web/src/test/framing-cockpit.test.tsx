@@ -201,7 +201,7 @@ describe("Framing page", () => {
       expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
       expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
       expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
-      expect(screen.getByText("Submit to Tollgate")).toBeDefined();
+      expect(screen.getByText("Tollgate 1 approval")).toBeDefined();
       expect(screen.getByText("Quick create Story Idea")).toBeDefined();
       expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
       expect(screen.queryByText("Framing Cockpit")).toBeNull();

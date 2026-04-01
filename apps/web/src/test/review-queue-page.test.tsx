@@ -125,7 +125,7 @@ vi.mock("@/lib/review/operational-review", () => ({
       outcomeTollgates: 1,
       storyReviews: 1
     },
-    message: "Framing reviews and Delivery Story reviews with human work are collected here.",
+    message: "Framing approvals and Delivery Story reviews with human work are collected here.",
     items: [
       {
         id: "outcome-1",
@@ -133,10 +133,10 @@ vi.mock("@/lib/review/operational-review", () => ({
         entityType: "outcome",
         entityId: "outcome-1",
         key: "OUT-001",
-        title: "Outcome tollgate review",
+        title: "Outcome tollgate approval",
         status: "blocked",
         tone: "blocked",
-        actionLabel: "Open Outcome tollgate",
+        actionLabel: "Open Framing approval",
         href: "/outcomes/outcome-1#tollgate-review",
         description: "Value owner is not assigned on the customer side.",
         context: "Outcome framing tollgate",
@@ -196,13 +196,13 @@ describe("Review queue page", () => {
 
     expect(screen.getByRole("heading", { name: "Human Review dashboard", level: 1 })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Human review lanes" })).toBeDefined();
-    expect(screen.getAllByText("Framing review").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Framing approvals").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Delivery review").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Imported review backlog" })).toBeDefined();
     expect(screen.getByText(/Use this page whenever you want one answer to the question/i)).toBeDefined();
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
-    expect(screen.getByText("Outcome tollgate review")).toBeDefined();
+    expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
     expect(screen.getByText("Delivery Story review")).toBeDefined();
     expect(screen.getAllByRole("link", { name: "Open delivery start" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Choose one item to start")).toBeDefined();

@@ -129,6 +129,7 @@ export async function getHumanReviewDashboardService(organizationId: string) {
       const summary = summarizeTollgateFromSignoffs({
         blockers: tollgate.blockers,
         profile,
+        ignoreBlockers: true,
         signoffs
       });
 
@@ -153,9 +154,11 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           href: `/framing?outcomeId=${outcome.id}#tollgate-review`,
           description:
             summary.status === "blocked"
-              ? blocker ?? "Tollgate 1 still has blockers before approval can continue."
-              : `${summary.pendingRequirements.length} required role${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before Tollgate 1 is approved.`,
-          context: "Framing / Tollgate 1",
+              ? blocker ?? "A recorded approval requested changes before Tollgate 1 can be completed."
+              : blocker
+                ? `${summary.pendingRequirements.length} approval role${summary.pendingRequirements.length === 1 ? "" : "s"} still remain. Framing also has open recommendations.`
+                : `${summary.pendingRequirements.length} approval role${summary.pendingRequirements.length === 1 ? "" : "s"} still remain before Tollgate 1 is approved.`,
+          context: "Framing / Tollgate 1 approvals",
           blocker,
           pendingLaneCount: summary.pendingRequirements.length,
           updatedAt: tollgate.updatedAt

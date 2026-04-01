@@ -448,8 +448,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     defaultOpen: boolean;
   }> = [
     {
-      title: "Framing review",
-      description: "Framing briefs and related framing decisions that still need a human reviewer. Story Ideas stay in Framing and Import, not in Delivery review.",
+      title: "Framing approvals",
+      description: "Framing briefs waiting on Tollgate 1 approvals. Story Ideas stay in Framing and Import, not in Delivery review.",
       items: operationalReview.items.filter((item) => item.workflow === "outcome_tollgate"),
       defaultOpen: true
     },
@@ -507,7 +507,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-semibold text-foreground">Framing review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Story Ideas, baseline decisions and Tollgate 1 belong here. This is about intent and direction, not delivery execution.
+                Story Ideas stay in Framing, while Tollgate 1 approvals for the Framing brief are coordinated here. This is about intent and direction, not delivery execution.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
@@ -557,7 +557,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             className="border-sky-200 bg-sky-50 text-sky-950"
             count={framingReviewItems.length}
             description="Outcome tollgates and framing decisions that still need a human reviewer."
-            label="Framing review"
+            label="Framing approvals"
           />
           <ReviewSummaryCard
             actionHref={deliveryReviewItems[0]?.href}
@@ -612,7 +612,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           <CardHeader>
             <CardTitle>Human review lanes</CardTitle>
             <CardDescription>
-              This page is split into Framing review and Delivery review. Story Ideas stay in Framing or Import. Delivery review only shows Delivery Stories that need a human decision before build can start.
+              This page is split into Framing approvals and Delivery review. Story Ideas stay in Framing or Import. Delivery review only shows Delivery Stories that need a human decision before build can start.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

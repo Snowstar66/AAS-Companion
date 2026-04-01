@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import { deriveOutcomeRiskProfile, getOutcomeFramingBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -19,7 +19,6 @@ import { FramingContextCard } from "@/components/workspace/framing-context-card"
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
-import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { WorkspaceStatusSummary } from "@/components/workspace/story-workspace-shared";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOrganizationUsersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
@@ -78,6 +77,10 @@ function getOriginSummary(originType: string) {
 
 function getWorkspaceLabel(outcome: { originType: string; createdMode: string }) {
   return outcome.originType === "native" && outcome.createdMode === "clean" ? "Clean" : "Shared";
+}
+
+function formatRoleLabel(value: string) {
+  return value.replaceAll("_", " ");
 }
 
 function CollapsibleFramingPanel(props: {
@@ -252,14 +255,14 @@ export function FramingOutcomeSection({
     tollgate?.status === "approved"
       ? "Continue with Story Ideas"
       : blockers.length > 0
-        ? "Clear framing blockers"
-        : "Submit to Tollgate";
+        ? "Clear blockers and collect approvals"
+        : "Collect Tollgate 1 approvals";
   const framingNextActionDetail =
     tollgate?.status === "approved"
       ? "Use the approved Framing as the decision baseline for Story Ideas, design and delivery work."
       : blockers.length > 0
-        ? "Complete the missing handshake items listed here so Framing can move into review."
-        : "Framing is complete enough for human review. Submit it to Tollgate 1 when you are ready.";
+        ? "Approvals are still possible now, but the open blockers should be cleared before you rely on the Framing as a stable baseline."
+        : "Framing is complete enough to collect the required Tollgate 1 approvals for the current AI level.";
 
   return (
     <section className="space-y-6">
@@ -280,12 +283,12 @@ export function FramingOutcomeSection({
       ) : null}
       {search.submitState === "blocked" ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Tollgate submission is still blocked. Complete the missing framing fields listed below.
+          Framing still has open recommendations. Approvals are allowed, but a fresh approval is recommended after the blockers are cleared.
         </div>
       ) : null}
       {search.submitState === "ready" ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Framing was submitted to Tollgate. Human review can now continue from the review workspace.
+          A Framing approval was recorded. Remaining approver roles are still shown below.
         </div>
       ) : null}
       {search.submitState === "approved" ? (
@@ -537,7 +540,7 @@ export function FramingOutcomeSection({
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle>Baseline</CardTitle>
-                <CardDescription>These fields must be present before Tollgate 1 can move to review.</CardDescription>
+                <CardDescription>These fields help ground the Framing before approval is recorded.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
                 <OutcomeAiValidatedTextarea
@@ -888,6 +891,7 @@ async function DeferredOutcomeTollgateSection(props: {
   submitTollgateAction: (formData: FormData) => void | Promise<void>;
   recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
 }) {
+  void props.submitTollgateAction;
   const session = await requireActiveProjectSession();
   const tollgateResult = await getCachedOutcomeTollgateReviewData(
     session.organization.organizationId,
@@ -907,74 +911,100 @@ async function DeferredOutcomeTollgateSection(props: {
     );
   }
 
-  const { outcome, tollgate, blockers, framingComplete, tollgateReview } = tollgateResult.data;
-  const tollgateReviewLabels = tollgateReview.requiredReviewRoles.map((requirement) => requirement.label);
-  const tollgateApprovalLabels = tollgateReview.requiredApprovalRoles.map((requirement) => requirement.label);
+  const { outcome, blockers, tollgateReview } = tollgateResult.data;
   const visibleBlockers = blockers.length > 0 ? blockers : props.defaultBlockers;
   const hasApprovedDocument = Boolean(tollgateReview.approvalSnapshot);
   const approvedVersion = tollgateReview.approvedVersion ?? null;
   const currentFramingVersion = outcome.framingVersion;
-  const hasSubmittedTollgate = Boolean(tollgate?.id);
-  const canApproveHere = hasSubmittedTollgate || tollgateReview.signoffRecords.length > 0;
+  const currentVersionApproved = approvedVersion === currentFramingVersion && tollgateReview.status === "approved";
+  const hasPartialApprovals =
+    !currentVersionApproved &&
+    tollgateReview.approvalActions.some((action) => action.completedRecords.length > 0);
+  const versionRecommendationVisible = Boolean(approvedVersion && approvedVersion !== currentFramingVersion);
+  const primaryStatusClasses = currentVersionApproved
+    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+    : visibleBlockers.length > 0 || versionRecommendationVisible
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-sky-200 bg-sky-50 text-sky-900";
+  const primaryStatusIcon = currentVersionApproved ? (
+    <CircleCheckBig className="h-4 w-4" />
+  ) : visibleBlockers.length > 0 || versionRecommendationVisible ? (
+    <CircleAlert className="h-4 w-4" />
+  ) : (
+    <Clock3 className="h-4 w-4" />
+  );
+  const primaryStatusTitle = currentVersionApproved
+    ? "Tollgate 1 is approved for the current Framing version."
+    : hasPartialApprovals
+      ? "Framing approvals are in progress for the current version."
+      : "Tollgate 1 approvals can be recorded now.";
+  const primaryStatusDetail = currentVersionApproved
+    ? "The required approval roles for the current AI level have signed off on this Framing version."
+    : versionRecommendationVisible
+      ? `Framing changed after version ${approvedVersion}. A fresh approval is recommended for version ${currentFramingVersion}.`
+      : visibleBlockers.length > 0
+        ? "Approvals are still allowed, but the open blockers below should be cleared before you rely on this Framing as a stable baseline."
+        : "The Framing looks complete enough. Record the required approvals for the current AI level below.";
 
   return (
     <>
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>{tollgateReview.status === "ready" || tollgateReview.status === "approved" ? "Tollgate 1 approval" : "Submit to Tollgate 1"}</CardTitle>
+          <CardTitle>Tollgate 1 approval</CardTitle>
           <CardDescription>
-            Tollgate 1 is the framing decision gate. It applies to the framing brief, not to individual Story Ideas.
+            Tollgate 1 applies to the Framing brief as a whole. Review lanes are not used here. Record approvals directly
+            from the required roles for the current AI level.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div
-            className={`rounded-2xl border px-4 py-4 text-sm ${
-              tollgateReview.status === "approved"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : tollgateReview.status === "ready"
-                  ? "border-sky-200 bg-sky-50 text-sky-900"
-                  : framingComplete
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                    : "border-amber-200 bg-amber-50 text-amber-900"
-            }`}
-          >
-            <p className="font-medium">
-              {tollgateReview.status === "approved"
-                ? "Tollgate 1 is already approved."
-                : hasSubmittedTollgate
-                  ? "This Framing is submitted and ready for approval below."
-                  : framingComplete
-                    ? "This Framing is ready to submit."
-                    : "This Framing is not ready to submit yet."}
-            </p>
-            <p className="mt-2 leading-6">
-              {tollgateReview.status === "approved"
-                ? "The required roles have signed off. You can continue with Story Ideas, design and export."
-                : hasSubmittedTollgate
-                  ? "Record the required review and approval decisions directly in the approval section below."
-                  : visibleBlockers[0] ?? "Complete the Framing and then submit it once to start Tollgate 1 approval."}
-            </p>
+          <div className={`rounded-2xl border px-4 py-4 text-sm ${primaryStatusClasses}`}>
+            <div className="flex items-center gap-2 font-medium">
+              {primaryStatusIcon}
+              {primaryStatusTitle}
+            </div>
+            <p className="mt-2 leading-6">{primaryStatusDetail}</p>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-3">
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current framing version</p>
               <p className="mt-2 leading-6 text-foreground">Version {currentFramingVersion}</p>
-              {approvedVersion && approvedVersion !== currentFramingVersion ? (
+              {versionRecommendationVisible ? (
                 <p className="mt-2 text-muted-foreground">
-                  Latest approved version is {approvedVersion}. A new TG1 decision is required for the current brief.
+                  Latest approved version is {approvedVersion}. A new approval is recommended for the current brief.
                 </p>
               ) : null}
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required reviewers for current AI level</p>
-              <p className="mt-2 leading-6 text-foreground">{tollgateReviewLabels.join(" | ")}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Approval progress</p>
+              <p className="mt-2 leading-6 text-foreground">
+                {tollgateReview.approvalActions.filter((action) => action.completedRecords.length > 0).length} of{" "}
+                {tollgateReview.approvalActions.length} roles approved
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                {currentVersionApproved
+                  ? "All required approvals for this Framing version are complete."
+                  : "Each listed role records approval directly here with a short motivation."}
+              </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Required approvers for current AI level</p>
-              <p className="mt-2 leading-6 text-foreground">{tollgateApprovalLabels.join(" | ")}</p>
+              <p className="mt-2 leading-6 text-foreground">
+                {tollgateReview.requiredApprovalRoles.map((requirement) => requirement.label).join(" | ")}
+              </p>
             </div>
           </div>
+
+          {visibleBlockers.length > 0 ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+              <p className="font-medium">Recommendations before relying on this approval</p>
+              <ul className="mt-3 space-y-2">
+                {visibleBlockers.map((blocker) => (
+                  <li key={blocker}>• {blocker}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {hasApprovedDocument ? (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -989,74 +1019,125 @@ async function DeferredOutcomeTollgateSection(props: {
             </div>
           ) : null}
 
-          {canApproveHere ? (
+          {!props.isArchived ? (
             <div className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-4 text-sm text-sky-950">
-              Approve Tollgate 1 directly on this Framing page below. Human Review only mirrors this as a queue entry.
+              Human Review only mirrors this as a queue entry. Record Framing approvals directly here.
             </div>
-          ) : !props.isArchived ? (
-            <form action={props.submitTollgateAction} className="space-y-4">
-              <input name="outcomeId" type="hidden" value={props.outcomeId} />
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Submission note</span>
-                <textarea
-                  className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                  defaultValue={tollgate?.comments ?? ""}
-                  name="comments"
-                />
-              </label>
-              <PendingFormButton
-                className="gap-2"
-                disabled={!framingComplete}
-                icon={<ShieldCheck className="h-4 w-4" />}
-                label="Submit to Tollgate"
-                pendingLabel="Submitting to Tollgate..."
-              />
-              {!framingComplete ? (
-                <p className="text-sm text-muted-foreground">
-                  Submit unlocks as soon as the outcome statement, baseline, value owner, AI level, risk profile and at least one epic are in place.
-                </p>
-              ) : null}
-            </form>
           ) : null}
         </CardContent>
       </Card>
 
-      {canApproveHere ? (
-        <div id="tollgate-review">
-          <TollgateDecisionCard
-            aiAccelerationLevel={outcome.aiAccelerationLevel}
-            approvalActions={tollgateReview.approvalActions}
-            availablePeople={tollgateReview.availablePeople}
-            blockers={visibleBlockers}
-            blockedActions={tollgateReview.blockedActions}
-            comments={tollgateReview.comments ?? tollgate?.comments ?? null}
-            description="Record the required reviewer and approver decisions for Tollgate 1 here. The required roles are determined by the current AI Acceleration Level."
-            entityId={props.outcomeId}
-            entityType="outcome"
-            formAction={props.recordTollgateDecisionAction}
-            hiddenFields={[
-              { name: "outcomeId", value: props.outcomeId }
-            ]}
-            pendingActions={tollgateReview.pendingActions}
-            reviewActions={tollgateReview.reviewActions}
-            signoffRecords={tollgateReview.signoffRecords.map((record) => ({
-              id: record.id,
-              decisionKind: record.decisionKind,
-              requiredRoleType: record.requiredRoleType,
-              actualPersonName: record.actualPersonName,
-              actualRoleTitle: record.actualRoleTitle,
-              organizationSide: record.organizationSide,
-              decisionStatus: record.decisionStatus,
-              note: record.note,
-              evidenceReference: record.evidenceReference,
-              createdAt: record.createdAt
-            }))}
-            status={tollgateReview.status ?? (framingComplete ? "ready" : "blocked")}
-            title="Approve Tollgate 1 here"
-            tollgateType="tg1_baseline"
-          />
-        </div>
-      ) : null}
+      <div className="space-y-4" id="tollgate-review">
+        {tollgateReview.approvalActions.map((action) => {
+          const completedRecord = action.completedRecords[0] ?? null;
+          const hasAssignedPeople = action.assignedPeople.length > 0;
+
+          return (
+            <Card className="border-border/70 shadow-sm" key={`${action.decisionKind}:${action.roleType}:${action.organizationSide}`}>
+              <CardHeader>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{action.label}</CardTitle>
+                    <CardDescription>
+                      Required {formatRoleLabel(action.roleType)} on the {action.organizationSide} side for{" "}
+                      {outcome.aiAccelerationLevel.replaceAll("_", " ")}.
+                    </CardDescription>
+                  </div>
+                  <span
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                      completedRecord
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-amber-200 bg-amber-50 text-amber-800"
+                    }`}
+                  >
+                    {completedRecord ? "Approved" : "Pending approval"}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
+                  <p className="font-medium text-foreground">Assigned role holders</p>
+                  <p className="mt-2 text-muted-foreground">
+                    {hasAssignedPeople
+                      ? action.assignedPeople.map((person) => `${person.fullName} (${person.roleTitle})`).join(", ")
+                      : "No active person is assigned for this approval role yet."}
+                  </p>
+                </div>
+
+                {completedRecord ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-950">
+                    <div className="flex items-center gap-2 font-medium">
+                      <CircleCheckBig className="h-4 w-4" />
+                      Approved by {completedRecord.actualPersonName}
+                    </div>
+                    <p className="mt-2 leading-6">
+                      {new Date(completedRecord.createdAt).toLocaleString("sv-SE")}
+                    </p>
+                    {completedRecord.note ? <p className="mt-2 leading-6">Motivation: {completedRecord.note}</p> : null}
+                  </div>
+                ) : props.isArchived ? (
+                  <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm text-muted-foreground">
+                    Restore the Framing brief to continue approvals.
+                  </div>
+                ) : hasAssignedPeople ? (
+                  <form action={props.recordTollgateDecisionAction} className="space-y-4 rounded-2xl border border-border/70 bg-background p-4">
+                    <input name="outcomeId" type="hidden" value={props.outcomeId} />
+                    <input name="entityId" type="hidden" value={props.outcomeId} />
+                    <input name="aiAccelerationLevel" type="hidden" value={outcome.aiAccelerationLevel} />
+                    <input
+                      name="decisionKey"
+                      type="hidden"
+                      value={`approval|${action.roleType}|${action.organizationSide}`}
+                    />
+                    <input name="decisionStatus" type="hidden" value="approved" />
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Approver</span>
+                        <select
+                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                          defaultValue={action.assignedPeople[0]?.partyRoleEntryId ?? ""}
+                          name="actualPartyRoleEntryId"
+                        >
+                          {action.assignedPeople.map((person) => (
+                            <option key={person.partyRoleEntryId} value={person.partyRoleEntryId}>
+                              {person.fullName} - {person.roleTitle}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/15 px-4 py-3 text-sm">
+                        <input className="mt-1 h-4 w-4" name="confirmApproval" required type="checkbox" value="yes" />
+                        <span className="leading-6 text-foreground">
+                          I confirm that this Framing version can be approved from the perspective of this role.
+                        </span>
+                      </label>
+                    </div>
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-foreground">Motivation</span>
+                      <textarea
+                        className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                        name="note"
+                        required
+                      />
+                    </label>
+                    <PendingFormButton
+                      className="gap-2 whitespace-nowrap"
+                      icon={<ShieldCheck className="h-4 w-4" />}
+                      label={`Approve as ${action.label}`}
+                      pendingLabel="Recording approval..."
+                    />
+                  </form>
+                ) : (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+                    Assign an active {formatRoleLabel(action.roleType)} on the {action.organizationSide} side before this
+                    approval can be recorded.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </>
   );
 }
@@ -1066,7 +1147,7 @@ function OutcomeTollgateSectionFallback() {
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
         <CardTitle>Loading tollgate follow-up</CardTitle>
-        <CardDescription>Review roles, submission state and decision lanes are loading separately.</CardDescription>
+        <CardDescription>Approval roles and current Framing sign-offs are loading separately.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-2">
         <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
