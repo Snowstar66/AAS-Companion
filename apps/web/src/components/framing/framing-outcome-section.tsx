@@ -607,7 +607,6 @@ export function FramingOutcomeSection({
             </Card>
 
             <CollapsibleFramingPanel
-              defaultOpen
               description="Define AI usage intent, classify risk and record the framing-level AI decision before Tollgate 1."
               badge={
                 <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${aiRiskBadgeClasses}`}>
@@ -642,7 +641,6 @@ export function FramingOutcomeSection({
             </CollapsibleFramingPanel>
 
             <CollapsibleFramingPanel
-              defaultOpen
               description="Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational."
               title="Epics and Story Ideas"
             >
@@ -767,7 +765,6 @@ export function FramingOutcomeSection({
             </CollapsibleFramingPanel>
 
             <CollapsibleFramingPanel
-              defaultOpen
               description="Scan the framing brief, epics and story ideas together in one compact branch."
               title="Framing value spine"
             >

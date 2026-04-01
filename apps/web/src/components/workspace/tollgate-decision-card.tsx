@@ -128,8 +128,6 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
   const signoffCount = props.signoffRecords.length;
   const reviewCount = props.reviewActions.length;
   const approvalCount = props.approvalActions.length;
-  const hasOpenReviewWork = props.reviewActions.some((action) => action.pending);
-  const hasOpenApprovalWork = props.approvalActions.some((action) => action.pending);
   const isOutcomeTollgate = props.entityType === "outcome" && props.tollgateType === "tg1_baseline";
 
   return (
@@ -221,7 +219,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
 
           <CollapsibleSection
             badge={`${reviewCount}`}
-            defaultOpen={hasOpenReviewWork}
+            defaultOpen={false}
             description="Required human reviews for this tollgate."
             title="Required review roles"
           >
@@ -277,7 +275,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
 
           <CollapsibleSection
             badge={`${approvalCount}`}
-            defaultOpen={hasOpenApprovalWork}
+            defaultOpen={false}
             description="Required human approvals for this tollgate."
             title="Required approval roles"
           >
@@ -334,7 +332,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
           <div className="grid gap-4 xl:grid-cols-2">
             <CollapsibleSection
               badge={`${pendingCount}`}
-              defaultOpen={pendingCount > 0}
+              defaultOpen={false}
               description="Review or approval work still waiting for completion."
               title="Pending actions"
             >
@@ -356,7 +354,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
 
             <CollapsibleSection
               badge={`${blockedCount}`}
-              defaultOpen={blockedCount > 0}
+              defaultOpen={false}
               description="Actions that cannot proceed until staffing or governance gaps are cleared."
               title="Blocked actions"
             >
@@ -378,7 +376,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
           {!isOutcomeTollgate ? (
             <CollapsibleSection
               badge={props.availablePeople.length > 0 ? `${props.availablePeople.length} signers` : "No signers"}
-              defaultOpen={pendingCount > 0 || blockedCount > 0}
+              defaultOpen={false}
               description="Capture one review, approval or escalation decision with the human signer and evidence trail."
               title="Record approval or review"
             >
@@ -398,7 +396,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
 
           <CollapsibleSection
             badge={`${signoffCount}`}
-            defaultOpen={signoffCount > 0}
+            defaultOpen={false}
             description="Completed reviews, approvals and escalations recorded for this tollgate."
             title="Sign-off history"
           >

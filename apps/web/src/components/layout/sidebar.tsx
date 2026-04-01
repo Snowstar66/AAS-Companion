@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, CircleHelp, Compass, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
+import { BriefcaseBusiness, CircleHelp, Compass, Eye, EyeOff, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain/navigation";
 
 const icons = {
@@ -23,9 +24,24 @@ type SidebarProps = {
   activeSectionLabel?: string;
 };
 
+const GUIDANCE_STORAGE_KEY = "aas-guidance-visible";
+
 export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps) {
   const pathname = usePathname() ?? "/";
   const returnTo = pathname === "/help" ? "/" : pathname;
+  const [guidanceVisible, setGuidanceVisible] = useState(true);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(GUIDANCE_STORAGE_KEY);
+    const visible = stored !== "false";
+    setGuidanceVisible(visible);
+    document.documentElement.dataset.guidanceVisible = visible ? "true" : "false";
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(GUIDANCE_STORAGE_KEY, guidanceVisible ? "true" : "false");
+    document.documentElement.dataset.guidanceVisible = guidanceVisible ? "true" : "false";
+  }, [guidanceVisible]);
 
   return (
     <aside className="rounded-[28px] border border-border/70 bg-[#102033] px-4 py-5 text-slate-50 shadow-[0_18px_65px_rgba(15,23,42,0.18)] xl:max-h-[calc(100vh-2.5rem)] xl:overflow-auto">
@@ -59,6 +75,21 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
           </div>
         </div>
 
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/12 to-white/4 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Guidance</p>
+          <p className="mt-3 text-sm leading-6 text-slate-300">
+            Toggle method guidance on or off across the work views.
+          </p>
+          <button
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/8 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/14"
+            onClick={() => setGuidanceVisible((current) => !current)}
+            type="button"
+          >
+            {guidanceVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {guidanceVisible ? "Hide guidance" : "Show guidance"}
+          </button>
+        </div>
+
         <nav className="space-y-2">
           {primaryNavigation.map((item) => {
             const Icon = icons[item.href as keyof typeof icons] ?? LayoutDashboard;
@@ -89,6 +120,13 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
           })}
         </nav>
       </div>
+      <style jsx global>{`
+        :root[data-guidance-visible="false"] .guidance-block,
+        :root[data-guidance-visible="false"] .framing-inline-guidance,
+        :root[data-guidance-visible="false"] .framing-guidance-copy {
+          display: none !important;
+        }
+      `}</style>
     </aside>
   );
 }

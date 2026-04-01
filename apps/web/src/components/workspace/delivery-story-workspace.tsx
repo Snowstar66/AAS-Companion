@@ -212,7 +212,6 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           </Card>
 
           <SecondaryPanel
-            defaultOpen
             description={
               missingReadinessFields.length === 0
                 ? "All required design inputs are present. Review and approval can continue without more field edits."

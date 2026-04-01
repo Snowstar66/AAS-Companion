@@ -210,7 +210,6 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
         <div className="space-y-3">
           <CollapsibleSection
             accentClassName="border-border/70 bg-background/95"
-            defaultOpen
             description="A compact visual sketch of how Framing, Story Ideas, Delivery Stories and feedback are meant to work together."
             title="Framing roundtrip"
           >
@@ -282,7 +281,6 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
 
           <CollapsibleSection
             accentClassName="border-border/70 bg-background/95"
-            defaultOpen
             description="A tighter explanation of the four AAS phases and why the sequence matters."
             title="AAS method deep dive"
           >

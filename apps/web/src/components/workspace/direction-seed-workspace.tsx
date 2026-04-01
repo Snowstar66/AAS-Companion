@@ -271,7 +271,6 @@ export function DirectionSeedWorkspace({
 
       <div className="space-y-6">
         <SecondaryPanel
-          defaultOpen
           description="See how this Story Idea is being realized in delivery without turning the framing view into delivery workflow."
           title="Delivery realization"
         >

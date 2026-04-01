@@ -451,13 +451,13 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
       title: "Framing approvals",
       description: "Framing briefs waiting on Tollgate 1 approvals. Story Ideas stay in Framing and Import, not in Delivery review.",
       items: operationalReview.items.filter((item) => item.workflow === "outcome_tollgate"),
-      defaultOpen: true
+      defaultOpen: false
     },
     {
       title: "Delivery review",
       description: "Individual Delivery Stories no longer use human approval lanes here. This stays empty until a future design-wide checkpoint is introduced.",
       items: operationalReview.items.filter((item) => item.workflow === "story_review" || item.workflow === "delivery_start"),
-      defaultOpen: true
+      defaultOpen: false
     }
   ];
   const framingReviewItems = operationalReview.items.filter((item) => item.workflow === "outcome_tollgate");
@@ -712,7 +712,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                 {groups.map((group) => (
                   <CollapsibleSection
                     badge={`${group.items.length}`}
-                    defaultOpen={group.state === "needs_action" || group.state === "needs_confirmation" || group.state === "pending"}
+                    defaultOpen={false}
                     description={getBacklogDescription(group.state)}
                     key={group.state}
                     title={getBacklogLabel(group.state)}
@@ -970,7 +970,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           </label>
                         </div>
 
-                        <CollapsibleSection badge={selectedCandidate.type} defaultOpen description="Type-specific fields for the current candidate." title="Candidate fields">
+                        <CollapsibleSection badge={selectedCandidate.type} defaultOpen={false} description="Type-specific fields for the current candidate." title="Candidate fields">
                           <div className="grid gap-4">
                             {selectedCandidate.type === "outcome" ? (
                               <>
@@ -1059,7 +1059,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           </div>
                         </CollapsibleSection>
 
-                        <CollapsibleSection badge={`${selectedCandidate.issueProgress.categories.humanOnly} human-only`} defaultOpen={selectedCandidate.issueProgress.categories.humanOnly > 0} description="Resolve the decisions that explicitly require a human reviewer." title="Human-only decisions">
+                        <CollapsibleSection badge={`${selectedCandidate.issueProgress.categories.humanOnly} human-only`} defaultOpen={false} description="Resolve the decisions that explicitly require a human reviewer." title="Human-only decisions">
                           <div className="grid gap-4">
                             <label className="space-y-2">
                               <span className="text-sm font-medium text-foreground">Value Owner</span>
@@ -1102,7 +1102,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           </div>
                         </CollapsibleSection>
 
-                        <CollapsibleSection defaultOpen description="Leave a short note and choose how this item should move through the backlog." title="Disposition">
+                        <CollapsibleSection defaultOpen={false} description="Leave a short note and choose how this item should move through the backlog." title="Disposition">
                           <div className="space-y-4">
                             <label className="space-y-2">
                               <span className="text-sm font-medium text-foreground">Review comment</span>

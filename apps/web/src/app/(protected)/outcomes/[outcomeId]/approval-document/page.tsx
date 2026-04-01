@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CheckCircle2, CircleAlert, TriangleAlert } from "lucide-react";
 import { Card, CardContent } from "@aas-companion/ui";
 import { AasBrandMark } from "@/components/shared/aas-brand-mark";
 import { ApprovalDocumentPrintButton } from "@/components/workspace/approval-document-print-button";
@@ -86,6 +87,60 @@ function formatLabel(value: string | null) {
   return value ? value.replaceAll("_", " ") : "Not captured";
 }
 
+function parseRiskRationale(value: string | null) {
+  if (!value) {
+    return {
+      level: null,
+      rationale: "Not captured"
+    };
+  }
+
+  const match = value.match(/^(low|medium|high):\s*(.*)$/i);
+
+  if (!match) {
+    return {
+      level: null,
+      rationale: value
+    };
+  }
+
+  const level = match[1];
+  const rationale = match[2];
+
+  return {
+    level: (level ? level.toLowerCase() : "low") as "low" | "medium" | "high",
+    rationale: rationale || "Not captured"
+  };
+}
+
+function getRiskDisplay(level: "low" | "medium" | "high" | null) {
+  if (level === "low") {
+    return {
+      label: "Risk: Low",
+      icon: <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+    };
+  }
+
+  if (level === "medium") {
+    return {
+      label: "Risk: Medium",
+      icon: <TriangleAlert className="h-4 w-4 text-amber-700" />
+    };
+  }
+
+  if (level === "high") {
+    return {
+      label: "Risk: High",
+      icon: <CircleAlert className="h-4 w-4 text-rose-700" />
+    };
+  }
+
+  return {
+    label: "Risk: Not captured",
+    icon: <CircleAlert className="h-4 w-4 text-slate-500" />
+  };
+}
+
 export default async function OutcomeApprovalDocumentPage({
   params
 }: {
@@ -132,6 +187,10 @@ export default async function OutcomeApprovalDocumentPage({
   }
 
   const unassignedStoryIdeas = storyIdeasByEpic.get("__unassigned__") ?? [];
+  const businessImpact = parseRiskRationale(snapshot.outcome.riskRationale.businessImpact);
+  const dataSensitivityRationale = parseRiskRationale(snapshot.outcome.riskRationale.dataSensitivity);
+  const blastRadius = parseRiskRationale(snapshot.outcome.riskRationale.blastRadius);
+  const decisionImpact = parseRiskRationale(snapshot.outcome.riskRationale.decisionImpact);
 
   return (
     <section className="space-y-6 print:space-y-4">
@@ -227,7 +286,10 @@ export default async function OutcomeApprovalDocumentPage({
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-800">
                 <p><span className="font-semibold">AI Level:</span> {formatAiLevelLabel(snapshot.outcome.aiLevel)}</p>
                 <p className="mt-2 text-slate-700">{getAiLevelSummary(snapshot.outcome.aiLevel) ?? "Not captured"}</p>
-                <p className="mt-3"><span className="font-semibold">Risk profile:</span> {formatLabel(snapshot.outcome.riskProfile)}</p>
+                <div className="mt-3 flex items-center gap-2">
+                  {getRiskDisplay(snapshot.outcome.riskProfile).icon}
+                  <p><span className="font-semibold">{getRiskDisplay(snapshot.outcome.riskProfile).label}</span></p>
+                </div>
                 <p><span className="font-semibold">Data sensitivity:</span> {snapshot.outcome.dataSensitivity ?? "Not captured"}</p>
                 <p><span className="font-semibold">Delivery type:</span> {snapshot.outcome.deliveryType ?? "Not captured"}</p>
               </div>
@@ -241,19 +303,39 @@ export default async function OutcomeApprovalDocumentPage({
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
                 <p className="font-semibold text-slate-950">Business impact</p>
-                <p className="mt-2">{snapshot.outcome.riskRationale.businessImpact ?? "Not captured"}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  {getRiskDisplay(businessImpact.level).icon}
+                  <p className="font-medium text-slate-950">{getRiskDisplay(businessImpact.level).label}</p>
+                </div>
+                <p className="mt-2">{businessImpact.rationale}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Rationale should describe what happens to the business if the system or AI output is wrong.</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
                 <p className="font-semibold text-slate-950">Data sensitivity rationale</p>
-                <p className="mt-2">{snapshot.outcome.riskRationale.dataSensitivity ?? "Not captured"}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  {getRiskDisplay(dataSensitivityRationale.level).icon}
+                  <p className="font-medium text-slate-950">{getRiskDisplay(dataSensitivityRationale.level).label}</p>
+                </div>
+                <p className="mt-2">{dataSensitivityRationale.rationale}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Rationale should describe what kind of data is involved and whether it is personal, sensitive or regulated.</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
                 <p className="font-semibold text-slate-950">Blast radius</p>
-                <p className="mt-2">{snapshot.outcome.riskRationale.blastRadius ?? "Not captured"}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  {getRiskDisplay(blastRadius.level).icon}
+                  <p className="font-medium text-slate-950">{getRiskDisplay(blastRadius.level).label}</p>
+                </div>
+                <p className="mt-2">{blastRadius.rationale}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Rationale should describe how many users, teams or systems are affected if something goes wrong.</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
                 <p className="font-semibold text-slate-950">Decision impact</p>
-                <p className="mt-2">{snapshot.outcome.riskRationale.decisionImpact ?? "Not captured"}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  {getRiskDisplay(decisionImpact.level).icon}
+                  <p className="font-medium text-slate-950">{getRiskDisplay(decisionImpact.level).label}</p>
+                </div>
+                <p className="mt-2">{decisionImpact.rationale}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Rationale should describe whether AI only assists, influences decisions, or automates them.</p>
               </div>
             </div>
           </section>
