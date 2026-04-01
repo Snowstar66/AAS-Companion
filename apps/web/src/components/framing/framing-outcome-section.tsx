@@ -92,11 +92,28 @@ function formatDateTime(value: Date | string | null | undefined) {
   return new Date(value).toLocaleString("sv-SE");
 }
 
+function getDeliveryTypeHelper(value: "AD" | "AT" | "AM" | null | undefined) {
+  if (value === "AD") {
+    return "Application Development frames a new application, a net-new service, or a significant functional expansion in an existing product. Focus on outcome, boundaries and why this capability should exist.";
+  }
+
+  if (value === "AT") {
+    return "Application Transformation frames a larger change to an existing landscape, flow or architecture direction. Focus on what must change, what must stay safe, and why the operating model needs to move.";
+  }
+
+  if (value === "AM") {
+    return "Application Maintenance frames change in an existing application with continuity in mind. Focus on existing context, operational constraints, and what must be preserved while improving or extending the app.";
+  }
+
+  return "Choose whether this Framing is primarily about Application Development, Application Transformation or Application Maintenance.";
+}
+
 function CollapsibleFramingPanel(props: {
   title: string;
   description: string;
   defaultOpen?: boolean | undefined;
   badge?: ReactNode;
+  teaser?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -105,6 +122,7 @@ function CollapsibleFramingPanel(props: {
         <div className="min-w-0">
           <h3 className="font-semibold text-foreground">{props.title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
+          {props.teaser ? <div className="mt-3 text-sm text-foreground">{props.teaser}</div> : null}
         </div>
         <div className="flex shrink-0 items-center gap-3">
           {props.badge}
@@ -183,7 +201,8 @@ export function FramingOutcomeSection({
   const framingHref = `/framing?outcomeId=${outcome.id}`;
   const framingBriefExport = buildFramingBriefExport({
     outcome,
-    blockers
+    blockers,
+    tollgate
   });
   const aiFeedback =
     search.aiField && search.aiVerdict && search.aiReason
@@ -286,6 +305,8 @@ export function FramingOutcomeSection({
       })
     ).length;
   const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
+  const deliveryTypeValue =
+    outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null;
   const framingCompleteItems = [
     outcome.outcomeStatement?.trim() ? "Outcome statement is captured" : null,
     outcome.baselineDefinition?.trim() ? "Baseline is defined" : null,
@@ -321,6 +342,23 @@ export function FramingOutcomeSection({
       : framingWarnings.length > 0
         ? "Approvals are still possible now, but the open warnings should be reviewed before you rely on the Framing as a stable baseline."
         : "Framing is complete enough to collect the required Tollgate 1 approvals for the current AI level.";
+  const aiAndRiskTeaser = [
+    `AI Level ${outcome.aiAccelerationLevel.replace("level_", "")}`,
+    `Risk ${derivedRiskProfile ? derivedRiskProfile.charAt(0).toUpperCase() + derivedRiskProfile.slice(1) : "Not determined"}`,
+    aiRiskBlockers.length > 0 ? `${aiRiskBlockers.length} action item${aiRiskBlockers.length === 1 ? "" : "s"}` : "Ready to review",
+    aiRiskBlockers.length > 0 ? "Expand to complete the missing classifications." : "Expand to review the rationale and governance fit."
+  ];
+  const epicsAndStoriesTeaser = [
+    `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"}`,
+    `${visibleStoryIdeaCount} Story Idea${visibleStoryIdeaCount === 1 ? "" : "s"}`,
+    `${readyStoryIdeaCount} ready`,
+    outcome.epics.length === 0 ? "Expand to create the first Epic." : "Expand to create or assign Story Ideas."
+  ];
+  const valueSpineTeaser = [
+    `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"} in view`,
+    `${visibleStoryIdeaCount} Story Idea${visibleStoryIdeaCount === 1 ? "" : "s"} linked`,
+    "Expand to inspect the hierarchy and check coverage."
+  ];
 
   return (
     <section className="space-y-6">
@@ -594,6 +632,10 @@ export function FramingOutcomeSection({
                     <option value="AT">AT</option>
                     <option value="AM">AM</option>
                   </select>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    AD = Application Development, AT = Application Transformation, AM = Application Maintenance.
+                    {` ${getDeliveryTypeHelper(deliveryTypeValue)}`}
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type")} />
                 </label>
               </CardContent>
@@ -637,6 +679,7 @@ export function FramingOutcomeSection({
                   {aiRiskStatusLabel}
                 </span>
               }
+              teaser={<p className="leading-6 text-muted-foreground">{aiAndRiskTeaser.join(" · ")}</p>}
               title="AI and risk"
             >
               <OutcomeAiRiskPostureCard
@@ -666,6 +709,7 @@ export function FramingOutcomeSection({
 
             <CollapsibleFramingPanel
               description="Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational."
+              teaser={<p className="leading-6 text-muted-foreground">{epicsAndStoriesTeaser.join(" · ")}</p>}
               title="Epics and Story Ideas"
             >
               <div className="space-y-5">
@@ -790,6 +834,7 @@ export function FramingOutcomeSection({
 
             <CollapsibleFramingPanel
               description="Scan the framing brief, epics and story ideas together in one compact branch."
+              teaser={<p className="leading-6 text-muted-foreground">{valueSpineTeaser.join(" · ")}</p>}
               title="Framing value spine"
             >
               <FramingValueSpineTree
@@ -936,6 +981,11 @@ export function FramingOutcomeSection({
         <CollapsibleFramingPanel
           defaultOpen={false}
           description="Expand when you want to export the customer handshake into another AI tool or workflow."
+          teaser={
+            <p className="leading-6 text-muted-foreground">
+              Includes AI-friendly Markdown, structured JSON, UX sketch references and approval context for the next step.
+            </p>
+          }
           title="Export framing brief"
         >
           <FramingBriefExportPanel embedded disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
@@ -1142,11 +1192,6 @@ async function DeferredOutcomeTollgateSection(props: {
             </div>
           ) : null}
 
-          {!props.isArchived ? (
-            <div className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-4 text-sm text-sky-950">
-              Human Review only mirrors this as a queue entry. Record Framing approvals directly here.
-            </div>
-          ) : null}
         </CardContent>
       </Card>
 

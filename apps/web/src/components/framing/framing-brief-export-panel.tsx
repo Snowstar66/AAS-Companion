@@ -43,16 +43,16 @@ export function FramingBriefExportPanel({
       <CardHeader>
         <CardTitle>Export framing brief</CardTitle>
         <CardDescription>
-          Export the current framing brief, epics and direction seeds as an AI-friendly package for further refinement in tools such as BMAD.
-          Business content comes first. Internal IDs and any legacy migration references remain as metadata only.
+          Export the current framing brief, approvals and Story Idea references as an AI-friendly package for the next step in tools such as BMAD.
+          Business content, visual intent and approval context come first.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
           <p className="font-medium">How to use this export</p>
           <p className="mt-2">
-            Use Markdown when you want to paste the framing brief into another AI tool. Use JSON when another system or workflow
-            should read the package structurally with epics and direction seeds intact.
+            Use Markdown when you want to hand the Framing to another AI tool directly. Use JSON when another workflow should keep
+            the structure, UX sketch references and approval context intact.
           </p>
           {disabled ? <p className="mt-2">Restore the Outcome first if you want to update the framing before exporting again.</p> : null}
         </div>
@@ -104,7 +104,7 @@ export function FramingBriefExportPanel({
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>JSON preview</CardTitle>
-              <CardDescription>Structured payload with metadata retained only for traceability and migration context.</CardDescription>
+              <CardDescription>Structured payload for workflows that should keep Story Ideas, sketches and approvals together.</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="max-h-[520px] overflow-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">
