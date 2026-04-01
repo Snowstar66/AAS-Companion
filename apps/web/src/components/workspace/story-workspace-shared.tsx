@@ -89,10 +89,14 @@ export function getSimplifiedStatusClasses(tone: SimplifiedStatusTone) {
 export function WorkspaceStatusSummary(props: {
   statusLabel: string;
   statusTone: SimplifiedStatusTone;
+  statusDetail?: string | undefined;
   completeItems: string[];
   blockers: string[];
   nextActionLabel: string;
   nextActionDetail: string;
+  completeTitle?: string | undefined;
+  blockerTitle?: string | undefined;
+  nextActionTitle?: string | undefined;
   completeEmptyText?: string | undefined;
   blockerEmptyText?: string | undefined;
 }) {
@@ -101,9 +105,12 @@ export function WorkspaceStatusSummary(props: {
       <div className={`rounded-2xl border px-4 py-4 text-sm ${getSimplifiedStatusClasses(props.statusTone)}`}>
         <p className="text-xs font-semibold uppercase tracking-[0.18em]">Current status</p>
         <p className="mt-2 font-semibold">{props.statusLabel}</p>
+        {props.statusDetail ? <p className="mt-2 leading-6">{props.statusDetail}</p> : null}
       </div>
       <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Complete now</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {props.completeTitle ?? "Complete now"}
+        </p>
         {props.completeItems.length > 0 ? (
           <ul className="mt-2 space-y-2 text-foreground">
             {props.completeItems.map((item) => (
@@ -115,7 +122,9 @@ export function WorkspaceStatusSummary(props: {
         )}
       </div>
       <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blockers</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {props.blockerTitle ?? "Blockers"}
+        </p>
         {props.blockers.length > 0 ? (
           <ul className="mt-2 space-y-2 text-foreground">
             {props.blockers.map((item) => (
@@ -127,7 +136,9 @@ export function WorkspaceStatusSummary(props: {
         )}
       </div>
       <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next best action</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {props.nextActionTitle ?? "Next best action"}
+        </p>
         <p className="mt-2 font-semibold text-foreground">{props.nextActionLabel}</p>
         <p className="mt-2 leading-6 text-muted-foreground">{props.nextActionDetail}</p>
       </div>
