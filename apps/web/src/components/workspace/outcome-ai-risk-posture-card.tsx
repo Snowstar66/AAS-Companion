@@ -386,34 +386,20 @@ export function OutcomeAiRiskPostureCard({
   const statusTone = getStatusTone(blockers.length, derivedRisk, aiLevel);
 
   const content = (
-    <>
-      <CardHeader>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <CardTitle>AI and risk</CardTitle>
-            <CardDescription>
-              Guide the framing decision with explicit AI intent, four risk dimensions and one derived risk profile before Tollgate 1.
-            </CardDescription>
-          </div>
-          <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusTone.classes}`}>
-            {statusTone.icon}
-            {statusTone.label}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-5">
+    <CardContent className={embedded ? "space-y-5 p-0" : "space-y-5"}>
         <input name="aiAccelerationLevel" type="hidden" value={aiLevel} />
         <input name="riskProfile" type="hidden" value={derivedRisk ?? defaultRiskProfile} />
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="rounded-3xl border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.94),rgba(255,255,255,0.94))] p-5">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">
-                Structured framing decision
-              </div>
               <div className="inline-flex items-center gap-2 text-sm font-medium text-sky-950">
                 <Bot className="h-4 w-4" />
-                AI Acceleration Level and Risk Profile
+                AI execution, risk and governance fit
+              </div>
+              <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusTone.classes}`}>
+                {statusTone.icon}
+                {statusTone.label}
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-700">
@@ -599,20 +585,31 @@ export function OutcomeAiRiskPostureCard({
             ) : (
               <p className="mt-2 leading-6 text-muted-foreground">The current AI level and risk posture do not expose any additional governance warnings.</p>
             )}
-            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next best action</p>
-            <p className="mt-2 font-semibold text-foreground">{nextBestAction}</p>
           </div>
         </div>
       </CardContent>
-    </>
   );
 
   if (embedded) {
-    return <div className="space-y-5">{content}</div>;
+    return content;
   }
 
   return (
     <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <CardTitle>AI and risk</CardTitle>
+            <CardDescription>
+              Guide the framing decision with explicit AI intent, four risk dimensions and one derived risk profile before Tollgate 1.
+            </CardDescription>
+          </div>
+          <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusTone.classes}`}>
+            {statusTone.icon}
+            {statusTone.label}
+          </div>
+        </div>
+      </CardHeader>
       {content}
     </Card>
   );

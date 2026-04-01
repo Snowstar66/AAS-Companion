@@ -33,10 +33,6 @@ type ApprovalSnapshot = {
       blastRadius: string | null;
       decisionImpact: string | null;
     };
-    riskAcceptance: {
-      acceptedBy: string | null;
-      acceptedAt: string | null;
-    };
   };
   epics: Array<{
     key: string;
@@ -125,6 +121,17 @@ export default async function OutcomeApprovalDocumentPage({
     );
   }
 
+  const storyIdeasByEpic = new Map<string, ApprovalSnapshot["storyIdeas"]>();
+
+  for (const storyIdea of snapshot.storyIdeas) {
+    const epicKey = storyIdea.linkedEpic ?? "__unassigned__";
+    const existing = storyIdeasByEpic.get(epicKey) ?? [];
+    existing.push(storyIdea);
+    storyIdeasByEpic.set(epicKey, existing);
+  }
+
+  const unassignedStoryIdeas = storyIdeasByEpic.get("__unassigned__") ?? [];
+
   return (
     <section className="space-y-6 print:space-y-4">
       <div className="flex flex-col gap-4 rounded-[28px] border border-border/70 bg-white px-6 py-5 shadow-sm print:hidden lg:flex-row lg:items-center lg:justify-between">
@@ -169,25 +176,6 @@ export default async function OutcomeApprovalDocumentPage({
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">Approved at</p>
                 <p className="mt-2 text-sm font-medium text-emerald-950">{formatDate(snapshot.approvedAt)}</p>
               </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 lg:grid-cols-4">
-            <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">Business case</p>
-              <p className="mt-2 text-sm text-slate-700">Outcome, problem statement and ownership.</p>
-            </div>
-            <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">Baseline</p>
-              <p className="mt-2 text-sm text-slate-700">Current state and measurable source.</p>
-            </div>
-            <div className="rounded-3xl border border-fuchsia-200 bg-fuchsia-50/60 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-900">AI and risk</p>
-              <p className="mt-2 text-sm text-slate-700">Structured AI usage and risk posture.</p>
-            </div>
-            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">Scope and approval</p>
-              <p className="mt-2 text-sm text-slate-700">Epics, Story Ideas and recorded sign-offs.</p>
             </div>
           </div>
 
@@ -242,44 +230,62 @@ export default async function OutcomeApprovalDocumentPage({
                 <p><span className="font-semibold">Delivery type:</span> {snapshot.outcome.deliveryType ?? "Not captured"}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-800">
-                <p><span className="font-semibold">Risk accepted by:</span> {snapshot.outcome.riskAcceptance.acceptedBy ?? "Not captured"}</p>
-                <p><span className="font-semibold">Accepted at:</span> {formatDate(snapshot.outcome.riskAcceptance.acceptedAt)}</p>
+                <p><span className="font-semibold">Business impact rationale:</span> {snapshot.outcome.riskRationale.businessImpact ?? "Not captured"}</p>
+                <p><span className="font-semibold">Data sensitivity rationale:</span> {snapshot.outcome.riskRationale.dataSensitivity ?? "Not captured"}</p>
               </div>
             </div>
             <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-800">
-              <li><span className="font-semibold">Business impact:</span> {snapshot.outcome.riskRationale.businessImpact ?? "Not captured"}</li>
-              <li><span className="font-semibold">Data sensitivity rationale:</span> {snapshot.outcome.riskRationale.dataSensitivity ?? "Not captured"}</li>
               <li><span className="font-semibold">Blast radius:</span> {snapshot.outcome.riskRationale.blastRadius ?? "Not captured"}</li>
               <li><span className="font-semibold">Decision impact:</span> {snapshot.outcome.riskRationale.decisionImpact ?? "Not captured"}</li>
             </ul>
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-3xl border border-border/70 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Epics</p>
-              <div className="mt-4 space-y-4">
-                {snapshot.epics.length > 0 ? snapshot.epics.map((epic) => (
+          <section className="rounded-3xl border border-border/70 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Epics and Story Ideas</p>
+            <div className="mt-4 space-y-5">
+              {snapshot.epics.length > 0 ? snapshot.epics.map((epic) => {
+                const epicStoryIdeas = storyIdeasByEpic.get(epic.key) ?? [];
+
+                return (
                   <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={epic.key}>
                     <p className="font-semibold text-slate-950">{epic.key} {epic.title}</p>
                     <p className="mt-2 text-sm text-slate-700"><span className="font-medium">Purpose:</span> {epic.purpose ?? "Not captured"}</p>
                     <p className="mt-1 text-sm text-slate-700"><span className="font-medium">Scope boundary:</span> {epic.scopeBoundary ?? "Not captured"}</p>
-                  </div>
-                )) : <p className="text-sm text-slate-600">No Epics were captured.</p>}
-              </div>
-            </div>
 
-            <div className="rounded-3xl border border-border/70 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Story Ideas</p>
-              <div className="mt-4 space-y-4">
-                {snapshot.storyIdeas.length > 0 ? snapshot.storyIdeas.map((storyIdea) => (
-                  <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={`${storyIdea.sourceType}:${storyIdea.key}`}>
-                    <p className="font-semibold text-slate-950">{storyIdea.key} {storyIdea.title}</p>
-                    <p className="mt-2 text-sm text-slate-700"><span className="font-medium">Linked Epic:</span> {storyIdea.linkedEpic ?? "Unassigned"}</p>
-                    <p className="mt-1 text-sm text-slate-700"><span className="font-medium">Value intent:</span> {storyIdea.valueIntent ?? "Not captured"}</p>
-                    <p className="mt-1 text-sm text-slate-700"><span className="font-medium">Expected behavior:</span> {storyIdea.expectedBehavior ?? "Not captured"}</p>
+                    <div className="mt-4 rounded-2xl border border-border/70 bg-white/70 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Story Ideas</p>
+                      {epicStoryIdeas.length > 0 ? (
+                        <div className="mt-3 space-y-3">
+                          {epicStoryIdeas.map((storyIdea) => (
+                            <div className="rounded-2xl border border-border/70 bg-background p-4" key={`${storyIdea.sourceType}:${storyIdea.key}`}>
+                              <p className="font-semibold text-slate-950">{storyIdea.key} {storyIdea.title}</p>
+                              <p className="mt-2 text-sm text-slate-700"><span className="font-medium">Value intent:</span> {storyIdea.valueIntent ?? "Not captured"}</p>
+                              <p className="mt-1 text-sm text-slate-700"><span className="font-medium">Expected behavior:</span> {storyIdea.expectedBehavior ?? "Not captured"}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm text-slate-600">No Story Ideas were linked to this Epic.</p>
+                      )}
+                    </div>
                   </div>
-                )) : <p className="text-sm text-slate-600">No Story Ideas were captured.</p>}
-              </div>
+                );
+              }) : <p className="text-sm text-slate-600">No Epics were captured.</p>}
+
+              {unassignedStoryIdeas.length > 0 ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">Unassigned Story Ideas</p>
+                  <div className="mt-3 space-y-3">
+                    {unassignedStoryIdeas.map((storyIdea) => (
+                      <div className="rounded-2xl border border-amber-200 bg-white/90 p-4" key={`${storyIdea.sourceType}:${storyIdea.key}`}>
+                        <p className="font-semibold text-slate-950">{storyIdea.key} {storyIdea.title}</p>
+                        <p className="mt-2 text-sm text-slate-700"><span className="font-medium">Value intent:</span> {storyIdea.valueIntent ?? "Not captured"}</p>
+                        <p className="mt-1 text-sm text-slate-700"><span className="font-medium">Expected behavior:</span> {storyIdea.expectedBehavior ?? "Not captured"}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
 

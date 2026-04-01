@@ -2,7 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
-import { deriveOutcomeRiskProfile, getOutcomeFramingBlockers } from "@aas-companion/domain";
+import { deriveOutcomeRiskProfile, getOutcomeAiAndRiskBlockers, getOutcomeFramingBlockers } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type {
   OutcomeInlineSaveActionState,
@@ -87,16 +87,20 @@ function CollapsibleFramingPanel(props: {
   title: string;
   description: string;
   defaultOpen?: boolean | undefined;
+  badge?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <details className="group rounded-2xl border border-border/70 bg-background shadow-sm" open={props.defaultOpen}>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
-        <div>
+        <div className="min-w-0">
           <h3 className="font-semibold text-foreground">{props.title}</h3>
           <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
         </div>
-        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+        <div className="flex shrink-0 items-center gap-3">
+          {props.badge}
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+        </div>
       </summary>
       <div className="border-t border-border/70 px-6 py-5">{props.children}</div>
     </details>
@@ -191,6 +195,39 @@ export function FramingOutcomeSection({
     blastRadiusLevel: outcome.blastRadiusLevel ?? null,
     decisionImpactLevel: outcome.decisionImpactLevel ?? null
   });
+  const aiRiskBlockers = getOutcomeAiAndRiskBlockers({
+    aiUsageRole:
+      outcome.aiUsageRole === "support" ||
+      outcome.aiUsageRole === "generation" ||
+      outcome.aiUsageRole === "validation" ||
+      outcome.aiUsageRole === "decision_support" ||
+      outcome.aiUsageRole === "automation"
+        ? outcome.aiUsageRole
+        : null,
+    aiExecutionPattern:
+      outcome.aiExecutionPattern === "assisted" ||
+      outcome.aiExecutionPattern === "step_by_step" ||
+      outcome.aiExecutionPattern === "orchestrated"
+        ? outcome.aiExecutionPattern
+        : null,
+    aiUsageIntent: outcome.aiUsageIntent ?? null,
+    businessImpactLevel: outcome.businessImpactLevel ?? null,
+    businessImpactRationale: outcome.businessImpactRationale ?? null,
+    dataSensitivityLevel: outcome.dataSensitivityLevel ?? null,
+    dataSensitivityRationale: outcome.dataSensitivityRationale ?? null,
+    blastRadiusLevel: outcome.blastRadiusLevel ?? null,
+    blastRadiusRationale: outcome.blastRadiusRationale ?? null,
+    decisionImpactLevel: outcome.decisionImpactLevel ?? null,
+    decisionImpactRationale: outcome.decisionImpactRationale ?? null,
+    aiLevelJustification: outcome.aiLevelJustification ?? null,
+    riskProfile: outcome.riskProfile,
+    aiAccelerationLevel: outcome.aiAccelerationLevel
+  }).map((reason) => reason.message);
+  const aiRiskStatusLabel = aiRiskBlockers.length > 0 ? "Needs action" : "Ready for review";
+  const aiRiskBadgeClasses =
+    aiRiskBlockers.length > 0
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-sky-200 bg-sky-50 text-sky-900";
   const seedsByEpicId = new Map<string, typeof outcome.directionSeeds>();
 
   for (const seed of outcome.directionSeeds) {
@@ -570,6 +607,11 @@ export function FramingOutcomeSection({
             <CollapsibleFramingPanel
               defaultOpen
               description="Define AI usage intent, classify risk and record the framing-level AI decision before Tollgate 1."
+              badge={
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${aiRiskBadgeClasses}`}>
+                  {aiRiskStatusLabel}
+                </span>
+              }
               title="AI and risk"
             >
               <OutcomeAiRiskPostureCard
@@ -605,8 +647,7 @@ export function FramingOutcomeSection({
               <div className="space-y-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">Epics and Story Ideas</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational.
                     </p>
                   </div>
@@ -730,6 +771,7 @@ export function FramingOutcomeSection({
             >
               <FramingValueSpineTree
                 description="Read the active branch as one framing brief with epics and story ideas."
+                embedded
                 emptyEpicMessage={
                   isArchived
                     ? "Archived Outcomes no longer surface active Epic work in this branch."

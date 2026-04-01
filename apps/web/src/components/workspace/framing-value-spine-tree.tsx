@@ -102,6 +102,7 @@ type FramingValueSpineTreeProps = {
   mode?: "delivery" | "framing";
   title?: string | undefined;
   description?: string | undefined;
+  embedded?: boolean | undefined;
 };
 
 type StoryIdeaFeedback = {
@@ -848,15 +849,19 @@ export function FramingValueSpineTree({
   emptyStoryMessage,
   mode = "delivery",
   title = "Framing-scoped Value Spine",
-  description
+  description,
+  embedded = false
 }: FramingValueSpineTreeProps) {
-  return (
-    <Card className="border-border/70 shadow-sm">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
-      </CardHeader>
-      <CardContent className="space-y-4">
+  const treeContent = (
+    <>
+      {!embedded ? (
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          {description ? <CardDescription>{description}</CardDescription> : null}
+        </CardHeader>
+      ) : null}
+      <CardContent className={embedded ? "space-y-4 p-0" : "space-y-4"}>
+        {embedded && description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
         <OutcomeRow mode={mode} outcome={outcome} />
 
         {epics.length === 0 ? (
@@ -872,6 +877,12 @@ export function FramingValueSpineTree({
           </div>
         )}
       </CardContent>
-    </Card>
+    </>
   );
+
+  if (embedded) {
+    return treeContent;
+  }
+
+  return <Card className="border-border/70 shadow-sm">{treeContent}</Card>;
 }
