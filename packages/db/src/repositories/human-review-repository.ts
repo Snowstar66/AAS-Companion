@@ -1,7 +1,7 @@
 import { prisma } from "../client";
 
 export async function getHumanReviewSnapshot(organizationId: string) {
-  const [organization, outcomes, stories, tollgates, signoffRecords, partyRoleEntries] = await prisma.$transaction([
+  const [organization, outcomes, tollgates, signoffRecords, partyRoleEntries] = await prisma.$transaction([
     prisma.organization.findUnique({
       where: {
         id: organizationId
@@ -27,45 +27,11 @@ export async function getHumanReviewSnapshot(organizationId: string) {
         status: true
       }
     }),
-    prisma.story.findMany({
-      where: {
-        organizationId,
-        lifecycleState: "active"
-      },
-      orderBy: {
-        createdAt: "asc"
-      },
-      select: {
-        id: true,
-        key: true,
-        title: true,
-        status: true,
-        aiAccelerationLevel: true,
-        outcomeId: true,
-        epicId: true,
-        outcome: {
-          select: {
-            key: true,
-            title: true
-          }
-        },
-        epic: {
-          select: {
-            key: true,
-            title: true
-          }
-        }
-      }
-    }),
     prisma.tollgate.findMany({
       where: {
         organizationId,
-        entityType: {
-          in: ["outcome", "story"]
-        },
-        tollgateType: {
-          in: ["tg1_baseline", "story_readiness"]
-        }
+        entityType: "outcome",
+        tollgateType: "tg1_baseline"
       },
       orderBy: {
         updatedAt: "desc"
@@ -84,9 +50,7 @@ export async function getHumanReviewSnapshot(organizationId: string) {
     prisma.signoffRecord.findMany({
       where: {
         organizationId,
-        entityType: {
-          in: ["outcome", "story"]
-        }
+        entityType: "outcome"
       },
       orderBy: {
         createdAt: "desc"
@@ -134,7 +98,6 @@ export async function getHumanReviewSnapshot(organizationId: string) {
   return {
     organization,
     outcomes,
-    stories,
     tollgates,
     signoffRecords,
     partyRoleEntries

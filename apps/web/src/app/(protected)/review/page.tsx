@@ -15,6 +15,8 @@ type ReviewPageProps = {
 
 type ReviewQueue = Awaited<ReturnType<typeof loadArtifactReviewQueue>>;
 type ReviewCandidate = ReviewQueue["items"][number];
+type SelectedReviewCandidate = NonNullable<ReviewQueue["selectedCandidate"]>;
+type ReviewFinding = NonNullable<SelectedReviewCandidate["complianceResult"]>["findings"][number];
 type ReviewBacklogState = "needs_action" | "needs_confirmation" | "pending" | "approved" | "discarded";
 type OperationalReviewDashboard = Awaited<ReturnType<typeof loadOperationalReviewDashboard>>;
 type OperationalReviewItem = OperationalReviewDashboard["items"][number];
@@ -384,10 +386,10 @@ function ReviewSummaryCard(props: {
 
 export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const query = searchParams ? await searchParams : {};
-  const [queue, operationalReview] = await Promise.all([loadArtifactReviewQueue(), loadOperationalReviewDashboard()]);
+  const candidateId = getParamValue(query.candidateId);
+  const [queue, operationalReview] = await Promise.all([loadArtifactReviewQueue(candidateId), loadOperationalReviewDashboard()]);
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
-  const candidateId = getParamValue(query.candidateId);
   const reviewStatusFilter = getParamValue(query.reviewStatusFilter) ?? "all";
   const findingFilter = getParamValue(query.findingFilter) ?? "all";
   const reviewHelp = getHelpPattern("review.workspace", null);
@@ -418,10 +420,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     return getBacklogState(candidate) === reviewStatusFilter;
   });
 
-  const selectedCandidate = candidateId ? queue.items.find((candidate) => candidate.id === candidateId) ?? null : null;
+  const selectedCandidate = queue.selectedCandidate;
   const selectedCandidateState = selectedCandidate ? getBacklogState(selectedCandidate) : null;
   const visibleFindings =
-    selectedCandidate?.complianceResult?.findings.filter((finding) => {
+    selectedCandidate?.complianceResult?.findings.filter((finding: ReviewFinding) => {
       if (findingFilter === "all") {
         return true;
       }
@@ -904,7 +906,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           No open findings match the current filter for this candidate.
                         </div>
                       ) : (
-                        visibleFindings.map((finding) => {
+                        visibleFindings.map((finding: ReviewFinding) => {
                           const disposition = selectedCandidate.issueDispositions[finding.code];
                           const dispositionLabel = getDispositionLabel(disposition?.action);
 

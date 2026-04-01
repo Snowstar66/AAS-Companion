@@ -3,12 +3,13 @@ import {
   artifactCandidateHumanDecisionSchema,
   artifactIssueDispositionMapSchema,
   artifactComplianceResultSchema,
-  artifactParseResultSchema,
   getArtifactCandidateIssueProgress
 } from "@aas-companion/domain/artifact-intake";
 import { unstable_rethrow } from "next/navigation";
-import { listArtifactCandidateQueueService } from "@aas-companion/api/intake";
+import { getArtifactCandidateService, listArtifactCandidateQueueService } from "@aas-companion/api/intake";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+
+type ParsedIssueDispositions = ReturnType<typeof artifactIssueDispositionMapSchema.parse>;
 
 function parseDraftRecord(value: unknown) {
   const parsed = artifactCandidateDraftRecordSchema.safeParse(value);
@@ -27,24 +28,65 @@ function parseComplianceResult(value: unknown) {
 
 function parseIssueDispositions(value: unknown) {
   const parsed = artifactIssueDispositionMapSchema.safeParse(value);
-  return parsed.success ? parsed.data : {};
+  return parsed.success ? parsed.data : artifactIssueDispositionMapSchema.parse({});
 }
 
-function parseParsedArtifacts(value: unknown) {
-  const parsed = artifactParseResultSchema.safeParse(value);
-  return parsed.success ? parsed.data : null;
+function buildIssueProgress(
+  complianceResult: ReturnType<typeof parseComplianceResult>,
+  issueDispositions: ParsedIssueDispositions
+) {
+  return complianceResult
+    ? getArtifactCandidateIssueProgress({
+        complianceResult,
+        issueDispositions
+      })
+    : {
+        total: 0,
+        resolved: 0,
+        unresolved: 0,
+        categories: {
+          missing: 0,
+          uncertain: 0,
+          humanOnly: 0,
+          blocked: 0,
+          unmapped: 0
+        }
+      };
 }
 
-export async function loadArtifactReviewQueue() {
+function parseReviewCandidate<T extends {
+  draftRecord: unknown;
+  humanDecisions: unknown;
+  complianceResult: unknown;
+  issueDispositions: unknown;
+}>(candidate: T) {
+  const complianceResult = parseComplianceResult(candidate.complianceResult);
+  const issueDispositions = parseIssueDispositions(candidate.issueDispositions);
+
+  return {
+    ...candidate,
+    draftRecord: parseDraftRecord(candidate.draftRecord),
+    humanDecisions: parseHumanDecisions(candidate.humanDecisions),
+    complianceResult,
+    issueDispositions,
+    issueProgress: buildIssueProgress(complianceResult, issueDispositions)
+  };
+}
+
+export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
   try {
     const organization = await requireOrganizationContext();
-    const result = await listArtifactCandidateQueueService(organization.organizationId);
+    const [result, selectedCandidateResult] = await Promise.all([
+      listArtifactCandidateQueueService(organization.organizationId),
+      selectedCandidateId ? getArtifactCandidateService(organization.organizationId, selectedCandidateId) : Promise.resolve(null)
+    ]);
 
     if (!result.ok) {
       return {
         state: "unavailable" as const,
         organizationName: organization.organizationName,
         items: [],
+        selectedCandidate: null,
         summary: {
           total: 0,
           pending: 0,
@@ -56,44 +98,17 @@ export async function loadArtifactReviewQueue() {
       };
     }
 
-    const items = result.data.map((candidate) => {
-      const complianceResult = parseComplianceResult(candidate.complianceResult);
-      const issueDispositions = parseIssueDispositions(candidate.issueDispositions);
-
-      return {
-        ...candidate,
-        draftRecord: parseDraftRecord(candidate.draftRecord),
-        humanDecisions: parseHumanDecisions(candidate.humanDecisions),
-        complianceResult,
-        issueDispositions,
-        issueProgress: complianceResult
-          ? getArtifactCandidateIssueProgress({
-              complianceResult,
-              issueDispositions
-            })
-          : {
-              total: 0,
-              resolved: 0,
-              unresolved: 0,
-              categories: {
-                missing: 0,
-                uncertain: 0,
-                humanOnly: 0,
-                blocked: 0,
-                unmapped: 0
-              }
-            },
-        file: {
-          ...candidate.file,
-          parsedArtifacts: parseParsedArtifacts(candidate.file.parsedArtifacts)
-        }
-      };
-    });
+    const items = result.data.map((candidate) => parseReviewCandidate(candidate));
+    const selectedCandidate =
+      selectedCandidateResult && selectedCandidateResult.ok && selectedCandidateResult.data
+        ? parseReviewCandidate(selectedCandidateResult.data)
+        : null;
 
     return {
       state: "ready" as const,
       organizationName: organization.organizationName,
       items,
+      selectedCandidate,
       summary: {
         total: items.length,
         pending: items.filter((item) => item.reviewStatus === "pending").length,
@@ -113,6 +128,7 @@ export async function loadArtifactReviewQueue() {
       state: "unavailable" as const,
       organizationName: "Unknown project",
       items: [],
+      selectedCandidate: null,
       summary: {
         total: 0,
         pending: 0,
