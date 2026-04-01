@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Copy, Download } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { FramingBriefExportPayload } from "@/lib/framing/framing-brief-export";
+import { buildFramingBriefExportPackage } from "@/lib/framing/framing-brief-export-package";
 
 type FramingBriefExportPanelProps = {
   payload: FramingBriefExportPayload;
@@ -38,6 +39,19 @@ export function FramingBriefExportPanel({
     URL.revokeObjectURL(href);
   }
 
+  function handlePackageDownload() {
+    const pkg = buildFramingBriefExportPackage({
+      payload,
+      markdown
+    });
+    const href = URL.createObjectURL(pkg.blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = pkg.filename;
+    link.click();
+    URL.revokeObjectURL(href);
+  }
+
   const content = (
     <>
       <CardHeader>
@@ -52,7 +66,8 @@ export function FramingBriefExportPanel({
           <p className="font-medium">How to use this export</p>
           <p className="mt-2">
             Use Markdown when you want to hand the Framing to another AI tool directly. Use JSON when another workflow should keep
-            the structure, UX sketch references and approval context intact.
+            the structure, UX sketch references and approval context intact. Use the package download when you want the Story Idea
+            images included as real files and referenced in a clearer handoff bundle.
           </p>
           {disabled ? <p className="mt-2">Restore the Outcome first if you want to update the framing before exporting again.</p> : null}
         </div>
@@ -65,6 +80,15 @@ export function FramingBriefExportPanel({
           <Button className="gap-2" disabled={disabled} onClick={() => handleCopy(json, "json")} type="button" variant="secondary">
             {copied === "json" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             Copy Framing JSON
+          </Button>
+          <Button
+            className="gap-2"
+            disabled={disabled}
+            onClick={handlePackageDownload}
+            type="button"
+          >
+            <Download className="h-4 w-4" />
+            Download Package (.zip)
           </Button>
           <Button
             className="gap-2"
@@ -92,7 +116,7 @@ export function FramingBriefExportPanel({
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>Markdown preview</CardTitle>
-              <CardDescription>Best for copy/paste into another AI tool.</CardDescription>
+              <CardDescription>Best for direct copy/paste into another AI tool.</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-background p-4 text-sm text-foreground">
@@ -104,7 +128,7 @@ export function FramingBriefExportPanel({
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>JSON preview</CardTitle>
-              <CardDescription>Structured payload for workflows that should keep Story Ideas, sketches and approvals together.</CardDescription>
+              <CardDescription>Structured payload. Use the zip package if you want the actual image files included too.</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="max-h-[520px] overflow-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">

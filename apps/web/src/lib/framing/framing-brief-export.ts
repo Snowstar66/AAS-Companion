@@ -46,7 +46,13 @@ type FramingBriefOutcome = {
     expectedBehavior?: string | null;
     sourceStoryId?: string | null;
     uxSketchName?: string | null;
+    uxSketchContentType?: string | null;
     uxSketchDataUrl?: string | null;
+    uxSketches?: Array<{
+      name: string;
+      contentType: string;
+      dataUrl: string;
+    }> | null;
   }>;
 };
 
@@ -65,7 +71,7 @@ type FramingApprovalSnapshot = {
 
 export type FramingBriefExportPayload = {
   kind: "framing_brief";
-  version: 2;
+  version: 3;
   handshake: {
     outcome_key: string;
     outcome_title: string;
@@ -114,7 +120,9 @@ export type FramingBriefExportPayload = {
         expected_behavior: string | null;
         ux_sketches: Array<{
           name: string;
+          content_type: string | null;
           data_url: string | null;
+          file_path: string | null;
         }>;
       }>;
     }>;
@@ -125,7 +133,9 @@ export type FramingBriefExportPayload = {
       expected_behavior: string | null;
       ux_sketches: Array<{
         name: string;
+        content_type: string | null;
         data_url: string | null;
+        file_path: string | null;
       }>;
     }>;
   };
@@ -209,6 +219,28 @@ function getAiLevelSummary(value: "level_1" | "level_2" | "level_3") {
   return "Level 3 means orchestrated agentic delivery: AI executes multiple chained steps through workflows or agents with stronger governance.";
 }
 
+function sanitizePathSegment(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
+function buildSketchFilePath(input: {
+  epicKey?: string | null;
+  storyIdeaKey: string;
+  storyIdeaTitle: string;
+  sketchName: string;
+  index: number;
+}) {
+  const epicSegment = sanitizePathSegment(input.epicKey ?? "unassigned");
+  const storySegment = sanitizePathSegment(`${input.storyIdeaKey}-${input.storyIdeaTitle}`) || sanitizePathSegment(input.storyIdeaKey);
+  const sketchSegment = sanitizePathSegment(input.sketchName) || `sketch-${input.index + 1}`;
+
+  return `ux-sketches/${epicSegment}/${storySegment}/${String(input.index + 1).padStart(2, "0")}-${sketchSegment}`;
+}
+
 function parseApprovalSnapshot(value: unknown): FramingApprovalSnapshot {
   if (!value || typeof value !== "object") {
     return {
@@ -253,17 +285,45 @@ function parseApprovalSnapshot(value: unknown): FramingApprovalSnapshot {
   };
 }
 
-function getSketches(seed: FramingBriefOutcome["directionSeeds"][number]) {
-  if (hasText(seed.uxSketchDataUrl)) {
-    return [
-      {
-        name: seed.uxSketchName ?? "Concept sketch attached",
-        data_url: seed.uxSketchDataUrl ?? null
-      }
-    ];
+function getSketches(
+  seed: FramingBriefOutcome["directionSeeds"][number],
+  context: {
+    epicKey?: string | null;
+    storyIdeaKey: string;
+    storyIdeaTitle: string;
   }
+) {
+  const sketches =
+    seed.uxSketches && seed.uxSketches.length > 0
+      ? seed.uxSketches.map((sketch) => ({
+          name: sketch.name,
+          content_type: sketch.contentType,
+          data_url: sketch.dataUrl,
+          file_path: null as string | null
+        }))
+      : hasText(seed.uxSketchDataUrl)
+        ? [
+            {
+              name: seed.uxSketchName ?? "Concept sketch attached",
+              content_type: seed.uxSketchContentType ?? null,
+              data_url: seed.uxSketchDataUrl ?? null,
+              file_path: null as string | null
+            }
+          ]
+        : [];
 
-  return [];
+  return sketches.map((sketch, index) => ({
+    ...sketch,
+    file_path: sketch.data_url
+      ? buildSketchFilePath({
+          epicKey: context.epicKey ?? null,
+          storyIdeaKey: context.storyIdeaKey,
+          storyIdeaTitle: context.storyIdeaTitle,
+          sketchName: sketch.name,
+          index
+        })
+      : null
+  }));
 }
 
 export function buildFramingBriefExport(input: {
@@ -294,7 +354,11 @@ export function buildFramingBriefExport(input: {
         title: seed.title,
         value_intent: seed.shortDescription?.trim() || null,
         expected_behavior: seed.expectedBehavior?.trim() || null,
-        ux_sketches: getSketches(seed)
+        ux_sketches: getSketches(seed, {
+          epicKey: epic.key,
+          storyIdeaKey: seed.key,
+          storyIdeaTitle: seed.title
+        })
       }))
   }));
   const unassignedStoryIdeas = input.outcome.directionSeeds
@@ -304,12 +368,16 @@ export function buildFramingBriefExport(input: {
       title: seed.title,
       value_intent: seed.shortDescription?.trim() || null,
       expected_behavior: seed.expectedBehavior?.trim() || null,
-      ux_sketches: getSketches(seed)
+      ux_sketches: getSketches(seed, {
+        epicKey: null,
+        storyIdeaKey: seed.key,
+        storyIdeaTitle: seed.title
+      })
     }));
 
   const payload: FramingBriefExportPayload = {
     kind: "framing_brief",
-    version: 2,
+    version: 3,
     handshake: {
       outcome_key: input.outcome.key,
       outcome_title: input.outcome.title,
@@ -438,7 +506,9 @@ export function buildFramingBriefExport(input: {
                 `  Expected behavior: ${storyIdea.expected_behavior ?? "Not captured yet"}`,
                 `  UX sketches: ${
                   storyIdea.ux_sketches.length > 0
-                    ? `${storyIdea.ux_sketches.map((sketch) => sketch.name).join(", ")} (included in JSON payload)`
+                    ? storyIdea.ux_sketches
+                        .map((sketch) => `${sketch.name}${sketch.file_path ? ` -> ${sketch.file_path}` : ""}`)
+                        .join(", ")
                     : "None attached"
                 }`
               ])
@@ -455,7 +525,9 @@ export function buildFramingBriefExport(input: {
             `  Expected behavior: ${storyIdea.expected_behavior ?? "Not captured yet"}`,
             `  UX sketches: ${
               storyIdea.ux_sketches.length > 0
-                ? `${storyIdea.ux_sketches.map((sketch) => sketch.name).join(", ")} (included in JSON payload)`
+                ? storyIdea.ux_sketches
+                    .map((sketch) => `${sketch.name}${sketch.file_path ? ` -> ${sketch.file_path}` : ""}`)
+                    .join(", ")
                 : "None attached"
             }`
           ]),
