@@ -8,7 +8,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url))
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@aas-companion/domain/navigation": fileURLToPath(new URL("../../packages/domain/src/navigation.ts", import.meta.url))
     }
   },
   test: {
