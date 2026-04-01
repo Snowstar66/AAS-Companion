@@ -1,12 +1,25 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { getLoadingProjectName } from "@/lib/loading-project";
 
-export default function Loading() {
+export default async function Loading() {
+  const projectName = (await getLoadingProjectName()) ?? undefined;
+
   return (
     <AppShell
+      activeProjectName={projectName}
       topbarProps={{
-        eyebrow: "AAS Companion",
-        title: "Home",
-        badge: "Project selector"
+        ...(projectName
+          ? {
+              projectName,
+              sectionLabel: "Loading workspace",
+              title: "Loading workspace",
+              badge: "Project section"
+            }
+          : {
+              eyebrow: "AAS Companion",
+              title: "Home",
+              badge: "Project selector"
+            })
       }}
     >
       <section className="space-y-6">

@@ -1,12 +1,17 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { getLoadingProjectName } from "@/lib/loading-project";
 
-export default function FramingLoading() {
+export default async function FramingLoading() {
+  const projectName = (await getLoadingProjectName()) ?? undefined;
+
   return (
     <AppShell
+      activeProjectName={projectName}
       topbarProps={{
-        eyebrow: "AAS Companion",
-        title: "Framing Cockpit",
-        badge: "Story M1-005"
+        projectName,
+        sectionLabel: "Framing",
+        title: "Framing",
+        badge: "Loading"
       }}
     >
       <div className="space-y-4">
