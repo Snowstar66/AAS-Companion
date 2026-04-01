@@ -6,7 +6,7 @@ export default async function Loading() {
 
   return (
     <AppShell
-      activeProjectName={projectName}
+      {...(projectName ? { activeProjectName: projectName } : {})}
       topbarProps={{
         ...(projectName
           ? {

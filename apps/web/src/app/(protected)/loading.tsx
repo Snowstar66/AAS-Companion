@@ -6,9 +6,9 @@ export default async function ProtectedLoading() {
 
   return (
     <AppShell
-      activeProjectName={projectName}
+      {...(projectName ? { activeProjectName: projectName } : {})}
       topbarProps={{
-        projectName,
+        ...(projectName ? { projectName } : {}),
         sectionLabel: "Loading workspace",
         title: "Loading workspace",
         badge: "Project section"
