@@ -6,9 +6,9 @@ export default async function FramingLoading() {
 
   return (
     <AppShell
-      activeProjectName={projectName}
+      {...(projectName ? { activeProjectName: projectName } : {})}
       topbarProps={{
-        projectName,
+        ...(projectName ? { projectName } : {}),
         sectionLabel: "Framing",
         title: "Framing",
         badge: "Loading"
