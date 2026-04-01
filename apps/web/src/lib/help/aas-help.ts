@@ -179,3 +179,11 @@ export function formatAiLevelLabel(value: string | null | undefined) {
 
   return value.replaceAll("_", " ").replace("level", "Level");
 }
+
+export function getAiLevelSummary(value: string | null | undefined) {
+  if (value === "level_1" || value === "level_2" || value === "level_3") {
+    return aiLevelNotes[value];
+  }
+
+  return null;
+}

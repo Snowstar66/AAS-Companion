@@ -11,6 +11,7 @@ import type {
   reviewOutcomeFramingWithAiAction
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
+import { FramingGuidanceShell } from "@/components/framing/framing-guidance-shell";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
@@ -427,16 +428,17 @@ export function FramingOutcomeSection({
         </>
       ) : null}
 
-      <div className="flex justify-start">
-        <OutcomeAiReviewDialog
-          action={reviewFramingAction}
-          currentAiLevel={outcome.aiAccelerationLevel}
-          initialState={initialReviewFramingState}
-          outcomeId={outcome.id}
-        />
-      </div>
+      <FramingGuidanceShell>
+        <div className="flex justify-start">
+          <OutcomeAiReviewDialog
+            action={reviewFramingAction}
+            currentAiLevel={outcome.aiAccelerationLevel}
+            initialState={initialReviewFramingState}
+            outcomeId={outcome.id}
+          />
+        </div>
 
-      <form action={saveAction} className="space-y-6">
+        <form action={saveAction} className="space-y-6">
             <input name="outcomeId" type="hidden" value={outcome.id} />
             <input name="returnPath" type="hidden" value={returnPath} />
             <Card className="border-border/70 shadow-sm">
@@ -880,43 +882,44 @@ export function FramingOutcomeSection({
                 <Link href="/framing">Back to Framing Cockpit</Link>
               </Button>
             ) : null}
-      </form>
+        </form>
 
-      <Suspense fallback={<OutcomeTollgateSectionFallback />}>
-        <DeferredOutcomeTollgateSection
-          defaultBlockers={blockers}
-          isArchived={isArchived}
-          outcomeId={outcome.id}
-          recordTollgateDecisionAction={recordTollgateDecisionAction}
-          submitTollgateAction={submitTollgateAction}
-        />
-      </Suspense>
+        <Suspense fallback={<OutcomeTollgateSectionFallback />}>
+          <DeferredOutcomeTollgateSection
+            defaultBlockers={blockers}
+            isArchived={isArchived}
+            outcomeId={outcome.id}
+            recordTollgateDecisionAction={recordTollgateDecisionAction}
+            submitTollgateAction={submitTollgateAction}
+          />
+        </Suspense>
 
-      {removal?.decision ? (
+        {removal?.decision ? (
+          <CollapsibleFramingPanel
+            defaultOpen={false}
+            description="Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context."
+            title="Remove or archive in this project"
+          >
+            <GovernedLifecycleCard
+              archiveAction={archiveAction}
+              decision={removal.decision}
+              entityId={outcome.id}
+              entityLabel="Outcome"
+              hardDeleteAction={hardDeleteAction}
+              hideHeader
+              restoreAction={restoreAction}
+            />
+          </CollapsibleFramingPanel>
+        ) : null}
+
         <CollapsibleFramingPanel
           defaultOpen={false}
-          description="Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context."
-          title="Remove or archive in this project"
+          description="Expand when you want to export the customer handshake into another AI tool or workflow."
+          title="Export framing brief"
         >
-          <GovernedLifecycleCard
-            archiveAction={archiveAction}
-            decision={removal.decision}
-            entityId={outcome.id}
-            entityLabel="Outcome"
-            hardDeleteAction={hardDeleteAction}
-            hideHeader
-            restoreAction={restoreAction}
-          />
+          <FramingBriefExportPanel embedded disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
         </CollapsibleFramingPanel>
-      ) : null}
-
-      <CollapsibleFramingPanel
-        defaultOpen={false}
-        description="Expand when you want to export the customer handshake into another AI tool or workflow."
-        title="Export framing brief"
-      >
-        <FramingBriefExportPanel embedded disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
-      </CollapsibleFramingPanel>
+      </FramingGuidanceShell>
     </section>
   );
 }

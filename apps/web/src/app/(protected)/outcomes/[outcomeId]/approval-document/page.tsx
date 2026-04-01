@@ -5,6 +5,7 @@ import { AasBrandMark } from "@/components/shared/aas-brand-mark";
 import { ApprovalDocumentPrintButton } from "@/components/workspace/approval-document-print-button";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
+import { formatAiLevelLabel, getAiLevelSummary } from "@/lib/help/aas-help";
 
 type ApprovalSnapshot = {
   kind: "framing_approval_document";
@@ -224,20 +225,37 @@ export default async function OutcomeApprovalDocumentPage({
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">AI and risk</p>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-800">
-                <p><span className="font-semibold">AI Level:</span> {formatLabel(snapshot.outcome.aiLevel).toUpperCase()}</p>
-                <p><span className="font-semibold">Risk profile:</span> {formatLabel(snapshot.outcome.riskProfile)}</p>
+                <p><span className="font-semibold">AI Level:</span> {formatAiLevelLabel(snapshot.outcome.aiLevel)}</p>
+                <p className="mt-2 text-slate-700">{getAiLevelSummary(snapshot.outcome.aiLevel) ?? "Not captured"}</p>
+                <p className="mt-3"><span className="font-semibold">Risk profile:</span> {formatLabel(snapshot.outcome.riskProfile)}</p>
                 <p><span className="font-semibold">Data sensitivity:</span> {snapshot.outcome.dataSensitivity ?? "Not captured"}</p>
                 <p><span className="font-semibold">Delivery type:</span> {snapshot.outcome.deliveryType ?? "Not captured"}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-800">
-                <p><span className="font-semibold">Business impact rationale:</span> {snapshot.outcome.riskRationale.businessImpact ?? "Not captured"}</p>
-                <p><span className="font-semibold">Data sensitivity rationale:</span> {snapshot.outcome.riskRationale.dataSensitivity ?? "Not captured"}</p>
+                <p className="font-semibold text-slate-950">Risk summary</p>
+                <p className="mt-2 text-slate-700">
+                  This risk posture was classified in Framing and approved as part of Tollgate 1 for the recorded Framing version.
+                </p>
               </div>
             </div>
-            <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-800">
-              <li><span className="font-semibold">Blast radius:</span> {snapshot.outcome.riskRationale.blastRadius ?? "Not captured"}</li>
-              <li><span className="font-semibold">Decision impact:</span> {snapshot.outcome.riskRationale.decisionImpact ?? "Not captured"}</li>
-            </ul>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
+                <p className="font-semibold text-slate-950">Business impact</p>
+                <p className="mt-2">{snapshot.outcome.riskRationale.businessImpact ?? "Not captured"}</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
+                <p className="font-semibold text-slate-950">Data sensitivity rationale</p>
+                <p className="mt-2">{snapshot.outcome.riskRationale.dataSensitivity ?? "Not captured"}</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
+                <p className="font-semibold text-slate-950">Blast radius</p>
+                <p className="mt-2">{snapshot.outcome.riskRationale.blastRadius ?? "Not captured"}</p>
+              </div>
+              <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
+                <p className="font-semibold text-slate-950">Decision impact</p>
+                <p className="mt-2">{snapshot.outcome.riskRationale.decisionImpact ?? "Not captured"}</p>
+              </div>
+            </div>
           </section>
 
           <section className="rounded-3xl border border-border/70 p-5">

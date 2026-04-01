@@ -63,5 +63,5 @@ export function ContextHelp({ pattern, className, summaryLabel = "Open help", de
 }
 
 export function InlineFieldGuidance({ guidance }: { guidance: string }) {
-  return <p className="text-sm leading-6 text-muted-foreground">{guidance}</p>;
+  return <p className="framing-inline-guidance text-sm leading-6 text-muted-foreground">{guidance}</p>;
 }

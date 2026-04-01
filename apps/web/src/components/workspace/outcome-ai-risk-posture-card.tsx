@@ -183,7 +183,7 @@ function StepCard(props: {
   return (
     <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{props.title}</p>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">{props.description}</p>
+      <p className="framing-guidance-copy mt-2 text-sm leading-6 text-muted-foreground">{props.description}</p>
       <div className="mt-4">{props.children}</div>
     </div>
   );
@@ -224,7 +224,7 @@ function RiskDimensionFields(props: {
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">Rationale</span>
-          <span className="block text-xs leading-5 text-muted-foreground">{props.helper}</span>
+          <span className="framing-guidance-copy block text-xs leading-5 text-muted-foreground">{props.helper}</span>
           <textarea
             className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
             defaultValue={props.defaultRationale ?? ""}
@@ -402,7 +402,7 @@ export function OutcomeAiRiskPostureCard({
                 {statusTone.label}
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-700">
+            <p className="framing-guidance-copy mt-4 text-sm leading-6 text-slate-700">
               Keep this at framing level. Capture how AI will be used, what risk exists and what control model is needed.
               Do not name tools, models or technical solution design here.
             </p>
@@ -465,8 +465,8 @@ export function OutcomeAiRiskPostureCard({
           </div>
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 text-sm leading-6 text-sky-950">
             <p className="font-semibold">{formatExecutionPattern(aiExecutionPattern)} {"->"} {formatAiLevel(aiLevel)}</p>
-            <p className="mt-2">{getExecutionPatternGuidance(aiExecutionPattern)}</p>
-            <p className="mt-3">{getAiLevelLifecycleExample(aiLevel)}</p>
+            <p className="framing-guidance-copy mt-2">{getExecutionPatternGuidance(aiExecutionPattern)}</p>
+            <p className="framing-guidance-copy mt-3">{getAiLevelLifecycleExample(aiLevel)}</p>
           </div>
         </StepCard>
 
@@ -544,7 +544,7 @@ export function OutcomeAiRiskPostureCard({
               </p>
             </div>
           </div>
-          <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
+          <div className="framing-guidance-copy rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
             {getAiLevelLifecycleExample(aiLevel)}
           </div>
 
