@@ -25,7 +25,6 @@ import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOrganizationUsersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
-import { isStoryIdeaReadyForFraming, isStoryIdeaStarted } from "@/lib/framing/story-idea-status";
 import { getInlineGuidance } from "@/lib/help/aas-help";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
@@ -84,6 +83,14 @@ function formatRoleLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function formatPersonLabel(person: { fullName: string | null; email: string }) {
+  if (person.fullName && person.email) {
+    return `${person.fullName} (${person.email})`;
+  }
+
+  return person.fullName ?? person.email;
+}
+
 function formatDateTime(value: Date | string | null | undefined) {
   if (!value) {
     return null;
@@ -94,18 +101,18 @@ function formatDateTime(value: Date | string | null | undefined) {
 
 function getDeliveryTypeHelper(value: "AD" | "AT" | "AM" | null | undefined) {
   if (value === "AD") {
-    return "Application Development frames a new application, a net-new service, or a significant functional expansion in an existing product. Focus on outcome, boundaries and why this capability should exist.";
+    return "Use this when Framing a new application, service, or a clear functional expansion. Keep the brief centered on the new value to create and the scope boundaries to hold.";
   }
 
   if (value === "AT") {
-    return "Application Transformation frames a larger change to an existing landscape, flow or architecture direction. Focus on what must change, what must stay safe, and why the operating model needs to move.";
+    return "Use this when Framing a larger change in an existing landscape or operating model. Focus on what must change, what must stay stable, and where design needs to respect transition risk.";
   }
 
   if (value === "AM") {
-    return "Application Maintenance frames change in an existing application with continuity in mind. Focus on existing context, operational constraints, and what must be preserved while improving or extending the app.";
+    return "Use this when Framing change in an existing application where continuity matters. Focus on current context, operational constraints, and what design must preserve while improving or extending the app.";
   }
 
-  return "Choose whether this Framing is primarily about Application Development, Application Transformation or Application Maintenance.";
+  return "Choose the delivery posture that best describes this case so design starts from the right context: new value creation, transformation of an existing landscape, or maintenance and extension of an existing app.";
 }
 
 function CollapsibleFramingPanel(props: {
@@ -278,32 +285,6 @@ export function FramingOutcomeSection({
       : !isLikelyDeliveryStory(story, mappedSourceStoryIds);
   });
   const visibleStoryIdeaCount = outcome.directionSeeds.length + legacyStoryIdeas.length;
-  const startedStoryIdeaCount =
-    outcome.directionSeeds.filter((seed) =>
-      isStoryIdeaStarted({
-        shortDescription: seed.shortDescription,
-        expectedBehavior: seed.expectedBehavior
-      })
-    ).length +
-    legacyStoryIdeas.filter((story) =>
-      isStoryIdeaStarted({
-        valueIntent: story.valueIntent,
-        expectedBehavior: story.expectedBehavior
-      })
-    ).length;
-  const readyStoryIdeaCount =
-    outcome.directionSeeds.filter((seed) =>
-      isStoryIdeaReadyForFraming({
-        shortDescription: seed.shortDescription,
-        expectedBehavior: seed.expectedBehavior
-      })
-    ).length +
-    legacyStoryIdeas.filter((story) =>
-      isStoryIdeaReadyForFraming({
-        valueIntent: story.valueIntent,
-        expectedBehavior: story.expectedBehavior
-      })
-    ).length;
   const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
   const deliveryTypeValue =
     outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null;
@@ -348,16 +329,12 @@ export function FramingOutcomeSection({
     aiRiskBlockers.length > 0 ? `${aiRiskBlockers.length} action item${aiRiskBlockers.length === 1 ? "" : "s"}` : "Ready to review",
     aiRiskBlockers.length > 0 ? "Expand to complete the missing classifications." : "Expand to review the rationale and governance fit."
   ];
-  const epicsAndStoriesTeaser = [
+  const structureTeaser = [
     `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"}`,
     `${visibleStoryIdeaCount} Story Idea${visibleStoryIdeaCount === 1 ? "" : "s"}`,
-    `${readyStoryIdeaCount} ready`,
-    outcome.epics.length === 0 ? "Expand to create the first Epic." : "Expand to create or assign Story Ideas."
-  ];
-  const valueSpineTeaser = [
-    `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"} in view`,
-    `${visibleStoryIdeaCount} Story Idea${visibleStoryIdeaCount === 1 ? "" : "s"} linked`,
-    "Expand to inspect the hierarchy and check coverage."
+    outcome.epics.length === 0
+      ? "Expand to create the first Epic and Story Ideas."
+      : "Expand to create new items and inspect the framing hierarchy."
   ];
 
   return (
@@ -531,6 +508,9 @@ export function FramingOutcomeSection({
                     name="timeframe"
                     type="text"
                   />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Describe the business window for this case, for example a pilot season, quarter, budget window or launch horizon. This is for business timing, not sprint planning.
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe")} />
                 </label>
                 <label className="space-y-2">
@@ -551,6 +531,9 @@ export function FramingOutcomeSection({
                       organizationId={outcome.organizationId}
                     />
                   </Suspense>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Choose the named person on the customer side who owns the business value, baseline and Tollgate 1 decision. The list shows people available in this project context.
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -581,8 +564,7 @@ export function FramingOutcomeSection({
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground">Solution Context &amp; Constraints</p>
                     <p className="text-sm text-muted-foreground">
-                      Keep this at framing level. Capture context, risk and constraints without defining architecture,
-                      technologies, APIs or implementation details.
+                      Capture only the context and constraints that Design needs to inherit. Use this to carry forward business context, existing landscape realities, integration expectations and non-negotiable boundaries without slipping into technical solution detail.
                     </p>
                   </div>
                 </div>
@@ -593,8 +575,11 @@ export function FramingOutcomeSection({
                     defaultValue={outcome.solutionContext ?? ""}
                     disabled={isArchived}
                     name="solutionContext"
-                    placeholder="Describe the system context, usage context and high-level integration expectations."
+                    placeholder="Describe the business setting, usage context, existing system landscape and high-level integration expectations that design must take into account."
                   />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Pass forward only the surrounding context that should shape Design. Include greenfield vs existing landscape, who will use it, and major external dependencies. If the context increases sensitivity or delivery complexity, it should inform both risk classification and AI acceleration decisions.
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -604,8 +589,11 @@ export function FramingOutcomeSection({
                     defaultValue={outcome.solutionConstraints ?? ""}
                     disabled={isArchived}
                     name="solutionConstraints"
-                    placeholder="List the conditions the solution must satisfy."
+                    placeholder="List the business, operational, compliance or integration conditions that Design must satisfy."
                   />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Capture what Design must respect, not how to implement it. Good examples are operational limits, compliance obligations, must-keep integrations, rollout constraints and continuity requirements. If a constraint raises risk or demands more control, it should influence the AI/risk assessment.
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints")} />
                 </label>
                 <label className="space-y-2">
@@ -628,13 +616,12 @@ export function FramingOutcomeSection({
                     name="deliveryType"
                   >
                     <option value="">Select delivery type</option>
-                    <option value="AD">AD</option>
-                    <option value="AT">AT</option>
-                    <option value="AM">AM</option>
+                    <option value="AD">Application Development (AD)</option>
+                    <option value="AT">Application Transformation (AT)</option>
+                    <option value="AM">Application Maintenance (AM)</option>
                   </select>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    AD = Application Development, AT = Application Transformation, AM = Application Maintenance.
-                    {` ${getDeliveryTypeHelper(deliveryTypeValue)}`}
+                    {getDeliveryTypeHelper(deliveryTypeValue)}
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type")} />
                 </label>
@@ -709,63 +696,44 @@ export function FramingOutcomeSection({
 
             <CollapsibleFramingPanel
               description="Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational."
-              teaser={<p className="leading-6 text-muted-foreground">{epicsAndStoriesTeaser.join(" · ")}</p>}
-              title="Epics and Story Ideas"
+              teaser={<p className="leading-6 text-muted-foreground">{structureTeaser.join(" · ")}</p>}
+              title="Epics, Story Ideas and framing hierarchy"
             >
               <div className="space-y-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational.
-                    </p>
-                  </div>
-                  <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px]">
-                    {!isArchived ? (
-                      <PendingFormButton
-                        className="w-full gap-2 self-start whitespace-nowrap"
-                        formAction={createEpicAction}
-                        icon={<ArrowRight className="h-4 w-4" />}
-                        label="Create Epic"
-                        pendingLabel="Creating Epic..."
-                      />
-                    ) : null}
-                  </div>
-                </div>
-                <div className="space-y-3 text-sm text-muted-foreground">
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current Epics</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{outcome.epics.length}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        {outcome.epics.length === 0
-                          ? "No Epics exist yet for this case."
-                          : "Open and inspect them in the Value Spine below."}
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">Quick create Epic</p>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        Create the next scope boundary directly from Framing before you break it down into Story Ideas.
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story Ideas</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{visibleStoryIdeaCount}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Story ideas stay nested under their Epic and only capture framing intent, not delivery workflow.
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Started</p>
-                      <p className="mt-2 text-2xl font-semibold text-foreground">{startedStoryIdeaCount}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Story ideas with at least value intent or expected behavior captured.
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Ready for review</p>
-                      <p className="mt-2 text-2xl font-semibold text-sky-950">{readyStoryIdeaCount}</p>
-                      <p className="mt-2 text-sm leading-6 text-sky-900">
-                        Story ideas that already have both value intent and expected behavior.
-                      </p>
+                    <div className="mt-3 space-y-3">
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Epic title</span>
+                        <input
+                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                          defaultValue="New epic"
+                          disabled={isArchived}
+                          name="quickEpicTitle"
+                          type="text"
+                        />
+                      </label>
+                      {!isArchived ? (
+                        <PendingFormButton
+                          className="gap-2 self-start px-5"
+                          formAction={createEpicAction}
+                          icon={<ArrowRight className="h-4 w-4" />}
+                          label="Create Epic"
+                          pendingLabel="Creating Epic..."
+                        />
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Restore the Framing brief before creating new Epics.</p>
+                      )}
                     </div>
                   </div>
                   {outcome.epics.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5">
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 xl:col-span-2">
                       <p className="font-medium text-foreground">No Epics exist for this case yet.</p>
                       <p className="mt-2 leading-6">
                         {isArchived
@@ -829,104 +797,97 @@ export function FramingOutcomeSection({
                     ) : null}
                   </div>
                 </div>
+                <FramingValueSpineTree
+                  description="Read the active branch as one framing brief with Epics and Story Ideas in the hierarchy Design will inherit."
+                  embedded
+                  emptyEpicMessage={
+                    isArchived
+                      ? "Archived Outcomes no longer surface active Epic work in this branch."
+                      : "Create the first native Epic here. Empty branches stay empty until you add child work."
+                  }
+                  emptyStoryMessage={
+                    isArchived
+                      ? "Archived Outcomes no longer surface active Story Ideas."
+                      : "Create Story Ideas from the relevant Epic so the hierarchy stays scoped to this Framing."
+                  }
+                  mode="framing"
+                  epics={outcome.epics.map((epic) => ({
+                    id: epic.id,
+                    key: epic.key,
+                    title: epic.title,
+                    href: `/epics/${epic.id}`,
+                    isCurrent: false,
+                    scopeBoundary: epic.scopeBoundary ?? null,
+                    purpose: epic.purpose ?? null,
+                    originType: epic.originType,
+                    lifecycleState: epic.lifecycleState,
+                    importedReadinessState: epic.importedReadinessState ?? null,
+                    lineageHref:
+                      epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
+                        ? `/review?candidateId=${epic.lineageSourceId}`
+                        : null,
+                    directionSeeds: outcome.directionSeeds
+                      .filter((seed) => seed.epicId === epic.id)
+                      .map((seed) => ({
+                        id: seed.id,
+                        key: seed.key,
+                        title: seed.title,
+                        href: `/story-ideas/${seed.id}`,
+                        isCurrent: false,
+                        shortDescription: seed.shortDescription ?? null,
+                        expectedBehavior: seed.expectedBehavior ?? null,
+                        uxSketchName: seed.uxSketchName ?? null,
+                        uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
+                        sourceStoryId: seed.sourceStoryId ?? null,
+                        originType: seed.originType,
+                        lifecycleState: seed.lifecycleState,
+                        importedReadinessState: seed.importedReadinessState ?? null,
+                        lineageHref:
+                          seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
+                            ? `/review?candidateId=${seed.lineageSourceId}`
+                            : null
+                      })),
+                    stories: outcome.stories
+                      .filter((story) => story.epicId === epic.id)
+                      .map((story) => ({
+                        id: story.id,
+                        key: story.key,
+                        title: story.title,
+                        href: story.sourceDirectionSeedId ? `/stories/${story.id}` : `/story-ideas/${story.id}`,
+                        isCurrent: false,
+                        sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
+                        valueIntent: story.valueIntent ?? null,
+                        expectedBehavior: story.expectedBehavior ?? null,
+                        testDefinition: story.testDefinition ?? null,
+                        acceptanceCriteria: story.acceptanceCriteria,
+                        definitionOfDone: story.definitionOfDone,
+                        status: story.status,
+                        originType: story.originType,
+                        lifecycleState: story.lifecycleState,
+                        importedReadinessState: story.importedReadinessState ?? null,
+                        lineageHref:
+                          story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                            ? `/review?candidateId=${story.lineageSourceId}`
+                            : null
+                      }))
+                  }))}
+                  outcome={{
+                    id: outcome.id,
+                    key: outcome.key,
+                    title: outcome.title,
+                    href: framingHref,
+                    isCurrent: true,
+                    statement: outcome.outcomeStatement ?? null,
+                    originType: outcome.originType,
+                    lifecycleState: outcome.lifecycleState,
+                    importedReadinessState: outcome.importedReadinessState ?? null,
+                    lineageHref:
+                      outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId
+                        ? `/review?candidateId=${outcome.lineageSourceId}`
+                        : null
+                  }}
+                />
               </div>
-            </CollapsibleFramingPanel>
-
-            <CollapsibleFramingPanel
-              description="Scan the framing brief, epics and story ideas together in one compact branch."
-              teaser={<p className="leading-6 text-muted-foreground">{valueSpineTeaser.join(" · ")}</p>}
-              title="Framing value spine"
-            >
-              <FramingValueSpineTree
-                description="Read the active branch as one framing brief with epics and story ideas."
-                embedded
-                emptyEpicMessage={
-                  isArchived
-                    ? "Archived Outcomes no longer surface active Epic work in this branch."
-                    : "Create the first native Epic here. Empty branches stay empty until you add child work."
-                }
-                emptyStoryMessage={
-                  isArchived
-                    ? "Archived Outcomes no longer surface active story ideas."
-                    : "Create story ideas from the relevant Epic so the hierarchy stays scoped to this Framing."
-                }
-                mode="framing"
-                epics={outcome.epics.map((epic) => ({
-                  id: epic.id,
-                  key: epic.key,
-                  title: epic.title,
-                  href: `/epics/${epic.id}`,
-                  isCurrent: false,
-                  scopeBoundary: epic.scopeBoundary ?? null,
-                  purpose: epic.purpose ?? null,
-                  originType: epic.originType,
-                  lifecycleState: epic.lifecycleState,
-                  importedReadinessState: epic.importedReadinessState ?? null,
-                  lineageHref:
-                    epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                      ? `/review?candidateId=${epic.lineageSourceId}`
-                      : null,
-                  directionSeeds: outcome.directionSeeds
-                    .filter((seed) => seed.epicId === epic.id)
-                    .map((seed) => ({
-                      id: seed.id,
-                      key: seed.key,
-                      title: seed.title,
-                      href: `/story-ideas/${seed.id}`,
-                      isCurrent: false,
-                      shortDescription: seed.shortDescription ?? null,
-                      expectedBehavior: seed.expectedBehavior ?? null,
-                      uxSketchName: seed.uxSketchName ?? null,
-                      uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
-                      sourceStoryId: seed.sourceStoryId ?? null,
-                      originType: seed.originType,
-                      lifecycleState: seed.lifecycleState,
-                      importedReadinessState: seed.importedReadinessState ?? null,
-                      lineageHref:
-                        seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                          ? `/review?candidateId=${seed.lineageSourceId}`
-                      : null
-                    })),
-                  stories: outcome.stories
-                    .filter((story) => story.epicId === epic.id)
-                    .map((story) => ({
-                      id: story.id,
-                      key: story.key,
-                      title: story.title,
-                      href: story.sourceDirectionSeedId ? `/stories/${story.id}` : `/story-ideas/${story.id}`,
-                      isCurrent: false,
-                      sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
-                      valueIntent: story.valueIntent ?? null,
-                      expectedBehavior: story.expectedBehavior ?? null,
-                      testDefinition: story.testDefinition ?? null,
-                      acceptanceCriteria: story.acceptanceCriteria,
-                      definitionOfDone: story.definitionOfDone,
-                      status: story.status,
-                      originType: story.originType,
-                      lifecycleState: story.lifecycleState,
-                      importedReadinessState: story.importedReadinessState ?? null,
-                      lineageHref:
-                        story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                          ? `/review?candidateId=${story.lineageSourceId}`
-                          : null
-                    }))
-                }))}
-                outcome={{
-                  id: outcome.id,
-                  key: outcome.key,
-                  title: outcome.title,
-                  href: framingHref,
-                  isCurrent: true,
-                  statement: outcome.outcomeStatement ?? null,
-                  originType: outcome.originType,
-                  lifecycleState: outcome.lifecycleState,
-                  importedReadinessState: outcome.importedReadinessState ?? null,
-                  lineageHref:
-                    outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId
-                      ? `/review?candidateId=${outcome.lineageSourceId}`
-                      : null
-                }}
-              />
             </CollapsibleFramingPanel>
 
             {!isArchived ? (
@@ -1363,7 +1324,7 @@ async function DeferredValueOwnerField(props: {
       <option value="">Unassigned</option>
       {ownersResult.data.map((owner) => (
         <option key={owner.userId} value={owner.userId}>
-          {owner.fullName ?? owner.email}
+          {formatPersonLabel(owner)}
         </option>
       ))}
     </select>

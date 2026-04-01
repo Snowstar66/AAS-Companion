@@ -159,6 +159,7 @@ export async function createNativeEpicFromOutcomeService(input: {
   organizationId: string;
   outcomeId: string;
   actorId?: string | null;
+  title?: string | null;
 }) {
   const outcome = await getOutcomeById(input.organizationId, input.outcomeId);
 
@@ -177,7 +178,7 @@ export async function createNativeEpicFromOutcomeService(input: {
       organizationId: input.organizationId,
       outcomeId: outcome.id,
       key,
-      title: "New epic",
+      title: input.title?.trim() || "New epic",
       purpose: "Describe the value area this Epic advances.",
       scopeBoundary: "Describe what this Epic includes, excludes, or leaves for later.",
       riskNote: null,

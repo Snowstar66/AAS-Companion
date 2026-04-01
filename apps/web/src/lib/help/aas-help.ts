@@ -76,17 +76,17 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
   },
   "framing.solution_context": {
     title: "Solution context",
-    summary: "Capture only the surrounding business, usage and system context that shapes scope and risk.",
+    summary: "Capture the surrounding business, usage and system context that Design should inherit and that may affect scope, risk or AI posture.",
     purpose: "Make the framing conditions explicit without locking the solution design too early.",
     belongs:
-      "Business context, usage context, existing landscape context, high-level integration expectations and compliance context.",
+      "Business context, usage context, existing landscape context, high-level integration expectations, operational expectations and compliance context.",
     avoid: "Architecture structure, technology choices, API contracts or implementation detail."
   },
   "framing.solution_constraints": {
     title: "Constraints",
-    summary: "List the conditions the solution must satisfy, not how the team should technically build it.",
+    summary: "List the conditions Design must satisfy, not how the team should technically build the solution.",
     purpose: "Hold onto the important boundaries while keeping design options open.",
-    belongs: "Operational constraints, business conditions, compliance limits and delivery-level constraints.",
+    belongs: "Operational constraints, business conditions, compliance limits, must-keep integrations and delivery-level constraints.",
     avoid: "Prescriptive implementation steps, frameworks, components or detailed technical patterns."
   },
   "framing.data_sensitivity": {
@@ -98,23 +98,23 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
   },
   "framing.delivery_type": {
     title: "Delivery type",
-    summary: "Classify the framing as AD, AT or AM so the case carries the right delivery posture from the start.",
+    summary: "Choose the delivery posture that best fits the case so Design starts from the right context.",
     purpose: "Make the expected delivery mode explicit without slipping into solution design.",
-    belongs: "The delivery classification only: AD, AT or AM.",
+    belongs: "Whether this is primarily Application Development, Application Transformation or Application Maintenance.",
     avoid: "Detailed delivery planning or execution workflow."
   },
   "framing.value_owner": {
     title: "Value owner",
-    summary: "Name the person who should own the business value and accept whether the case is worth doing.",
+    summary: "Choose the named person who owns the business value, baseline and Tollgate 1 decision for this case.",
     purpose: "Place business accountability on a real person.",
-    belongs: "Customer-side person who can validate value, baseline and priority.",
+    belongs: "Customer-side person who can validate value, baseline, priority and whether the case is worth doing.",
     avoid: "Generic team names with no accountable human."
   },
   "framing.timeframe": {
     title: "Timeframe",
-    summary: "Capture the expected business horizon for the outcome so the case stays decision-oriented.",
+    summary: "Capture the business horizon for the outcome so the case stays decision-oriented.",
     purpose: "Set a realistic business window for the change.",
-    belongs: "Quarter, deadline window or business timing expectation.",
+    belongs: "Pilot window, season, quarter, decision point or business timing expectation.",
     avoid: "Low-level sprint planning or delivery task sequencing."
   },
   "framing.ai_level": {

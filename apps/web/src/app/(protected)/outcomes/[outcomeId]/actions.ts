@@ -461,10 +461,12 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
 export async function createEpicFromOutcomeAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
+  const title = String(formData.get("quickEpicTitle") ?? "") || null;
   const result = await createNativeEpicFromOutcomeService({
     organizationId: session.organization.organizationId,
     outcomeId,
-    actorId: session.userId
+    actorId: session.userId,
+    title
   });
 
   revalidateFramingCockpitCache(session.organization.organizationId);
