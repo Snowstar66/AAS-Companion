@@ -1,11 +1,13 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ReviewPage from "@/app/(protected)/review/page";
+import { loadArtifactReviewQueue } from "@/lib/intake/review-queue";
 
 vi.mock("@/lib/intake/review-queue", () => ({
   loadArtifactReviewQueue: vi.fn(async () => ({
     state: "ready",
     organizationName: "AAS Demo Organization",
+    selectedCandidate: null,
     summary: {
       total: 1,
       pending: 0,
@@ -176,6 +178,155 @@ describe("Review queue page", () => {
   });
 
   it("opens a focused correction workspace for the selected imported candidate", async () => {
+    vi.mocked(loadArtifactReviewQueue).mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      summary: {
+        total: 1,
+        pending: 0,
+        followUpNeeded: 0,
+        rejected: 0,
+        promoted: 0
+      },
+      message: "Imported candidates are ready for human review.",
+      items: [
+        {
+          id: "candidate-story-1",
+          type: "story",
+          title: "Imported reviewable story",
+          summary: "As a builder I want imported candidates to stay traceable.",
+          reviewStatus: "edited",
+          importedReadinessState: "imported_human_review_needed",
+          sourceSectionMarker: "## Story",
+          draftRecord: {
+            key: "IMP-STORY-1",
+            title: "Imported reviewable story",
+            storyType: "outcome_delivery",
+            valueIntent: "Keep imported work traceable",
+            acceptanceCriteria: ["Trace lineage in review"],
+            aiUsageScope: ["Drafting"],
+            testDefinition: "Review queue renders source traceability",
+            definitionOfDone: ["Human review confirmed"],
+            outcomeCandidateId: "candidate-outcome-1",
+            epicCandidateId: "candidate-epic-1"
+          },
+          humanDecisions: {
+            aiAccelerationLevel: "level_2",
+            riskAcceptanceStatus: "needs_review",
+            valueOwnerId: null,
+            baselineValidity: null,
+            riskProfile: null
+          },
+          complianceResult: {
+            findings: [
+              {
+                code: "risk_acceptance_human_only",
+                category: "human_only",
+                message: "Risk acceptance status must be confirmed by a human reviewer.",
+                fieldLabel: "Risk acceptance"
+              }
+            ],
+            summary: {
+              missing: 0,
+              uncertain: 0,
+              humanOnly: 1,
+              blocked: 0
+            },
+            promotionBlocked: true,
+            humanReviewRequired: true
+          },
+          issueDispositions: {},
+          issueProgress: {
+            total: 1,
+            resolved: 0,
+            unresolved: 1,
+            categories: {
+              missing: 0,
+              uncertain: 0,
+              humanOnly: 1,
+              blocked: 0,
+              unmapped: 0
+            }
+          },
+          file: {
+            id: "file-1",
+            fileName: "story-pack.md"
+          }
+        }
+      ],
+      selectedCandidate: {
+        id: "candidate-story-1",
+        type: "story",
+        title: "Imported reviewable story",
+        summary: "As a builder I want imported candidates to stay traceable.",
+        reviewStatus: "edited",
+        importedReadinessState: "imported_human_review_needed",
+        sourceSectionMarker: "## Story",
+        draftRecord: {
+          key: "IMP-STORY-1",
+          title: "Imported reviewable story",
+          storyType: "outcome_delivery",
+          valueIntent: "Keep imported work traceable",
+          acceptanceCriteria: ["Trace lineage in review"],
+          aiUsageScope: ["Drafting"],
+          testDefinition: "Review queue renders source traceability",
+          definitionOfDone: ["Human review confirmed"],
+          outcomeCandidateId: "candidate-outcome-1",
+          epicCandidateId: "candidate-epic-1"
+        },
+        humanDecisions: {
+          aiAccelerationLevel: "level_2",
+          riskAcceptanceStatus: "needs_review",
+          valueOwnerId: null,
+          baselineValidity: null,
+          riskProfile: null
+        },
+        complianceResult: {
+          findings: [
+            {
+              code: "risk_acceptance_human_only",
+              category: "human_only",
+              message: "Risk acceptance status must be confirmed by a human reviewer.",
+              fieldLabel: "Risk acceptance"
+            }
+          ],
+          summary: {
+            missing: 0,
+            uncertain: 0,
+            humanOnly: 1,
+            blocked: 0
+          },
+          promotionBlocked: true,
+          humanReviewRequired: true
+        },
+        issueDispositions: {},
+        issueProgress: {
+          total: 1,
+          resolved: 0,
+          unresolved: 1,
+          categories: {
+            missing: 0,
+            uncertain: 0,
+            humanOnly: 1,
+            blocked: 0,
+            unmapped: 0
+          }
+        },
+        intakeSession: {
+          id: "session-1",
+          label: "Artifact intake 2026-03-23 21:00"
+        },
+        file: {
+          id: "file-1",
+          fileName: "story-pack.md",
+          content: "# Story\n\nImported reviewable story"
+        },
+        promotedEntityType: null,
+        promotedEntityId: null,
+        reviewComment: null
+      }
+    } as Awaited<ReturnType<typeof loadArtifactReviewQueue>>);
+
     render(await ReviewPage({ searchParams: Promise.resolve({ candidateId: "candidate-story-1" }) }));
 
     expect(screen.getAllByRole("heading", { name: "Human Review dashboard", level: 1 }).length).toBeGreaterThan(0);
