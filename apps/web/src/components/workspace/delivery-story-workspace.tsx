@@ -6,19 +6,22 @@ import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { StoryIdeaAiValidatedTextarea } from "@/components/workspace/story-idea-ai-validated-textarea";
-import { TollgateDecisionCard } from "@/components/workspace/tollgate-decision-card";
 import { getStoryToneClasses, getStoryUxModel } from "@/lib/workspace/story-ux";
 import {
   archiveStoryAction,
   hardDeleteStoryAction,
-  recordStoryTollgateDecisionAction,
   restoreStoryAction,
   saveStoryWorkspaceInlineAction,
   saveStoryWorkspaceAction,
-  submitStoryReadinessAction,
   validateStoryExpectedBehaviorAiAction
 } from "@/app/(protected)/stories/[storyId]/actions";
-import { formatAiLevel, getReadinessFieldStatus, SecondaryPanel, type StoryWorkspaceData } from "./story-workspace-shared";
+import {
+  formatAiLevel,
+  getReadinessFieldStatus,
+  SecondaryPanel,
+  type StoryWorkspaceData,
+  WorkspaceStatusSummary
+} from "./story-workspace-shared";
 
 type DeliveryStoryWorkspaceProps = {
   blockers: string[];
@@ -27,7 +30,7 @@ type DeliveryStoryWorkspaceProps = {
 };
 
 export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryStoryWorkspaceProps) {
-  const { activities, importedBuildBlockers, originStoryIdea, removal, story, tollgate, tollgateReview, valueSpineValidation } = data;
+  const { activities, importedBuildBlockers, originStoryIdea, removal, story, valueSpineValidation } = data;
   const valueSpineBlockers = valueSpineValidation.reasons.map((reason) => reason.message);
   const storyUx = getStoryUxModel({
     id: story.id,
@@ -37,10 +40,10 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
     testDefinition: story.testDefinition ?? null,
     acceptanceCriteria: story.acceptanceCriteria,
     definitionOfDone: story.definitionOfDone,
-    tollgateStatus: tollgateReview?.status ?? tollgate?.status ?? null,
+    tollgateStatus: null,
     blockers,
-    pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
-    blockedActionCount: tollgateReview?.blockedActions.length ?? 0
+    pendingActionCount: 0,
+    blockedActionCount: 0
   });
   const readinessFields = getReadinessFieldStatus(story);
   const missingReadinessFields = readinessFields.filter((field) => !field.complete);
@@ -50,7 +53,14 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
     story.epic.purpose?.trim() ||
     story.epic.scopeBoundary?.trim() ||
     `This delivery story should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`;
-  const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
+  const statusTone = storyUx.statusLabel === "Approved" ? "approved" : storyUx.statusLabel === "Ready for review" ? "ready_for_review" : "needs_action";
+  const completeItems = [
+    valueSpineValidation.state === "ready" ? "Value Spine validation is complete" : null,
+    story.acceptanceCriteria.length > 0 ? "Acceptance criteria are present" : null,
+    story.testDefinition?.trim() ? "Test definition is present" : null,
+    story.definitionOfDone.length > 0 ? "Definition of Done is present" : null,
+    story.status === "in_progress" ? "Build is already in progress" : null
+  ].filter((value): value is string => Boolean(value));
 
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
@@ -101,33 +111,16 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               ) : null}
             </div>
           </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-3">
-            <div className={`rounded-2xl border px-4 py-4 text-sm ${getStoryToneClasses(storyUx.tone)}`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]">Readiness</p>
-              <p className="mt-2 font-semibold">{storyUx.readinessLabel}</p>
-              <p className="mt-2 leading-6">{storyUx.readinessDetail}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Value Spine validation</p>
-              <p className="mt-2 font-semibold text-foreground">
-                {valueSpineValidation.state === "ready" ? "Valid against Value Spine" : "Value Spine still blocked"}
-              </p>
-              <p className="mt-2 leading-6 text-muted-foreground">
-                {valueSpineBlockers.length === 0
-                  ? "Outcome link, Epic link, Acceptance Criteria, and Test Definition are all present."
-                  : valueSpineBlockers[0]}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {valueSpineBlockers.length > 1
-                  ? `${valueSpineBlockers.length - 1} more Value Spine blocker${valueSpineBlockers.length - 1 === 1 ? "" : "s"} remain.`
-                  : "This check stays informational until the Story moves into active build."}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Next step</p>
-              <p className="mt-2 font-semibold text-foreground">{primaryNextStepLabel}</p>
-              <p className="mt-2 leading-6 text-muted-foreground">{primaryNextStepDetail}</p>
-            </div>
+          <CardContent className="grid gap-4">
+            <WorkspaceStatusSummary
+              blockerEmptyText="No Delivery Story blockers are visible right now."
+              blockers={blockers}
+              completeItems={completeItems}
+              nextActionDetail={primaryNextStepDetail}
+              nextActionLabel={primaryNextStepLabel}
+              statusLabel={storyUx.statusLabel}
+              statusTone={statusTone}
+            />
           </CardContent>
         </Card>
 
@@ -198,11 +191,27 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 </p>
                 <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
               </div>
+              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-blockers">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocking items</p>
+                {blockers.length > 0 ? (
+                  <ul className="mt-2 space-y-2 text-foreground">
+                    {blockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 leading-6 text-muted-foreground">No blockers remain. This Delivery Story is ready for review.</p>
+                )}
+                {valueSpineBlockers.length > 0 ? (
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    Value Spine: {valueSpineBlockers.join(" ")}
+                  </p>
+                ) : null}
+              </div>
             </CardContent>
           </Card>
 
           <SecondaryPanel
-            defaultOpen
             description={
               missingReadinessFields.length === 0
                 ? "All required design inputs are present. Review and approval can continue without more field edits."
@@ -394,9 +403,9 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                       status: story.status,
                       originType: story.originType,
                       lifecycleState: story.lifecycleState,
-                      tollgateStatus,
-                      pendingActionCount: tollgateReview?.pendingActions.length ?? 0,
-                      blockedActionCount: tollgateReview?.blockedActions.length ?? 0,
+                      tollgateStatus: null,
+                      pendingActionCount: 0,
+                      blockedActionCount: 0,
                       importedReadinessState: story.importedReadinessState ?? null,
                       lineageHref:
                         story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
@@ -427,85 +436,32 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
       </div>
 
       <div className="space-y-6">
-        <SecondaryPanel
-          defaultOpen
-          description="Lightweight human checks and sign-off trail before build starts."
-          title="Build review"
-        >
-          <div id="story-signoff-history">
-            <div id="story-signoff">
-              <TollgateDecisionCard
-                aiAccelerationLevel={story.aiAccelerationLevel}
-                approvalActions={tollgateReview?.approvalActions ?? []}
-                availablePeople={tollgateReview?.availablePeople ?? []}
-                blockers={blockers}
-                blockedActions={tollgateReview?.blockedActions ?? []}
-                comments={tollgateReview?.comments ?? tollgate?.comments ?? null}
-                description="Lightweight human checks and sign-off trail before build starts."
-                entityId={story.id}
-                entityType="story"
-                formAction={recordStoryTollgateDecisionAction}
-                hiddenFields={[
-                  { name: "storyId", value: story.id },
-                  { name: "epicId", value: story.epicId },
-                  { name: "outcomeId", value: story.outcomeId }
-                ]}
-                pendingActions={tollgateReview?.pendingActions ?? []}
-                reviewActions={tollgateReview?.reviewActions ?? []}
-                signoffRecords={
-                  tollgateReview?.signoffRecords.map((record) => ({
-                    id: record.id,
-                    decisionKind: record.decisionKind,
-                    requiredRoleType: record.requiredRoleType,
-                    actualPersonName: record.actualPersonName,
-                    actualRoleTitle: record.actualRoleTitle,
-                    organizationSide: record.organizationSide,
-                    decisionStatus: record.decisionStatus,
-                    note: record.note,
-                    evidenceReference: record.evidenceReference,
-                    createdAt: record.createdAt
-                  })) ?? []
-                }
-                status={tollgateReview?.status ?? (blockers.length === 0 ? "ready" : "blocked")}
-                title="Build review"
-                tollgateType="story_readiness"
-              />
+        <Card className="border-border/70 shadow-sm" id="story-design-readiness">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Design readiness
+              <InlineTermHelp term="Readiness" />
+            </CardTitle>
+            <CardDescription>
+              This tool keeps Delivery Stories as a design and traceability view. Per-story human approval lanes are not used here.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+              <p className="font-medium text-foreground">{storyUx.readinessLabel}</p>
+              <p className="mt-2 leading-6 text-muted-foreground">{storyUx.readinessDetail}</p>
             </div>
-          </div>
-        </SecondaryPanel>
-
-        {!isArchived ? (
-          <Card className="border-border/70 shadow-sm" id="story-readiness">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Start build review
-                <InlineTermHelp term="Readiness" />
-              </CardTitle>
-              <CardDescription>Freeze the current blockers and open the lightweight human review for this Delivery Story.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form action={submitStoryReadinessAction} className="space-y-4">
-                <input name="storyId" type="hidden" value={story.id} />
-                <input name="epicId" type="hidden" value={story.epicId} />
-                <input name="outcomeId" type="hidden" value={story.outcomeId} />
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Readiness note</span>
-                  <textarea
-                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                    defaultValue={tollgate?.comments ?? ""}
-                    name="comments"
-                  />
-                </label>
-                <PendingFormButton
-                  className="gap-2"
-                  icon={<ShieldCheck className="h-4 w-4" />}
-                  label="Start build review"
-                  pendingLabel="Starting review..."
-                />
-              </form>
-            </CardContent>
-          </Card>
-        ) : null}
+            {blockers.length > 0 ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+                Clear the remaining blockers before relying on this Delivery Story as a complete design input for BMAD or downstream build tooling.
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+                This Delivery Story is complete enough to export into external build work or AI-assisted implementation.
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="border-border/70 shadow-sm" id="story-governance">
           <CardHeader>

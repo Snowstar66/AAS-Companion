@@ -197,7 +197,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 className="border-emerald-200 bg-emerald-50/85 text-emerald-950"
                 count={readyStoryIdeas.length}
                 description="Story Ideas that already have both value intent and expected behavior."
-                label="Ready for framing"
+                label="Ready for review"
               />
               <StatCard
                 actionHref={firstAttentionStoryIdea?.href}

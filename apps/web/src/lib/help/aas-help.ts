@@ -4,6 +4,10 @@ export type WorkspaceHelpKey =
   | "framing.outcome"
   | "framing.baseline_definition"
   | "framing.baseline_source"
+  | "framing.solution_context"
+  | "framing.solution_constraints"
+  | "framing.data_sensitivity"
+  | "framing.delivery_type"
   | "framing.value_owner"
   | "framing.timeframe"
   | "framing.ai_level"
@@ -25,9 +29,9 @@ export type HelpPattern = {
 };
 
 const aiLevelNotes: Record<AiLevelKey, string> = {
-  level_1: "Level 1 fits narrow automation with low-risk support and straightforward human checking.",
-  level_2: "Level 2 fits AI-assisted delivery where humans still own judgment, sign-off and customer accountability.",
-  level_3: "Level 3 needs stronger governance, explicit oversight and a clearer risk conversation before moving forward."
+  level_1: "Level 1 fits assisted delivery where AI supports a human interactively and humans make all decisions.",
+  level_2: "Level 2 fits structured acceleration where AI produces one artifact step at a time with human review between steps.",
+  level_3: "Level 3 fits orchestrated agentic delivery where multi-step flows are chained and must stay fully traceable."
 };
 
 const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
@@ -70,26 +74,55 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
     belongs: "Named report, dashboard, stakeholder source or observed operational evidence.",
     avoid: "Unsupported guesses with no source trail."
   },
+  "framing.solution_context": {
+    title: "Solution context",
+    summary: "Capture the surrounding business, usage and system context that Design should inherit and that may affect scope, risk or AI posture.",
+    purpose: "Make the framing conditions explicit without locking the solution design too early.",
+    belongs:
+      "Business context, usage context, existing landscape context, high-level integration expectations, operational expectations and compliance context.",
+    avoid: "Architecture structure, technology choices, API contracts or implementation detail."
+  },
+  "framing.solution_constraints": {
+    title: "Constraints",
+    summary: "List the conditions Design must satisfy, not how the team should technically build the solution.",
+    purpose: "Hold onto the important boundaries while keeping design options open.",
+    belongs: "Operational constraints, business conditions, compliance limits, must-keep integrations and delivery-level constraints.",
+    avoid: "Prescriptive implementation steps, frameworks, components or detailed technical patterns."
+  },
+  "framing.data_sensitivity": {
+    title: "Data sensitivity",
+    summary: "Capture only the relevant data categories and their sensitivity level at a business-facing level.",
+    purpose: "Surface risk and governance needs early in framing.",
+    belongs: "Personal data, commercial data, regulated data, internal data and their sensitivity.",
+    avoid: "Schema design, storage details, field-by-field implementation or security architecture."
+  },
+  "framing.delivery_type": {
+    title: "Delivery type",
+    summary: "Choose the delivery posture that best fits the case so Design starts from the right context.",
+    purpose: "Make the expected delivery mode explicit without slipping into solution design.",
+    belongs: "Whether this is primarily Application Development, Application Transformation or Application Maintenance.",
+    avoid: "Detailed delivery planning or execution workflow."
+  },
   "framing.value_owner": {
     title: "Value owner",
-    summary: "Name the person who should own the business value and accept whether the case is worth doing.",
+    summary: "Choose the named person who owns the business value, baseline and Tollgate 1 decision for this case.",
     purpose: "Place business accountability on a real person.",
-    belongs: "Customer-side person who can validate value, baseline and priority.",
+    belongs: "Customer-side person who can validate value, baseline, priority and whether the case is worth doing.",
     avoid: "Generic team names with no accountable human."
   },
   "framing.timeframe": {
     title: "Timeframe",
-    summary: "Capture the expected business horizon for the outcome so the case stays decision-oriented.",
+    summary: "Capture the business horizon for the outcome so the case stays decision-oriented.",
     purpose: "Set a realistic business window for the change.",
-    belongs: "Quarter, deadline window or business timing expectation.",
+    belongs: "Pilot window, season, quarter, decision point or business timing expectation.",
     avoid: "Low-level sprint planning or delivery task sequencing."
   },
   "framing.ai_level": {
     title: "AI acceleration level",
-    summary: "Choose the intended AI posture for the case, not the final implementation detail.",
-    purpose: "Set the expected level of AI assistance and governance early in the project.",
-    belongs: "A practical choice of AI level based on autonomy, risk and expected human oversight.",
-    avoid: "Tool shopping, model selection or hidden risk assumptions.",
+    summary: "Determine the execution pattern first, let that map to the AI Acceleration Level, then describe the expected AI use across later phases.",
+    purpose: "Classify AI use according to the AAS operating model before Tollgate 1.",
+    belongs: "Execution pattern, derived AI level, expected BMAD lifecycle support, explicit risk and retained human decision authority.",
+    avoid: "Tool-name classification, competing AI role taxonomies or treating risk as the thing that directly decides AI level.",
     aiLevelNotes
   },
   "framing.design_direction": {
@@ -145,4 +178,12 @@ export function formatAiLevelLabel(value: string | null | undefined) {
   }
 
   return value.replaceAll("_", " ").replace("level", "Level");
+}
+
+export function getAiLevelSummary(value: string | null | undefined) {
+  if (value === "level_1" || value === "level_2" || value === "level_3") {
+    return aiLevelNotes[value];
+  }
+
+  return null;
 }

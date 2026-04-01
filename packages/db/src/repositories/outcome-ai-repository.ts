@@ -58,6 +58,24 @@ type OutcomeFramingAiReviewInput = {
     outcomeStatement?: string | null;
     baselineDefinition?: string | null;
     baselineSource?: string | null;
+    solutionContext?: string | null;
+    solutionConstraints?: string | null;
+    dataSensitivity?: string | null;
+    deliveryType?: "AD" | "AT" | "AM" | null;
+    aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+    aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
+    aiUsageIntent?: string | null;
+    businessImpactLevel?: "low" | "medium" | "high" | null;
+    businessImpactRationale?: string | null;
+    dataSensitivityLevel?: "low" | "medium" | "high" | null;
+    dataSensitivityRationale?: string | null;
+    blastRadiusLevel?: "low" | "medium" | "high" | null;
+    blastRadiusRationale?: string | null;
+    decisionImpactLevel?: "low" | "medium" | "high" | null;
+    decisionImpactRationale?: string | null;
+    aiLevelJustification?: string | null;
+    riskAcceptedAt?: Date | null;
+    riskAcceptedBy?: string | null;
     timeframe?: string | null;
     aiAccelerationLevel: "level_1" | "level_2" | "level_3";
     riskProfile: "low" | "medium" | "high";
@@ -601,6 +619,8 @@ Use a critical but constructive approach.
 You will receive:
 - Problem Statement
 - Outcome (including baseline and owner context)
+- Solution Context & Constraints
+- AI execution pattern, lifecycle usage intent and structured risk rationale
 - Epics
 - Story Ideas (with Value Intent and Expected Behavior)
 - Selected AI Acceleration Level
@@ -811,6 +831,24 @@ export async function reviewOutcomeFramingWithAi(input: {
     outcomeStatement?: string | null;
     baselineDefinition?: string | null;
     baselineSource?: string | null;
+    solutionContext?: string | null;
+    solutionConstraints?: string | null;
+    dataSensitivity?: string | null;
+    deliveryType?: "AD" | "AT" | "AM" | null;
+    aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+    aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
+    aiUsageIntent?: string | null;
+    businessImpactLevel?: "low" | "medium" | "high" | null;
+    businessImpactRationale?: string | null;
+    dataSensitivityLevel?: "low" | "medium" | "high" | null;
+    dataSensitivityRationale?: string | null;
+    blastRadiusLevel?: "low" | "medium" | "high" | null;
+    blastRadiusRationale?: string | null;
+    decisionImpactLevel?: "low" | "medium" | "high" | null;
+    decisionImpactRationale?: string | null;
+    aiLevelJustification?: string | null;
+    riskAcceptedAt?: Date | null;
+    riskAcceptedBy?: string | null;
     timeframe?: string | null;
     aiAccelerationLevel: "level_1" | "level_2" | "level_3";
     riskProfile: "low" | "medium" | "high";

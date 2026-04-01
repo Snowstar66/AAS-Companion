@@ -67,19 +67,18 @@ vi.mock("@aas-companion/api", async () => {
               roleTitle: "Value Owner"
             }
           ],
-          reviewActions: [
+          reviewActions: [],
+          approvalActions: [
             {
-              decisionKind: "review",
+              decisionKind: "approval",
               roleType: "architect",
               organizationSide: "supplier",
-              label: "Architecture review",
+              label: "Architecture approval",
               assignedPeople: [],
               completedRecords: [],
               pending: true,
               blockedReasons: ["No active architect is currently assigned on the supplier side."]
-            }
-          ],
-          approvalActions: [
+            },
             {
               decisionKind: "approval",
               roleType: "value_owner",
@@ -100,18 +99,33 @@ vi.mock("@aas-companion/api", async () => {
           ],
           pendingActions: [
             {
-              label: "Architecture review",
+              label: "Architecture approval",
               roleType: "architect",
               organizationSide: "supplier"
             }
           ],
           blockedActions: [
             {
-              label: "Architecture review",
+              label: "Architecture approval",
               blockedReasons: ["No active architect is currently assigned on the supplier side."]
             }
           ],
-          signoffRecords: []
+          signoffRecords: [],
+          requiredReviewRoles: [],
+          requiredApprovalRoles: [
+            {
+              decisionKind: "approval",
+              roleType: "architect",
+              organizationSide: "supplier",
+              label: "Architecture approval"
+            },
+            {
+              decisionKind: "approval",
+              roleType: "value_owner",
+              organizationSide: "customer",
+              label: "Business value approval"
+            }
+          ]
         },
         activities: [
           {
@@ -249,10 +263,9 @@ describe("Outcome page", () => {
     expect(screen.getByRole("button", { name: "Create Epic" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Create Story Idea" }).hasAttribute("disabled")).toBe(true);
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
-    expect(screen.getByText("Submit to Tollgate")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Submit to Tollgate" }).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText("Tollgate 1 decision workspace")).toBeDefined();
-    expect(screen.getByText("Record approval or review")).toBeDefined();
+    expect(screen.getByText("Tollgate 1 approval")).toBeDefined();
+    expect(screen.getByText("Required approvers for current AI level")).toBeDefined();
+    expect(screen.getByText("Business value approval")).toBeDefined();
     expect(screen.getByText("Remove or archive in this project")).toBeDefined();
     },
     15000

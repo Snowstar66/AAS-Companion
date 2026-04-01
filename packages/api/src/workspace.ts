@@ -16,6 +16,7 @@ import {
 import {
   artifactComplianceResultSchema,
   buildGovernedRemovalDecision,
+  deriveOutcomeRiskProfile,
   executionContractSchema,
   executionContractToMarkdown,
   type GovernedChildImpact,
@@ -55,6 +56,20 @@ function toGovernedChildImpact(
     title: record.title,
     lifecycleState: record.lifecycleState
   };
+}
+
+function normalizeAiUsageRole(value: string | null | undefined) {
+  return value === "support" ||
+    value === "generation" ||
+    value === "validation" ||
+    value === "decision_support" ||
+    value === "automation"
+    ? value
+    : null;
+}
+
+function normalizeAiExecutionPattern(value: string | null | undefined) {
+  return value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null;
 }
 
 function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getOutcomeWorkspaceSnapshot>>>) {
@@ -178,6 +193,8 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
       ...snapshot,
       readiness: getOutcomeFramingReadiness({
         ...snapshot.outcome,
+        aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+        aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
         epicCount: snapshot.outcome.epics.length
       }),
       removal: buildOutcomeRemovalFromSnapshot(snapshot)
@@ -206,6 +223,8 @@ export async function getOutcomeTollgateReviewService(organizationId: string, ou
       snapshot.tollgate?.blockers ??
       getOutcomeFramingReadiness({
         ...snapshot.outcome,
+        aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+        aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
         epicCount: snapshot.outcome.epics.length
       }).reasons.map((reason) => reason.message);
 
@@ -227,7 +246,17 @@ export async function getOutcomeTollgateReviewService(organizationId: string, ou
     return success({
       outcome: {
         id: snapshot.outcome.id,
-        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel
+        aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
+        framingVersion: snapshot.outcome.framingVersion,
+        riskProfile: snapshot.outcome.riskProfile,
+        businessImpactLevel: snapshot.outcome.businessImpactLevel ?? null,
+        businessImpactRationale: snapshot.outcome.businessImpactRationale ?? null,
+        dataSensitivityLevel: snapshot.outcome.dataSensitivityLevel ?? null,
+        dataSensitivityRationale: snapshot.outcome.dataSensitivityRationale ?? null,
+        blastRadiusLevel: snapshot.outcome.blastRadiusLevel ?? null,
+        blastRadiusRationale: snapshot.outcome.blastRadiusRationale ?? null,
+        decisionImpactLevel: snapshot.outcome.decisionImpactLevel ?? null,
+        decisionImpactRationale: snapshot.outcome.decisionImpactRationale ?? null
       },
       tollgate: snapshot.tollgate,
       blockers,
@@ -246,11 +275,34 @@ export async function saveOutcomeWorkspaceService(input: {
   outcomeStatement?: string | null;
   baselineDefinition?: string | null;
   baselineSource?: string | null;
+  solutionContext?: string | null;
+  solutionConstraints?: string | null;
+  dataSensitivity?: string | null;
+  deliveryType?: "AD" | "AT" | "AM" | null;
+  aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
+  aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
+  aiUsageIntent?: string | null;
+  businessImpactLevel?: "low" | "medium" | "high" | null;
+  businessImpactRationale?: string | null;
+  dataSensitivityLevel?: "low" | "medium" | "high" | null;
+  dataSensitivityRationale?: string | null;
+  blastRadiusLevel?: "low" | "medium" | "high" | null;
+  blastRadiusRationale?: string | null;
+  decisionImpactLevel?: "low" | "medium" | "high" | null;
+  decisionImpactRationale?: string | null;
+  aiLevelJustification?: string | null;
   timeframe?: string | null;
   valueOwnerId?: string | null;
   riskProfile?: "low" | "medium" | "high";
   aiAccelerationLevel?: "level_1" | "level_2" | "level_3";
 }) {
+  const derivedRiskProfile = deriveOutcomeRiskProfile({
+    businessImpactLevel: input.businessImpactLevel ?? null,
+    dataSensitivityLevel: input.dataSensitivityLevel ?? null,
+    blastRadiusLevel: input.blastRadiusLevel ?? null,
+    decisionImpactLevel: input.decisionImpactLevel ?? null
+  });
+
   const result = await updateOutcome({
     organizationId: input.organizationId,
     id: input.id,
@@ -260,9 +312,25 @@ export async function saveOutcomeWorkspaceService(input: {
     outcomeStatement: input.outcomeStatement,
     baselineDefinition: input.baselineDefinition,
     baselineSource: input.baselineSource,
+    solutionContext: input.solutionContext,
+    solutionConstraints: input.solutionConstraints,
+    dataSensitivity: input.dataSensitivity,
+    deliveryType: input.deliveryType,
+    aiUsageRole: input.aiUsageRole,
+    aiExecutionPattern: input.aiExecutionPattern,
+    aiUsageIntent: input.aiUsageIntent,
+    businessImpactLevel: input.businessImpactLevel,
+    businessImpactRationale: input.businessImpactRationale,
+    dataSensitivityLevel: input.dataSensitivityLevel,
+    dataSensitivityRationale: input.dataSensitivityRationale,
+    blastRadiusLevel: input.blastRadiusLevel,
+    blastRadiusRationale: input.blastRadiusRationale,
+    decisionImpactLevel: input.decisionImpactLevel,
+    decisionImpactRationale: input.decisionImpactRationale,
+    aiLevelJustification: input.aiLevelJustification,
     timeframe: input.timeframe,
     valueOwnerId: input.valueOwnerId,
-    riskProfile: input.riskProfile,
+    riskProfile: derivedRiskProfile ?? input.riskProfile,
     aiAccelerationLevel: input.aiAccelerationLevel
   });
 
@@ -324,6 +392,26 @@ export async function reviewOutcomeFramingWithAiService(input: {
           outcomeStatement: snapshot.outcome.outcomeStatement ?? null,
           baselineDefinition: snapshot.outcome.baselineDefinition ?? null,
           baselineSource: snapshot.outcome.baselineSource ?? null,
+          solutionContext: snapshot.outcome.solutionContext ?? null,
+          solutionConstraints: snapshot.outcome.solutionConstraints ?? null,
+          dataSensitivity: snapshot.outcome.dataSensitivity ?? null,
+          deliveryType: snapshot.outcome.deliveryType === "AD" || snapshot.outcome.deliveryType === "AT" || snapshot.outcome.deliveryType === "AM"
+            ? snapshot.outcome.deliveryType
+            : null,
+          aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+          aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
+          aiUsageIntent: snapshot.outcome.aiUsageIntent ?? null,
+          businessImpactLevel: snapshot.outcome.businessImpactLevel ?? null,
+          businessImpactRationale: snapshot.outcome.businessImpactRationale ?? null,
+          dataSensitivityLevel: snapshot.outcome.dataSensitivityLevel ?? null,
+          dataSensitivityRationale: snapshot.outcome.dataSensitivityRationale ?? null,
+          blastRadiusLevel: snapshot.outcome.blastRadiusLevel ?? null,
+          blastRadiusRationale: snapshot.outcome.blastRadiusRationale ?? null,
+          decisionImpactLevel: snapshot.outcome.decisionImpactLevel ?? null,
+          decisionImpactRationale: snapshot.outcome.decisionImpactRationale ?? null,
+          aiLevelJustification: snapshot.outcome.aiLevelJustification ?? null,
+          riskAcceptedAt: snapshot.outcome.riskAcceptedAt ?? null,
+          riskAcceptedBy: snapshot.outcome.valueOwner?.fullName ?? snapshot.outcome.valueOwner?.email ?? null,
           timeframe: snapshot.outcome.timeframe ?? null,
           aiAccelerationLevel: snapshot.outcome.aiAccelerationLevel,
           riskProfile: snapshot.outcome.riskProfile
@@ -371,6 +459,8 @@ export async function submitOutcomeTollgateService(input: {
 
   const readiness = getOutcomeFramingReadiness({
     ...snapshot.outcome,
+    aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
+    aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
     epicCount: snapshot.outcome.epics.length
   });
   const blockers = readiness.reasons.map((reason) => reason.message);
@@ -383,7 +473,15 @@ export async function submitOutcomeTollgateService(input: {
     tollgateType: "tg1_baseline",
     status: isReady ? "ready" : "blocked",
     blockers,
-    approverRoles: ["value_owner", "architect"],
+    approverRoles:
+      snapshot.outcome.aiAccelerationLevel === "level_1"
+        ? ["value_owner", "delivery_lead"]
+        : snapshot.outcome.aiAccelerationLevel === "level_2"
+          ? ["value_owner", "architect"]
+          : ["value_owner", "aqa"],
+    submissionVersion: snapshot.outcome.framingVersion,
+    approvedVersion: snapshot.tollgate?.approvedVersion ?? null,
+    approvalSnapshot: snapshot.tollgate?.approvalSnapshot ?? null,
     comments: input.comments ?? null,
     actorId: input.actorId ?? null
   });

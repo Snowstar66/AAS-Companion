@@ -20,10 +20,29 @@ export const outcomeRecordSchema = z.object({
   organizationId: z.string().min(1),
   key: z.string().min(1),
   title: z.string().min(1),
+  framingVersion: z.number().int().positive().default(1),
   problemStatement: z.string().nullish(),
   outcomeStatement: z.string().nullish(),
   baselineDefinition: z.string().nullish(),
   baselineSource: z.string().nullish(),
+  solutionContext: z.string().nullish(),
+  solutionConstraints: z.string().nullish(),
+  dataSensitivity: z.string().nullish(),
+  deliveryType: z.enum(["AD", "AT", "AM"]).nullish(),
+  aiUsageRole: z.enum(["support", "generation", "validation", "decision_support", "automation"]).nullish(),
+  aiExecutionPattern: z.enum(["assisted", "step_by_step", "orchestrated"]).nullish(),
+  aiUsageIntent: z.string().nullish(),
+  businessImpactLevel: riskProfileSchema.nullish(),
+  businessImpactRationale: z.string().nullish(),
+  dataSensitivityLevel: riskProfileSchema.nullish(),
+  dataSensitivityRationale: z.string().nullish(),
+  blastRadiusLevel: riskProfileSchema.nullish(),
+  blastRadiusRationale: z.string().nullish(),
+  decisionImpactLevel: riskProfileSchema.nullish(),
+  decisionImpactRationale: z.string().nullish(),
+  aiLevelJustification: z.string().nullish(),
+  riskAcceptedAt: z.date().nullish(),
+  riskAcceptedByValueOwnerId: z.string().nullish(),
   timeframe: z.string().nullish(),
   valueOwnerId: z.string().nullish(),
   riskProfile: riskProfileSchema,
@@ -43,6 +62,7 @@ export const outcomeRecordSchema = z.object({
 const outcomeCreateInputBaseSchema = outcomeRecordSchema
   .omit({
     id: true,
+    framingVersion: true,
     originType: true,
     createdMode: true,
     lifecycleState: true,
@@ -103,10 +123,272 @@ export type OutcomeUpdateInput = z.infer<typeof outcomeUpdateInputSchema>;
 type OutcomeBaselineFields = Pick<OutcomeRecord, "baselineDefinition" | "baselineSource" | "status">;
 type OutcomeFramingFields = Pick<
   OutcomeRecord,
-  "title" | "outcomeStatement" | "baselineDefinition" | "valueOwnerId" | "riskProfile" | "aiAccelerationLevel" | "status"
+  | "title"
+  | "outcomeStatement"
+  | "baselineDefinition"
+  | "valueOwnerId"
+  | "riskProfile"
+  | "aiAccelerationLevel"
+  | "status"
+  | "aiUsageRole"
+  | "aiExecutionPattern"
+  | "aiUsageIntent"
+  | "businessImpactLevel"
+  | "businessImpactRationale"
+  | "dataSensitivityLevel"
+  | "dataSensitivityRationale"
+  | "blastRadiusLevel"
+  | "blastRadiusRationale"
+  | "decisionImpactLevel"
+  | "decisionImpactRationale"
+  | "aiLevelJustification"
+  | "riskAcceptedAt"
+  | "riskAcceptedByValueOwnerId"
 > & {
   epicCount: number;
 };
+
+type RiskDimensionLevel = z.infer<typeof riskProfileSchema>;
+export type AiExecutionPattern = NonNullable<OutcomeRecord["aiExecutionPattern"]>;
+
+function getRiskWeight(level: RiskDimensionLevel) {
+  if (level === "high") {
+    return 3;
+  }
+
+  if (level === "medium") {
+    return 2;
+  }
+
+  return 1;
+}
+
+function getHighestRiskProfile(levels: Array<RiskDimensionLevel | null | undefined>) {
+  const presentLevels = levels.filter((level): level is RiskDimensionLevel => Boolean(level));
+  const [firstLevel, ...remainingLevels] = presentLevels;
+
+  if (!firstLevel) {
+    return null;
+  }
+
+  return remainingLevels.reduce<RiskDimensionLevel>(
+    (highest, current) => (getRiskWeight(current) > getRiskWeight(highest) ? current : highest),
+    firstLevel
+  );
+}
+
+export function deriveAiLevelFromExecutionPattern(pattern: AiExecutionPattern | null | undefined) {
+  if (pattern === "assisted") {
+    return "level_1" as const;
+  }
+
+  if (pattern === "step_by_step") {
+    return "level_2" as const;
+  }
+
+  if (pattern === "orchestrated") {
+    return "level_3" as const;
+  }
+
+  return null;
+}
+
+export function deriveExecutionPatternFromAiLevel(level: OutcomeRecord["aiAccelerationLevel"] | null | undefined) {
+  if (level === "level_1") {
+    return "assisted" as const;
+  }
+
+  if (level === "level_2") {
+    return "step_by_step" as const;
+  }
+
+  if (level === "level_3") {
+    return "orchestrated" as const;
+  }
+
+  return null;
+}
+
+export function deriveOutcomeRiskProfile(outcome: Pick<
+  OutcomeRecord,
+  "businessImpactLevel" | "dataSensitivityLevel" | "blastRadiusLevel" | "decisionImpactLevel"
+>) {
+  return getHighestRiskProfile([
+    outcome.businessImpactLevel,
+    outcome.dataSensitivityLevel,
+    outcome.blastRadiusLevel,
+    outcome.decisionImpactLevel
+  ]);
+}
+
+export function getOutcomeAiAndRiskBlockers(outcome: Pick<
+  OutcomeRecord,
+  | "aiUsageRole"
+  | "aiExecutionPattern"
+  | "aiUsageIntent"
+  | "businessImpactLevel"
+  | "businessImpactRationale"
+  | "dataSensitivityLevel"
+  | "dataSensitivityRationale"
+  | "blastRadiusLevel"
+  | "blastRadiusRationale"
+  | "decisionImpactLevel"
+  | "decisionImpactRationale"
+  | "riskProfile"
+  | "aiAccelerationLevel"
+  | "aiLevelJustification"
+>) {
+  const reasons: ReadinessBlockReason[] = [];
+  const derivedRiskProfile = deriveOutcomeRiskProfile(outcome);
+  const derivedAiLevel = deriveAiLevelFromExecutionPattern(outcome.aiExecutionPattern);
+
+  if (!outcome.aiExecutionPattern) {
+    reasons.push({
+      code: "ai_execution_pattern_missing",
+      message: "Missing AI execution pattern.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.aiUsageIntent?.trim()) {
+    reasons.push({
+      code: "ai_usage_intent_missing",
+      message: "Missing AI usage across lifecycle.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.businessImpactLevel) {
+    reasons.push({
+      code: "business_impact_level_missing",
+      message: "Missing business impact classification.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.businessImpactRationale?.trim()) {
+    reasons.push({
+      code: "business_impact_rationale_missing",
+      message: "Missing business impact rationale.",
+      severity: "medium"
+    });
+  }
+
+  if (!outcome.dataSensitivityLevel) {
+    reasons.push({
+      code: "data_sensitivity_level_missing",
+      message: "Missing data sensitivity classification.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.dataSensitivityRationale?.trim()) {
+    reasons.push({
+      code: "data_sensitivity_rationale_missing",
+      message: "Missing data sensitivity rationale.",
+      severity: "medium"
+    });
+  }
+
+  if (!outcome.blastRadiusLevel) {
+    reasons.push({
+      code: "blast_radius_level_missing",
+      message: "Missing blast radius classification.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.blastRadiusRationale?.trim()) {
+    reasons.push({
+      code: "blast_radius_rationale_missing",
+      message: "Missing blast radius rationale.",
+      severity: "medium"
+    });
+  }
+
+  if (!outcome.decisionImpactLevel) {
+    reasons.push({
+      code: "decision_impact_level_missing",
+      message: "Missing decision impact classification.",
+      severity: "high"
+    });
+  }
+
+  if (!outcome.decisionImpactRationale?.trim()) {
+    reasons.push({
+      code: "decision_impact_rationale_missing",
+      message: "Missing decision impact rationale.",
+      severity: "medium"
+    });
+  }
+
+  if (!derivedRiskProfile) {
+    reasons.push({
+      code: "risk_profile_unresolved",
+      message: "Risk profile cannot be determined until all four risk dimensions are classified.",
+      severity: "high"
+    });
+  } else if (outcome.riskProfile !== derivedRiskProfile) {
+    reasons.push({
+      code: "risk_profile_mismatch",
+      message: `Risk profile must match the highest classified dimension (${derivedRiskProfile}).`,
+      severity: "high"
+    });
+  }
+
+  if (derivedAiLevel && outcome.aiAccelerationLevel !== derivedAiLevel) {
+    reasons.push({
+      code: "ai_level_execution_pattern_mismatch",
+      message: `Selected AI level does not match the declared execution pattern. This case maps to ${derivedAiLevel.replaceAll("_", " ")}.`,
+      severity: "high"
+    });
+  }
+
+  if (outcome.aiAccelerationLevel === "level_3" && !outcome.aiLevelJustification?.trim()) {
+    reasons.push({
+      code: "ai_level_justification_missing",
+      message: "Level 3 requires explicit governance justification.",
+      severity: "high"
+    });
+  }
+
+  return reasons;
+}
+
+export function getOutcomeAiAndRiskWarnings(outcome: Pick<
+  OutcomeRecord,
+  | "aiExecutionPattern"
+  | "businessImpactLevel"
+  | "dataSensitivityLevel"
+  | "blastRadiusLevel"
+  | "decisionImpactLevel"
+  | "aiAccelerationLevel"
+>) {
+  const warnings: string[] = [];
+  const derivedRiskProfile = deriveOutcomeRiskProfile(outcome);
+
+  if (derivedRiskProfile === "high" && outcome.aiAccelerationLevel === "level_2") {
+    warnings.push("High risk with Level 2 requires structured human validation after each step and reproducible outputs.");
+  }
+
+  if (derivedRiskProfile === "high" && outcome.aiAccelerationLevel === "level_3") {
+    warnings.push("High risk with Level 3 requires full traceability, logged orchestration and explicit human approval before autonomous decisions.");
+  }
+
+  if (derivedRiskProfile === "medium" && outcome.aiAccelerationLevel === "level_3") {
+    warnings.push("Medium risk with Level 3 should have explicit orchestration boundaries, human supervision and clear traceability.");
+  }
+
+  if (outcome.decisionImpactLevel === "high" && outcome.aiAccelerationLevel !== "level_1") {
+    warnings.push("Human decision authority must stay explicit when AI influences or automates high-impact decisions.");
+  }
+
+  if (outcome.aiExecutionPattern === "orchestrated") {
+    warnings.push("Orchestrated agentic delivery requires logs and step traceability across the full execution chain.");
+  }
+
+  return [...new Set(warnings)];
+}
 
 export function getOutcomeBaselineReadiness(outcome: OutcomeBaselineFields) {
   const reasons: ReadinessBlockReason[] = [];
@@ -176,21 +458,7 @@ export function getOutcomeFramingReadiness(outcome: OutcomeFramingFields) {
     });
   }
 
-  if (!outcome.aiAccelerationLevel) {
-    reasons.push({
-      code: "ai_level_missing",
-      message: "AI level is missing.",
-      severity: "high"
-    });
-  }
-
-  if (!outcome.riskProfile) {
-    reasons.push({
-      code: "risk_profile_missing",
-      message: "Risk profile is missing.",
-      severity: "high"
-    });
-  }
+  reasons.push(...getOutcomeAiAndRiskBlockers(outcome));
 
   if (outcome.epicCount < 1) {
     reasons.push({

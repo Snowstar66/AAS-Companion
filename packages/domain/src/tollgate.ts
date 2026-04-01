@@ -17,6 +17,9 @@ export const tollgateRecordSchema = z.object({
   status: tollgateStatusSchema,
   blockers: z.array(z.string().min(1)).default([]),
   approverRoles: z.array(membershipRoleSchema).default([]),
+  submissionVersion: z.number().int().positive().nullish(),
+  approvedVersion: z.number().int().positive().nullish(),
+  approvalSnapshot: z.unknown().nullish(),
   decidedBy: z.string().nullish(),
   decidedAt: z.date().nullish(),
   comments: z.string().nullish(),
@@ -59,17 +62,32 @@ export function getTollgateDecisionProfile(input: {
 }) {
   if (input.tollgateType === "tg1_baseline") {
     return tollgateDecisionProfileSchema.parse({
-      reviewRequirements: [
-        buildRequirement("review", "architect", "supplier", "Architecture review"),
-        ...(input.aiAccelerationLevel === "level_3"
-          ? [buildRequirement("review", "ai_governance_lead", "supplier", "AI governance review")]
-          : [])
-      ],
+      reviewRequirements: [],
       approvalRequirements: [
-        buildRequirement("approval", "value_owner", "customer", "Business value approval"),
-        ...(input.aiAccelerationLevel === "level_3"
-          ? [buildRequirement("approval", "customer_sponsor", "customer", "Sponsor sign-off")]
-          : [])
+        buildRequirement(
+          "approval",
+          "value_owner",
+          "customer",
+          input.aiAccelerationLevel === "level_1"
+            ? "Customer value approval"
+            : input.aiAccelerationLevel === "level_2"
+              ? "Customer framing approval"
+              : "Customer risk and value approval"
+        ),
+        buildRequirement(
+          "approval",
+          input.aiAccelerationLevel === "level_1"
+            ? "delivery_lead"
+            : input.aiAccelerationLevel === "level_2"
+              ? "architect"
+              : "aqa",
+          "supplier",
+          input.aiAccelerationLevel === "level_1"
+            ? "Supplier delivery approval"
+            : input.aiAccelerationLevel === "level_2"
+              ? "Supplier architecture approval"
+              : "Supplier AI quality approval"
+        )
       ]
     });
   }
@@ -94,13 +112,14 @@ export function summarizeTollgateFromSignoffs(input: {
   blockers: string[];
   profile: TollgateDecisionProfile;
   signoffs: SignoffRecord[];
+  ignoreBlockers?: boolean;
 }) {
   const decisionRequirements = [...input.profile.reviewRequirements, ...input.profile.approvalRequirements];
   const rejectedOrChanged = input.signoffs.filter(
     (record) => record.decisionStatus === "rejected" || record.decisionStatus === "changes_requested"
   );
 
-  if (input.blockers.length > 0 || rejectedOrChanged.length > 0) {
+  if ((!input.ignoreBlockers && input.blockers.length > 0) || rejectedOrChanged.length > 0) {
     return {
       status: "blocked" as const,
       pendingRequirements: decisionRequirements

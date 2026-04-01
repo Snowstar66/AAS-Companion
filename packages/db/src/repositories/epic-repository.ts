@@ -13,6 +13,7 @@ import {
   toGovernedObjectProvenanceFields,
   toGovernedObjectProvenanceMetadata
 } from "./governed-object-provenance";
+import { advanceOutcomeFramingVersion } from "./outcome-repository";
 
 export async function createEpic(input: unknown, db: Prisma.TransactionClient | typeof prisma = prisma) {
   const parsed = epicCreateInputSchema.parse(input);
@@ -56,6 +57,11 @@ export async function createEpic(input: unknown, db: Prisma.TransactionClient | 
       },
       tx
     );
+
+    await advanceOutcomeFramingVersion(tx, {
+      organizationId: parsed.organizationId,
+      outcomeId: parsed.outcomeId
+    });
 
     return withEpicShape(epic);
   };
@@ -185,6 +191,7 @@ export async function updateEpic(input: unknown) {
     }
 
     const data: Prisma.EpicUncheckedUpdateInput = {};
+    const existingShape = withEpicShape(existing);
     const provenance = resolveGovernedObjectProvenance({
       organizationId: parsed.organizationId,
       originType: parsed.originType ?? existing.originType,
@@ -200,6 +207,13 @@ export async function updateEpic(input: unknown) {
             : null
           : parsed.lineageReference
     });
+    const framingContentChanged =
+      (parsed.outcomeId !== undefined && parsed.outcomeId !== existing.outcomeId) ||
+      (parsed.key !== undefined && parsed.key !== existing.key) ||
+      (parsed.title !== undefined && parsed.title !== existing.title) ||
+      (parsed.purpose !== undefined && parsed.purpose !== existing.purpose) ||
+      (parsed.scopeBoundary !== undefined && parsed.scopeBoundary !== existingShape.scopeBoundary) ||
+      (parsed.riskNote !== undefined && parsed.riskNote !== existingShape.riskNote);
 
     if (parsed.outcomeId !== undefined) {
       data.outcomeId = parsed.outcomeId;
@@ -218,7 +232,6 @@ export async function updateEpic(input: unknown) {
     }
 
     if (parsed.scopeBoundary !== undefined || parsed.riskNote !== undefined) {
-      const existingShape = withEpicShape(existing);
       data.summary = encodeEpicShape({
         scopeBoundary: parsed.scopeBoundary === undefined ? existingShape.scopeBoundary : parsed.scopeBoundary,
         riskNote: parsed.riskNote === undefined ? existingShape.riskNote : parsed.riskNote
@@ -262,6 +275,13 @@ export async function updateEpic(input: unknown) {
       },
       tx
     );
+
+    if (framingContentChanged) {
+      await advanceOutcomeFramingVersion(tx, {
+        organizationId: parsed.organizationId,
+        outcomeId: epic.outcomeId
+      });
+    }
 
     return withEpicShape(epic);
   });

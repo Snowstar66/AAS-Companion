@@ -448,16 +448,16 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     defaultOpen: boolean;
   }> = [
     {
-      title: "Framing review",
-      description: "Framing briefs and related framing decisions that still need a human reviewer. Story Ideas stay in Framing and Import, not in Delivery review.",
+      title: "Framing approvals",
+      description: "Framing briefs waiting on Tollgate 1 approvals. Story Ideas stay in Framing and Import, not in Delivery review.",
       items: operationalReview.items.filter((item) => item.workflow === "outcome_tollgate"),
-      defaultOpen: true
+      defaultOpen: false
     },
     {
       title: "Delivery review",
-      description: "Only Delivery Stories appear here. Use this lane when a Delivery Story still needs human review or is ready to start build.",
+      description: "Individual Delivery Stories no longer use human approval lanes here. This stays empty until a future design-wide checkpoint is introduced.",
       items: operationalReview.items.filter((item) => item.workflow === "story_review" || item.workflow === "delivery_start"),
-      defaultOpen: true
+      defaultOpen: false
     }
   ];
   const framingReviewItems = operationalReview.items.filter((item) => item.workflow === "outcome_tollgate");
@@ -507,13 +507,13 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-semibold text-foreground">Framing review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Story Ideas, baseline decisions and Tollgate 1 belong here. This is about intent and direction, not delivery execution.
+                Story Ideas stay in Framing, while Tollgate 1 approvals for the Framing brief are coordinated here. This is about intent and direction, not delivery execution.
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-semibold text-foreground">Delivery review</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Only Delivery Stories belong here. This is where execution readiness is checked before build starts.
+                Individual Delivery Stories do not use approval lanes here anymore. Use the Story pages for design completeness and Value Spine checks instead.
               </p>
             </div>
           </div>
@@ -557,14 +557,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             className="border-sky-200 bg-sky-50 text-sky-950"
             count={framingReviewItems.length}
             description="Outcome tollgates and framing decisions that still need a human reviewer."
-            label="Framing review"
+            label="Framing approvals"
           />
           <ReviewSummaryCard
             actionHref={deliveryReviewItems[0]?.href}
             actionLabel={deliveryReviewItems[0] ? "Open delivery review" : undefined}
             className="border-indigo-200 bg-indigo-50 text-indigo-950"
             count={deliveryReviewItems.length}
-            description="Delivery Stories that still need a human decision or are ready to start build."
+            description="Reserved for a future design-wide checkpoint. Individual Delivery Stories are no longer approved here."
             label="Delivery review"
           />
           <ReviewSummaryCard
@@ -612,7 +612,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           <CardHeader>
             <CardTitle>Human review lanes</CardTitle>
             <CardDescription>
-              This page is split into Framing review and Delivery review. Story Ideas stay in Framing or Import. Delivery review only shows Delivery Stories that need a human decision before build can start.
+              This page is split into Framing approvals and Delivery review. Story Ideas stay in Framing or Import. Individual Delivery Stories no longer require human approval lanes here.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -622,7 +622,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </div>
             ) : operationalReview.items.length === 0 ? (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                No framing reviews or Delivery Story reviews are currently waiting for human action.
+                No Framing approvals are currently waiting for human action.
               </div>
             ) : (
               operationalGroups.map((group) => (
@@ -712,7 +712,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                 {groups.map((group) => (
                   <CollapsibleSection
                     badge={`${group.items.length}`}
-                    defaultOpen={group.state === "needs_action" || group.state === "needs_confirmation" || group.state === "pending"}
+                    defaultOpen={false}
                     description={getBacklogDescription(group.state)}
                     key={group.state}
                     title={getBacklogLabel(group.state)}
@@ -970,7 +970,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           </label>
                         </div>
 
-                        <CollapsibleSection badge={selectedCandidate.type} defaultOpen description="Type-specific fields for the current candidate." title="Candidate fields">
+                        <CollapsibleSection badge={selectedCandidate.type} defaultOpen={false} description="Type-specific fields for the current candidate." title="Candidate fields">
                           <div className="grid gap-4">
                             {selectedCandidate.type === "outcome" ? (
                               <>
@@ -1059,7 +1059,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           </div>
                         </CollapsibleSection>
 
-                        <CollapsibleSection badge={`${selectedCandidate.issueProgress.categories.humanOnly} human-only`} defaultOpen={selectedCandidate.issueProgress.categories.humanOnly > 0} description="Resolve the decisions that explicitly require a human reviewer." title="Human-only decisions">
+                        <CollapsibleSection badge={`${selectedCandidate.issueProgress.categories.humanOnly} human-only`} defaultOpen={false} description="Resolve the decisions that explicitly require a human reviewer." title="Human-only decisions">
                           <div className="grid gap-4">
                             <label className="space-y-2">
                               <span className="text-sm font-medium text-foreground">Value Owner</span>
@@ -1102,7 +1102,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           </div>
                         </CollapsibleSection>
 
-                        <CollapsibleSection defaultOpen description="Leave a short note and choose how this item should move through the backlog." title="Disposition">
+                        <CollapsibleSection defaultOpen={false} description="Leave a short note and choose how this item should move through the backlog." title="Disposition">
                           <div className="space-y-4">
                             <label className="space-y-2">
                               <span className="text-sm font-medium text-foreground">Review comment</span>

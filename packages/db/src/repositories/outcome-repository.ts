@@ -11,6 +11,92 @@ import {
   toGovernedObjectProvenanceMetadata
 } from "./governed-object-provenance";
 
+function hasScalarChanged<T>(nextValue: T | undefined, currentValue: T | null | undefined) {
+  if (nextValue === undefined) {
+    return false;
+  }
+
+  if (nextValue instanceof Date) {
+    return nextValue.getTime() !== (currentValue instanceof Date ? currentValue.getTime() : null);
+  }
+
+  return nextValue !== currentValue;
+}
+
+async function invalidateOutcomeTollgateForNewFramingVersion(
+  tx: Prisma.TransactionClient,
+  input: {
+    organizationId: string;
+    outcomeId: string;
+    framingVersion: number;
+  }
+) {
+  const tollgate = await tx.tollgate.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      entityType: "outcome",
+      entityId: input.outcomeId,
+      tollgateType: "tg1_baseline"
+    },
+    select: {
+      id: true,
+      status: true,
+      approvedVersion: true,
+      submissionVersion: true,
+      comments: true
+    }
+  });
+
+  if (!tollgate || (tollgate.status !== "approved" && tollgate.status !== "ready" && !tollgate.submissionVersion)) {
+    return;
+  }
+
+  const priorVersion = tollgate.approvedVersion ?? tollgate.submissionVersion ?? input.framingVersion - 1;
+
+  await tx.tollgate.update({
+    where: {
+      id: tollgate.id
+    },
+    data: {
+      status: "blocked",
+      blockers: [
+        `Framing changed after version ${priorVersion}. Submit version ${input.framingVersion} to Tollgate 1 for a new approval.`
+      ],
+      submissionVersion: null
+    }
+  });
+}
+
+export async function advanceOutcomeFramingVersion(
+  tx: Prisma.TransactionClient,
+  input: {
+    organizationId: string;
+    outcomeId: string;
+  }
+) {
+  const outcome = await tx.outcome.update({
+    where: {
+      id: input.outcomeId
+    },
+    data: {
+      framingVersion: {
+        increment: 1
+      }
+    },
+    select: {
+      framingVersion: true
+    }
+  });
+
+  await invalidateOutcomeTollgateForNewFramingVersion(tx, {
+    organizationId: input.organizationId,
+    outcomeId: input.outcomeId,
+    framingVersion: outcome.framingVersion
+  });
+
+  return outcome.framingVersion;
+}
+
 export async function listOutcomes(organizationId: string, options?: { includeArchived?: boolean }) {
   const where: Prisma.OutcomeWhereInput = {
     organizationId
@@ -69,6 +155,20 @@ export async function listOutcomeCockpitEntries(organizationId: string) {
           lineageSourceId: true,
           baselineDefinition: true,
           baselineSource: true,
+          aiUsageRole: true,
+          aiExecutionPattern: true,
+          aiUsageIntent: true,
+          businessImpactLevel: true,
+          businessImpactRationale: true,
+          dataSensitivityLevel: true,
+          dataSensitivityRationale: true,
+          blastRadiusLevel: true,
+          blastRadiusRationale: true,
+          decisionImpactLevel: true,
+          decisionImpactRationale: true,
+          aiLevelJustification: true,
+          riskAcceptedAt: true,
+          riskAcceptedByValueOwnerId: true,
           timeframe: true,
           valueOwnerId: true,
           riskProfile: true,
@@ -146,10 +246,29 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           organizationId: true,
           key: true,
           title: true,
+          framingVersion: true,
           problemStatement: true,
           outcomeStatement: true,
           baselineDefinition: true,
           baselineSource: true,
+          solutionContext: true,
+          solutionConstraints: true,
+          dataSensitivity: true,
+          deliveryType: true,
+          aiUsageRole: true,
+          aiExecutionPattern: true,
+          aiUsageIntent: true,
+          businessImpactLevel: true,
+          businessImpactRationale: true,
+          dataSensitivityLevel: true,
+          dataSensitivityRationale: true,
+          blastRadiusLevel: true,
+          blastRadiusRationale: true,
+          decisionImpactLevel: true,
+          decisionImpactRationale: true,
+          aiLevelJustification: true,
+          riskAcceptedAt: true,
+          riskAcceptedByValueOwnerId: true,
           timeframe: true,
           valueOwnerId: true,
           riskProfile: true,
@@ -252,6 +371,9 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           status: true,
           blockers: true,
           approverRoles: true,
+          submissionVersion: true,
+          approvedVersion: true,
+          approvalSnapshot: true,
           decidedBy: true,
           decidedAt: true,
           comments: true,
@@ -308,10 +430,29 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         organizationId: parsed.organizationId,
         key: parsed.key,
         title: parsed.title,
+        framingVersion: 1,
         problemStatement: parsed.problemStatement ?? null,
         outcomeStatement: parsed.outcomeStatement ?? null,
         baselineDefinition: parsed.baselineDefinition ?? null,
         baselineSource: parsed.baselineSource ?? null,
+        solutionContext: parsed.solutionContext ?? null,
+        solutionConstraints: parsed.solutionConstraints ?? null,
+        dataSensitivity: parsed.dataSensitivity ?? null,
+        deliveryType: parsed.deliveryType ?? null,
+        aiUsageRole: parsed.aiUsageRole ?? null,
+        aiExecutionPattern: parsed.aiExecutionPattern ?? null,
+        aiUsageIntent: parsed.aiUsageIntent ?? null,
+        businessImpactLevel: parsed.businessImpactLevel ?? null,
+        businessImpactRationale: parsed.businessImpactRationale ?? null,
+        dataSensitivityLevel: parsed.dataSensitivityLevel ?? null,
+        dataSensitivityRationale: parsed.dataSensitivityRationale ?? null,
+        blastRadiusLevel: parsed.blastRadiusLevel ?? null,
+        blastRadiusRationale: parsed.blastRadiusRationale ?? null,
+        decisionImpactLevel: parsed.decisionImpactLevel ?? null,
+        decisionImpactRationale: parsed.decisionImpactRationale ?? null,
+        aiLevelJustification: parsed.aiLevelJustification ?? null,
+        riskAcceptedAt: parsed.riskAcceptedAt ?? null,
+        riskAcceptedByValueOwnerId: parsed.riskAcceptedByValueOwnerId ?? null,
         timeframe: parsed.timeframe ?? null,
         valueOwnerId: parsed.valueOwnerId ?? null,
         riskProfile: parsed.riskProfile,
@@ -383,6 +524,34 @@ export async function updateOutcome(input: unknown) {
             : null
           : parsed.lineageReference
     });
+    const framingContentChanged =
+      hasScalarChanged(parsed.title, existing.title) ||
+      hasScalarChanged(parsed.problemStatement, existing.problemStatement) ||
+      hasScalarChanged(parsed.outcomeStatement, existing.outcomeStatement) ||
+      hasScalarChanged(parsed.baselineDefinition, existing.baselineDefinition) ||
+      hasScalarChanged(parsed.baselineSource, existing.baselineSource) ||
+      hasScalarChanged(parsed.solutionContext, existing.solutionContext) ||
+      hasScalarChanged(parsed.solutionConstraints, existing.solutionConstraints) ||
+      hasScalarChanged(parsed.dataSensitivity, existing.dataSensitivity) ||
+      hasScalarChanged(parsed.deliveryType, existing.deliveryType) ||
+      hasScalarChanged(parsed.aiUsageRole, existing.aiUsageRole) ||
+      hasScalarChanged(parsed.aiExecutionPattern, existing.aiExecutionPattern) ||
+      hasScalarChanged(parsed.aiUsageIntent, existing.aiUsageIntent) ||
+      hasScalarChanged(parsed.businessImpactLevel, existing.businessImpactLevel) ||
+      hasScalarChanged(parsed.businessImpactRationale, existing.businessImpactRationale) ||
+      hasScalarChanged(parsed.dataSensitivityLevel, existing.dataSensitivityLevel) ||
+      hasScalarChanged(parsed.dataSensitivityRationale, existing.dataSensitivityRationale) ||
+      hasScalarChanged(parsed.blastRadiusLevel, existing.blastRadiusLevel) ||
+      hasScalarChanged(parsed.blastRadiusRationale, existing.blastRadiusRationale) ||
+      hasScalarChanged(parsed.decisionImpactLevel, existing.decisionImpactLevel) ||
+      hasScalarChanged(parsed.decisionImpactRationale, existing.decisionImpactRationale) ||
+      hasScalarChanged(parsed.aiLevelJustification, existing.aiLevelJustification) ||
+      hasScalarChanged(parsed.riskAcceptedAt, existing.riskAcceptedAt) ||
+      hasScalarChanged(parsed.riskAcceptedByValueOwnerId, existing.riskAcceptedByValueOwnerId) ||
+      hasScalarChanged(parsed.timeframe, existing.timeframe) ||
+      hasScalarChanged(parsed.valueOwnerId, existing.valueOwnerId) ||
+      hasScalarChanged(parsed.riskProfile, existing.riskProfile) ||
+      hasScalarChanged(parsed.aiAccelerationLevel, existing.aiAccelerationLevel);
 
     if (parsed.key !== undefined) {
       data.key = parsed.key;
@@ -406,6 +575,78 @@ export async function updateOutcome(input: unknown) {
 
     if (parsed.baselineSource !== undefined) {
       data.baselineSource = parsed.baselineSource;
+    }
+
+    if (parsed.solutionContext !== undefined) {
+      data.solutionContext = parsed.solutionContext;
+    }
+
+    if (parsed.solutionConstraints !== undefined) {
+      data.solutionConstraints = parsed.solutionConstraints;
+    }
+
+    if (parsed.dataSensitivity !== undefined) {
+      data.dataSensitivity = parsed.dataSensitivity;
+    }
+
+    if (parsed.deliveryType !== undefined) {
+      data.deliveryType = parsed.deliveryType;
+    }
+
+    if (parsed.aiUsageRole !== undefined) {
+      data.aiUsageRole = parsed.aiUsageRole;
+    }
+
+    if (parsed.aiExecutionPattern !== undefined) {
+      data.aiExecutionPattern = parsed.aiExecutionPattern;
+    }
+
+    if (parsed.aiUsageIntent !== undefined) {
+      data.aiUsageIntent = parsed.aiUsageIntent;
+    }
+
+    if (parsed.businessImpactLevel !== undefined) {
+      data.businessImpactLevel = parsed.businessImpactLevel;
+    }
+
+    if (parsed.businessImpactRationale !== undefined) {
+      data.businessImpactRationale = parsed.businessImpactRationale;
+    }
+
+    if (parsed.dataSensitivityLevel !== undefined) {
+      data.dataSensitivityLevel = parsed.dataSensitivityLevel;
+    }
+
+    if (parsed.dataSensitivityRationale !== undefined) {
+      data.dataSensitivityRationale = parsed.dataSensitivityRationale;
+    }
+
+    if (parsed.blastRadiusLevel !== undefined) {
+      data.blastRadiusLevel = parsed.blastRadiusLevel;
+    }
+
+    if (parsed.blastRadiusRationale !== undefined) {
+      data.blastRadiusRationale = parsed.blastRadiusRationale;
+    }
+
+    if (parsed.decisionImpactLevel !== undefined) {
+      data.decisionImpactLevel = parsed.decisionImpactLevel;
+    }
+
+    if (parsed.decisionImpactRationale !== undefined) {
+      data.decisionImpactRationale = parsed.decisionImpactRationale;
+    }
+
+    if (parsed.aiLevelJustification !== undefined) {
+      data.aiLevelJustification = parsed.aiLevelJustification;
+    }
+
+    if (parsed.riskAcceptedAt !== undefined) {
+      data.riskAcceptedAt = parsed.riskAcceptedAt;
+    }
+
+    if (parsed.riskAcceptedByValueOwnerId !== undefined) {
+      data.riskAcceptedByValueOwnerId = parsed.riskAcceptedByValueOwnerId;
     }
 
     if (parsed.timeframe !== undefined) {
@@ -442,8 +683,25 @@ export async function updateOutcome(input: unknown) {
 
     const outcome = await tx.outcome.update({
       where: { id: existing.id },
-      data
+      data: {
+        ...data,
+        ...(framingContentChanged
+          ? {
+              framingVersion: {
+                increment: 1
+              }
+            }
+          : {})
+      }
     });
+
+    if (framingContentChanged) {
+      await invalidateOutcomeTollgateForNewFramingVersion(tx, {
+        organizationId: parsed.organizationId,
+        outcomeId: outcome.id,
+        framingVersion: outcome.framingVersion
+      });
+    }
 
     await appendActivityEvent(
       {

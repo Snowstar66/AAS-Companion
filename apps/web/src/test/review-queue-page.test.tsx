@@ -118,14 +118,14 @@ vi.mock("@/lib/review/operational-review", () => ({
     state: "ready",
     organizationName: "AAS Demo Organization",
     summary: {
-      total: 3,
+      total: 1,
       blocked: 1,
-      inProgress: 1,
-      deliveryStartReady: 1,
+      inProgress: 0,
+      deliveryStartReady: 0,
       outcomeTollgates: 1,
-      storyReviews: 1
+      storyReviews: 0
     },
-    message: "Framing reviews and Delivery Story reviews with human work are collected here.",
+    message: "Framing approvals with human work are collected here.",
     items: [
       {
         id: "outcome-1",
@@ -133,50 +133,16 @@ vi.mock("@/lib/review/operational-review", () => ({
         entityType: "outcome",
         entityId: "outcome-1",
         key: "OUT-001",
-        title: "Outcome tollgate review",
+        title: "Outcome tollgate approval",
         status: "blocked",
         tone: "blocked",
-        actionLabel: "Open Outcome tollgate",
+        actionLabel: "Open Framing approval",
         href: "/outcomes/outcome-1#tollgate-review",
         description: "Value owner is not assigned on the customer side.",
         context: "Outcome framing tollgate",
         blocker: "Value owner is not assigned on the customer side.",
         pendingLaneCount: 2,
         updatedAt: new Date("2026-03-27T08:00:00.000Z")
-      },
-      {
-        id: "story-1",
-        workflow: "story_review",
-        entityType: "story",
-        entityId: "story-1",
-        key: "STR-003",
-        title: "Delivery Story review",
-        status: "ready",
-        tone: "progress",
-        actionLabel: "Open Delivery Story review",
-        href: "/stories/story-1#story-signoff",
-        description: "1 sign-off lane still remains before this Delivery Story is ready to start build.",
-        context: "OUT-001 / EPC-001",
-        blocker: null,
-        pendingLaneCount: 1,
-        updatedAt: new Date("2026-03-27T08:05:00.000Z")
-      },
-      {
-        id: "handoff-1",
-        workflow: "delivery_start",
-        entityType: "story",
-        entityId: "story-2",
-        key: "STR-004",
-        title: "Ready Delivery Story",
-        status: "approved",
-        tone: "success",
-        actionLabel: "Open delivery start",
-        href: "/handoff/story-2",
-        description: "Delivery review is complete. Open the delivery start page to finalize the build package.",
-        context: "OUT-001 / EPC-001",
-        blocker: null,
-        pendingLaneCount: 0,
-        updatedAt: new Date("2026-03-27T08:10:00.000Z")
       }
     ]
   }))
@@ -196,15 +162,15 @@ describe("Review queue page", () => {
 
     expect(screen.getByRole("heading", { name: "Human Review dashboard", level: 1 })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Human review lanes" })).toBeDefined();
-    expect(screen.getAllByText("Framing review").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Framing approvals").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Delivery review").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Imported review backlog" })).toBeDefined();
     expect(screen.getByText(/Use this page whenever you want one answer to the question/i)).toBeDefined();
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
-    expect(screen.getByText("Outcome tollgate review")).toBeDefined();
-    expect(screen.getByText("Delivery Story review")).toBeDefined();
-    expect(screen.getAllByRole("link", { name: "Open delivery start" }).length).toBeGreaterThan(0);
+    expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
+    expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
+    expect(screen.getByText("No items are currently in this group.")).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });

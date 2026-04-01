@@ -384,10 +384,29 @@ model Outcome {
   organizationId      String
   key                 String
   title               String
+  framingVersion      Int                 @default(1)
   problemStatement    String?
   outcomeStatement    String?
   baselineDefinition  String?
   baselineSource      String?
+  solutionContext     String?
+  solutionConstraints String?
+  dataSensitivity     String?
+  deliveryType        String?
+  aiUsageRole         String?
+  aiExecutionPattern  String?
+  aiUsageIntent       String?
+  businessImpactLevel RiskProfile?
+  businessImpactRationale String?
+  dataSensitivityLevel RiskProfile?
+  dataSensitivityRationale String?
+  blastRadiusLevel    RiskProfile?
+  blastRadiusRationale String?
+  decisionImpactLevel RiskProfile?
+  decisionImpactRationale String?
+  aiLevelJustification String?
+  riskAcceptedAt      DateTime?
+  riskAcceptedByValueOwnerId String?
   timeframe           String?
   valueOwnerId        String?
   riskProfile         RiskProfile         @default(medium)
@@ -542,6 +561,9 @@ model Tollgate {
   status         TollgateStatus     @default(blocked)
   blockers       String[]           @default([])
   approverRoles  MembershipRole[]   @default([])
+  submissionVersion Int?
+  approvedVersion Int?
+  approvalSnapshot Json?
   decidedBy      String?
   decidedAt      DateTime?
   comments       String?
@@ -561,6 +583,7 @@ model SignoffRecord {
   organizationId       String
   entityType           TollgateEntityType
   entityId             String
+  entityVersion        Int?
   tollgateId           String?
   tollgateType         TollgateType?
   decisionKind         SignoffDecisionKind

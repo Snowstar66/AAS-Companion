@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { Prisma } from "../../generated/client";
 import { tollgateUpsertInputSchema } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
@@ -36,6 +37,9 @@ export async function upsertTollgate(input: unknown) {
         status: parsed.status,
         blockers: parsed.blockers,
         approverRoles: parsed.approverRoles,
+        submissionVersion: parsed.submissionVersion ?? null,
+        approvedVersion: parsed.approvedVersion ?? null,
+        approvalSnapshot: parsed.approvalSnapshot ?? Prisma.JsonNull,
         decidedBy: parsed.decidedBy ?? null,
         decidedAt: parsed.decidedAt ?? null,
         comments: parsed.comments ?? null
@@ -49,6 +53,9 @@ export async function upsertTollgate(input: unknown) {
         status: parsed.status,
         blockers: parsed.blockers,
         approverRoles: parsed.approverRoles,
+        submissionVersion: parsed.submissionVersion ?? null,
+        approvedVersion: parsed.approvedVersion ?? null,
+        approvalSnapshot: parsed.approvalSnapshot ?? Prisma.JsonNull,
         decidedBy: parsed.decidedBy ?? null,
         decidedAt: parsed.decidedAt ?? null,
         comments: parsed.comments ?? null

@@ -55,6 +55,11 @@ function requireExplicitConfirmation(formData: FormData) {
   return String(formData.get("confirmAction") ?? "") === "yes";
 }
 
+function parseOptionalRiskLevel(formData: FormData, key: string) {
+  const value = String(formData.get(key) ?? "");
+  return value === "low" || value === "medium" || value === "high" ? value : null;
+}
+
 function parseDecisionKey(value: string) {
   if (value === "escalation") {
     return {
@@ -86,6 +91,23 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
     baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
     baselineSource: String(formData.get("baselineSource") ?? "") || null,
+    solutionContext: String(formData.get("solutionContext") ?? "") || null,
+    solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
+    dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
+    deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
+    aiUsageRole: null,
+    aiExecutionPattern:
+      (String(formData.get("aiExecutionPattern") ?? "") as "assisted" | "step_by_step" | "orchestrated") || null,
+    aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
+    businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
+    businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,
+    dataSensitivityLevel: parseOptionalRiskLevel(formData, "dataSensitivityLevel"),
+    dataSensitivityRationale: String(formData.get("dataSensitivityRationale") ?? "") || null,
+    blastRadiusLevel: parseOptionalRiskLevel(formData, "blastRadiusLevel"),
+    blastRadiusRationale: String(formData.get("blastRadiusRationale") ?? "") || null,
+    decisionImpactLevel: parseOptionalRiskLevel(formData, "decisionImpactLevel"),
+    decisionImpactRationale: String(formData.get("decisionImpactRationale") ?? "") || null,
+    aiLevelJustification: String(formData.get("aiLevelJustification") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
     valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
     riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",
@@ -97,6 +119,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/");
 
@@ -139,6 +162,23 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
     outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
     baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
     baselineSource: String(formData.get("baselineSource") ?? "") || null,
+    solutionContext: String(formData.get("solutionContext") ?? "") || null,
+    solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
+    dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
+    deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
+    aiUsageRole: null,
+    aiExecutionPattern:
+      (String(formData.get("aiExecutionPattern") ?? "") as "assisted" | "step_by_step" | "orchestrated") || null,
+    aiUsageIntent: String(formData.get("aiUsageIntent") ?? "") || null,
+    businessImpactLevel: parseOptionalRiskLevel(formData, "businessImpactLevel"),
+    businessImpactRationale: String(formData.get("businessImpactRationale") ?? "") || null,
+    dataSensitivityLevel: parseOptionalRiskLevel(formData, "dataSensitivityLevel"),
+    dataSensitivityRationale: String(formData.get("dataSensitivityRationale") ?? "") || null,
+    blastRadiusLevel: parseOptionalRiskLevel(formData, "blastRadiusLevel"),
+    blastRadiusRationale: String(formData.get("blastRadiusRationale") ?? "") || null,
+    decisionImpactLevel: parseOptionalRiskLevel(formData, "decisionImpactLevel"),
+    decisionImpactRationale: String(formData.get("decisionImpactRationale") ?? "") || null,
+    aiLevelJustification: String(formData.get("aiLevelJustification") ?? "") || null,
     timeframe: String(formData.get("timeframe") ?? "") || null,
     valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
     riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium",
@@ -150,6 +190,7 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/");
 
@@ -338,6 +379,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/");
 
@@ -369,7 +411,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
 export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("entityId") ?? formData.get("outcomeId") ?? "");
-  const parsedDecision = parseDecisionKey(String(formData.get("decisionKey") ?? "review|architect|supplier"));
+  const parsedDecision = parseDecisionKey(String(formData.get("decisionKey") ?? "approval|value_owner|customer"));
   const actualPartyRoleEntryId = String(formData.get("actualPartyRoleEntryId") ?? "");
   const evidenceReference = String(formData.get("evidenceReference") ?? "") || null;
   const note = String(formData.get("note") ?? "") || null;
@@ -394,6 +436,7 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/review");
@@ -418,16 +461,19 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
 export async function createEpicFromOutcomeAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
+  const title = String(formData.get("quickEpicTitle") ?? "") || null;
   const result = await createNativeEpicFromOutcomeService({
     organizationId: session.organization.organizationId,
     outcomeId,
-    actorId: session.userId
+    actorId: session.userId,
+    title
   });
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/");
@@ -461,6 +507,7 @@ export async function createStoryIdeaFromOutcomeAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/");
@@ -543,6 +590,7 @@ export async function archiveOutcomeAction(formData: FormData) {
   revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
   revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
   revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
   revalidatePath("/framing");
   revalidatePath("/workspace");
   revalidatePath("/stories");

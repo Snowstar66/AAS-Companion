@@ -4,14 +4,21 @@ import { useState } from "react";
 import { Check, Copy, Download } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { FramingBriefExportPayload } from "@/lib/framing/framing-brief-export";
+import { buildFramingBriefExportPackage } from "@/lib/framing/framing-brief-export-package";
 
 type FramingBriefExportPanelProps = {
   payload: FramingBriefExportPayload;
   markdown: string;
+  embedded?: boolean | undefined;
   disabled?: boolean | undefined;
 };
 
-export function FramingBriefExportPanel({ payload, markdown, disabled = false }: FramingBriefExportPanelProps) {
+export function FramingBriefExportPanel({
+  payload,
+  markdown,
+  embedded = false,
+  disabled = false
+}: FramingBriefExportPanelProps) {
   const [copied, setCopied] = useState<"json" | "markdown" | null>(null);
   const json = JSON.stringify(payload, null, 2);
   const fileBaseName = payload.handshake.outcome_key.toLowerCase();
@@ -32,21 +39,35 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
     URL.revokeObjectURL(href);
   }
 
-  return (
-    <Card className="border-border/70 shadow-sm">
+  function handlePackageDownload() {
+    const pkg = buildFramingBriefExportPackage({
+      payload,
+      markdown
+    });
+    const href = URL.createObjectURL(pkg.blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = pkg.filename;
+    link.click();
+    URL.revokeObjectURL(href);
+  }
+
+  const content = (
+    <>
       <CardHeader>
         <CardTitle>Export framing brief</CardTitle>
         <CardDescription>
-          Export the current framing brief, epics and direction seeds as an AI-friendly package for further refinement in tools such as BMAD.
-          Business content comes first. Internal IDs and any legacy migration references remain as metadata only.
+          Export the current framing brief, approvals and Story Idea references as an AI-friendly package for the next step in tools such as BMAD.
+          Business content, visual intent and approval context come first.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
           <p className="font-medium">How to use this export</p>
           <p className="mt-2">
-            Use Markdown when you want to paste the framing brief into another AI tool. Use JSON when another system or workflow
-            should read the package structurally with epics and direction seeds intact.
+            Use Markdown when you want to hand the Framing to another AI tool directly. Use JSON when another workflow should keep
+            the structure, UX sketch references and approval context intact. Use the package download when you want the Story Idea
+            images included as real files and referenced in a clearer handoff bundle.
           </p>
           {disabled ? <p className="mt-2">Restore the Outcome first if you want to update the framing before exporting again.</p> : null}
         </div>
@@ -59,6 +80,15 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
           <Button className="gap-2" disabled={disabled} onClick={() => handleCopy(json, "json")} type="button" variant="secondary">
             {copied === "json" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             Copy Framing JSON
+          </Button>
+          <Button
+            className="gap-2"
+            disabled={disabled}
+            onClick={handlePackageDownload}
+            type="button"
+          >
+            <Download className="h-4 w-4" />
+            Download Package (.zip)
           </Button>
           <Button
             className="gap-2"
@@ -86,7 +116,7 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>Markdown preview</CardTitle>
-              <CardDescription>Best for copy/paste into another AI tool.</CardDescription>
+              <CardDescription>Best for direct copy/paste into another AI tool.</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-background p-4 text-sm text-foreground">
@@ -98,7 +128,7 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>JSON preview</CardTitle>
-              <CardDescription>Structured payload with metadata retained only for traceability and migration context.</CardDescription>
+              <CardDescription>Structured payload. Use the zip package if you want the actual image files included too.</CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="max-h-[520px] overflow-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">
@@ -108,6 +138,16 @@ export function FramingBriefExportPanel({ payload, markdown, disabled = false }:
           </Card>
         </div>
       </CardContent>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="space-y-5">{content}</div>;
+  }
+
+  return (
+    <Card className="border-border/70 shadow-sm">
+      {content}
     </Card>
   );
 }

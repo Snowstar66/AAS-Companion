@@ -12,7 +12,7 @@ type ContextHelpProps = {
 export function ContextHelp({ pattern, className, summaryLabel = "Open help", defaultOpen = false }: ContextHelpProps) {
   return (
     <details
-      className={`group rounded-2xl border border-border/70 bg-background/85 shadow-sm ${className ?? ""}`}
+      className={`guidance-block group rounded-2xl border border-border/70 bg-background/85 shadow-sm ${className ?? ""}`}
       open={defaultOpen}
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
@@ -63,5 +63,5 @@ export function ContextHelp({ pattern, className, summaryLabel = "Open help", de
 }
 
 export function InlineFieldGuidance({ guidance }: { guidance: string }) {
-  return <p className="text-sm leading-6 text-muted-foreground">{guidance}</p>;
+  return <p className="framing-inline-guidance text-sm leading-6 text-muted-foreground">{guidance}</p>;
 }

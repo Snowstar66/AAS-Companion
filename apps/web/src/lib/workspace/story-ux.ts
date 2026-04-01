@@ -47,19 +47,19 @@ export type StoryUxModel = {
 
 const lifecycleStepDefinitions = [
   {
-    key: "draft",
-    label: "Draft",
-    description: "Core delivery inputs are still being written."
+    key: "needs_action",
+    label: "Needs action",
+    description: "One or more required delivery inputs are still missing."
   },
   {
-    key: "review_ready",
-    label: "In review",
-    description: "The Delivery Story is going through the lightweight human checks needed before build starts."
+    key: "design_ready",
+    label: "Design ready",
+    description: "All required delivery inputs are present and the story is ready to hand over into external build work."
   },
   {
-    key: "build_ready",
-    label: "Ready to start build",
-    description: "Required delivery checks are complete and the build package can be finalized."
+    key: "in_build",
+    label: "In build",
+    description: "Build work is active for this delivery story."
   }
 ] as const;
 
@@ -104,20 +104,15 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     status: input.status as "draft" | "definition_blocked" | "ready_for_handoff" | "in_progress"
   });
   const blockers = input.blockers?.length ? input.blockers : readiness.reasons.map((reason) => reason.message);
-  const openActionCount = input.pendingActionCount ?? 0;
-  const blockedActionCount = input.blockedActionCount ?? 0;
-  const hasTollgateStatus = input.tollgateStatus === "blocked" || input.tollgateStatus === "ready" || input.tollgateStatus === "approved";
-  const missingSignoffCount =
-    input.tollgateStatus === "approved" ? 0 : openActionCount + (input.tollgateStatus === "ready" ? 0 : blockedActionCount);
+  const openActionCount = 0;
+  const missingSignoffCount = 0;
   const isArchived = input.lifecycleState === "archived";
-  const isUnderSignoff = input.tollgateStatus === "ready" || input.tollgateStatus === "blocked";
-  const isApproved = input.tollgateStatus === "approved";
   const isInDelivery = input.status === "in_progress";
-  const isReadyForHandoff = hasTollgateStatus ? isApproved : isApproved || input.status === "ready_for_handoff";
-  const isReviewReady = readiness.state === "ready" && !hasTollgateStatus && !isReadyForHandoff;
+  const isReadyForHandoff = readiness.state === "ready" || input.status === "ready_for_handoff";
+  const isDesignReady = readiness.state === "ready" && !isInDelivery;
 
-  let statusLabel = "Draft delivery story";
-  let statusDetail = "This Delivery Story still needs key delivery inputs before review can start.";
+  let statusLabel = "Needs action";
+  let statusDetail = "One or more required delivery inputs are still missing.";
   let tone: StoryUxTone = "neutral";
 
   if (isArchived) {
@@ -126,55 +121,26 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
     tone = "archived";
   } else if (isInDelivery) {
     statusLabel = "In build";
-    statusDetail = "Build has started and active implementation work can proceed.";
-    tone = "progress";
-  } else if (isReadyForHandoff) {
-    statusLabel = "Ready to start build";
-    statusDetail = "Required delivery checks are complete and the build package can now be finalized.";
+    statusDetail = "Build work is already active for this Delivery Story.";
     tone = "success";
-  } else if (isUnderSignoff) {
-    statusLabel = "In review";
-    statusDetail =
-      missingSignoffCount > 0
-        ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before build can start.`
-        : "Human review is in progress for this Delivery Story.";
-    tone = "progress";
-  } else if (isReviewReady) {
-    statusLabel = "Ready for review";
-    statusDetail = "All required design inputs are present. Submit the Delivery Story to begin human review.";
-    tone = "progress";
-  } else if (input.status === "in_progress") {
-    statusLabel = "In build";
-    statusDetail = "The Delivery Story has already moved beyond planning into active implementation work.";
-    tone = "progress";
+  } else if (isDesignReady) {
+    statusLabel = "Design ready";
+    statusDetail = "Required delivery inputs are present. This Delivery Story is ready to export into build work.";
+    tone = "success";
   } else if (blockers.length > 0) {
-    statusLabel = "Needs updates";
+    statusLabel = "Needs action";
     statusDetail = blockers[0] ?? "Important delivery inputs are still missing.";
     tone = "warning";
   }
 
-  const readinessLabel = isInDelivery
-    ? "Build started"
-    : isReadyForHandoff
-      ? "Ready to start build"
-      : isUnderSignoff
-        ? "In review"
-        : readiness.state === "ready"
-          ? "Ready for review"
-          : "Needs design inputs";
+  const readinessLabel = isInDelivery ? "In build" : isReadyForHandoff ? "Design ready" : "Needs action";
   const readinessDetail = isInDelivery
-    ? "The Delivery Story has already moved into active implementation."
+    ? "Build is already active for this Delivery Story."
     : isReadyForHandoff
-      ? "Required delivery checks are complete and all inputs needed to start build are present."
-      : isUnderSignoff
-        ? missingSignoffCount > 0
-          ? `${missingSignoffCount} human review action${missingSignoffCount === 1 ? "" : "s"} still remain before build can start.`
-          : "Human review is in progress for this Delivery Story."
-        : readiness.state === "ready"
-          ? "Test definition, acceptance criteria and definition of done are all present."
-          : blockers[0] ?? "Complete the missing design inputs before submitting the Delivery Story.";
+      ? "Acceptance criteria, Test Definition and Definition of Done are all present."
+      : blockers[0] ?? "Complete the missing delivery inputs before handing this over into build work.";
 
-  const currentStepIndex = isReadyForHandoff || isInDelivery ? 2 : isUnderSignoff || isReviewReady ? 1 : 0;
+  const currentStepIndex = isInDelivery ? 2 : isDesignReady ? 1 : 0;
   const lifecycleSteps = lifecycleStepDefinitions.map((step, index) => {
     const isCurrent = index === currentStepIndex;
     const state: StoryUxStepState =
@@ -231,68 +197,21 @@ export function getStoryUxModel(input: StoryUxInput): StoryUxModel {
         ]
       : readiness.state !== "ready"
       ? getMissingInputActions(input)
-      : isApproved
-        ? [
-            ...(input.id
-              ? [
-                  {
-                    label: "Start build",
-                    description: "Open the build-start page and finalize the approved package for build.",
-                    href: `/handoff/${input.id}`
-                  }
-                ]
-              : []),
-            {
-              label: "Review sign-off history",
-              description: "See who reviewed and approved the Story.",
-              href: "#story-signoff-history"
-            },
-            {
-              label: "Check Value Spine context",
-              description: "Confirm the Story still sits in the correct Framing branch and Epic.",
-              href: "#story-value-spine"
-            }
-          ]
-        : isUnderSignoff
-          ? [
+      : [
               {
-                label: "Record remaining sign-offs",
-                description:
-                  missingSignoffCount > 0
-                    ? `${missingSignoffCount} review or approval action${missingSignoffCount === 1 ? "" : "s"} still remain before build can start.`
-                    : "Continue recording the human decisions that move this Delivery Story forward.",
-                href: "#story-signoff"
-              },
-              ...(blockedActionCount > 0
-                ? [
-                    {
-                      label: "Clear blocked lanes",
-                      description: "Resolve staffing or governance gaps that are blocking sign-off.",
-                      href: "#story-governance"
-                    }
-                  ]
-                : []),
-              {
-                label: "Review current blockers",
-                description: blockers[0] ?? "Check the current readiness and tollgate notes before proceeding.",
-                href: "#story-blockers"
-              }
-            ]
-          : [
-              {
-                label: "Start delivery review",
-                description: "Freeze the current readiness state and start human review for this Delivery Story.",
-                href: "#story-readiness"
-              },
-              {
-                label: "Check governance coverage",
-                description: "Make sure the required humans are available before sign-off begins.",
-                href: "#story-governance"
+                label: "Open build package",
+                description: "Preview the build package that will be used outside this tool for implementation work.",
+                href: input.id ? `/handoff/${input.id}` : "#story-value-spine"
               },
               {
                 label: "Review branch context",
                 description: "Confirm that the Story still belongs to the intended Framing and Epic.",
                 href: "#story-value-spine"
+              },
+              {
+                label: "Check governance coverage",
+                description: "Verify that the project is staffed for the current AI level before external build work begins.",
+                href: "#story-governance"
               }
             ];
 
