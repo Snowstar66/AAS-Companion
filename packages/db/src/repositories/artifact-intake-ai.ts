@@ -63,9 +63,11 @@ Import intent:
 - ${input.importIntent === "framing" ? "framing" : "design"}
 - If intent is framing:
   - keep candidates outcome- and epic-oriented
-  - treat detailed user stories conservatively
-  - story candidates should describe framing-level intent, not design workflow
-  - when a section is too detailed for framing, prefer leftoverSectionIds over forcing a candidate
+  - detailed user stories may still become story candidates, but only when you can restate them as framing-level Story Ideas
+  - story candidates must focus on title, value intent, and expected behavior
+  - do not preserve delivery-only detail such as acceptance criteria, test plans, or UI flows inside framing story candidates unless needed as weak source context
+  - leave UX, NFR, additional requirements, and detailed design sections outside candidates so the importer can carry them forward separately
+  - when a section is too detailed for framing and you cannot generalize it cleanly, prefer leftoverSectionIds over forcing a candidate
 - If intent is design:
   - story candidates may stay concrete enough for delivery/design use
   - preserve acceptance criteria and verification-oriented detail when the source clearly contains it

@@ -349,6 +349,9 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="rounded-2xl border border-sky-200 bg-sky-50/40 px-4 py-4 text-sm text-sky-950">
+                  Bulk approve/reject with checkboxes lives in <Link className="font-semibold underline underline-offset-4" href="/review">Human Review</Link>. Use Intake to inspect one file at a time and Human Review when you want to confirm or reject many imported items together.
+                </div>
                 {backlogRows.length > 0 ? (
                   <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">
                     {backlogRows.map((row, index) => {

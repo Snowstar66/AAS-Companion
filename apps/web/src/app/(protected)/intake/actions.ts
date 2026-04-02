@@ -110,11 +110,11 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
 
   const baseMessage =
     requestedProcessingMode === "ai_assisted" && result.data.processingModeUsed === "ai_assisted"
-      ? `Uploaded ${result.data.uploadedCount} file(s) into a new AI-assisted ${importIntent} import session. Likely Value Spine candidates were extracted, and anything that could not be placed confidently remains visible under Review leftovers.`
+      ? `Uploaded ${result.data.uploadedCount} file(s) into a new AI-assisted ${importIntent} import session. Likely Value Spine candidates were extracted, carry-forward design input was separated when possible, and anything that still could not be placed confidently remains visible under Review leftovers.`
       : requestedProcessingMode === "ai_assisted"
-        ? `Uploaded ${result.data.uploadedCount} file(s) into a new ${importIntent} import session. The built-in parser completed the import successfully, and anything that could not be placed confidently remains visible under Review leftovers.`
+        ? `Uploaded ${result.data.uploadedCount} file(s) into a new ${importIntent} import session. The built-in parser completed the import successfully, carry-forward design input was separated when possible, and anything that could not be placed confidently remains visible under Review leftovers.`
         : result.data.rejectedCount > 0
-        ? `Uploaded ${result.data.uploadedCount} file(s) into a new ${importIntent} import. ${result.data.rejectedCount} file(s) were rejected with clear feedback while the accepted files were classified and mapped for review.`
+          ? `Uploaded ${result.data.uploadedCount} file(s) into a new ${importIntent} import. ${result.data.rejectedCount} file(s) were rejected with clear feedback while the accepted files were classified and mapped for review.`
         : `Uploaded ${result.data.uploadedCount} file(s) into a new ${importIntent} import session and mapped them into reviewable candidates.`;
   const message = result.data.processingNote ? `${baseMessage} ${result.data.processingNote}` : baseMessage;
 

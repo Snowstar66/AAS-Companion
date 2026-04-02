@@ -163,8 +163,32 @@ export const artifactAasCandidateSchema = z.object({
   draftRecord: z.lazy(() => artifactCandidateDraftRecordSchema.partial()).optional()
 });
 
+export const artifactCarryForwardCategorySchema = z.enum([
+  "ux_principle",
+  "nfr_constraint",
+  "solution_constraint",
+  "additional_requirement",
+  "excluded_design"
+]);
+
+export const artifactCarryForwardUseSchema = z.enum([
+  "design_input",
+  "framing_constraint",
+  "cross_cutting_requirement"
+]);
+
+export const artifactCarryForwardItemSchema = z.object({
+  id: z.string().min(1),
+  category: artifactCarryForwardCategorySchema,
+  recommendedUse: artifactCarryForwardUseSchema,
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  sourceSection: artifactParsedSectionSchema
+});
+
 export const artifactMappingResultSchema = z.object({
   candidates: z.array(artifactAasCandidateSchema),
+  carryForwardItems: z.array(artifactCarryForwardItemSchema).default([]),
   unmappedSections: z.array(artifactParsedSectionSchema)
 });
 
@@ -312,6 +336,9 @@ export type ArtifactSourceClassification = z.infer<typeof artifactSourceClassifi
 export type ArtifactParsedSection = z.infer<typeof artifactParsedSectionSchema>;
 export type ArtifactParseResult = z.infer<typeof artifactParseResultSchema>;
 export type ArtifactAasCandidate = z.infer<typeof artifactAasCandidateSchema>;
+export type ArtifactCarryForwardCategory = z.infer<typeof artifactCarryForwardCategorySchema>;
+export type ArtifactCarryForwardUse = z.infer<typeof artifactCarryForwardUseSchema>;
+export type ArtifactCarryForwardItem = z.infer<typeof artifactCarryForwardItemSchema>;
 export type ArtifactMappingResult = z.infer<typeof artifactMappingResultSchema>;
 export type ArtifactCandidateHumanDecision = z.infer<typeof artifactCandidateHumanDecisionSchema>;
 export type ArtifactCandidateDraftRecord = z.infer<typeof artifactCandidateDraftRecordSchema>;
@@ -1065,6 +1092,203 @@ function dedupeArtifactText(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
+function normalizeInlineText(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function extractStoryNarrative(text: string) {
+  const normalized = normalizeInlineText(text);
+  const match = normalized.match(/as an?\s+(.+?)\s+i want\s+(.+?)(?:\s+so that\s+(.+?))?(?:[.!?]|$)/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    actor: match[1]?.trim() ?? "",
+    intent: match[2]?.trim() ?? "",
+    outcome: match[3]?.trim() ?? ""
+  };
+}
+
+function upperCaseFirst(value: string) {
+  if (!value) {
+    return value;
+  }
+
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function deriveFramingStoryValueIntent(input: {
+  section: ArtifactParsedSection;
+  currentValueIntent: string | null | undefined;
+  fallbackSummary: string;
+}) {
+  if (input.currentValueIntent?.trim()) {
+    return input.currentValueIntent.trim();
+  }
+
+  const narrative = extractStoryNarrative(input.section.text);
+
+  if (narrative?.outcome) {
+    return summarizeText(upperCaseFirst(narrative.outcome), 180);
+  }
+
+  if (narrative?.intent) {
+    return summarizeText(upperCaseFirst(narrative.intent), 180);
+  }
+
+  return summarizeText(input.fallbackSummary || input.section.text, 180);
+}
+
+function deriveFramingStoryExpectedBehavior(input: {
+  section: ArtifactParsedSection;
+  currentExpectedBehavior: string | null | undefined;
+  fallbackSummary: string;
+}) {
+  if (input.currentExpectedBehavior?.trim()) {
+    return input.currentExpectedBehavior.trim();
+  }
+
+  const narrative = extractStoryNarrative(input.section.text);
+  const normalizedIntent = narrative?.intent?.replace(/^to\s+/i, "") ?? "";
+
+  if (narrative?.actor && normalizedIntent) {
+    return summarizeText(`${upperCaseFirst(narrative.actor)} can ${normalizedIntent}.`, 180);
+  }
+
+  if (normalizedIntent) {
+    return summarizeText(upperCaseFirst(normalizedIntent), 180);
+  }
+
+  return summarizeText(input.fallbackSummary || input.section.text, 180);
+}
+
+function adaptStoryCandidateForImportIntent(input: {
+  candidate: ArtifactAasCandidate;
+  section: ArtifactParsedSection;
+  importIntent: "framing" | "design";
+}) {
+  if (input.importIntent !== "framing" || input.candidate.type !== "story") {
+    return input.candidate;
+  }
+
+  const baseDraftRecord = artifactCandidateDraftRecordSchema.parse({
+    ...createArtifactCandidateDraftRecord(input.candidate),
+    ...(input.candidate.draftRecord ?? {})
+  });
+  const valueIntent = deriveFramingStoryValueIntent({
+    section: input.section,
+    currentValueIntent: baseDraftRecord.valueIntent,
+    fallbackSummary: input.candidate.summary
+  });
+  const expectedBehavior = deriveFramingStoryExpectedBehavior({
+    section: input.section,
+    currentExpectedBehavior: baseDraftRecord.expectedBehavior,
+    fallbackSummary: input.candidate.summary
+  });
+
+  return {
+    ...input.candidate,
+    summary: summarizeText(valueIntent || input.candidate.summary),
+    acceptanceCriteria: [],
+    testNotes: [],
+    draftRecord: {
+      ...baseDraftRecord,
+      valueIntent,
+      expectedBehavior,
+      acceptanceCriteria: [],
+      aiUsageScope: [],
+      testDefinition: null,
+      definitionOfDone: []
+    }
+  } satisfies ArtifactAasCandidate;
+}
+
+function detectCarryForwardSection(section: ArtifactParsedSection) {
+  const title = normalizeHeading(section.title);
+  const text = normalizeHeading(section.text);
+
+  if (/additional requirement|additional req|open issue|assumption|dependency/.test(title)) {
+    return {
+      category: "additional_requirement" as const,
+      recommendedUse: "design_input" as const
+    };
+  }
+
+  if (/ux|user experience|usability|design principle/.test(title)) {
+    return {
+      category: "ux_principle" as const,
+      recommendedUse: "design_input" as const
+    };
+  }
+
+  if (/non[\s-]?functional|nfr|performance|security|availability|privacy|compliance|accessibility|reliability/.test(title)) {
+    return {
+      category: "nfr_constraint" as const,
+      recommendedUse: "cross_cutting_requirement" as const
+    };
+  }
+
+  if (/constraint|integration|platform|technology|persistence|database|api|hosting|architecture/.test(title)) {
+    return {
+      category: /wireframe|mockup|screen|page|flow|interaction/.test(text)
+        ? ("excluded_design" as const)
+        : ("solution_constraint" as const),
+      recommendedUse: /wireframe|mockup|screen|page|flow|interaction/.test(text)
+        ? ("design_input" as const)
+        : ("framing_constraint" as const)
+    };
+  }
+
+  if (/wireframe|mockup|screen flow|user flow|interaction pattern|page layout|ui flow/.test(title)) {
+    return {
+      category: "excluded_design" as const,
+      recommendedUse: "design_input" as const
+    };
+  }
+
+  if (/mobile-first|accessible|responsive|clear feedback|simple navigation/.test(text)) {
+    return {
+      category: "ux_principle" as const,
+      recommendedUse: "design_input" as const
+    };
+  }
+
+  if (/performance|security|availability|privacy|compliance|retention|audit|accessibility|reliability/.test(text)) {
+    return {
+      category: "nfr_constraint" as const,
+      recommendedUse: "cross_cutting_requirement" as const
+    };
+  }
+
+  if (/must integrate|must support|must persist|must run on|must comply|must avoid/.test(text)) {
+    return {
+      category: "solution_constraint" as const,
+      recommendedUse: "framing_constraint" as const
+    };
+  }
+
+  return null;
+}
+
+function createCarryForwardItem(section: ArtifactParsedSection) {
+  const classification = detectCarryForwardSection(section);
+
+  if (!classification) {
+    return null;
+  }
+
+  return {
+    id: `carry-forward-${section.sourceReference.fileId}-${section.id}`,
+    category: classification.category,
+    recommendedUse: classification.recommendedUse,
+    title: section.title,
+    summary: summarizeText(section.text, 220),
+    sourceSection: section
+  } satisfies ArtifactCarryForwardItem;
+}
+
 function extractTaggedLineValue(text: string, label: string) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = text.match(new RegExp(`^${escapedLabel}:\\s*(.+)$`, "im"));
@@ -1288,7 +1512,9 @@ export function buildAiAssistedArtifactProcessingResult(input: {
     parsedArtifacts: ArtifactParseResult;
   }>;
   interpretation: ArtifactAiSessionInterpretation;
+  importIntent?: "framing" | "design";
 }) {
+  const importIntent = input.importIntent ?? "design";
   const normalizedInterpretation = artifactAiSessionInterpretationSchema.parse(input.interpretation);
   const aiFilesByName = new Map<string, ArtifactAiFileInterpretation[]>();
 
@@ -1306,6 +1532,7 @@ export function buildAiAssistedArtifactProcessingResult(input: {
     parseResult: ArtifactParseResult;
   }> = [];
   const candidates: ArtifactAasCandidate[] = [];
+  const carryForwardItems: ArtifactCarryForwardItem[] = [];
   const unmappedSections: ArtifactParsedSection[] = [];
   let lastOutcomeCandidateId: string | undefined;
   let lastEpicCandidateId: string | undefined;
@@ -1380,7 +1607,8 @@ export function buildAiAssistedArtifactProcessingResult(input: {
         confidence: sourceSection.confidence
       });
 
-      candidates.push({
+      const nextCandidate = adaptStoryCandidateForImportIntent({
+        candidate: {
         id: candidateId,
         type: interpretedCandidate.type,
         title: summarizeText(interpretedCandidate.title, 80),
@@ -1414,7 +1642,12 @@ export function buildAiAssistedArtifactProcessingResult(input: {
           }),
           interpretedCandidate.draftRecord
         )
+      },
+        section: sourceSection,
+        importIntent
       });
+
+      candidates.push(nextCandidate);
 
       if (interpretedCandidate.type === "outcome") {
         lastOutcomeCandidateId = candidateId;
@@ -1430,20 +1663,50 @@ export function buildAiAssistedArtifactProcessingResult(input: {
 
     for (const section of nextSections) {
       if (leftoverSectionIds.has(section.id)) {
-        unmappedSections.push(section);
+        const carryForwardItem = createCarryForwardItem(section);
+
+        if (carryForwardItem) {
+          carryForwardItems.push(carryForwardItem);
+        } else {
+          unmappedSections.push(section);
+        }
         continue;
       }
 
       if (!usedSectionIds.has(section.id) && (section.kind === "unmapped" || section.kind === "architecture_notes")) {
-        unmappedSections.push(section);
+        const carryForwardItem = createCarryForwardItem(section);
+
+        if (carryForwardItem) {
+          carryForwardItems.push(carryForwardItem);
+        } else {
+          unmappedSections.push(section);
+        }
       }
     }
   }
 
+  const normalizedCandidates =
+    importIntent === "framing"
+      ? candidates.map((candidate) => {
+          const sourceSection = parseResults
+            .flatMap((entry) => entry.parseResult.sections)
+            .find((section) => section.sourceReference.fileId === candidate.source.fileId && section.id === candidate.source.sectionId);
+
+          return sourceSection
+            ? adaptStoryCandidateForImportIntent({
+                candidate,
+                section: sourceSection,
+                importIntent
+              })
+            : candidate;
+        })
+      : candidates;
+
   return {
     files: parseResults,
     mappingResult: {
-      candidates,
+      candidates: normalizedCandidates,
+      carryForwardItems,
       unmappedSections
     }
   };
@@ -1979,8 +2242,11 @@ export function mapParsedArtifactsToAasCandidates(input: {
     sourceType: ArtifactSourceClassification["sourceType"] | null | undefined;
     parsedArtifacts: ArtifactParseResult | null | undefined;
   }>;
+  importIntent?: "framing" | "design";
 }): ArtifactMappingResult {
+  const importIntent = input.importIntent ?? "design";
   const candidates: ArtifactAasCandidate[] = [];
+  const carryForwardItems: ArtifactCarryForwardItem[] = [];
   const unmappedSections: ArtifactParsedSection[] = [];
   let lastOutcomeCandidateId: string | null = null;
   let lastEpicCandidateId: string | null = null;
@@ -2031,7 +2297,8 @@ export function mapParsedArtifactsToAasCandidates(input: {
       const definitionOfDone = definitionOfDoneSection ? extractListItems(definitionOfDoneSection.text) : [];
 
       if (titleSection && summarySection) {
-        candidates.push({
+        const nextCandidate = adaptStoryCandidateForImportIntent({
+          candidate: {
           id: buildArtifactCandidateId({
             fileId: file.id,
             sectionId: titleSection.id,
@@ -2067,7 +2334,12 @@ export function mapParsedArtifactsToAasCandidates(input: {
             outcomeCandidateId: null,
             epicCandidateId: null
           }
+        },
+          section: titleSection,
+          importIntent
         });
+
+        candidates.push(nextCandidate);
       }
 
       const consumedTitles = new Set([
@@ -2091,7 +2363,13 @@ export function mapParsedArtifactsToAasCandidates(input: {
         }
 
         if (section.kind === "architecture_notes" || section.kind === "unmapped") {
-          unmappedSections.push(section);
+          const carryForwardItem = createCarryForwardItem(section);
+
+          if (carryForwardItem) {
+            carryForwardItems.push(carryForwardItem);
+          } else {
+            unmappedSections.push(section);
+          }
         }
       }
 
@@ -2100,7 +2378,13 @@ export function mapParsedArtifactsToAasCandidates(input: {
 
     for (const section of parsedArtifacts.sections) {
       if (section.kind === "unmapped" || section.kind === "architecture_notes") {
-        unmappedSections.push(section);
+        const carryForwardItem = createCarryForwardItem(section);
+
+        if (carryForwardItem) {
+          carryForwardItems.push(carryForwardItem);
+        } else {
+          unmappedSections.push(section);
+        }
         continue;
       }
 
@@ -2112,6 +2396,10 @@ export function mapParsedArtifactsToAasCandidates(input: {
             const lastStoryCandidate = candidates[lastStoryCandidateIndex];
 
             if (lastStoryCandidate?.type === "story") {
+              if (importIntent === "framing") {
+                continue;
+              }
+
               lastStoryCandidate.acceptanceCriteria = [...lastStoryCandidate.acceptanceCriteria, ...listItems];
               if (lastStoryCandidate.draftRecord) {
                 lastStoryCandidate.draftRecord.acceptanceCriteria = [...lastStoryCandidate.acceptanceCriteria];
@@ -2135,6 +2423,10 @@ export function mapParsedArtifactsToAasCandidates(input: {
           const lastStoryCandidate = candidates[lastStoryCandidateIndex];
 
           if (lastStoryCandidate?.type === "story") {
+            if (importIntent === "framing") {
+              continue;
+            }
+
             lastStoryCandidate.testNotes = [...lastStoryCandidate.testNotes, summarizeText(section.text, 120)];
             if (lastStoryCandidate.draftRecord) {
               lastStoryCandidate.draftRecord.testDefinition = lastStoryCandidate.testNotes.join("\n");
@@ -2221,7 +2513,8 @@ export function mapParsedArtifactsToAasCandidates(input: {
         inferredEpicCandidateId
       });
 
-      candidates.push({
+      const nextCandidate = adaptStoryCandidateForImportIntent({
+        candidate: {
         id: candidateId,
         type: candidateType,
         title: summarizeText(draftRecord.title || section.title, 80),
@@ -2249,7 +2542,12 @@ export function mapParsedArtifactsToAasCandidates(input: {
         acceptanceCriteria,
         testNotes,
         draftRecord
+      },
+        section,
+        importIntent
       });
+
+      candidates.push(nextCandidate);
 
       if (candidateType === "story") {
         lastStoryCandidateIndex = candidates.length - 1;
@@ -2257,8 +2555,26 @@ export function mapParsedArtifactsToAasCandidates(input: {
     }
   }
 
+  const normalizedCandidates =
+    importIntent === "framing"
+      ? candidates.map((candidate) => {
+          const sourceSection = input.files
+            .flatMap((file) => file.parsedArtifacts?.sections ?? [])
+            .find((section) => section.sourceReference.fileId === candidate.source.fileId && section.id === candidate.source.sectionId);
+
+          return sourceSection
+            ? adaptStoryCandidateForImportIntent({
+                candidate,
+                section: sourceSection,
+                importIntent
+              })
+            : candidate;
+        })
+      : candidates;
+
   return {
-    candidates,
+    candidates: normalizedCandidates,
+    carryForwardItems,
     unmappedSections
   };
 }

@@ -111,7 +111,7 @@ describe("artifact intake helpers", () => {
     expect(storyCandidate).toBeDefined();
     expect(storyCandidate?.relationshipState).toBe("mapped");
     expect(storyCandidate?.source.fileName).toBe("delivery-plan.md");
-    expect(mapping.unmappedSections.some((section) => section.kind === "architecture_notes")).toBe(true);
+    expect(mapping.carryForwardItems.some((item) => item.category === "solution_constraint")).toBe(true);
   });
 
   it("builds AI-assisted import results on top of the existing intake model", () => {
@@ -391,6 +391,59 @@ describe("artifact intake helpers", () => {
       "validation is enforced server-side",
       "blocked and valid states are both demonstrable"
     ]);
+  });
+
+  it("distills framing imports into story ideas and carries forward UX, NFR, and additional requirements", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-framing-1",
+      "golf-brief.md",
+      [
+        "# Epic",
+        "Epic title: Guided score capture",
+        "",
+        "## Story 1.1",
+        "As a golfer I want to capture my score hole by hole so that I can complete a round without paper notes.",
+        "",
+        "## Acceptance Criteria",
+        "- Hole score can be entered quickly",
+        "- The round can be saved",
+        "",
+        "## UX Principles",
+        "- mobile-first",
+        "- clear feedback after save",
+        "",
+        "## Non-functional requirements",
+        "- data must be retained across sessions",
+        "- accessibility support is required",
+        "",
+        "## Additional requirements",
+        "- support 9-hole and 18-hole rounds"
+      ].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-framing-1",
+          fileName: "golf-brief.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const storyCandidate = mapping.candidates.find((candidate) => candidate.type === "story");
+
+    expect(storyCandidate).toBeDefined();
+    expect(storyCandidate?.draftRecord?.acceptanceCriteria).toEqual([]);
+    expect(storyCandidate?.draftRecord?.testDefinition).toBeNull();
+    expect(storyCandidate?.draftRecord?.expectedBehavior).toContain("capture my score hole by hole");
+
+    expect(mapping.carryForwardItems.map((item) => item.category)).toEqual(
+      expect.arrayContaining(["ux_principle", "nfr_constraint", "additional_requirement"])
+    );
+    expect(mapping.unmappedSections).toHaveLength(0);
   });
 
   it("assigns an automatic unique-looking import key for story candidates", () => {

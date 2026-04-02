@@ -345,7 +345,8 @@ async function processArtifactIntakeSession(
       fileName: entry.fileName,
       sourceType: entry.sourceType,
       parsedArtifacts: entry.parseResult
-    }))
+    })),
+    importIntent: input.importIntent
   });
   let processingModeUsed: "deterministic" | "ai_assisted" = "deterministic";
   let processingNote: string | null = null;
@@ -366,7 +367,8 @@ async function processArtifactIntakeSession(
           fileName: entry.fileName,
           parsedArtifacts: entry.parseResult
         })),
-        interpretation: aiInterpretation
+        interpretation: aiInterpretation,
+        importIntent: input.importIntent
       });
 
       parsedArtifacts = aiResult.files.map((entry) => ({

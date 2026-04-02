@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { CheckCircle2, ChevronDown, CircleAlert, GitBranch, ShieldCheck } from "lucide-react";
 import type {
+  ArtifactCarryForwardItem,
   ArtifactCandidateDraftRecord,
   ArtifactCandidateHumanDecision,
   ArtifactComplianceResult,
@@ -63,7 +64,10 @@ type IntakeArtifactSession = {
   id: string;
   label: string;
   importIntent?: "framing" | "design";
-  mappedArtifacts: { unmappedSections: ParsedSection[] } | null;
+  mappedArtifacts: {
+    carryForwardItems?: ArtifactCarryForwardItem[];
+    unmappedSections: ParsedSection[];
+  } | null;
   allCandidates: IntakeArtifactCandidate[];
 };
 
@@ -277,6 +281,38 @@ function queueItemTone(item: QueueItem) {
   return "border-amber-200 bg-amber-50/50";
 }
 
+function carryForwardCategoryLabel(category: ArtifactCarryForwardItem["category"]) {
+  if (category === "ux_principle") {
+    return "UX principle";
+  }
+
+  if (category === "nfr_constraint") {
+    return "Non-functional requirement";
+  }
+
+  if (category === "solution_constraint") {
+    return "Solution constraint";
+  }
+
+  if (category === "additional_requirement") {
+    return "Additional requirement";
+  }
+
+  return "Design input";
+}
+
+function carryForwardUseLabel(recommendedUse: ArtifactCarryForwardItem["recommendedUse"]) {
+  if (recommendedUse === "cross_cutting_requirement") {
+    return "Carry forward as cross-cutting requirement";
+  }
+
+  if (recommendedUse === "framing_constraint") {
+    return "Carry forward as framing constraint";
+  }
+
+  return "Carry forward to design";
+}
+
 function CollapsibleReviewPanel(props: {
   title: string;
   description?: string | undefined;
@@ -374,6 +410,9 @@ export function ArtifactIntakeReviewWorkspace({
     candidateId: selectedCandidate?.id ?? null
   };
   const groups = queueItems(session, selectedFile, currentSelection);
+  const carryForwardItems = (session.mappedArtifacts?.carryForwardItems ?? []).filter(
+    (item) => item.sourceSection.sourceReference.fileId === selectedFile.id
+  );
   const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
     (section) => section.sourceReference.fileId === selectedFile.id
   ).length;
@@ -439,6 +478,42 @@ export function ArtifactIntakeReviewWorkspace({
 
   return (
     <div className="space-y-6">
+      {carryForwardItems.length > 0 ? (
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>Carry forward to design</CardTitle>
+            <CardDescription>
+              These sections were recognized as useful design or constraint input, so they are kept visible here instead of being treated as leftovers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2 text-xs">
+              {compactMetric("Carry-forward items", carryForwardItems.length)}
+            </div>
+            <div className="grid gap-3">
+              {carryForwardItems.map((item) => (
+                <div className="rounded-2xl border border-sky-200 bg-sky-50/40 p-4" key={item.id}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
+                      {carryForwardCategoryLabel(item.category)}
+                    </span>
+                    <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                      {carryForwardUseLabel(item.recommendedUse)}
+                    </span>
+                  </div>
+                  <p className="mt-3 font-medium text-foreground">{item.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.summary}</p>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {item.sourceSection.sourceReference.sectionMarker} lines {item.sourceSection.sourceReference.lineStart}-
+                    {item.sourceSection.sourceReference.lineEnd}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>Review leftovers</CardTitle>
