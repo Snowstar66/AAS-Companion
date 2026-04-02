@@ -427,9 +427,11 @@ describe("Import page", () => {
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Imported Story").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Story Idea").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Review leftovers" })).toBeDefined();
     expect(screen.getAllByText("Leave promotion outside this story.").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Save and approve import" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Save and approve Story Idea import" })).toBeDefined();
+    expect(screen.getByText(/This imported story will become a Story Idea in Framing when approved\./)).toBeDefined();
   });
 
   it("shows Demo as read-only and disables new uploads", async () => {

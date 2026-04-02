@@ -8,38 +8,33 @@ import { Button } from "@aas-companion/ui";
 type ReviewIntent = "edit" | "reject" | "promote";
 type UploadProcessingMode = "deterministic" | "ai_assisted";
 
-const reviewActionConfig: Array<{
-  intent: ReviewIntent;
-  label: string;
-  pendingLabel: string;
-  pendingMessage: string;
-  variant?: "default" | "secondary";
-  Icon: typeof GitBranch;
-}> = [
-  {
-    intent: "edit",
-    label: "Save corrections",
-    pendingLabel: "Saving corrections...",
-    pendingMessage: "Saving your corrections and refreshing the imported candidate.",
-    variant: "secondary",
-    Icon: GitBranch
-  },
-  {
-    intent: "reject",
-    label: "Discard or reject candidate",
-    pendingLabel: "Discarding candidate...",
-    pendingMessage: "Recording the rejection and updating the intake queue.",
-    variant: "secondary",
-    Icon: XCircle
-  },
-  {
-    intent: "promote",
-    label: "Approve import into project",
-    pendingLabel: "Approving import...",
-    pendingMessage: "Creating governed project records and moving the import into the normal project workflow.",
-    Icon: Upload
-  }
-];
+function getReviewActionConfig(importTargetLabel: string) {
+  return [
+    {
+      intent: "edit" as const,
+      label: "Save corrections",
+      pendingLabel: "Saving corrections...",
+      pendingMessage: "Saving your corrections and refreshing the imported candidate.",
+      variant: "secondary" as const,
+      Icon: GitBranch
+    },
+    {
+      intent: "reject" as const,
+      label: "Reject import",
+      pendingLabel: "Rejecting import...",
+      pendingMessage: "Recording the rejection and updating the intake queue.",
+      variant: "secondary" as const,
+      Icon: XCircle
+    },
+    {
+      intent: "promote" as const,
+      label: `Approve as ${importTargetLabel}`,
+      pendingLabel: `Approving ${importTargetLabel}...`,
+      pendingMessage: `Creating governed ${importTargetLabel} records and moving the import into the normal project workflow.`,
+      Icon: Upload
+    }
+  ];
+}
 
 export function ArtifactIntakeUploadSubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
@@ -91,10 +86,11 @@ export function ArtifactIntakeUploadSubmitButton({ disabled }: { disabled?: bool
   );
 }
 
-export function ArtifactIntakeReviewSubmitButtons() {
+export function ArtifactIntakeReviewSubmitButtons({ importTargetLabel = "project record" }: { importTargetLabel?: string }) {
   const { pending } = useFormStatus();
   const [submittedIntent, setSubmittedIntent] = useState<ReviewIntent | null>(null);
   const activeIntent = pending ? submittedIntent : null;
+  const reviewActionConfig = getReviewActionConfig(importTargetLabel);
   const activeConfig = reviewActionConfig.find((entry) => entry.intent === activeIntent) ?? null;
 
   return (

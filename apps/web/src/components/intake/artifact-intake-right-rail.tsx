@@ -49,17 +49,17 @@ export function ArtifactIntakeRightRail({ summary }: ArtifactIntakeRightRailProp
           />
           <ActionSummaryCard
             actionHref={summary.candidateObjects > 0 ? "/review" : undefined}
-            actionLabel="Open candidate review"
+            actionLabel="Open import approval"
             className="border-border/70 bg-muted/30"
-            description="Candidate objects that can continue into human review."
+            description="Imported objects that can be approved into Framing or Design."
             label="Candidate objects"
             value={summary.candidateObjects}
           />
           <ActionSummaryCard
             actionHref={summary.humanReviewRequired > 0 ? "/review?reviewStatusFilter=pending" : undefined}
-            actionLabel="Open Human Review"
+            actionLabel="Open approval queue"
             className="border-border/70 bg-muted/30"
-            description="Sessions currently waiting on explicit human review."
+            description="Imported rows currently waiting for explicit human approval."
             label="Human review queues"
             value={summary.humanReviewRequired}
           />

@@ -33,6 +33,10 @@ function getImportIntentLabel(importIntent: "framing" | "design" | string) {
   return importIntent === "design" ? "Design import" : "Framing import";
 }
 
+function getImportTargetLabel(importIntent: "framing" | "design" | string) {
+  return importIntent === "design" ? "Delivery Stories in Design" : "Story Ideas in Framing";
+}
+
 function getCandidateObjectLabel(candidate: {
   type: ReviewCandidate["type"];
   intakeSession: {
@@ -222,6 +226,7 @@ function buildReviewHref(input: {
   candidateId?: string | undefined;
   reviewStatusFilter?: string | undefined;
   findingFilter?: string | undefined;
+  importIntent?: string | undefined;
 }) {
   const params = new URLSearchParams();
 
@@ -235,6 +240,10 @@ function buildReviewHref(input: {
 
   if (input.findingFilter && input.findingFilter !== "all") {
     params.set("findingFilter", input.findingFilter);
+  }
+
+  if (input.importIntent && input.importIntent !== "all") {
+    params.set("importIntent", input.importIntent);
   }
 
   const query = params.toString();
@@ -413,6 +422,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const status = getParamValue(query.status);
   const reviewStatusFilter = getParamValue(query.reviewStatusFilter) ?? "all";
   const findingFilter = getParamValue(query.findingFilter) ?? "all";
+  const importIntentFilter = getParamValue(query.importIntent) ?? "all";
   const reviewHelp = getHelpPattern("review.workspace", null);
 
   const backlogSummary = queue.items.reduce(
@@ -434,6 +444,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const remainingCount = Math.max(queue.summary.total - completedCount, 0);
   const completionPercent = queue.summary.total > 0 ? Math.round((completedCount / queue.summary.total) * 100) : 0;
   const visibleItems = queue.items.filter((candidate) => {
+    if (importIntentFilter !== "all" && (candidate.intakeSession?.importIntent ?? "framing") !== importIntentFilter) {
+      return false;
+    }
+
     if (reviewStatusFilter === "all") {
       return true;
     }
@@ -613,11 +627,18 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ReviewSummaryCard
-            actionHref={firstImportedCandidate ? buildReviewHref({ candidateId: firstImportedCandidate.id }) : undefined}
-            actionLabel={firstImportedCandidate ? "Open imported candidate" : undefined}
+            actionHref={
+              firstImportedCandidate
+                ? buildReviewHref({
+                    candidateId: firstImportedCandidate.id,
+                    importIntent: firstImportedCandidate.intakeSession?.importIntent ?? "framing"
+                  })
+                : undefined
+            }
+            actionLabel={firstImportedCandidate ? "Open import approval" : undefined}
             className="border-border/70 bg-background text-foreground"
             count={queue.summary.total}
-            description="Imported candidates that still need human interpretation, correction, confirmation or approval."
+            description="Imported objects waiting to be approved into Framing or Design."
             label="Imported items to review"
           />
           <ReviewSummaryCard
@@ -627,11 +648,18 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             label="Imported decisions done"
           />
           <ReviewSummaryCard
-            actionHref={firstImportedCandidate ? buildReviewHref({ candidateId: firstImportedCandidate.id }) : undefined}
-            actionLabel={firstImportedCandidate ? "Resolve next imported item" : undefined}
+            actionHref={
+              firstImportedCandidate
+                ? buildReviewHref({
+                    candidateId: firstImportedCandidate.id,
+                    importIntent: firstImportedCandidate.intakeSession?.importIntent ?? "framing"
+                  })
+                : undefined
+            }
+            actionLabel={firstImportedCandidate ? "Resolve next import approval" : undefined}
             className="border-sky-200 bg-sky-50 text-sky-950"
             count={remainingCount}
-            description="Imported candidates that still need a human to fix, confirm or explicitly send onward."
+            description="Imported objects that still need a human to fix, approve or reject."
             label="Imported decisions left"
           />
           <ReviewSummaryCard
@@ -729,10 +757,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   <div>
                     <CardTitle>Imported review backlog</CardTitle>
                     <CardDescription>
-                      Each row is an imported Story, Epic or candidate item that can be opened into a focused correction workspace.
+                      Review imported objects here, then approve them into Framing or Design. If the import target was Framing, imported stories become Story Ideas.
                     </CardDescription>
                   </div>
-                  {reviewStatusFilter !== "all" ? (
+                  {reviewStatusFilter !== "all" || importIntentFilter !== "all" ? (
                     <Button asChild className="gap-2" variant="secondary">
                       <Link href={buildReviewHref({ candidateId })}>
                         Clear filter
@@ -752,19 +780,19 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                     <form action={submitArtifactBulkReviewAction} className="space-y-4" key={intentGroup.importIntent}>
                       <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-medium text-foreground">{intentGroup.label}</p>
-                              <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                {intentGroup.items.length} candidate(s)
-                              </span>
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-medium text-foreground">{intentGroup.label}</p>
+                                <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  {intentGroup.items.length} {intentGroup.importIntent === "design" ? "Delivery" : "Story Idea"} candidate(s)
+                                </span>
+                              </div>
+                              <p className="text-sm leading-6 text-muted-foreground">
+                                {intentGroup.importIntent === "design"
+                                  ? "Approve checked rows to create Delivery Stories in Design. Outcome and Epic records are linked or created as needed."
+                                  : "Approve checked rows to create Framing records. Imported stories become Story Ideas, while Outcome and Epic records are linked or created as needed."}
+                              </p>
                             </div>
-                            <p className="text-sm leading-6 text-muted-foreground">
-                              {intentGroup.importIntent === "design"
-                                ? "Approve checked rows to create Delivery Stories and linked Outcome/Epic records where needed."
-                                : "Approve checked rows to create Framing records such as Outcome, Epics and Story Ideas."}
-                            </p>
-                          </div>
                           <div className="flex flex-col gap-3 lg:min-w-[320px]">
                             <textarea
                               className="min-h-20 rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -774,7 +802,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                             <div className="flex flex-wrap gap-2">
                               <Button className="gap-2" name="bulkIntent" type="submit" value="approve">
                                 <ShieldCheck className="h-4 w-4" />
-                                {intentGroup.importIntent === "design" ? "Approve selected for Design" : "Approve selected for Framing"}
+                                {intentGroup.importIntent === "design" ? "Approve selected as Delivery Stories" : "Approve selected as Story Ideas"}
                               </Button>
                               <Button className="gap-2" name="bulkIntent" type="submit" value="reject" variant="secondary">
                                 <CircleAlert className="h-4 w-4" />
@@ -828,6 +856,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                             <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
                                               {getImportIntentLabel(candidate.intakeSession?.importIntent ?? "framing")}
                                             </span>
+                                            <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-900">
+                                              {getImportTargetLabel(candidate.intakeSession?.importIntent ?? "framing")}
+                                            </span>
                                             <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getBacklogBadgeClasses(candidateState)}`}>
                                               {getBacklogLabel(candidateState)}
                                             </span>
@@ -845,8 +876,17 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
                                       <div className="flex flex-col items-start gap-2 sm:flex-row">
                                         <Button asChild size="sm" variant={isSelected ? "default" : "secondary"}>
-                                          <Link href={buildReviewHref({ candidateId: candidate.id, reviewStatusFilter, findingFilter: "all" })}>
-                                            Open review workspace
+                                          <Link
+                                            href={buildReviewHref({
+                                              candidateId: candidate.id,
+                                              reviewStatusFilter,
+                                              findingFilter: "all",
+                                              importIntent: importIntentFilter
+                                            })}
+                                          >
+                                            {candidate.intakeSession?.importIntent === "design"
+                                              ? "Open Delivery Story approval"
+                                              : "Open Story Idea approval"}
                                           </Link>
                                         </Button>
                                       </div>
@@ -1222,11 +1262,13 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                               </Button>
                               <Button className="gap-2" name="intent" type="submit" value="reject" variant="secondary">
                                 <CircleAlert className="h-4 w-4" />
-                                Reject candidate
+                                Reject import
                               </Button>
                               <Button className="gap-2" name="intent" type="submit" value="promote" variant="secondary">
                                 <ShieldCheck className="h-4 w-4" />
-                                Approve into project records
+                                {selectedCandidate.intakeSession?.importIntent === "design"
+                                  ? "Approve as Delivery Story"
+                                  : "Approve as Story Idea"}
                               </Button>
                             </div>
                           </div>

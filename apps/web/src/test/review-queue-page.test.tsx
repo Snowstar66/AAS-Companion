@@ -338,8 +338,9 @@ describe("Review queue page", () => {
     expect(screen.getByRole("heading", { name: "Focused correction workspace" })).toBeDefined();
     expect(screen.getAllByText("Imported reviewable story").length).toBeGreaterThan(0);
     expect(screen.getByText(/Risk acceptance status must be confirmed by a human reviewer\./)).toBeDefined();
-    expect(screen.getByRole("button", { name: "Approve into project records" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Approve as Story Idea" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Mark not relevant" })).toBeDefined();
     expect(screen.getByDisplayValue("IMP-STORY-1")).toBeDefined();
+    expect(screen.getByText("Story Ideas in Framing")).toBeDefined();
   });
 });

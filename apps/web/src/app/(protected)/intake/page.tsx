@@ -53,6 +53,14 @@ function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+function getImportTargetLabel(importIntent: "framing" | "design" | string | undefined) {
+  return importIntent === "design" ? "Delivery Story" : "Story Idea";
+}
+
+function getImportWorkspaceLabel(importIntent: "framing" | "design" | string | undefined) {
+  return importIntent === "design" ? "Design approval queue" : "Framing approval queue";
+}
+
 function flashTone(status: string | undefined) {
   if (status === "error" || status === "blocked") {
     return "border-red-200 bg-red-50 text-red-700";
@@ -195,7 +203,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   fileName: artifactFile.fileName,
                   title: candidate.title,
                   subtitle: candidate.summary,
-                  typeLabel: candidate.type,
+                  typeLabel: candidate.type === "story" ? getImportTargetLabel(artifactSession.importIntent) : candidate.type,
                   statusLabel: formatLabel(candidate.reviewStatus),
                   unresolvedCount: progress?.unresolved ?? 0,
                   blockedCount: progress?.categories.blocked ?? 0,
@@ -345,12 +353,25 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <CardHeader>
                 <CardTitle>Imported candidates</CardTitle>
                 <CardDescription>
-                  Work through the imported material as a backlog. Each row shows what still needs attention before approval.
+                  Work through the imported material as a backlog. If the import target was Framing, imported stories are reviewed and approved as Story Ideas.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-2xl border border-sky-200 bg-sky-50/40 px-4 py-4 text-sm text-sky-950">
-                  Bulk approve/reject with checkboxes lives in <Link className="font-semibold underline underline-offset-4" href="/review">Human Review</Link>. Use Intake to inspect one file at a time and Human Review when you want to confirm or reject many imported items together.
+                  <p>
+                    Use Intake to inspect one file at a time. When you want to approve or reject many imported rows together,
+                    continue to{" "}
+                    <Link
+                      className="font-semibold underline underline-offset-4"
+                      href={`/review?importIntent=${selectedSession?.importIntent ?? "framing"}&reviewStatusFilter=pending`}
+                    >
+                      {getImportWorkspaceLabel(selectedSession?.importIntent)}
+                    </Link>
+                    .
+                  </p>
+                  <p className="mt-2 text-sky-900/80">
+                    There you can tick checkboxes and approve selected {selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} in bulk.
+                  </p>
                 </div>
                 {backlogRows.length > 0 ? (
                   <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">

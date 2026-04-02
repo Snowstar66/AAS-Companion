@@ -175,6 +175,10 @@ function promotedEntityLabel(
   return promotedEntityType ? label(promotedEntityType) : "record";
 }
 
+function importedStoryLabel(importIntent: "framing" | "design" | undefined) {
+  return importIntent === "design" ? "Delivery Story" : "Story Idea";
+}
+
 function confidenceTone(confidence: "high" | "medium" | "low") {
   if (confidence === "high") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
@@ -782,7 +786,18 @@ export function ArtifactIntakeReviewWorkspace({
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Save and approve import</CardTitle>
+                  <CardTitle>
+                    {selectedCandidate.type === "story"
+                      ? `Save and approve ${importedStoryLabel(session.importIntent)} import`
+                      : "Save and approve import"}
+                  </CardTitle>
+                  <CardDescription>
+                    {selectedCandidate.type === "story"
+                      ? session.importIntent === "design"
+                        ? "This imported story will become a Delivery Story when approved."
+                        : "This imported story will become a Story Idea in Framing when approved."
+                      : "Review the imported candidate, make corrections, then approve it into governed project records."}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -1228,7 +1243,13 @@ export function ArtifactIntakeReviewWorkspace({
                     />
                   </label>
 
-                  <ArtifactIntakeReviewSubmitButtons />
+                  <ArtifactIntakeReviewSubmitButtons
+                    importTargetLabel={
+                      selectedCandidate.type === "story"
+                        ? importedStoryLabel(session.importIntent)
+                        : label(selectedCandidate.type)
+                    }
+                  />
 
                   {selectedCandidate.promotedEntityId ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
