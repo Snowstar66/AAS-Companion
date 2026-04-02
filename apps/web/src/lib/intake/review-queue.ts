@@ -31,6 +31,10 @@ function parseIssueDispositions(value: unknown) {
   return parsed.success ? parsed.data : artifactIssueDispositionMapSchema.parse({});
 }
 
+function parseImportIntent(value: unknown) {
+  return value === "design" ? "design" : "framing";
+}
+
 function buildIssueProgress(
   complianceResult: ReturnType<typeof parseComplianceResult>,
   issueDispositions: ParsedIssueDispositions
@@ -59,12 +63,22 @@ function parseReviewCandidate<T extends {
   humanDecisions: unknown;
   complianceResult: unknown;
   issueDispositions: unknown;
+  intakeSession?: {
+    id?: unknown;
+    label?: unknown;
+    importIntent?: unknown;
+  } | null;
 }>(candidate: T) {
   const complianceResult = parseComplianceResult(candidate.complianceResult);
   const issueDispositions = parseIssueDispositions(candidate.issueDispositions);
 
   return {
     ...candidate,
+    intakeSession: {
+      id: typeof candidate.intakeSession?.id === "string" ? candidate.intakeSession.id : "",
+      label: typeof candidate.intakeSession?.label === "string" ? candidate.intakeSession.label : "",
+      importIntent: parseImportIntent(candidate.intakeSession?.importIntent)
+    },
     draftRecord: parseDraftRecord(candidate.draftRecord),
     humanDecisions: parseHumanDecisions(candidate.humanDecisions),
     complianceResult,

@@ -33,12 +33,17 @@ function getImportIntentLabel(importIntent: "framing" | "design" | string) {
   return importIntent === "design" ? "Design import" : "Framing import";
 }
 
-function getCandidateObjectLabel(candidate: Pick<ReviewCandidate, "type" | "intakeSession">) {
+function getCandidateObjectLabel(candidate: {
+  type: ReviewCandidate["type"];
+  intakeSession: {
+    importIntent?: "framing" | "design" | string | null;
+  };
+}) {
   if (candidate.type !== "story") {
     return formatLabel(candidate.type);
   }
 
-  return candidate.intakeSession.importIntent === "design" ? "Delivery Story" : "Story Idea";
+  return candidate.intakeSession?.importIntent === "design" ? "Delivery Story" : "Story Idea";
 }
 
 function getPromotedEntityLabel(
@@ -457,7 +462,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
   const importIntentGroups = (["framing", "design"] as const)
     .map((importIntent) => {
-      const items = visibleItems.filter((candidate) => (candidate.intakeSession.importIntent ?? "framing") === importIntent);
+      const items = visibleItems.filter((candidate) => (candidate.intakeSession?.importIntent ?? "framing") === importIntent);
 
       return {
         importIntent,
@@ -821,7 +826,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                               {getCandidateObjectLabel(candidate)}
                                             </span>
                                             <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                              {getImportIntentLabel(candidate.intakeSession.importIntent ?? "framing")}
+                                              {getImportIntentLabel(candidate.intakeSession?.importIntent ?? "framing")}
                                             </span>
                                             <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getBacklogBadgeClasses(candidateState)}`}>
                                               {getBacklogLabel(candidateState)}
@@ -881,7 +886,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                               {getCandidateObjectLabel(selectedCandidate)}
                             </span>
                             <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                              {getImportIntentLabel(selectedCandidate.intakeSession.importIntent ?? "framing")}
+                              {getImportIntentLabel(selectedCandidate.intakeSession?.importIntent ?? "framing")}
                             </span>
                             <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getBacklogBadgeClasses(selectedCandidateState ?? "needs_action")}`}>
                               {getBacklogLabel(selectedCandidateState ?? "needs_action")}
@@ -1042,7 +1047,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   <form action={submitArtifactCandidateReviewAction} className="space-y-4" id="candidate-editor">
                     <input name="candidateId" type="hidden" value={selectedCandidate.id} />
                     <input name="candidateType" type="hidden" value={selectedCandidate.type} />
-                    <input name="importIntent" type="hidden" value={selectedCandidate.intakeSession.importIntent ?? "framing"} />
+                    <input name="importIntent" type="hidden" value={selectedCandidate.intakeSession?.importIntent ?? "framing"} />
 
                     <Card className="border-border/70 shadow-sm">
                       <CardHeader>
@@ -1233,7 +1238,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                             {getPromotedEntityLabel(
                               selectedCandidate.type,
                               selectedCandidate.promotedEntityType,
-                              selectedCandidate.intakeSession.importIntent ?? "framing"
+                              selectedCandidate.intakeSession?.importIntent ?? "framing"
                             )}{" "}
                             with ID {selectedCandidate.promotedEntityId}.
                           </div>
