@@ -158,6 +158,25 @@ function buildNextSimpleKey(existingKeys: string[], prefix: string) {
   return `${prefix}-${String(nextNumber).padStart(3, "0")}`;
 }
 
+function getSimpleKeyPrefix(input: {
+  type: "outcome" | "epic" | "story";
+  importIntent?: "framing" | "design" | undefined;
+}) {
+  if (input.type === "outcome") {
+    return "OUT";
+  }
+
+  if (input.type === "epic") {
+    return "EPC";
+  }
+
+  return input.importIntent === "framing" ? "SC" : "STR";
+}
+
+function isLegacyImportKey(value: string | null | undefined) {
+  return /^IMP-(OUT|EPC|STR|STORY)-/i.test(value?.trim() ?? "");
+}
+
 async function resolvePreferredProjectOutcomeId(db: DbClient, organizationId: string) {
   const outcomes = await db.outcome.findMany({
     where: {
@@ -398,13 +417,82 @@ export async function createPersistedArtifactCandidates(input: {
   candidates: ArtifactAasCandidate[];
 }, db: DbClient = prisma) {
   const persisted = [];
+  const intakeSession = await db.artifactIntakeSession.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      id: input.intakeSessionId
+    },
+    select: {
+      importIntent: true
+    }
+  });
+  const preferredOutcomeId =
+    intakeSession?.importIntent === "framing" ? await resolvePreferredProjectOutcomeId(db, input.organizationId) : null;
+  const [existingOutcomeKeys, existingEpicKeys, existingStoryIdeaKeys, existingStoryKeys] = await Promise.all([
+    db.outcome.findMany({
+      where: { organizationId: input.organizationId },
+      select: { key: true }
+    }),
+    db.epic.findMany({
+      where: { organizationId: input.organizationId },
+      select: { key: true }
+    }),
+    db.directionSeed.findMany({
+      where: { organizationId: input.organizationId },
+      select: { key: true }
+    }),
+    db.story.findMany({
+      where: { organizationId: input.organizationId },
+      select: { key: true }
+    })
+  ]);
+  const reservedKeysByPrefix = {
+    OUT: new Set(existingOutcomeKeys.map((record) => record.key)),
+    EPC: new Set(existingEpicKeys.map((record) => record.key)),
+    SC: new Set(existingStoryIdeaKeys.map((record) => record.key)),
+    STR: new Set(existingStoryKeys.map((record) => record.key))
+  };
+
+  function assignDraftKey(inputKey: {
+    type: "outcome" | "epic" | "story";
+    requestedKey: string | null | undefined;
+  }) {
+    const prefix = getSimpleKeyPrefix({
+      type: inputKey.type,
+      importIntent: intakeSession?.importIntent
+    });
+    const reservedKeys = reservedKeysByPrefix[prefix];
+    const normalizedRequestedKey = inputKey.requestedKey?.trim() ?? "";
+
+    if (normalizedRequestedKey && !isLegacyImportKey(normalizedRequestedKey) && !reservedKeys.has(normalizedRequestedKey)) {
+      reservedKeys.add(normalizedRequestedKey);
+      return normalizedRequestedKey;
+    }
+
+    const nextKey = buildNextSimpleKey([...reservedKeys], prefix);
+    reservedKeys.add(nextKey);
+    return nextKey;
+  }
 
   for (const candidate of input.candidates) {
     const sanitizedCandidate = sanitizeArtifactPersistenceValue(candidate);
     const draftRecord = sanitizeArtifactPersistenceValue(
       artifactCandidateDraftRecordSchema.parse({
         ...createArtifactCandidateDraftRecord(sanitizedCandidate),
-        ...(sanitizedCandidate.draftRecord ?? {})
+        ...(sanitizedCandidate.draftRecord ?? {}),
+        ...(
+          intakeSession?.importIntent === "framing" &&
+          preferredOutcomeId &&
+          sanitizedCandidate.type !== "outcome"
+            ? {
+                outcomeCandidateId: preferredOutcomeId
+              }
+            : {}
+        ),
+        key: assignDraftKey({
+          type: sanitizedCandidate.type,
+          requestedKey: sanitizedCandidate.draftRecord?.key ?? null
+        })
       })
     );
     const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse({

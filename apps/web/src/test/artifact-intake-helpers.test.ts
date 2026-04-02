@@ -442,11 +442,51 @@ describe("artifact intake helpers", () => {
     expect(storyCandidate).toBeDefined();
     expect(storyCandidate?.draftRecord?.acceptanceCriteria).toEqual([]);
     expect(storyCandidate?.draftRecord?.testDefinition).toBeNull();
+    expect(storyCandidate?.draftRecord?.valueIntent).toContain("complete a round without paper notes");
+    expect(storyCandidate?.draftRecord?.valueIntent).not.toBe(storyCandidate?.draftRecord?.title);
     expect(storyCandidate?.draftRecord?.expectedBehavior).toContain("capture my score hole by hole");
 
     expect(mapping.carryForwardItems.map((item) => item.category)).toEqual(
       expect.arrayContaining(["ux_principle", "nfr_constraint", "additional_requirement"])
     );
+    expect(mapping.unmappedSections).toHaveLength(0);
+  });
+
+  it("turns functional requirements into framing story ideas when the bullets read like story ideas", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-framing-functional-1",
+      "functional-brief.md",
+      [
+        "# Outcome",
+        "Outcome statement: make imported review faster.",
+        "",
+        "## Epic",
+        "Epic title: Human review workflow",
+        "",
+        "## Functional requirements",
+        "- As a reviewer I want to approve imported ideas in one queue so that triage stays fast.",
+        "- Users can upload supporting evidence for an imported idea."
+      ].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-framing-functional-1",
+          fileName: "functional-brief.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const storyCandidates = mapping.candidates.filter((candidate) => candidate.type === "story");
+
+    expect(storyCandidates).toHaveLength(2);
+    expect(storyCandidates[0]?.draftRecord?.valueIntent).toContain("triage stays fast");
+    expect(storyCandidates[0]?.draftRecord?.epicCandidateId).toBeTruthy();
+    expect(storyCandidates[1]?.draftRecord?.expectedBehavior).toContain("upload supporting evidence");
     expect(mapping.unmappedSections).toHaveLength(0);
   });
 
@@ -578,6 +618,111 @@ describe("artifact intake helpers", () => {
     expect(storyBetaCandidate?.inferredEpicCandidateId).toBe(epicBetaCandidate?.id);
     expect(storyAlphaCandidate?.draftRecord?.epicCandidateId).toBe(epicAlphaCandidate?.id);
     expect(storyBetaCandidate?.draftRecord?.epicCandidateId).toBe(epicBetaCandidate?.id);
+  });
+
+  it("uses acceptance criteria to improve framing value intent during AI-assisted imports", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-ai-story-intent",
+      "ai-story-intent.md",
+      [
+        "# Outcome",
+        "Reduce import noise for value owners.",
+        "",
+        "## Epic",
+        "Give reviewers one place to handle imported material.",
+        "",
+        "## Story",
+        "Review imported leftovers",
+        "",
+        "## Acceptance Criteria",
+        "- Decision makers can approve or reject summarized leftovers quickly",
+        "- Leftovers are grouped instead of listed item by item"
+      ].join("\n")
+    );
+    const outcomeSection = parsed.sections.find((section) => section.title === "Outcome");
+    const epicSection = parsed.sections.find((section) => section.title === "Epic");
+    const storySection = parsed.sections.find((section) => section.title === "Story");
+    const acceptanceSection = parsed.sections.find((section) => section.title === "Acceptance Criteria");
+
+    const result = buildAiAssistedArtifactProcessingResult({
+      importIntent: "framing",
+      files: [
+        {
+          id: "file-ai-story-intent",
+          fileName: "ai-story-intent.md",
+          parsedArtifacts: parsed
+        }
+      ],
+      interpretation: {
+        files: [
+          {
+            fileName: "ai-story-intent.md",
+            sourceType: "mixed_markdown_bundle",
+            confidence: "high",
+            rationale: "Outcome, epic and story are clearly identifiable.",
+            sectionDecisions: [
+              {
+                sectionId: outcomeSection!.id,
+                kind: "outcome_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: epicSection!.id,
+                kind: "epic_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: storySection!.id,
+                kind: "story_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: acceptanceSection!.id,
+                kind: "acceptance_criteria",
+                confidence: "high"
+              }
+            ],
+            candidates: [
+              {
+                sectionId: outcomeSection!.id,
+                type: "outcome",
+                title: "Reduce import noise",
+                summary: "Reduce import noise for value owners."
+              },
+              {
+                sectionId: epicSection!.id,
+                type: "epic",
+                title: "Review imported material in one place",
+                summary: "Give reviewers one place to handle imported material.",
+                linkedOutcomeSectionId: outcomeSection!.id
+              },
+              {
+                sectionId: storySection!.id,
+                type: "story",
+                title: "Review imported leftovers",
+                summary: "Review imported leftovers",
+                linkedOutcomeSectionId: outcomeSection!.id,
+                linkedEpicSectionId: epicSection!.id,
+                acceptanceCriteria: [
+                  "Decision makers can approve or reject summarized leftovers quickly",
+                  "Leftovers are grouped instead of listed item by item"
+                ],
+                draftRecord: {
+                  title: "Review imported leftovers",
+                  valueIntent: "Review imported leftovers"
+                }
+              }
+            ],
+            leftoverSectionIds: []
+          }
+        ]
+      }
+    });
+
+    const storyCandidate = result.mappingResult.candidates.find((candidate) => candidate.type === "story");
+
+    expect(storyCandidate?.draftRecord?.valueIntent).toContain("approve or reject summarized leftovers quickly");
+    expect(storyCandidate?.draftRecord?.valueIntent).not.toBe("Review imported leftovers");
   });
 
   it("round-trips structured framing constraint bundles", () => {

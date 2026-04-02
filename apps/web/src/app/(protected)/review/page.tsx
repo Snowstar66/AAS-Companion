@@ -17,6 +17,8 @@ type ReviewQueue = Awaited<ReturnType<typeof loadArtifactReviewQueue>>;
 type ReviewCandidate = ReviewQueue["items"][number];
 type SelectedReviewCandidate = NonNullable<ReviewQueue["selectedCandidate"]>;
 type ReviewFinding = NonNullable<SelectedReviewCandidate["complianceResult"]>["findings"][number];
+type ReviewProjectOutcomeOption = ReviewQueue["projectOutcomes"][number];
+type ReviewProjectEpicOption = ReviewQueue["projectEpics"][number];
 type ReviewBacklogState = "needs_action" | "needs_confirmation" | "pending" | "approved" | "discarded";
 type OperationalReviewDashboard = Awaited<ReturnType<typeof loadOperationalReviewDashboard>>;
 type OperationalReviewItem = OperationalReviewDashboard["items"][number];
@@ -335,14 +337,62 @@ function describeCandidateOption(candidate: ReviewCandidate) {
   return key ? `${key} - ${title}` : title;
 }
 
-function getLinkedCandidateOptions(
+function describeProjectOutcomeOption(option: ReviewProjectOutcomeOption) {
+  return `${option.key} - ${option.title}`;
+}
+
+function describeProjectEpicOption(option: ReviewProjectEpicOption) {
+  return `${option.key} - ${option.title}`;
+}
+
+function isLegacyImportKey(value: string | null | undefined) {
+  return /^IMP-(OUT|EPC|STR|STORY)-/i.test(value?.trim() ?? "");
+}
+
+function buildSuggestedCandidateKey(
   allCandidates: ReviewQueue["items"],
-  currentCandidate: ReviewCandidate,
-  type: "outcome" | "epic"
+  candidate: ReviewCandidate | null | undefined,
+  importIntent: "framing" | "design" | string | null | undefined
+) {
+  if (!candidate) {
+    return "";
+  }
+
+  const typedCandidates = allCandidates.filter(
+    (entry) =>
+      entry.type === candidate.type &&
+      entry.intakeSession?.id === candidate.intakeSession?.id &&
+      entry.reviewStatus !== "rejected"
+  );
+  const index = typedCandidates.findIndex((entry) => entry.id === candidate.id);
+  const sequence = index >= 0 ? index + 1 : typedCandidates.length + 1;
+  const prefix =
+    candidate.type === "outcome" ? "OUT" : candidate.type === "epic" ? "EPC" : importIntent === "design" ? "STR" : "SC";
+
+  return `${prefix}-${String(sequence).padStart(3, "0")}`;
+}
+
+function getDisplayedCandidateKey(
+  allCandidates: ReviewQueue["items"],
+  candidate: ReviewCandidate | null | undefined,
+  importIntent: "framing" | "design" | string | null | undefined
+) {
+  const storedKey = candidate?.draftRecord?.key?.trim() ?? "";
+
+  if (storedKey && !isLegacyImportKey(storedKey)) {
+    return storedKey;
+  }
+
+  return buildSuggestedCandidateKey(allCandidates, candidate, importIntent);
+}
+
+function getImportedEpicOptions(
+  allCandidates: ReviewQueue["items"],
+  currentCandidate: ReviewCandidate
 ) {
   return allCandidates.filter(
     (candidate) =>
-      candidate.type === type &&
+      candidate.type === "epic" &&
       candidate.reviewStatus !== "rejected" &&
       candidate.intakeSession?.id === currentCandidate.intakeSession?.id
   );
@@ -350,11 +400,16 @@ function getLinkedCandidateOptions(
 
 function CandidateInlineEditor(props: {
   allCandidates: ReviewQueue["items"];
+  projectOutcomes: ReviewQueue["projectOutcomes"];
+  projectEpics: ReviewQueue["projectEpics"];
   candidate: ReviewCandidate;
 }) {
-  const { allCandidates, candidate } = props;
-  const outcomeCandidateOptions = getLinkedCandidateOptions(allCandidates, candidate, "outcome");
-  const epicCandidateOptions = getLinkedCandidateOptions(allCandidates, candidate, "epic");
+  const { allCandidates, projectOutcomes, projectEpics, candidate } = props;
+  const displayedCandidateKey = getDisplayedCandidateKey(
+    allCandidates,
+    candidate,
+    candidate.intakeSession?.importIntent ?? "framing"
+  );
   const isFinal = candidate.reviewStatus === "promoted" || candidate.reviewStatus === "rejected";
   const defaultOpen =
     candidate.reviewStatus !== "promoted" &&
@@ -362,12 +417,32 @@ function CandidateInlineEditor(props: {
     (candidate.issueProgress.categories.missing > 0 ||
       candidate.issueProgress.categories.blocked > 0 ||
       candidate.issueProgress.categories.uncertain > 0);
-  const currentOutcomeCandidateId = candidate.draftRecord?.outcomeCandidateId ?? "";
-  const currentEpicCandidateId = candidate.draftRecord?.epicCandidateId ?? "";
+  const currentOutcomeCandidateId =
+    candidate.draftRecord?.outcomeCandidateId && projectOutcomes.some((option) => option.id === candidate.draftRecord?.outcomeCandidateId)
+      ? candidate.draftRecord.outcomeCandidateId
+      : projectOutcomes.length === 1
+        ? projectOutcomes[0]?.id ?? ""
+        : candidate.draftRecord?.outcomeCandidateId ?? "";
+  const importedEpicOptions = getImportedEpicOptions(allCandidates, candidate);
+  const projectEpicOptions = currentOutcomeCandidateId
+    ? projectEpics.filter((option) => option.outcomeId === currentOutcomeCandidateId)
+    : projectEpics;
+  const combinedEpicOptions = [
+    ...importedEpicOptions.map((option) => ({ id: option.id, label: describeCandidateOption(option) })),
+    ...projectEpicOptions
+      .filter((option) => !importedEpicOptions.some((candidateOption) => candidateOption.id === option.id))
+      .map((option) => ({ id: option.id, label: describeProjectEpicOption(option) }))
+  ];
+  const currentEpicCandidateId =
+    candidate.draftRecord?.epicCandidateId && combinedEpicOptions.some((option) => option.id === candidate.draftRecord?.epicCandidateId)
+      ? candidate.draftRecord.epicCandidateId
+      : combinedEpicOptions.length === 1
+        ? combinedEpicOptions[0]?.id ?? ""
+        : candidate.draftRecord?.epicCandidateId ?? "";
   const needsCurrentOutcomeOption =
-    currentOutcomeCandidateId.length > 0 && !outcomeCandidateOptions.some((option) => option.id === currentOutcomeCandidateId);
+    currentOutcomeCandidateId.length > 0 && !projectOutcomes.some((option) => option.id === currentOutcomeCandidateId);
   const needsCurrentEpicOption =
-    currentEpicCandidateId.length > 0 && !epicCandidateOptions.some((option) => option.id === currentEpicCandidateId);
+    currentEpicCandidateId.length > 0 && !combinedEpicOptions.some((option) => option.id === currentEpicCandidateId);
 
   return (
     <details className="mt-4 rounded-2xl border border-border/70 bg-background/80" open={defaultOpen}>
@@ -400,7 +475,7 @@ function CandidateInlineEditor(props: {
             <span className="text-sm font-medium text-foreground">Key</span>
             <input
               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-              defaultValue={candidate.draftRecord?.key ?? ""}
+              defaultValue={displayedCandidateKey}
               disabled={isFinal}
               name="key"
               type="text"
@@ -469,14 +544,19 @@ function CandidateInlineEditor(props: {
                 name="outcomeCandidateId"
               >
                 <option value="">Select linked Outcome</option>
+                {projectOutcomes.length === 1 ? (
+                  <option value={projectOutcomes[0]?.id ?? ""}>{describeProjectOutcomeOption(projectOutcomes[0]!)}</option>
+                ) : null}
                 {needsCurrentOutcomeOption ? (
                   <option value={currentOutcomeCandidateId}>Current linked record ({currentOutcomeCandidateId})</option>
                 ) : null}
-                {outcomeCandidateOptions.map((option) => (
+                {projectOutcomes.length > 1
+                  ? projectOutcomes.map((option) => (
                   <option key={option.id} value={option.id}>
-                    {describeCandidateOption(option)}
+                    {describeProjectOutcomeOption(option)}
                   </option>
-                ))}
+                    ))
+                  : null}
               </select>
             </label>
           </div>
@@ -512,14 +592,19 @@ function CandidateInlineEditor(props: {
                   name="outcomeCandidateId"
                 >
                   <option value="">Select linked Outcome</option>
+                  {projectOutcomes.length === 1 ? (
+                    <option value={projectOutcomes[0]?.id ?? ""}>{describeProjectOutcomeOption(projectOutcomes[0]!)}</option>
+                  ) : null}
                   {needsCurrentOutcomeOption ? (
                     <option value={currentOutcomeCandidateId}>Current linked record ({currentOutcomeCandidateId})</option>
                   ) : null}
-                  {outcomeCandidateOptions.map((option) => (
+                  {projectOutcomes.length > 1
+                    ? projectOutcomes.map((option) => (
                     <option key={option.id} value={option.id}>
-                      {describeCandidateOption(option)}
+                      {describeProjectOutcomeOption(option)}
                     </option>
-                  ))}
+                      ))
+                    : null}
                 </select>
               </label>
               <label className="space-y-2">
@@ -534,9 +619,9 @@ function CandidateInlineEditor(props: {
                   {needsCurrentEpicOption ? (
                     <option value={currentEpicCandidateId}>Current linked record ({currentEpicCandidateId})</option>
                   ) : null}
-                  {epicCandidateOptions.map((option) => (
+                  {combinedEpicOptions.map((option) => (
                     <option key={option.id} value={option.id}>
-                      {describeCandidateOption(option)}
+                      {option.label}
                     </option>
                   ))}
                 </select>
@@ -722,20 +807,42 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
   const selectedCandidate = queue.selectedCandidate;
   const selectedCandidateState = selectedCandidate ? getBacklogState(selectedCandidate) : null;
-  const selectedCandidateOutcomeOptions = selectedCandidate
-    ? getLinkedCandidateOptions(queue.items, selectedCandidate, "outcome")
-    : [];
-  const selectedCandidateEpicOptions = selectedCandidate
-    ? getLinkedCandidateOptions(queue.items, selectedCandidate, "epic")
-    : [];
-  const selectedOutcomeCandidateId = selectedCandidate?.draftRecord?.outcomeCandidateId ?? "";
-  const selectedEpicCandidateId = selectedCandidate?.draftRecord?.epicCandidateId ?? "";
+  const selectedCandidateOutcomeOptions = queue.projectOutcomes ?? [];
+  const selectedCandidateImportedEpicOptions = selectedCandidate ? getImportedEpicOptions(queue.items, selectedCandidate) : [];
+  const selectedOutcomeCandidateId =
+    selectedCandidate?.draftRecord?.outcomeCandidateId &&
+    selectedCandidateOutcomeOptions.some((option) => option.id === selectedCandidate.draftRecord?.outcomeCandidateId)
+      ? selectedCandidate.draftRecord.outcomeCandidateId
+      : selectedCandidateOutcomeOptions.length === 1
+        ? selectedCandidateOutcomeOptions[0]?.id ?? ""
+        : selectedCandidate?.draftRecord?.outcomeCandidateId ?? "";
+  const selectedProjectEpicOptions = selectedOutcomeCandidateId
+    ? queue.projectEpics.filter((option) => option.outcomeId === selectedOutcomeCandidateId)
+    : queue.projectEpics;
+  const selectedCandidateEpicOptions = [
+    ...selectedCandidateImportedEpicOptions.map((option) => ({ id: option.id, label: describeCandidateOption(option) })),
+    ...selectedProjectEpicOptions
+      .filter((option) => !selectedCandidateImportedEpicOptions.some((candidateOption) => candidateOption.id === option.id))
+      .map((option) => ({ id: option.id, label: describeProjectEpicOption(option) }))
+  ];
+  const selectedEpicCandidateId =
+    selectedCandidate?.draftRecord?.epicCandidateId &&
+    selectedCandidateEpicOptions.some((option) => option.id === selectedCandidate.draftRecord?.epicCandidateId)
+      ? selectedCandidate.draftRecord.epicCandidateId
+      : selectedCandidateEpicOptions.length === 1
+        ? selectedCandidateEpicOptions[0]?.id ?? ""
+        : selectedCandidate?.draftRecord?.epicCandidateId ?? "";
   const selectedNeedsCurrentOutcomeOption =
     selectedOutcomeCandidateId.length > 0 &&
     !selectedCandidateOutcomeOptions.some((option) => option.id === selectedOutcomeCandidateId);
   const selectedNeedsCurrentEpicOption =
     selectedEpicCandidateId.length > 0 &&
     !selectedCandidateEpicOptions.some((option) => option.id === selectedEpicCandidateId);
+  const displayedSelectedCandidateKey = getDisplayedCandidateKey(
+    queue.items,
+    selectedCandidate,
+    selectedCandidate?.intakeSession?.importIntent ?? "framing"
+  );
   const visibleFindings =
     selectedCandidate?.complianceResult?.findings.filter((finding: ReviewFinding) => {
       if (findingFilter === "all") {
@@ -1178,7 +1285,12 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                         </Button>
                                       </div>
                                     </div>
-                                    <CandidateInlineEditor allCandidates={queue.items} candidate={candidate} />
+                                    <CandidateInlineEditor
+                                      allCandidates={queue.items}
+                                      projectOutcomes={queue.projectOutcomes}
+                                      projectEpics={queue.projectEpics}
+                                      candidate={candidate}
+                                    />
                                   </div>
                                 );
                               })}
@@ -1388,7 +1500,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                         <div className="grid gap-4 sm:grid-cols-2">
                           <label className="space-y-2">
                             <span className="text-sm font-medium text-foreground">Key</span>
-                            <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.key ?? ""} name="key" type="text" />
+                            <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={displayedSelectedCandidateKey} name="key" type="text" />
                           </label>
                           <label className="space-y-2">
                             <span className="text-sm font-medium text-foreground">Title</span>
@@ -1437,16 +1549,23 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                     name="outcomeCandidateId"
                                   >
                                     <option value="">Select linked Outcome</option>
+                                    {selectedCandidateOutcomeOptions.length === 1 ? (
+                                      <option value={selectedCandidateOutcomeOptions[0]?.id ?? ""}>
+                                        {describeProjectOutcomeOption(selectedCandidateOutcomeOptions[0]!)}
+                                      </option>
+                                    ) : null}
                                     {selectedNeedsCurrentOutcomeOption ? (
                                       <option value={selectedOutcomeCandidateId}>
                                         Current linked record ({selectedOutcomeCandidateId})
                                       </option>
                                     ) : null}
-                                    {selectedCandidateOutcomeOptions.map((option) => (
-                                      <option key={option.id} value={option.id}>
-                                        {describeCandidateOption(option)}
-                                      </option>
-                                    ))}
+                                    {selectedCandidateOutcomeOptions.length > 1
+                                      ? selectedCandidateOutcomeOptions.map((option) => (
+                                          <option key={option.id} value={option.id}>
+                                            {describeProjectOutcomeOption(option)}
+                                          </option>
+                                        ))
+                                      : null}
                                   </select>
                                 </label>
                               </>
@@ -1495,16 +1614,23 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                       name="outcomeCandidateId"
                                     >
                                       <option value="">Select linked Outcome</option>
+                                      {selectedCandidateOutcomeOptions.length === 1 ? (
+                                        <option value={selectedCandidateOutcomeOptions[0]?.id ?? ""}>
+                                          {describeProjectOutcomeOption(selectedCandidateOutcomeOptions[0]!)}
+                                        </option>
+                                      ) : null}
                                       {selectedNeedsCurrentOutcomeOption ? (
                                         <option value={selectedOutcomeCandidateId}>
                                           Current linked record ({selectedOutcomeCandidateId})
                                         </option>
                                       ) : null}
-                                      {selectedCandidateOutcomeOptions.map((option) => (
-                                        <option key={option.id} value={option.id}>
-                                          {describeCandidateOption(option)}
-                                        </option>
-                                      ))}
+                                      {selectedCandidateOutcomeOptions.length > 1
+                                        ? selectedCandidateOutcomeOptions.map((option) => (
+                                            <option key={option.id} value={option.id}>
+                                              {describeProjectOutcomeOption(option)}
+                                            </option>
+                                          ))
+                                        : null}
                                     </select>
                                   </label>
                                   <label className="space-y-2">
@@ -1522,7 +1648,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                       ) : null}
                                       {selectedCandidateEpicOptions.map((option) => (
                                         <option key={option.id} value={option.id}>
-                                          {describeCandidateOption(option)}
+                                          {option.label}
                                         </option>
                                       ))}
                                     </select>

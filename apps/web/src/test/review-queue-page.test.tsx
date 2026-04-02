@@ -8,6 +8,21 @@ vi.mock("@/lib/intake/review-queue", () => ({
     state: "ready",
     organizationName: "AAS Demo Organization",
     selectedCandidate: null,
+    projectOutcomes: [
+      {
+        id: "project-outcome-1",
+        key: "OUT-001",
+        title: "Primary project outcome"
+      }
+    ],
+    projectEpics: [
+      {
+        id: "candidate-epic-1",
+        key: "EPC-001",
+        title: "Imported epic",
+        outcomeId: "project-outcome-1"
+      }
+    ],
     summary: {
       total: 1,
       pending: 0,
@@ -34,7 +49,7 @@ vi.mock("@/lib/intake/review-queue", () => ({
           aiUsageScope: ["Drafting"],
           testDefinition: "Review queue renders source traceability",
           definitionOfDone: ["Human review confirmed"],
-          outcomeCandidateId: "candidate-outcome-1",
+          outcomeCandidateId: "project-outcome-1",
           epicCandidateId: "candidate-epic-1"
         },
         humanDecisions: {
@@ -186,6 +201,21 @@ describe("Review queue page", () => {
     vi.mocked(loadArtifactReviewQueue).mockResolvedValueOnce({
       state: "ready",
       organizationName: "AAS Demo Organization",
+      projectOutcomes: [
+        {
+          id: "project-outcome-1",
+          key: "OUT-001",
+          title: "Primary project outcome"
+        }
+      ],
+      projectEpics: [
+        {
+          id: "candidate-epic-1",
+          key: "EPC-001",
+          title: "Imported epic",
+          outcomeId: "project-outcome-1"
+        }
+      ],
       summary: {
         total: 1,
         pending: 0,
@@ -212,7 +242,7 @@ describe("Review queue page", () => {
             aiUsageScope: ["Drafting"],
             testDefinition: "Review queue renders source traceability",
             definitionOfDone: ["Human review confirmed"],
-            outcomeCandidateId: "candidate-outcome-1",
+            outcomeCandidateId: "project-outcome-1",
             epicCandidateId: "candidate-epic-1"
           },
           humanDecisions: {
@@ -276,7 +306,7 @@ describe("Review queue page", () => {
           aiUsageScope: ["Drafting"],
           testDefinition: "Review queue renders source traceability",
           definitionOfDone: ["Human review confirmed"],
-          outcomeCandidateId: "candidate-outcome-1",
+          outcomeCandidateId: "project-outcome-1",
           epicCandidateId: "candidate-epic-1"
         },
         humanDecisions: {
@@ -343,7 +373,7 @@ describe("Review queue page", () => {
     expect(screen.getByText(/Risk acceptance status must be confirmed by a human reviewer\./)).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Approve as Story Idea" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Mark not relevant" })).toBeDefined();
-    expect(screen.getAllByDisplayValue("IMP-STORY-1").length).toBeGreaterThan(0);
+    expect(screen.getAllByDisplayValue("SC-001").length).toBeGreaterThan(0);
     expect(screen.getByText("Story Ideas in Framing")).toBeDefined();
   });
 });

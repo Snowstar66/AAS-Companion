@@ -7,6 +7,8 @@ import {
 } from "@aas-companion/domain/artifact-intake";
 import { unstable_rethrow } from "next/navigation";
 import { getArtifactCandidateService, listArtifactCandidateQueueService } from "@aas-companion/api/intake";
+import { listEpicsService } from "@aas-companion/api/epics";
+import { listOutcomesService } from "@aas-companion/api/outcomes";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 
 type ParsedIssueDispositions = ReturnType<typeof artifactIssueDispositionMapSchema.parse>;
@@ -90,9 +92,11 @@ function parseReviewCandidate<T extends {
 export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
   try {
     const organization = await requireOrganizationContext();
-    const [result, selectedCandidateResult] = await Promise.all([
+    const [result, selectedCandidateResult, outcomesResult, epicsResult] = await Promise.all([
       listArtifactCandidateQueueService(organization.organizationId),
-      selectedCandidateId ? getArtifactCandidateService(organization.organizationId, selectedCandidateId) : Promise.resolve(null)
+      selectedCandidateId ? getArtifactCandidateService(organization.organizationId, selectedCandidateId) : Promise.resolve(null),
+      listOutcomesService(organization.organizationId),
+      listEpicsService(organization.organizationId)
     ]);
 
     if (!result.ok) {
@@ -101,6 +105,8 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
         organizationName: organization.organizationName,
         items: [],
         selectedCandidate: null,
+        projectOutcomes: [],
+        projectEpics: [],
         summary: {
           total: 0,
           pending: 0,
@@ -123,6 +129,21 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
       organizationName: organization.organizationName,
       items,
       selectedCandidate,
+      projectOutcomes: outcomesResult.ok
+        ? outcomesResult.data.map((outcome) => ({
+            id: outcome.id,
+            key: outcome.key,
+            title: outcome.title
+          }))
+        : [],
+      projectEpics: epicsResult.ok
+        ? epicsResult.data.map((epic) => ({
+            id: epic.id,
+            key: epic.key,
+            title: epic.title,
+            outcomeId: epic.outcomeId
+          }))
+        : [],
       summary: {
         total: items.length,
         pending: items.filter((item) => item.reviewStatus === "pending").length,
@@ -143,6 +164,8 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
       organizationName: "Unknown project",
       items: [],
       selectedCandidate: null,
+      projectOutcomes: [],
+      projectEpics: [],
       summary: {
         total: 0,
         pending: 0,

@@ -1121,49 +1121,139 @@ function upperCaseFirst(value: string) {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
+function lowerCaseFirst(value: string) {
+  if (!value) {
+    return value;
+  }
+
+  return `${value.charAt(0).toLowerCase()}${value.slice(1)}`;
+}
+
+function normalizeComparableStoryText(value: string | null | undefined) {
+  return normalizeDraftText(value).toLowerCase();
+}
+
+function isDistinctStoryText(value: string | null | undefined, blockedValues: Array<string | null | undefined>) {
+  const normalizedValue = normalizeComparableStoryText(value);
+
+  if (!normalizedValue) {
+    return false;
+  }
+
+  return blockedValues.every((blockedValue) => normalizeComparableStoryText(blockedValue) !== normalizedValue);
+}
+
+function summarizeAcceptanceCriteriaForStoryIdea(acceptanceCriteria: string[]) {
+  const normalizedCriteria = dedupeArtifactText(acceptanceCriteria);
+
+  if (normalizedCriteria.length === 0) {
+    return "";
+  }
+
+  if (normalizedCriteria.length === 1) {
+    return summarizeText(upperCaseFirst(normalizedCriteria[0] ?? ""), 180);
+  }
+
+  return summarizeText(
+    `${upperCaseFirst(normalizedCriteria[0] ?? "")}; ${lowerCaseFirst(normalizedCriteria[1] ?? "")}`,
+    180
+  );
+}
+
+function pickDistinctStoryText(input: {
+  candidates: Array<string | null | undefined>;
+  blockedValues: Array<string | null | undefined>;
+  maxLength?: number;
+}) {
+  for (const candidate of input.candidates) {
+    if (!isDistinctStoryText(candidate, input.blockedValues)) {
+      continue;
+    }
+
+    return summarizeText(candidate ?? "", input.maxLength ?? 180);
+  }
+
+  return "";
+}
+
+function shouldReplaceStoryTextWithStrongerSignal(value: string | null | undefined, blockedValues: Array<string | null | undefined>) {
+  if (!value?.trim()) {
+    return true;
+  }
+
+  if (!isDistinctStoryText(value, blockedValues)) {
+    return true;
+  }
+
+  return countMeaningfulWords(value) < 6;
+}
+
 function deriveFramingStoryValueIntent(input: {
   section: ArtifactParsedSection;
+  currentTitle: string | null | undefined;
   currentValueIntent: string | null | undefined;
+  currentExpectedBehavior: string | null | undefined;
+  acceptanceCriteria: string[];
   fallbackSummary: string;
 }) {
-  if (input.currentValueIntent?.trim()) {
-    return input.currentValueIntent.trim();
-  }
-
   const narrative = extractStoryNarrative(input.section.text);
+  const title = input.currentTitle?.trim() ?? input.section.title;
+  const acceptanceSummary = summarizeAcceptanceCriteriaForStoryIdea(input.acceptanceCriteria);
+  const keepCurrentValueIntent = !shouldReplaceStoryTextWithStrongerSignal(input.currentValueIntent, [title]);
 
-  if (narrative?.outcome) {
-    return summarizeText(upperCaseFirst(narrative.outcome), 180);
+  if (keepCurrentValueIntent && input.currentValueIntent?.trim()) {
+    return summarizeText(input.currentValueIntent.trim(), 180);
   }
 
-  if (narrative?.intent) {
-    return summarizeText(upperCaseFirst(narrative.intent), 180);
-  }
-
-  return summarizeText(input.fallbackSummary || input.section.text, 180);
+  return (
+    pickDistinctStoryText({
+      candidates: [
+        narrative?.outcome ? upperCaseFirst(narrative.outcome) : null,
+        acceptanceSummary,
+        narrative?.intent ? upperCaseFirst(narrative.intent) : null,
+        input.currentExpectedBehavior,
+        input.currentValueIntent,
+        input.fallbackSummary,
+        input.section.text
+      ],
+      blockedValues: [title]
+    }) || summarizeText(input.fallbackSummary || input.section.text, 180)
+  );
 }
 
 function deriveFramingStoryExpectedBehavior(input: {
   section: ArtifactParsedSection;
+  currentTitle: string | null | undefined;
+  currentValueIntent: string | null | undefined;
   currentExpectedBehavior: string | null | undefined;
+  acceptanceCriteria: string[];
   fallbackSummary: string;
 }) {
-  if (input.currentExpectedBehavior?.trim()) {
-    return input.currentExpectedBehavior.trim();
-  }
-
   const narrative = extractStoryNarrative(input.section.text);
   const normalizedIntent = narrative?.intent?.replace(/^to\s+/i, "") ?? "";
+  const title = input.currentTitle?.trim() ?? input.section.title;
+  const acceptanceSummary = summarizeAcceptanceCriteriaForStoryIdea(input.acceptanceCriteria);
 
-  if (narrative?.actor && normalizedIntent) {
-    return summarizeText(`${upperCaseFirst(narrative.actor)} can ${normalizedIntent}.`, 180);
+  if (
+    input.currentExpectedBehavior?.trim() &&
+    !shouldReplaceStoryTextWithStrongerSignal(input.currentExpectedBehavior, [title, input.currentValueIntent])
+  ) {
+    return summarizeText(input.currentExpectedBehavior.trim(), 180);
   }
 
-  if (normalizedIntent) {
-    return summarizeText(upperCaseFirst(normalizedIntent), 180);
-  }
-
-  return summarizeText(input.fallbackSummary || input.section.text, 180);
+  return (
+    pickDistinctStoryText({
+      candidates: [
+        narrative?.actor && normalizedIntent ? `${upperCaseFirst(narrative.actor)} can ${normalizedIntent}.` : null,
+        acceptanceSummary,
+        normalizedIntent ? upperCaseFirst(normalizedIntent) : null,
+        input.currentValueIntent,
+        input.fallbackSummary,
+        input.section.text
+      ],
+      blockedValues: [title]
+    }) || summarizeText(input.fallbackSummary || input.section.text, 180)
+  );
 }
 
 function adaptStoryCandidateForImportIntent(input: {
@@ -1181,12 +1271,18 @@ function adaptStoryCandidateForImportIntent(input: {
   });
   const valueIntent = deriveFramingStoryValueIntent({
     section: input.section,
+    currentTitle: baseDraftRecord.title,
     currentValueIntent: baseDraftRecord.valueIntent,
+    currentExpectedBehavior: baseDraftRecord.expectedBehavior,
+    acceptanceCriteria: [...input.candidate.acceptanceCriteria, ...baseDraftRecord.acceptanceCriteria],
     fallbackSummary: input.candidate.summary
   });
   const expectedBehavior = deriveFramingStoryExpectedBehavior({
     section: input.section,
+    currentTitle: baseDraftRecord.title,
+    currentValueIntent: valueIntent,
     currentExpectedBehavior: baseDraftRecord.expectedBehavior,
+    acceptanceCriteria: [...input.candidate.acceptanceCriteria, ...baseDraftRecord.acceptanceCriteria],
     fallbackSummary: input.candidate.summary
   });
 
@@ -1205,6 +1301,70 @@ function adaptStoryCandidateForImportIntent(input: {
       definitionOfDone: []
     }
   } satisfies ArtifactAasCandidate;
+}
+
+function isFunctionalRequirementSection(section: ArtifactParsedSection) {
+  const title = normalizeHeading(section.title);
+  const text = normalizeHeading(section.text);
+  const isClearlyNonFunctional = /\bnon[\s-]?functional\b|\bnfr\b/.test(title) || /\bnon[\s-]?functional\b|\bnfr\b/.test(text);
+
+  if (isClearlyNonFunctional) {
+    return false;
+  }
+
+  return (
+    /\bfunctional requirement(s)?\b|\bfunctional req(s)?\b|\bfeature requirement(s)?\b/.test(title) ||
+    (/\bfunctional requirement(s)?\b|\bfunctional req(s)?\b/.test(text) && /^[-*]\s+/m.test(section.text))
+  );
+}
+
+function deriveFunctionalRequirementStoryTitle(input: {
+  requirementText: string;
+  fallbackTitle: string;
+  index: number;
+}) {
+  const narrative = extractStoryNarrative(input.requirementText);
+
+  if (narrative?.intent) {
+    return summarizeText(upperCaseFirst(narrative.intent), 80);
+  }
+
+  const normalizedRequirement = input.requirementText
+    .replace(/^(the\s+system|system|users?|the\s+user|application|platform)\s+(shall|must|should|can)\s+/i, "")
+    .replace(/^(shall|must|should|can)\s+/i, "")
+    .replace(/\s+so that\s+.+$/i, "")
+    .replace(/[.!?]+$/g, "")
+    .trim();
+
+  if (normalizedRequirement) {
+    return summarizeText(upperCaseFirst(normalizedRequirement), 80);
+  }
+
+  return `${input.fallbackTitle} ${input.index + 1}`;
+}
+
+function buildDerivedFunctionalRequirementStorySection(input: {
+  section: ArtifactParsedSection;
+  requirementText: string;
+  index: number;
+}) {
+  const derivedSectionId = `${input.section.id}-story-${input.index + 1}`;
+
+  return {
+    ...input.section,
+    id: derivedSectionId,
+    kind: "story_candidate" as const,
+    title: deriveFunctionalRequirementStoryTitle({
+      requirementText: input.requirementText,
+      fallbackTitle: input.section.title,
+      index: input.index
+    }),
+    text: input.requirementText,
+    sourceReference: {
+      ...input.section.sourceReference,
+      sectionId: derivedSectionId
+    }
+  } satisfies ArtifactParsedSection;
 }
 
 function detectCarryForwardSection(section: ArtifactParsedSection) {
@@ -1403,7 +1563,10 @@ function buildDraftRecordFromParsedSection(input: {
     scopeBoundary: null,
     riskNote: null,
     storyType: normalizeImportedStoryType(rawStoryType, input.section.text),
-    valueIntent: valueIntent || summarizeText(input.section.text),
+    valueIntent:
+      valueIntent && isDistinctStoryText(valueIntent, [taggedTitle || input.section.title])
+        ? valueIntent
+        : summarizeText(input.section.text),
     expectedBehavior,
     acceptanceCriteria: input.acceptanceCriteria,
     aiUsageScope,
@@ -1672,6 +1835,82 @@ export function buildAiAssistedArtifactProcessingResult(input: {
     const leftoverSectionIds = new Set(aiMatch.leftoverSectionIds);
 
     for (const section of nextSections) {
+      if (importIntent === "framing" && !usedSectionIds.has(section.id) && isFunctionalRequirementSection(section)) {
+        const requirementItems = extractListItems(section.text);
+        const derivedSections =
+          requirementItems.length > 0
+            ? requirementItems.map((requirementText, index) =>
+                buildDerivedFunctionalRequirementStorySection({
+                  section,
+                  requirementText,
+                  index
+                })
+              )
+            : [
+                buildDerivedFunctionalRequirementStorySection({
+                  section,
+                  requirementText: section.text,
+                  index: 0
+                })
+              ];
+
+        for (const derivedSection of derivedSections) {
+          const candidateId = buildArtifactCandidateId({
+            fileId: file.id,
+            sectionId: derivedSection.id,
+            candidateType: "story"
+          });
+          const sourceConfidence =
+            sourceType === "unknown_artifact" && derivedSection.confidence === "high"
+              ? "medium"
+              : derivedSection.confidence;
+          const relationship = resolveAiCandidateRelationshipState({
+            candidateType: "story",
+            inferredOutcomeCandidateId: lastOutcomeCandidateId,
+            inferredEpicCandidateId: lastEpicCandidateId,
+            confidence: derivedSection.confidence
+          });
+          const nextCandidate = adaptStoryCandidateForImportIntent({
+            candidate: {
+              id: candidateId,
+              type: "story",
+              title: summarizeText(derivedSection.title, 80),
+              summary: summarizeText(derivedSection.text),
+              mappingState: sourceType === "unknown_artifact" || sourceConfidence === "low" ? "uncertain" : "mapped",
+              source: {
+                fileId: derivedSection.sourceReference.fileId,
+                fileName: derivedSection.sourceReference.fileName,
+                sectionId: derivedSection.sourceReference.sectionId,
+                sectionTitle: derivedSection.sourceReference.sectionTitle,
+                sectionMarker: derivedSection.sourceReference.sectionMarker,
+                sourceType,
+                confidence: sourceConfidence
+              },
+              inferredOutcomeCandidateId: lastOutcomeCandidateId,
+              inferredEpicCandidateId: lastEpicCandidateId,
+              relationshipState: relationship.relationshipState,
+              relationshipNote: relationship.relationshipNote,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: buildDraftRecordFromParsedSection({
+                candidateType: "story",
+                section: derivedSection,
+                acceptanceCriteria: [],
+                testNotes: [],
+                inferredOutcomeCandidateId: lastOutcomeCandidateId,
+                inferredEpicCandidateId: lastEpicCandidateId
+              })
+            },
+            section: derivedSection,
+            importIntent
+          });
+
+          candidates.push(nextCandidate);
+        }
+
+        continue;
+      }
+
       if (leftoverSectionIds.has(section.id)) {
         const carryForwardItem = createCarryForwardItem(section);
 
@@ -2387,6 +2626,91 @@ export function mapParsedArtifactsToAasCandidates(input: {
     }
 
     for (const section of parsedArtifacts.sections) {
+      if (importIntent === "framing" && isFunctionalRequirementSection(section)) {
+        const requirementItems = extractListItems(section.text);
+        const derivedSections =
+          requirementItems.length > 0
+            ? requirementItems.map((requirementText, index) =>
+                buildDerivedFunctionalRequirementStorySection({
+                  section,
+                  requirementText,
+                  index
+                })
+              )
+            : [
+                buildDerivedFunctionalRequirementStorySection({
+                  section,
+                  requirementText: section.text,
+                  index: 0
+                })
+              ];
+
+        for (const derivedSection of derivedSections) {
+          const candidateId = buildArtifactCandidateId({
+            fileId: file.id,
+            sectionId: derivedSection.id,
+            candidateType: "story"
+          });
+          const sourceConfidence =
+            file.sourceType === "unknown_artifact" && derivedSection.confidence === "high"
+              ? "medium"
+              : derivedSection.confidence;
+          const mappingState =
+            file.sourceType === "unknown_artifact" || sourceConfidence === "low" ? "uncertain" : "mapped";
+          const relationshipState =
+            !lastOutcomeCandidateId || !lastEpicCandidateId
+              ? ("missing" as const)
+              : derivedSection.confidence === "low"
+                ? ("uncertain" as const)
+                : ("mapped" as const);
+          const relationshipNote =
+            relationshipState === "missing"
+              ? "Story relationship inference is incomplete because a prior Outcome or Epic candidate was not found."
+              : relationshipState === "uncertain"
+                ? "Story relationship is inferred from nearby sections but remains uncertain."
+                : undefined;
+          const nextCandidate = adaptStoryCandidateForImportIntent({
+            candidate: {
+              id: candidateId,
+              type: "story",
+              title: summarizeText(derivedSection.title, 80),
+              summary: summarizeText(derivedSection.text),
+              mappingState,
+              source: {
+                fileId: derivedSection.sourceReference.fileId,
+                fileName: derivedSection.sourceReference.fileName,
+                sectionId: derivedSection.sourceReference.sectionId,
+                sectionTitle: derivedSection.sourceReference.sectionTitle,
+                sectionMarker: derivedSection.sourceReference.sectionMarker,
+                sourceType: file.sourceType ?? "unknown_artifact",
+                confidence: sourceConfidence
+              },
+              inferredOutcomeCandidateId: lastOutcomeCandidateId ?? undefined,
+              inferredEpicCandidateId: lastEpicCandidateId ?? undefined,
+              relationshipState,
+              relationshipNote,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: buildDraftRecordFromParsedSection({
+                candidateType: "story",
+                section: derivedSection,
+                acceptanceCriteria: [],
+                testNotes: [],
+                inferredOutcomeCandidateId: lastOutcomeCandidateId ?? undefined,
+                inferredEpicCandidateId: lastEpicCandidateId ?? undefined
+              })
+            },
+            section: derivedSection,
+            importIntent
+          });
+
+          candidates.push(nextCandidate);
+          lastStoryCandidateIndex = candidates.length - 1;
+        }
+
+        continue;
+      }
+
       if (section.kind === "unmapped" || section.kind === "architecture_notes") {
         const carryForwardItem = createCarryForwardItem(section);
 
