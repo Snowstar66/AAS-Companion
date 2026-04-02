@@ -173,8 +173,9 @@ describe("Review queue page", () => {
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
-    expect(screen.getByDisplayValue("candidate-story-1")).toBeDefined();
-    expect(screen.getByRole("link", { name: "Open Story Idea approval" })).toBeDefined();
+    expect(screen.getAllByDisplayValue("candidate-story-1").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Open focused workspace" })).toBeDefined();
+    expect(screen.getByText("Expand to fix fields and approve here")).toBeDefined();
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
     expect(screen.getByText("No items are currently in this group.")).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();
@@ -340,9 +341,9 @@ describe("Review queue page", () => {
     expect(screen.getByRole("heading", { name: "Focused correction workspace" })).toBeDefined();
     expect(screen.getAllByText("Imported reviewable story").length).toBeGreaterThan(0);
     expect(screen.getByText(/Risk acceptance status must be confirmed by a human reviewer\./)).toBeDefined();
-    expect(screen.getByRole("button", { name: "Approve as Story Idea" })).toBeDefined();
+    expect(screen.getAllByRole("button", { name: "Approve as Story Idea" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Mark not relevant" })).toBeDefined();
-    expect(screen.getByDisplayValue("IMP-STORY-1")).toBeDefined();
+    expect(screen.getAllByDisplayValue("IMP-STORY-1").length).toBeGreaterThan(0);
     expect(screen.getByText("Story Ideas in Framing")).toBeDefined();
   });
 });

@@ -329,6 +329,251 @@ function getCandidateRelationshipSummary(candidate: ReviewCandidate, allCandidat
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+function describeCandidateOption(candidate: ReviewCandidate) {
+  const key = candidate.draftRecord?.key?.trim();
+  const title = candidate.draftRecord?.title?.trim() || candidate.title;
+  return key ? `${key} - ${title}` : title;
+}
+
+function getLinkedCandidateOptions(
+  allCandidates: ReviewQueue["items"],
+  currentCandidate: ReviewCandidate,
+  type: "outcome" | "epic"
+) {
+  return allCandidates.filter(
+    (candidate) =>
+      candidate.type === type &&
+      candidate.reviewStatus !== "rejected" &&
+      candidate.intakeSession?.id === currentCandidate.intakeSession?.id
+  );
+}
+
+function CandidateInlineEditor(props: {
+  allCandidates: ReviewQueue["items"];
+  candidate: ReviewCandidate;
+}) {
+  const { allCandidates, candidate } = props;
+  const outcomeCandidateOptions = getLinkedCandidateOptions(allCandidates, candidate, "outcome");
+  const epicCandidateOptions = getLinkedCandidateOptions(allCandidates, candidate, "epic");
+  const isFinal = candidate.reviewStatus === "promoted" || candidate.reviewStatus === "rejected";
+  const defaultOpen =
+    candidate.reviewStatus !== "promoted" &&
+    candidate.reviewStatus !== "rejected" &&
+    (candidate.issueProgress.categories.missing > 0 ||
+      candidate.issueProgress.categories.blocked > 0 ||
+      candidate.issueProgress.categories.uncertain > 0);
+  const currentOutcomeCandidateId = candidate.draftRecord?.outcomeCandidateId ?? "";
+  const currentEpicCandidateId = candidate.draftRecord?.epicCandidateId ?? "";
+  const needsCurrentOutcomeOption =
+    currentOutcomeCandidateId.length > 0 && !outcomeCandidateOptions.some((option) => option.id === currentOutcomeCandidateId);
+  const needsCurrentEpicOption =
+    currentEpicCandidateId.length > 0 && !epicCandidateOptions.some((option) => option.id === currentEpicCandidateId);
+
+  return (
+    <details className="mt-4 rounded-2xl border border-border/70 bg-background/80" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+        <div>
+          <p className="text-sm font-medium text-foreground">Expand to fix fields and approve here</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Update the missing fields inline, then save or approve without leaving this backlog row.
+          </p>
+        </div>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </summary>
+      <form action={submitArtifactCandidateReviewAction} className="space-y-4 border-t border-border/70 px-4 py-4">
+        <input name="candidateId" type="hidden" value={candidate.id} />
+        <input name="candidateType" type="hidden" value={candidate.type} />
+        <input name="importIntent" type="hidden" value={candidate.intakeSession?.importIntent ?? "framing"} />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-foreground">Title</span>
+            <input
+              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+              defaultValue={candidate.draftRecord?.title ?? candidate.title}
+              disabled={isFinal}
+              name="title"
+              type="text"
+            />
+          </label>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-foreground">Key</span>
+            <input
+              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+              defaultValue={candidate.draftRecord?.key ?? ""}
+              disabled={isFinal}
+              name="key"
+              type="text"
+            />
+          </label>
+        </div>
+
+        {candidate.type === "outcome" ? (
+          <div className="grid gap-4">
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Outcome statement</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={candidate.draftRecord?.outcomeStatement ?? ""}
+                disabled={isFinal}
+                name="outcomeStatement"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Baseline definition</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={candidate.draftRecord?.baselineDefinition ?? ""}
+                disabled={isFinal}
+                name="baselineDefinition"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Baseline source</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={candidate.draftRecord?.baselineSource ?? ""}
+                disabled={isFinal}
+                name="baselineSource"
+              />
+            </label>
+          </div>
+        ) : null}
+
+        {candidate.type === "epic" ? (
+          <div className="grid gap-4">
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Purpose</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={candidate.draftRecord?.purpose ?? ""}
+                disabled={isFinal}
+                name="purpose"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Scope boundary</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={candidate.draftRecord?.scopeBoundary ?? ""}
+                disabled={isFinal}
+                name="scopeBoundary"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Linked Outcome</span>
+              <select
+                className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                defaultValue={currentOutcomeCandidateId}
+                disabled={isFinal}
+                name="outcomeCandidateId"
+              >
+                <option value="">Select linked Outcome</option>
+                {needsCurrentOutcomeOption ? (
+                  <option value={currentOutcomeCandidateId}>Current linked record ({currentOutcomeCandidateId})</option>
+                ) : null}
+                {outcomeCandidateOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {describeCandidateOption(option)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
+
+        {candidate.type === "story" ? (
+          <div className="grid gap-4">
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Value intent</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={candidate.draftRecord?.valueIntent ?? ""}
+                disabled={isFinal}
+                name="valueIntent"
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm font-medium text-foreground">Expected behavior</span>
+              <textarea
+                className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                defaultValue={candidate.draftRecord?.expectedBehavior ?? ""}
+                disabled={isFinal}
+                name="expectedBehavior"
+              />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Linked Outcome</span>
+                <select
+                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                  defaultValue={currentOutcomeCandidateId}
+                  disabled={isFinal}
+                  name="outcomeCandidateId"
+                >
+                  <option value="">Select linked Outcome</option>
+                  {needsCurrentOutcomeOption ? (
+                    <option value={currentOutcomeCandidateId}>Current linked record ({currentOutcomeCandidateId})</option>
+                  ) : null}
+                  {outcomeCandidateOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {describeCandidateOption(option)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Linked Epic</span>
+                <select
+                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                  defaultValue={currentEpicCandidateId}
+                  disabled={isFinal}
+                  name="epicCandidateId"
+                >
+                  <option value="">Select linked Epic</option>
+                  {needsCurrentEpicOption ? (
+                    <option value={currentEpicCandidateId}>Current linked record ({currentEpicCandidateId})</option>
+                  ) : null}
+                  {epicCandidateOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {describeCandidateOption(option)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+        ) : null}
+
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-foreground">Review comment</span>
+          <textarea
+            className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+            defaultValue={candidate.reviewComment ?? ""}
+            disabled={isFinal}
+            name="reviewComment"
+          />
+        </label>
+
+        <div className="flex flex-wrap gap-2">
+          <Button className="gap-2" disabled={isFinal} name="intent" type="submit" value="edit" variant="secondary">
+            <GitBranch className="h-4 w-4" />
+            Save edits
+          </Button>
+          <Button className="gap-2" disabled={isFinal} name="intent" type="submit" value="promote">
+            <ShieldCheck className="h-4 w-4" />
+            {candidate.intakeSession?.importIntent === "design" ? "Approve as Delivery Story" : "Approve as Story Idea"}
+          </Button>
+          <Button className="gap-2" disabled={isFinal} name="intent" type="submit" value="reject" variant="secondary">
+            <CircleAlert className="h-4 w-4" />
+            Reject
+          </Button>
+        </div>
+      </form>
+    </details>
+  );
+}
+
 function CollapsibleSection(props: {
   title: string;
   description: string;
@@ -477,6 +722,20 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
   const selectedCandidate = queue.selectedCandidate;
   const selectedCandidateState = selectedCandidate ? getBacklogState(selectedCandidate) : null;
+  const selectedCandidateOutcomeOptions = selectedCandidate
+    ? getLinkedCandidateOptions(queue.items, selectedCandidate, "outcome")
+    : [];
+  const selectedCandidateEpicOptions = selectedCandidate
+    ? getLinkedCandidateOptions(queue.items, selectedCandidate, "epic")
+    : [];
+  const selectedOutcomeCandidateId = selectedCandidate?.draftRecord?.outcomeCandidateId ?? "";
+  const selectedEpicCandidateId = selectedCandidate?.draftRecord?.epicCandidateId ?? "";
+  const selectedNeedsCurrentOutcomeOption =
+    selectedOutcomeCandidateId.length > 0 &&
+    !selectedCandidateOutcomeOptions.some((option) => option.id === selectedOutcomeCandidateId);
+  const selectedNeedsCurrentEpicOption =
+    selectedEpicCandidateId.length > 0 &&
+    !selectedCandidateEpicOptions.some((option) => option.id === selectedEpicCandidateId);
   const visibleFindings =
     selectedCandidate?.complianceResult?.findings.filter((finding: ReviewFinding) => {
       if (findingFilter === "all") {
@@ -797,22 +1056,26 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   </div>
                 ) : (
                   importIntentGroups.map((intentGroup) => (
-                    <form action={submitArtifactBulkReviewAction} className="space-y-4" key={intentGroup.importIntent}>
-                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                    <div className="space-y-4" key={intentGroup.importIntent}>
+                      <form
+                        action={submitArtifactBulkReviewAction}
+                        className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                        id={`bulk-review-${intentGroup.importIntent}`}
+                      >
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-medium text-foreground">{intentGroup.label}</p>
-                                <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                  {intentGroup.items.length} {intentGroup.importIntent === "design" ? "Delivery" : "Story Idea"} candidate(s)
-                                </span>
-                              </div>
-                              <p className="text-sm leading-6 text-muted-foreground">
-                                {intentGroup.importIntent === "design"
-                                  ? "Approve checked rows to create Delivery Stories in Design. Outcome and Epic records are linked or created as needed."
-                                  : "Approve checked rows to create Framing records. Imported stories become Story Ideas, while Outcome and Epic records are linked or created as needed."}
-                              </p>
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium text-foreground">{intentGroup.label}</p>
+                              <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                {intentGroup.items.length} {intentGroup.importIntent === "design" ? "Delivery" : "Story Idea"} candidate(s)
+                              </span>
                             </div>
+                            <p className="text-sm leading-6 text-muted-foreground">
+                              {intentGroup.importIntent === "design"
+                                ? "Approve checked rows to create Delivery Stories in Design. Linked Outcome and Epic candidates are promoted automatically when needed."
+                                : "Approve checked rows to create Framing records. Imported stories become Story Ideas, and linked Outcome and Epic candidates are promoted automatically when needed."}
+                            </p>
+                          </div>
                           <div className="flex flex-col gap-3 lg:min-w-[320px]">
                             <textarea
                               className="min-h-20 rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -831,7 +1094,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </form>
 
                       {intentGroup.groups.map((group) => (
                         <CollapsibleSection
@@ -863,6 +1126,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                           className="mt-1 h-4 w-4 rounded border-border text-primary"
                                           defaultChecked={false}
                                           disabled={isFinal}
+                                          form={`bulk-review-${intentGroup.importIntent}`}
                                           name="candidateIds"
                                           type="checkbox"
                                           value={candidate.id}
@@ -909,13 +1173,12 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                               importIntent: importIntentFilter
                                             })}
                                           >
-                                            {candidate.intakeSession?.importIntent === "design"
-                                              ? "Open Delivery Story approval"
-                                              : "Open Story Idea approval"}
+                                            Open focused workspace
                                           </Link>
                                         </Button>
                                       </div>
                                     </div>
+                                    <CandidateInlineEditor allCandidates={queue.items} candidate={candidate} />
                                   </div>
                                 );
                               })}
@@ -923,7 +1186,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           )}
                         </CollapsibleSection>
                       ))}
-                    </form>
+                    </div>
                   ))
                 )}
               </CardContent>
@@ -1167,8 +1430,24 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.riskNote ?? ""} name="riskNote" />
                                 </label>
                                 <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Linked Outcome candidate ID</span>
-                                  <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.outcomeCandidateId ?? ""} name="outcomeCandidateId" type="text" />
+                                  <span className="text-sm font-medium text-foreground">Linked Outcome</span>
+                                  <select
+                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={selectedOutcomeCandidateId}
+                                    name="outcomeCandidateId"
+                                  >
+                                    <option value="">Select linked Outcome</option>
+                                    {selectedNeedsCurrentOutcomeOption ? (
+                                      <option value={selectedOutcomeCandidateId}>
+                                        Current linked record ({selectedOutcomeCandidateId})
+                                      </option>
+                                    ) : null}
+                                    {selectedCandidateOutcomeOptions.map((option) => (
+                                      <option key={option.id} value={option.id}>
+                                        {describeCandidateOption(option)}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </label>
                               </>
                             ) : null}
@@ -1209,12 +1488,44 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                 </label>
                                 <div className="grid gap-4 sm:grid-cols-2">
                                   <label className="space-y-2">
-                                    <span className="text-sm font-medium text-foreground">Linked Outcome candidate ID</span>
-                                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.outcomeCandidateId ?? ""} name="outcomeCandidateId" type="text" />
+                                    <span className="text-sm font-medium text-foreground">Linked Outcome</span>
+                                    <select
+                                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                      defaultValue={selectedOutcomeCandidateId}
+                                      name="outcomeCandidateId"
+                                    >
+                                      <option value="">Select linked Outcome</option>
+                                      {selectedNeedsCurrentOutcomeOption ? (
+                                        <option value={selectedOutcomeCandidateId}>
+                                          Current linked record ({selectedOutcomeCandidateId})
+                                        </option>
+                                      ) : null}
+                                      {selectedCandidateOutcomeOptions.map((option) => (
+                                        <option key={option.id} value={option.id}>
+                                          {describeCandidateOption(option)}
+                                        </option>
+                                      ))}
+                                    </select>
                                   </label>
                                   <label className="space-y-2">
-                                    <span className="text-sm font-medium text-foreground">Linked Epic candidate ID</span>
-                                    <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.epicCandidateId ?? ""} name="epicCandidateId" type="text" />
+                                    <span className="text-sm font-medium text-foreground">Linked Epic</span>
+                                    <select
+                                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                      defaultValue={selectedEpicCandidateId}
+                                      name="epicCandidateId"
+                                    >
+                                      <option value="">Select linked Epic</option>
+                                      {selectedNeedsCurrentEpicOption ? (
+                                        <option value={selectedEpicCandidateId}>
+                                          Current linked record ({selectedEpicCandidateId})
+                                        </option>
+                                      ) : null}
+                                      {selectedCandidateEpicOptions.map((option) => (
+                                        <option key={option.id} value={option.id}>
+                                          {describeCandidateOption(option)}
+                                        </option>
+                                      ))}
+                                    </select>
                                   </label>
                                 </div>
                               </>

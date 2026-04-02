@@ -529,366 +529,432 @@ export async function promoteArtifactCandidate(input: {
   actorId?: string | null;
 }) {
   return prisma.$transaction(async (tx) => {
-    const candidate = await tx.artifactAasCandidate.findFirst({
-      where: {
-        organizationId: input.organizationId,
-        id: input.candidateId
-      },
-      include: {
-        intakeSession: {
-          select: {
-            importIntent: true
+    const seen = new Set<string>();
+
+    async function autoPromoteDependencyCandidate(dependencyCandidateId: string | null | undefined, label: string) {
+      if (!dependencyCandidateId) {
+        return null;
+      }
+
+      const dependencyCandidate = await tx.artifactAasCandidate.findFirst({
+        where: {
+          organizationId: input.organizationId,
+          id: dependencyCandidateId
+        },
+        include: {
+          intakeSession: {
+            select: {
+              importIntent: true
+            }
           }
         }
+      });
+
+      if (!dependencyCandidate) {
+        return null;
       }
-    });
 
-    if (!candidate) {
-      throw new Error("Artifact candidate was not found in organization scope.");
-    }
+      if (dependencyCandidate.reviewStatus === "rejected") {
+        throw new Error(`Linked ${label} was rejected and cannot be promoted automatically.`);
+      }
 
-    const file = await tx.artifactIntakeFile.findFirst({
-      where: {
-        organizationId: input.organizationId,
-        id: candidate.fileId
-      },
-      select: {
-        id: true,
-        sectionDispositions: true,
-        intakeSession: {
-          select: {
-            mappedArtifacts: true
+      if (!dependencyCandidate.promotedEntityId) {
+        if (dependencyCandidate.reviewStatus !== "confirmed" && dependencyCandidate.reviewStatus !== "edited") {
+          await tx.artifactAasCandidate.update({
+            where: { id: dependencyCandidate.id },
+            data: {
+              reviewStatus: "confirmed",
+              reviewComment:
+                dependencyCandidate.reviewComment ??
+                `Auto-confirmed while promoting linked ${label.toLowerCase()} dependency.`
+            }
+          });
+        }
+
+        await promoteCandidateWithinTransaction(dependencyCandidate.id);
+      }
+
+      return tx.artifactAasCandidate.findFirst({
+        where: {
+          organizationId: input.organizationId,
+          id: dependencyCandidateId
+        },
+        include: {
+          intakeSession: {
+            select: {
+              importIntent: true
+            }
           }
         }
-      }
-    });
-
-    if (candidate.promotedEntityId) {
-      return {
-        candidateId: candidate.id,
-        promotedEntityType: candidate.promotedEntityType ?? candidate.type,
-        promotedEntityId: candidate.promotedEntityId,
-        importedReadinessState: candidate.importedReadinessState ?? "imported"
-      };
+      });
     }
 
-    const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse(candidate.draftRecord));
-    const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions));
-    const issueDispositions = artifactIssueDispositionMapSchema.parse(candidate.issueDispositions ?? {});
-    const complianceResult = analyzeArtifactCandidateCompliance({
-      candidate: sanitizeArtifactPersistenceValue({
-        id: candidate.id,
-        type: candidate.type,
-        title: candidate.title,
-        summary: candidate.summary,
-        mappingState: candidate.mappingState,
-        source: {
+    async function promoteCandidateWithinTransaction(candidateId: string) {
+      if (seen.has(candidateId)) {
+        throw new Error("A cyclic import dependency was detected while promoting linked candidates.");
+      }
+
+      seen.add(candidateId);
+
+      try {
+        const candidate = await tx.artifactAasCandidate.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            id: candidateId
+          },
+          include: {
+            intakeSession: {
+              select: {
+                importIntent: true
+              }
+            }
+          }
+        });
+
+        if (!candidate) {
+          throw new Error("Artifact candidate was not found in organization scope.");
+        }
+
+        const file = await tx.artifactIntakeFile.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            id: candidate.fileId
+          },
+          select: {
+            id: true,
+            sectionDispositions: true,
+            intakeSession: {
+              select: {
+                mappedArtifacts: true
+              }
+            }
+          }
+        });
+
+        if (candidate.promotedEntityId) {
+          return {
+            candidateId: candidate.id,
+            promotedEntityType: candidate.promotedEntityType ?? candidate.type,
+            promotedEntityId: candidate.promotedEntityId,
+            importedReadinessState: candidate.importedReadinessState ?? "imported"
+          };
+        }
+
+        const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse(candidate.draftRecord));
+        const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions));
+        const issueDispositions = artifactIssueDispositionMapSchema.parse(candidate.issueDispositions ?? {});
+        const complianceResult = analyzeArtifactCandidateCompliance({
+          candidate: sanitizeArtifactPersistenceValue({
+            id: candidate.id,
+            type: candidate.type,
+            title: candidate.title,
+            summary: candidate.summary,
+            mappingState: candidate.mappingState,
+            source: {
+              fileId: candidate.fileId,
+              fileName: candidate.sourceSectionTitle,
+              sectionId: candidate.sourceSectionId,
+              sectionTitle: candidate.sourceSectionTitle,
+              sectionMarker: candidate.sourceSectionMarker,
+              sourceType: candidate.sourceType,
+              confidence: candidate.sourceConfidence
+            },
+            inferredOutcomeCandidateId: candidate.inferredOutcomeCandidateId,
+            inferredEpicCandidateId: candidate.inferredEpicCandidateId,
+            relationshipState: candidate.relationshipState,
+            relationshipNote: candidate.relationshipNote,
+            acceptanceCriteria: candidate.acceptanceCriteria,
+            testNotes: candidate.testNotes
+          }),
+          reviewStatus: candidate.reviewStatus,
+          draftRecord,
+          humanDecisions
+        });
+        const unmappedSectionContext = getUnmappedSectionContext({
+          mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
           fileId: candidate.fileId,
-          fileName: candidate.sourceSectionTitle,
-          sectionId: candidate.sourceSectionId,
-          sectionTitle: candidate.sourceSectionTitle,
-          sectionMarker: candidate.sourceSectionMarker,
-          sourceType: candidate.sourceType,
-          confidence: candidate.sourceConfidence
-        },
-        inferredOutcomeCandidateId: candidate.inferredOutcomeCandidateId,
-        inferredEpicCandidateId: candidate.inferredEpicCandidateId,
-        relationshipState: candidate.relationshipState,
-        relationshipNote: candidate.relationshipNote,
-        acceptanceCriteria: candidate.acceptanceCriteria,
-        testNotes: candidate.testNotes
-      }),
-      reviewStatus: candidate.reviewStatus,
-      draftRecord,
-      humanDecisions
-    });
-    const unmappedSectionContext = getUnmappedSectionContext({
-      mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
-      fileId: candidate.fileId,
-      sectionDispositions: file?.sectionDispositions ?? null
-    });
-    const importedReadinessState = deriveImportedReadinessState({
-      reviewStatus: candidate.reviewStatus,
-      complianceResult,
-      candidateType: candidate.type,
-      issueDispositions,
-      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
-      sectionDispositions: unmappedSectionContext.sectionDispositions
-    });
-    const issueProgress = getArtifactCandidateIssueProgress({
-      complianceResult,
-      issueDispositions,
-      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
-      sectionDispositions: unmappedSectionContext.sectionDispositions
-    });
+          sectionDispositions: file?.sectionDispositions ?? null
+        });
+        const importedReadinessState = deriveImportedReadinessState({
+          reviewStatus: candidate.reviewStatus,
+          complianceResult,
+          candidateType: candidate.type,
+          issueDispositions,
+          unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+          sectionDispositions: unmappedSectionContext.sectionDispositions
+        });
+        const issueProgress = getArtifactCandidateIssueProgress({
+          complianceResult,
+          issueDispositions,
+          unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+          sectionDispositions: unmappedSectionContext.sectionDispositions
+        });
 
-    if (candidate.reviewStatus !== "confirmed" && candidate.reviewStatus !== "edited") {
-      throw new Error("Candidate must be confirmed or edited before promotion can continue.");
-    }
+        if (candidate.reviewStatus !== "confirmed" && candidate.reviewStatus !== "edited") {
+          throw new Error("Candidate must be confirmed or edited before promotion can continue.");
+        }
 
-    if (importedReadinessState === "discarded") {
-      throw new Error("Rejected or discarded candidates cannot be promoted.");
-    }
+        if (importedReadinessState === "discarded") {
+          throw new Error("Rejected or discarded candidates cannot be promoted.");
+        }
 
-    if (importedReadinessState !== "imported_framing_ready" && importedReadinessState !== "imported_design_ready") {
-      await appendActivityEvent(
-        {
-          organizationId: candidate.organizationId,
-          entityType: "artifact_aas_candidate",
-          entityId: candidate.id,
-          eventType: "imported_progression_blocked",
-          actorId: input.actorId ?? null,
-          metadata: {
-            importedReadinessState,
-            issueProgress
+        if (importedReadinessState !== "imported_framing_ready" && importedReadinessState !== "imported_design_ready") {
+          await appendActivityEvent(
+            {
+              organizationId: candidate.organizationId,
+              entityType: "artifact_aas_candidate",
+              entityId: candidate.id,
+              eventType: "imported_progression_blocked",
+              actorId: input.actorId ?? null,
+              metadata: {
+                importedReadinessState,
+                issueProgress
+              }
+            },
+            tx
+          );
+
+          throw new Error("Promotion is blocked until import readiness is green and human confirmation work is complete.");
+        }
+
+        const promotedReadinessState = deriveImportedReadinessState({
+          reviewStatus: "promoted",
+          complianceResult,
+          candidateType: candidate.type,
+          issueDispositions,
+          unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+          sectionDispositions: unmappedSectionContext.sectionDispositions
+        });
+        const lineageReference = {
+          sourceType: "artifact_aas_candidate" as const,
+          sourceId: candidate.id,
+          note: `Promoted from intake session ${candidate.intakeSessionId}`
+        };
+        const importIntent = candidate.intakeSession.importIntent;
+        const importedCarryForward =
+          importIntent === "framing"
+            ? buildImportedFramingCarryForwardBundle(file?.intakeSession.mappedArtifacts ?? null)
+            : { solutionContext: null as string | null, solutionConstraints: null as string | null };
+
+        let promotedEntityId = "";
+        const promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
+
+        if (candidate.type === "outcome") {
+          const created = await createOutcome(
+            {
+              organizationId: candidate.organizationId,
+              actorId: input.actorId ?? null,
+              key: draftRecord.key ?? `IMP-OUT-${candidate.id.slice(0, 8).toUpperCase()}`,
+              title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+              problemStatement: draftRecord.problemStatement ?? null,
+              outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
+              baselineDefinition: draftRecord.baselineDefinition ?? null,
+              baselineSource: draftRecord.baselineSource ?? null,
+              solutionContext: importedCarryForward.solutionContext,
+              solutionConstraints: importedCarryForward.solutionConstraints,
+              timeframe: draftRecord.timeframe ?? null,
+              valueOwnerId: humanDecisions.valueOwnerId ?? null,
+              riskProfile: humanDecisions.riskProfile ?? "medium",
+              aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
+              status: promotedReadinessState === "imported_framing_ready" ? "ready_for_tg1" : "baseline_in_progress",
+              originType: "imported",
+              createdMode: "promotion",
+              lineageReference,
+              importedReadinessState: promotedReadinessState
+            },
+            tx
+          );
+          promotedEntityId = created.id;
+        }
+
+        if (candidate.type === "epic") {
+          const promotedOutcomeCandidate = await autoPromoteDependencyCandidate(draftRecord.outcomeCandidateId, "Outcome");
+          const linkedOutcome =
+            promotedOutcomeCandidate?.promotedEntityId
+              ? await tx.outcome.findFirst({
+                  where: {
+                    organizationId: candidate.organizationId,
+                    id: promotedOutcomeCandidate.promotedEntityId
+                  }
+                })
+              : draftRecord.outcomeCandidateId
+                ? await tx.outcome.findFirst({
+                    where: {
+                      organizationId: candidate.organizationId,
+                      id: draftRecord.outcomeCandidateId
+                    }
+                  })
+                : null;
+
+          if (!linkedOutcome) {
+            throw new Error("Select or link a valid project Outcome before promoting this Epic.");
           }
-        },
-        tx
-      );
 
-      throw new Error("Promotion is blocked until import readiness is green and human confirmation work is complete.");
-    }
-
-    const promotedReadinessState = deriveImportedReadinessState({
-      reviewStatus: "promoted",
-      complianceResult,
-      candidateType: candidate.type,
-      issueDispositions,
-      unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
-      sectionDispositions: unmappedSectionContext.sectionDispositions
-    });
-    const lineageReference = {
-      sourceType: "artifact_aas_candidate" as const,
-      sourceId: candidate.id,
-      note: `Promoted from intake session ${candidate.intakeSessionId}`
-    };
-    const importIntent = candidate.intakeSession.importIntent;
-    const importedCarryForward = importIntent === "framing"
-      ? buildImportedFramingCarryForwardBundle(file?.intakeSession.mappedArtifacts ?? null)
-      : { solutionContext: null as string | null, solutionConstraints: null as string | null };
-
-    let promotedEntityId = "";
-    const promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
-
-    if (candidate.type === "outcome") {
-      const created = await createOutcome({
-        organizationId: candidate.organizationId,
-        actorId: input.actorId ?? null,
-        key: draftRecord.key ?? `IMP-OUT-${candidate.id.slice(0, 8).toUpperCase()}`,
-        title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
-        problemStatement: draftRecord.problemStatement ?? null,
-        outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
-        baselineDefinition: draftRecord.baselineDefinition ?? null,
-        baselineSource: draftRecord.baselineSource ?? null,
-        solutionContext: importedCarryForward.solutionContext,
-        solutionConstraints: importedCarryForward.solutionConstraints,
-        timeframe: draftRecord.timeframe ?? null,
-        valueOwnerId: humanDecisions.valueOwnerId ?? null,
-        riskProfile: humanDecisions.riskProfile ?? "medium",
-        aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
-        status: promotedReadinessState === "imported_framing_ready" ? "ready_for_tg1" : "baseline_in_progress",
-        originType: "imported",
-        createdMode: "promotion",
-        lineageReference,
-        importedReadinessState: promotedReadinessState
-      }, tx);
-      promotedEntityId = created.id;
-    }
-
-    if (candidate.type === "epic") {
-      const promotedOutcomeCandidate = draftRecord.outcomeCandidateId
-        ? await tx.artifactAasCandidate.findFirst({
-            where: {
-              organizationId: candidate.organizationId,
-              id: draftRecord.outcomeCandidateId
-            }
-          })
-        : null;
-      const linkedOutcome =
-        promotedOutcomeCandidate?.promotedEntityId
-          ? await tx.outcome.findFirst({
-              where: {
-                organizationId: candidate.organizationId,
-                id: promotedOutcomeCandidate.promotedEntityId
-              }
-            })
-          : draftRecord.outcomeCandidateId
-            ? await tx.outcome.findFirst({
-                where: {
-                  organizationId: candidate.organizationId,
-                  id: draftRecord.outcomeCandidateId
-                }
-              })
-            : null;
-
-      if (!linkedOutcome) {
-        throw new Error("Select a valid project Outcome before promoting this Epic.");
-      }
-
-      const created = await createEpic({
-        organizationId: candidate.organizationId,
-        actorId: input.actorId ?? null,
-        outcomeId: linkedOutcome.id,
-        key: draftRecord.key ?? `IMP-EPC-${candidate.id.slice(0, 8).toUpperCase()}`,
-        title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
-        purpose: draftRecord.purpose ?? sanitizeArtifactPersistenceText(candidate.summary),
-        scopeBoundary: draftRecord.scopeBoundary ?? null,
-        riskNote: draftRecord.riskNote ?? null,
-        status: "draft",
-        originType: "imported",
-        createdMode: "promotion",
-        lineageReference,
-        importedReadinessState: promotedReadinessState
-      }, tx);
-      promotedEntityId = created.id;
-    }
-
-    if (candidate.type === "story") {
-      const promotedOutcomeCandidate = draftRecord.outcomeCandidateId
-        ? await tx.artifactAasCandidate.findFirst({
-            where: {
-              organizationId: candidate.organizationId,
-              id: draftRecord.outcomeCandidateId
-            }
-          })
-        : null;
-      const promotedEpicCandidate = draftRecord.epicCandidateId
-        ? await tx.artifactAasCandidate.findFirst({
-            where: {
-              organizationId: candidate.organizationId,
-              id: draftRecord.epicCandidateId
-            }
-          })
-        : null;
-      const linkedOutcome =
-        promotedOutcomeCandidate?.promotedEntityId
-          ? await tx.outcome.findFirst({
-              where: {
-                organizationId: candidate.organizationId,
-                id: promotedOutcomeCandidate.promotedEntityId
-              }
-            })
-          : draftRecord.outcomeCandidateId
-            ? await tx.outcome.findFirst({
-                where: {
-                  organizationId: candidate.organizationId,
-                  id: draftRecord.outcomeCandidateId
-                }
-              })
-            : null;
-      const linkedEpic =
-        promotedEpicCandidate?.promotedEntityId
-          ? await tx.epic.findFirst({
-              where: {
-                organizationId: candidate.organizationId,
-                id: promotedEpicCandidate.promotedEntityId
-              }
-            })
-          : draftRecord.epicCandidateId
-            ? await tx.epic.findFirst({
-                where: {
-                  organizationId: candidate.organizationId,
-                  id: draftRecord.epicCandidateId
-                }
-              })
-            : null;
-
-      if (!linkedOutcome || !linkedEpic) {
-        throw new Error("Select a valid project Outcome and Epic before promoting this Story.");
-      }
-
-      const created =
-        importIntent === "design"
-          ? await createStory({
+          const created = await createEpic(
+            {
               organizationId: candidate.organizationId,
               actorId: input.actorId ?? null,
               outcomeId: linkedOutcome.id,
-              epicId: linkedEpic.id,
-              key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+              key: draftRecord.key ?? `IMP-EPC-${candidate.id.slice(0, 8).toUpperCase()}`,
               title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
-              storyType: draftRecord.storyType ?? "outcome_delivery",
-              valueIntent:
-                draftRecord.valueIntent ??
-                draftRecord.expectedBehavior ??
-                sanitizeArtifactPersistenceText(candidate.summary),
-              expectedBehavior: draftRecord.expectedBehavior ?? null,
-              acceptanceCriteria: draftRecord.acceptanceCriteria,
-              aiUsageScope: draftRecord.aiUsageScope,
-              aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
-              testDefinition: draftRecord.testDefinition ?? null,
-              definitionOfDone: draftRecord.definitionOfDone,
+              purpose: draftRecord.purpose ?? sanitizeArtifactPersistenceText(candidate.summary),
+              scopeBoundary: draftRecord.scopeBoundary ?? null,
+              riskNote: draftRecord.riskNote ?? null,
               status: "draft",
               originType: "imported",
               createdMode: "promotion",
               lineageReference,
               importedReadinessState: promotedReadinessState
-            }, tx)
-          : await createDirectionSeed({
-              organizationId: candidate.organizationId,
-              actorId: input.actorId ?? null,
-              outcomeId: linkedOutcome.id,
-              epicId: linkedEpic.id,
-              key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
-              title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
-              shortDescription: draftRecord.valueIntent ?? sanitizeArtifactPersistenceText(candidate.summary),
-              expectedBehavior: draftRecord.expectedBehavior ?? null,
-              originType: "imported",
-              createdMode: "promotion",
-              lineageReference,
+            },
+            tx
+          );
+          promotedEntityId = created.id;
+        }
+
+        if (candidate.type === "story") {
+          const promotedOutcomeCandidate = await autoPromoteDependencyCandidate(draftRecord.outcomeCandidateId, "Outcome");
+          const promotedEpicCandidate = await autoPromoteDependencyCandidate(draftRecord.epicCandidateId, "Epic");
+          const linkedOutcome =
+            promotedOutcomeCandidate?.promotedEntityId
+              ? await tx.outcome.findFirst({
+                  where: {
+                    organizationId: candidate.organizationId,
+                    id: promotedOutcomeCandidate.promotedEntityId
+                  }
+                })
+              : draftRecord.outcomeCandidateId
+                ? await tx.outcome.findFirst({
+                    where: {
+                      organizationId: candidate.organizationId,
+                      id: draftRecord.outcomeCandidateId
+                    }
+                  })
+                : null;
+          const linkedEpic =
+            promotedEpicCandidate?.promotedEntityId
+              ? await tx.epic.findFirst({
+                  where: {
+                    organizationId: candidate.organizationId,
+                    id: promotedEpicCandidate.promotedEntityId
+                  }
+                })
+              : draftRecord.epicCandidateId
+                ? await tx.epic.findFirst({
+                    where: {
+                      organizationId: candidate.organizationId,
+                      id: draftRecord.epicCandidateId
+                    }
+                  })
+                : null;
+
+          if (!linkedOutcome || !linkedEpic) {
+            throw new Error("Select or link a valid Outcome and Epic before promoting this Story Idea.");
+          }
+
+          const created =
+            importIntent === "design"
+              ? await createStory(
+                  {
+                    organizationId: candidate.organizationId,
+                    actorId: input.actorId ?? null,
+                    outcomeId: linkedOutcome.id,
+                    epicId: linkedEpic.id,
+                    key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+                    title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+                    storyType: draftRecord.storyType ?? "outcome_delivery",
+                    valueIntent:
+                      draftRecord.valueIntent ??
+                      draftRecord.expectedBehavior ??
+                      sanitizeArtifactPersistenceText(candidate.summary),
+                    expectedBehavior: draftRecord.expectedBehavior ?? null,
+                    acceptanceCriteria: draftRecord.acceptanceCriteria,
+                    aiUsageScope: draftRecord.aiUsageScope,
+                    aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
+                    testDefinition: draftRecord.testDefinition ?? null,
+                    definitionOfDone: draftRecord.definitionOfDone,
+                    status: "draft",
+                    originType: "imported",
+                    createdMode: "promotion",
+                    lineageReference,
+                    importedReadinessState: promotedReadinessState
+                  },
+                  tx
+                )
+              : await createDirectionSeed(
+                  {
+                    organizationId: candidate.organizationId,
+                    actorId: input.actorId ?? null,
+                    outcomeId: linkedOutcome.id,
+                    epicId: linkedEpic.id,
+                    key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+                    title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+                    shortDescription: draftRecord.valueIntent ?? sanitizeArtifactPersistenceText(candidate.summary),
+                    expectedBehavior: draftRecord.expectedBehavior ?? null,
+                    originType: "imported",
+                    createdMode: "promotion",
+                    lineageReference,
+                    importedReadinessState: promotedReadinessState
+                  },
+                  tx
+                );
+          promotedEntityId = created.id;
+        }
+
+        const promotedAt = new Date();
+        await tx.artifactAasCandidate.update({
+          where: { id: candidate.id },
+          data: {
+            reviewStatus: "promoted",
+            promotedEntityType,
+            promotedEntityId,
+            promotedAt,
+            importedReadinessState: promotedReadinessState
+          }
+        });
+
+        await appendActivityEvent(
+          {
+            organizationId: candidate.organizationId,
+            entityType: "artifact_aas_candidate",
+            entityId: candidate.id,
+            eventType: "artifact_candidate_promoted",
+            actorId: input.actorId ?? null,
+            metadata: {
+              promotedEntityType,
+              promotedEntityId,
               importedReadinessState: promotedReadinessState
-            }, tx);
-      promotedEntityId = created.id;
+            }
+          },
+          tx
+        );
+
+        await appendActivityEvent(
+          {
+            organizationId: candidate.organizationId,
+            entityType: "artifact_aas_candidate",
+            entityId: candidate.id,
+            eventType: "imported_progression_allowed",
+            actorId: input.actorId ?? null,
+            metadata: {
+              promotedEntityType,
+              promotedEntityId,
+              importedReadinessState: promotedReadinessState
+            }
+          },
+          tx
+        );
+
+        return {
+          candidateId: candidate.id,
+          promotedEntityType,
+          promotedEntityId,
+          importedReadinessState: promotedReadinessState
+        };
+      } finally {
+        seen.delete(candidateId);
+      }
     }
 
-    const promotedAt = new Date();
-    await tx.artifactAasCandidate.update({
-      where: { id: candidate.id },
-      data: {
-        reviewStatus: "promoted",
-        promotedEntityType,
-        promotedEntityId,
-        promotedAt,
-        importedReadinessState: promotedReadinessState
-      }
-    });
-
-    await appendActivityEvent(
-      {
-        organizationId: candidate.organizationId,
-        entityType: "artifact_aas_candidate",
-        entityId: candidate.id,
-        eventType: "artifact_candidate_promoted",
-        actorId: input.actorId ?? null,
-        metadata: {
-          promotedEntityType,
-          promotedEntityId,
-          importedReadinessState: promotedReadinessState
-        }
-      },
-      tx
-    );
-
-    await appendActivityEvent(
-      {
-        organizationId: candidate.organizationId,
-        entityType: "artifact_aas_candidate",
-        entityId: candidate.id,
-        eventType: "imported_progression_allowed",
-        actorId: input.actorId ?? null,
-        metadata: {
-          promotedEntityType,
-          promotedEntityId,
-          importedReadinessState: promotedReadinessState
-        }
-      },
-      tx
-    );
-
-    return {
-      candidateId: candidate.id,
-      promotedEntityType,
-      promotedEntityId,
-      importedReadinessState: promotedReadinessState
-    };
+    return promoteCandidateWithinTransaction(input.candidateId);
   });
 }
