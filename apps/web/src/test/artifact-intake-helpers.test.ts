@@ -440,6 +440,7 @@ describe("artifact intake helpers", () => {
     const storyCandidate = mapping.candidates.find((candidate) => candidate.type === "story");
 
     expect(storyCandidate).toBeDefined();
+    expect(mapping.candidates.some((candidate) => candidate.type === "outcome")).toBe(false);
     expect(storyCandidate?.draftRecord?.acceptanceCriteria).toEqual([]);
     expect(storyCandidate?.draftRecord?.testDefinition).toBeNull();
     expect(storyCandidate?.draftRecord?.valueIntent).toContain("complete a round without paper notes");
@@ -452,7 +453,7 @@ describe("artifact intake helpers", () => {
     expect(mapping.unmappedSections).toHaveLength(0);
   });
 
-  it("turns functional requirements into framing story ideas when the bullets read like story ideas", () => {
+  it("routes functional requirements into framing constraints instead of turning them into extra story ideas", () => {
     const parsed = parseMarkdownArtifact(
       "file-framing-functional-1",
       "functional-brief.md",
@@ -483,10 +484,10 @@ describe("artifact intake helpers", () => {
 
     const storyCandidates = mapping.candidates.filter((candidate) => candidate.type === "story");
 
-    expect(storyCandidates).toHaveLength(2);
-    expect(storyCandidates[0]?.draftRecord?.valueIntent).toContain("triage stays fast");
-    expect(storyCandidates[0]?.draftRecord?.epicCandidateId).toBeTruthy();
-    expect(storyCandidates[1]?.draftRecord?.expectedBehavior).toContain("upload supporting evidence");
+    expect(storyCandidates).toHaveLength(0);
+    expect(mapping.carryForwardItems.map((item) => item.category)).toEqual(
+      expect.arrayContaining(["additional_requirement"])
+    );
     expect(mapping.unmappedSections).toHaveLength(0);
   });
 

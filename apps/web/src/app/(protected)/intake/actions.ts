@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  applyApprovedArtifactFileCarryForwardToOutcomeService,
   createArtifactIntakeSessionService,
+  getArtifactCandidateService,
   promoteArtifactCandidateService,
   reviewArtifactFileSectionDispositionService,
   reviewArtifactCandidateService
@@ -46,6 +48,21 @@ function getPromotionLabel(candidateType: string, promotedEntityType: string, im
   }
 
   return promotedEntityType.replaceAll("_", " ");
+}
+
+function sortCandidateIdsForPromotion(
+  candidates: Array<{
+    id: string;
+    type: "outcome" | "epic" | "story";
+  }>
+) {
+  const weights: Record<"outcome" | "epic" | "story", number> = {
+    outcome: 0,
+    epic: 1,
+    story: 2
+  };
+
+  return [...candidates].sort((left, right) => weights[left.type] - weights[right.type]);
 }
 
 function redirectDemoIntakeBlocked() {
@@ -281,6 +298,204 @@ export async function submitArtifactCandidateFromIntakeAction(formData: FormData
             : intent === "follow_up"
               ? "Candidate marked for follow-up."
               : "Candidate edits saved."
+    })
+  );
+}
+
+export async function submitFramingBulkApproveFromIntakeAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    redirectDemoIntakeBlocked();
+  }
+
+  const sessionId = String(formData.get("sessionId") ?? "");
+  const fileId = String(formData.get("fileId") ?? "");
+  const outcomeCandidateId = String(formData.get("outcomeCandidateId") ?? "") || null;
+  const targetEpicCandidateId = String(formData.get("targetEpicCandidateId") ?? "") || null;
+  const selectedCandidateIds = formData
+    .getAll("candidateIds")
+    .map((value) => String(value))
+    .filter(Boolean);
+  const selectedCarryForwardSectionIds = formData
+    .getAll("carryForwardSectionIds")
+    .map((value) => String(value))
+    .filter(Boolean);
+  const leftoverSectionIds = formData
+    .getAll("leftoverSectionIds")
+    .map((value) => String(value))
+    .filter(Boolean);
+
+  if (!outcomeCandidateId) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message: "Choose the framing Outcome before approving the imported epics, story ideas, and constraints."
+      })
+    );
+  }
+
+  if (selectedCandidateIds.length === 0 && selectedCarryForwardSectionIds.length === 0) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message: "Select at least one imported Epic, Story Idea, or constraint before bulk approval."
+      })
+    );
+  }
+
+  const candidateResults = await Promise.all(
+    selectedCandidateIds.map(async (candidateId) => ({
+      candidateId,
+      result: await getArtifactCandidateService(session.organization.organizationId, candidateId)
+    }))
+  );
+  const failedLookup = candidateResults.find((entry) => !entry.result.ok || !entry.result.data);
+
+  if (failedLookup && !failedLookup.result.ok) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message: failedLookup.result.errors[0]?.message ?? "One or more imported candidates could not be loaded for bulk approval."
+      })
+    );
+  }
+
+  const candidates = candidateResults.flatMap((entry) =>
+    entry.result.ok && entry.result.data ? [entry.result.data] : []
+  );
+  const storiesMissingEpic = candidates.filter(
+    (candidate) => candidate.type === "story" && !candidate.draftRecord?.epicCandidateId?.trim()
+  );
+
+  if (storiesMissingEpic.length > 0 && !targetEpicCandidateId) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message: "Choose the target Epic for imported Story Ideas that do not already belong to an imported Epic."
+      })
+    );
+  }
+
+  for (const sectionId of selectedCarryForwardSectionIds) {
+    await reviewArtifactFileSectionDispositionService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "confirmed",
+      note: null
+    });
+  }
+
+  for (const sectionId of leftoverSectionIds) {
+    await reviewArtifactFileSectionDispositionService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "not_relevant",
+      note: "Ignored during simplified framing bulk approval."
+    });
+  }
+
+  if (selectedCarryForwardSectionIds.length > 0) {
+    const carryForwardApplyResult = await applyApprovedArtifactFileCarryForwardToOutcomeService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      outcomeId: outcomeCandidateId,
+      fileId
+    });
+
+    if (!carryForwardApplyResult.ok) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: carryForwardApplyResult.errors[0]?.message ?? "Constraints could not be applied to the framing Outcome."
+        })
+      );
+    }
+  }
+
+  for (const candidate of candidates) {
+    const reviewResult = await reviewArtifactCandidateService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      candidateId: candidate.id,
+      reviewStatus: "confirmed",
+      reviewComment: "Approved through simplified framing bulk approval.",
+      draftRecord: {
+        outcomeCandidateId,
+        epicCandidateId:
+          candidate.type === "story"
+            ? (candidate.draftRecord?.epicCandidateId?.trim() || targetEpicCandidateId)
+            : candidate.draftRecord?.epicCandidateId ?? null
+      }
+    });
+
+    if (!reviewResult.ok) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: reviewResult.errors[0]?.message ?? "Imported candidates could not be prepared for approval."
+        })
+      );
+    }
+  }
+
+  const orderedCandidates = sortCandidateIdsForPromotion(
+    candidates.map((candidate) => ({
+      id: candidate.id,
+      type: candidate.type
+    }))
+  );
+  let promotedCount = 0;
+  const failures: string[] = [];
+
+  for (const candidate of orderedCandidates) {
+    const promoteResult = await promoteArtifactCandidateService({
+      organizationId: session.organization.organizationId,
+      candidateId: candidate.id,
+      actorId: session.userId
+    });
+
+    if (!promoteResult.ok) {
+      const failedCandidate = candidates.find((entry) => entry.id === candidate.id);
+      failures.push(`${failedCandidate?.title ?? "Candidate"}: ${promoteResult.errors[0]?.message ?? "Promotion blocked."}`);
+      continue;
+    }
+
+    promotedCount += 1;
+  }
+
+  revalidatePath("/intake");
+  revalidatePath("/review");
+  revalidatePath("/framing");
+  revalidatePath("/stories");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  redirect(
+    buildRedirect("/intake", {
+      status: failures.length > 0 ? "blocked" : "promoted",
+      sessionId,
+      fileId,
+      message:
+        failures.length > 0
+          ? `Approved ${promotedCount} imported framing item(s), but ${failures.length} still need attention: ${failures.slice(0, 2).join(" | ")}`
+          : `Approved ${promotedCount} imported framing item(s) and applied ${selectedCarryForwardSectionIds.length} constraint item(s) to the current framing Outcome.`
     })
   );
 }

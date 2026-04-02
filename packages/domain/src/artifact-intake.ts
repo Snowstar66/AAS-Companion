@@ -1318,65 +1318,9 @@ function isFunctionalRequirementSection(section: ArtifactParsedSection) {
   );
 }
 
-function deriveFunctionalRequirementStoryTitle(input: {
-  requirementText: string;
-  fallbackTitle: string;
-  index: number;
-}) {
-  const narrative = extractStoryNarrative(input.requirementText);
-
-  if (narrative?.intent) {
-    return summarizeText(upperCaseFirst(narrative.intent), 80);
-  }
-
-  const normalizedRequirement = input.requirementText
-    .replace(/^(the\s+system|system|users?|the\s+user|application|platform)\s+(shall|must|should|can)\s+/i, "")
-    .replace(/^(shall|must|should|can)\s+/i, "")
-    .replace(/\s+so that\s+.+$/i, "")
-    .replace(/[.!?]+$/g, "")
-    .trim();
-
-  if (normalizedRequirement) {
-    return summarizeText(upperCaseFirst(normalizedRequirement), 80);
-  }
-
-  return `${input.fallbackTitle} ${input.index + 1}`;
-}
-
-function buildDerivedFunctionalRequirementStorySection(input: {
-  section: ArtifactParsedSection;
-  requirementText: string;
-  index: number;
-}) {
-  const derivedSectionId = `${input.section.id}-story-${input.index + 1}`;
-
-  return {
-    ...input.section,
-    id: derivedSectionId,
-    kind: "story_candidate" as const,
-    title: deriveFunctionalRequirementStoryTitle({
-      requirementText: input.requirementText,
-      fallbackTitle: input.section.title,
-      index: input.index
-    }),
-    text: input.requirementText,
-    sourceReference: {
-      ...input.section.sourceReference,
-      sectionId: derivedSectionId
-    }
-  } satisfies ArtifactParsedSection;
-}
-
 function detectCarryForwardSection(section: ArtifactParsedSection) {
   const title = normalizeHeading(section.title);
   const text = normalizeHeading(section.text);
-
-  if (/additional requirement|additional req|open issue|assumption|dependency/.test(title)) {
-    return {
-      category: "additional_requirement" as const,
-      recommendedUse: "design_input" as const
-    };
-  }
 
   if (/ux|user experience|usability|design principle/.test(title)) {
     return {
@@ -1389,6 +1333,13 @@ function detectCarryForwardSection(section: ArtifactParsedSection) {
     return {
       category: "nfr_constraint" as const,
       recommendedUse: "cross_cutting_requirement" as const
+    };
+  }
+
+  if (/additional requirement|additional req|functional requirement|functional req|feature requirement|open issue|assumption|dependency/.test(title)) {
+    return {
+      category: "additional_requirement" as const,
+      recommendedUse: "framing_constraint" as const
     };
   }
 
@@ -1609,6 +1560,7 @@ function mergeDraftRecordValues(
 
 function resolveAiCandidateRelationshipState(input: {
   candidateType: ArtifactAasCandidate["type"];
+  importIntent?: "framing" | "design";
   explicitRelationshipState?: ArtifactAasCandidate["relationshipState"] | undefined;
   explicitRelationshipNote?: string | null | undefined;
   inferredOutcomeCandidateId?: string | undefined;
@@ -1630,7 +1582,7 @@ function resolveAiCandidateRelationshipState(input: {
   }
 
   if (input.candidateType === "epic") {
-    if (!input.inferredOutcomeCandidateId) {
+    if (!input.inferredOutcomeCandidateId && input.importIntent !== "framing") {
       return {
         relationshipState: "missing" as const,
         relationshipNote: "No prior Outcome candidate was available to anchor this Epic relationship."
@@ -1640,20 +1592,29 @@ function resolveAiCandidateRelationshipState(input: {
     if (input.confidence === "low") {
       return {
         relationshipState: "uncertain" as const,
-        relationshipNote: "Epic likely belongs to the nearest Outcome candidate, but the relationship remains uncertain."
+        relationshipNote:
+          input.importIntent === "framing"
+            ? "Epic looks valid, but a reviewer should still sanity-check the import before approval."
+            : "Epic likely belongs to the nearest Outcome candidate, but the relationship remains uncertain."
       };
     }
 
     return {
       relationshipState: "mapped" as const,
-      relationshipNote: "Epic relationship was inferred from nearby Outcome context."
+      relationshipNote:
+        input.importIntent === "framing"
+          ? "Epic is ready to be linked to the current project Outcome during framing approval."
+          : "Epic relationship was inferred from nearby Outcome context."
     };
   }
 
-  if (!input.inferredOutcomeCandidateId || !input.inferredEpicCandidateId) {
+  if ((!input.inferredOutcomeCandidateId && input.importIntent !== "framing") || !input.inferredEpicCandidateId) {
     return {
       relationshipState: "missing" as const,
-      relationshipNote: "Story relationship inference is incomplete because a prior Outcome or Epic candidate was not found."
+      relationshipNote:
+        input.importIntent === "framing"
+          ? "Story Idea still needs an Epic destination before approval."
+          : "Story relationship inference is incomplete because a prior Outcome or Epic candidate was not found."
     };
   }
 
@@ -1746,6 +1707,10 @@ export function buildAiAssistedArtifactProcessingResult(input: {
     const usedSectionIds = new Set<string>();
 
     for (const interpretedCandidate of aiMatch.candidates) {
+      if (importIntent === "framing" && interpretedCandidate.type === "outcome") {
+        continue;
+      }
+
       const sourceSection = sectionById.get(interpretedCandidate.sectionId);
 
       if (!sourceSection) {
@@ -1766,13 +1731,18 @@ export function buildAiAssistedArtifactProcessingResult(input: {
         ? candidateIdBySectionAndType.get(`${interpretedCandidate.linkedEpicSectionId}:epic`)
         : undefined;
       const inferredOutcomeCandidateId =
-        interpretedCandidate.type === "outcome" ? undefined : explicitOutcomeCandidateId ?? lastOutcomeCandidateId;
+        interpretedCandidate.type === "outcome"
+          ? undefined
+          : importIntent === "framing"
+            ? undefined
+            : explicitOutcomeCandidateId ?? lastOutcomeCandidateId;
       const inferredEpicCandidateId =
         interpretedCandidate.type === "story" ? explicitEpicCandidateId ?? lastEpicCandidateId : undefined;
       const sourceConfidence =
         sourceType === "unknown_artifact" && sourceSection.confidence === "high" ? "medium" : sourceSection.confidence;
       const relationship = resolveAiCandidateRelationshipState({
         candidateType: interpretedCandidate.type,
+        importIntent,
         explicitRelationshipState: interpretedCandidate.relationshipState,
         explicitRelationshipNote: interpretedCandidate.relationshipNote,
         inferredOutcomeCandidateId,
@@ -1835,83 +1805,7 @@ export function buildAiAssistedArtifactProcessingResult(input: {
     const leftoverSectionIds = new Set(aiMatch.leftoverSectionIds);
 
     for (const section of nextSections) {
-      if (importIntent === "framing" && !usedSectionIds.has(section.id) && isFunctionalRequirementSection(section)) {
-        const requirementItems = extractListItems(section.text);
-        const derivedSections =
-          requirementItems.length > 0
-            ? requirementItems.map((requirementText, index) =>
-                buildDerivedFunctionalRequirementStorySection({
-                  section,
-                  requirementText,
-                  index
-                })
-              )
-            : [
-                buildDerivedFunctionalRequirementStorySection({
-                  section,
-                  requirementText: section.text,
-                  index: 0
-                })
-              ];
-
-        for (const derivedSection of derivedSections) {
-          const candidateId = buildArtifactCandidateId({
-            fileId: file.id,
-            sectionId: derivedSection.id,
-            candidateType: "story"
-          });
-          const sourceConfidence =
-            sourceType === "unknown_artifact" && derivedSection.confidence === "high"
-              ? "medium"
-              : derivedSection.confidence;
-          const relationship = resolveAiCandidateRelationshipState({
-            candidateType: "story",
-            inferredOutcomeCandidateId: lastOutcomeCandidateId,
-            inferredEpicCandidateId: lastEpicCandidateId,
-            confidence: derivedSection.confidence
-          });
-          const nextCandidate = adaptStoryCandidateForImportIntent({
-            candidate: {
-              id: candidateId,
-              type: "story",
-              title: summarizeText(derivedSection.title, 80),
-              summary: summarizeText(derivedSection.text),
-              mappingState: sourceType === "unknown_artifact" || sourceConfidence === "low" ? "uncertain" : "mapped",
-              source: {
-                fileId: derivedSection.sourceReference.fileId,
-                fileName: derivedSection.sourceReference.fileName,
-                sectionId: derivedSection.sourceReference.sectionId,
-                sectionTitle: derivedSection.sourceReference.sectionTitle,
-                sectionMarker: derivedSection.sourceReference.sectionMarker,
-                sourceType,
-                confidence: sourceConfidence
-              },
-              inferredOutcomeCandidateId: lastOutcomeCandidateId,
-              inferredEpicCandidateId: lastEpicCandidateId,
-              relationshipState: relationship.relationshipState,
-              relationshipNote: relationship.relationshipNote,
-              acceptanceCriteria: [],
-              testNotes: [],
-              draftRecord: buildDraftRecordFromParsedSection({
-                candidateType: "story",
-                section: derivedSection,
-                acceptanceCriteria: [],
-                testNotes: [],
-                inferredOutcomeCandidateId: lastOutcomeCandidateId,
-                inferredEpicCandidateId: lastEpicCandidateId
-              })
-            },
-            section: derivedSection,
-            importIntent
-          });
-
-          candidates.push(nextCandidate);
-        }
-
-        continue;
-      }
-
-      if (leftoverSectionIds.has(section.id)) {
+      if (leftoverSectionIds.has(section.id) || (importIntent === "framing" && isFunctionalRequirementSection(section))) {
         const carryForwardItem = createCarryForwardItem(section);
 
         if (carryForwardItem) {
@@ -2229,15 +2123,6 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!draftRecord.scopeBoundary?.trim()) {
-      findings.push({
-        code: "epic_scope_boundary_missing",
-        category: "missing",
-        message: "Scope boundary is missing.",
-        fieldLabel: "Scope boundary"
-      });
-    }
-
     if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && draftRecord.purpose?.trim() && countMeaningfulWords(draftRecord.purpose) < 6) {
       findings.push({
         code: "epic_purpose_too_thin",
@@ -2473,7 +2358,11 @@ export function inferImportedReadinessState(input: {
     return "imported_human_review_needed";
   }
 
-  if (progress.categories.missing > 0 || progress.categories.uncertain > 0 || progress.categories.unmapped > 0) {
+  if (
+    progress.categories.missing > 0 ||
+    progress.categories.unmapped > 0 ||
+    ((input.reviewStatus === "pending" || input.reviewStatus === "follow_up_needed") && progress.categories.uncertain > 0)
+  ) {
     return "imported_incomplete";
   }
 
@@ -2626,92 +2515,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
     }
 
     for (const section of parsedArtifacts.sections) {
-      if (importIntent === "framing" && isFunctionalRequirementSection(section)) {
-        const requirementItems = extractListItems(section.text);
-        const derivedSections =
-          requirementItems.length > 0
-            ? requirementItems.map((requirementText, index) =>
-                buildDerivedFunctionalRequirementStorySection({
-                  section,
-                  requirementText,
-                  index
-                })
-              )
-            : [
-                buildDerivedFunctionalRequirementStorySection({
-                  section,
-                  requirementText: section.text,
-                  index: 0
-                })
-              ];
-
-        for (const derivedSection of derivedSections) {
-          const candidateId = buildArtifactCandidateId({
-            fileId: file.id,
-            sectionId: derivedSection.id,
-            candidateType: "story"
-          });
-          const sourceConfidence =
-            file.sourceType === "unknown_artifact" && derivedSection.confidence === "high"
-              ? "medium"
-              : derivedSection.confidence;
-          const mappingState =
-            file.sourceType === "unknown_artifact" || sourceConfidence === "low" ? "uncertain" : "mapped";
-          const relationshipState =
-            !lastOutcomeCandidateId || !lastEpicCandidateId
-              ? ("missing" as const)
-              : derivedSection.confidence === "low"
-                ? ("uncertain" as const)
-                : ("mapped" as const);
-          const relationshipNote =
-            relationshipState === "missing"
-              ? "Story relationship inference is incomplete because a prior Outcome or Epic candidate was not found."
-              : relationshipState === "uncertain"
-                ? "Story relationship is inferred from nearby sections but remains uncertain."
-                : undefined;
-          const nextCandidate = adaptStoryCandidateForImportIntent({
-            candidate: {
-              id: candidateId,
-              type: "story",
-              title: summarizeText(derivedSection.title, 80),
-              summary: summarizeText(derivedSection.text),
-              mappingState,
-              source: {
-                fileId: derivedSection.sourceReference.fileId,
-                fileName: derivedSection.sourceReference.fileName,
-                sectionId: derivedSection.sourceReference.sectionId,
-                sectionTitle: derivedSection.sourceReference.sectionTitle,
-                sectionMarker: derivedSection.sourceReference.sectionMarker,
-                sourceType: file.sourceType ?? "unknown_artifact",
-                confidence: sourceConfidence
-              },
-              inferredOutcomeCandidateId: lastOutcomeCandidateId ?? undefined,
-              inferredEpicCandidateId: lastEpicCandidateId ?? undefined,
-              relationshipState,
-              relationshipNote,
-              acceptanceCriteria: [],
-              testNotes: [],
-              draftRecord: buildDraftRecordFromParsedSection({
-                candidateType: "story",
-                section: derivedSection,
-                acceptanceCriteria: [],
-                testNotes: [],
-                inferredOutcomeCandidateId: lastOutcomeCandidateId ?? undefined,
-                inferredEpicCandidateId: lastEpicCandidateId ?? undefined
-              })
-            },
-            section: derivedSection,
-            importIntent
-          });
-
-          candidates.push(nextCandidate);
-          lastStoryCandidateIndex = candidates.length - 1;
-        }
-
-        continue;
-      }
-
-      if (section.kind === "unmapped" || section.kind === "architecture_notes") {
+      if (section.kind === "unmapped" || section.kind === "architecture_notes" || (importIntent === "framing" && isFunctionalRequirementSection(section))) {
         const carryForwardItem = createCarryForwardItem(section);
 
         if (carryForwardItem) {
@@ -2723,6 +2527,15 @@ export function mapParsedArtifactsToAasCandidates(input: {
       }
 
       if (section.kind === "acceptance_criteria") {
+        if (importIntent === "framing") {
+          const carryForwardItem = createCarryForwardItem(section);
+
+          if (carryForwardItem) {
+            carryForwardItems.push(carryForwardItem);
+            continue;
+          }
+        }
+
         if (lastStoryCandidateIndex !== null) {
           const listItems = extractListItems(section.text);
 
@@ -2783,6 +2596,10 @@ export function mapParsedArtifactsToAasCandidates(input: {
         continue;
       }
 
+      if (importIntent === "framing" && section.kind === "outcome_candidate") {
+        continue;
+      }
+
       const candidateType =
         section.kind === "outcome_candidate" ? "outcome" : section.kind === "epic_candidate" ? "epic" : "story";
       const candidateId = buildArtifactCandidateId({
@@ -2803,14 +2620,16 @@ export function mapParsedArtifactsToAasCandidates(input: {
       }
 
       if (candidateType === "epic") {
-        inferredOutcomeCandidateId = lastOutcomeCandidateId ?? undefined;
-        if (!inferredOutcomeCandidateId) {
+        inferredOutcomeCandidateId = importIntent === "framing" ? undefined : (lastOutcomeCandidateId ?? undefined);
+        if (!inferredOutcomeCandidateId && importIntent !== "framing") {
           relationshipState = "missing";
           relationshipNote = "No prior Outcome candidate was available to anchor this Epic relationship.";
         } else {
           relationshipState = section.confidence === "high" ? "mapped" : "uncertain";
           relationshipNote =
-            relationshipState === "mapped"
+            importIntent === "framing"
+              ? "Epic is ready to be linked to the current project Outcome during framing approval."
+              : relationshipState === "mapped"
               ? "Epic relationship was inferred from nearby Outcome context."
               : "Epic likely belongs to the nearest Outcome candidate, but the relationship remains uncertain.";
         }
@@ -2819,12 +2638,15 @@ export function mapParsedArtifactsToAasCandidates(input: {
       }
 
       if (candidateType === "story") {
-        inferredOutcomeCandidateId = lastOutcomeCandidateId ?? undefined;
+        inferredOutcomeCandidateId = importIntent === "framing" ? undefined : (lastOutcomeCandidateId ?? undefined);
         inferredEpicCandidateId = lastEpicCandidateId ?? undefined;
 
-        if (!inferredEpicCandidateId || !inferredOutcomeCandidateId) {
+        if (!inferredEpicCandidateId || (!inferredOutcomeCandidateId && importIntent !== "framing")) {
           relationshipState = "missing";
-          relationshipNote = "Story relationship inference is incomplete because a prior Outcome or Epic candidate was not found.";
+          relationshipNote =
+            importIntent === "framing"
+              ? "Story Idea still needs an Epic destination before approval."
+              : "Story relationship inference is incomplete because a prior Outcome or Epic candidate was not found.";
         } else if (section.confidence === "low") {
           relationshipState = "uncertain";
           relationshipNote = "Story relationship is inferred from nearby sections but remains uncertain.";

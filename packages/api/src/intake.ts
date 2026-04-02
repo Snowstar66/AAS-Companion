@@ -1,4 +1,5 @@
 import {
+  applyApprovedArtifactFileCarryForwardToOutcome,
   appendArtifactFileRejections,
   createArtifactIntakeSession,
   getArtifactIntakeFileById,
@@ -194,6 +195,29 @@ export async function promoteArtifactCandidateService(input: {
     return failure({
       code: "artifact_candidate_promotion_blocked",
       message: error instanceof Error ? error.message : "Artifact candidate promotion is blocked."
+    });
+  }
+}
+
+export async function applyApprovedArtifactFileCarryForwardToOutcomeService(input: {
+  organizationId: string;
+  outcomeId: string;
+  fileId: string;
+  actorId?: string | null;
+}) {
+  try {
+    return success(
+      await applyApprovedArtifactFileCarryForwardToOutcome({
+        organizationId: input.organizationId,
+        outcomeId: input.outcomeId,
+        fileId: input.fileId,
+        actorId: input.actorId ?? null
+      })
+    );
+  } catch (error) {
+    return failure({
+      code: "artifact_carry_forward_apply_failed",
+      message: error instanceof Error ? error.message : "Artifact carry-forward could not be applied to the framing outcome."
     });
   }
 }

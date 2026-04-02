@@ -300,6 +300,64 @@ async function mergeApprovedCarryForwardIntoOutcome(input: {
   });
 }
 
+export async function applyApprovedArtifactFileCarryForwardToOutcome(input: {
+  organizationId: string;
+  outcomeId: string;
+  fileId: string;
+  actorId?: string | null;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const file = await tx.artifactIntakeFile.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        id: input.fileId
+      },
+      select: {
+        id: true,
+        sectionDispositions: true,
+        intakeSession: {
+          select: {
+            mappedArtifacts: true
+          }
+        }
+      }
+    });
+
+    if (!file) {
+      throw new Error("Artifact file was not found in organization scope.");
+    }
+
+    await mergeApprovedCarryForwardIntoOutcome({
+      db: tx,
+      organizationId: input.organizationId,
+      outcomeId: input.outcomeId,
+      mappedArtifacts: file.intakeSession.mappedArtifacts ?? null,
+      fileId: file.id,
+      sectionDispositions: file.sectionDispositions ?? null
+    });
+
+    await appendActivityEvent(
+      {
+        organizationId: input.organizationId,
+        entityType: "artifact_intake_file",
+        entityId: file.id,
+        eventType: "artifact_file_carry_forward_applied",
+        actorId: input.actorId ?? null,
+        metadata: {
+          outcomeId: input.outcomeId
+        }
+      },
+      tx
+    );
+
+    return {
+      ok: true as const,
+      outcomeId: input.outcomeId,
+      fileId: file.id
+    };
+  });
+}
+
 function clearPendingUnmappedSectionsForRejectedFile(input: {
   mappedArtifacts: unknown;
   fileId: string;

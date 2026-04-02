@@ -118,6 +118,7 @@ type ArtifactIntakeReviewWorkspaceProps = {
   projectEpics: ProjectEpicOption[];
   selectedCandidate: IntakeArtifactCandidate | null;
   submitAction: (formData: FormData) => Promise<void>;
+  submitFramingBulkApproveAction?: ((formData: FormData) => Promise<void>) | undefined;
   submitCandidateDispositionInlineAction: (input: {
     candidateId: string;
     candidateType: "outcome" | "epic" | "story";
@@ -381,6 +382,27 @@ function groupLeftoversByKind(sections: ParsedSection[]) {
   return [...grouped.values()];
 }
 
+function groupCarryForwardItemsByCategory(items: ArtifactCarryForwardItem[]) {
+  const grouped = new Map<string, { category: ArtifactCarryForwardItem["category"]; title: string; items: ArtifactCarryForwardItem[] }>();
+
+  for (const item of items) {
+    const existing = grouped.get(item.category);
+
+    if (existing) {
+      existing.items.push(item);
+      continue;
+    }
+
+    grouped.set(item.category, {
+      category: item.category,
+      title: carryForwardCategoryLabel(item.category),
+      items: [item]
+    });
+  }
+
+  return [...grouped.values()];
+}
+
 function carryForwardCategoryLabel(category: ArtifactCarryForwardItem["category"]) {
   if (category === "ux_principle") {
     return "UX principle";
@@ -502,6 +524,7 @@ export function ArtifactIntakeReviewWorkspace({
   projectEpics,
   selectedCandidate,
   submitAction,
+  submitFramingBulkApproveAction,
   submitSectionDispositionInlineAction
 }: ArtifactIntakeReviewWorkspaceProps) {
   const currentSelection = {
@@ -574,19 +597,18 @@ export function ArtifactIntakeReviewWorkspace({
     };
   });
   const unresolvedCarryForwardCount = carryForwardItemStates.filter((entry) => entry.status === "unresolved").length;
-  const importedOutcomeCandidates = fileCandidates.filter((candidate) => candidate.type === "outcome");
   const importedEpicCandidates = fileCandidates.filter((candidate) => candidate.type === "epic");
   const importedStoryCandidates = fileCandidates.filter((candidate) => candidate.type === "story");
   const selectedProjectOutcome =
     outcomeCandidateOptions.find((outcome) => outcome.id === selectedOutcomeCandidateId) ??
     (outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0] : null);
-  const framingPreviewEpics = importedEpicCandidates.map((epic) => ({
-    epic,
-    stories: importedStoryCandidates.filter((story) => story.draftRecord?.epicCandidateId === epic.id)
-  }));
-  const unassignedStoryIdeas = importedStoryCandidates.filter(
-    (story) => !framingPreviewEpics.some((entry) => entry.stories.some((candidate) => candidate.id === story.id))
-  );
+  const carryForwardGroups = groupCarryForwardItemsByCategory(carryForwardItems);
+  const bulkOutcomeCandidateId = selectedProjectOutcome?.id ?? "";
+  const bulkProjectEpicOptions = bulkOutcomeCandidateId
+    ? (projectEpics ?? []).filter((epic) => epic.outcomeId === bulkOutcomeCandidateId)
+    : (projectEpics ?? []);
+  const storyIdeasNeedingProjectEpic = importedStoryCandidates.filter((story) => !story.draftRecord?.epicCandidateId?.trim());
+  const defaultBulkEpicCandidateId = bulkProjectEpicOptions.length === 1 ? bulkProjectEpicOptions[0]?.id ?? "" : "";
   const fieldValidationNotes = resolveFieldValidationNotes(selectedCandidate);
   const fieldValidationMap = new Map<string, FieldValidationNote[]>();
 
@@ -611,118 +633,179 @@ export function ArtifactIntakeReviewWorkspace({
       {session.importIntent === "framing" ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Framing Value Spine preview</CardTitle>
+            <CardTitle>Simple framing import</CardTitle>
             <CardDescription>
-              The import is shown as the Value Spine it most likely maps to. Review rows here, then use checkbox approval in Human Review when you want to approve the selected candidates into the project.
+              For framing imports we keep it simple: import Epics as Epics, Story Ideas as Story Ideas, and send UX, non-functional, and functional requirements straight into the framing constraints.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs">
-              {compactMetric("Outcomes", selectedProjectOutcome ? 1 : importedOutcomeCandidates.length)}
               {compactMetric("Epics", importedEpicCandidates.length)}
               {compactMetric("Story ideas", importedStoryCandidates.length)}
+              {compactMetric("Constraints", carryForwardItems.length)}
+              {compactMetric("Ignored leftovers", fileLeftovers.length)}
             </div>
-            <div className="rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
-                  Outcome
-                </span>
-                <p className="font-medium text-foreground">
-                  {selectedProjectOutcome
-                    ? describeProjectOutcome(selectedProjectOutcome)
-                    : importedOutcomeCandidates[0]?.title ?? "Existing project outcome needs to be selected"}
-                </p>
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {selectedProjectOutcome
-                  ? "Imported epics are linked to the active project outcome so they can be approved directly into the existing framing."
-                  : "If the project already has one outcome, it is used automatically. Otherwise choose the destination outcome before approval."}
-              </p>
-            </div>
-            {framingPreviewEpics.length > 0 ? (
-              <div className="space-y-3">
-                {framingPreviewEpics.map(({ epic, stories }) => (
-                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={epic.id}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Epic
-                      </span>
-                      <p className="font-medium text-foreground">
-                        {isLegacyImportKey(epic.draftRecord?.key ?? null)
-                          ? buildSuggestedCandidateKey(session, epic)
-                          : epic.draftRecord?.key || buildSuggestedCandidateKey(session, epic)}{" "}
-                        {epic.title}
-                      </p>
-                    </div>
-                    <p className="mt-2 text-sm text-muted-foreground">{epic.draftRecord?.purpose ?? epic.summary}</p>
-                    <div className="mt-4 space-y-3 border-l border-dashed border-sky-200 pl-4">
-                      {stories.length > 0 ? (
-                        stories.map((story) => (
-                          <div className="rounded-2xl border border-sky-100 bg-sky-50/35 p-4" key={story.id}>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
-                                Story idea
-                              </span>
-                              <p className="font-medium text-foreground">
-                                {isLegacyImportKey(story.draftRecord?.key ?? null)
-                                  ? buildSuggestedCandidateKey(session, story)
-                                  : story.draftRecord?.key || buildSuggestedCandidateKey(session, story)}{" "}
-                                {story.title}
-                              </p>
-                            </div>
-                            {storyIdeaDescription(story) ? (
-                              <p className="mt-2 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
-                            ) : null}
-                            <p className="mt-2 text-sm text-foreground">
-                              <span className="font-medium">Expected behavior:</span>{" "}
-                              {story.draftRecord?.expectedBehavior?.trim() || "Needs a clearer expected behavior before approval."}
+            {submitFramingBulkApproveAction ? (
+              <form action={submitFramingBulkApproveAction} className="space-y-4">
+                <input name="sessionId" type="hidden" value={session.id} />
+                <input name="fileId" type="hidden" value={selectedFile.id} />
+                {fileLeftovers.map((section) => (
+                  <input key={section.id} name="leftoverSectionIds" type="hidden" value={section.id} />
+                ))}
+
+                <div className="rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">1. Framing outcome</p>
+                  {outcomeCandidateOptions.length === 1 && selectedProjectOutcome ? (
+                    <>
+                      <input name="outcomeCandidateId" type="hidden" value={selectedProjectOutcome.id} />
+                      <p className="mt-2 font-medium text-foreground">{describeProjectOutcome(selectedProjectOutcome)}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">The project only has one Outcome, so it is used automatically.</p>
+                    </>
+                  ) : (
+                    <label className="mt-3 block space-y-2">
+                      <span className="text-sm font-medium text-foreground">Choose framing Outcome</span>
+                      <select
+                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                        defaultValue={bulkOutcomeCandidateId}
+                        name="outcomeCandidateId"
+                      >
+                        <option value="">Select Outcome</option>
+                        {outcomeCandidateOptions.map((candidate) => (
+                          <option key={candidate.id} value={candidate.id}>
+                            {describeProjectOutcome(candidate)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </div>
+
+                {storyIdeasNeedingProjectEpic.length > 0 ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/35 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">2. Target epic for free-standing story ideas</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Story Ideas that are not already grouped under an imported Epic will be attached to this project Epic.
+                    </p>
+                    <label className="mt-3 block space-y-2">
+                      <span className="text-sm font-medium text-foreground">Project Epic</span>
+                      <select
+                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                        defaultValue={defaultBulkEpicCandidateId}
+                        name="targetEpicCandidateId"
+                      >
+                        <option value="">Select Epic</option>
+                        {bulkProjectEpicOptions.map((candidate) => (
+                          <option key={candidate.id} value={candidate.id}>
+                            {describeProjectEpic(candidate)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                ) : null}
+
+                {importedEpicCandidates.length > 0 ? (
+                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">3. Imported epics</p>
+                    <div className="mt-3 space-y-3">
+                      {importedEpicCandidates.map((epic) => (
+                        <label className="flex gap-3 rounded-2xl border border-border/70 bg-background p-4" key={epic.id}>
+                          <input defaultChecked name="candidateIds" type="checkbox" value={epic.id} />
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground">
+                              {(epic.draftRecord?.key && !isLegacyImportKey(epic.draftRecord.key)
+                                ? epic.draftRecord.key
+                                : buildSuggestedCandidateKey(session, epic))}{" "}
+                              {epic.title}
                             </p>
+                            <p className="mt-1 text-sm text-muted-foreground">{epic.draftRecord?.purpose ?? epic.summary}</p>
                           </div>
-                        ))
-                      ) : (
-                        <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-4 py-4 text-sm text-muted-foreground">
-                          No Story Ideas were placed under this Epic yet.
-                        </div>
-                      )}
+                        </label>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : null}
-            {unassignedStoryIdeas.length > 0 ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/35 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">Story ideas waiting for epic</p>
-                <div className="mt-3 space-y-3">
-                  {unassignedStoryIdeas.map((story) => (
-                    <div className="rounded-2xl border border-amber-200 bg-white/80 p-4" key={story.id}>
-                      <p className="font-medium text-foreground">
-                        {isLegacyImportKey(story.draftRecord?.key ?? null)
-                          ? buildSuggestedCandidateKey(session, story)
-                          : story.draftRecord?.key || buildSuggestedCandidateKey(session, story)}{" "}
-                        {story.title}
-                      </p>
-                      {storyIdeaDescription(story) ? (
-                        <p className="mt-2 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
-                      ) : null}
+                ) : null}
+
+                {importedStoryCandidates.length > 0 ? (
+                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">4. Imported story ideas</p>
+                    <div className="mt-3 space-y-3">
+                      {importedStoryCandidates.map((story) => {
+                        const parentEpic = importedEpicCandidates.find((epic) => epic.id === story.draftRecord?.epicCandidateId);
+
+                        return (
+                          <label className="flex gap-3 rounded-2xl border border-border/70 bg-background p-4" key={story.id}>
+                            <input defaultChecked name="candidateIds" type="checkbox" value={story.id} />
+                            <div className="min-w-0">
+                              <p className="font-medium text-foreground">
+                                {(story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                                  ? story.draftRecord.key
+                                  : buildSuggestedCandidateKey(session, story))}{" "}
+                                {story.title}
+                              </p>
+                              {storyIdeaDescription(story) ? (
+                                <p className="mt-1 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
+                              ) : null}
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                {parentEpic
+                                  ? `Will stay under imported Epic ${parentEpic.title}.`
+                                  : "Will use the selected project Epic during bulk approval."}
+                              </p>
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
-                  ))}
+                  </div>
+                ) : null}
+
+                {carryForwardGroups.length > 0 ? (
+                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">5. Constraints for framing</p>
+                    <div className="mt-3 space-y-4">
+                      {carryForwardGroups.map((group) => (
+                        <div key={group.category}>
+                          <p className="text-sm font-medium text-foreground">{group.title}</p>
+                          <div className="mt-2 space-y-2">
+                            {group.items.map((item) => (
+                              <label className="flex gap-3 rounded-2xl border border-border/70 bg-background p-4" key={item.id}>
+                                <input defaultChecked name="carryForwardSectionIds" type="checkbox" value={item.sourceSection.id} />
+                                <div className="min-w-0">
+                                  <p className="font-medium text-foreground">{item.title}</p>
+                                  <p className="mt-1 text-sm text-muted-foreground">{item.summary}</p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
+                  {fileLeftovers.length > 0
+                    ? "Leftovers are not shown in detail here. Bulk approval will mark the remaining leftovers as ignored so the framing import stays clean."
+                    : "No leftover sections are waiting outside the simplified framing import."}
                 </div>
-              </div>
+
+                <Button className="w-full gap-2" type="submit">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Approve selected framing import
+                </Button>
+              </form>
             ) : null}
           </CardContent>
         </Card>
       ) : null}
 
-      {carryForwardItems.length > 0 ? (
+      {carryForwardItems.length > 0 && session.importIntent !== "framing" ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>
-              {session.importIntent === "framing" ? "Approve framing constraints" : "Carry forward to design"}
-            </CardTitle>
+            <CardTitle>Carry forward to design</CardTitle>
             <CardDescription>
-              {session.importIntent === "framing"
-                ? "UX requirements, non-functional requirements, and additional requirements can be approved into the current framing or rejected as not relevant."
-                : "These sections were recognized as useful design or constraint input, so they are kept visible here instead of being treated as leftovers."}
+              These sections were recognized as useful design or constraint input, so they are kept visible here
+              instead of being treated as leftovers.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -784,6 +867,7 @@ export function ArtifactIntakeReviewWorkspace({
         </Card>
       ) : null}
 
+      {session.importIntent !== "framing" ? (
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>Review leftovers</CardTitle>
@@ -935,6 +1019,7 @@ export function ArtifactIntakeReviewWorkspace({
           })}
         </CardContent>
       </Card>
+      ) : null}
 
       <div className="space-y-6">
         <div className="space-y-6">
@@ -1058,9 +1143,10 @@ export function ArtifactIntakeReviewWorkspace({
           </CollapsibleReviewPanel>
         </div>
 
-        <div className="space-y-6">
-          {selectedCandidate ? (
-            <form action={submitAction} className="space-y-4" id="candidate-editor">
+        {session.importIntent !== "framing" ? (
+          <div className="space-y-6">
+            {selectedCandidate ? (
+              <form action={submitAction} className="space-y-4" id="candidate-editor">
               <input name="sessionId" type="hidden" value={session.id} />
               <input name="fileId" type="hidden" value={selectedFile.id} />
               <input name="candidateId" type="hidden" value={selectedCandidate.id} />
@@ -1543,19 +1629,20 @@ export function ArtifactIntakeReviewWorkspace({
                   ) : null}
                 </CardContent>
               </Card>
-            </form>
-          ) : (
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>No mapped candidate selected</CardTitle>
-                <CardDescription>
-                  Full source and the correction queue stay available even when the selected artifact currently has no
-                  candidate to edit.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          )}
-        </div>
+              </form>
+            ) : (
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>No mapped candidate selected</CardTitle>
+                  <CardDescription>
+                    Full source and the correction queue stay available even when the selected artifact currently has no
+                    candidate to edit.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );

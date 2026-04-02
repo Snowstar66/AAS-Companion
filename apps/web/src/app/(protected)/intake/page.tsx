@@ -12,6 +12,7 @@ import {
   submitArtifactSectionDispositionInlineAction,
   submitArtifactCandidateIssueDispositionInlineAction,
   submitArtifactCandidateFromIntakeAction,
+  submitFramingBulkApproveFromIntakeAction,
   uploadArtifactIntakeFilesAction
 } from "./actions";
 
@@ -479,6 +480,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   allCandidates: selectedSession.allCandidates ?? selectedSession.candidates ?? []
                 }}
                 submitAction={submitArtifactCandidateFromIntakeAction}
+                submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
                 submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
                 submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
               />

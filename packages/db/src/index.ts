@@ -7,6 +7,7 @@ export {
   reviewArtifactFileSectionDisposition
 } from "./repositories/artifact-intake-repository";
 export {
+  applyApprovedArtifactFileCarryForwardToOutcome,
   getArtifactCandidateById,
   listArtifactCandidatesForOrganization,
   promoteArtifactCandidate,

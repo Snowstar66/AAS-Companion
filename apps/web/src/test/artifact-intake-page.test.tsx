@@ -25,6 +25,21 @@ vi.mock("@/lib/intake/workspace", () => ({
   loadArtifactIntakeWorkspace: vi.fn(async () => ({
     state: "ready",
     organizationName: "AAS Demo Organization",
+    projectOutcomes: [
+      {
+        id: "project-outcome-1",
+        key: "OUT-001",
+        title: "Primary project outcome"
+      }
+    ],
+    projectEpics: [
+      {
+        id: "candidate-epic",
+        key: "EPC-001",
+        title: "Imported Epic",
+        outcomeId: "project-outcome-1"
+      }
+    ],
     summary: {
       sessions: 1,
       files: 1,
@@ -38,6 +53,7 @@ vi.mock("@/lib/intake/workspace", () => ({
       {
         id: "session-1",
         label: "Artifact intake 2026-03-24 10:10",
+        importIntent: "framing",
         status: "human_review_required",
         createdAt: new Date("2026-03-24T09:10:00.000Z"),
         creator: {
@@ -77,7 +93,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               aiUsageScope: [],
               testDefinition: null,
               definitionOfDone: [],
-              outcomeCandidateId: "candidate-outcome",
+              outcomeCandidateId: "project-outcome-1",
               epicCandidateId: "candidate-epic"
             },
             humanDecisions: {
@@ -277,7 +293,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               aiUsageScope: [],
               testDefinition: null,
               definitionOfDone: [],
-              outcomeCandidateId: "candidate-outcome",
+              outcomeCandidateId: "project-outcome-1",
               epicCandidateId: "candidate-epic"
             },
             humanDecisions: {
@@ -428,10 +444,11 @@ describe("Import page", () => {
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Imported Story").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Story Idea").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Review leftovers" })).toBeDefined();
-    expect(screen.getAllByText("Leave promotion outside this story.").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Save and approve Story Idea import" })).toBeDefined();
-    expect(screen.getByText(/This imported story will become a Story Idea in Framing when approved\./)).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Simple framing import" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Approve selected framing import" })).toBeDefined();
+    expect(screen.getByText(/For framing imports we keep it simple/i)).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Save and approve Story Idea import" })).toBeNull();
   });
 
   it("shows Demo as read-only and disables new uploads", async () => {
