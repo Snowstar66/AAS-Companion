@@ -65,6 +65,21 @@ function unresolvedUnmappedSectionCount(input: {
   }).length;
 }
 
+function unresolvedCarryForwardItemCount(input: {
+  fileId: string;
+  carryForwardItems: Array<{ sourceSection: { id: string; sourceReference: { fileId: string } } }>;
+  sectionDispositions: Record<string, { action: string }>;
+}) {
+  return input.carryForwardItems.filter((item) => {
+    if (item.sourceSection.sourceReference.fileId !== input.fileId) {
+      return false;
+    }
+
+    const action = input.sectionDispositions[item.sourceSection.id]?.action;
+    return !action || action === "pending" || action === "blocked";
+  }).length;
+}
+
 type ArtifactIntakeWorkspaceSelection = {
   sessionId?: string | null | undefined;
   fileId?: string | null | undefined;
@@ -121,6 +136,11 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
           unmappedSections: mappedArtifacts?.unmappedSections ?? [],
           sectionDispositions
         });
+        const unresolvedCarryForwardCount = unresolvedCarryForwardItemCount({
+          fileId: file.id,
+          carryForwardItems: mappedArtifacts?.carryForwardItems ?? [],
+          sectionDispositions
+        });
 
         return {
           ...file,
@@ -131,7 +151,8 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
           uncertainSectionCount:
             parsedArtifacts?.sections.filter((section) => section.isUncertain || section.confidence === "low").length ?? 0,
           unresolvedUnmappedCount,
-          activeImportWorkCount: unresolvedUnmappedCount
+          unresolvedCarryForwardCount,
+          activeImportWorkCount: unresolvedUnmappedCount + unresolvedCarryForwardCount
         };
       });
       const candidates = (artifactSession.candidates ?? []).map((candidate) => ({

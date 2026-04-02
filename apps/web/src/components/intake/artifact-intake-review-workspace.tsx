@@ -198,7 +198,53 @@ function buildSuggestedImportedStoryKey(session: IntakeArtifactSession, candidat
   const index = storyCandidates.findIndex((entry) => entry.id === candidate.id);
   const sequence = index >= 0 ? index + 1 : storyCandidates.length + 1;
 
-  return `IMP-STR-${String(sequence).padStart(3, "0")}`;
+  return `SC-${String(sequence).padStart(3, "0")}`;
+}
+
+function buildSuggestedCandidateKey(session: IntakeArtifactSession, candidate: IntakeArtifactCandidate | null) {
+  if (!candidate) {
+    return "";
+  }
+
+  if (candidate.type === "story") {
+    return buildSuggestedImportedStoryKey(session, candidate);
+  }
+
+  const typedCandidates = session.allCandidates.filter((entry) => entry.type === candidate.type);
+  const index = typedCandidates.findIndex((entry) => entry.id === candidate.id);
+  const sequence = index >= 0 ? index + 1 : typedCandidates.length + 1;
+  const prefix = candidate.type === "outcome" ? "OUT" : "EPC";
+  return `${prefix}-${String(sequence).padStart(3, "0")}`;
+}
+
+function isLegacyImportKey(value: string | null | undefined) {
+  return /^IMP-(OUT|EPC|STR|STORY)-/i.test(value?.trim() ?? "");
+}
+
+function summarizeReviewText(value: string, maxLength = 180) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
+}
+
+function normalizeForComparison(value: string | null | undefined) {
+  return (value ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function storyIdeaDescription(candidate: IntakeArtifactCandidate) {
+  const description = candidate.draftRecord?.valueIntent?.trim() || candidate.summary.trim();
+  const normalizedTitle = normalizeForComparison(candidate.draftRecord?.title ?? candidate.title);
+  const normalizedDescription = normalizeForComparison(description);
+
+  if (!normalizedDescription || normalizedDescription === normalizedTitle) {
+    return null;
+  }
+
+  return description;
 }
 
 function dispositionLabel(action: string | null | undefined) {
@@ -247,7 +293,7 @@ function queueItems(
         issueId: section.id,
         actions: [
           { label: "Worked off", value: "corrected" as const },
-          { label: "Not relevant", value: "not_relevant" as const },
+          { label: "Reject", value: "not_relevant" as const },
           { label: "Keep pending", value: "pending" as const },
           { label: "Mark blocker", value: "blocked" as const }
         ]
@@ -283,6 +329,56 @@ function queueItemTone(item: QueueItem) {
   }
 
   return "border-amber-200 bg-amber-50/50";
+}
+
+function carryForwardDispositionState(action: string | null | undefined) {
+  if (action === "confirmed" || action === "corrected") {
+    return {
+      status: "resolved" as const,
+      tone: "border-emerald-200 bg-emerald-50/45 text-emerald-900"
+    };
+  }
+
+  if (action === "not_relevant") {
+    return {
+      status: "resolved" as const,
+      tone: "border-slate-200 bg-slate-50/45 text-slate-900"
+    };
+  }
+
+  if (action === "blocked") {
+    return {
+      status: "unresolved" as const,
+      tone: "border-rose-200 bg-rose-50/45 text-rose-900"
+    };
+  }
+
+  return {
+    status: "unresolved" as const,
+    tone: "border-amber-200 bg-amber-50/45 text-amber-900"
+  };
+}
+
+function groupLeftoversByKind(sections: ParsedSection[]) {
+  const grouped = new Map<string, { title: string; count: number; preview: string }>();
+
+  for (const section of sections) {
+    const key = section.kind;
+    const existing = grouped.get(key);
+
+    if (existing) {
+      existing.count += 1;
+      continue;
+    }
+
+    grouped.set(key, {
+      title: label(section.kind),
+      count: 1,
+      preview: summarizeReviewText(section.text, 140)
+    });
+  }
+
+  return [...grouped.values()];
 }
 
 function carryForwardCategoryLabel(category: ArtifactCarryForwardItem["category"]) {
@@ -451,6 +547,9 @@ export function ArtifactIntakeReviewWorkspace({
     selectedCandidate?.type === "story"
       ? selectedCandidate.draftRecord?.key ?? suggestedStoryKey
       : selectedCandidate?.draftRecord?.key ?? "";
+  const suggestedCandidateKey = buildSuggestedCandidateKey(session, selectedCandidate);
+  const displayedCandidateKeyValue =
+    selectedCandidate && isLegacyImportKey(selectedCandidateKeyValue) ? suggestedCandidateKey : selectedCandidateKeyValue;
   const mappedSectionsBySourceId = new Map(
     fileCandidates.map((candidate) => [candidate.source.sectionId, candidate] as const)
   );
@@ -461,6 +560,33 @@ export function ArtifactIntakeReviewWorkspace({
   );
   const quickEditFieldNames = new Set<string>();
   const showHumanDecisionFields = true;
+  const fileLeftovers = (session.mappedArtifacts?.unmappedSections ?? []).filter(
+    (section) => section.sourceReference.fileId === selectedFile.id
+  );
+  const leftoverGroups = groupLeftoversByKind(fileLeftovers);
+  const carryForwardItemStates = carryForwardItems.map((item) => {
+    const selectedAction = selectedFile.sectionDispositions[item.sourceSection.id]?.action ?? null;
+    return {
+      item,
+      selectedAction,
+      dispositionLabel: dispositionLabel(selectedAction),
+      ...carryForwardDispositionState(selectedAction)
+    };
+  });
+  const unresolvedCarryForwardCount = carryForwardItemStates.filter((entry) => entry.status === "unresolved").length;
+  const importedOutcomeCandidates = fileCandidates.filter((candidate) => candidate.type === "outcome");
+  const importedEpicCandidates = fileCandidates.filter((candidate) => candidate.type === "epic");
+  const importedStoryCandidates = fileCandidates.filter((candidate) => candidate.type === "story");
+  const selectedProjectOutcome =
+    outcomeCandidateOptions.find((outcome) => outcome.id === selectedOutcomeCandidateId) ??
+    (outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0] : null);
+  const framingPreviewEpics = importedEpicCandidates.map((epic) => ({
+    epic,
+    stories: importedStoryCandidates.filter((story) => story.draftRecord?.epicCandidateId === epic.id)
+  }));
+  const unassignedStoryIdeas = importedStoryCandidates.filter(
+    (story) => !framingPreviewEpics.some((entry) => entry.stories.some((candidate) => candidate.id === story.id))
+  );
   const fieldValidationNotes = resolveFieldValidationNotes(selectedCandidate);
   const fieldValidationMap = new Map<string, FieldValidationNote[]>();
 
@@ -482,21 +608,131 @@ export function ArtifactIntakeReviewWorkspace({
 
   return (
     <div className="space-y-6">
+      {session.importIntent === "framing" ? (
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>Framing Value Spine preview</CardTitle>
+            <CardDescription>
+              The import is shown as the Value Spine it most likely maps to. Review rows here, then use checkbox approval in Human Review when you want to approve the selected candidates into the project.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2 text-xs">
+              {compactMetric("Outcomes", selectedProjectOutcome ? 1 : importedOutcomeCandidates.length)}
+              {compactMetric("Epics", importedEpicCandidates.length)}
+              {compactMetric("Story ideas", importedStoryCandidates.length)}
+            </div>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
+                  Outcome
+                </span>
+                <p className="font-medium text-foreground">
+                  {selectedProjectOutcome
+                    ? describeProjectOutcome(selectedProjectOutcome)
+                    : importedOutcomeCandidates[0]?.title ?? "Existing project outcome needs to be selected"}
+                </p>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {selectedProjectOutcome
+                  ? "Imported epics are linked to the active project outcome so they can be approved directly into the existing framing."
+                  : "If the project already has one outcome, it is used automatically. Otherwise choose the destination outcome before approval."}
+              </p>
+            </div>
+            {framingPreviewEpics.length > 0 ? (
+              <div className="space-y-3">
+                {framingPreviewEpics.map(({ epic, stories }) => (
+                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={epic.id}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Epic
+                      </span>
+                      <p className="font-medium text-foreground">
+                        {isLegacyImportKey(epic.draftRecord?.key ?? null)
+                          ? buildSuggestedCandidateKey(session, epic)
+                          : epic.draftRecord?.key || buildSuggestedCandidateKey(session, epic)}{" "}
+                        {epic.title}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{epic.draftRecord?.purpose ?? epic.summary}</p>
+                    <div className="mt-4 space-y-3 border-l border-dashed border-sky-200 pl-4">
+                      {stories.length > 0 ? (
+                        stories.map((story) => (
+                          <div className="rounded-2xl border border-sky-100 bg-sky-50/35 p-4" key={story.id}>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
+                                Story idea
+                              </span>
+                              <p className="font-medium text-foreground">
+                                {isLegacyImportKey(story.draftRecord?.key ?? null)
+                                  ? buildSuggestedCandidateKey(session, story)
+                                  : story.draftRecord?.key || buildSuggestedCandidateKey(session, story)}{" "}
+                                {story.title}
+                              </p>
+                            </div>
+                            {storyIdeaDescription(story) ? (
+                              <p className="mt-2 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
+                            ) : null}
+                            <p className="mt-2 text-sm text-foreground">
+                              <span className="font-medium">Expected behavior:</span>{" "}
+                              {story.draftRecord?.expectedBehavior?.trim() || "Needs a clearer expected behavior before approval."}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-4 py-4 text-sm text-muted-foreground">
+                          No Story Ideas were placed under this Epic yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {unassignedStoryIdeas.length > 0 ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/35 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">Story ideas waiting for epic</p>
+                <div className="mt-3 space-y-3">
+                  {unassignedStoryIdeas.map((story) => (
+                    <div className="rounded-2xl border border-amber-200 bg-white/80 p-4" key={story.id}>
+                      <p className="font-medium text-foreground">
+                        {isLegacyImportKey(story.draftRecord?.key ?? null)
+                          ? buildSuggestedCandidateKey(session, story)
+                          : story.draftRecord?.key || buildSuggestedCandidateKey(session, story)}{" "}
+                        {story.title}
+                      </p>
+                      {storyIdeaDescription(story) ? (
+                        <p className="mt-2 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
       {carryForwardItems.length > 0 ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Carry forward to design</CardTitle>
+            <CardTitle>
+              {session.importIntent === "framing" ? "Approve framing constraints" : "Carry forward to design"}
+            </CardTitle>
             <CardDescription>
-              These sections were recognized as useful design or constraint input, so they are kept visible here instead of being treated as leftovers.
+              {session.importIntent === "framing"
+                ? "UX requirements, non-functional requirements, and additional requirements can be approved into the current framing or rejected as not relevant."
+                : "These sections were recognized as useful design or constraint input, so they are kept visible here instead of being treated as leftovers."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs">
               {compactMetric("Carry-forward items", carryForwardItems.length)}
+              {compactMetric("Pending decisions", unresolvedCarryForwardCount)}
             </div>
             <div className="grid gap-3">
-              {carryForwardItems.map((item) => (
-                <div className="rounded-2xl border border-sky-200 bg-sky-50/40 p-4" key={item.id}>
+              {carryForwardItemStates.map(({ item, selectedAction, dispositionLabel, status, tone }) => (
+                <div className={`rounded-2xl border p-4 ${tone}`} key={item.id}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
                       {carryForwardCategoryLabel(item.category)}
@@ -507,10 +743,40 @@ export function ArtifactIntakeReviewWorkspace({
                   </div>
                   <p className="mt-3 font-medium text-foreground">{item.title}</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.summary}</p>
+                  {dispositionLabel ? (
+                    <p className="mt-3 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                      Disposition: {dispositionLabel}
+                    </p>
+                  ) : null}
                   <p className="mt-3 text-xs text-muted-foreground">
                     {item.sourceSection.sourceReference.sectionMarker} lines {item.sourceSection.sourceReference.lineStart}-
                     {item.sourceSection.sourceReference.lineEnd}
                   </p>
+                  <ArtifactIntakeDispositionButtons
+                    actions={
+                      session.importIntent === "framing"
+                        ? [
+                            { label: "Approve into Framing", value: "confirmed" as const },
+                            { label: "Reject", value: "not_relevant" as const },
+                            { label: "Keep pending", value: "pending" as const },
+                            { label: "Mark blocker", value: "blocked" as const }
+                          ]
+                        : [
+                            { label: "Confirm", value: "confirmed" as const },
+                            { label: "Not relevant", value: "not_relevant" as const },
+                            { label: "Keep pending", value: "pending" as const },
+                            { label: "Mark blocker", value: "blocked" as const }
+                          ]
+                    }
+                    fileId={selectedFile.id}
+                    initialAction={selectedAction}
+                    initialStatus={status}
+                    key={`${item.id}-carry-forward-actions`}
+                    kind="section"
+                    resolvedActions={["confirmed", "corrected", "not_relevant"]}
+                    sectionId={item.sourceSection.id}
+                    submitSectionDisposition={submitSectionDispositionInlineAction}
+                  />
                 </div>
               ))}
             </div>
@@ -521,11 +787,28 @@ export function ArtifactIntakeReviewWorkspace({
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>Review leftovers</CardTitle>
+          <CardDescription>
+            Only leftover material that still needs a human decision is shown here. Supporting noise is summarized first so it is easier to reject and move on.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {progress?.categories.unmapped ? (
             <div className="flex flex-wrap gap-2 text-xs">
               {compactMetric("Review leftovers", progress.categories.unmapped)}
+            </div>
+          ) : null}
+          {leftoverGroups.length > 0 ? (
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Leftover summary</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {leftoverGroups.map((group) => (
+                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={`${group.title}-${group.preview}`}>
+                    <p className="font-medium text-foreground">{group.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{group.count} section(s)</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{group.preview}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 
@@ -586,7 +869,7 @@ export function ArtifactIntakeReviewWorkspace({
                                 {item.actionScope === "section" ? "Source section" : "Candidate issue"}
                               </span>
                             </div>
-                            <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{summarizeReviewText(item.description, 180)}</p>
                             <p className="mt-2 text-xs text-muted-foreground">{item.context}</p>
                             {item.dispositionLabel ? (
                               <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -814,7 +1097,7 @@ export function ArtifactIntakeReviewWorkspace({
                       <span className="text-sm font-medium text-foreground">Key</span>
                       <input
                         className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "key")}
-                        defaultValue={selectedCandidateKeyValue}
+                        defaultValue={displayedCandidateKeyValue}
                         name="key"
                         type="text"
                       />
@@ -823,9 +1106,9 @@ export function ArtifactIntakeReviewWorkspace({
                           {note.message}
                         </p>
                       ))}
-                      {selectedCandidate.type === "story" && !selectedCandidate.draftRecord?.key ? (
+                      {selectedCandidate.type === "story" && (isLegacyImportKey(selectedCandidate.draftRecord?.key) || !selectedCandidate.draftRecord?.key) ? (
                         <p className="text-xs text-muted-foreground">
-                          Suggested import key. It stays visibly separate from native Story keys.
+                          Suggested simple project key. A unique `SC-###` value is assigned automatically if you approve without changing it.
                         </p>
                       ) : null}
                     </label>

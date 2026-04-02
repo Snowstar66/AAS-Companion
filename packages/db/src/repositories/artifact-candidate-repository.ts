@@ -2,6 +2,7 @@ import type { Prisma } from "../../generated/client";
 import {
   analyzeArtifactCandidateCompliance,
   type ArtifactAasCandidate,
+  parseFramingConstraintBundle,
   artifactMappingResultSchema,
   artifactCandidateDraftRecordSchema,
   artifactCandidateHumanDecisionSchema,
@@ -68,6 +69,216 @@ function buildImportedFramingCarryForwardBundle(mappedArtifacts: unknown) {
     solutionContext: solutionContext || null,
     solutionConstraints
   };
+}
+
+function lineList(value: string | null | undefined) {
+  return (value ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function mergeUniqueLines(existingValue: string | null | undefined, nextValue: string | null | undefined) {
+  const merged = [...new Set([...lineList(existingValue), ...lineList(nextValue)])];
+  return merged.length > 0 ? merged.join("\n") : "";
+}
+
+function isCarryForwardApproved(action: string | undefined) {
+  return action === "confirmed" || action === "corrected";
+}
+
+function buildImportedFramingCarryForwardBundleForFile(input: {
+  mappedArtifacts: unknown;
+  fileId: string;
+  sectionDispositions: unknown;
+}) {
+  const mapping = artifactMappingResultSchema.safeParse(input.mappedArtifacts);
+  const sectionDispositions = artifactIssueDispositionMapSchema.parse(input.sectionDispositions ?? {});
+
+  if (!mapping.success) {
+    return {
+      solutionContext: null as string | null,
+      solutionConstraints: null as string | null
+    };
+  }
+
+  const fileItems = mapping.data.carryForwardItems.filter(
+    (item) => item.sourceSection.sourceReference.fileId === input.fileId
+  );
+
+  if (fileItems.length === 0) {
+    return {
+      solutionContext: null as string | null,
+      solutionConstraints: null as string | null
+    };
+  }
+
+  const hasExplicitDisposition = fileItems.some((item) => Boolean(sectionDispositions[item.sourceSection.id]?.action));
+  const includedItems = hasExplicitDisposition
+    ? fileItems.filter((item) => isCarryForwardApproved(sectionDispositions[item.sourceSection.id]?.action))
+    : fileItems.filter((item) => sectionDispositions[item.sourceSection.id]?.action !== "not_relevant");
+
+  const scopedMapping = {
+    ...mapping.data,
+    carryForwardItems: includedItems
+  };
+
+  return buildImportedFramingCarryForwardBundle(scopedMapping);
+}
+
+function mergeFramingConstraintBundleText(input: {
+  existing: string | null | undefined;
+  next: string | null | undefined;
+}) {
+  const existingBundle = parseFramingConstraintBundle(input.existing);
+  const nextBundle = parseFramingConstraintBundle(input.next);
+
+  return serializeFramingConstraintBundle({
+    generalConstraints: mergeUniqueLines(existingBundle.generalConstraints, nextBundle.generalConstraints),
+    uxPrinciples: mergeUniqueLines(existingBundle.uxPrinciples, nextBundle.uxPrinciples),
+    nonFunctionalRequirements: mergeUniqueLines(
+      existingBundle.nonFunctionalRequirements,
+      nextBundle.nonFunctionalRequirements
+    ),
+    additionalRequirements: mergeUniqueLines(
+      existingBundle.additionalRequirements,
+      nextBundle.additionalRequirements
+    )
+  });
+}
+
+function buildNextSimpleKey(existingKeys: string[], prefix: string) {
+  const numericKeys = existingKeys
+    .map((key) => new RegExp(`^${prefix}-(\\d+)$`, "i").exec(key)?.[1])
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => Number.isFinite(value));
+
+  const nextNumber = (numericKeys.length > 0 ? Math.max(...numericKeys) : 0) + 1;
+  return `${prefix}-${String(nextNumber).padStart(3, "0")}`;
+}
+
+async function resolvePreferredProjectOutcomeId(db: DbClient, organizationId: string) {
+  const outcomes = await db.outcome.findMany({
+    where: {
+      organizationId,
+      lifecycleState: "active"
+    },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      originType: true
+    }
+  });
+
+  return outcomes.find((outcome) => outcome.originType === "native")?.id ?? outcomes[0]?.id ?? null;
+}
+
+async function resolveNextGovernedKey(input: {
+  db: DbClient;
+  organizationId: string;
+  entityType: "outcome" | "epic" | "story" | "direction_seed";
+  requestedKey: string | null | undefined;
+  importIntent?: "framing" | "design";
+}) {
+  const normalizedRequestedKey = input.requestedKey?.trim() ?? "";
+  const isLegacyImportKey = /^IMP-(OUT|EPC|STR|STORY)-/i.test(normalizedRequestedKey);
+
+  const prefix =
+    input.entityType === "outcome"
+      ? "OUT"
+      : input.entityType === "epic"
+        ? "EPC"
+        : input.entityType === "direction_seed"
+          ? "SC"
+          : "STR";
+
+  const existingKeys =
+    input.entityType === "outcome"
+      ? (
+          await input.db.outcome.findMany({
+            where: { organizationId: input.organizationId },
+            select: { key: true }
+          })
+        ).map((record) => record.key)
+      : input.entityType === "epic"
+        ? (
+            await input.db.epic.findMany({
+              where: { organizationId: input.organizationId },
+              select: { key: true }
+            })
+          ).map((record) => record.key)
+        : input.entityType === "direction_seed"
+          ? (
+              await input.db.directionSeed.findMany({
+                where: { organizationId: input.organizationId },
+                select: { key: true }
+              })
+            ).map((record) => record.key)
+          : (
+              await input.db.story.findMany({
+                where: { organizationId: input.organizationId },
+                select: { key: true }
+              })
+            ).map((record) => record.key);
+
+  if (normalizedRequestedKey && !isLegacyImportKey && !existingKeys.includes(normalizedRequestedKey)) {
+    return normalizedRequestedKey;
+  }
+
+  return buildNextSimpleKey(existingKeys, prefix);
+}
+
+async function mergeApprovedCarryForwardIntoOutcome(input: {
+  db: DbClient;
+  organizationId: string;
+  outcomeId: string;
+  mappedArtifacts: unknown;
+  fileId: string;
+  sectionDispositions: unknown;
+}) {
+  const importedCarryForward = buildImportedFramingCarryForwardBundleForFile({
+    mappedArtifacts: input.mappedArtifacts,
+    fileId: input.fileId,
+    sectionDispositions: input.sectionDispositions
+  });
+
+  if (!importedCarryForward.solutionConstraints) {
+    return;
+  }
+
+  const existingOutcome = await input.db.outcome.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      id: input.outcomeId
+    },
+    select: {
+      id: true,
+      solutionConstraints: true
+    }
+  });
+
+  if (!existingOutcome) {
+    return;
+  }
+
+  const mergedConstraints = mergeFramingConstraintBundleText({
+    existing: existingOutcome.solutionConstraints,
+    next: importedCarryForward.solutionConstraints
+  });
+
+  if (mergedConstraints === existingOutcome.solutionConstraints) {
+    return;
+  }
+
+  await input.db.outcome.update({
+    where: {
+      id: existingOutcome.id
+    },
+    data: {
+      solutionConstraints: mergedConstraints
+    }
+  });
 }
 
 function clearPendingUnmappedSectionsForRejectedFile(input: {
@@ -733,18 +944,29 @@ export async function promoteArtifactCandidate(input: {
         const importIntent = candidate.intakeSession.importIntent;
         const importedCarryForward =
           importIntent === "framing"
-            ? buildImportedFramingCarryForwardBundle(file?.intakeSession.mappedArtifacts ?? null)
+            ? buildImportedFramingCarryForwardBundleForFile({
+                mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
+                fileId: candidate.fileId,
+                sectionDispositions: file?.sectionDispositions ?? null
+              })
             : { solutionContext: null as string | null, solutionConstraints: null as string | null };
 
         let promotedEntityId = "";
         const promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
 
         if (candidate.type === "outcome") {
+          const outcomeKey = await resolveNextGovernedKey({
+            db: tx,
+            organizationId: candidate.organizationId,
+            entityType: "outcome",
+            requestedKey: draftRecord.key ?? null,
+            importIntent
+          });
           const created = await createOutcome(
             {
               organizationId: candidate.organizationId,
               actorId: input.actorId ?? null,
-              key: draftRecord.key ?? `IMP-OUT-${candidate.id.slice(0, 8).toUpperCase()}`,
+              key: outcomeKey,
               title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
               problemStatement: draftRecord.problemStatement ?? null,
               outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
@@ -777,25 +999,45 @@ export async function promoteArtifactCandidate(input: {
                     id: promotedOutcomeCandidate.promotedEntityId
                   }
                 })
-              : draftRecord.outcomeCandidateId
-                ? await tx.outcome.findFirst({
-                    where: {
-                      organizationId: candidate.organizationId,
-                      id: draftRecord.outcomeCandidateId
-                    }
-                  })
+                : draftRecord.outcomeCandidateId
+                  ? await tx.outcome.findFirst({
+                      where: {
+                        organizationId: candidate.organizationId,
+                        id: draftRecord.outcomeCandidateId
+                      }
+                    })
                 : null;
 
-          if (!linkedOutcome) {
+          const fallbackOutcome =
+            linkedOutcome ??
+            (await resolvePreferredProjectOutcomeId(tx, candidate.organizationId).then((outcomeId) =>
+              outcomeId
+                ? tx.outcome.findFirst({
+                    where: {
+                      organizationId: candidate.organizationId,
+                      id: outcomeId
+                    }
+                  })
+                : null
+            ));
+
+          if (!fallbackOutcome) {
             throw new Error("Select or link a valid project Outcome before promoting this Epic.");
           }
 
+          const epicKey = await resolveNextGovernedKey({
+            db: tx,
+            organizationId: candidate.organizationId,
+            entityType: "epic",
+            requestedKey: draftRecord.key ?? null,
+            importIntent
+          });
           const created = await createEpic(
             {
               organizationId: candidate.organizationId,
               actorId: input.actorId ?? null,
-              outcomeId: linkedOutcome.id,
-              key: draftRecord.key ?? `IMP-EPC-${candidate.id.slice(0, 8).toUpperCase()}`,
+              outcomeId: fallbackOutcome.id,
+              key: epicKey,
               title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
               purpose: draftRecord.purpose ?? sanitizeArtifactPersistenceText(candidate.summary),
               scopeBoundary: draftRecord.scopeBoundary ?? null,
@@ -808,13 +1050,23 @@ export async function promoteArtifactCandidate(input: {
             },
             tx
           );
+          if (importIntent === "framing") {
+            await mergeApprovedCarryForwardIntoOutcome({
+              db: tx,
+              organizationId: candidate.organizationId,
+              outcomeId: fallbackOutcome.id,
+              mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
+              fileId: candidate.fileId,
+              sectionDispositions: file?.sectionDispositions ?? null
+            });
+          }
           promotedEntityId = created.id;
         }
 
         if (candidate.type === "story") {
           const promotedOutcomeCandidate = await autoPromoteDependencyCandidate(draftRecord.outcomeCandidateId, "Outcome");
           const promotedEpicCandidate = await autoPromoteDependencyCandidate(draftRecord.epicCandidateId, "Epic");
-          const linkedOutcome =
+          let linkedOutcome =
             promotedOutcomeCandidate?.promotedEntityId
               ? await tx.outcome.findFirst({
                   where: {
@@ -847,10 +1099,49 @@ export async function promoteArtifactCandidate(input: {
                   })
                 : null;
 
+          const preferredOutcomeId = await resolvePreferredProjectOutcomeId(tx, candidate.organizationId);
           if (!linkedOutcome || !linkedEpic) {
-            throw new Error("Select or link a valid Outcome and Epic before promoting this Story Idea.");
+            const fallbackOutcome =
+              linkedOutcome ??
+              (linkedEpic
+                ? await tx.outcome.findFirst({
+                    where: {
+                      organizationId: candidate.organizationId,
+                      id: linkedEpic.outcomeId
+                    }
+                  })
+                : preferredOutcomeId
+                  ? await tx.outcome.findFirst({
+                      where: {
+                        organizationId: candidate.organizationId,
+                        id: preferredOutcomeId
+                      }
+                    })
+                  : null);
+
+            if (!fallbackOutcome || !linkedEpic) {
+              throw new Error("Select or link a valid Outcome and Epic before promoting this Story Idea.");
+            }
+
+            linkedOutcome = fallbackOutcome;
           }
 
+          const storyIdeaKey =
+            importIntent === "framing"
+              ? await resolveNextGovernedKey({
+                  db: tx,
+                  organizationId: candidate.organizationId,
+                  entityType: "direction_seed",
+                  requestedKey: draftRecord.key ?? null,
+                  importIntent
+                })
+              : await resolveNextGovernedKey({
+                  db: tx,
+                  organizationId: candidate.organizationId,
+                  entityType: "story",
+                  requestedKey: draftRecord.key ?? null,
+                  importIntent
+                });
           const created =
             importIntent === "design"
               ? await createStory(
@@ -859,7 +1150,7 @@ export async function promoteArtifactCandidate(input: {
                     actorId: input.actorId ?? null,
                     outcomeId: linkedOutcome.id,
                     epicId: linkedEpic.id,
-                    key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+                    key: storyIdeaKey,
                     title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
                     storyType: draftRecord.storyType ?? "outcome_delivery",
                     valueIntent:
@@ -886,7 +1177,7 @@ export async function promoteArtifactCandidate(input: {
                     actorId: input.actorId ?? null,
                     outcomeId: linkedOutcome.id,
                     epicId: linkedEpic.id,
-                    key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+                    key: storyIdeaKey,
                     title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
                     shortDescription: draftRecord.valueIntent ?? sanitizeArtifactPersistenceText(candidate.summary),
                     expectedBehavior: draftRecord.expectedBehavior ?? null,
@@ -897,6 +1188,16 @@ export async function promoteArtifactCandidate(input: {
                   },
                   tx
                 );
+          if (importIntent === "framing") {
+            await mergeApprovedCarryForwardIntoOutcome({
+              db: tx,
+              organizationId: candidate.organizationId,
+              outcomeId: linkedOutcome.id,
+              mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
+              fileId: candidate.fileId,
+              sectionDispositions: file?.sectionDispositions ?? null
+            });
+          }
           promotedEntityId = created.id;
         }
 
