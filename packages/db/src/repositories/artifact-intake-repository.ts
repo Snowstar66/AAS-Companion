@@ -104,6 +104,7 @@ type ArtifactRejectionContext = {
 type ArtifactProcessingContext = {
   organizationId: string;
   sessionId: string;
+  importIntent: "framing" | "design";
   processingMode: "deterministic" | "ai_assisted";
 };
 
@@ -135,6 +136,7 @@ export async function listArtifactIntakeSessions(organizationId: string) {
       id: true,
       organizationId: true,
       label: true,
+      importIntent: true,
       status: true,
       createdAt: true,
       updatedAt: true,
@@ -351,6 +353,7 @@ async function processArtifactIntakeSession(
   if (input.processingMode === "ai_assisted") {
     try {
       const aiInterpretation = await interpretArtifactFilesWithAi({
+        importIntent: input.importIntent,
         files: initialParsedArtifacts.map((entry) => ({
           fileId: entry.fileId,
           fileName: entry.fileName,
@@ -466,6 +469,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
         id: randomUUID(),
         organizationId: parsed.organizationId,
         label: parsed.label ?? `Artifact intake ${new Date().toISOString().slice(0, 16).replace("T", " ")}`,
+        importIntent: parsed.importIntent,
         status: "uploaded",
         createdBy: actorId
       }
@@ -480,6 +484,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
         actorId,
         metadata: {
           label: session.label,
+          importIntent: session.importIntent,
           fileCount: parsed.files.length
         }
       },
@@ -547,6 +552,7 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
     const processingResult = await processArtifactIntakeSession({
       organizationId: parsed.organizationId,
       sessionId: session.id,
+      importIntent: parsed.importIntent,
       processingMode: parsed.processingMode
     });
 

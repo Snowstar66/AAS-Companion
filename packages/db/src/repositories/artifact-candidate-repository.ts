@@ -19,6 +19,7 @@ import { appendActivityEvent } from "./activity-repository";
 import { createDirectionSeed } from "./direction-seed-repository";
 import { createEpic } from "./epic-repository";
 import { createOutcome } from "./outcome-repository";
+import { createStory } from "./story-repository";
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
 
@@ -501,6 +502,13 @@ export async function promoteArtifactCandidate(input: {
       where: {
         organizationId: input.organizationId,
         id: input.candidateId
+      },
+      include: {
+        intakeSession: {
+          select: {
+            importIntent: true
+          }
+        }
       }
     });
 
@@ -623,6 +631,7 @@ export async function promoteArtifactCandidate(input: {
       sourceId: candidate.id,
       note: `Promoted from intake session ${candidate.intakeSessionId}`
     };
+    const importIntent = candidate.intakeSession.importIntent;
 
     let promotedEntityId = "";
     const promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
@@ -752,20 +761,46 @@ export async function promoteArtifactCandidate(input: {
         throw new Error("Select a valid project Outcome and Epic before promoting this Story.");
       }
 
-      const created = await createDirectionSeed({
-        organizationId: candidate.organizationId,
-        actorId: input.actorId ?? null,
-        outcomeId: linkedOutcome.id,
-        epicId: linkedEpic.id,
-        key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
-        title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
-        shortDescription: draftRecord.valueIntent ?? sanitizeArtifactPersistenceText(candidate.summary),
-        expectedBehavior: draftRecord.expectedBehavior ?? null,
-        originType: "imported",
-        createdMode: "promotion",
-        lineageReference,
-        importedReadinessState: promotedReadinessState
-      }, tx);
+      const created =
+        importIntent === "design"
+          ? await createStory({
+              organizationId: candidate.organizationId,
+              actorId: input.actorId ?? null,
+              outcomeId: linkedOutcome.id,
+              epicId: linkedEpic.id,
+              key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+              title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+              storyType: draftRecord.storyType ?? "outcome_delivery",
+              valueIntent:
+                draftRecord.valueIntent ??
+                draftRecord.expectedBehavior ??
+                sanitizeArtifactPersistenceText(candidate.summary),
+              expectedBehavior: draftRecord.expectedBehavior ?? null,
+              acceptanceCriteria: draftRecord.acceptanceCriteria,
+              aiUsageScope: draftRecord.aiUsageScope,
+              aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
+              testDefinition: draftRecord.testDefinition ?? null,
+              definitionOfDone: draftRecord.definitionOfDone,
+              status: "draft",
+              originType: "imported",
+              createdMode: "promotion",
+              lineageReference,
+              importedReadinessState: promotedReadinessState
+            }, tx)
+          : await createDirectionSeed({
+              organizationId: candidate.organizationId,
+              actorId: input.actorId ?? null,
+              outcomeId: linkedOutcome.id,
+              epicId: linkedEpic.id,
+              key: draftRecord.key ?? `IMP-STORY-${candidate.id.slice(0, 8).toUpperCase()}`,
+              title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+              shortDescription: draftRecord.valueIntent ?? sanitizeArtifactPersistenceText(candidate.summary),
+              expectedBehavior: draftRecord.expectedBehavior ?? null,
+              originType: "imported",
+              createdMode: "promotion",
+              lineageReference,
+              importedReadinessState: promotedReadinessState
+            }, tx);
       promotedEntityId = created.id;
     }
 

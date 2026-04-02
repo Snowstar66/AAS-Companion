@@ -62,6 +62,7 @@ type IntakeArtifactCandidate = {
 type IntakeArtifactSession = {
   id: string;
   label: string;
+  importIntent?: "framing" | "design";
   mappedArtifacts: { unmappedSections: ParsedSection[] } | null;
   allCandidates: IntakeArtifactCandidate[];
 };
@@ -158,9 +159,13 @@ function label(value: string) {
   return value.replaceAll("_", " ");
 }
 
-function promotedEntityLabel(candidateType: string, promotedEntityType: string | null | undefined) {
+function promotedEntityLabel(
+  candidateType: string,
+  promotedEntityType: string | null | undefined,
+  importIntent: "framing" | "design" | undefined
+) {
   if (candidateType === "story" || promotedEntityType === "story") {
-    return "Story Idea";
+    return importIntent === "design" ? "Delivery Story" : "Story Idea";
   }
 
   return promotedEntityType ? label(promotedEntityType) : "record";
@@ -698,6 +703,7 @@ export function ArtifactIntakeReviewWorkspace({
               <input name="fileId" type="hidden" value={selectedFile.id} />
               <input name="candidateId" type="hidden" value={selectedCandidate.id} />
               <input name="candidateType" type="hidden" value={selectedCandidate.type} />
+              <input name="importIntent" type="hidden" value={session.importIntent ?? "framing"} />
 
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
@@ -1152,7 +1158,7 @@ export function ArtifactIntakeReviewWorkspace({
                   {selectedCandidate.promotedEntityId ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
                       Imported into the project as governed{" "}
-                      {promotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType)} with ID{" "}
+                      {promotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType, session.importIntent)} with ID{" "}
                       {selectedCandidate.promotedEntityId}. It now continues like native project work.
                     </div>
                   ) : null}

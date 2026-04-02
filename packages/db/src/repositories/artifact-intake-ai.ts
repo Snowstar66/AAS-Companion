@@ -10,6 +10,8 @@ type AiArtifactFileInput = {
   parsedArtifacts: ArtifactParseResult;
 };
 
+type ArtifactImportIntent = "framing" | "design";
+
 function readRequiredLlmEnv() {
   const endpoint = process.env.LLM_ENDPOINT?.trim() ?? "";
   const apiKey = process.env.LLM_ENDPOINT_KEY?.trim() ?? "";
@@ -26,7 +28,7 @@ function readRequiredLlmEnv() {
   };
 }
 
-function buildPrompt(input: { files: AiArtifactFileInput[] }) {
+function buildPrompt(input: { importIntent: ArtifactImportIntent; files: AiArtifactFileInput[] }) {
   const payload = {
     files: input.files.map((file) => ({
       fileId: file.fileId,
@@ -56,6 +58,17 @@ Goal:
 - Do not invent delivery detail that is not grounded in the source.
 - Do not suggest improvements unless the source clearly needs strengthening.
 - If a field already seems adequate, keep it as-is rather than "improving" it.
+
+Import intent:
+- ${input.importIntent === "framing" ? "framing" : "design"}
+- If intent is framing:
+  - keep candidates outcome- and epic-oriented
+  - treat detailed user stories conservatively
+  - story candidates should describe framing-level intent, not design workflow
+  - when a section is too detailed for framing, prefer leftoverSectionIds over forcing a candidate
+- If intent is design:
+  - story candidates may stay concrete enough for delivery/design use
+  - preserve acceptance criteria and verification-oriented detail when the source clearly contains it
 
 Value Spine guidance:
 - Outcome = desired effect or business/user result, not implementation work.
@@ -125,7 +138,7 @@ function extractJsonObject(text: string) {
   return candidate.slice(firstBrace, lastBrace + 1);
 }
 
-export async function interpretArtifactFilesWithAi(input: { files: AiArtifactFileInput[] }) {
+export async function interpretArtifactFilesWithAi(input: { importIntent: ArtifactImportIntent; files: AiArtifactFileInput[] }) {
   const env = readRequiredLlmEnv();
   const response = await fetch(new URL("responses", env.endpoint), {
     method: "POST",

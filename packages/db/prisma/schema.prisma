@@ -223,6 +223,11 @@ enum ArtifactIntakeSessionStatus {
   blocked
 }
 
+enum ArtifactImportIntent {
+  framing
+  design
+}
+
 enum ArtifactSourceTypeStatus {
   pending
   classified
@@ -629,6 +634,7 @@ model ArtifactIntakeSession {
   id             String                    @id
   organizationId String
   label          String
+  importIntent   ArtifactImportIntent      @default(framing)
   status         ArtifactIntakeSessionStatus @default(uploaded)
   mappedArtifacts Json?
   mappingCompletedAt DateTime?

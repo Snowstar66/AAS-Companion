@@ -54,6 +54,7 @@ export const artifactIntakeSessionStatuses = [
   "promoted",
   "blocked"
 ] as const;
+export const artifactImportIntents = ["framing", "design"] as const;
 export const artifactSourceTypeStatuses = ["pending", "classified"] as const;
 export const artifactSourceTypes = ["bmad_prd", "epic_file", "story_file", "mixed_markdown_bundle", "unknown_artifact"] as const;
 export const extractionConfidences = ["high", "medium", "low"] as const;
@@ -173,6 +174,7 @@ export const lineageSourceTypeSchema = z.enum(lineageSourceTypes);
 export const readinessStateSchema = z.enum(readinessStates);
 export const readinessBlockReasonSeveritySchema = z.enum(readinessBlockReasonSeverities);
 export const artifactIntakeSessionStatusSchema = z.enum(artifactIntakeSessionStatuses);
+export const artifactImportIntentSchema = z.enum(artifactImportIntents);
 export const artifactSourceTypeStatusSchema = z.enum(artifactSourceTypeStatuses);
 export const artifactSourceTypeSchema = z.enum(artifactSourceTypes);
 export const extractionConfidenceSchema = z.enum(extractionConfidences);
@@ -213,6 +215,7 @@ export type LineageSourceType = z.infer<typeof lineageSourceTypeSchema>;
 export type ReadinessState = z.infer<typeof readinessStateSchema>;
 export type ReadinessBlockReasonSeverity = z.infer<typeof readinessBlockReasonSeveritySchema>;
 export type ArtifactIntakeSessionStatus = z.infer<typeof artifactIntakeSessionStatusSchema>;
+export type ArtifactImportIntent = z.infer<typeof artifactImportIntentSchema>;
 export type ArtifactSourceTypeStatus = z.infer<typeof artifactSourceTypeStatusSchema>;
 export type ArtifactSourceType = z.infer<typeof artifactSourceTypeSchema>;
 export type ExtractionConfidence = z.infer<typeof extractionConfidenceSchema>;

@@ -77,7 +77,8 @@ vi.mock("@/lib/intake/review-queue", () => ({
         },
         intakeSession: {
           id: "session-1",
-          label: "Artifact intake 2026-03-23 21:00"
+          label: "Artifact intake 2026-03-23 21:00",
+          importIntent: "framing"
         },
         file: {
           id: "file-1",
@@ -151,7 +152,8 @@ vi.mock("@/lib/review/operational-review", () => ({
 }));
 
 vi.mock("@/app/(protected)/review/actions", () => ({
-  submitArtifactCandidateReviewAction: vi.fn()
+  submitArtifactCandidateReviewAction: vi.fn(),
+  submitArtifactBulkReviewAction: vi.fn()
 }));
 
 describe("Review queue page", () => {

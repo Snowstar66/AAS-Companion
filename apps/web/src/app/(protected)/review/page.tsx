@@ -7,7 +7,7 @@ import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactReviewQueue } from "@/lib/intake/review-queue";
 import { loadOperationalReviewDashboard } from "@/lib/review/operational-review";
-import { submitArtifactCandidateReviewAction } from "./actions";
+import { submitArtifactBulkReviewAction, submitArtifactCandidateReviewAction } from "./actions";
 
 type ReviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -29,9 +29,25 @@ function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
-function getPromotedEntityLabel(candidateType: string, promotedEntityType: string | null | undefined) {
+function getImportIntentLabel(importIntent: "framing" | "design" | string) {
+  return importIntent === "design" ? "Design import" : "Framing import";
+}
+
+function getCandidateObjectLabel(candidate: Pick<ReviewCandidate, "type" | "intakeSession">) {
+  if (candidate.type !== "story") {
+    return formatLabel(candidate.type);
+  }
+
+  return candidate.intakeSession.importIntent === "design" ? "Delivery Story" : "Story Idea";
+}
+
+function getPromotedEntityLabel(
+  candidateType: string,
+  promotedEntityType: string | null | undefined,
+  importIntent: "framing" | "design" | string
+) {
   if (candidateType === "story" || promotedEntityType === "story") {
-    return "Story Idea";
+    return importIntent === "design" ? "Delivery Story" : "Story Idea";
   }
 
   return promotedEntityType ? formatLabel(promotedEntityType) : "record";
@@ -439,10 +455,21 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     "discarded"
   ];
 
-  const groups = groupOrder.map((state) => ({
-    state,
-    items: visibleItems.filter((candidate) => getBacklogState(candidate) === state)
-  }));
+  const importIntentGroups = (["framing", "design"] as const)
+    .map((importIntent) => {
+      const items = visibleItems.filter((candidate) => (candidate.intakeSession.importIntent ?? "framing") === importIntent);
+
+      return {
+        importIntent,
+        label: getImportIntentLabel(importIntent),
+        items,
+        groups: groupOrder.map((state) => ({
+          state,
+          items: items.filter((candidate) => getBacklogState(candidate) === state)
+        }))
+      };
+    })
+    .filter((group) => group.items.length > 0);
   const operationalGroups: Array<{
     title: string;
     description: string;
@@ -711,64 +738,124 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {groups.map((group) => (
-                  <CollapsibleSection
-                    badge={`${group.items.length}`}
-                    defaultOpen={false}
-                    description={getBacklogDescription(group.state)}
-                    key={group.state}
-                    title={getBacklogLabel(group.state)}
-                  >
-                    {group.items.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No review items are currently in this group.</p>
-                    ) : (
-                      <div className="grid gap-3">
-                        {group.items.map((candidate) => {
-                          const candidateState = getBacklogState(candidate);
-                          const isSelected = selectedCandidate?.id === candidate.id;
-                          return (
-                            <div
-                              className={`rounded-2xl border p-4 transition ${
-                                isSelected ? "border-primary/40 bg-primary/5" : "border-border/70 bg-muted/20"
-                              }`}
-                              key={candidate.id}
-                            >
-                              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div className="space-y-2">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <p className="font-medium text-foreground">{candidate.title}</p>
-                                    <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                                      {candidate.type}
-                                    </span>
-                                    <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getBacklogBadgeClasses(candidateState)}`}>
-                                      {getBacklogLabel(candidateState)}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm leading-6 text-muted-foreground">{candidate.summary}</p>
-                                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                    <span>File: {candidate.file.fileName}</span>
-                                    <span>Source: {candidate.sourceSectionMarker}</span>
-                                    <span>
-                                      Queue: {candidate.issueProgress.unresolved} open / {candidate.issueProgress.total} total
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-col items-start gap-2 sm:flex-row">
-                                  <Button asChild size="sm" variant={isSelected ? "default" : "secondary"}>
-                                    <Link href={buildReviewHref({ candidateId: candidate.id, reviewStatusFilter, findingFilter: "all" })}>
-                                      Open review workspace
-                                    </Link>
-                                  </Button>
-                                </div>
-                              </div>
+                {importIntentGroups.length === 0 ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
+                    No imported candidates match the current review filter.
+                  </div>
+                ) : (
+                  importIntentGroups.map((intentGroup) => (
+                    <form action={submitArtifactBulkReviewAction} className="space-y-4" key={intentGroup.importIntent}>
+                      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium text-foreground">{intentGroup.label}</p>
+                              <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                {intentGroup.items.length} candidate(s)
+                              </span>
                             </div>
-                          );
-                        })}
+                            <p className="text-sm leading-6 text-muted-foreground">
+                              {intentGroup.importIntent === "design"
+                                ? "Approve checked rows to create Delivery Stories and linked Outcome/Epic records where needed."
+                                : "Approve checked rows to create Framing records such as Outcome, Epics and Story Ideas."}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-3 lg:min-w-[320px]">
+                            <textarea
+                              className="min-h-20 rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                              name="bulkReviewComment"
+                              placeholder="Optional decision note for all checked candidates"
+                            />
+                            <div className="flex flex-wrap gap-2">
+                              <Button className="gap-2" name="bulkIntent" type="submit" value="approve">
+                                <ShieldCheck className="h-4 w-4" />
+                                {intentGroup.importIntent === "design" ? "Approve selected for Design" : "Approve selected for Framing"}
+                              </Button>
+                              <Button className="gap-2" name="bulkIntent" type="submit" value="reject" variant="secondary">
+                                <CircleAlert className="h-4 w-4" />
+                                Reject selected
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </CollapsibleSection>
-                ))}
+
+                      {intentGroup.groups.map((group) => (
+                        <CollapsibleSection
+                          badge={`${group.items.length}`}
+                          defaultOpen={false}
+                          description={getBacklogDescription(group.state)}
+                          key={`${intentGroup.importIntent}-${group.state}`}
+                          title={getBacklogLabel(group.state)}
+                        >
+                          {group.items.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No review items are currently in this group.</p>
+                          ) : (
+                            <div className="grid gap-3">
+                              {group.items.map((candidate) => {
+                                const candidateState = getBacklogState(candidate);
+                                const isSelected = selectedCandidate?.id === candidate.id;
+                                const isFinal = candidate.reviewStatus === "promoted" || candidate.reviewStatus === "rejected";
+
+                                return (
+                                  <div
+                                    className={`rounded-2xl border p-4 transition ${
+                                      isSelected ? "border-primary/40 bg-primary/5" : "border-border/70 bg-muted/20"
+                                    }`}
+                                    key={candidate.id}
+                                  >
+                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                      <div className="flex gap-3">
+                                        <input
+                                          className="mt-1 h-4 w-4 rounded border-border text-primary"
+                                          defaultChecked={false}
+                                          disabled={isFinal}
+                                          name="candidateIds"
+                                          type="checkbox"
+                                          value={candidate.id}
+                                        />
+                                        <div className="space-y-2">
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <p className="font-medium text-foreground">{candidate.title}</p>
+                                            <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                                              {getCandidateObjectLabel(candidate)}
+                                            </span>
+                                            <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                              {getImportIntentLabel(candidate.intakeSession.importIntent ?? "framing")}
+                                            </span>
+                                            <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getBacklogBadgeClasses(candidateState)}`}>
+                                              {getBacklogLabel(candidateState)}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm leading-6 text-muted-foreground">{candidate.summary}</p>
+                                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                            <span>File: {candidate.file.fileName}</span>
+                                            <span>Source: {candidate.sourceSectionMarker}</span>
+                                            <span>
+                                              Queue: {candidate.issueProgress.unresolved} open / {candidate.issueProgress.total} total
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex flex-col items-start gap-2 sm:flex-row">
+                                        <Button asChild size="sm" variant={isSelected ? "default" : "secondary"}>
+                                          <Link href={buildReviewHref({ candidateId: candidate.id, reviewStatusFilter, findingFilter: "all" })}>
+                                            Open review workspace
+                                          </Link>
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </CollapsibleSection>
+                      ))}
+                    </form>
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -791,7 +878,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           <CardTitle className="flex flex-wrap items-center gap-3">
                             <span>{selectedCandidate.title}</span>
                             <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                              {selectedCandidate.type}
+                              {getCandidateObjectLabel(selectedCandidate)}
+                            </span>
+                            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+                              {getImportIntentLabel(selectedCandidate.intakeSession.importIntent ?? "framing")}
                             </span>
                             <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getBacklogBadgeClasses(selectedCandidateState ?? "needs_action")}`}>
                               {getBacklogLabel(selectedCandidateState ?? "needs_action")}
@@ -952,6 +1042,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   <form action={submitArtifactCandidateReviewAction} className="space-y-4" id="candidate-editor">
                     <input name="candidateId" type="hidden" value={selectedCandidate.id} />
                     <input name="candidateType" type="hidden" value={selectedCandidate.type} />
+                    <input name="importIntent" type="hidden" value={selectedCandidate.intakeSession.importIntent ?? "framing"} />
 
                     <Card className="border-border/70 shadow-sm">
                       <CardHeader>
@@ -1138,7 +1229,13 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
                         {selectedCandidate.promotedEntityId ? (
                           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                            Approved and promoted into project {getPromotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType)} with ID {selectedCandidate.promotedEntityId}.
+                            Approved and promoted into project{" "}
+                            {getPromotedEntityLabel(
+                              selectedCandidate.type,
+                              selectedCandidate.promotedEntityType,
+                              selectedCandidate.intakeSession.importIntent ?? "framing"
+                            )}{" "}
+                            with ID {selectedCandidate.promotedEntityId}.
                           </div>
                         ) : null}
                       </CardContent>

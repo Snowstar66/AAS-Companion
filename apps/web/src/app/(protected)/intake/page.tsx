@@ -277,6 +277,22 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
             ) : null}
             <form action={uploadArtifactIntakeFilesAction} className="space-y-4">
               <label className="block space-y-2">
+                <span className="text-sm font-medium text-foreground">Import target</span>
+                <select
+                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                  defaultValue="framing"
+                  name="importIntent"
+                >
+                  <option value="framing">Import to Framing</option>
+                  <option value="design">Import to Design</option>
+                </select>
+                <p className="text-sm text-muted-foreground">
+                  Choose <strong>Framing</strong> when the document should become Outcome, Epics, Story Ideas and
+                  constraints. Choose <strong>Design</strong> when the document already contains concrete stories that
+                  should become Delivery Stories.
+                </p>
+              </label>
+              <label className="block space-y-2">
                 <span className="text-sm font-medium text-foreground">Artifact files</span>
                 <input
                   accept=".md,.mdx,.markdown,.txt,text/markdown,text/plain"

@@ -11,6 +11,7 @@ import {
 } from "@aas-companion/db";
 import {
   artifactCandidateReviewActionInputSchema,
+  artifactImportIntentSchema,
   artifactFileSectionDispositionActionInputSchema,
   artifactIntakeProcessingModeSchema,
   artifactIntakeRejectedFileSchema,
@@ -80,6 +81,7 @@ export async function createArtifactIntakeSessionService(input: {
   organizationId: string;
   actorId?: string | null;
   label?: string;
+  importIntent?: "framing" | "design";
   processingMode?: ArtifactIntakeProcessingMode;
   files: UploadArtifactFileInput[];
 }): Promise<
@@ -118,6 +120,7 @@ export async function createArtifactIntakeSessionService(input: {
 
   let result;
   const requestedProcessingMode = artifactIntakeProcessingModeSchema.parse(input.processingMode ?? "deterministic");
+  const importIntent = artifactImportIntentSchema.parse(input.importIntent ?? "framing");
 
   try {
     result = await createArtifactIntakeSession(
@@ -125,6 +128,7 @@ export async function createArtifactIntakeSessionService(input: {
         organizationId: input.organizationId,
         actorId: input.actorId ?? null,
         label: input.label,
+        importIntent,
         processingMode: requestedProcessingMode,
         files: accepted
       },

@@ -6,6 +6,7 @@ import {
   artifactComplianceFindingCategorySchema,
   artifactIssueDispositionActionSchema,
   artifactAasMappingStateSchema,
+  artifactImportIntentSchema,
   artifactIntakeSessionStatusSchema,
   artifactParsedSectionKindSchema,
   artifactSourceTypeSchema,
@@ -44,6 +45,7 @@ export const artifactIntakeSessionRecordSchema = z.object({
   id: z.string().min(1),
   organizationId: z.string().min(1),
   label: z.string().min(1),
+  importIntent: artifactImportIntentSchema,
   status: artifactIntakeSessionStatusSchema,
   mappedArtifacts: z.unknown().nullish(),
   mappingCompletedAt: z.date().nullish(),
@@ -63,6 +65,7 @@ export const artifactIntakeUploadRequestSchema = z.object({
   organizationId: z.string().min(1),
   actorId: z.string().nullish(),
   label: z.string().trim().min(1).max(120).optional(),
+  importIntent: artifactImportIntentSchema.default("framing"),
   processingMode: artifactIntakeProcessingModeSchema.default("deterministic"),
   files: z.array(artifactIntakeUploadFileSchema).min(1)
 });
@@ -1546,10 +1549,6 @@ function looksLikeActivityStatement(value: string | null | undefined) {
   const effectSignals = /\b(reduce|increase|improve|decrease|shorten|raise|lower|stabilize|enable|faster|safer|better|more reliable|less)\b/;
 
   return activityStarts.test(normalized) && !effectSignals.test(normalized);
-}
-
-function listItemsNeedStrengthening(values: string[]) {
-  return values.length > 0 && values.every((value) => countMeaningfulWords(value) < 4);
 }
 
 export function analyzeArtifactCandidateCompliance(input: {

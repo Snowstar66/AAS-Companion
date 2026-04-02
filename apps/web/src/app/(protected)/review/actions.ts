@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { promoteArtifactCandidateService, reviewArtifactCandidateService } from "@aas-companion/api";
+import { getArtifactCandidateService, promoteArtifactCandidateService, reviewArtifactCandidateService } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildRedirect(params: Record<string, string | undefined>) {
@@ -34,18 +34,34 @@ function readCsv(formData: FormData, name: string) {
     .filter(Boolean);
 }
 
-function getPromotionLabel(candidateType: string, promotedEntityType: string) {
+function getPromotionLabel(candidateType: string, promotedEntityType: string, importIntent: "framing" | "design") {
   if (candidateType === "story" || promotedEntityType === "story") {
-    return "Story Idea";
+    return importIntent === "design" ? "Delivery Story" : "Story Idea";
   }
 
   return promotedEntityType.replaceAll("_", " ");
+}
+
+function sortCandidateIdsForPromotion(
+  candidates: Array<{
+    id: string;
+    type: "outcome" | "epic" | "story";
+  }>
+) {
+  const weights: Record<"outcome" | "epic" | "story", number> = {
+    outcome: 0,
+    epic: 1,
+    story: 2
+  };
+
+  return [...candidates].sort((left, right) => weights[left.type] - weights[right.type]);
 }
 
 export async function submitArtifactCandidateReviewAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const candidateId = String(formData.get("candidateId") ?? "");
   const candidateType = String(formData.get("candidateType") ?? "story");
+  const importIntent = String(formData.get("importIntent") ?? "framing") === "design" ? "design" : "framing";
   const intent = String(formData.get("intent") ?? "edit");
   const reviewComment = String(formData.get("reviewComment") ?? "") || null;
   const issueId = String(formData.get("issueId") ?? "") || null;
@@ -158,7 +174,7 @@ export async function submitArtifactCandidateReviewAction(formData: FormData) {
       buildRedirect({
         status: "promoted",
         candidateId,
-        message: `${reviewResult.data.title ?? "Candidate"} was promoted into governed ${getPromotionLabel(candidateType, promoteResult.data.promotedEntityType)} work.`
+        message: `${reviewResult.data.title ?? "Candidate"} was promoted into governed ${getPromotionLabel(candidateType, promoteResult.data.promotedEntityType, importIntent)} work.`
       })
     );
   }
@@ -182,6 +198,159 @@ export async function submitArtifactCandidateReviewAction(formData: FormData) {
             : intent === "follow_up"
               ? "Candidate marked for follow-up."
               : "Candidate edits saved."
+    })
+  );
+}
+
+export async function submitArtifactBulkReviewAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const bulkIntent = String(formData.get("bulkIntent") ?? "approve");
+  const reviewComment = String(formData.get("bulkReviewComment") ?? "").trim() || null;
+  const candidateIds = formData
+    .getAll("candidateIds")
+    .map((value) => String(value))
+    .filter(Boolean);
+
+  if (candidateIds.length === 0) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: "Select one or more imported candidates before running a bulk action."
+      })
+    );
+  }
+
+  const candidateResults = await Promise.all(
+    candidateIds.map(async (candidateId) => ({
+      candidateId,
+      result: await getArtifactCandidateService(session.organization.organizationId, candidateId)
+    }))
+  );
+  const failedLookup = candidateResults.find((entry) => !entry.result.ok || !entry.result.data);
+
+  if (failedLookup && !failedLookup.result.ok) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: failedLookup.result.errors[0]?.message ?? "One or more selected imported candidates could not be loaded."
+      })
+    );
+  }
+
+  if (failedLookup) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: "One or more selected imported candidates could not be loaded."
+      })
+    );
+  }
+
+  const candidates = [];
+
+  for (const entry of candidateResults) {
+    if (entry.result.ok && entry.result.data) {
+      candidates.push(entry.result.data);
+    }
+  }
+  const intents = [...new Set(candidates.map((candidate) => candidate.intakeSession.importIntent ?? "framing"))];
+
+  if (intents.length !== 1) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: "Bulk actions can only run on one import target at a time. Select either Framing imports or Design imports."
+      })
+    );
+  }
+
+  const importIntent = intents[0] === "design" ? "design" : "framing";
+  const activeCandidates = candidates.filter(
+    (candidate) => candidate.reviewStatus !== "promoted" && candidate.reviewStatus !== "rejected"
+  );
+
+  if (activeCandidates.length === 0) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: "The selected imported candidates already have a final decision."
+      })
+    );
+  }
+
+  if (bulkIntent === "reject") {
+    for (const candidate of activeCandidates) {
+      await reviewArtifactCandidateService({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        candidateId: candidate.id,
+        reviewStatus: "rejected",
+        reviewComment
+      });
+    }
+
+    revalidatePath("/review");
+    revalidatePath("/intake");
+    revalidatePath("/workspace");
+    revalidatePath("/");
+
+    redirect(
+      buildRedirect({
+        status: "rejected",
+        message: `Rejected ${activeCandidates.length} selected ${importIntent === "design" ? "design" : "framing"} import candidate(s).`
+      })
+    );
+  }
+
+  for (const candidate of activeCandidates) {
+    await reviewArtifactCandidateService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      candidateId: candidate.id,
+      reviewStatus: "confirmed",
+      reviewComment
+    });
+  }
+
+  const orderedCandidates = sortCandidateIdsForPromotion(
+    activeCandidates.map((candidate) => ({
+      id: candidate.id,
+      type: candidate.type
+    }))
+  );
+  let promotedCount = 0;
+  const failures: string[] = [];
+
+  for (const candidate of orderedCandidates) {
+    const promoteResult = await promoteArtifactCandidateService({
+      organizationId: session.organization.organizationId,
+      candidateId: candidate.id,
+      actorId: session.userId
+    });
+
+    if (!promoteResult.ok) {
+      const failedCandidate = activeCandidates.find((entry) => entry.id === candidate.id);
+      failures.push(`${failedCandidate?.title ?? "Candidate"}: ${promoteResult.errors[0]?.message ?? "Promotion blocked."}`);
+      continue;
+    }
+
+    promotedCount += 1;
+  }
+
+  revalidatePath("/review");
+  revalidatePath("/intake");
+  revalidatePath("/framing");
+  revalidatePath("/stories");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  redirect(
+    buildRedirect({
+      status: failures.length > 0 ? "blocked" : "promoted",
+      message:
+        failures.length > 0
+          ? `Approved ${promotedCount} selected ${importIntent} import candidate(s). ${failures.length} item(s) still need attention: ${failures.slice(0, 2).join(" | ")}`
+          : `Approved ${promotedCount} selected ${importIntent} import candidate(s).`
     })
   );
 }
