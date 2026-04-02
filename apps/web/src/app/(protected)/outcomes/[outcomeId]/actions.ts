@@ -14,6 +14,7 @@ import {
   submitOutcomeTollgateService,
   validateOutcomeFieldWithAiService
 } from "@aas-companion/api";
+import { serializeFramingConstraintBundle } from "@aas-companion/domain";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import {
   revalidateFramingCockpitCache,
@@ -60,6 +61,15 @@ function parseOptionalRiskLevel(formData: FormData, key: string) {
   return value === "low" || value === "medium" || value === "high" ? value : null;
 }
 
+function readStructuredSolutionConstraints(formData: FormData) {
+  return serializeFramingConstraintBundle({
+    generalConstraints: String(formData.get("generalSolutionConstraints") ?? ""),
+    uxPrinciples: String(formData.get("uxPrinciples") ?? ""),
+    nonFunctionalRequirements: String(formData.get("nonFunctionalRequirements") ?? ""),
+    additionalRequirements: String(formData.get("additionalRequirements") ?? "")
+  });
+}
+
 function parseDecisionKey(value: string) {
   if (value === "escalation") {
     return {
@@ -92,7 +102,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
     baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
     baselineSource: String(formData.get("baselineSource") ?? "") || null,
     solutionContext: String(formData.get("solutionContext") ?? "") || null,
-    solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
+    solutionConstraints: readStructuredSolutionConstraints(formData),
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
     aiUsageRole: null,
@@ -163,7 +173,7 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
     baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
     baselineSource: String(formData.get("baselineSource") ?? "") || null,
     solutionContext: String(formData.get("solutionContext") ?? "") || null,
-    solutionConstraints: String(formData.get("solutionConstraints") ?? "") || null,
+    solutionConstraints: readStructuredSolutionConstraints(formData),
     dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
     aiUsageRole: null,

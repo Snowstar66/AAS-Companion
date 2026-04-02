@@ -65,12 +65,15 @@ Import intent:
   - keep candidates outcome- and epic-oriented
   - detailed user stories may still become story candidates, but only when you can restate them as framing-level Story Ideas
   - story candidates must focus on title, value intent, and expected behavior
+  - whenever a story candidate clearly belongs to a specific epic section, set linkedEpicSectionId to that epic sectionId
+  - whenever an epic clearly belongs to a specific outcome section, set linkedOutcomeSectionId to that outcome sectionId
   - do not preserve delivery-only detail such as acceptance criteria, test plans, or UI flows inside framing story candidates unless needed as weak source context
   - leave UX, NFR, additional requirements, and detailed design sections outside candidates so the importer can carry them forward separately
   - when a section is too detailed for framing and you cannot generalize it cleanly, prefer leftoverSectionIds over forcing a candidate
 - If intent is design:
   - story candidates may stay concrete enough for delivery/design use
   - preserve acceptance criteria and verification-oriented detail when the source clearly contains it
+  - still set linkedEpicSectionId and linkedOutcomeSectionId whenever the structure is visible in the source
 
 Value Spine guidance:
 - Outcome = desired effect or business/user result, not implementation work.
@@ -90,6 +93,7 @@ Required output:
 - Every input file must appear exactly once in the output.
 - Use the input fileName unchanged.
 - Every candidate must point to one existing sectionId from that file.
+- linkedEpicSectionId and linkedOutcomeSectionId must point to existing sectionIds from that same file when used.
 - leftoverSectionIds must only contain existing sectionIds from that file.
 - draftRecord should only include fields you can justify from the source. Leave other fields out.
 - For weak or uncertain material, prefer null/omitted draft fields and leftoverSectionIds over hallucinating structure.

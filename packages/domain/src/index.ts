@@ -5,6 +5,7 @@ export * from "./demo";
 export * from "./direction-seed";
 export * from "./epic";
 export * from "./enums";
+export * from "./framing-constraint-bundle";
 export * from "./governance";
 export * from "./governed-lifecycle";
 export * from "./governed-object";

@@ -305,6 +305,8 @@ export const artifactAiCandidateInterpretationSchema = z.object({
   type: artifactAasCandidateTypeSchema,
   title: z.string().min(1),
   summary: z.string().min(1),
+  linkedOutcomeSectionId: z.string().min(1).nullish(),
+  linkedEpicSectionId: z.string().min(1).nullish(),
   mappingState: artifactAasMappingStateSchema.optional(),
   relationshipState: artifactAasMappingStateSchema.optional(),
   relationshipNote: z.string().nullish(),
@@ -1536,6 +1538,7 @@ export function buildAiAssistedArtifactProcessingResult(input: {
   const unmappedSections: ArtifactParsedSection[] = [];
   let lastOutcomeCandidateId: string | undefined;
   let lastEpicCandidateId: string | undefined;
+  const candidateIdBySectionAndType = new Map<string, string>();
 
   for (const file of input.files) {
     const fileKey = file.fileName.trim().toLowerCase();
@@ -1592,10 +1595,17 @@ export function buildAiAssistedArtifactProcessingResult(input: {
         sectionId: sourceSection.id,
         candidateType: interpretedCandidate.type
       });
+      candidateIdBySectionAndType.set(`${sourceSection.id}:${interpretedCandidate.type}`, candidateId);
+      const explicitOutcomeCandidateId = interpretedCandidate.linkedOutcomeSectionId
+        ? candidateIdBySectionAndType.get(`${interpretedCandidate.linkedOutcomeSectionId}:outcome`)
+        : undefined;
+      const explicitEpicCandidateId = interpretedCandidate.linkedEpicSectionId
+        ? candidateIdBySectionAndType.get(`${interpretedCandidate.linkedEpicSectionId}:epic`)
+        : undefined;
       const inferredOutcomeCandidateId =
-        interpretedCandidate.type === "outcome" ? undefined : lastOutcomeCandidateId;
+        interpretedCandidate.type === "outcome" ? undefined : explicitOutcomeCandidateId ?? lastOutcomeCandidateId;
       const inferredEpicCandidateId =
-        interpretedCandidate.type === "story" ? lastEpicCandidateId : undefined;
+        interpretedCandidate.type === "story" ? explicitEpicCandidateId ?? lastEpicCandidateId : undefined;
       const sourceConfidence =
         sourceType === "unknown_artifact" && sourceSection.confidence === "high" ? "medium" : sourceSection.confidence;
       const relationship = resolveAiCandidateRelationshipState({

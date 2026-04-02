@@ -173,6 +173,8 @@ describe("Review queue page", () => {
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
+    expect(screen.getByDisplayValue("candidate-story-1")).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open Story Idea approval" })).toBeDefined();
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
     expect(screen.getByText("No items are currently in this group.")).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();

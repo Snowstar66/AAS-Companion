@@ -11,6 +11,7 @@ import {
   createArtifactCandidateDraftRecord,
   getArtifactCandidateIssueProgress,
   inferImportedReadinessState,
+  serializeFramingConstraintBundle,
   sanitizeArtifactPersistenceText,
   sanitizeArtifactPersistenceValue
 } from "@aas-companion/domain";
@@ -36,6 +37,36 @@ function getUnmappedSectionContext(input: {
   return {
     unmappedSectionCount,
     sectionDispositions: artifactIssueDispositionMapSchema.parse(input.sectionDispositions ?? {})
+  };
+}
+
+function buildImportedFramingCarryForwardBundle(mappedArtifacts: unknown) {
+  const mapping = artifactMappingResultSchema.safeParse(mappedArtifacts);
+
+  if (!mapping.success) {
+    return {
+      solutionContext: null as string | null,
+      solutionConstraints: null as string | null
+    };
+  }
+
+  const bulletList = (categories: Array<string>) =>
+    mapping.data.carryForwardItems
+      .filter((item) => categories.includes(item.category))
+      .map((item) => `- ${item.title}: ${item.summary}`)
+      .join("\n");
+
+  const solutionContext = bulletList(["excluded_design"]);
+  const solutionConstraints = serializeFramingConstraintBundle({
+    generalConstraints: bulletList(["solution_constraint"]),
+    uxPrinciples: bulletList(["ux_principle"]),
+    nonFunctionalRequirements: bulletList(["nfr_constraint"]),
+    additionalRequirements: bulletList(["additional_requirement"])
+  });
+
+  return {
+    solutionContext: solutionContext || null,
+    solutionConstraints
   };
 }
 
@@ -632,6 +663,9 @@ export async function promoteArtifactCandidate(input: {
       note: `Promoted from intake session ${candidate.intakeSessionId}`
     };
     const importIntent = candidate.intakeSession.importIntent;
+    const importedCarryForward = importIntent === "framing"
+      ? buildImportedFramingCarryForwardBundle(file?.intakeSession.mappedArtifacts ?? null)
+      : { solutionContext: null as string | null, solutionConstraints: null as string | null };
 
     let promotedEntityId = "";
     const promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
@@ -646,6 +680,8 @@ export async function promoteArtifactCandidate(input: {
         outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
         baselineDefinition: draftRecord.baselineDefinition ?? null,
         baselineSource: draftRecord.baselineSource ?? null,
+        solutionContext: importedCarryForward.solutionContext,
+        solutionConstraints: importedCarryForward.solutionConstraints,
         timeframe: draftRecord.timeframe ?? null,
         valueOwnerId: humanDecisions.valueOwnerId ?? null,
         riskProfile: humanDecisions.riskProfile ?? "medium",

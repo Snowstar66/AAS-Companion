@@ -13,6 +13,10 @@ import {
   sanitizeArtifactPersistenceText,
   sanitizeArtifactPersistenceValue
 } from "@aas-companion/domain";
+import {
+  parseFramingConstraintBundle,
+  serializeFramingConstraintBundle
+} from "../../../../packages/domain/src/framing-constraint-bundle";
 
 describe("artifact intake helpers", () => {
   it("accepts markdown-based artifact files", () => {
@@ -444,6 +448,152 @@ describe("artifact intake helpers", () => {
       expect.arrayContaining(["ux_principle", "nfr_constraint", "additional_requirement"])
     );
     expect(mapping.unmappedSections).toHaveLength(0);
+  });
+
+  it("preserves explicit AI-assisted epic links instead of relying only on section order", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-ai-epic-link",
+      "epic-linked-intake.md",
+      [
+        "# Outcome",
+        "Reduce onboarding delay for new supplier teams.",
+        "",
+        "## Epic Alpha",
+        "Standardize onboarding checklist and handoff preparation.",
+        "",
+        "## Story Alpha 1",
+        "As a delivery lead I want a shared onboarding checklist so that supplier teams start with fewer gaps.",
+        "",
+        "## Epic Beta",
+        "Make reviewable import outputs visible before promotion.",
+        "",
+        "## Story Beta 1",
+        "As a value owner I want to review imported story ideas in one queue so that framing approval stays fast."
+      ].join("\n")
+    );
+
+    const outcomeSection = parsed.sections.find((section) => section.title === "Outcome");
+    const epicAlphaSection = parsed.sections.find((section) => section.title === "Epic Alpha");
+    const storyAlphaSection = parsed.sections.find((section) => section.title === "Story Alpha 1");
+    const epicBetaSection = parsed.sections.find((section) => section.title === "Epic Beta");
+    const storyBetaSection = parsed.sections.find((section) => section.title === "Story Beta 1");
+
+    const result = buildAiAssistedArtifactProcessingResult({
+      importIntent: "framing",
+      files: [
+        {
+          id: "file-ai-epic-link",
+          fileName: "epic-linked-intake.md",
+          parsedArtifacts: parsed
+        }
+      ],
+      interpretation: {
+        files: [
+          {
+            fileName: "epic-linked-intake.md",
+            sourceType: "mixed_markdown_bundle",
+            confidence: "high",
+            rationale: "The source contains one outcome, two epics and linked story sections.",
+            sectionDecisions: [
+              {
+                sectionId: outcomeSection!.id,
+                kind: "outcome_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: epicAlphaSection!.id,
+                kind: "epic_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: storyAlphaSection!.id,
+                kind: "story_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: epicBetaSection!.id,
+                kind: "epic_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: storyBetaSection!.id,
+                kind: "story_candidate",
+                confidence: "high"
+              }
+            ],
+            candidates: [
+              {
+                sectionId: outcomeSection!.id,
+                type: "outcome",
+                title: "Reduce onboarding delay",
+                summary: "Reduce onboarding delay for new supplier teams.",
+                draftRecord: {
+                  title: "Reduce onboarding delay",
+                  outcomeStatement: "Reduce onboarding delay for new supplier teams."
+                }
+              },
+              {
+                sectionId: epicAlphaSection!.id,
+                type: "epic",
+                title: "Standardize onboarding checklist",
+                summary: "Standardize onboarding checklist and handoff preparation.",
+                linkedOutcomeSectionId: outcomeSection!.id
+              },
+              {
+                sectionId: storyAlphaSection!.id,
+                type: "story",
+                title: "Shared onboarding checklist",
+                summary: "Create a framing-level story idea for a shared onboarding checklist.",
+                linkedEpicSectionId: epicAlphaSection!.id,
+                linkedOutcomeSectionId: outcomeSection!.id
+              },
+              {
+                sectionId: epicBetaSection!.id,
+                type: "epic",
+                title: "Reviewable import outputs",
+                summary: "Make reviewable import outputs visible before promotion.",
+                linkedOutcomeSectionId: outcomeSection!.id
+              },
+              {
+                sectionId: storyBetaSection!.id,
+                type: "story",
+                title: "Review imported story ideas in one queue",
+                summary: "Review imported story ideas in one queue so framing approval stays fast.",
+                linkedEpicSectionId: epicBetaSection!.id,
+                linkedOutcomeSectionId: outcomeSection!.id
+              }
+            ],
+            leftoverSectionIds: []
+          }
+        ]
+      }
+    });
+
+    const epicAlphaCandidate = result.mappingResult.candidates.find((candidate) => candidate.title === "Standardize onboarding checklist");
+    const epicBetaCandidate = result.mappingResult.candidates.find((candidate) => candidate.title === "Reviewable import outputs");
+    const storyAlphaCandidate = result.mappingResult.candidates.find((candidate) => candidate.title === "Shared onboarding checklist");
+    const storyBetaCandidate = result.mappingResult.candidates.find((candidate) => candidate.title === "Review imported story ideas in one queue");
+
+    expect(storyAlphaCandidate?.inferredEpicCandidateId).toBe(epicAlphaCandidate?.id);
+    expect(storyBetaCandidate?.inferredEpicCandidateId).toBe(epicBetaCandidate?.id);
+    expect(storyAlphaCandidate?.draftRecord?.epicCandidateId).toBe(epicAlphaCandidate?.id);
+    expect(storyBetaCandidate?.draftRecord?.epicCandidateId).toBe(epicBetaCandidate?.id);
+  });
+
+  it("round-trips structured framing constraint bundles", () => {
+    const serialized = serializeFramingConstraintBundle({
+      generalConstraints: "- Keep data within approved tenant boundaries",
+      uxPrinciples: "- Mobile first\n- Clear save feedback",
+      nonFunctionalRequirements: "- Accessibility support is required",
+      additionalRequirements: "- Support both 9-hole and 18-hole rounds"
+    });
+
+    expect(parseFramingConstraintBundle(serialized)).toEqual({
+      generalConstraints: "- Keep data within approved tenant boundaries",
+      uxPrinciples: "- Mobile first\n- Clear save feedback",
+      nonFunctionalRequirements: "- Accessibility support is required",
+      additionalRequirements: "- Support both 9-hole and 18-hole rounds"
+    });
   });
 
   it("assigns an automatic unique-looking import key for story candidates", () => {

@@ -2,7 +2,12 @@ import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
-import { deriveOutcomeRiskProfile, getOutcomeAiAndRiskBlockers, getOutcomeFramingBlockers } from "@aas-companion/domain";
+import {
+  deriveOutcomeRiskProfile,
+  getOutcomeAiAndRiskBlockers,
+  getOutcomeFramingBlockers,
+  parseFramingConstraintBundle
+} from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type {
   OutcomeInlineSaveActionState,
@@ -288,6 +293,7 @@ export function FramingOutcomeSection({
   const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
   const deliveryTypeValue =
     outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null;
+  const structuredConstraints = parseFramingConstraintBundle(outcome.solutionConstraints ?? null);
   const framingCompleteItems = [
     outcome.outcomeStatement?.trim() ? "Outcome statement is captured" : null,
     outcome.baselineDefinition?.trim() ? "Baseline is defined" : null,
@@ -586,15 +592,54 @@ export function FramingOutcomeSection({
                   <span className="text-sm font-medium text-foreground">Constraints</span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                    defaultValue={outcome.solutionConstraints ?? ""}
+                    defaultValue={structuredConstraints.generalConstraints}
                     disabled={isArchived}
-                    name="solutionConstraints"
+                    name="generalSolutionConstraints"
                     placeholder="List the business, operational, compliance or integration conditions that Design must satisfy."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
                     Capture what Design must respect, not how to implement it. Good examples are operational limits, compliance obligations, must-keep integrations, rollout constraints and continuity requirements. If a constraint raises risk or demands more control, it should influence the AI/risk assessment.
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints")} />
+                </label>
+                <label className="space-y-2 xl:col-span-2">
+                  <span className="text-sm font-medium text-foreground">UX principles to carry into design</span>
+                  <textarea
+                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    defaultValue={structuredConstraints.uxPrinciples}
+                    disabled={isArchived}
+                    name="uxPrinciples"
+                    placeholder="Capture UI and UX principles such as mobile-first, accessibility, clarity, continuity, or interaction constraints that design must respect."
+                  />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Put design-driving UX constraints here, not wireframes or page-by-page solutions. Use this when imported material contains UX expectations that must guide the design phase without freezing the solution too early.
+                  </p>
+                </label>
+                <label className="space-y-2 xl:col-span-2">
+                  <span className="text-sm font-medium text-foreground">Non-functional requirements to carry into design</span>
+                  <textarea
+                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    defaultValue={structuredConstraints.nonFunctionalRequirements}
+                    disabled={isArchived}
+                    name="nonFunctionalRequirements"
+                    placeholder="Capture performance, security, availability, compliance, privacy, accessibility or reliability requirements that design and delivery must satisfy."
+                  />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Use this for cross-cutting quality requirements. If an NFR increases delivery sensitivity, supervision needs, or operational risk, it should also be reflected in AI and risk.
+                  </p>
+                </label>
+                <label className="space-y-2 xl:col-span-2">
+                  <span className="text-sm font-medium text-foreground">Additional requirements to carry forward</span>
+                  <textarea
+                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    defaultValue={structuredConstraints.additionalRequirements}
+                    disabled={isArchived}
+                    name="additionalRequirements"
+                    placeholder="Capture extra business rules, dependencies, assumptions or design-stage requirements that should not be lost when the work moves into design."
+                  />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    Use this for imported additional requirements that are real and relevant, but that do not belong as Outcome, Epic or Story Idea content. These become part of the design input package for the next step.
+                  </p>
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">Data sensitivity</span>

@@ -309,6 +309,26 @@ function getCandidatePreviewRows(candidate: ReviewCandidate) {
   return rows.slice(0, 8);
 }
 
+function getCandidateRelationshipSummary(candidate: ReviewCandidate, allCandidates: ReviewQueue["items"]) {
+  if (candidate.type !== "story") {
+    return null;
+  }
+
+  const epicCandidate = candidate.draftRecord?.epicCandidateId
+    ? allCandidates.find((entry) => entry.id === candidate.draftRecord?.epicCandidateId)
+    : null;
+  const outcomeCandidate = candidate.draftRecord?.outcomeCandidateId
+    ? allCandidates.find((entry) => entry.id === candidate.draftRecord?.outcomeCandidateId)
+    : null;
+
+  const parts = [
+    epicCandidate ? `Epic: ${epicCandidate.title}` : null,
+    outcomeCandidate ? `Outcome: ${outcomeCandidate.title}` : null
+  ].filter((value): value is string => Boolean(value));
+
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 function CollapsibleSection(props: {
   title: string;
   description: string;
@@ -816,7 +836,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                       {intentGroup.groups.map((group) => (
                         <CollapsibleSection
                           badge={`${group.items.length}`}
-                          defaultOpen={false}
+                          defaultOpen={group.items.length > 0 && (group.state === "needs_action" || group.state === "needs_confirmation" || group.state === "pending")}
                           description={getBacklogDescription(group.state)}
                           key={`${intentGroup.importIntent}-${group.state}`}
                           title={getBacklogLabel(group.state)}
@@ -864,6 +884,11 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                             </span>
                                           </div>
                                           <p className="text-sm leading-6 text-muted-foreground">{candidate.summary}</p>
+                                          {getCandidateRelationshipSummary(candidate, queue.items) ? (
+                                            <p className="text-sm text-sky-900">
+                                              {getCandidateRelationshipSummary(candidate, queue.items)}
+                                            </p>
+                                          ) : null}
                                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                                             <span>File: {candidate.file.fileName}</span>
                                             <span>Source: {candidate.sourceSectionMarker}</span>
