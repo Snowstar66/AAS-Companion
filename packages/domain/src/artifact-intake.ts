@@ -66,7 +66,7 @@ export const artifactIntakeUploadRequestSchema = z.object({
   actorId: z.string().nullish(),
   label: z.string().trim().min(1).max(120).optional(),
   importIntent: artifactImportIntentSchema.default("framing"),
-  processingMode: artifactIntakeProcessingModeSchema.default("deterministic"),
+  processingMode: artifactIntakeProcessingModeSchema.default("ai_assisted"),
   files: z.array(artifactIntakeUploadFileSchema).min(1)
 });
 

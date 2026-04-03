@@ -121,7 +121,7 @@ export async function createArtifactIntakeSessionService(input: {
   }
 
   let result;
-  const requestedProcessingMode = artifactIntakeProcessingModeSchema.parse(input.processingMode ?? "deterministic");
+  const requestedProcessingMode = artifactIntakeProcessingModeSchema.parse(input.processingMode ?? "ai_assisted");
   const importIntent = artifactImportIntentSchema.parse(input.importIntent ?? "framing");
 
   try {

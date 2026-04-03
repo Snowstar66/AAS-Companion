@@ -439,7 +439,9 @@ describe("Import page", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Project Import", level: 1 })).toBeDefined();
-    expect(screen.getByRole("button", { name: /AI-assisted import/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Import" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: /AI-assisted import/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Create import session/i })).toBeNull();
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
@@ -472,8 +474,7 @@ describe("Import page", () => {
     render(await ArtifactIntakePage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByText(/Import writes persisted intake sessions and is therefore disabled in Demo/i)).toBeDefined();
-    expect(screen.getAllByRole("button", { name: /Create import session/i }).some((button) => button.hasAttribute("disabled"))).toBe(true);
-    expect(screen.getAllByRole("button", { name: /AI-assisted import/i }).some((button) => button.hasAttribute("disabled"))).toBe(true);
+    expect(screen.getAllByRole("button", { name: "Import" }).some((button) => button.hasAttribute("disabled"))).toBe(true);
     expect(screen.getByRole("link", { name: /Leave Demo and choose project/i })).toBeDefined();
   });
 });

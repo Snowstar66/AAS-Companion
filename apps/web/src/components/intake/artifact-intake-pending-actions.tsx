@@ -6,7 +6,7 @@ import { Bot, GitBranch, LoaderCircle, Upload, XCircle } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
 type ReviewIntent = "edit" | "reject" | "promote";
-type UploadProcessingMode = "deterministic" | "ai_assisted";
+type UploadProcessingMode = "ai_assisted";
 
 function getReviewActionConfig(importTargetLabel: string) {
   return [
@@ -43,42 +43,23 @@ export function ArtifactIntakeUploadSubmitButton({ disabled }: { disabled?: bool
 
   return (
     <div className="space-y-3">
+      <input name="processingMode" type="hidden" value="ai_assisted" />
       <div className="flex flex-wrap gap-3">
         <Button
           className="gap-2"
           disabled={disabled || pending}
-          name="processingMode"
-          onClick={() => setSubmittedMode("deterministic")}
-          type="submit"
-          value="deterministic"
-        >
-          {pending && activeMode === "deterministic" ? (
-            <LoaderCircle className="h-4 w-4 animate-spin" />
-          ) : (
-            <Upload className="h-4 w-4" />
-          )}
-          {pending && activeMode === "deterministic" ? "Creating standard import..." : "Create import session"}
-        </Button>
-        <Button
-          className="gap-2"
-          disabled={disabled || pending}
-          name="processingMode"
           onClick={() => setSubmittedMode("ai_assisted")}
           type="submit"
-          value="ai_assisted"
-          variant="secondary"
         >
           {pending && activeMode === "ai_assisted" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-          {pending && activeMode === "ai_assisted" ? "Running AI-assisted import..." : "AI-assisted import"}
+          {pending && activeMode === "ai_assisted" ? "Running import..." : "Import"}
         </Button>
       </div>
       {pending ? (
         <div className="flex items-center gap-2 rounded-2xl border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           <LoaderCircle className="h-3.5 w-3.5 animate-spin text-primary" />
           <span>
-            {activeMode === "ai_assisted"
-              ? "Classifying the files, extracting likely Value Spine candidates, and placing anything unclear into Review leftovers."
-              : "Creating the standard import session and mapping structured candidates for review."}
+            Classifying the files, extracting likely Value Spine candidates, and falling back to the built-in parser automatically if the AI response is incomplete.
           </span>
         </div>
       ) : null}

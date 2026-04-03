@@ -96,8 +96,8 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
     redirectDemoIntakeBlocked();
   }
 
-  const requestedProcessingMode = String(formData.get("processingMode") ?? "deterministic");
-  const processingMode = requestedProcessingMode === "ai_assisted" ? "ai_assisted" : "deterministic";
+  const requestedProcessingMode = String(formData.get("processingMode") ?? "ai_assisted");
+  const processingMode = requestedProcessingMode === "deterministic" ? "deterministic" : "ai_assisted";
   const requestedImportIntent = String(formData.get("importIntent") ?? "framing");
   const importIntent = requestedImportIntent === "design" ? "design" : "framing";
   const files = formData

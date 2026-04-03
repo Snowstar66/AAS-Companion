@@ -558,6 +558,91 @@ describe("artifact intake helpers", () => {
     expect(outcomeCandidate?.draftRecord?.problemStatement).toContain("Give value owners one simple framing import flow.");
   });
 
+  it("imports explicit value spine and delivery story sections from a framing document", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-krisapp2-1",
+      "Krisapp2.md",
+      [
+        "# AAS Framing Document",
+        "",
+        "# 4. Outcome",
+        "## 4.2 Outcome statement",
+        "Öka aktiv hemberedskap i hushåll genom att göra det enkelt att etablera, följa upp och underhålla hemberedskap i vardagen.",
+        "",
+        "# 17. Value Spine",
+        "## 17.1 Outcome",
+        "### OUT-001",
+        "**Title:** Aktiv hemberedskap i vardagen",
+        "**Statement:** Öka aktiv hemberedskap i hushåll genom enkel, vardagsnära och kontinuerlig uppföljning.",
+        "**Baseline:** Not yet established",
+        "",
+        "## 17.2 Epics",
+        "### EPIC-001 – Hushållsprofil och onboarding",
+        "- **Outcome Link:** OUT-001",
+        "- **Purpose:** göra det möjligt att snabbt skapa ett hushåll och anpassa rekommendationer utifrån hushållsstorlek och behov.",
+        "",
+        "### EPIC-002 – Inventering av hemberedskap",
+        "- **Outcome Link:** OUT-001",
+        "- **Purpose:** ge användaren möjlighet att registrera vad som finns hemma.",
+        "",
+        "# 18. Delivery Stories",
+        "## 18.2 Stories",
+        "### STORY-001 – Skapa hushållsprofil",
+        "- **Story Type:** Feature",
+        "- **Outcome Link:** OUT-001",
+        "- **Epic Link:** EPIC-001",
+        "- **Value Intent:** användaren ska snabbt kunna konfigurera sitt hushåll så att rekommendationer blir relevanta från start.",
+        "- **Acceptance Criteria:**",
+        "  - användaren kan ange hushållsnamn",
+        "  - användaren kan spara hushållet",
+        "",
+        "### STORY-002 – Registrera artikel i förråd",
+        "- **Story Type:** Feature",
+        "- **Outcome Link:** OUT-001",
+        "- **Epic Link:** EPIC-002",
+        "- **Value Intent:** användaren ska kunna bygga upp en faktisk inventering.",
+        "- **Acceptance Criteria:**",
+        "  - användaren kan ange namn på artikel",
+        "  - användaren kan spara artikeln",
+        "",
+        "# 9. Non-Functional Requirements at Framing Level",
+        "## 9.1 Simplicity",
+        "- användaren ska förstå appens huvudvärde direkt",
+        "",
+        "# 13. Architecture Intent",
+        "## 13.1 Core principle",
+        "Appen ska byggas med separation mellan produktmotor och land-/innehållsprofil"
+      ].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-krisapp2-1",
+          fileName: "Krisapp2.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const outcomeCandidates = mapping.candidates.filter((candidate) => candidate.type === "outcome");
+    const epicCandidates = mapping.candidates.filter((candidate) => candidate.type === "epic");
+    const storyCandidates = mapping.candidates.filter((candidate) => candidate.type === "story");
+
+    expect(["bmad_prd", "mixed_markdown_bundle"]).toContain(parsed.classification.sourceType);
+    expect(outcomeCandidates.length).toBeGreaterThanOrEqual(1);
+    expect(epicCandidates.length).toBeGreaterThanOrEqual(2);
+    expect(storyCandidates.length).toBeGreaterThanOrEqual(2);
+    expect(storyCandidates.some((candidate) => candidate.title.includes("Skapa hushållsprofil"))).toBe(true);
+    expect(storyCandidates.some((candidate) => candidate.title.includes("Registrera artikel i förråd"))).toBe(true);
+    expect(storyCandidates.every((candidate) => Boolean(candidate.draftRecord?.epicCandidateId || candidate.inferredEpicCandidateId))).toBe(true);
+    expect(mapping.carryForwardItems.map((item) => item.category)).toEqual(
+      expect.arrayContaining(["nfr_constraint", "solution_constraint"])
+    );
+  });
+
   it("collapses multiple framing outcomes from the same file into one merged outcome candidate", () => {
     const parsed = parseMarkdownArtifact(
       "file-framing-merged-outcome-1",

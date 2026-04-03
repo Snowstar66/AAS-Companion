@@ -245,8 +245,8 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <h1 className="text-3xl font-semibold tracking-tight">Project Import</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                 Upload text or markdown delivery artifacts, inspect the full imported source, review structured candidates,
-                and correct them before promotion. Use AI-assisted import when the source material is looser and needs help
-                to be interpreted into the Value Spine.
+                and correct them before promotion. Import always starts with AI-assisted interpretation and falls back to
+                the built-in parser automatically when the AI response is incomplete.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
