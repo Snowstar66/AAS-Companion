@@ -135,6 +135,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     : [];
   const selectedCandidate =
     selectedFileCandidates.find((candidate) => candidate.id === candidateId) ?? selectedFileCandidates[0] ?? null;
+  const showBacklogCard = selectedSession?.importIntent !== "framing";
 
   const backlogRows: BacklogRow[] =
     workspace.state === "ready"
@@ -350,123 +351,125 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
           </Card>
         ) : (
           <>
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Imported candidates</CardTitle>
-                <CardDescription>
-                  Work through the imported material as a backlog. If the import target was Framing, imported stories are reviewed and approved as Story Ideas.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="rounded-2xl border border-sky-200 bg-sky-50/40 px-4 py-4 text-sm text-sky-950">
-                  <p>
-                    Use Intake to inspect one file at a time. When you want to approve or reject many imported rows together,
-                    continue to{" "}
-                    <Link
-                      className="font-semibold underline underline-offset-4"
-                      href={`/review?importIntent=${selectedSession?.importIntent ?? "framing"}&reviewStatusFilter=pending`}
-                    >
-                      {getImportWorkspaceLabel(selectedSession?.importIntent)}
-                    </Link>
-                    .
-                  </p>
-                  <p className="mt-2 text-sky-900/80">
-                    There you can tick checkboxes and approve selected {selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} in bulk.
-                  </p>
-                </div>
-                {backlogRows.length > 0 ? (
-                  <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">
-                    {backlogRows.map((row, index) => {
-                      const needsAttention = row.unresolvedCount > 0 || row.blockedCount > 0 || row.leftoverCount > 0;
+            {showBacklogCard ? (
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Imported candidates</CardTitle>
+                  <CardDescription>
+                    Work through the imported material as a backlog. If the import target was Framing, imported stories are reviewed and approved as Story Ideas.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50/40 px-4 py-4 text-sm text-sky-950">
+                    <p>
+                      Use Intake to inspect one file at a time. When you want to approve or reject many imported rows together,
+                      continue to{" "}
+                      <Link
+                        className="font-semibold underline underline-offset-4"
+                        href={`/review?importIntent=${selectedSession?.importIntent ?? "framing"}&reviewStatusFilter=pending`}
+                      >
+                        {getImportWorkspaceLabel(selectedSession?.importIntent)}
+                      </Link>
+                      .
+                    </p>
+                    <p className="mt-2 text-sky-900/80">
+                      There you can tick checkboxes and approve selected {selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} in bulk.
+                    </p>
+                  </div>
+                  {backlogRows.length > 0 ? (
+                    <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">
+                      {backlogRows.map((row, index) => {
+                        const needsAttention = row.unresolvedCount > 0 || row.blockedCount > 0 || row.leftoverCount > 0;
 
-                      return (
-                        <Link
-                          className={`block px-5 py-4 transition ${
-                            index > 0 ? "border-t border-border/70" : ""
-                          } ${
-                            row.isSelected
-                              ? "border-l-4 border-l-[#2f5f98] bg-[#2f5f98] text-white"
-                              : needsAttention
-                                ? "border-l-4 border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/50"
-                                : "border-l-4 border-l-transparent hover:bg-muted/30"
-                          }`}
-                          href={row.href}
-                          key={row.id}
-                          prefetch={false}
-                        >
-                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
+                        return (
+                          <Link
+                            className={`block px-5 py-4 transition ${
+                              index > 0 ? "border-t border-border/70" : ""
+                            } ${
+                              row.isSelected
+                                ? "border-l-4 border-l-[#2f5f98] bg-[#2f5f98] text-white"
+                                : needsAttention
+                                  ? "border-l-4 border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/50"
+                                  : "border-l-4 border-l-transparent hover:bg-muted/30"
+                            }`}
+                            href={row.href}
+                            key={row.id}
+                            prefetch={false}
+                          >
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span
+                                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
+                                      row.isSelected
+                                        ? "border-white/30 bg-white/10 text-white"
+                                        : needsAttention
+                                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                                          : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    }`}
+                                  >
+                                    {needsAttention ? <CircleAlert className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                  </span>
+                                  <span
+                                    className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                                      row.isSelected
+                                        ? "border-white/20 bg-white/10 text-white/85"
+                                        : "border-border/70 bg-muted text-muted-foreground"
+                                    }`}
+                                  >
+                                    {row.typeLabel}
+                                  </span>
+                                  <h3 className={`text-sm font-semibold ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.title}</h3>
+                                </div>
+                                <p className={`mt-2 text-sm leading-6 ${row.isSelected ? "text-white/90" : "text-muted-foreground"}`}>
+                                  {row.subtitle}
+                                </p>
+                                <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs ${row.isSelected ? "text-white/75" : "text-muted-foreground"}`}>
+                                  <span>{row.fileName}</span>
+                                  <span>{row.sessionLabel}</span>
+                                  <span>{row.meta}</span>
+                                  <span>{row.statusLabel}</span>
+                                </div>
+                                <p className={`mt-2 text-xs ${row.isSelected ? "text-white/80" : "text-muted-foreground"}`}>
+                                  {needsAttention ? "Needs review:" : "Status:"} {row.attentionPreview.join(" - ")}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 text-xs">
                                 <span
-                                  className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
+                                  className={`inline-flex rounded-full border px-3 py-1 ${
                                     row.isSelected
-                                      ? "border-white/30 bg-white/10 text-white"
-                                      : needsAttention
-                                      ? "border-amber-200 bg-amber-50 text-amber-700"
-                                      : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                      ? "border-white/20 bg-white/10 text-white/90"
+                                      : "border-border/70 bg-background text-muted-foreground"
                                   }`}
                                 >
-                                  {needsAttention ? <CircleAlert className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                  Open: <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
                                 </span>
-                                <span
-                                  className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                                    row.isSelected
-                                      ? "border-white/20 bg-white/10 text-white/85"
-                                      : "border-border/70 bg-muted text-muted-foreground"
-                                  }`}
-                                >
-                                  {row.typeLabel}
-                                </span>
-                                <h3 className={`text-sm font-semibold ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.title}</h3>
+                                {row.blockedCount > 0 ? (
+                                  <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">
+                                    Blocked: {row.blockedCount}
+                                  </span>
+                                ) : null}
+                                {row.leftoverCount > 0 ? (
+                                  <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700">
+                                    Leftovers: {row.leftoverCount}
+                                  </span>
+                                ) : null}
                               </div>
-                              <p className={`mt-2 text-sm leading-6 ${row.isSelected ? "text-white/90" : "text-muted-foreground"}`}>
-                                {row.subtitle}
-                              </p>
-                              <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs ${row.isSelected ? "text-white/75" : "text-muted-foreground"}`}>
-                                <span>{row.fileName}</span>
-                                <span>{row.sessionLabel}</span>
-                                <span>{row.meta}</span>
-                                <span>{row.statusLabel}</span>
-                              </div>
-                              <p className={`mt-2 text-xs ${row.isSelected ? "text-white/80" : "text-muted-foreground"}`}>
-                                {needsAttention ? "Needs review:" : "Status:"} {row.attentionPreview.join(" - ")}
-                              </p>
                             </div>
-
-                            <div className="flex flex-wrap gap-2 text-xs">
-                              <span
-                                className={`inline-flex rounded-full border px-3 py-1 ${
-                                  row.isSelected
-                                    ? "border-white/20 bg-white/10 text-white/90"
-                                    : "border-border/70 bg-background text-muted-foreground"
-                                }`}
-                              >
-                                Open: <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
-                              </span>
-                              {row.blockedCount > 0 ? (
-                                <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">
-                                  Blocked: {row.blockedCount}
-                                </span>
-                              ) : null}
-                              {row.leftoverCount > 0 ? (
-                                <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700">
-                                  Leftovers: {row.leftoverCount}
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ) : null}
-                {backlogRows.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-                    No import sessions match the current action filter.
-                  </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                  {backlogRows.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
+                      No import sessions match the current action filter.
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            ) : null}
 
             {selectedSession && selectedFile ? (
               <ArtifactIntakeReviewWorkspace

@@ -526,6 +526,38 @@ describe("artifact intake helpers", () => {
     expect(epicCandidate?.draftRecord?.outcomeCandidateId).toBe(outcomeCandidate?.id);
   });
 
+  it("maps product vision text into the imported outcome description for framing", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-framing-outcome-vision-1",
+      "framing-outcome-vision.md",
+      [
+        "# Product vision",
+        "Give value owners one simple framing import flow.",
+        "",
+        "## Outcome",
+        "Outcome statement: reduce framing import cleanup time.",
+        "Baseline definition: time from upload to approved framing material.",
+        "Measurement method: weekly review sample."
+      ].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-framing-outcome-vision-1",
+          fileName: "framing-outcome-vision.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const outcomeCandidate = mapping.candidates.find((candidate) => candidate.type === "outcome");
+
+    expect(outcomeCandidate?.draftRecord?.problemStatement).toContain("Give value owners one simple framing import flow.");
+  });
+
   it("preserves explicit AI-assisted epic links instead of relying only on section order", () => {
     const parsed = parseMarkdownArtifact(
       "file-ai-epic-link",
@@ -974,9 +1006,52 @@ describe("artifact intake helpers", () => {
     });
 
     expect(compliance.summary.humanOnly).toBe(0);
-    expect(compliance.summary.missing).toBe(1);
-    expect(compliance.findings.some((finding) => finding.code === "story_expected_behavior_missing")).toBe(true);
-    expect(inferImportedReadinessState({ type: "story", complianceResult: compliance })).toBe("imported_incomplete");
+    expect(compliance.findings.some((finding) => finding.code === "story_expected_behavior_missing")).toBe(false);
+  });
+
+  it("keeps imported outcomes well-formed when they target an existing project outcome", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-outcome-existing-1",
+        type: "outcome",
+        title: "Imported Outcome",
+        summary: "Reduce framing cleanup time.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-outcome-existing-1",
+          fileName: "outcome-import.md",
+          sectionId: "section-outcome",
+          sectionTitle: "Outcome",
+          sectionMarker: "## Outcome",
+          sourceType: "mixed_markdown_bundle",
+          confidence: "high"
+        },
+        inferredOutcomeCandidateId: null,
+        inferredEpicCandidateId: null,
+        relationshipState: "mapped",
+        relationshipNote: null,
+        acceptanceCriteria: [],
+        testNotes: []
+      },
+      reviewStatus: "confirmed",
+      draftRecord: {
+        key: "OUT-001",
+        title: "Imported Outcome",
+        outcomeStatement: "Reduce framing cleanup time.",
+        baselineDefinition: "Current cleanup is manual and slow.",
+        baselineSource: "Import review notes",
+        outcomeCandidateId: "project-outcome-1"
+      },
+      humanDecisions: {
+        valueOwnerId: null,
+        aiAccelerationLevel: null,
+        riskProfile: null,
+        baselineValidity: null
+      }
+    });
+
+    expect(compliance.summary.missing).toBe(0);
+    expect(compliance.findings.some((finding) => finding.code === "outcome_statement_missing")).toBe(false);
   });
 
   it("marks imported stories as framing-ready once required framing fields are confirmed", () => {

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   applyApprovedArtifactFileCarryForwardToOutcomeService,
   createArtifactIntakeSessionService,
+  createNativeEpicFromOutcomeService,
   getArtifactCandidateService,
   promoteArtifactCandidateService,
   reviewArtifactFileSectionDispositionService,
@@ -76,6 +77,8 @@ function readDynamicLines(formData: FormData, scope: "candidate" | "section", id
     .map((value) => value.trim())
     .filter(Boolean);
 }
+
+const FALLBACK_EPIC_OPTION_VALUE = "__fallback_epic__";
 
 function redirectDemoIntakeBlocked() {
   redirect(
@@ -376,6 +379,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const selectedOutcomeCandidateIds = new Set(selectedOutcomeCandidates.map((candidate) => candidate.id));
   const selectedOutcomeCandidateId =
     selectedOutcomeCandidates.length === 1 ? selectedOutcomeCandidates[0]?.id ?? null : null;
+  const selectedStoryCandidates = candidates.filter((candidate) => candidate.type === "story");
   const storiesMissingEpic = candidates.filter((candidate) => {
     if (candidate.type !== "story") {
       return false;
@@ -609,8 +613,11 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   let promotedCount = 0;
   const failures: string[] = [];
   let resolvedOutcomeId = targetOutcomeId;
+  let resolvedFallbackEpicId: string | null = null;
 
-  for (const candidate of orderedCandidates) {
+  const outcomeAndEpicCandidates = orderedCandidates.filter((candidate) => candidate.type !== "story");
+
+  for (const candidate of outcomeAndEpicCandidates) {
     const promoteResult = await promoteArtifactCandidateService({
       organizationId: session.organization.organizationId,
       candidateId: candidate.id,
@@ -625,6 +632,98 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
 
     if (candidate.type === "outcome") {
       resolvedOutcomeId = promoteResult.data.promotedEntityId;
+    }
+
+    promotedCount += 1;
+  }
+
+  if (
+    targetEpicCandidateId === FALLBACK_EPIC_OPTION_VALUE &&
+    selectedStoryCandidates.some((candidate) => {
+      const currentEpicLink =
+        readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
+        candidate.draftRecord?.epicCandidateId?.trim() ||
+        "";
+
+      return !currentEpicLink;
+    })
+  ) {
+    if (!resolvedOutcomeId) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: "Choose or approve an Outcome before creating the Fallback Epic."
+        })
+      );
+    }
+
+    const fallbackEpicResult = await createNativeEpicFromOutcomeService({
+      organizationId: session.organization.organizationId,
+      outcomeId: resolvedOutcomeId,
+      actorId: session.userId,
+      title: "Fallback Epic"
+    });
+
+    if (!fallbackEpicResult.ok) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: fallbackEpicResult.errors[0]?.message ?? "Fallback Epic could not be created."
+        })
+      );
+    }
+
+    resolvedFallbackEpicId = fallbackEpicResult.data.id;
+  }
+
+  for (const candidate of orderedCandidates.filter((entry) => entry.type === "story")) {
+    if (resolvedFallbackEpicId) {
+      const story = candidates.find((entry) => entry.id === candidate.id);
+      const currentEpicLink =
+        readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
+        story?.draftRecord?.epicCandidateId?.trim() ||
+        "";
+
+      if (!currentEpicLink) {
+        const fallbackReviewResult = await reviewArtifactCandidateService({
+          organizationId: session.organization.organizationId,
+          actorId: session.userId,
+          candidateId: candidate.id,
+          reviewStatus: "confirmed",
+          reviewComment: "Approved from the framing import spine.",
+          draftRecord: {
+            epicCandidateId: resolvedFallbackEpicId,
+            outcomeCandidateId: resolvedOutcomeId
+          }
+        });
+
+        if (!fallbackReviewResult.ok) {
+          redirect(
+            buildRedirect("/intake", {
+              status: "error",
+              sessionId,
+              fileId,
+              message: fallbackReviewResult.errors[0]?.message ?? "Fallback Epic could not be linked to the selected Story Idea."
+            })
+          );
+        }
+      }
+    }
+
+    const promoteResult = await promoteArtifactCandidateService({
+      organizationId: session.organization.organizationId,
+      candidateId: candidate.id,
+      actorId: session.userId
+    });
+
+    if (!promoteResult.ok) {
+      const failedCandidate = candidates.find((entry) => entry.id === candidate.id);
+      failures.push(`${failedCandidate?.title ?? "Candidate"}: ${promoteResult.errors[0]?.message ?? "Promotion blocked."}`);
+      continue;
     }
 
     promotedCount += 1;

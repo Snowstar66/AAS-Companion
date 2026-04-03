@@ -94,7 +94,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               testDefinition: null,
               definitionOfDone: [],
               outcomeCandidateId: "project-outcome-1",
-              epicCandidateId: "candidate-epic"
+              epicCandidateId: null
             },
             humanDecisions: {
               valueOwnerId: null,
@@ -294,7 +294,7 @@ vi.mock("@/lib/intake/workspace", () => ({
               testDefinition: null,
               definitionOfDone: [],
               outcomeCandidateId: "project-outcome-1",
-              epicCandidateId: "candidate-epic"
+              epicCandidateId: null
             },
             humanDecisions: {
               valueOwnerId: null,
@@ -442,11 +442,11 @@ describe("Import page", () => {
     expect(screen.getByRole("button", { name: /AI-assisted import/i })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Imported Story").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Story Idea").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Imported candidates" })).toBeNull();
     expect(screen.getByRole("button", { name: "Approve" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Reject" })).toBeDefined();
+    expect(screen.getByRole("option", { name: "EPC-AUTO - Fallback Epic" })).toBeDefined();
     expect(screen.getByText(/Review imported framing content directly in one spine/i)).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Save and approve Story Idea import" })).toBeNull();

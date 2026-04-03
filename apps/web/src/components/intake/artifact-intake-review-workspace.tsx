@@ -84,6 +84,8 @@ type ProjectEpicOption = {
   outcomeId: string;
 };
 
+const FALLBACK_EPIC_OPTION_VALUE = "__fallback_epic__";
+
 type QueueItem = {
   id: string;
   title: string;
@@ -422,8 +424,26 @@ function framingCandidateStatus(candidate: IntakeArtifactCandidate) {
     };
   }
 
-  const summary = candidate.complianceResult?.summary;
-  const isReady = !summary || (summary.missing === 0 && summary.blocked === 0 && summary.humanOnly === 0);
+  const draft = candidate.draftRecord ?? null;
+  const hasKey = Boolean((draft?.key ?? "").trim()) || !candidate.type;
+  const hasTitle = Boolean((draft?.title ?? candidate.title ?? "").trim());
+  const hasOutcomeStatement = candidate.type !== "outcome" || Boolean((draft?.outcomeStatement ?? "").trim());
+  const hasBaselineDefinition = candidate.type !== "outcome" || Boolean((draft?.baselineDefinition ?? "").trim());
+  const hasBaselineSource = candidate.type !== "outcome" || Boolean((draft?.baselineSource ?? "").trim());
+  const hasEpicPurpose = candidate.type !== "epic" || Boolean((draft?.purpose ?? "").trim());
+  const hasValueIntent = candidate.type !== "story" || Boolean((draft?.valueIntent ?? "").trim());
+  const hasOutcomeLink = candidate.type === "outcome" || Boolean((draft?.outcomeCandidateId ?? "").trim());
+  const hasEpicLink = candidate.type !== "story" || Boolean((draft?.epicCandidateId ?? "").trim());
+  const isReady =
+    hasKey &&
+    hasTitle &&
+    hasOutcomeStatement &&
+    hasBaselineDefinition &&
+    hasBaselineSource &&
+    hasEpicPurpose &&
+    hasValueIntent &&
+    hasOutcomeLink &&
+    hasEpicLink;
 
   return isReady
     ? {
@@ -545,6 +565,15 @@ function FramingImportSpine(props: {
   defaultBulkEpicCandidateId: string;
   submitFramingBulkApproveAction?: ((formData: FormData) => Promise<void>) | undefined;
 }) {
+  const projectEpicOptions = [
+    {
+      id: FALLBACK_EPIC_OPTION_VALUE,
+      key: "EPC-AUTO",
+      title: "Fallback Epic",
+      outcomeId: props.defaultTargetOutcomeId
+    },
+    ...props.projectEpicOptionsForTarget
+  ];
   const storiesNeedingProjectEpic = props.importedStoryCandidates.filter((story) => !story.draftRecord?.epicCandidateId?.trim());
 
   return (
@@ -620,11 +649,10 @@ function FramingImportSpine(props: {
                   <span className="text-sm font-medium text-foreground">Project Epic</span>
                   <select
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                    defaultValue={props.defaultBulkEpicCandidateId}
+                    defaultValue={props.defaultBulkEpicCandidateId || FALLBACK_EPIC_OPTION_VALUE}
                     name="targetEpicCandidateId"
                   >
-                    <option value="">Select Epic</option>
-                    {props.projectEpicOptionsForTarget.map((candidate) => (
+                    {projectEpicOptions.map((candidate) => (
                       <option key={candidate.id} value={candidate.id}>
                         {describeProjectEpic(candidate)}
                       </option>
@@ -791,17 +819,18 @@ function FramingImportSpine(props: {
                                   </label>
                                   <label className="space-y-2">
                                     <span className="text-sm font-medium text-foreground">Constraint category</span>
-                                    <select
-                                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                                      defaultValue={item.category}
+                                    <input
+                                      className="h-11 w-full rounded-2xl border border-border bg-muted/20 px-4 text-sm text-muted-foreground"
+                                      defaultValue="Stored under the Outcome constraint field"
+                                      disabled
+                                      readOnly
+                                      type="text"
+                                    />
+                                    <input
                                       name={`section:${item.sourceSection.id}:category`}
-                                    >
-                                      <option value="ux_principle">UX principle</option>
-                                      <option value="nfr_constraint">Non-functional requirement</option>
-                                      <option value="solution_constraint">Solution constraint</option>
-                                      <option value="additional_requirement">Additional requirement</option>
-                                      <option value="excluded_design">Design input</option>
-                                    </select>
+                                      type="hidden"
+                                      value={item.category}
+                                    />
                                   </label>
                                 </div>
                               </details>
@@ -997,14 +1026,6 @@ function FramingImportSpine(props: {
                                             name={`candidate:${story.id}:expectedBehavior`}
                                           />
                                         </label>
-                                        <label className="space-y-2 md:col-span-2">
-                                          <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
-                                          <textarea
-                                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                                            defaultValue={(story.draftRecord?.acceptanceCriteria ?? []).join("\n")}
-                                            name={`candidate:${story.id}:acceptanceCriteria`}
-                                          />
-                                        </label>
                                         <input
                                           name={`candidate:${story.id}:outcomeCandidateId`}
                                           type="hidden"
@@ -1103,14 +1124,6 @@ function FramingImportSpine(props: {
                                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                     defaultValue={story.draftRecord?.expectedBehavior ?? ""}
                                     name={`candidate:${story.id}:expectedBehavior`}
-                                  />
-                                </label>
-                                <label className="space-y-2 md:col-span-2">
-                                  <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
-                                  <textarea
-                                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                                    defaultValue={(story.draftRecord?.acceptanceCriteria ?? []).join("\n")}
-                                    name={`candidate:${story.id}:acceptanceCriteria`}
                                   />
                                 </label>
                                 <input

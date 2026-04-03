@@ -978,10 +978,13 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
     const text = section.text.toLowerCase();
     const candidates: Array<{ kind: ArtifactParsedSection["kind"]; confidence: ArtifactParsedSection["confidence"] }> = [];
 
-    if (/problem|goal|objective/.test(title) || /problem statement|objective|goal/.test(text)) {
+    if (/problem|goal|objective|vision/.test(title) || /problem statement|objective|goal|product vision|vision/.test(text)) {
       candidates.push({
         kind: "problem_goal",
-        confidence: confidenceFromSignals(/problem|goal|objective/.test(title) ? 1 : 0, /problem statement|objective|goal/.test(text) ? 1 : 0)
+        confidence: confidenceFromSignals(
+          /problem|goal|objective|vision/.test(title) ? 1 : 0,
+          /problem statement|objective|goal|product vision|vision/.test(text) ? 1 : 0
+        )
       });
     }
 
@@ -1158,6 +1161,14 @@ function summarizeAcceptanceCriteriaForStoryIdea(acceptanceCriteria: string[]) {
     `${upperCaseFirst(normalizedCriteria[0] ?? "")}; ${lowerCaseFirst(normalizedCriteria[1] ?? "")}`,
     180
   );
+}
+
+function mergeArtifactDraftParagraphs(values: Array<string | null | undefined>) {
+  const paragraphs = values
+    .map((value) => value?.trim() ?? "")
+    .filter(Boolean);
+
+  return paragraphs.length > 0 ? [...new Set(paragraphs)].join("\n\n") : null;
 }
 
 function pickDistinctStoryText(input: {
@@ -1402,6 +1413,16 @@ function createCarryForwardItem(section: ArtifactParsedSection) {
   } satisfies ArtifactCarryForwardItem;
 }
 
+function isFramingOutcomeContextSection(section: ArtifactParsedSection) {
+  const title = normalizeHeading(section.title);
+  const text = normalizeHeading(section.text);
+
+  return (
+    /\bproduct vision\b|\bvision\b|\bproblem\b|\bgoal\b|\bobjective\b/.test(title) ||
+    /\bproduct vision\b|\bvision\b|\bproblem statement\b|\bgoal\b|\bobjective\b/.test(text)
+  );
+}
+
 function extractTaggedLineValue(text: string, label: string) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = text.match(new RegExp(`^${escapedLabel}:\\s*(.+)$`, "im"));
@@ -1443,7 +1464,10 @@ function buildDraftRecordFromParsedSection(input: {
     return {
       key: null,
       title: taggedTitle || input.section.title,
-      problemStatement: null,
+      problemStatement:
+        extractTaggedLineValue(input.section.text, "Problem Statement") ||
+        extractTaggedLineValue(input.section.text, "Product Vision") ||
+        null,
       outcomeStatement: extractTaggedLineValue(input.section.text, "Outcome Statement") || summarizeText(input.section.text),
       baselineDefinition: extractTaggedLineValue(input.section.text, "Baseline Definition") || null,
       baselineSource: extractTaggedLineValue(input.section.text, "Measurement Method") || null,
@@ -1796,6 +1820,27 @@ export function buildAiAssistedArtifactProcessingResult(input: {
       }
     }
 
+    if (importIntent === "framing") {
+      const fileOutcomeCandidates = candidates.filter(
+        (candidate) => candidate.type === "outcome" && candidate.source.fileId === file.id
+      );
+      const outcomeContextText = nextSections
+        .filter((section) => section.kind === "problem_goal" || isFramingOutcomeContextSection(section))
+        .map((section) => section.text.trim())
+        .filter(Boolean);
+
+      if (fileOutcomeCandidates.length > 0 && outcomeContextText.length > 0) {
+        const primaryOutcomeCandidate = fileOutcomeCandidates[0]!;
+        primaryOutcomeCandidate.draftRecord = {
+          ...primaryOutcomeCandidate.draftRecord,
+          problemStatement: mergeArtifactDraftParagraphs([
+            primaryOutcomeCandidate.draftRecord?.problemStatement ?? null,
+            ...outcomeContextText
+          ])
+        };
+      }
+    }
+
     const leftoverSectionIds = new Set(aiMatch.leftoverSectionIds);
 
     for (const section of nextSections) {
@@ -2005,6 +2050,8 @@ export function analyzeArtifactCandidateCompliance(input: {
   }
 
   if (input.candidate.type === "outcome") {
+    const isComplementingExistingOutcome = Boolean(draftRecord.outcomeCandidateId?.trim());
+
     if (!draftRecord.key?.trim()) {
       findings.push({
         code: "outcome_key_missing",
@@ -2061,7 +2108,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       }
     }
 
-    if (!humanDecisions.valueOwnerId) {
+    if (!isComplementingExistingOutcome && !humanDecisions.valueOwnerId) {
       findings.push({
         code: "value_owner_human_only",
         category: "human_only",
@@ -2070,7 +2117,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!humanDecisions.aiAccelerationLevel) {
+    if (!isComplementingExistingOutcome && !humanDecisions.aiAccelerationLevel) {
       findings.push({
         code: "ai_level_human_only",
         category: "human_only",
@@ -2079,7 +2126,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!humanDecisions.riskProfile) {
+    if (!isComplementingExistingOutcome && !humanDecisions.riskProfile) {
       findings.push({
         code: "risk_profile_human_only",
         category: "human_only",
@@ -2088,7 +2135,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!humanDecisions.baselineValidity) {
+    if (!isComplementingExistingOutcome && !humanDecisions.baselineValidity) {
       findings.push({
         code: "baseline_validity_human_only",
         category: "human_only",
@@ -2164,14 +2211,8 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!draftRecord.expectedBehavior?.trim()) {
-      findings.push({
-        code: "story_expected_behavior_missing",
-        category: "missing",
-        message: "Expected behavior is missing.",
-        fieldLabel: "Expected behavior"
-      });
-    } else if (
+    if (
+      draftRecord.expectedBehavior?.trim() &&
       shouldSurfaceUncertainty(input.candidate, reviewStatus) &&
       countMeaningfulWords(draftRecord.expectedBehavior) < 6
     ) {
@@ -2383,8 +2424,10 @@ export function mapParsedArtifactsToAasCandidates(input: {
   let lastOutcomeCandidateId: string | null = null;
   let lastEpicCandidateId: string | null = null;
   let lastStoryCandidateIndex: number | null = null;
+  let pendingOutcomeContextText: string[] = [];
 
   for (const file of input.files) {
+    pendingOutcomeContextText = [];
     const parsedArtifacts = file.parsedArtifacts;
 
     if (!parsedArtifacts) {
@@ -2585,7 +2628,31 @@ export function mapParsedArtifactsToAasCandidates(input: {
         continue;
       }
 
-      if (section.kind === "problem_goal") {
+      if (section.kind === "problem_goal" || (importIntent === "framing" && isFramingOutcomeContextSection(section))) {
+        if (importIntent === "framing") {
+          const contextText = section.text.trim();
+
+          if (lastOutcomeCandidateId) {
+            const lastOutcomeCandidate = candidates.find((candidate) => candidate.id === lastOutcomeCandidateId);
+
+            if (lastOutcomeCandidate?.type === "outcome") {
+              lastOutcomeCandidate.draftRecord = {
+                ...lastOutcomeCandidate.draftRecord,
+                problemStatement: mergeArtifactDraftParagraphs([
+                  lastOutcomeCandidate.draftRecord?.problemStatement ?? null,
+                  contextText
+                ])
+              };
+              continue;
+            }
+          }
+
+          if (contextText) {
+            pendingOutcomeContextText.push(contextText);
+            continue;
+          }
+        }
+
         unmappedSections.push(section);
         continue;
       }
@@ -2658,6 +2725,14 @@ export function mapParsedArtifactsToAasCandidates(input: {
         inferredOutcomeCandidateId,
         inferredEpicCandidateId
       });
+
+      if (candidateType === "outcome" && pendingOutcomeContextText.length > 0) {
+        draftRecord.problemStatement = mergeArtifactDraftParagraphs([
+          draftRecord.problemStatement ?? null,
+          ...pendingOutcomeContextText
+        ]);
+        pendingOutcomeContextText = [];
+      }
 
       const nextCandidate = adaptStoryCandidateForImportIntent({
         candidate: {

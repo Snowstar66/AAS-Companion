@@ -51,22 +51,20 @@ function buildImportedFramingCarryForwardBundle(mappedArtifacts: unknown) {
     };
   }
 
-  const bulletList = (categories: Array<string>) =>
+  const bulletList = (categories?: Array<string>) =>
     mapping.data.carryForwardItems
-      .filter((item) => categories.includes(item.category))
+      .filter((item) => !categories || categories.includes(item.category))
       .map((item) => `- ${item.title}: ${item.summary}`)
       .join("\n");
-
-  const solutionContext = bulletList(["excluded_design"]);
   const solutionConstraints = serializeFramingConstraintBundle({
-    generalConstraints: bulletList(["solution_constraint"]),
-    uxPrinciples: bulletList(["ux_principle"]),
-    nonFunctionalRequirements: bulletList(["nfr_constraint"]),
-    additionalRequirements: bulletList(["additional_requirement"])
+    generalConstraints: bulletList(),
+    uxPrinciples: "",
+    nonFunctionalRequirements: "",
+    additionalRequirements: ""
   });
 
   return {
-    solutionContext: solutionContext || null,
+    solutionContext: null,
     solutionConstraints
   };
 }
