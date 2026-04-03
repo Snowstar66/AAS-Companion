@@ -13,6 +13,7 @@ import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { ArtifactIntakeDispositionButtons } from "@/components/intake/artifact-intake-disposition-buttons";
 import { ArtifactIntakeReviewSubmitButtons } from "@/components/intake/artifact-intake-pending-actions";
+import { FramingImportBulkDecisionButtons } from "@/components/intake/framing-import-bulk-decision-buttons";
 
 type ParsedSection = ArtifactParseResult["sections"][number];
 
@@ -1375,16 +1376,7 @@ function FramingImportSpine(props: {
                 : "No hidden leftovers remain for this imported file."}
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button className="flex-1 gap-2" name="decision" type="submit" value="approve">
-                <CheckCircle2 className="h-4 w-4" />
-                Approve
-              </Button>
-              <Button className="flex-1 gap-2" name="decision" type="submit" value="reject" variant="secondary">
-                <CircleAlert className="h-4 w-4" />
-                Reject
-              </Button>
-            </div>
+            <FramingImportBulkDecisionButtons />
           </form>
         ) : null}
       </CardContent>

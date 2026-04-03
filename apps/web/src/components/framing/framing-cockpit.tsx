@@ -122,7 +122,7 @@ function buildOriginFilters(items: FramingOutcomeItem[]) {
 
 function SubmitButton({ pending }: { pending: boolean }) {
   return (
-    <Button className="gap-2" disabled={pending} type="submit">
+    <Button aria-busy={pending} className={`gap-2 ${pending ? "cursor-wait" : ""}`.trim()} data-pending={pending ? "true" : undefined} disabled={pending} type="submit">
       {pending ? "Creating case..." : "Start new case"}
       <ArrowRight className="h-4 w-4" />
     </Button>

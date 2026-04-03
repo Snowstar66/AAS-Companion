@@ -53,6 +53,7 @@ export function StoryIdeaInlineSaveButton({
       <Button
         aria-busy={isPending}
         className={`gap-2 ${isPending ? "cursor-wait" : ""}`.trim()}
+        data-pending={isPending ? "true" : undefined}
         disabled={disabled || isPending}
         onClick={handleSave}
         type="button"

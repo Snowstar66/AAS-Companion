@@ -668,7 +668,7 @@ describe("artifact intake helpers", () => {
 
     expect(
       shouldPreferDeterministicFramingImport({
-        importIntent: "framing",
+        importIntent: "design",
         explicitValueSpineCounts: {
           outcomes: 1,
           epics: 7,

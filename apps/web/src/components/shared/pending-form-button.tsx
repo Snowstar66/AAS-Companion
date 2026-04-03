@@ -25,8 +25,10 @@ export function PendingFormButton({
 
   return (
     <Button
+      aria-busy={pending}
       {...buttonProps}
       className={`${className ?? ""} ${pending && showPendingCursor ? "cursor-wait" : ""}`.trim()}
+      data-pending={pending ? "true" : undefined}
       disabled={disabled || pending}
       type="submit"
     >

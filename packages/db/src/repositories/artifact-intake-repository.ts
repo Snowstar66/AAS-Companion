@@ -435,7 +435,7 @@ async function processArtifactIntakeSession(
 
       if (shouldFallBackToDeterministicForExplicitSpine) {
         processingNote =
-          "The AI response under-read explicit Value Spine sections, so the built-in parser completed the framing import instead.";
+          "An explicit Value Spine was detected, so the built-in parser handled the framing import to preserve the declared Outcome, Epic, and Story links.";
       } else {
         mappingResult = aiResult.mappingResult;
         processingModeUsed = "ai_assisted";

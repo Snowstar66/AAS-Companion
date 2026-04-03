@@ -46,7 +46,9 @@ export function ArtifactIntakeUploadSubmitButton({ disabled }: { disabled?: bool
       <input name="processingMode" type="hidden" value="ai_assisted" />
       <div className="flex flex-wrap gap-3">
         <Button
-          className="gap-2"
+          aria-busy={pending && activeMode === "ai_assisted"}
+          className={`gap-2 ${pending && activeMode === "ai_assisted" ? "cursor-wait" : ""}`.trim()}
+          data-pending={pending && activeMode === "ai_assisted" ? "true" : undefined}
           disabled={disabled || pending}
           onClick={() => setSubmittedMode("ai_assisted")}
           type="submit"
@@ -82,7 +84,9 @@ export function ArtifactIntakeReviewSubmitButtons({ importTargetLabel = "project
 
           return (
             <Button
-              className="gap-2 justify-start"
+              aria-busy={isActive}
+              className={`gap-2 justify-start ${isActive ? "cursor-wait" : ""}`.trim()}
+              data-pending={isActive ? "true" : undefined}
               disabled={pending}
               key={action.intent}
               name="intent"

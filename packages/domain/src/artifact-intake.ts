@@ -1322,6 +1322,15 @@ export function shouldPreferDeterministicFramingImport(input: {
     return false;
   }
 
+  if (
+    input.explicitValueSpineCounts.epics > 0 &&
+    input.explicitValueSpineCounts.stories > 0 &&
+    input.deterministicCandidateCounts.epics > 0 &&
+    input.deterministicCandidateCounts.stories > 0
+  ) {
+    return true;
+  }
+
   const comparisons = [
     {
       explicit: input.explicitValueSpineCounts.outcomes,
