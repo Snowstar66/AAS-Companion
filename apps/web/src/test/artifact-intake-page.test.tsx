@@ -446,9 +446,11 @@ describe("Import page", () => {
     expect(screen.queryByRole("heading", { name: "Imported candidates" })).toBeNull();
     expect(screen.getByRole("button", { name: "Approve" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Reject" })).toBeDefined();
-    expect(screen.getByRole("option", { name: "EPC-AUTO - Fallback Epic" })).toBeDefined();
+    expect(screen.getByRole("combobox", { name: "Linked Epic" })).toBeDefined();
+    expect(screen.getByRole("option", { name: "Project Epic: EPC-AUTO - Fallback Epic" })).toBeDefined();
     expect(screen.getByText(/Review imported framing content directly in one spine/i)).toBeDefined();
     expect(screen.queryByText("Missing required fields")).toBeNull();
+    expect(screen.queryByText("Story type")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Save and approve Story Idea import" })).toBeNull();
   });

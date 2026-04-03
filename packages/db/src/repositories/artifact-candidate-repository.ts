@@ -51,16 +51,24 @@ function buildImportedFramingCarryForwardBundle(mappedArtifacts: unknown) {
     };
   }
 
-  const bulletList = (categories?: Array<string>) =>
-    mapping.data.carryForwardItems
-      .filter((item) => !categories || categories.includes(item.category))
-      .map((item) => `- ${item.title}: ${item.summary}`)
-      .join("\n");
+  const sectionedBulletList = (title: string, categories: Array<string>) => {
+    const lines = mapping.data.carryForwardItems
+      .filter((item) => categories.includes(item.category))
+      .map((item) => `- ${item.title}: ${item.summary}`);
+
+    if (lines.length === 0) {
+      return "";
+    }
+
+    return [`${title}`, ...lines].join("\n");
+  };
   const solutionConstraints = serializeFramingConstraintBundle({
-    generalConstraints: bulletList(),
-    uxPrinciples: "",
-    nonFunctionalRequirements: "",
-    additionalRequirements: ""
+    generalConstraints: [sectionedBulletList("Imported constraints", ["solution_constraint"]), sectionedBulletList("Imported design notes", ["excluded_design"])]
+      .filter(Boolean)
+      .join("\n\n"),
+    uxPrinciples: sectionedBulletList("Imported UX input", ["ux_principle"]),
+    nonFunctionalRequirements: sectionedBulletList("Imported non-functional requirements", ["nfr_constraint"]),
+    additionalRequirements: sectionedBulletList("Imported additional requirements", ["additional_requirement"])
   });
 
   return {

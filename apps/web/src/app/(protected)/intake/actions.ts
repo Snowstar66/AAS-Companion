@@ -384,15 +384,20 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const selectedOutcomeCandidateId =
     selectedOutcomeCandidates.length === 1 ? selectedOutcomeCandidates[0]?.id ?? null : null;
   const selectedStoryCandidates = candidates.filter((candidate) => candidate.type === "story");
+  function readResolvedStoryEpicSelection(candidate: { id: string; draftRecord?: { epicCandidateId?: string | null } | null }) {
+    return (
+      readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
+      candidate.draftRecord?.epicCandidateId?.trim() ||
+      targetEpicCandidateId ||
+      ""
+    );
+  }
   const storiesMissingEpic = candidates.filter((candidate) => {
     if (candidate.type !== "story") {
       return false;
     }
 
-    const currentEpicId =
-      readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
-      candidate.draftRecord?.epicCandidateId?.trim() ||
-      targetEpicCandidateId;
+    const currentEpicId = readResolvedStoryEpicSelection(candidate);
 
     return !currentEpicId;
   });
@@ -563,7 +568,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
 
   for (const candidate of candidates) {
     const currentOutcomeLink = readDynamicField(formData, "candidate", candidate.id, "outcomeCandidateId") || candidate.draftRecord?.outcomeCandidateId?.trim() || "";
-    const currentEpicLink = readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") || candidate.draftRecord?.epicCandidateId?.trim() || "";
+    const currentEpicLink = readResolvedStoryEpicSelection(candidate);
+    const usesFallbackEpic = currentEpicLink === FALLBACK_EPIC_OPTION_VALUE;
     const resolvedOutcomeLink =
       candidate.type === "outcome"
         ? targetOutcomeId
@@ -605,7 +611,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
               expectedBehavior: readDynamicField(formData, "candidate", candidate.id, "expectedBehavior") || null,
               acceptanceCriteria: readDynamicLines(formData, "candidate", candidate.id, "acceptanceCriteria"),
               outcomeCandidateId: resolvedOutcomeLink || null,
-              epicCandidateId: currentEpicLink || targetEpicCandidateId || null
+              epicCandidateId: usesFallbackEpic ? null : currentEpicLink || null
             };
 
     const reviewResult = await reviewArtifactCandidateService({
@@ -684,14 +690,9 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
 
   if (
-    targetEpicCandidateId === FALLBACK_EPIC_OPTION_VALUE &&
     selectedStoryCandidates.some((candidate) => {
-      const currentEpicLink =
-        readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
-        candidate.draftRecord?.epicCandidateId?.trim() ||
-        "";
-
-      return !currentEpicLink;
+      const currentEpicLink = readResolvedStoryEpicSelection(candidate);
+      return !currentEpicLink || currentEpicLink === FALLBACK_EPIC_OPTION_VALUE;
     })
   ) {
     if (!resolvedOutcomeId) {
@@ -729,12 +730,9 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   for (const candidate of orderedCandidates.filter((entry) => entry.type === "story")) {
     if (resolvedFallbackEpicId) {
       const story = candidates.find((entry) => entry.id === candidate.id);
-      const currentEpicLink =
-        readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
-        story?.draftRecord?.epicCandidateId?.trim() ||
-        "";
+      const currentEpicLink = story ? readResolvedStoryEpicSelection(story) : "";
 
-      if (!currentEpicLink) {
+      if (!currentEpicLink || currentEpicLink === FALLBACK_EPIC_OPTION_VALUE) {
         const fallbackReviewResult = await reviewArtifactCandidateService({
           organizationId: session.organization.organizationId,
           actorId: session.userId,
