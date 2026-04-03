@@ -17,6 +17,7 @@ import {
   parseFramingConstraintBundle,
   serializeFramingConstraintBundle
 } from "../../../../packages/domain/src/framing-constraint-bundle";
+import { shouldPreferDeterministicFramingImport } from "../../../../packages/domain/src/artifact-intake";
 
 describe("artifact intake helpers", () => {
   it("accepts markdown-based artifact files", () => {
@@ -641,6 +642,50 @@ describe("artifact intake helpers", () => {
     expect(mapping.carryForwardItems.map((item) => item.category)).toEqual(
       expect.arrayContaining(["nfr_constraint", "solution_constraint"])
     );
+  });
+
+  it("prefers deterministic framing import when AI under-reads explicit value spine counts", () => {
+    expect(
+      shouldPreferDeterministicFramingImport({
+        importIntent: "framing",
+        explicitValueSpineCounts: {
+          outcomes: 1,
+          epics: 7,
+          stories: 18
+        },
+        aiCandidateCounts: {
+          outcomes: 1,
+          epics: 7,
+          stories: 2
+        },
+        deterministicCandidateCounts: {
+          outcomes: 1,
+          epics: 7,
+          stories: 18
+        }
+      })
+    ).toBe(true);
+
+    expect(
+      shouldPreferDeterministicFramingImport({
+        importIntent: "framing",
+        explicitValueSpineCounts: {
+          outcomes: 1,
+          epics: 7,
+          stories: 18
+        },
+        aiCandidateCounts: {
+          outcomes: 1,
+          epics: 7,
+          stories: 18
+        },
+        deterministicCandidateCounts: {
+          outcomes: 1,
+          epics: 7,
+          stories: 18
+        }
+      })
+    ).toBe(false);
   });
 
   it("collapses multiple framing outcomes from the same file into one merged outcome candidate", () => {

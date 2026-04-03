@@ -1300,6 +1300,61 @@ function shouldReplaceStoryTextWithStrongerSignal(value: string | null | undefin
   return countMeaningfulWords(value) < 6;
 }
 
+export function shouldPreferDeterministicFramingImport(input: {
+  importIntent: "framing" | "design";
+  explicitValueSpineCounts: {
+    outcomes: number;
+    epics: number;
+    stories: number;
+  };
+  aiCandidateCounts: {
+    outcomes: number;
+    epics: number;
+    stories: number;
+  };
+  deterministicCandidateCounts: {
+    outcomes: number;
+    epics: number;
+    stories: number;
+  };
+}) {
+  if (input.importIntent !== "framing") {
+    return false;
+  }
+
+  const comparisons = [
+    {
+      explicit: input.explicitValueSpineCounts.outcomes,
+      ai: input.aiCandidateCounts.outcomes,
+      deterministic: input.deterministicCandidateCounts.outcomes
+    },
+    {
+      explicit: input.explicitValueSpineCounts.epics,
+      ai: input.aiCandidateCounts.epics,
+      deterministic: input.deterministicCandidateCounts.epics
+    },
+    {
+      explicit: input.explicitValueSpineCounts.stories,
+      ai: input.aiCandidateCounts.stories,
+      deterministic: input.deterministicCandidateCounts.stories
+    }
+  ];
+
+  return comparisons.some(({ explicit, ai, deterministic }) => {
+    if (explicit <= 0) {
+      return false;
+    }
+
+    const deterministicEvidenceFloor = Math.min(explicit, deterministic);
+
+    if (deterministicEvidenceFloor <= 0) {
+      return false;
+    }
+
+    return deterministic > ai && ai < deterministicEvidenceFloor;
+  });
+}
+
 function deriveFramingStoryValueIntent(input: {
   section: ArtifactParsedSection;
   currentTitle: string | null | undefined;

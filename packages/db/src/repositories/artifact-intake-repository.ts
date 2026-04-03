@@ -9,6 +9,7 @@ import {
   getArtifactFileExtension,
   mapParsedArtifactsToAasCandidates,
   parseMarkdownArtifact,
+  shouldPreferDeterministicFramingImport,
   type ArtifactIntakeRejectedFile
 } from "@aas-companion/domain";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
@@ -425,21 +426,16 @@ async function processArtifactIntakeSession(
       });
       const aiCandidateCounts = countCandidateTypes(aiResult.mappingResult);
       const deterministicCandidateCounts = countCandidateTypes(mappingResult);
-      const shouldFallBackToDeterministicForExplicitSpine =
-        input.importIntent === "framing" &&
-        ((explicitValueSpineCounts.outcomes > 0 &&
-          aiCandidateCounts.outcomes === 0 &&
-          deterministicCandidateCounts.outcomes > 0) ||
-          (explicitValueSpineCounts.epics > 0 &&
-            aiCandidateCounts.epics === 0 &&
-            deterministicCandidateCounts.epics > 0) ||
-          (explicitValueSpineCounts.stories > 0 &&
-            aiCandidateCounts.stories === 0 &&
-            deterministicCandidateCounts.stories > 0));
+      const shouldFallBackToDeterministicForExplicitSpine = shouldPreferDeterministicFramingImport({
+        importIntent: input.importIntent,
+        explicitValueSpineCounts,
+        aiCandidateCounts,
+        deterministicCandidateCounts
+      });
 
       if (shouldFallBackToDeterministicForExplicitSpine) {
         processingNote =
-          "The AI response missed explicit Value Spine sections, so the built-in parser completed the framing import instead.";
+          "The AI response under-read explicit Value Spine sections, so the built-in parser completed the framing import instead.";
       } else {
         mappingResult = aiResult.mappingResult;
         processingModeUsed = "ai_assisted";
