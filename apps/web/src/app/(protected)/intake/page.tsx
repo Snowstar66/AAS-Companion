@@ -113,15 +113,19 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
           return true;
         })
       : [];
+  const explicitlySelectedSession =
+    workspace.state === "ready"
+      ? workspace.sessions.find((artifactSession) => artifactSession.id === sessionId) ?? null
+      : null;
 
   const selectedSession =
     workspace.state === "ready"
-      ? visibleSessions.find((artifactSession) => artifactSession.id === sessionId) ?? visibleSessions[0] ?? null
+      ? explicitlySelectedSession ?? visibleSessions[0] ?? workspace.sessions[0] ?? null
       : null;
   const visibleFiles =
     selectedSession?.files.filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0) ?? [];
   const selectedFile =
-    visibleFiles.find((artifactFile) => artifactFile.id === fileId) ?? visibleFiles[0] ?? null;
+    selectedSession?.files.find((artifactFile) => artifactFile.id === fileId) ?? visibleFiles[0] ?? selectedSession?.files[0] ?? null;
   const selectedSessionCandidates =
     selectedSession && selectedSession.candidates.length > 0
       ? selectedSession.candidates
@@ -136,6 +140,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const selectedCandidate =
     selectedFileCandidates.find((candidate) => candidate.id === candidateId) ?? selectedFileCandidates[0] ?? null;
   const showBacklogCard = selectedSession?.importIntent !== "framing";
+  const shouldShowNoActiveWorkState = visibleSessions.length === 0 && !explicitlySelectedSession;
 
   const backlogRows: BacklogRow[] =
     workspace.state === "ready"
@@ -339,7 +344,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <CardDescription>{workspace.message}</CardDescription>
             </CardHeader>
           </Card>
-        ) : visibleSessions.length === 0 ? (
+        ) : shouldShowNoActiveWorkState ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>No active import work remains</CardTitle>

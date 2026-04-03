@@ -976,6 +976,9 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
   for (const section of sections) {
     const title = section.title.toLowerCase();
     const text = section.text.toLowerCase();
+    const hasExplicitOutcomeKey = Boolean(extractImportedCandidateKey("outcome", section.title));
+    const hasExplicitEpicKey = Boolean(extractImportedCandidateKey("epic", section.title));
+    const hasExplicitStoryKey = Boolean(extractImportedCandidateKey("story", section.title));
     const candidates: Array<{ kind: ArtifactParsedSection["kind"]; confidence: ArtifactParsedSection["confidence"] }> = [];
 
     if (/problem|goal|objective|vision/.test(title) || /problem statement|objective|goal|product vision|vision/.test(text)) {
@@ -988,28 +991,38 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
       });
     }
 
-    if (/outcome/.test(title) || /outcome statement|expected outcome|success metric/.test(text)) {
+    if (hasExplicitOutcomeKey || /outcome/.test(title) || /outcome statement|expected outcome|success metric/.test(text)) {
       candidates.push({
         kind: "outcome_candidate",
-        confidence: confidenceFromSignals(/outcome/.test(title) ? 1 : 0, /outcome statement|expected outcome|success metric/.test(text) ? 1 : 0)
+        confidence: confidenceFromSignals(
+          hasExplicitOutcomeKey || /outcome/.test(title) ? 1 : 0,
+          /outcome statement|expected outcome|success metric/.test(text) ? 1 : 0
+        )
       });
     }
 
-    if (/epic/.test(title) || /epic key|epic title/.test(text)) {
+    if (hasExplicitEpicKey || /epic/.test(title) || /epic key|epic title/.test(text)) {
       candidates.push({
         kind: "epic_candidate",
-        confidence: confidenceFromSignals(/epic/.test(title) ? 1 : 0, /epic key|epic title/.test(text) ? 1 : 0)
+        confidence: confidenceFromSignals(
+          hasExplicitEpicKey || /epic/.test(title) ? 1 : 0,
+          /epic key|epic title/.test(text) ? 1 : 0
+        )
       });
     }
 
     if (
+      hasExplicitStoryKey ||
       /story/.test(title) ||
       /story[-\s]id|as a .* i want .* so that/.test(text) ||
       (structuredStorySpec && /^(title|summary|story type|value intent)$/i.test(section.title))
     ) {
       candidates.push({
         kind: "story_candidate",
-        confidence: confidenceFromSignals(/story/.test(title) ? 1 : 0, /story[-\s]id|as a .* i want .* so that/.test(text) ? 1 : 0)
+        confidence: confidenceFromSignals(
+          hasExplicitStoryKey || /story/.test(title) ? 1 : 0,
+          /story[-\s]id|as a .* i want .* so that/.test(text) ? 1 : 0
+        )
       });
     }
 
@@ -1067,6 +1080,85 @@ function buildArtifactCandidateId(input: {
   candidateType: ArtifactAasCandidate["type"];
 }) {
   return `mapped-${input.fileId}-${input.sectionId}-${input.candidateType}`;
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeImportedReferenceKey(value: string | null | undefined) {
+  const normalized = value?.replace(/[*_`]/g, "").replace(/\s+/g, " ").trim().toUpperCase() ?? "";
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized
+    .replace(/^OUTCOME-/, "OUT-")
+    .replace(/^EPC-/, "EPIC-")
+    .replace(/^STR-/, "STORY-")
+    .replace(/^SC-/, "STORY-");
+}
+
+function buildImportedReferenceAliases(value: string | null | undefined) {
+  const normalized = normalizeImportedReferenceKey(value);
+
+  if (!normalized) {
+    return [];
+  }
+
+  const aliases = [normalized];
+
+  if (normalized.startsWith("OUT-")) {
+    aliases.push(normalized.replace(/^OUT-/, "OUTCOME-"));
+  }
+
+  if (normalized.startsWith("EPIC-")) {
+    aliases.push(normalized.replace(/^EPIC-/, "EPC-"));
+  }
+
+  if (normalized.startsWith("STORY-")) {
+    aliases.push(normalized.replace(/^STORY-/, "SC-"));
+    aliases.push(normalized.replace(/^STORY-/, "STR-"));
+  }
+
+  return [...new Set(aliases)];
+}
+
+function extractImportedCandidateKey(candidateType: ArtifactAasCandidate["type"], value: string | null | undefined) {
+  const normalized = value?.replace(/[*_`]/g, "").trim() ?? "";
+
+  if (!normalized) {
+    return null;
+  }
+
+  const pattern =
+    candidateType === "outcome"
+      ? /\b(?:OUT|OUTCOME)-\d+\b/i
+      : candidateType === "epic"
+        ? /\b(?:EPIC|EPC)-\d+\b/i
+        : /\b(?:STORY|SC|STR)-\d+\b/i;
+  const match = normalized.match(pattern);
+
+  return normalizeImportedReferenceKey(match?.[0]);
+}
+
+function stripImportedCandidateKeyPrefix(candidateType: ArtifactAasCandidate["type"], value: string, key?: string | null) {
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  const resolvedKey = key ?? extractImportedCandidateKey(candidateType, normalizedValue);
+
+  if (!resolvedKey) {
+    return normalizedValue;
+  }
+
+  const withoutKey = normalizedValue.replace(new RegExp(`^${escapeRegExp(resolvedKey)}\\b`, "i"), "").trim();
+  const withoutSeparator = withoutKey.replace(/^(?:(?:â€“|â€”)|[-–—:|])+[\s]*/u, "").trim();
+  return withoutSeparator;
 }
 
 function findStructuredSection(
@@ -1377,7 +1469,12 @@ function mergeFramingOutcomeCandidates(candidates: ArtifactAasCandidate[]) {
       });
       const mergedDraft = artifactCandidateDraftRecordSchema.parse({
         ...mergedOutcome.draftRecord,
-        title: mergedOutcome.draftRecord?.title?.trim() || secondaryDraft.title || secondaryOutcome.title,
+        key: mergedOutcome.draftRecord?.key?.trim() || secondaryDraft.key || null,
+        title:
+          mergedOutcome.draftRecord?.title?.trim() &&
+          !isGenericFramingCandidateTitle("outcome", mergedOutcome.draftRecord.title)
+            ? mergedOutcome.draftRecord.title
+            : secondaryDraft.title || secondaryOutcome.title,
         problemStatement: mergeArtifactDraftParagraphs([
           mergedOutcome.draftRecord?.problemStatement,
           secondaryDraft.problemStatement
@@ -1401,7 +1498,10 @@ function mergeFramingOutcomeCandidates(candidates: ArtifactAasCandidate[]) {
 
       mergedOutcome = {
         ...mergedOutcome,
-        title: mergedOutcome.title.trim() || secondaryOutcome.title,
+        title:
+          mergedOutcome.title.trim() && !isGenericFramingCandidateTitle("outcome", mergedOutcome.title)
+            ? mergedOutcome.title
+            : secondaryOutcome.title,
         summary: summarizeText(
           mergedDraft.outcomeStatement || mergedOutcome.summary || secondaryOutcome.summary
         ),
@@ -1451,6 +1551,169 @@ function mergeFramingOutcomeCandidates(candidates: ArtifactAasCandidate[]) {
       }
     ];
   });
+}
+
+function isGenericFramingCandidateTitle(candidateType: ArtifactAasCandidate["type"], value: string | null | undefined) {
+  const normalized = normalizeHeading(value ?? "").replace(/^\d+(?:\.\d+)*\s+/, "").trim();
+
+  if (!normalized) {
+    return true;
+  }
+
+  if (candidateType === "outcome") {
+    return normalized === "outcome" || normalized === "value spine";
+  }
+
+  if (candidateType === "epic") {
+    return normalized === "epic" || normalized === "epics";
+  }
+
+  return normalized === "story" || normalized === "stories" || normalized === "story idea" || normalized === "story ideas";
+}
+
+function normalizeFramingCandidates(input: {
+  candidates: ArtifactAasCandidate[];
+  sections: ArtifactParsedSection[];
+}) {
+  const sectionBySourceKey = new Map(
+    input.sections.map((section) => [`${section.sourceReference.fileId}:${section.id}`, section] as const)
+  );
+  const outcomeCandidateIdByKey = new Map<string, string>();
+  const epicCandidateIdByKey = new Map<string, string>();
+
+  const normalizedCandidates = input.candidates.flatMap((candidate) => {
+    const sourceSection = sectionBySourceKey.get(`${candidate.source.fileId}:${candidate.source.sectionId}`);
+
+    if (!sourceSection) {
+      return [candidate];
+    }
+
+    if (shouldSkipStructuralFramingCandidateSection(sourceSection, candidate.type)) {
+      return [];
+    }
+
+    const baseDraftRecord = artifactCandidateDraftRecordSchema.parse({
+      ...createArtifactCandidateDraftRecord(candidate),
+      ...(candidate.draftRecord ?? {})
+    });
+    const resolvedKey = resolveImportedCandidateKey({
+      candidateType: candidate.type,
+      section: sourceSection,
+      currentTitle: baseDraftRecord.title ?? candidate.title
+    });
+    const resolvedTitle = resolveImportedCandidateTitle({
+      candidateType: candidate.type,
+      section: sourceSection,
+      currentTitle: baseDraftRecord.title ?? candidate.title,
+      key: resolvedKey
+    });
+    const nextCandidate: ArtifactAasCandidate = {
+      ...candidate,
+      title: summarizeText(resolvedTitle || candidate.title, 80),
+      draftRecord: {
+        ...baseDraftRecord,
+        key: resolvedKey ?? baseDraftRecord.key ?? null,
+        title: resolvedTitle || baseDraftRecord.title || candidate.title
+      }
+    };
+
+    if (nextCandidate.type === "outcome") {
+      for (const alias of buildImportedReferenceAliases(nextCandidate.draftRecord?.key ?? null)) {
+        outcomeCandidateIdByKey.set(alias, nextCandidate.id);
+      }
+    }
+
+    if (nextCandidate.type === "epic") {
+      for (const alias of buildImportedReferenceAliases(nextCandidate.draftRecord?.key ?? null)) {
+        epicCandidateIdByKey.set(alias, nextCandidate.id);
+      }
+    }
+
+    return [nextCandidate];
+  });
+  const filesWithExplicitOutcomeCandidates = new Set(
+    normalizedCandidates
+      .filter((candidate) => candidate.type === "outcome" && Boolean(candidate.draftRecord?.key?.trim()))
+      .map((candidate) => candidate.source.fileId)
+  );
+  const prunedCandidates = normalizedCandidates.filter((candidate) => {
+    if (candidate.type !== "outcome" || !filesWithExplicitOutcomeCandidates.has(candidate.source.fileId)) {
+      return true;
+    }
+
+    if (candidate.draftRecord?.key?.trim()) {
+      return true;
+    }
+
+    return !isGenericFramingCandidateTitle("outcome", candidate.draftRecord?.title ?? candidate.title);
+  });
+
+  return mergeFramingOutcomeCandidates(
+    prunedCandidates.map((candidate) => {
+      const sourceSection = sectionBySourceKey.get(`${candidate.source.fileId}:${candidate.source.sectionId}`);
+
+      if (!sourceSection) {
+        return candidate;
+      }
+
+      const explicitOutcomeLinkKey =
+        candidate.type !== "outcome"
+          ? normalizeImportedReferenceKey(extractTaggedLineValue(sourceSection.text, "Outcome Link"))
+          : null;
+      const explicitEpicLinkKey =
+        candidate.type === "story"
+          ? normalizeImportedReferenceKey(extractTaggedLineValue(sourceSection.text, "Epic Link"))
+          : null;
+      const resolvedOutcomeCandidateId =
+        explicitOutcomeLinkKey
+          ? outcomeCandidateIdByKey.get(explicitOutcomeLinkKey) ?? candidate.draftRecord?.outcomeCandidateId ?? candidate.inferredOutcomeCandidateId ?? null
+          : candidate.draftRecord?.outcomeCandidateId ?? candidate.inferredOutcomeCandidateId ?? null;
+      const resolvedEpicCandidateId =
+        explicitEpicLinkKey
+          ? epicCandidateIdByKey.get(explicitEpicLinkKey) ?? candidate.draftRecord?.epicCandidateId ?? candidate.inferredEpicCandidateId ?? null
+          : candidate.draftRecord?.epicCandidateId ?? candidate.inferredEpicCandidateId ?? null;
+      const resolvedCandidate: ArtifactAasCandidate = {
+        ...candidate,
+        inferredOutcomeCandidateId:
+          candidate.type === "outcome" ? undefined : resolvedOutcomeCandidateId ?? candidate.inferredOutcomeCandidateId,
+        inferredEpicCandidateId:
+          candidate.type === "story" ? resolvedEpicCandidateId ?? candidate.inferredEpicCandidateId : undefined,
+        relationshipState:
+          candidate.type === "outcome"
+            ? "mapped"
+            : candidate.type === "epic"
+              ? resolvedOutcomeCandidateId
+                ? "mapped"
+                : "missing"
+              : resolvedEpicCandidateId
+                ? "mapped"
+                : "missing",
+        relationshipNote:
+          candidate.type === "outcome"
+            ? candidate.relationshipNote
+            : candidate.type === "epic"
+              ? resolvedOutcomeCandidateId
+                ? "Epic is linked to the imported Outcome from the explicit Value Spine."
+                : candidate.relationshipNote
+              : resolvedEpicCandidateId
+                ? "Story Idea is linked to the imported Epic from the explicit Value Spine."
+                : candidate.relationshipNote,
+        draftRecord: candidate.draftRecord
+          ? {
+              ...candidate.draftRecord,
+              outcomeCandidateId: candidate.type === "outcome" ? null : resolvedOutcomeCandidateId,
+              epicCandidateId: candidate.type === "story" ? resolvedEpicCandidateId : null
+            }
+          : candidate.draftRecord
+      };
+
+      return adaptStoryCandidateForImportIntent({
+        candidate: resolvedCandidate,
+        section: sourceSection,
+        importIntent: "framing"
+      });
+    })
+  );
 }
 
 function adaptStoryCandidateForImportIntent(input: {
@@ -1610,16 +1873,111 @@ function isFramingOutcomeContextSection(section: ArtifactParsedSection) {
 }
 
 function extractTaggedLineValue(text: string, label: string) {
-  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = text.match(new RegExp(`^${escapedLabel}:\\s*(.+)$`, "im"));
-  return match?.[1]?.trim() ?? "";
+  const normalizedLabel = normalizeHeading(label);
+
+  for (const line of text.split("\n")) {
+    const normalizedLine = line
+      .trim()
+      .replace(/^[-*]\s+/, "")
+      .replace(/[*_`]/g, "")
+      .trim();
+    const [lineLabel, ...lineValue] = normalizedLine.split(":");
+
+    if (normalizeHeading(lineLabel ?? "") !== normalizedLabel) {
+      continue;
+    }
+
+    const resolvedValue = lineValue.join(":").trim();
+
+    if (resolvedValue) {
+      return resolvedValue;
+    }
+  }
+
+  return "";
 }
 
 function extractTaggedLineList(text: string, label: string) {
   return extractTaggedLineValue(text, label)
-    .split("|")
+    .split(/[|,]/)
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+function resolveImportedCandidateKey(input: {
+  candidateType: ArtifactAasCandidate["type"];
+  section: ArtifactParsedSection;
+  currentTitle: string | null | undefined;
+}) {
+  const idLabel =
+    input.candidateType === "outcome" ? "Outcome ID" : input.candidateType === "epic" ? "Epic ID" : "Story ID";
+
+  return (
+    extractImportedCandidateKey(input.candidateType, extractTaggedLineValue(input.section.text, idLabel)) ??
+    extractImportedCandidateKey(input.candidateType, input.currentTitle) ??
+    extractImportedCandidateKey(input.candidateType, input.section.title)
+  );
+}
+
+function resolveImportedCandidateTitle(input: {
+  candidateType: ArtifactAasCandidate["type"];
+  section: ArtifactParsedSection;
+  currentTitle: string | null | undefined;
+  key: string | null;
+}) {
+  const explicitTitle = extractTaggedLineValue(input.section.text, "Title");
+
+  if (explicitTitle) {
+    return explicitTitle;
+  }
+
+  const strippedCurrentTitle = stripImportedCandidateKeyPrefix(
+    input.candidateType,
+    input.currentTitle ?? "",
+    input.key
+  );
+
+  if (strippedCurrentTitle) {
+    return strippedCurrentTitle;
+  }
+
+  const strippedSectionTitle = stripImportedCandidateKeyPrefix(input.candidateType, input.section.title, input.key);
+
+  if (strippedSectionTitle) {
+    return strippedSectionTitle;
+  }
+
+  return input.currentTitle?.trim() || input.section.title.trim();
+}
+
+function shouldSkipStructuralFramingCandidateSection(
+  section: ArtifactParsedSection,
+  candidateType: ArtifactAasCandidate["type"]
+) {
+  const title = normalizeHeading(section.title).replace(/^\d+(?:\.\d+)*\s+/, "").trim();
+  const body = normalizeHeading(getStructuredSectionBody(section));
+
+  if (/schema|template/.test(title)) {
+    return true;
+  }
+
+  if (/^value spine$|^delivery stories$/.test(title)) {
+    return true;
+  }
+
+  if (candidateType === "outcome") {
+    return /^outcome$/.test(title) && body.length === 0;
+  }
+
+  if (candidateType === "epic") {
+    return /^epics?$/.test(title) && body.length === 0;
+  }
+
+  if (candidateType === "story") {
+    return (/^stories?$/.test(title) || /^story ideas?$/.test(title)) && body.length === 0;
+  }
+
+  return false;
 }
 
 function normalizeImportedStoryType(rawType: string, fallbackText: string) {
@@ -1644,20 +2002,42 @@ function buildDraftRecordFromParsedSection(input: {
   inferredOutcomeCandidateId?: string | undefined;
   inferredEpicCandidateId?: string | undefined;
 }) {
-  const taggedTitle = extractTaggedLineValue(input.section.text, "Title");
+  const resolvedKey = resolveImportedCandidateKey({
+    candidateType: input.candidateType,
+    section: input.section,
+    currentTitle: extractTaggedLineValue(input.section.text, "Title") || input.section.title
+  });
+  const resolvedTitle = resolveImportedCandidateTitle({
+    candidateType: input.candidateType,
+    section: input.section,
+    currentTitle: extractTaggedLineValue(input.section.text, "Title") || input.section.title,
+    key: resolvedKey
+  });
 
   if (input.candidateType === "outcome") {
     return {
-      key: null,
-      title: taggedTitle || input.section.title,
+      key: resolvedKey,
+      title: resolvedTitle,
       problemStatement:
         extractTaggedLineValue(input.section.text, "Problem Statement") ||
         extractTaggedLineValue(input.section.text, "Product Vision") ||
         null,
-      outcomeStatement: extractTaggedLineValue(input.section.text, "Outcome Statement") || summarizeText(input.section.text),
-      baselineDefinition: extractTaggedLineValue(input.section.text, "Baseline Definition") || null,
-      baselineSource: extractTaggedLineValue(input.section.text, "Measurement Method") || null,
-      timeframe: extractTaggedLineValue(input.section.text, "Timeframe") || null,
+      outcomeStatement:
+        extractTaggedLineValue(input.section.text, "Outcome Statement") ||
+        extractTaggedLineValue(input.section.text, "Statement") ||
+        summarizeText(input.section.text),
+      baselineDefinition:
+        extractTaggedLineValue(input.section.text, "Baseline Definition") ||
+        extractTaggedLineValue(input.section.text, "Baseline") ||
+        null,
+      baselineSource:
+        extractTaggedLineValue(input.section.text, "Measurement Method") ||
+        extractTaggedLineValue(input.section.text, "Baseline Source") ||
+        null,
+      timeframe:
+        extractTaggedLineValue(input.section.text, "Timeframe") ||
+        extractTaggedLineValue(input.section.text, "Time Horizon") ||
+        null,
       purpose: null,
       scopeBoundary: null,
       riskNote: null,
@@ -1681,8 +2061,8 @@ function buildDraftRecordFromParsedSection(input: {
       .join("\n");
 
     return {
-      key: null,
-      title: taggedTitle || input.section.title,
+      key: resolvedKey,
+      title: resolvedTitle,
       problemStatement: null,
       outcomeStatement: null,
       baselineDefinition: null,
@@ -1713,8 +2093,8 @@ function buildDraftRecordFromParsedSection(input: {
   const rawStoryType = extractTaggedLineValue(input.section.text, "Story Type");
 
   return {
-    key: null,
-    title: taggedTitle || input.section.title,
+    key: resolvedKey,
+    title: resolvedTitle,
     problemStatement: null,
     outcomeStatement: null,
     baselineDefinition: null,
@@ -1725,7 +2105,7 @@ function buildDraftRecordFromParsedSection(input: {
     riskNote: null,
     storyType: normalizeImportedStoryType(rawStoryType, input.section.text),
     valueIntent:
-      valueIntent && isDistinctStoryText(valueIntent, [taggedTitle || input.section.title])
+      valueIntent && isDistinctStoryText(valueIntent, [resolvedTitle || input.section.title])
         ? valueIntent
         : summarizeText(input.section.text),
     expectedBehavior,
@@ -2062,19 +2442,10 @@ export function buildAiAssistedArtifactProcessingResult(input: {
 
   const normalizedCandidates =
     importIntent === "framing"
-      ? mergeFramingOutcomeCandidates(candidates.map((candidate) => {
-          const sourceSection = parseResults
-            .flatMap((entry) => entry.parseResult.sections)
-            .find((section) => section.sourceReference.fileId === candidate.source.fileId && section.id === candidate.source.sectionId);
-
-          return sourceSection
-            ? adaptStoryCandidateForImportIntent({
-                candidate,
-                section: sourceSection,
-                importIntent
-              })
-            : candidate;
-        }))
+      ? normalizeFramingCandidates({
+          candidates,
+          sections: parseResults.flatMap((entry) => entry.parseResult.sections)
+        })
       : candidates;
 
   return {
@@ -2971,19 +3342,10 @@ export function mapParsedArtifactsToAasCandidates(input: {
 
   const normalizedCandidates =
     importIntent === "framing"
-      ? mergeFramingOutcomeCandidates(candidates.map((candidate) => {
-          const sourceSection = input.files
-            .flatMap((file) => file.parsedArtifacts?.sections ?? [])
-            .find((section) => section.sourceReference.fileId === candidate.source.fileId && section.id === candidate.source.sectionId);
-
-          return sourceSection
-            ? adaptStoryCandidateForImportIntent({
-                candidate,
-                section: sourceSection,
-                importIntent
-              })
-            : candidate;
-        }))
+      ? normalizeFramingCandidates({
+          candidates,
+          sections: input.files.flatMap((file) => file.parsedArtifacts?.sections ?? [])
+        })
       : candidates;
 
   return {

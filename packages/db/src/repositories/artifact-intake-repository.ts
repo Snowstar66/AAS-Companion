@@ -94,6 +94,47 @@ function describeAiFallback(error: unknown) {
   return `The AI response was incomplete, so the built-in parser completed the import instead. Missing or invalid AI fields: ${fields.slice(0, 4).join(", ")}${fields.length > 4 ? ", and more" : ""}.`;
 }
 
+function countCandidateTypes(mappingResult: {
+  candidates: Array<{ type: "outcome" | "epic" | "story" }>;
+}) {
+  return {
+    outcomes: mappingResult.candidates.filter((candidate) => candidate.type === "outcome").length,
+    epics: mappingResult.candidates.filter((candidate) => candidate.type === "epic").length,
+    stories: mappingResult.candidates.filter((candidate) => candidate.type === "story").length
+  };
+}
+
+function countExplicitValueSpineHeadings(input: {
+  files: Array<{
+    parseResult: {
+      sections: Array<{ title: string }>;
+    };
+  }>;
+}) {
+  return input.files.reduce(
+    (counts, file) => {
+      for (const section of file.parseResult.sections) {
+        const title = section.title.trim().toUpperCase();
+
+        if (/^(OUT|OUTCOME)-\d+\b/.test(title)) {
+          counts.outcomes += 1;
+        } else if (/^(EPIC|EPC)-\d+\b/.test(title)) {
+          counts.epics += 1;
+        } else if (/^(STORY|SC|STR)-\d+\b/.test(title)) {
+          counts.stories += 1;
+        }
+      }
+
+      return counts;
+    },
+    {
+      outcomes: 0,
+      epics: 0,
+      stories: 0
+    }
+  );
+}
+
 type ArtifactRejectionContext = {
   organizationId: string;
   actorId?: string | null;
@@ -377,8 +418,32 @@ async function processArtifactIntakeSession(
         sourceType: entry.sourceType,
         parseResult: entry.parseResult
       }));
-      mappingResult = aiResult.mappingResult;
-      processingModeUsed = "ai_assisted";
+      const explicitValueSpineCounts = countExplicitValueSpineHeadings({
+        files: initialParsedArtifacts.map((entry) => ({
+          parseResult: entry.parseResult
+        }))
+      });
+      const aiCandidateCounts = countCandidateTypes(aiResult.mappingResult);
+      const deterministicCandidateCounts = countCandidateTypes(mappingResult);
+      const shouldFallBackToDeterministicForExplicitSpine =
+        input.importIntent === "framing" &&
+        ((explicitValueSpineCounts.outcomes > 0 &&
+          aiCandidateCounts.outcomes === 0 &&
+          deterministicCandidateCounts.outcomes > 0) ||
+          (explicitValueSpineCounts.epics > 0 &&
+            aiCandidateCounts.epics === 0 &&
+            deterministicCandidateCounts.epics > 0) ||
+          (explicitValueSpineCounts.stories > 0 &&
+            aiCandidateCounts.stories === 0 &&
+            deterministicCandidateCounts.stories > 0));
+
+      if (shouldFallBackToDeterministicForExplicitSpine) {
+        processingNote =
+          "The AI response missed explicit Value Spine sections, so the built-in parser completed the framing import instead.";
+      } else {
+        mappingResult = aiResult.mappingResult;
+        processingModeUsed = "ai_assisted";
+      }
     } catch (error) {
       processingNote = describeAiFallback(error);
     }

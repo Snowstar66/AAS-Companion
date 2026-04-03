@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import ArtifactIntakePage from "@/app/(protected)/intake/page";
 
-const { requireProtectedSessionMock } = vi.hoisted(() => ({
+const { requireProtectedSessionMock, loadArtifactIntakeWorkspaceMock } = vi.hoisted(() => ({
   requireProtectedSessionMock: vi.fn(async () => ({
     mode: "local" as const,
     userId: "user-1",
@@ -14,15 +14,8 @@ const { requireProtectedSessionMock } = vi.hoisted(() => ({
       organizationSlug: "customer-project",
       role: "value_owner" as const
     }
-  }))
-}));
-
-vi.mock("@/lib/auth/guards", () => ({
-  requireProtectedSession: requireProtectedSessionMock
-}));
-
-vi.mock("@/lib/intake/workspace", () => ({
-  loadArtifactIntakeWorkspace: vi.fn(async () => ({
+  })),
+  loadArtifactIntakeWorkspaceMock: vi.fn(async () => ({
     state: "ready",
     organizationName: "AAS Demo Organization",
     projectOutcomes: [
@@ -426,6 +419,14 @@ vi.mock("@/lib/intake/workspace", () => ({
   }))
 }));
 
+vi.mock("@/lib/auth/guards", () => ({
+  requireProtectedSession: requireProtectedSessionMock
+}));
+
+vi.mock("@/lib/intake/workspace", () => ({
+  loadArtifactIntakeWorkspace: loadArtifactIntakeWorkspaceMock
+}));
+
 describe("Import page", () => {
   it("renders full source, structured candidate view, and correction queue for the selected artifact", async () => {
     render(
@@ -444,8 +445,8 @@ describe("Import page", () => {
     expect(screen.queryByRole("button", { name: /Create import session/i })).toBeNull();
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
-    expect(screen.queryByRole("heading", { name: "Imported candidates" })).toBeNull();
+    expect(screen.getAllByRole("heading", { name: "Framing value spine" }).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("heading", { name: "Imported candidates" })).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Approve" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Reject" })).toBeDefined();
     expect(screen.getByRole("combobox", { name: "Linked Epic" })).toBeDefined();
@@ -476,5 +477,175 @@ describe("Import page", () => {
     expect(screen.getByText(/Import writes persisted intake sessions and is therefore disabled in Demo/i)).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Import" }).some((button) => button.hasAttribute("disabled"))).toBe(true);
     expect(screen.getByRole("link", { name: /Leave Demo and choose project/i })).toBeDefined();
+  });
+
+  it("keeps the explicitly selected framing session visible even when no active work remains", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [
+        {
+          id: "project-outcome-1",
+          key: "OUT-001",
+          title: "Primary project outcome"
+        }
+      ],
+      projectEpics: [],
+      summary: {
+        sessions: 2,
+        files: 2,
+        pendingClassification: 0,
+        parsedSections: 4,
+        candidateObjects: 1,
+        humanReviewRequired: 1
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-design",
+          label: "Older design import",
+          importIntent: "design",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-24T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 1,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 1,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [
+            {
+              id: "design-candidate-1",
+              fileId: "design-file-1",
+              type: "story",
+              title: "Older design story",
+              summary: "This should not steal focus from the selected framing session.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: null,
+                title: "Older design story",
+                storyType: "outcome_delivery",
+                valueIntent: "Older design story",
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: [],
+                outcomeCandidateId: null,
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_incomplete",
+              source: {
+                fileId: "design-file-1",
+                fileName: "older-design.md",
+                sectionId: "section-1",
+                sectionTitle: "Story",
+                sectionMarker: "## Story",
+                sourceType: "story_file",
+                confidence: "high"
+              }
+            }
+          ],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "design-file-1",
+              fileName: "older-design.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-24T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "story_file",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 256,
+              content: "# Older design import",
+              parsedSectionCount: 1,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 1,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "story_file",
+                  confidence: "high",
+                  rationale: "Story file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 1
+        },
+        {
+          id: "session-empty-framing",
+          label: "Selected framing import",
+          importIntent: "framing",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 0,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 0,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "framing-file-1",
+              fileName: "selected-framing.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 512,
+              content: "# Selected framing import",
+              parsedSectionCount: 1,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 0,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 0
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          sessionId: "session-empty-framing",
+          fileId: "framing-file-1"
+        })
+      })
+    );
+
+    expect(screen.getAllByRole("heading", { name: "Framing value spine" }).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("heading", { name: "Imported candidates" })).toHaveLength(0);
+    expect(screen.getByText(/No hidden leftovers remain for this imported file/i)).toBeDefined();
   });
 });
