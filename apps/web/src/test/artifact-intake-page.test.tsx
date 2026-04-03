@@ -648,4 +648,214 @@ describe("Import page", () => {
     expect(screen.queryAllByRole("heading", { name: "Imported candidates" })).toHaveLength(0);
     expect(screen.getByText(/No hidden leftovers remain for this imported file/i)).toBeDefined();
   });
+
+  it("shows story ideas under imported epics even when the draft outcome points at the project outcome", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [
+        {
+          id: "project-outcome-1",
+          key: "OUT-PRJ-001",
+          title: "Existing project outcome"
+        }
+      ],
+      projectEpics: [],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 5,
+        candidateObjects: 3,
+        humanReviewRequired: 1
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-framing-linked",
+          label: "Framing import with inferred story linkage",
+          importIntent: "framing",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 3,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 3,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [
+            {
+              id: "candidate-outcome",
+              fileId: "file-framing-linked",
+              type: "outcome",
+              title: "Imported Outcome",
+              summary: "Imported outcome summary.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "OUT-001",
+                title: "Imported Outcome",
+                outcomeStatement: "Imported outcome summary.",
+                baselineDefinition: "Baseline exists.",
+                baselineSource: "Imported notes",
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: [],
+                outcomeCandidateId: null,
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-framing-linked",
+                fileName: "krisapp2.md",
+                sectionId: "section-outcome",
+                sectionTitle: "OUT-001",
+                sectionMarker: "### OUT-001",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            },
+            {
+              id: "candidate-epic",
+              fileId: "file-framing-linked",
+              type: "epic",
+              title: "Imported Epic",
+              summary: "Epic summary.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "EPIC-001",
+                title: "Imported Epic",
+                purpose: "Epic summary.",
+                outcomeCandidateId: "candidate-outcome",
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: [],
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-framing-linked",
+                fileName: "krisapp2.md",
+                sectionId: "section-epic",
+                sectionTitle: "EPIC-001",
+                sectionMarker: "### EPIC-001",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            },
+            {
+              id: "candidate-story",
+              fileId: "file-framing-linked",
+              type: "story",
+              title: "Imported Story Idea",
+              summary: "Story idea summary.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              inferredOutcomeCandidateId: "candidate-outcome",
+              inferredEpicCandidateId: "candidate-epic",
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "STORY-001",
+                title: "Imported Story Idea",
+                valueIntent: "Story idea summary.",
+                outcomeCandidateId: "project-outcome-1",
+                epicCandidateId: null,
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: []
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-framing-linked",
+                fileName: "krisapp2.md",
+                sectionId: "section-story",
+                sectionTitle: "STORY-001",
+                sectionMarker: "### STORY-001",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            }
+          ],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "file-framing-linked",
+              fileName: "krisapp2.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 1024,
+              content: "# Imported artifact",
+              parsedSectionCount: 3,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 3,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 3
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          sessionId: "session-framing-linked",
+          fileId: "file-framing-linked"
+        })
+      })
+    );
+
+    expect(screen.getByText(/Imported Story Idea/i)).toBeDefined();
+    expect(screen.getByText(/Linked to imported Epic Imported Epic/i)).toBeDefined();
+  });
 });

@@ -58,6 +58,8 @@ type IntakeArtifactCandidate = {
   promotedEntityId?: string | null;
   promotedEntityType?: string | null;
   importedReadinessState?: string | null;
+  inferredOutcomeCandidateId?: string | null | undefined;
+  inferredEpicCandidateId?: string | null | undefined;
 };
 
 type IntakeArtifactSession = {
@@ -712,6 +714,42 @@ function FramingImportSpine(props: {
       label: `Project Epic: ${describeProjectEpic(candidate)}`
     }))
   ];
+  const importedOutcomeIdSet = new Set(props.importedOutcomeCandidates.map((candidate) => candidate.id));
+  const importedEpicIdSet = new Set(props.importedEpicCandidates.map((candidate) => candidate.id));
+
+  function resolveImportedOutcomeLink(candidate: IntakeArtifactCandidate) {
+    const draftOutcomeId = candidate.draftRecord?.outcomeCandidateId?.trim() ?? "";
+    const inferredOutcomeId = candidate.inferredOutcomeCandidateId?.trim() ?? "";
+
+    if (draftOutcomeId && importedOutcomeIdSet.has(draftOutcomeId)) {
+      return draftOutcomeId;
+    }
+
+    if (inferredOutcomeId && importedOutcomeIdSet.has(inferredOutcomeId)) {
+      return inferredOutcomeId;
+    }
+
+    return draftOutcomeId || inferredOutcomeId || "";
+  }
+
+  function resolveImportedEpicLink(candidate: IntakeArtifactCandidate) {
+    const draftEpicId = candidate.draftRecord?.epicCandidateId?.trim() ?? "";
+    const inferredEpicId = candidate.inferredEpicCandidateId?.trim() ?? "";
+
+    if (draftEpicId && importedEpicIdSet.has(draftEpicId)) {
+      return draftEpicId;
+    }
+
+    if (inferredEpicId && importedEpicIdSet.has(inferredEpicId)) {
+      return inferredEpicId;
+    }
+
+    return draftEpicId || inferredEpicId || "";
+  }
+
+  const importedEpicOutcomeIdById = new Map(
+    props.importedEpicCandidates.map((candidate) => [candidate.id, resolveImportedOutcomeLink(candidate)] as const)
+  );
 
   return (
     <Card className="border-border/70 shadow-sm">
@@ -784,14 +822,20 @@ function FramingImportSpine(props: {
             <div className="space-y-3 rounded-2xl border border-border/70 bg-background/70 p-4">
               {(props.importedOutcomeCandidates.length > 0 ? props.importedOutcomeCandidates : [null]).map((outcomeCandidate, index) => {
                 const epicNodes = props.importedEpicCandidates.filter((epic) =>
-                  outcomeCandidate ? epic.draftRecord?.outcomeCandidateId === outcomeCandidate.id : true
+                  outcomeCandidate ? resolveImportedOutcomeLink(epic) === outcomeCandidate.id : true
                 );
                 const freeStandingStories = props.importedStoryCandidates.filter(
-                  (story) =>
-                    !story.draftRecord?.epicCandidateId?.trim() &&
-                    (!outcomeCandidate ||
-                      !story.draftRecord?.outcomeCandidateId?.trim() ||
-                      story.draftRecord?.outcomeCandidateId === outcomeCandidate.id)
+                  (story) => {
+                    const resolvedEpicLink = resolveImportedEpicLink(story);
+                    const resolvedOutcomeLink =
+                      resolveImportedOutcomeLink(story) ||
+                      (resolvedEpicLink ? importedEpicOutcomeIdById.get(resolvedEpicLink) ?? "" : "");
+
+                    return (
+                      !resolvedEpicLink &&
+                      (!outcomeCandidate || !resolvedOutcomeLink || resolvedOutcomeLink === outcomeCandidate.id)
+                    );
+                  }
                 );
                 const outcomeStatus = outcomeCandidate
                   ? framingCandidateStatus(outcomeCandidate, {
@@ -971,9 +1015,12 @@ function FramingImportSpine(props: {
                             epic.draftRecord?.key && !isLegacyImportKey(epic.draftRecord.key)
                               ? epic.draftRecord.key
                               : buildSuggestedCandidateKey(props.session, epic),
-                          resolvedOutcomeLink: epic.draftRecord?.outcomeCandidateId ?? outcomeCandidate?.id ?? props.defaultTargetOutcomeId
+                          resolvedOutcomeLink:
+                            resolveImportedOutcomeLink(epic) || outcomeCandidate?.id || props.defaultTargetOutcomeId
                         });
-                        const epicStories = props.importedStoryCandidates.filter((story) => story.draftRecord?.epicCandidateId === epic.id);
+                        const epicStories = props.importedStoryCandidates.filter(
+                          (story) => resolveImportedEpicLink(story) === epic.id
+                        );
 
                         return (
                           <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={epic.id}>
@@ -1062,12 +1109,14 @@ function FramingImportSpine(props: {
                                       ? story.draftRecord.key
                                       : buildSuggestedCandidateKey(props.session, story),
                                   resolvedOutcomeLink:
-                                    story.draftRecord?.outcomeCandidateId ??
-                                    outcomeCandidate?.id ??
+                                    resolveImportedOutcomeLink(story) ||
+                                    outcomeCandidate?.id ||
                                     props.defaultTargetOutcomeId,
-                                  resolvedEpicLink: story.draftRecord?.epicCandidateId ?? epic.id
+                                  resolvedEpicLink: resolveImportedEpicLink(story) || epic.id
                                 });
-                                const parentEpic = props.importedEpicCandidates.find((candidate) => candidate.id === story.draftRecord?.epicCandidateId);
+                                const parentEpic = props.importedEpicCandidates.find(
+                                  (candidate) => candidate.id === resolveImportedEpicLink(story)
+                                );
 
                                 return (
                                   <details className="ml-4 rounded-2xl border border-border/70 bg-muted/10" key={story.id}>
@@ -1129,7 +1178,7 @@ function FramingImportSpine(props: {
                                           <span className="text-sm font-medium text-foreground">Linked Epic</span>
                                           <select
                                             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                                            defaultValue={story.draftRecord?.epicCandidateId ?? epic.id}
+                                            defaultValue={resolveImportedEpicLink(story) || epic.id}
                                             name={`candidate:${story.id}:epicCandidateId`}
                                           >
                                             {storyEpicOptions.map((candidate) => (
@@ -1193,20 +1242,20 @@ function FramingImportSpine(props: {
                           </summary>
                           <div className="space-y-4 border-t border-border/70 px-4 py-4">
                             {freeStandingStories.map((story) => {
-                              const storyStatus = framingCandidateStatus(story, {
-                                resolvedKey:
-                                  story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
-                                    ? story.draftRecord.key
-                                    : buildSuggestedCandidateKey(props.session, story),
-                                resolvedOutcomeLink:
-                                  story.draftRecord?.outcomeCandidateId ??
-                                  outcomeCandidate?.id ??
-                                  props.defaultTargetOutcomeId,
-                                resolvedEpicLink:
-                                  story.draftRecord?.epicCandidateId ??
-                                  props.defaultBulkEpicCandidateId ??
-                                  FALLBACK_EPIC_OPTION_VALUE
-                              });
+                                const storyStatus = framingCandidateStatus(story, {
+                                  resolvedKey:
+                                    story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                                      ? story.draftRecord.key
+                                      : buildSuggestedCandidateKey(props.session, story),
+                                  resolvedOutcomeLink:
+                                    resolveImportedOutcomeLink(story) ||
+                                    outcomeCandidate?.id ||
+                                    props.defaultTargetOutcomeId,
+                                  resolvedEpicLink:
+                                    resolveImportedEpicLink(story) ||
+                                    props.defaultBulkEpicCandidateId ||
+                                    FALLBACK_EPIC_OPTION_VALUE
+                                });
 
                               return (
                                 <details className="ml-4 rounded-2xl border border-border/70 bg-muted/10" key={story.id}>
@@ -1263,7 +1312,11 @@ function FramingImportSpine(props: {
                                         <span className="text-sm font-medium text-foreground">Linked Epic</span>
                                         <select
                                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                                          defaultValue={story.draftRecord?.epicCandidateId ?? props.defaultBulkEpicCandidateId ?? FALLBACK_EPIC_OPTION_VALUE}
+                                          defaultValue={
+                                            resolveImportedEpicLink(story) ||
+                                            props.defaultBulkEpicCandidateId ||
+                                            FALLBACK_EPIC_OPTION_VALUE
+                                          }
                                           name={`candidate:${story.id}:epicCandidateId`}
                                         >
                                           {storyEpicOptions.map((candidate) => (
