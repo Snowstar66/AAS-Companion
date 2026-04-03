@@ -558,6 +558,54 @@ describe("artifact intake helpers", () => {
     expect(outcomeCandidate?.draftRecord?.problemStatement).toContain("Give value owners one simple framing import flow.");
   });
 
+  it("collapses multiple framing outcomes from the same file into one merged outcome candidate", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-framing-merged-outcome-1",
+      "framing-merged-outcome.md",
+      [
+        "# Product vision",
+        "Give reviewers one simpler import flow.",
+        "",
+        "## Outcome Alpha",
+        "Outcome statement: reduce framing cleanup time.",
+        "Baseline definition: clean-up is manual today.",
+        "",
+        "## Outcome Beta",
+        "Outcome statement: make outcome updates easier to review.",
+        "Measurement method: weekly import audit.",
+        "",
+        "## Epic",
+        "Create one editable framing spine.",
+        "",
+        "## Story",
+        "As a value owner I want one merged imported outcome so that I can complement the project outcome instead of creating many."
+      ].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-framing-merged-outcome-1",
+          fileName: "framing-merged-outcome.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const outcomeCandidates = mapping.candidates.filter((candidate) => candidate.type === "outcome");
+    const epicCandidate = mapping.candidates.find((candidate) => candidate.type === "epic");
+    const storyCandidate = mapping.candidates.find((candidate) => candidate.type === "story");
+
+    expect(outcomeCandidates).toHaveLength(1);
+    expect(outcomeCandidates[0]?.draftRecord?.outcomeStatement).toContain("reduce framing cleanup time");
+    expect(outcomeCandidates[0]?.draftRecord?.outcomeStatement).toContain("make outcome updates easier to review");
+    expect(outcomeCandidates[0]?.draftRecord?.baselineSource).toContain("weekly import audit");
+    expect(epicCandidate?.draftRecord?.outcomeCandidateId).toBe(outcomeCandidates[0]?.id);
+    expect(storyCandidate?.draftRecord?.outcomeCandidateId).toBe(outcomeCandidates[0]?.id);
+  });
+
   it("preserves explicit AI-assisted epic links instead of relying only on section order", () => {
     const parsed = parseMarkdownArtifact(
       "file-ai-epic-link",
@@ -791,6 +839,77 @@ describe("artifact intake helpers", () => {
 
     expect(storyCandidate?.draftRecord?.valueIntent).toContain("approve or reject summarized leftovers quickly");
     expect(storyCandidate?.draftRecord?.valueIntent).not.toBe("Review imported leftovers");
+    expect(storyCandidate?.draftRecord?.expectedBehavior).not.toBe(storyCandidate?.draftRecord?.valueIntent);
+  });
+
+  it("can reinterpret story-like AI candidates as story ideas during framing import", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-ai-story-reinterpret",
+      "ai-story-reinterpret.md",
+      [
+        "# Outcome",
+        "Reduce framing cleanup time.",
+        "",
+        "## Candidate item",
+        "As a value owner I want imported story ideas in one spine so that I can approve the right ones quickly."
+      ].join("\n")
+    );
+    const outcomeSection = parsed.sections.find((section) => section.title === "Outcome");
+    const candidateSection = parsed.sections.find((section) => section.title === "Candidate item");
+
+    const result = buildAiAssistedArtifactProcessingResult({
+      importIntent: "framing",
+      files: [
+        {
+          id: "file-ai-story-reinterpret",
+          fileName: "ai-story-reinterpret.md",
+          parsedArtifacts: parsed
+        }
+      ],
+      interpretation: {
+        files: [
+          {
+            fileName: "ai-story-reinterpret.md",
+            sourceType: "mixed_markdown_bundle",
+            confidence: "medium",
+            rationale: "The second section was interpreted too broadly.",
+            sectionDecisions: [
+              {
+                sectionId: outcomeSection!.id,
+                kind: "outcome_candidate",
+                confidence: "high"
+              },
+              {
+                sectionId: candidateSection!.id,
+                kind: "epic_candidate",
+                confidence: "medium"
+              }
+            ],
+            candidates: [
+              {
+                sectionId: outcomeSection!.id,
+                type: "outcome",
+                title: "Reduce framing cleanup time",
+                summary: "Reduce framing cleanup time."
+              },
+              {
+                sectionId: candidateSection!.id,
+                type: "epic",
+                title: "Imported story ideas in one spine",
+                summary: "As a value owner I want imported story ideas in one spine so that I can approve the right ones quickly."
+              }
+            ],
+            leftoverSectionIds: []
+          }
+        ]
+      }
+    });
+
+    const nonOutcomeCandidates = result.mappingResult.candidates.filter((candidate) => candidate.type !== "outcome");
+
+    expect(nonOutcomeCandidates).toHaveLength(1);
+    expect(nonOutcomeCandidates[0]?.type).toBe("story");
+    expect(nonOutcomeCandidates[0]?.draftRecord?.valueIntent).toContain("approve the right ones quickly");
   });
 
   it("round-trips structured framing constraint bundles", () => {

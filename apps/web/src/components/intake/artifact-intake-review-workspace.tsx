@@ -238,12 +238,36 @@ function normalizeForComparison(value: string | null | undefined) {
   return (value ?? "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+function mergeReviewParagraphs(values: Array<string | null | undefined>) {
+  const paragraphs = values
+    .map((value) => value?.trim() ?? "")
+    .filter(Boolean);
+
+  return paragraphs.length > 0 ? [...new Set(paragraphs)].join("\n\n") : null;
+}
+
+function mergeReviewLines(values: Array<string | null | undefined>) {
+  const lines = values
+    .flatMap((value) => (value ?? "").split(/\r?\n+/))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return lines.length > 0 ? [...new Set(lines)].join("\n") : null;
+}
+
 function storyIdeaDescription(candidate: IntakeArtifactCandidate) {
-  const description = candidate.draftRecord?.valueIntent?.trim() || candidate.summary.trim();
+  const valueIntent = candidate.draftRecord?.valueIntent?.trim() ?? "";
+  const expectedBehavior = candidate.draftRecord?.expectedBehavior?.trim() ?? "";
+  const description = valueIntent || candidate.summary.trim();
   const normalizedTitle = normalizeForComparison(candidate.draftRecord?.title ?? candidate.title);
   const normalizedDescription = normalizeForComparison(description);
+  const normalizedExpectedBehavior = normalizeForComparison(expectedBehavior);
 
-  if (!normalizedDescription || normalizedDescription === normalizedTitle) {
+  if (
+    !normalizedDescription ||
+    normalizedDescription === normalizedTitle ||
+    (normalizedExpectedBehavior && normalizedDescription === normalizedExpectedBehavior)
+  ) {
     return null;
   }
 
@@ -416,7 +440,110 @@ function carryForwardUseLabel(recommendedUse: ArtifactCarryForwardItem["recommen
   return "Carry forward to design";
 }
 
-function framingCandidateStatus(candidate: IntakeArtifactCandidate) {
+function collapseFramingCandidatesForDisplay(fileCandidates: IntakeArtifactCandidate[]) {
+  const outcomeCandidates = fileCandidates.filter((candidate) => candidate.type === "outcome");
+
+  if (outcomeCandidates.length <= 1) {
+    return {
+      candidates: fileCandidates,
+      suppressedOutcomeCandidateIds: [] as string[]
+    };
+  }
+
+  const primaryOutcome = outcomeCandidates[0]!;
+  const suppressedOutcomeCandidateIds: string[] = [];
+  const outcomeAliasMap = new Map<string, string>();
+  let mergedPrimaryOutcome: IntakeArtifactCandidate = {
+    ...primaryOutcome,
+    draftRecord: primaryOutcome.draftRecord ? { ...primaryOutcome.draftRecord } : null
+  };
+
+  for (const secondaryOutcome of outcomeCandidates.slice(1)) {
+    suppressedOutcomeCandidateIds.push(secondaryOutcome.id);
+    outcomeAliasMap.set(secondaryOutcome.id, primaryOutcome.id);
+    mergedPrimaryOutcome = {
+      ...mergedPrimaryOutcome,
+      title: mergedPrimaryOutcome.title.trim() || secondaryOutcome.title,
+      summary: summarizeReviewText(
+        mergeReviewParagraphs([
+          mergedPrimaryOutcome.draftRecord?.outcomeStatement ?? mergedPrimaryOutcome.summary,
+          secondaryOutcome.draftRecord?.outcomeStatement ?? secondaryOutcome.summary
+        ]) ?? mergedPrimaryOutcome.summary
+      ),
+      draftRecord: mergedPrimaryOutcome.draftRecord
+        ? {
+            ...mergedPrimaryOutcome.draftRecord,
+            title:
+              mergedPrimaryOutcome.draftRecord.title?.trim() ||
+              secondaryOutcome.draftRecord?.title ||
+              secondaryOutcome.title,
+            problemStatement: mergeReviewParagraphs([
+              mergedPrimaryOutcome.draftRecord.problemStatement,
+              secondaryOutcome.draftRecord?.problemStatement
+            ]),
+            outcomeStatement: mergeReviewParagraphs([
+              mergedPrimaryOutcome.draftRecord.outcomeStatement,
+              secondaryOutcome.draftRecord?.outcomeStatement,
+              secondaryOutcome.summary
+            ]),
+            baselineDefinition: mergeReviewLines([
+              mergedPrimaryOutcome.draftRecord.baselineDefinition,
+              secondaryOutcome.draftRecord?.baselineDefinition
+            ]),
+            baselineSource: mergeReviewLines([
+              mergedPrimaryOutcome.draftRecord.baselineSource,
+              secondaryOutcome.draftRecord?.baselineSource
+            ]),
+            timeframe: mergeReviewLines([
+              mergedPrimaryOutcome.draftRecord.timeframe,
+              secondaryOutcome.draftRecord?.timeframe
+            ])
+          }
+        : mergedPrimaryOutcome.draftRecord
+    };
+  }
+
+  const collapsedCandidates = fileCandidates.flatMap((candidate) => {
+    if (suppressedOutcomeCandidateIds.includes(candidate.id)) {
+      return [];
+    }
+
+    if (candidate.id === primaryOutcome.id) {
+      return [mergedPrimaryOutcome];
+    }
+
+    const resolvedOutcomeCandidateId =
+      candidate.draftRecord?.outcomeCandidateId && outcomeAliasMap.has(candidate.draftRecord.outcomeCandidateId)
+        ? outcomeAliasMap.get(candidate.draftRecord.outcomeCandidateId) ?? candidate.draftRecord.outcomeCandidateId
+        : candidate.draftRecord?.outcomeCandidateId ?? null;
+
+    return [
+      {
+        ...candidate,
+        draftRecord: candidate.draftRecord
+          ? {
+              ...candidate.draftRecord,
+              outcomeCandidateId: resolvedOutcomeCandidateId
+            }
+          : candidate.draftRecord
+      }
+    ];
+  });
+
+  return {
+    candidates: collapsedCandidates,
+    suppressedOutcomeCandidateIds
+  };
+}
+
+function framingCandidateStatus(
+  candidate: IntakeArtifactCandidate,
+  context?: {
+    resolvedKey?: string | null | undefined;
+    resolvedOutcomeLink?: string | null | undefined;
+    resolvedEpicLink?: string | null | undefined;
+  }
+) {
   if (candidate.reviewStatus === "rejected") {
     return {
       label: "Rejected",
@@ -425,15 +552,15 @@ function framingCandidateStatus(candidate: IntakeArtifactCandidate) {
   }
 
   const draft = candidate.draftRecord ?? null;
-  const hasKey = Boolean((draft?.key ?? "").trim()) || !candidate.type;
+  const hasKey = Boolean((draft?.key ?? context?.resolvedKey ?? "").trim()) || !candidate.type;
   const hasTitle = Boolean((draft?.title ?? candidate.title ?? "").trim());
   const hasOutcomeStatement = candidate.type !== "outcome" || Boolean((draft?.outcomeStatement ?? "").trim());
   const hasBaselineDefinition = candidate.type !== "outcome" || Boolean((draft?.baselineDefinition ?? "").trim());
   const hasBaselineSource = candidate.type !== "outcome" || Boolean((draft?.baselineSource ?? "").trim());
   const hasEpicPurpose = candidate.type !== "epic" || Boolean((draft?.purpose ?? "").trim());
   const hasValueIntent = candidate.type !== "story" || Boolean((draft?.valueIntent ?? "").trim());
-  const hasOutcomeLink = candidate.type === "outcome" || Boolean((draft?.outcomeCandidateId ?? "").trim());
-  const hasEpicLink = candidate.type !== "story" || Boolean((draft?.epicCandidateId ?? "").trim());
+  const hasOutcomeLink = candidate.type === "outcome" || Boolean((draft?.outcomeCandidateId ?? context?.resolvedOutcomeLink ?? "").trim());
+  const hasEpicLink = candidate.type !== "story" || Boolean((draft?.epicCandidateId ?? context?.resolvedEpicLink ?? "").trim());
   const isReady =
     hasKey &&
     hasTitle &&
@@ -557,6 +684,7 @@ function FramingImportSpine(props: {
   importedOutcomeCandidates: IntakeArtifactCandidate[];
   importedEpicCandidates: IntakeArtifactCandidate[];
   importedStoryCandidates: IntakeArtifactCandidate[];
+  suppressedOutcomeCandidateIds: string[];
   carryForwardItems: ArtifactCarryForwardItem[];
   fileLeftovers: ParsedSection[];
   outcomeCandidateOptions: ProjectOutcomeOption[];
@@ -597,6 +725,9 @@ function FramingImportSpine(props: {
           <form action={props.submitFramingBulkApproveAction} className="space-y-4">
             <input name="sessionId" type="hidden" value={props.session.id} />
             <input name="fileId" type="hidden" value={props.selectedFile.id} />
+            {props.suppressedOutcomeCandidateIds.map((candidateId) => (
+              <input key={candidateId} name="suppressedCandidateIds" type="hidden" value={candidateId} />
+            ))}
             {props.fileLeftovers.map((section) => (
               <input key={section.id} name="leftoverSectionIds" type="hidden" value={section.id} />
             ))}
@@ -674,7 +805,14 @@ function FramingImportSpine(props: {
                       !story.draftRecord?.outcomeCandidateId?.trim() ||
                       story.draftRecord?.outcomeCandidateId === outcomeCandidate.id)
                 );
-                const outcomeStatus = outcomeCandidate ? framingCandidateStatus(outcomeCandidate) : null;
+                const outcomeStatus = outcomeCandidate
+                  ? framingCandidateStatus(outcomeCandidate, {
+                      resolvedKey:
+                        outcomeCandidate.draftRecord?.key && !isLegacyImportKey(outcomeCandidate.draftRecord.key)
+                          ? outcomeCandidate.draftRecord.key
+                          : buildSuggestedCandidateKey(props.session, outcomeCandidate)
+                    })
+                  : null;
 
                 return (
                   <details className="rounded-2xl border border-border/70 bg-background shadow-sm" key={outcomeCandidate?.id ?? `root-${index}`} open>
@@ -840,7 +978,13 @@ function FramingImportSpine(props: {
                       ) : null}
 
                       {epicNodes.map((epic) => {
-                        const epicStatus = framingCandidateStatus(epic);
+                        const epicStatus = framingCandidateStatus(epic, {
+                          resolvedKey:
+                            epic.draftRecord?.key && !isLegacyImportKey(epic.draftRecord.key)
+                              ? epic.draftRecord.key
+                              : buildSuggestedCandidateKey(props.session, epic),
+                          resolvedOutcomeLink: epic.draftRecord?.outcomeCandidateId ?? outcomeCandidate?.id ?? props.defaultTargetOutcomeId
+                        });
                         const epicStories = props.importedStoryCandidates.filter((story) => story.draftRecord?.epicCandidateId === epic.id);
 
                         return (
@@ -924,7 +1068,17 @@ function FramingImportSpine(props: {
                               </div>
 
                               {epicStories.map((story) => {
-                                const storyStatus = framingCandidateStatus(story);
+                                const storyStatus = framingCandidateStatus(story, {
+                                  resolvedKey:
+                                    story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                                      ? story.draftRecord.key
+                                      : buildSuggestedCandidateKey(props.session, story),
+                                  resolvedOutcomeLink:
+                                    story.draftRecord?.outcomeCandidateId ??
+                                    outcomeCandidate?.id ??
+                                    props.defaultTargetOutcomeId,
+                                  resolvedEpicLink: story.draftRecord?.epicCandidateId ?? epic.id
+                                });
                                 const parentEpic = props.importedEpicCandidates.find((candidate) => candidate.id === story.draftRecord?.epicCandidateId);
 
                                 return (
@@ -1042,7 +1196,20 @@ function FramingImportSpine(props: {
                       })}
 
                       {freeStandingStories.map((story) => {
-                        const storyStatus = framingCandidateStatus(story);
+                        const storyStatus = framingCandidateStatus(story, {
+                          resolvedKey:
+                            story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                              ? story.draftRecord.key
+                              : buildSuggestedCandidateKey(props.session, story),
+                          resolvedOutcomeLink:
+                            story.draftRecord?.outcomeCandidateId ??
+                            outcomeCandidate?.id ??
+                            props.defaultTargetOutcomeId,
+                          resolvedEpicLink:
+                            story.draftRecord?.epicCandidateId ??
+                            props.defaultBulkEpicCandidateId ??
+                            FALLBACK_EPIC_OPTION_VALUE
+                        });
 
                         return (
                           <details className="ml-4 rounded-2xl border border-border/70 bg-muted/10" key={story.id}>
@@ -1246,9 +1413,10 @@ export function ArtifactIntakeReviewWorkspace({
     };
   });
   const unresolvedCarryForwardCount = carryForwardItemStates.filter((entry) => entry.status === "unresolved").length;
-  const importedOutcomeCandidates = fileCandidates.filter((candidate) => candidate.type === "outcome");
-  const importedEpicCandidates = fileCandidates.filter((candidate) => candidate.type === "epic");
-  const importedStoryCandidates = fileCandidates.filter((candidate) => candidate.type === "story");
+  const collapsedFramingCandidates = collapseFramingCandidatesForDisplay(fileCandidates);
+  const importedOutcomeCandidates = collapsedFramingCandidates.candidates.filter((candidate) => candidate.type === "outcome");
+  const importedEpicCandidates = collapsedFramingCandidates.candidates.filter((candidate) => candidate.type === "epic");
+  const importedStoryCandidates = collapsedFramingCandidates.candidates.filter((candidate) => candidate.type === "story");
   const defaultTargetOutcomeId = outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0]?.id ?? "" : "";
   const projectEpicOptionsForTarget = defaultTargetOutcomeId
     ? (projectEpics ?? []).filter((epic) => epic.outcomeId === defaultTargetOutcomeId)
@@ -1288,6 +1456,7 @@ export function ArtifactIntakeReviewWorkspace({
           projectEpicOptionsForTarget={projectEpicOptionsForTarget}
           selectedFile={selectedFile}
           session={session}
+          suppressedOutcomeCandidateIds={collapsedFramingCandidates.suppressedOutcomeCandidateIds}
           submitFramingBulkApproveAction={submitFramingBulkApproveAction}
         />
       ) : null}

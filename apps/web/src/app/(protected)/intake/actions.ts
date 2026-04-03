@@ -337,6 +337,10 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     .getAll("carryForwardSectionIds")
     .map((value) => String(value))
     .filter(Boolean);
+  const suppressedCandidateIds = formData
+    .getAll("suppressedCandidateIds")
+    .map((value) => String(value))
+    .filter(Boolean);
   const leftoverSectionIds = formData
     .getAll("leftoverSectionIds")
     .map((value) => String(value))
@@ -462,6 +466,27 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
             sessionId,
             fileId,
             message: reviewResult.errors[0]?.message ?? "One or more selected framing items could not be rejected."
+          })
+        );
+      }
+    }
+
+    for (const candidateId of suppressedCandidateIds) {
+      const reviewResult = await reviewArtifactCandidateService({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        candidateId,
+        reviewStatus: "rejected",
+        reviewComment: "Merged into the primary imported Outcome in the framing spine."
+      });
+
+      if (!reviewResult.ok) {
+        redirect(
+          buildRedirect("/intake", {
+            status: "error",
+            sessionId,
+            fileId,
+            message: reviewResult.errors[0]?.message ?? "One or more merged Outcome candidates could not be cleared."
           })
         );
       }
@@ -599,6 +624,27 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
           sessionId,
           fileId,
           message: reviewResult.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
+        })
+      );
+    }
+  }
+
+  for (const candidateId of suppressedCandidateIds) {
+    const reviewResult = await reviewArtifactCandidateService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      candidateId,
+      reviewStatus: "rejected",
+      reviewComment: "Merged into the primary imported Outcome in the framing spine."
+    });
+
+    if (!reviewResult.ok) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: reviewResult.errors[0]?.message ?? "Merged Outcome cleanup could not be saved."
         })
       );
     }

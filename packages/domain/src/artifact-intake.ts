@@ -1171,6 +1171,15 @@ function mergeArtifactDraftParagraphs(values: Array<string | null | undefined>) 
   return paragraphs.length > 0 ? [...new Set(paragraphs)].join("\n\n") : null;
 }
 
+function mergeArtifactTextLines(values: Array<string | null | undefined>) {
+  const lines = values
+    .flatMap((value) => (value ?? "").split(/\r?\n+/))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return lines.length > 0 ? [...new Set(lines)].join("\n") : null;
+}
+
 function pickDistinctStoryText(input: {
   candidates: Array<string | null | undefined>;
   blockedValues: Array<string | null | undefined>;
@@ -1210,26 +1219,39 @@ function deriveFramingStoryValueIntent(input: {
   const narrative = extractStoryNarrative(input.section.text);
   const title = input.currentTitle?.trim() ?? input.section.title;
   const acceptanceSummary = summarizeAcceptanceCriteriaForStoryIdea(input.acceptanceCriteria);
-  const keepCurrentValueIntent = !shouldReplaceStoryTextWithStrongerSignal(input.currentValueIntent, [title]);
+  const taggedValueIntent =
+    extractTaggedLineValue(input.section.text, "Value Intent") ||
+    extractTaggedLineValue(input.section.text, "User Value") ||
+    extractTaggedLineValue(input.section.text, "Benefit");
+  const taggedSummary =
+    extractTaggedLineValue(input.section.text, "Summary") ||
+    extractTaggedLineValue(input.section.text, "Intent");
+  const keepCurrentValueIntent = !shouldReplaceStoryTextWithStrongerSignal(input.currentValueIntent, [
+    title,
+    input.currentExpectedBehavior
+  ]);
 
   if (keepCurrentValueIntent && input.currentValueIntent?.trim()) {
     return summarizeText(input.currentValueIntent.trim(), 180);
   }
 
-  return (
+  const valueIntent =
     pickDistinctStoryText({
       candidates: [
+        taggedValueIntent,
         narrative?.outcome ? upperCaseFirst(narrative.outcome) : null,
         acceptanceSummary,
+        taggedSummary,
         narrative?.intent ? upperCaseFirst(narrative.intent) : null,
         input.currentExpectedBehavior,
         input.currentValueIntent,
         input.fallbackSummary,
         input.section.text
       ],
-      blockedValues: [title]
-    }) || summarizeText(input.fallbackSummary || input.section.text, 180)
-  );
+      blockedValues: [title, input.currentExpectedBehavior]
+    }) || summarizeText(input.fallbackSummary || input.section.text, 180);
+
+  return isDistinctStoryText(valueIntent, [title]) ? valueIntent : summarizeText(input.section.text, 180);
 }
 
 function deriveFramingStoryExpectedBehavior(input: {
@@ -1244,6 +1266,10 @@ function deriveFramingStoryExpectedBehavior(input: {
   const normalizedIntent = narrative?.intent?.replace(/^to\s+/i, "") ?? "";
   const title = input.currentTitle?.trim() ?? input.section.title;
   const acceptanceSummary = summarizeAcceptanceCriteriaForStoryIdea(input.acceptanceCriteria);
+  const taggedExpectedBehavior =
+    extractTaggedLineValue(input.section.text, "Expected Behavior") ||
+    extractTaggedLineValue(input.section.text, "Summary") ||
+    extractTaggedLineValue(input.section.text, "Behavior");
 
   if (
     input.currentExpectedBehavior?.trim() &&
@@ -1252,19 +1278,179 @@ function deriveFramingStoryExpectedBehavior(input: {
     return summarizeText(input.currentExpectedBehavior.trim(), 180);
   }
 
-  return (
-    pickDistinctStoryText({
-      candidates: [
-        narrative?.actor && normalizedIntent ? `${upperCaseFirst(narrative.actor)} can ${normalizedIntent}.` : null,
-        acceptanceSummary,
-        normalizedIntent ? upperCaseFirst(normalizedIntent) : null,
-        input.currentValueIntent,
-        input.fallbackSummary,
-        input.section.text
-      ],
-      blockedValues: [title]
-    }) || summarizeText(input.fallbackSummary || input.section.text, 180)
+  const expectedBehavior = pickDistinctStoryText({
+    candidates: [
+      taggedExpectedBehavior,
+      narrative?.actor && normalizedIntent ? `${upperCaseFirst(narrative.actor)} can ${normalizedIntent}.` : null,
+      acceptanceSummary,
+      normalizedIntent ? upperCaseFirst(normalizedIntent) : null,
+      input.currentValueIntent,
+      input.fallbackSummary,
+      input.section.text
+    ],
+    blockedValues: [title, input.currentValueIntent, input.fallbackSummary]
+  });
+
+  if (
+    !expectedBehavior ||
+    !isDistinctStoryText(expectedBehavior, [title, input.currentValueIntent, input.fallbackSummary]) ||
+    countMeaningfulWords(expectedBehavior) < 5
+  ) {
+    return null;
+  }
+
+  return expectedBehavior;
+}
+
+function shouldTreatAiCandidateAsStoryIdea(input: {
+  importIntent: "framing" | "design";
+  interpretedCandidate: ArtifactAiCandidateInterpretation;
+  sourceSection: ArtifactParsedSection;
+}) {
+  if (input.importIntent !== "framing" || input.interpretedCandidate.type === "outcome") {
+    return false;
+  }
+
+  const combinedText = [
+    input.interpretedCandidate.title,
+    input.interpretedCandidate.summary,
+    input.interpretedCandidate.draftRecord?.title,
+    input.interpretedCandidate.draftRecord?.valueIntent,
+    input.interpretedCandidate.draftRecord?.expectedBehavior,
+    input.sourceSection.title,
+    input.sourceSection.text
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return Boolean(
+    extractStoryNarrative(combinedText) ||
+      /\bstory idea\b|\buser story\b/.test(normalizeHeading(combinedText)) ||
+      input.interpretedCandidate.draftRecord?.storyType ||
+      input.interpretedCandidate.draftRecord?.valueIntent
   );
+}
+
+function mergeFramingOutcomeCandidates(candidates: ArtifactAasCandidate[]) {
+  const candidatesByFile = new Map<string, ArtifactAasCandidate[]>();
+
+  for (const candidate of candidates) {
+    const existing = candidatesByFile.get(candidate.source.fileId) ?? [];
+    existing.push(candidate);
+    candidatesByFile.set(candidate.source.fileId, existing);
+  }
+
+  const suppressedOutcomeIds = new Set<string>();
+  const outcomeAliasMap = new Map<string, string>();
+  const mergedPrimaryOutcomeById = new Map<string, ArtifactAasCandidate>();
+
+  for (const fileCandidates of candidatesByFile.values()) {
+    const outcomeCandidates = fileCandidates.filter((candidate) => candidate.type === "outcome");
+
+    if (outcomeCandidates.length <= 1) {
+      continue;
+    }
+
+    const primaryOutcome = outcomeCandidates[0]!;
+    const primaryDraft = artifactCandidateDraftRecordSchema.parse({
+      ...createArtifactCandidateDraftRecord(primaryOutcome),
+      ...(primaryOutcome.draftRecord ?? {})
+    });
+    let mergedOutcome: ArtifactAasCandidate = {
+      ...primaryOutcome,
+      acceptanceCriteria: [...primaryOutcome.acceptanceCriteria],
+      testNotes: [...primaryOutcome.testNotes],
+      draftRecord: {
+        ...primaryDraft,
+        acceptanceCriteria: [...primaryDraft.acceptanceCriteria],
+        aiUsageScope: [...primaryDraft.aiUsageScope],
+        definitionOfDone: [...primaryDraft.definitionOfDone]
+      }
+    };
+
+    for (const secondaryOutcome of outcomeCandidates.slice(1)) {
+      suppressedOutcomeIds.add(secondaryOutcome.id);
+      outcomeAliasMap.set(secondaryOutcome.id, primaryOutcome.id);
+      const secondaryDraft = artifactCandidateDraftRecordSchema.parse({
+        ...createArtifactCandidateDraftRecord(secondaryOutcome),
+        ...(secondaryOutcome.draftRecord ?? {})
+      });
+      const mergedDraft = artifactCandidateDraftRecordSchema.parse({
+        ...mergedOutcome.draftRecord,
+        title: mergedOutcome.draftRecord?.title?.trim() || secondaryDraft.title || secondaryOutcome.title,
+        problemStatement: mergeArtifactDraftParagraphs([
+          mergedOutcome.draftRecord?.problemStatement,
+          secondaryDraft.problemStatement
+        ]),
+        outcomeStatement: mergeArtifactDraftParagraphs([
+          mergedOutcome.draftRecord?.outcomeStatement,
+          mergedOutcome.summary,
+          secondaryDraft.outcomeStatement,
+          secondaryOutcome.summary
+        ]),
+        baselineDefinition: mergeArtifactTextLines([
+          mergedOutcome.draftRecord?.baselineDefinition,
+          secondaryDraft.baselineDefinition
+        ]),
+        baselineSource: mergeArtifactTextLines([
+          mergedOutcome.draftRecord?.baselineSource,
+          secondaryDraft.baselineSource
+        ]),
+        timeframe: mergeArtifactTextLines([mergedOutcome.draftRecord?.timeframe, secondaryDraft.timeframe])
+      });
+
+      mergedOutcome = {
+        ...mergedOutcome,
+        title: mergedOutcome.title.trim() || secondaryOutcome.title,
+        summary: summarizeText(
+          mergedDraft.outcomeStatement || mergedOutcome.summary || secondaryOutcome.summary
+        ),
+        draftRecord: mergedDraft,
+        mappingState:
+          mergedOutcome.mappingState === "uncertain" || secondaryOutcome.mappingState === "uncertain"
+            ? "uncertain"
+            : mergedOutcome.mappingState,
+        relationshipState:
+          mergedOutcome.relationshipState === "uncertain" || secondaryOutcome.relationshipState === "uncertain"
+            ? "uncertain"
+            : mergedOutcome.relationshipState
+      };
+    }
+
+    mergedPrimaryOutcomeById.set(primaryOutcome.id, mergedOutcome);
+  }
+
+  return candidates.flatMap((candidate) => {
+    if (suppressedOutcomeIds.has(candidate.id)) {
+      return [];
+    }
+
+    if (candidate.type === "outcome") {
+      return [mergedPrimaryOutcomeById.get(candidate.id) ?? candidate];
+    }
+
+    const resolvedOutcomeCandidateId =
+      candidate.draftRecord?.outcomeCandidateId && outcomeAliasMap.has(candidate.draftRecord.outcomeCandidateId)
+        ? outcomeAliasMap.get(candidate.draftRecord.outcomeCandidateId) ?? candidate.draftRecord.outcomeCandidateId
+        : candidate.draftRecord?.outcomeCandidateId ?? null;
+    const resolvedInferredOutcomeCandidateId =
+      candidate.inferredOutcomeCandidateId && outcomeAliasMap.has(candidate.inferredOutcomeCandidateId)
+        ? outcomeAliasMap.get(candidate.inferredOutcomeCandidateId)
+        : candidate.inferredOutcomeCandidateId;
+
+    return [
+      {
+        ...candidate,
+        inferredOutcomeCandidateId: resolvedInferredOutcomeCandidateId,
+        draftRecord: candidate.draftRecord
+          ? {
+              ...candidate.draftRecord,
+              outcomeCandidateId: resolvedOutcomeCandidateId
+            }
+          : candidate.draftRecord
+      }
+    ];
+  });
 }
 
 function adaptStoryCandidateForImportIntent(input: {
@@ -1738,12 +1924,19 @@ export function buildAiAssistedArtifactProcessingResult(input: {
       }
 
       usedSectionIds.add(sourceSection.id);
+      const candidateType = shouldTreatAiCandidateAsStoryIdea({
+        importIntent,
+        interpretedCandidate,
+        sourceSection
+      })
+        ? "story"
+        : interpretedCandidate.type;
       const candidateId = buildArtifactCandidateId({
         fileId: file.id,
         sectionId: sourceSection.id,
-        candidateType: interpretedCandidate.type
+        candidateType
       });
-      candidateIdBySectionAndType.set(`${sourceSection.id}:${interpretedCandidate.type}`, candidateId);
+      candidateIdBySectionAndType.set(`${sourceSection.id}:${candidateType}`, candidateId);
       const explicitOutcomeCandidateId = interpretedCandidate.linkedOutcomeSectionId
         ? candidateIdBySectionAndType.get(`${interpretedCandidate.linkedOutcomeSectionId}:outcome`)
         : undefined;
@@ -1751,15 +1944,15 @@ export function buildAiAssistedArtifactProcessingResult(input: {
         ? candidateIdBySectionAndType.get(`${interpretedCandidate.linkedEpicSectionId}:epic`)
         : undefined;
       const inferredOutcomeCandidateId =
-        interpretedCandidate.type === "outcome"
+        candidateType === "outcome"
           ? undefined
           : explicitOutcomeCandidateId ?? lastOutcomeCandidateId;
       const inferredEpicCandidateId =
-        interpretedCandidate.type === "story" ? explicitEpicCandidateId ?? lastEpicCandidateId : undefined;
+        candidateType === "story" ? explicitEpicCandidateId ?? lastEpicCandidateId : undefined;
       const sourceConfidence =
         sourceType === "unknown_artifact" && sourceSection.confidence === "high" ? "medium" : sourceSection.confidence;
       const relationship = resolveAiCandidateRelationshipState({
-        candidateType: interpretedCandidate.type,
+        candidateType,
         importIntent,
         explicitRelationshipState: interpretedCandidate.relationshipState,
         explicitRelationshipNote: interpretedCandidate.relationshipNote,
@@ -1771,7 +1964,7 @@ export function buildAiAssistedArtifactProcessingResult(input: {
       const nextCandidate = adaptStoryCandidateForImportIntent({
         candidate: {
         id: candidateId,
-        type: interpretedCandidate.type,
+        type: candidateType,
         title: summarizeText(interpretedCandidate.title, 80),
         summary: summarizeText(interpretedCandidate.summary),
         mappingState:
@@ -1810,12 +2003,12 @@ export function buildAiAssistedArtifactProcessingResult(input: {
 
       candidates.push(nextCandidate);
 
-      if (interpretedCandidate.type === "outcome") {
+      if (candidateType === "outcome") {
         lastOutcomeCandidateId = candidateId;
         lastEpicCandidateId = undefined;
       }
 
-      if (interpretedCandidate.type === "epic") {
+      if (candidateType === "epic") {
         lastEpicCandidateId = candidateId;
       }
     }
@@ -1869,7 +2062,7 @@ export function buildAiAssistedArtifactProcessingResult(input: {
 
   const normalizedCandidates =
     importIntent === "framing"
-      ? candidates.map((candidate) => {
+      ? mergeFramingOutcomeCandidates(candidates.map((candidate) => {
           const sourceSection = parseResults
             .flatMap((entry) => entry.parseResult.sections)
             .find((section) => section.sourceReference.fileId === candidate.source.fileId && section.id === candidate.source.sectionId);
@@ -1881,7 +2074,7 @@ export function buildAiAssistedArtifactProcessingResult(input: {
                 importIntent
               })
             : candidate;
-        })
+        }))
       : candidates;
 
   return {
@@ -2778,7 +2971,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
 
   const normalizedCandidates =
     importIntent === "framing"
-      ? candidates.map((candidate) => {
+      ? mergeFramingOutcomeCandidates(candidates.map((candidate) => {
           const sourceSection = input.files
             .flatMap((file) => file.parsedArtifacts?.sections ?? [])
             .find((section) => section.sourceReference.fileId === candidate.source.fileId && section.id === candidate.source.sectionId);
@@ -2790,7 +2983,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
                 importIntent
               })
             : candidate;
-        })
+        }))
       : candidates;
 
   return {
