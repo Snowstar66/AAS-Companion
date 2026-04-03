@@ -1023,7 +1023,7 @@ function FramingImportSpine(props: {
                         );
 
                         return (
-                          <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={epic.id}>
+                          <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={epic.id} open>
                             <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
                               <div className="flex items-start gap-3">
                                 <input defaultChecked name="candidateIds" type="checkbox" value={epic.id} />
@@ -1034,6 +1034,9 @@ function FramingImportSpine(props: {
                                     </span>
                                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${epicStatus.tone}`}>
                                       {epicStatus.label}
+                                    </span>
+                                    <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                      {epicStories.length} {epicStories.length === 1 ? "story idea" : "story ideas"}
                                     </span>
                                   </div>
                                   <p className="mt-2 font-medium text-foreground">
