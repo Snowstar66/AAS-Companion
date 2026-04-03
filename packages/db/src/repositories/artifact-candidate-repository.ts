@@ -20,7 +20,7 @@ import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
 import { createDirectionSeed } from "./direction-seed-repository";
 import { createEpic } from "./epic-repository";
-import { createOutcome } from "./outcome-repository";
+import { createOutcome, updateOutcome } from "./outcome-repository";
 import { createStory } from "./story-repository";
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
@@ -87,6 +87,18 @@ function isCarryForwardApproved(action: string | undefined) {
   return action === "confirmed" || action === "corrected";
 }
 
+function recommendedUseForCarryForwardCategory(category: "ux_principle" | "nfr_constraint" | "solution_constraint" | "additional_requirement" | "excluded_design") {
+  if (category === "ux_principle" || category === "excluded_design") {
+    return "design_input" as const;
+  }
+
+  if (category === "nfr_constraint") {
+    return "cross_cutting_requirement" as const;
+  }
+
+  return "framing_constraint" as const;
+}
+
 function buildImportedFramingCarryForwardBundleForFile(input: {
   mappedArtifacts: unknown;
   fileId: string;
@@ -113,10 +125,7 @@ function buildImportedFramingCarryForwardBundleForFile(input: {
     };
   }
 
-  const hasExplicitDisposition = fileItems.some((item) => Boolean(sectionDispositions[item.sourceSection.id]?.action));
-  const includedItems = hasExplicitDisposition
-    ? fileItems.filter((item) => isCarryForwardApproved(sectionDispositions[item.sourceSection.id]?.action))
-    : fileItems.filter((item) => sectionDispositions[item.sourceSection.id]?.action !== "not_relevant");
+  const includedItems = fileItems.filter((item) => isCarryForwardApproved(sectionDispositions[item.sourceSection.id]?.action));
 
   const scopedMapping = {
     ...mapping.data,
@@ -358,6 +367,100 @@ export async function applyApprovedArtifactFileCarryForwardToOutcome(input: {
   });
 }
 
+export async function updateArtifactFileCarryForwardItems(input: {
+  organizationId: string;
+  fileId: string;
+  updates: Array<{
+    sectionId: string;
+    title: string;
+    summary: string;
+    category: "ux_principle" | "nfr_constraint" | "solution_constraint" | "additional_requirement" | "excluded_design";
+  }>;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const file = await tx.artifactIntakeFile.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        id: input.fileId
+      },
+      select: {
+        intakeSessionId: true,
+        intakeSession: {
+          select: {
+            mappedArtifacts: true
+          }
+        }
+      }
+    });
+
+    if (!file) {
+      throw new Error("Artifact file was not found in organization scope.");
+    }
+
+    const mapping = artifactMappingResultSchema.safeParse(file.intakeSession.mappedArtifacts);
+
+    if (!mapping.success) {
+      return {
+        ok: true as const,
+        updatedCount: 0
+      };
+    }
+
+    const updatesBySectionId = new Map(
+      input.updates
+        .filter((update) => update.sectionId.trim() && update.title.trim() && update.summary.trim())
+        .map((update) => [update.sectionId, update] as const)
+    );
+
+    let updatedCount = 0;
+    const carryForwardItems = mapping.data.carryForwardItems.map((item) => {
+      if (item.sourceSection.sourceReference.fileId !== input.fileId) {
+        return item;
+      }
+
+      const update = updatesBySectionId.get(item.sourceSection.id);
+
+      if (!update) {
+        return item;
+      }
+
+      updatedCount += 1;
+
+      return sanitizeArtifactPersistenceValue({
+        ...item,
+        title: sanitizeArtifactPersistenceText(update.title),
+        summary: sanitizeArtifactPersistenceText(update.summary),
+        category: update.category,
+        recommendedUse: recommendedUseForCarryForwardCategory(update.category)
+      });
+    });
+
+    if (updatedCount === 0) {
+      return {
+        ok: true as const,
+        updatedCount
+      };
+    }
+
+    await tx.artifactIntakeSession.update({
+      where: {
+        id: file.intakeSessionId
+      },
+      data: {
+        mappedArtifacts: sanitizeArtifactPersistenceValue({
+          ...mapping.data,
+          carryForwardItems
+        }) as Prisma.InputJsonValue
+      }
+    });
+
+    return {
+      ok: true as const,
+      updatedCount
+    };
+  });
+}
+
 function clearPendingUnmappedSectionsForRejectedFile(input: {
   mappedArtifacts: unknown;
   fileId: string;
@@ -541,7 +644,9 @@ export async function createPersistedArtifactCandidates(input: {
         ...(
           intakeSession?.importIntent === "framing" &&
           preferredOutcomeId &&
-          sanitizedCandidate.type !== "outcome"
+          sanitizedCandidate.type !== "outcome" &&
+          !sanitizedCandidate.inferredOutcomeCandidateId &&
+          !(sanitizedCandidate.draftRecord?.outcomeCandidateId?.trim())
             ? {
                 outcomeCandidateId: preferredOutcomeId
               }
@@ -1088,51 +1193,81 @@ export async function promoteArtifactCandidate(input: {
           note: `Promoted from intake session ${candidate.intakeSessionId}`
         };
         const importIntent = candidate.intakeSession.importIntent;
-        const importedCarryForward =
-          importIntent === "framing"
-            ? buildImportedFramingCarryForwardBundleForFile({
-                mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
-                fileId: candidate.fileId,
-                sectionDispositions: file?.sectionDispositions ?? null
-              })
-            : { solutionContext: null as string | null, solutionConstraints: null as string | null };
-
         let promotedEntityId = "";
         const promotedEntityType: "outcome" | "epic" | "story" = candidate.type;
 
         if (candidate.type === "outcome") {
-          const outcomeKey = await resolveNextGovernedKey({
-            db: tx,
-            organizationId: candidate.organizationId,
-            entityType: "outcome",
-            requestedKey: draftRecord.key ?? null,
-            importIntent
-          });
-          const created = await createOutcome(
-            {
+          const targetOutcomeId = draftRecord.outcomeCandidateId?.trim() ?? "";
+
+          if (targetOutcomeId) {
+            const existingOutcome = await tx.outcome.findFirst({
+              where: {
+                organizationId: candidate.organizationId,
+                id: targetOutcomeId
+              },
+              select: {
+                id: true
+              }
+            });
+
+            if (!existingOutcome) {
+              throw new Error("Select a valid project Outcome before approving this imported Outcome.");
+            }
+
+            const updated = await updateOutcome({
               organizationId: candidate.organizationId,
               actorId: input.actorId ?? null,
-              key: outcomeKey,
+              id: existingOutcome.id,
+              key: draftRecord.key ?? undefined,
               title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
               problemStatement: draftRecord.problemStatement ?? null,
               outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
               baselineDefinition: draftRecord.baselineDefinition ?? null,
               baselineSource: draftRecord.baselineSource ?? null,
-              solutionContext: importedCarryForward.solutionContext,
-              solutionConstraints: importedCarryForward.solutionConstraints,
               timeframe: draftRecord.timeframe ?? null,
               valueOwnerId: humanDecisions.valueOwnerId ?? null,
               riskProfile: humanDecisions.riskProfile ?? "medium",
               aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
-              status: promotedReadinessState === "imported_framing_ready" ? "ready_for_tg1" : "baseline_in_progress",
+              importedReadinessState: promotedReadinessState,
               originType: "imported",
               createdMode: "promotion",
-              lineageReference,
-              importedReadinessState: promotedReadinessState
-            },
-            tx
-          );
-          promotedEntityId = created.id;
+              lineageReference
+            });
+            promotedEntityId = updated.id;
+          } else {
+            const outcomeKey = await resolveNextGovernedKey({
+              db: tx,
+              organizationId: candidate.organizationId,
+              entityType: "outcome",
+              requestedKey: draftRecord.key ?? null,
+              importIntent
+            });
+            const created = await createOutcome(
+              {
+                organizationId: candidate.organizationId,
+                actorId: input.actorId ?? null,
+                key: outcomeKey,
+                title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+                problemStatement: draftRecord.problemStatement ?? null,
+                outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
+                baselineDefinition: draftRecord.baselineDefinition ?? null,
+                baselineSource: draftRecord.baselineSource ?? null,
+                solutionContext: null,
+                solutionConstraints: null,
+                timeframe: draftRecord.timeframe ?? null,
+                valueOwnerId: humanDecisions.valueOwnerId ?? null,
+                riskProfile: humanDecisions.riskProfile ?? "medium",
+                aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",
+                status: promotedReadinessState === "imported_framing_ready" ? "ready_for_tg1" : "baseline_in_progress",
+                originType: "imported",
+                createdMode: "promotion",
+                lineageReference,
+                importedReadinessState: promotedReadinessState
+              },
+              tx
+            );
+            promotedEntityId = created.id;
+          }
         }
 
         if (candidate.type === "epic") {
@@ -1196,16 +1331,6 @@ export async function promoteArtifactCandidate(input: {
             },
             tx
           );
-          if (importIntent === "framing") {
-            await mergeApprovedCarryForwardIntoOutcome({
-              db: tx,
-              organizationId: candidate.organizationId,
-              outcomeId: fallbackOutcome.id,
-              mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
-              fileId: candidate.fileId,
-              sectionDispositions: file?.sectionDispositions ?? null
-            });
-          }
           promotedEntityId = created.id;
         }
 
@@ -1334,16 +1459,6 @@ export async function promoteArtifactCandidate(input: {
                   },
                   tx
                 );
-          if (importIntent === "framing") {
-            await mergeApprovedCarryForwardIntoOutcome({
-              db: tx,
-              organizationId: candidate.organizationId,
-              outcomeId: linkedOutcome.id,
-              mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
-              fileId: candidate.fileId,
-              sectionDispositions: file?.sectionDispositions ?? null
-            });
-          }
           promotedEntityId = created.id;
         }
 

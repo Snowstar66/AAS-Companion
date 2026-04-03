@@ -8,7 +8,8 @@ import {
   listArtifactIntakeSessions,
   promoteArtifactCandidate,
   reviewArtifactFileSectionDisposition,
-  reviewArtifactCandidate
+  reviewArtifactCandidate,
+  updateArtifactFileCarryForwardItems
 } from "@aas-companion/db";
 import {
   artifactCandidateReviewActionInputSchema,
@@ -218,6 +219,32 @@ export async function applyApprovedArtifactFileCarryForwardToOutcomeService(inpu
     return failure({
       code: "artifact_carry_forward_apply_failed",
       message: error instanceof Error ? error.message : "Artifact carry-forward could not be applied to the framing outcome."
+    });
+  }
+}
+
+export async function updateArtifactFileCarryForwardItemsService(input: {
+  organizationId: string;
+  fileId: string;
+  updates: Array<{
+    sectionId: string;
+    title: string;
+    summary: string;
+    category: "ux_principle" | "nfr_constraint" | "solution_constraint" | "additional_requirement" | "excluded_design";
+  }>;
+}) {
+  try {
+    return success(
+      await updateArtifactFileCarryForwardItems({
+        organizationId: input.organizationId,
+        fileId: input.fileId,
+        updates: input.updates
+      })
+    );
+  } catch (error) {
+    return failure({
+      code: "artifact_carry_forward_update_failed",
+      message: error instanceof Error ? error.message : "Artifact carry-forward items could not be updated."
     });
   }
 }

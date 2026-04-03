@@ -444,9 +444,10 @@ describe("Import page", () => {
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Imported Story").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Story Idea").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Simple framing import" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Approve selected framing import" })).toBeDefined();
-    expect(screen.getByText(/For framing imports we keep it simple/i)).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Approve" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeDefined();
+    expect(screen.getByText(/Review imported framing content directly in one spine/i)).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Save and approve Story Idea import" })).toBeNull();
   });

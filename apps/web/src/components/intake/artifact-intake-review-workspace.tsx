@@ -382,27 +382,6 @@ function groupLeftoversByKind(sections: ParsedSection[]) {
   return [...grouped.values()];
 }
 
-function groupCarryForwardItemsByCategory(items: ArtifactCarryForwardItem[]) {
-  const grouped = new Map<string, { category: ArtifactCarryForwardItem["category"]; title: string; items: ArtifactCarryForwardItem[] }>();
-
-  for (const item of items) {
-    const existing = grouped.get(item.category);
-
-    if (existing) {
-      existing.items.push(item);
-      continue;
-    }
-
-    grouped.set(item.category, {
-      category: item.category,
-      title: carryForwardCategoryLabel(item.category),
-      items: [item]
-    });
-  }
-
-  return [...grouped.values()];
-}
-
 function carryForwardCategoryLabel(category: ArtifactCarryForwardItem["category"]) {
   if (category === "ux_principle") {
     return "UX principle";
@@ -433,6 +412,42 @@ function carryForwardUseLabel(recommendedUse: ArtifactCarryForwardItem["recommen
   }
 
   return "Carry forward to design";
+}
+
+function framingCandidateStatus(candidate: IntakeArtifactCandidate) {
+  if (candidate.reviewStatus === "rejected") {
+    return {
+      label: "Rejected",
+      tone: "border-slate-300 bg-slate-100 text-slate-700"
+    };
+  }
+
+  const summary = candidate.complianceResult?.summary;
+  const isReady = !summary || (summary.missing === 0 && summary.blocked === 0 && summary.humanOnly === 0);
+
+  return isReady
+    ? {
+        label: "Ready",
+        tone: "border-emerald-200 bg-emerald-50 text-emerald-700"
+      }
+    : {
+        label: "Missing required fields",
+        tone: "border-amber-200 bg-amber-50 text-amber-800"
+      };
+}
+
+function framingConstraintStatus(action: string | null | undefined) {
+  if (action === "not_relevant") {
+    return {
+      label: "Rejected",
+      tone: "border-slate-300 bg-slate-100 text-slate-700"
+    };
+  }
+
+  return {
+    label: "Ready",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-700"
+  };
 }
 
 function CollapsibleReviewPanel(props: {
@@ -516,6 +531,627 @@ function resolveFieldValidationNotes(candidate: IntakeArtifactCandidate | null):
   return notes;
 }
 
+function FramingImportSpine(props: {
+  session: IntakeArtifactSession;
+  selectedFile: IntakeArtifactFile;
+  importedOutcomeCandidates: IntakeArtifactCandidate[];
+  importedEpicCandidates: IntakeArtifactCandidate[];
+  importedStoryCandidates: IntakeArtifactCandidate[];
+  carryForwardItems: ArtifactCarryForwardItem[];
+  fileLeftovers: ParsedSection[];
+  outcomeCandidateOptions: ProjectOutcomeOption[];
+  projectEpicOptionsForTarget: ProjectEpicOption[];
+  defaultTargetOutcomeId: string;
+  defaultBulkEpicCandidateId: string;
+  submitFramingBulkApproveAction?: ((formData: FormData) => Promise<void>) | undefined;
+}) {
+  const storiesNeedingProjectEpic = props.importedStoryCandidates.filter((story) => !story.draftRecord?.epicCandidateId?.trim());
+
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <CardTitle>Framing value spine</CardTitle>
+        <CardDescription>
+          Review imported framing content directly in one spine. Open the nodes you want to complete, mark the objects
+          you want to act on, then approve or reject only that selection.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap gap-2 text-xs">
+          {compactMetric("Outcomes", props.importedOutcomeCandidates.length)}
+          {compactMetric("Epics", props.importedEpicCandidates.length)}
+          {compactMetric("Story ideas", props.importedStoryCandidates.length)}
+          {compactMetric("Constraints", props.carryForwardItems.length)}
+          {compactMetric("Hidden leftovers", props.fileLeftovers.length)}
+        </div>
+        {props.submitFramingBulkApproveAction ? (
+          <form action={props.submitFramingBulkApproveAction} className="space-y-4">
+            <input name="sessionId" type="hidden" value={props.session.id} />
+            <input name="fileId" type="hidden" value={props.selectedFile.id} />
+            {props.fileLeftovers.map((section) => (
+              <input key={section.id} name="leftoverSectionIds" type="hidden" value={section.id} />
+            ))}
+
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">Outcome target</p>
+              {props.outcomeCandidateOptions.length > 1 ? (
+                <label className="mt-3 block space-y-2">
+                  <span className="text-sm font-medium text-foreground">Project Outcome to update or attach to</span>
+                  <select
+                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                    defaultValue=""
+                    name="targetOutcomeId"
+                  >
+                    <option value="">Select project Outcome</option>
+                    {props.outcomeCandidateOptions.map((candidate) => (
+                      <option key={candidate.id} value={candidate.id}>
+                        {describeProjectOutcome(candidate)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : props.outcomeCandidateOptions.length === 1 ? (
+                <>
+                  <input name="targetOutcomeId" type="hidden" value={props.defaultTargetOutcomeId} />
+                  <p className="mt-2 font-medium text-foreground">{describeProjectOutcome(props.outcomeCandidateOptions[0]!)}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    The project already has one Outcome, so imported framing content will use it automatically.
+                  </p>
+                </>
+              ) : props.importedOutcomeCandidates.length > 0 ? (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No Outcome exists in the project yet. Approving a selected imported Outcome will create it first.
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-amber-800">
+                  This import has no Outcome and the project has no existing Outcome. Approve or create an Outcome
+                  before Epics, Story Ideas, or constraints can be attached.
+                </p>
+              )}
+            </div>
+
+            {storiesNeedingProjectEpic.length > 0 ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/35 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">Project epic fallback</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Story Ideas that are not already grouped under an imported Epic will use this project Epic.
+                </p>
+                <label className="mt-3 block space-y-2">
+                  <span className="text-sm font-medium text-foreground">Project Epic</span>
+                  <select
+                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                    defaultValue={props.defaultBulkEpicCandidateId}
+                    name="targetEpicCandidateId"
+                  >
+                    <option value="">Select Epic</option>
+                    {props.projectEpicOptionsForTarget.map((candidate) => (
+                      <option key={candidate.id} value={candidate.id}>
+                        {describeProjectEpic(candidate)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : null}
+
+            <div className="space-y-3 rounded-2xl border border-border/70 bg-background/70 p-4">
+              {(props.importedOutcomeCandidates.length > 0 ? props.importedOutcomeCandidates : [null]).map((outcomeCandidate, index) => {
+                const epicNodes = props.importedEpicCandidates.filter((epic) =>
+                  outcomeCandidate ? epic.draftRecord?.outcomeCandidateId === outcomeCandidate.id : true
+                );
+                const freeStandingStories = props.importedStoryCandidates.filter(
+                  (story) =>
+                    !story.draftRecord?.epicCandidateId?.trim() &&
+                    (!outcomeCandidate ||
+                      !story.draftRecord?.outcomeCandidateId?.trim() ||
+                      story.draftRecord?.outcomeCandidateId === outcomeCandidate.id)
+                );
+                const outcomeStatus = outcomeCandidate ? framingCandidateStatus(outcomeCandidate) : null;
+
+                return (
+                  <details className="rounded-2xl border border-border/70 bg-background shadow-sm" key={outcomeCandidate?.id ?? `root-${index}`} open>
+                    <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
+                      <div className="flex items-start gap-3">
+                        {outcomeCandidate ? (
+                          <input defaultChecked name="candidateIds" type="checkbox" value={outcomeCandidate.id} />
+                        ) : null}
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
+                              Outcome
+                            </span>
+                            {outcomeStatus ? (
+                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${outcomeStatus.tone}`}>
+                                {outcomeStatus.label}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-2 font-medium text-foreground">
+                            {outcomeCandidate
+                              ? `${(outcomeCandidate.draftRecord?.key && !isLegacyImportKey(outcomeCandidate.draftRecord.key)
+                                  ? outcomeCandidate.draftRecord.key
+                                  : buildSuggestedCandidateKey(props.session, outcomeCandidate))} ${outcomeCandidate.title}`
+                              : props.defaultTargetOutcomeId
+                                ? describeProjectOutcome(props.outcomeCandidateOptions.find((candidate) => candidate.id === props.defaultTargetOutcomeId) ?? props.outcomeCandidateOptions[0]!)
+                                : "Outcome required"}
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {outcomeCandidate
+                              ? outcomeCandidate.draftRecord?.outcomeStatement ?? outcomeCandidate.summary
+                              : "Imported Epics, Story Ideas, and constraints will attach to the selected project Outcome."}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                    </summary>
+                    <div className="space-y-4 border-t border-border/70 px-4 py-4">
+                      {outcomeCandidate ? (
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Key</span>
+                            <input
+                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                              defaultValue={
+                                outcomeCandidate.draftRecord?.key && !isLegacyImportKey(outcomeCandidate.draftRecord.key)
+                                  ? outcomeCandidate.draftRecord.key
+                                  : buildSuggestedCandidateKey(props.session, outcomeCandidate)
+                              }
+                              name={`candidate:${outcomeCandidate.id}:key`}
+                              type="text"
+                            />
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Title</span>
+                            <input
+                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                              defaultValue={outcomeCandidate.draftRecord?.title ?? outcomeCandidate.title}
+                              name={`candidate:${outcomeCandidate.id}:title`}
+                              type="text"
+                            />
+                          </label>
+                          <label className="space-y-2 md:col-span-2">
+                            <span className="text-sm font-medium text-foreground">Outcome statement</span>
+                            <textarea
+                              className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                              defaultValue={outcomeCandidate.draftRecord?.outcomeStatement ?? ""}
+                              name={`candidate:${outcomeCandidate.id}:outcomeStatement`}
+                            />
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Baseline definition</span>
+                            <textarea
+                              className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                              defaultValue={outcomeCandidate.draftRecord?.baselineDefinition ?? ""}
+                              name={`candidate:${outcomeCandidate.id}:baselineDefinition`}
+                            />
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-foreground">Baseline source</span>
+                            <textarea
+                              className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                              defaultValue={outcomeCandidate.draftRecord?.baselineSource ?? ""}
+                              name={`candidate:${outcomeCandidate.id}:baselineSource`}
+                            />
+                          </label>
+                          <label className="space-y-2 md:col-span-2">
+                            <span className="text-sm font-medium text-foreground">Timeframe</span>
+                            <input
+                              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                              defaultValue={outcomeCandidate.draftRecord?.timeframe ?? ""}
+                              name={`candidate:${outcomeCandidate.id}:timeframe`}
+                              type="text"
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+
+                      {props.carryForwardItems.length > 0 && index === 0 ? (
+                        <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/15 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Outcome constraints</p>
+                          {props.carryForwardItems.map((item) => {
+                            const constraintState = framingConstraintStatus(props.selectedFile.sectionDispositions[item.sourceSection.id]?.action ?? null);
+
+                            return (
+                              <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={item.id}>
+                                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
+                                  <div className="flex items-start gap-3">
+                                    <input defaultChecked name="carryForwardSectionIds" type="checkbox" value={item.sourceSection.id} />
+                                    <div>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                          {carryForwardCategoryLabel(item.category)}
+                                        </span>
+                                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${constraintState.tone}`}>
+                                          {constraintState.label}
+                                        </span>
+                                      </div>
+                                      <p className="mt-2 font-medium text-foreground">{item.title}</p>
+                                      <p className="mt-1 text-sm text-muted-foreground">{item.summary}</p>
+                                    </div>
+                                  </div>
+                                  <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                                </summary>
+                                <div className="space-y-4 border-t border-border/70 px-4 py-4">
+                                  <label className="space-y-2">
+                                    <span className="text-sm font-medium text-foreground">Title</span>
+                                    <input
+                                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                      defaultValue={item.title}
+                                      name={`section:${item.sourceSection.id}:title`}
+                                      type="text"
+                                    />
+                                  </label>
+                                  <label className="space-y-2">
+                                    <span className="text-sm font-medium text-foreground">Text</span>
+                                    <textarea
+                                      className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                      defaultValue={item.summary}
+                                      name={`section:${item.sourceSection.id}:summary`}
+                                    />
+                                  </label>
+                                  <label className="space-y-2">
+                                    <span className="text-sm font-medium text-foreground">Constraint category</span>
+                                    <select
+                                      className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                      defaultValue={item.category}
+                                      name={`section:${item.sourceSection.id}:category`}
+                                    >
+                                      <option value="ux_principle">UX principle</option>
+                                      <option value="nfr_constraint">Non-functional requirement</option>
+                                      <option value="solution_constraint">Solution constraint</option>
+                                      <option value="additional_requirement">Additional requirement</option>
+                                      <option value="excluded_design">Design input</option>
+                                    </select>
+                                  </label>
+                                </div>
+                              </details>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+
+                      {epicNodes.map((epic) => {
+                        const epicStatus = framingCandidateStatus(epic);
+                        const epicStories = props.importedStoryCandidates.filter((story) => story.draftRecord?.epicCandidateId === epic.id);
+
+                        return (
+                          <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={epic.id}>
+                            <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
+                              <div className="flex items-start gap-3">
+                                <input defaultChecked name="candidateIds" type="checkbox" value={epic.id} />
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-800">
+                                      Epic
+                                    </span>
+                                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${epicStatus.tone}`}>
+                                      {epicStatus.label}
+                                    </span>
+                                  </div>
+                                  <p className="mt-2 font-medium text-foreground">
+                                    {(epic.draftRecord?.key && !isLegacyImportKey(epic.draftRecord.key)
+                                      ? epic.draftRecord.key
+                                      : buildSuggestedCandidateKey(props.session, epic))}{" "}
+                                    {epic.title}
+                                  </p>
+                                  <p className="mt-1 text-sm text-muted-foreground">{epic.draftRecord?.purpose ?? epic.summary}</p>
+                                </div>
+                              </div>
+                              <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                            </summary>
+                            <div className="space-y-4 border-t border-border/70 px-4 py-4">
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Key</span>
+                                  <input
+                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={
+                                      epic.draftRecord?.key && !isLegacyImportKey(epic.draftRecord.key)
+                                        ? epic.draftRecord.key
+                                        : buildSuggestedCandidateKey(props.session, epic)
+                                    }
+                                    name={`candidate:${epic.id}:key`}
+                                    type="text"
+                                  />
+                                </label>
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Title</span>
+                                  <input
+                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={epic.draftRecord?.title ?? epic.title}
+                                    name={`candidate:${epic.id}:title`}
+                                    type="text"
+                                  />
+                                </label>
+                                <label className="space-y-2 md:col-span-2">
+                                  <span className="text-sm font-medium text-foreground">Purpose</span>
+                                  <textarea
+                                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={epic.draftRecord?.purpose ?? epic.summary}
+                                    name={`candidate:${epic.id}:purpose`}
+                                  />
+                                </label>
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Scope boundary</span>
+                                  <textarea
+                                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={epic.draftRecord?.scopeBoundary ?? ""}
+                                    name={`candidate:${epic.id}:scopeBoundary`}
+                                  />
+                                </label>
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Risk note</span>
+                                  <textarea
+                                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={epic.draftRecord?.riskNote ?? ""}
+                                    name={`candidate:${epic.id}:riskNote`}
+                                  />
+                                </label>
+                                <input
+                                  name={`candidate:${epic.id}:outcomeCandidateId`}
+                                  type="hidden"
+                                  value={epic.draftRecord?.outcomeCandidateId ?? outcomeCandidate?.id ?? ""}
+                                />
+                              </div>
+
+                              {epicStories.map((story) => {
+                                const storyStatus = framingCandidateStatus(story);
+                                const parentEpic = props.importedEpicCandidates.find((candidate) => candidate.id === story.draftRecord?.epicCandidateId);
+
+                                return (
+                                  <details className="ml-4 rounded-2xl border border-border/70 bg-muted/10" key={story.id}>
+                                    <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
+                                      <div className="flex items-start gap-3">
+                                        <input defaultChecked name="candidateIds" type="checkbox" value={story.id} />
+                                        <div>
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
+                                              Story idea
+                                            </span>
+                                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${storyStatus.tone}`}>
+                                              {storyStatus.label}
+                                            </span>
+                                          </div>
+                                          <p className="mt-2 font-medium text-foreground">
+                                            {(story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                                              ? story.draftRecord.key
+                                              : buildSuggestedCandidateKey(props.session, story))}{" "}
+                                            {story.title}
+                                          </p>
+                                          {storyIdeaDescription(story) ? (
+                                            <p className="mt-1 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
+                                          ) : null}
+                                          <p className="mt-2 text-xs text-muted-foreground">
+                                            {parentEpic
+                                              ? `Linked to imported Epic ${parentEpic.title}.`
+                                              : "Will use the selected project Epic if no imported Epic is linked."}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                                    </summary>
+                                    <div className="space-y-4 border-t border-border/70 px-4 py-4">
+                                      <div className="grid gap-4 md:grid-cols-2">
+                                        <label className="space-y-2">
+                                          <span className="text-sm font-medium text-foreground">Key</span>
+                                          <input
+                                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                            defaultValue={
+                                              story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                                                ? story.draftRecord.key
+                                                : buildSuggestedCandidateKey(props.session, story)
+                                            }
+                                            name={`candidate:${story.id}:key`}
+                                            type="text"
+                                          />
+                                        </label>
+                                        <label className="space-y-2">
+                                          <span className="text-sm font-medium text-foreground">Title</span>
+                                          <input
+                                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                            defaultValue={story.draftRecord?.title ?? story.title}
+                                            name={`candidate:${story.id}:title`}
+                                            type="text"
+                                          />
+                                        </label>
+                                        <label className="space-y-2">
+                                          <span className="text-sm font-medium text-foreground">Story type</span>
+                                          <select
+                                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                            defaultValue={story.draftRecord?.storyType ?? "outcome_delivery"}
+                                            name={`candidate:${story.id}:storyType`}
+                                          >
+                                            <option value="outcome_delivery">Outcome delivery</option>
+                                            <option value="governance">Governance</option>
+                                            <option value="enablement">Enablement</option>
+                                          </select>
+                                        </label>
+                                        <label className="space-y-2">
+                                          <span className="text-sm font-medium text-foreground">Linked Epic</span>
+                                          <select
+                                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                            defaultValue={story.draftRecord?.epicCandidateId ?? ""}
+                                            name={`candidate:${story.id}:epicCandidateId`}
+                                          >
+                                            <option value="">Use project Epic fallback</option>
+                                            {props.importedEpicCandidates.map((candidate) => (
+                                              <option key={candidate.id} value={candidate.id}>
+                                                {candidate.title}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </label>
+                                        <label className="space-y-2 md:col-span-2">
+                                          <span className="text-sm font-medium text-foreground">Value intent</span>
+                                          <textarea
+                                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                            defaultValue={story.draftRecord?.valueIntent ?? story.summary}
+                                            name={`candidate:${story.id}:valueIntent`}
+                                          />
+                                        </label>
+                                        <label className="space-y-2 md:col-span-2">
+                                          <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                                          <textarea
+                                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                            defaultValue={story.draftRecord?.expectedBehavior ?? ""}
+                                            name={`candidate:${story.id}:expectedBehavior`}
+                                          />
+                                        </label>
+                                        <label className="space-y-2 md:col-span-2">
+                                          <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                                          <textarea
+                                            className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                            defaultValue={(story.draftRecord?.acceptanceCriteria ?? []).join("\n")}
+                                            name={`candidate:${story.id}:acceptanceCriteria`}
+                                          />
+                                        </label>
+                                        <input
+                                          name={`candidate:${story.id}:outcomeCandidateId`}
+                                          type="hidden"
+                                          value={story.draftRecord?.outcomeCandidateId ?? outcomeCandidate?.id ?? ""}
+                                        />
+                                      </div>
+                                    </div>
+                                  </details>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        );
+                      })}
+
+                      {freeStandingStories.map((story) => {
+                        const storyStatus = framingCandidateStatus(story);
+
+                        return (
+                          <details className="ml-4 rounded-2xl border border-border/70 bg-muted/10" key={story.id}>
+                            <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
+                              <div className="flex items-start gap-3">
+                                <input defaultChecked name="candidateIds" type="checkbox" value={story.id} />
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
+                                      Story idea
+                                    </span>
+                                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${storyStatus.tone}`}>
+                                      {storyStatus.label}
+                                    </span>
+                                  </div>
+                                  <p className="mt-2 font-medium text-foreground">
+                                    {(story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                                      ? story.draftRecord.key
+                                      : buildSuggestedCandidateKey(props.session, story))}{" "}
+                                    {story.title}
+                                  </p>
+                                  {storyIdeaDescription(story) ? (
+                                    <p className="mt-1 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
+                                  ) : null}
+                                  <p className="mt-2 text-xs text-muted-foreground">
+                                    Will use the selected project Epic if no imported Epic is linked.
+                                  </p>
+                                </div>
+                              </div>
+                              <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                            </summary>
+                            <div className="space-y-4 border-t border-border/70 px-4 py-4">
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Key</span>
+                                  <input
+                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={
+                                      story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
+                                        ? story.draftRecord.key
+                                        : buildSuggestedCandidateKey(props.session, story)
+                                    }
+                                    name={`candidate:${story.id}:key`}
+                                    type="text"
+                                  />
+                                </label>
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Title</span>
+                                  <input
+                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={story.draftRecord?.title ?? story.title}
+                                    name={`candidate:${story.id}:title`}
+                                    type="text"
+                                  />
+                                </label>
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Story type</span>
+                                  <select
+                                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={story.draftRecord?.storyType ?? "outcome_delivery"}
+                                    name={`candidate:${story.id}:storyType`}
+                                  >
+                                    <option value="outcome_delivery">Outcome delivery</option>
+                                    <option value="governance">Governance</option>
+                                    <option value="enablement">Enablement</option>
+                                  </select>
+                                </label>
+                                <label className="space-y-2 md:col-span-2">
+                                  <span className="text-sm font-medium text-foreground">Value intent</span>
+                                  <textarea
+                                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={story.draftRecord?.valueIntent ?? story.summary}
+                                    name={`candidate:${story.id}:valueIntent`}
+                                  />
+                                </label>
+                                <label className="space-y-2 md:col-span-2">
+                                  <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                                  <textarea
+                                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={story.draftRecord?.expectedBehavior ?? ""}
+                                    name={`candidate:${story.id}:expectedBehavior`}
+                                  />
+                                </label>
+                                <label className="space-y-2 md:col-span-2">
+                                  <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                                  <textarea
+                                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                    defaultValue={(story.draftRecord?.acceptanceCriteria ?? []).join("\n")}
+                                    name={`candidate:${story.id}:acceptanceCriteria`}
+                                  />
+                                </label>
+                                <input
+                                  name={`candidate:${story.id}:outcomeCandidateId`}
+                                  type="hidden"
+                                  value={story.draftRecord?.outcomeCandidateId ?? outcomeCandidate?.id ?? ""}
+                                />
+                              </div>
+                            </div>
+                          </details>
+                        );
+                      })}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+
+            <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
+              {props.fileLeftovers.length > 0
+                ? "Any leftover source noise stays hidden here and will be ignored automatically when you approve selected framing objects."
+                : "No hidden leftovers remain for this imported file."}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button className="flex-1 gap-2" name="decision" type="submit" value="approve">
+                <CheckCircle2 className="h-4 w-4" />
+                Approve
+              </Button>
+              <Button className="flex-1 gap-2" name="decision" type="submit" value="reject" variant="secondary">
+                <CircleAlert className="h-4 w-4" />
+                Reject
+              </Button>
+            </div>
+          </form>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ArtifactIntakeReviewWorkspace({
   session,
   selectedFile,
@@ -597,18 +1233,14 @@ export function ArtifactIntakeReviewWorkspace({
     };
   });
   const unresolvedCarryForwardCount = carryForwardItemStates.filter((entry) => entry.status === "unresolved").length;
+  const importedOutcomeCandidates = fileCandidates.filter((candidate) => candidate.type === "outcome");
   const importedEpicCandidates = fileCandidates.filter((candidate) => candidate.type === "epic");
   const importedStoryCandidates = fileCandidates.filter((candidate) => candidate.type === "story");
-  const selectedProjectOutcome =
-    outcomeCandidateOptions.find((outcome) => outcome.id === selectedOutcomeCandidateId) ??
-    (outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0] : null);
-  const carryForwardGroups = groupCarryForwardItemsByCategory(carryForwardItems);
-  const bulkOutcomeCandidateId = selectedProjectOutcome?.id ?? "";
-  const bulkProjectEpicOptions = bulkOutcomeCandidateId
-    ? (projectEpics ?? []).filter((epic) => epic.outcomeId === bulkOutcomeCandidateId)
+  const defaultTargetOutcomeId = outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0]?.id ?? "" : "";
+  const projectEpicOptionsForTarget = defaultTargetOutcomeId
+    ? (projectEpics ?? []).filter((epic) => epic.outcomeId === defaultTargetOutcomeId)
     : (projectEpics ?? []);
-  const storyIdeasNeedingProjectEpic = importedStoryCandidates.filter((story) => !story.draftRecord?.epicCandidateId?.trim());
-  const defaultBulkEpicCandidateId = bulkProjectEpicOptions.length === 1 ? bulkProjectEpicOptions[0]?.id ?? "" : "";
+  const defaultBulkEpicCandidateId = projectEpicOptionsForTarget.length === 1 ? projectEpicOptionsForTarget[0]?.id ?? "" : "";
   const fieldValidationNotes = resolveFieldValidationNotes(selectedCandidate);
   const fieldValidationMap = new Map<string, FieldValidationNote[]>();
 
@@ -631,172 +1263,20 @@ export function ArtifactIntakeReviewWorkspace({
   return (
     <div className="space-y-6">
       {session.importIntent === "framing" ? (
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>Simple framing import</CardTitle>
-            <CardDescription>
-              For framing imports we keep it simple: import Epics as Epics, Story Ideas as Story Ideas, and send UX, non-functional, and functional requirements straight into the framing constraints.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2 text-xs">
-              {compactMetric("Epics", importedEpicCandidates.length)}
-              {compactMetric("Story ideas", importedStoryCandidates.length)}
-              {compactMetric("Constraints", carryForwardItems.length)}
-              {compactMetric("Ignored leftovers", fileLeftovers.length)}
-            </div>
-            {submitFramingBulkApproveAction ? (
-              <form action={submitFramingBulkApproveAction} className="space-y-4">
-                <input name="sessionId" type="hidden" value={session.id} />
-                <input name="fileId" type="hidden" value={selectedFile.id} />
-                {fileLeftovers.map((section) => (
-                  <input key={section.id} name="leftoverSectionIds" type="hidden" value={section.id} />
-                ))}
-
-                <div className="rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">1. Framing outcome</p>
-                  {outcomeCandidateOptions.length === 1 && selectedProjectOutcome ? (
-                    <>
-                      <input name="outcomeCandidateId" type="hidden" value={selectedProjectOutcome.id} />
-                      <p className="mt-2 font-medium text-foreground">{describeProjectOutcome(selectedProjectOutcome)}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">The project only has one Outcome, so it is used automatically.</p>
-                    </>
-                  ) : (
-                    <label className="mt-3 block space-y-2">
-                      <span className="text-sm font-medium text-foreground">Choose framing Outcome</span>
-                      <select
-                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                        defaultValue={bulkOutcomeCandidateId}
-                        name="outcomeCandidateId"
-                      >
-                        <option value="">Select Outcome</option>
-                        {outcomeCandidateOptions.map((candidate) => (
-                          <option key={candidate.id} value={candidate.id}>
-                            {describeProjectOutcome(candidate)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                </div>
-
-                {storyIdeasNeedingProjectEpic.length > 0 ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50/35 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">2. Target epic for free-standing story ideas</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Story Ideas that are not already grouped under an imported Epic will be attached to this project Epic.
-                    </p>
-                    <label className="mt-3 block space-y-2">
-                      <span className="text-sm font-medium text-foreground">Project Epic</span>
-                      <select
-                        className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                        defaultValue={defaultBulkEpicCandidateId}
-                        name="targetEpicCandidateId"
-                      >
-                        <option value="">Select Epic</option>
-                        {bulkProjectEpicOptions.map((candidate) => (
-                          <option key={candidate.id} value={candidate.id}>
-                            {describeProjectEpic(candidate)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                ) : null}
-
-                {importedEpicCandidates.length > 0 ? (
-                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">3. Imported epics</p>
-                    <div className="mt-3 space-y-3">
-                      {importedEpicCandidates.map((epic) => (
-                        <label className="flex gap-3 rounded-2xl border border-border/70 bg-background p-4" key={epic.id}>
-                          <input defaultChecked name="candidateIds" type="checkbox" value={epic.id} />
-                          <div className="min-w-0">
-                            <p className="font-medium text-foreground">
-                              {(epic.draftRecord?.key && !isLegacyImportKey(epic.draftRecord.key)
-                                ? epic.draftRecord.key
-                                : buildSuggestedCandidateKey(session, epic))}{" "}
-                              {epic.title}
-                            </p>
-                            <p className="mt-1 text-sm text-muted-foreground">{epic.draftRecord?.purpose ?? epic.summary}</p>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {importedStoryCandidates.length > 0 ? (
-                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">4. Imported story ideas</p>
-                    <div className="mt-3 space-y-3">
-                      {importedStoryCandidates.map((story) => {
-                        const parentEpic = importedEpicCandidates.find((epic) => epic.id === story.draftRecord?.epicCandidateId);
-
-                        return (
-                          <label className="flex gap-3 rounded-2xl border border-border/70 bg-background p-4" key={story.id}>
-                            <input defaultChecked name="candidateIds" type="checkbox" value={story.id} />
-                            <div className="min-w-0">
-                              <p className="font-medium text-foreground">
-                                {(story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
-                                  ? story.draftRecord.key
-                                  : buildSuggestedCandidateKey(session, story))}{" "}
-                                {story.title}
-                              </p>
-                              {storyIdeaDescription(story) ? (
-                                <p className="mt-1 text-sm text-muted-foreground">{storyIdeaDescription(story)}</p>
-                              ) : null}
-                              <p className="mt-2 text-xs text-muted-foreground">
-                                {parentEpic
-                                  ? `Will stay under imported Epic ${parentEpic.title}.`
-                                  : "Will use the selected project Epic during bulk approval."}
-                              </p>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
-
-                {carryForwardGroups.length > 0 ? (
-                  <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">5. Constraints for framing</p>
-                    <div className="mt-3 space-y-4">
-                      {carryForwardGroups.map((group) => (
-                        <div key={group.category}>
-                          <p className="text-sm font-medium text-foreground">{group.title}</p>
-                          <div className="mt-2 space-y-2">
-                            {group.items.map((item) => (
-                              <label className="flex gap-3 rounded-2xl border border-border/70 bg-background p-4" key={item.id}>
-                                <input defaultChecked name="carryForwardSectionIds" type="checkbox" value={item.sourceSection.id} />
-                                <div className="min-w-0">
-                                  <p className="font-medium text-foreground">{item.title}</p>
-                                  <p className="mt-1 text-sm text-muted-foreground">{item.summary}</p>
-                                </div>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-                  {fileLeftovers.length > 0
-                    ? "Leftovers are not shown in detail here. Bulk approval will mark the remaining leftovers as ignored so the framing import stays clean."
-                    : "No leftover sections are waiting outside the simplified framing import."}
-                </div>
-
-                <Button className="w-full gap-2" type="submit">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Approve selected framing import
-                </Button>
-              </form>
-            ) : null}
-          </CardContent>
-        </Card>
+        <FramingImportSpine
+          carryForwardItems={carryForwardItems}
+          defaultBulkEpicCandidateId={defaultBulkEpicCandidateId}
+          defaultTargetOutcomeId={defaultTargetOutcomeId}
+          fileLeftovers={fileLeftovers}
+          importedEpicCandidates={importedEpicCandidates}
+          importedOutcomeCandidates={importedOutcomeCandidates}
+          importedStoryCandidates={importedStoryCandidates}
+          outcomeCandidateOptions={outcomeCandidateOptions}
+          projectEpicOptionsForTarget={projectEpicOptionsForTarget}
+          selectedFile={selectedFile}
+          session={session}
+          submitFramingBulkApproveAction={submitFramingBulkApproveAction}
+        />
       ) : null}
 
       {carryForwardItems.length > 0 && session.importIntent !== "framing" ? (

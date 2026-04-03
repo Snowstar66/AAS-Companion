@@ -8,7 +8,8 @@ import {
   getArtifactCandidateService,
   promoteArtifactCandidateService,
   reviewArtifactFileSectionDispositionService,
-  reviewArtifactCandidateService
+  reviewArtifactCandidateService,
+  updateArtifactFileCarryForwardItemsService
 } from "@aas-companion/api";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
@@ -63,6 +64,17 @@ function sortCandidateIdsForPromotion(
   };
 
   return [...candidates].sort((left, right) => weights[left.type] - weights[right.type]);
+}
+
+function readDynamicField(formData: FormData, scope: "candidate" | "section", id: string, field: string) {
+  return String(formData.get(`${scope}:${id}:${field}`) ?? "").trim();
+}
+
+function readDynamicLines(formData: FormData, scope: "candidate" | "section", id: string, field: string) {
+  return readDynamicField(formData, scope, id, field)
+    .split("\n")
+    .map((value) => value.trim())
+    .filter(Boolean);
 }
 
 function redirectDemoIntakeBlocked() {
@@ -311,7 +323,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
 
   const sessionId = String(formData.get("sessionId") ?? "");
   const fileId = String(formData.get("fileId") ?? "");
-  const outcomeCandidateId = String(formData.get("outcomeCandidateId") ?? "") || null;
+  const decision = String(formData.get("decision") ?? "approve") === "reject" ? "reject" : "approve";
+  const targetOutcomeId = String(formData.get("targetOutcomeId") ?? "") || null;
   const targetEpicCandidateId = String(formData.get("targetEpicCandidateId") ?? "") || null;
   const selectedCandidateIds = formData
     .getAll("candidateIds")
@@ -326,24 +339,13 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     .map((value) => String(value))
     .filter(Boolean);
 
-  if (!outcomeCandidateId) {
-    redirect(
-      buildRedirect("/intake", {
-        status: "error",
-        sessionId,
-        fileId,
-        message: "Choose the framing Outcome before approving the imported epics, story ideas, and constraints."
-      })
-    );
-  }
-
   if (selectedCandidateIds.length === 0 && selectedCarryForwardSectionIds.length === 0) {
     redirect(
       buildRedirect("/intake", {
         status: "error",
         sessionId,
         fileId,
-        message: "Select at least one imported Epic, Story Idea, or constraint before bulk approval."
+        message: `Select at least one imported object before ${decision === "approve" ? "approval" : "rejection"}.`
       })
     );
   }
@@ -370,11 +372,24 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const candidates = candidateResults.flatMap((entry) =>
     entry.result.ok && entry.result.data ? [entry.result.data] : []
   );
-  const storiesMissingEpic = candidates.filter(
-    (candidate) => candidate.type === "story" && !candidate.draftRecord?.epicCandidateId?.trim()
-  );
+  const selectedOutcomeCandidates = candidates.filter((candidate) => candidate.type === "outcome");
+  const selectedOutcomeCandidateIds = new Set(selectedOutcomeCandidates.map((candidate) => candidate.id));
+  const selectedOutcomeCandidateId =
+    selectedOutcomeCandidates.length === 1 ? selectedOutcomeCandidates[0]?.id ?? null : null;
+  const storiesMissingEpic = candidates.filter((candidate) => {
+    if (candidate.type !== "story") {
+      return false;
+    }
 
-  if (storiesMissingEpic.length > 0 && !targetEpicCandidateId) {
+    const currentEpicId =
+      readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
+      candidate.draftRecord?.epicCandidateId?.trim() ||
+      targetEpicCandidateId;
+
+    return !currentEpicId;
+  });
+
+  if (decision === "approve" && storiesMissingEpic.length > 0) {
     redirect(
       buildRedirect("/intake", {
         status: "error",
@@ -385,6 +400,116 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     );
   }
 
+  if (
+    decision === "approve" &&
+    selectedCarryForwardSectionIds.length > 0 &&
+    selectedOutcomeCandidates.length > 1
+  ) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message: "Approve constraints together with one imported Outcome at a time."
+      })
+    );
+  }
+
+  if (
+    decision === "approve" &&
+    selectedOutcomeCandidates.length === 0 &&
+    !targetOutcomeId
+  ) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message: "Select a project Outcome before approving imported Epics, Story Ideas, or constraints."
+      })
+    );
+  }
+
+  if (decision === "reject") {
+    for (const sectionId of selectedCarryForwardSectionIds) {
+      await reviewArtifactFileSectionDispositionService({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        fileId,
+        sectionId,
+        action: "not_relevant",
+        note: "Rejected from the framing import spine."
+      });
+    }
+
+    for (const candidate of candidates) {
+      const reviewResult = await reviewArtifactCandidateService({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        candidateId: candidate.id,
+        reviewStatus: "rejected",
+        reviewComment: "Rejected from the framing import spine."
+      });
+
+      if (!reviewResult.ok) {
+        redirect(
+          buildRedirect("/intake", {
+            status: "error",
+            sessionId,
+            fileId,
+            message: reviewResult.errors[0]?.message ?? "One or more selected framing items could not be rejected."
+          })
+        );
+      }
+    }
+
+    revalidatePath("/intake");
+    revalidatePath("/review");
+    revalidatePath("/workspace");
+    revalidatePath("/");
+
+    redirect(
+      buildRedirect("/intake", {
+        status: "reject",
+        sessionId,
+        fileId,
+        message: `Rejected ${selectedCandidateIds.length + selectedCarryForwardSectionIds.length} selected framing item(s).`
+      })
+    );
+  }
+
+  const carryForwardUpdates = selectedCarryForwardSectionIds.map((sectionId) => ({
+    sectionId,
+    title: readDynamicField(formData, "section", sectionId, "title"),
+    summary: readDynamicField(formData, "section", sectionId, "summary"),
+    category:
+      ((readDynamicField(formData, "section", sectionId, "category") || "additional_requirement") as
+        | "ux_principle"
+        | "nfr_constraint"
+        | "solution_constraint"
+        | "additional_requirement"
+        | "excluded_design")
+  }));
+
+  if (carryForwardUpdates.length > 0) {
+    const updateCarryForwardResult = await updateArtifactFileCarryForwardItemsService({
+      organizationId: session.organization.organizationId,
+      fileId,
+      updates: carryForwardUpdates
+    });
+
+    if (!updateCarryForwardResult.ok) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: updateCarryForwardResult.errors[0]?.message ?? "Constraint edits could not be saved for approval."
+        })
+      );
+    }
+  }
+
   for (const sectionId of selectedCarryForwardSectionIds) {
     await reviewArtifactFileSectionDispositionService({
       organizationId: session.organization.organizationId,
@@ -392,7 +517,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       fileId,
       sectionId,
       action: "confirmed",
-      note: null
+      note: "Approved from the framing import spine."
     });
   }
 
@@ -403,44 +528,64 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       fileId,
       sectionId,
       action: "not_relevant",
-      note: "Ignored during simplified framing bulk approval."
+      note: "Ignored during framing spine approval."
     });
-  }
-
-  if (selectedCarryForwardSectionIds.length > 0) {
-    const carryForwardApplyResult = await applyApprovedArtifactFileCarryForwardToOutcomeService({
-      organizationId: session.organization.organizationId,
-      actorId: session.userId,
-      outcomeId: outcomeCandidateId,
-      fileId
-    });
-
-    if (!carryForwardApplyResult.ok) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: carryForwardApplyResult.errors[0]?.message ?? "Constraints could not be applied to the framing Outcome."
-        })
-      );
-    }
   }
 
   for (const candidate of candidates) {
+    const currentOutcomeLink = readDynamicField(formData, "candidate", candidate.id, "outcomeCandidateId") || candidate.draftRecord?.outcomeCandidateId?.trim() || "";
+    const currentEpicLink = readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") || candidate.draftRecord?.epicCandidateId?.trim() || "";
+    const resolvedOutcomeLink =
+      candidate.type === "outcome"
+        ? targetOutcomeId
+        : currentOutcomeLink && selectedOutcomeCandidateIds.has(currentOutcomeLink)
+          ? currentOutcomeLink
+          : currentOutcomeLink && !selectedOutcomeCandidateIds.has(currentOutcomeLink) && currentOutcomeLink !== targetOutcomeId
+            ? targetOutcomeId
+            : currentOutcomeLink || (selectedOutcomeCandidateId ?? targetOutcomeId);
+    const draftRecord =
+      candidate.type === "outcome"
+        ? {
+            key: readDynamicField(formData, "candidate", candidate.id, "key") || null,
+            title: readDynamicField(formData, "candidate", candidate.id, "title") || null,
+            problemStatement: readDynamicField(formData, "candidate", candidate.id, "problemStatement") || null,
+            outcomeStatement: readDynamicField(formData, "candidate", candidate.id, "outcomeStatement") || null,
+            baselineDefinition: readDynamicField(formData, "candidate", candidate.id, "baselineDefinition") || null,
+            baselineSource: readDynamicField(formData, "candidate", candidate.id, "baselineSource") || null,
+            timeframe: readDynamicField(formData, "candidate", candidate.id, "timeframe") || null,
+            outcomeCandidateId: targetOutcomeId
+          }
+        : candidate.type === "epic"
+          ? {
+              key: readDynamicField(formData, "candidate", candidate.id, "key") || null,
+              title: readDynamicField(formData, "candidate", candidate.id, "title") || null,
+              purpose: readDynamicField(formData, "candidate", candidate.id, "purpose") || null,
+              scopeBoundary: readDynamicField(formData, "candidate", candidate.id, "scopeBoundary") || null,
+              riskNote: readDynamicField(formData, "candidate", candidate.id, "riskNote") || null,
+              outcomeCandidateId: resolvedOutcomeLink || null
+            }
+          : {
+              key: readDynamicField(formData, "candidate", candidate.id, "key") || null,
+              title: readDynamicField(formData, "candidate", candidate.id, "title") || null,
+              storyType:
+                ((readDynamicField(formData, "candidate", candidate.id, "storyType") || "outcome_delivery") as
+                  | "outcome_delivery"
+                  | "governance"
+                  | "enablement"),
+              valueIntent: readDynamicField(formData, "candidate", candidate.id, "valueIntent") || null,
+              expectedBehavior: readDynamicField(formData, "candidate", candidate.id, "expectedBehavior") || null,
+              acceptanceCriteria: readDynamicLines(formData, "candidate", candidate.id, "acceptanceCriteria"),
+              outcomeCandidateId: resolvedOutcomeLink || null,
+              epicCandidateId: currentEpicLink || targetEpicCandidateId || null
+            };
+
     const reviewResult = await reviewArtifactCandidateService({
       organizationId: session.organization.organizationId,
       actorId: session.userId,
       candidateId: candidate.id,
       reviewStatus: "confirmed",
-      reviewComment: "Approved through simplified framing bulk approval.",
-      draftRecord: {
-        outcomeCandidateId,
-        epicCandidateId:
-          candidate.type === "story"
-            ? (candidate.draftRecord?.epicCandidateId?.trim() || targetEpicCandidateId)
-            : candidate.draftRecord?.epicCandidateId ?? null
-      }
+      reviewComment: "Approved from the framing import spine.",
+      draftRecord
     });
 
     if (!reviewResult.ok) {
@@ -449,7 +594,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
           status: "error",
           sessionId,
           fileId,
-          message: reviewResult.errors[0]?.message ?? "Imported candidates could not be prepared for approval."
+          message: reviewResult.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
         })
       );
     }
@@ -463,6 +608,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   );
   let promotedCount = 0;
   const failures: string[] = [];
+  let resolvedOutcomeId = targetOutcomeId;
 
   for (const candidate of orderedCandidates) {
     const promoteResult = await promoteArtifactCandidateService({
@@ -477,7 +623,42 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       continue;
     }
 
+    if (candidate.type === "outcome") {
+      resolvedOutcomeId = promoteResult.data.promotedEntityId;
+    }
+
     promotedCount += 1;
+  }
+
+  if (selectedCarryForwardSectionIds.length > 0) {
+    if (!resolvedOutcomeId) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: "Approve or choose a framing Outcome before applying imported constraints."
+        })
+      );
+    }
+
+    const carryForwardApplyResult = await applyApprovedArtifactFileCarryForwardToOutcomeService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      outcomeId: resolvedOutcomeId,
+      fileId
+    });
+
+    if (!carryForwardApplyResult.ok) {
+      redirect(
+        buildRedirect("/intake", {
+          status: "error",
+          sessionId,
+          fileId,
+          message: carryForwardApplyResult.errors[0]?.message ?? "Constraints could not be applied to the framing Outcome."
+        })
+      );
+    }
   }
 
   revalidatePath("/intake");
@@ -494,8 +675,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       fileId,
       message:
         failures.length > 0
-          ? `Approved ${promotedCount} imported framing item(s), but ${failures.length} still need attention: ${failures.slice(0, 2).join(" | ")}`
-          : `Approved ${promotedCount} imported framing item(s) and applied ${selectedCarryForwardSectionIds.length} constraint item(s) to the current framing Outcome.`
+          ? `Approved ${promotedCount} selected framing item(s), but ${failures.length} still need attention: ${failures.slice(0, 2).join(" | ")}`
+          : `Approved ${promotedCount} selected framing item(s) and applied ${selectedCarryForwardSectionIds.length} approved constraint item(s).`
     })
   );
 }

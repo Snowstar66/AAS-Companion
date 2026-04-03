@@ -1707,10 +1707,6 @@ export function buildAiAssistedArtifactProcessingResult(input: {
     const usedSectionIds = new Set<string>();
 
     for (const interpretedCandidate of aiMatch.candidates) {
-      if (importIntent === "framing" && interpretedCandidate.type === "outcome") {
-        continue;
-      }
-
       const sourceSection = sectionById.get(interpretedCandidate.sectionId);
 
       if (!sourceSection) {
@@ -1733,9 +1729,7 @@ export function buildAiAssistedArtifactProcessingResult(input: {
       const inferredOutcomeCandidateId =
         interpretedCandidate.type === "outcome"
           ? undefined
-          : importIntent === "framing"
-            ? undefined
-            : explicitOutcomeCandidateId ?? lastOutcomeCandidateId;
+          : explicitOutcomeCandidateId ?? lastOutcomeCandidateId;
       const inferredEpicCandidateId =
         interpretedCandidate.type === "story" ? explicitEpicCandidateId ?? lastEpicCandidateId : undefined;
       const sourceConfidence =
@@ -2596,10 +2590,6 @@ export function mapParsedArtifactsToAasCandidates(input: {
         continue;
       }
 
-      if (importIntent === "framing" && section.kind === "outcome_candidate") {
-        continue;
-      }
-
       const candidateType =
         section.kind === "outcome_candidate" ? "outcome" : section.kind === "epic_candidate" ? "epic" : "story";
       const candidateId = buildArtifactCandidateId({
@@ -2620,7 +2610,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
       }
 
       if (candidateType === "epic") {
-        inferredOutcomeCandidateId = importIntent === "framing" ? undefined : (lastOutcomeCandidateId ?? undefined);
+        inferredOutcomeCandidateId = lastOutcomeCandidateId ?? undefined;
         if (!inferredOutcomeCandidateId && importIntent !== "framing") {
           relationshipState = "missing";
           relationshipNote = "No prior Outcome candidate was available to anchor this Epic relationship.";
@@ -2638,7 +2628,7 @@ export function mapParsedArtifactsToAasCandidates(input: {
       }
 
       if (candidateType === "story") {
-        inferredOutcomeCandidateId = importIntent === "framing" ? undefined : (lastOutcomeCandidateId ?? undefined);
+        inferredOutcomeCandidateId = lastOutcomeCandidateId ?? undefined;
         inferredEpicCandidateId = lastEpicCandidateId ?? undefined;
 
         if (!inferredEpicCandidateId || (!inferredOutcomeCandidateId && importIntent !== "framing")) {

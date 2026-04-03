@@ -491,6 +491,41 @@ describe("artifact intake helpers", () => {
     expect(mapping.unmappedSections).toHaveLength(0);
   });
 
+  it("keeps imported outcomes visible in framing imports so they can be approved or updated", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-framing-outcome-1",
+      "framing-outcome.md",
+      [
+        "# Outcome",
+        "Outcome statement: reduce review lead time.",
+        "Baseline definition: average approval lead time from upload to approve.",
+        "Measurement method: weekly analytics export.",
+        "",
+        "## Epic",
+        "Epic title: Simplify framing import review"
+      ].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-framing-outcome-1",
+          fileName: "framing-outcome.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const outcomeCandidate = mapping.candidates.find((candidate) => candidate.type === "outcome");
+    const epicCandidate = mapping.candidates.find((candidate) => candidate.type === "epic");
+
+    expect(outcomeCandidate).toBeDefined();
+    expect(outcomeCandidate?.draftRecord?.outcomeStatement).toContain("reduce review lead time");
+    expect(epicCandidate?.draftRecord?.outcomeCandidateId).toBe(outcomeCandidate?.id);
+  });
+
   it("preserves explicit AI-assisted epic links instead of relying only on section order", () => {
     const parsed = parseMarkdownArtifact(
       "file-ai-epic-link",
