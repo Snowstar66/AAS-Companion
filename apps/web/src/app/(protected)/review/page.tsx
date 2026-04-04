@@ -129,26 +129,6 @@ function getBacklogLabel(state: ReviewBacklogState) {
   return "Discarded";
 }
 
-function getBacklogDescription(state: ReviewBacklogState) {
-  if (state === "needs_action") {
-    return "Items with missing fields, blocked issues or open follow-up work.";
-  }
-
-  if (state === "needs_confirmation") {
-    return "Items waiting on human confirmation or interpretation decisions.";
-  }
-
-  if (state === "pending") {
-    return "Items that are cleaned up and waiting for the final approval step.";
-  }
-
-  if (state === "approved") {
-    return "Items that were approved and promoted into project records.";
-  }
-
-  return "Items intentionally removed from the active review flow.";
-}
-
 function getBacklogBadgeClasses(state: ReviewBacklogState) {
   if (state === "approved") {
     return "border-emerald-200 bg-emerald-50 text-emerald-800";
@@ -909,26 +889,49 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
       return finding.category === findingFilter;
     }) ?? [];
 
-  const groupOrder: ReviewBacklogState[] = [
-    "needs_action",
-    "needs_confirmation",
-    "pending",
-    "approved",
-    "discarded"
-  ];
-
   const importIntentGroups = (["framing", "design"] as const)
     .map((importIntent) => {
       const items = visibleItems.filter((candidate) => (candidate.intakeSession?.importIntent ?? "framing") === importIntent);
+      const sessions = new Map<
+        string,
+        {
+          id: string;
+          label: string;
+          fileNames: string[];
+          items: typeof items;
+        }
+      >();
+
+      for (const candidate of items) {
+        const sessionKey = candidate.intakeSession?.id || `candidate-${candidate.id}`;
+        const existingSession = sessions.get(sessionKey);
+
+        if (existingSession) {
+          existingSession.items.push(candidate);
+          if (!existingSession.fileNames.includes(candidate.file.fileName)) {
+            existingSession.fileNames.push(candidate.file.fileName);
+          }
+          continue;
+        }
+
+        sessions.set(sessionKey, {
+          id: sessionKey,
+          label: candidate.intakeSession?.label || candidate.file.fileName,
+          fileNames: [candidate.file.fileName],
+          items: [candidate]
+        });
+      }
 
       return {
         importIntent,
         label: getImportIntentLabel(importIntent),
         items,
-        groups: groupOrder.map((state) => ({
-          state,
-          items: items.filter((candidate) => getBacklogState(candidate) === state)
-        }))
+        sessions: [...sessions.values()]
+          .map((sessionGroup) => ({
+            ...sessionGroup,
+            items: sortReviewCandidates(sessionGroup.items, queue.items)
+          }))
+          .sort((left, right) => compareText(left.label, right.label))
       };
     })
     .filter((group) => group.items.length > 0);
@@ -1260,16 +1263,16 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                         </div>
                       </form>
 
-                      {intentGroup.groups.map((group) => (
+                      {intentGroup.sessions.map((group) => (
                         <CollapsibleSection
                           badge={`${group.items.length}`}
-                          defaultOpen={group.items.length > 0 && (group.state === "needs_action" || group.state === "needs_confirmation" || group.state === "pending")}
-                          description={getBacklogDescription(group.state)}
-                          key={`${intentGroup.importIntent}-${group.state}`}
-                          title={getBacklogLabel(group.state)}
+                          defaultOpen={selectedCandidate ? group.items.some((candidate) => candidate.id === selectedCandidate.id) : true}
+                          description={`Files: ${group.fileNames.join(", ")}. Sorted as Outcome -> Epic -> ${intentGroup.importIntent === "design" ? "Delivery Story" : "Story Idea"}.`}
+                          key={`${intentGroup.importIntent}-${group.id}`}
+                          title={group.label}
                         >
                           {group.items.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No review items are currently in this group.</p>
+                            <p className="text-sm text-muted-foreground">No review items are currently in this import session.</p>
                           ) : (
                             <div className="grid gap-3">
                               {group.items.map((candidate) => {

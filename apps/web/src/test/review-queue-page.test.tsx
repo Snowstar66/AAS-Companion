@@ -192,7 +192,7 @@ describe("Review queue page", () => {
     expect(screen.getByRole("link", { name: "Open focused workspace" })).toBeDefined();
     expect(screen.getByText("Expand to fix fields and approve here")).toBeDefined();
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
-    expect(screen.getByText("No items are currently in this group.")).toBeDefined();
+    expect(screen.getByText(/Sorted as Outcome -> Epic -> Story Idea\./i)).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });

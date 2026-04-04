@@ -1,4 +1,4 @@
-import { listOperationalActivityEventsForOrganization } from "@aas-companion/db";
+import { clearOperationalActivityEventsForOrganization, listOperationalActivityEventsForOrganization } from "@aas-companion/db";
 import { success } from "./shared";
 
 export async function listOperationalActivityEventsService(input: {
@@ -6,4 +6,10 @@ export async function listOperationalActivityEventsService(input: {
   limit?: number;
 }) {
   return success(await listOperationalActivityEventsForOrganization(input));
+}
+
+export async function clearOperationalActivityEventsService(input: {
+  organizationId: string;
+}) {
+  return success(await clearOperationalActivityEventsForOrganization(input));
 }

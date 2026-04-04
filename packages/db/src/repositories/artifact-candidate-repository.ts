@@ -25,6 +25,17 @@ import { createStory } from "./story-repository";
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
 type ParsedArtifactCandidateReviewActionInput = ReturnType<typeof artifactCandidateReviewActionInputSchema.parse>;
+const BULK_REVIEW_CHUNK_SIZE = 8;
+
+function chunkArray<T>(items: T[], size: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
 
 function getUnmappedSectionContext(input: {
   mappedArtifacts: unknown;
@@ -999,16 +1010,23 @@ export async function reviewArtifactCandidate(input: unknown) {
 
 export async function reviewArtifactCandidatesBulk(inputs: unknown[]) {
   const parsedInputs = inputs.map((input) => artifactCandidateReviewActionInputSchema.parse(input));
+  const results = [];
 
-  return prisma.$transaction(async (tx) => {
-    const results = [];
+  for (const chunk of chunkArray(parsedInputs, BULK_REVIEW_CHUNK_SIZE)) {
+    const chunkResults = await prisma.$transaction(async (tx) => {
+      const nestedResults = [];
 
-    for (const parsed of parsedInputs) {
-      results.push(await reviewArtifactCandidateWithinTransaction(parsed, tx));
-    }
+      for (const parsed of chunk) {
+        nestedResults.push(await reviewArtifactCandidateWithinTransaction(parsed, tx));
+      }
 
-    return results;
-  });
+      return nestedResults;
+    });
+
+    results.push(...chunkResults);
+  }
+
+  return results;
 }
 
 export async function promoteArtifactCandidate(input: {

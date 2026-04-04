@@ -110,6 +110,7 @@ describe("Admin page", () => {
     expect(screen.getByRole("checkbox", { name: /Test Project/i })).toBeDefined();
     expect(screen.getByRole("button", { name: "Hard delete selected projects" })).toBeDefined();
     expect(screen.getByText("Operational logs")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Clear all logs" })).toBeDefined();
     expect(screen.getByText(/Transaction API error: Unable to start a transaction in the given time\./i)).toBeDefined();
   });
 });

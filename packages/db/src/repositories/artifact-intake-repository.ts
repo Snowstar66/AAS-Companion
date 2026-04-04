@@ -315,79 +315,88 @@ export async function reviewArtifactFileSectionDisposition(input: unknown) {
 
 export async function reviewArtifactFileSectionDispositionsBulk(inputs: unknown[]) {
   const parsedInputs = inputs.map((input) => artifactFileSectionDispositionActionInputSchema.parse(input));
+  const chunkSize = 8;
+  const results = [];
 
-  return prisma.$transaction(async (tx) => {
-    const filesById = new Map<
-      string,
-      Awaited<ReturnType<typeof tx.artifactIntakeFile.findFirst>>
-    >();
+  for (let index = 0; index < parsedInputs.length; index += chunkSize) {
+    const chunk = parsedInputs.slice(index, index + chunkSize);
+    const chunkResults = await prisma.$transaction(async (tx) => {
+      const filesById = new Map<
+        string,
+        Awaited<ReturnType<typeof tx.artifactIntakeFile.findFirst>>
+      >();
 
-    for (const parsed of parsedInputs) {
-      if (!filesById.has(parsed.fileId)) {
-        const file = await tx.artifactIntakeFile.findFirst({
-          where: {
-            organizationId: parsed.organizationId,
-            id: parsed.fileId
+      for (const parsed of chunk) {
+        if (!filesById.has(parsed.fileId)) {
+          const file = await tx.artifactIntakeFile.findFirst({
+            where: {
+              organizationId: parsed.organizationId,
+              id: parsed.fileId
+            }
+          });
+
+          if (!file) {
+            throw new Error("Artifact file was not found in organization scope.");
           }
-        });
 
-        if (!file) {
+          filesById.set(parsed.fileId, file);
+        }
+      }
+
+      const nestedResults = [];
+
+      for (const parsed of chunk) {
+        const existing = filesById.get(parsed.fileId);
+
+        if (!existing) {
           throw new Error("Artifact file was not found in organization scope.");
         }
 
-        filesById.set(parsed.fileId, file);
-      }
-    }
-
-    const results = [];
-
-    for (const parsed of parsedInputs) {
-      const existing = filesById.get(parsed.fileId);
-
-      if (!existing) {
-        throw new Error("Artifact file was not found in organization scope.");
-      }
-
-      const nextSectionDispositions = artifactIssueDispositionMapSchema.parse({
-        ...(artifactIssueDispositionMapSchema.parse(existing.sectionDispositions ?? {})),
-        [parsed.sectionId]: {
-          issueId: parsed.sectionId,
-          action: parsed.action,
-          note: parsed.note ?? null
-        }
-      });
-
-      const updated = await tx.artifactIntakeFile.update({
-        where: { id: existing.id },
-        data: {
-          sectionDispositions: nextSectionDispositions as Prisma.InputJsonValue
-        }
-      });
-
-      filesById.set(parsed.fileId, updated);
-      results.push(updated);
-    }
-
-    for (const parsed of parsedInputs) {
-      await appendActivityEvent(
-        {
-          organizationId: parsed.organizationId,
-          entityType: "artifact_intake_file",
-          entityId: parsed.fileId,
-          eventType: "artifact_file_section_disposition_recorded",
-          actorId: parsed.actorId ?? null,
-          metadata: {
-            sectionId: parsed.sectionId,
+        const nextSectionDispositions = artifactIssueDispositionMapSchema.parse({
+          ...(artifactIssueDispositionMapSchema.parse(existing.sectionDispositions ?? {})),
+          [parsed.sectionId]: {
+            issueId: parsed.sectionId,
             action: parsed.action,
             note: parsed.note ?? null
           }
-        },
-        tx
-      );
-    }
+        });
 
-    return results;
-  });
+        const updated = await tx.artifactIntakeFile.update({
+          where: { id: existing.id },
+          data: {
+            sectionDispositions: nextSectionDispositions as Prisma.InputJsonValue
+          }
+        });
+
+        filesById.set(parsed.fileId, updated);
+        nestedResults.push(updated);
+      }
+
+      for (const parsed of chunk) {
+        await appendActivityEvent(
+          {
+            organizationId: parsed.organizationId,
+            entityType: "artifact_intake_file",
+            entityId: parsed.fileId,
+            eventType: "artifact_file_section_disposition_recorded",
+            actorId: parsed.actorId ?? null,
+            metadata: {
+              sectionId: parsed.sectionId,
+              action: parsed.action,
+              note: parsed.note ?? null
+            }
+          },
+          tx
+        );
+      }
+
+      return nestedResults;
+    });
+
+    results.push(...chunkResults);
+  }
+
+  return results;
 }
 
 async function processArtifactIntakeSession(

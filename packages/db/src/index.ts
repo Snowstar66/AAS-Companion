@@ -18,6 +18,7 @@ export {
 } from "./repositories/artifact-candidate-repository";
 export {
   appendActivityEvent,
+  clearOperationalActivityEventsForOrganization,
   listActivityEventsForEntity,
   listOperationalActivityEventsForOrganization
 } from "./repositories/activity-repository";

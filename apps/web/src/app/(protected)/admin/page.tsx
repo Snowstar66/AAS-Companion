@@ -4,7 +4,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { loadOperationalLogs } from "@/lib/admin/operational-logs";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
-import { hardDeleteProjectsAction } from "./actions";
+import { clearOperationalLogsAction, hardDeleteProjectsAction } from "./actions";
 
 type AdminPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -180,10 +180,23 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>Operational logs</CardTitle>
-                <CardDescription>
-                  Lightweight troubleshooting for the active project. Slow or failed imports and approvals show up here with timing.
-                </CardDescription>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <CardTitle>Operational logs</CardTitle>
+                    <CardDescription>
+                      Lightweight troubleshooting for the active project. Slow or failed imports and approvals show up here with timing.
+                    </CardDescription>
+                  </div>
+                  <form action={clearOperationalLogsAction}>
+                    <PendingFormButton
+                      className="gap-2"
+                      label="Clear all logs"
+                      pendingLabel="Clearing logs..."
+                      showPendingCursor
+                      variant="secondary"
+                    />
+                  </form>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">

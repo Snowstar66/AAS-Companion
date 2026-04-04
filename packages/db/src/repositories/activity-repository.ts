@@ -5,39 +5,18 @@ import { prisma } from "../client";
 
 type DbClient = Prisma.TransactionClient | PrismaClient;
 
-async function resolveExistingActorId(
-  actorId: string | null | undefined,
-  db: DbClient
-) {
-  if (!actorId) {
-    return null;
-  }
-
-  const existingActor = await db.appUser.findUnique({
-    where: {
-      id: actorId
-    },
-    select: {
-      id: true
-    }
-  });
-
-  return existingActor?.id ?? null;
-}
-
 export async function appendActivityEvent(
   input: unknown,
   db: DbClient = prisma
 ) {
   const parsed = activityEventCreateInputSchema.parse(input);
-  const actorId = await resolveExistingActorId(parsed.actorId ?? null, db);
   const data: Prisma.ActivityEventUncheckedCreateInput = {
     id: randomUUID(),
     organizationId: parsed.organizationId,
     entityType: parsed.entityType,
     entityId: parsed.entityId,
     eventType: parsed.eventType as never,
-    actorId
+    actorId: parsed.actorId ?? null
   };
 
   if (parsed.metadata) {
@@ -85,4 +64,19 @@ export async function listOperationalActivityEventsForOrganization(input: {
     },
     take: Math.max(1, Math.min(input.limit ?? 40, 100))
   });
+}
+
+export async function clearOperationalActivityEventsForOrganization(input: {
+  organizationId: string;
+}) {
+  const result = await prisma.activityEvent.deleteMany({
+    where: {
+      organizationId: input.organizationId,
+      eventType: "operational_log_recorded"
+    }
+  });
+
+  return {
+    deletedCount: result.count
+  };
 }
