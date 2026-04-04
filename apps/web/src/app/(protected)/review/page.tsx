@@ -2,12 +2,20 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, FileSearch, GitBranch, ShieldCheck } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
 import { AppShell } from "@/components/layout/app-shell";
 import { ReviewSessionValueSpine } from "@/components/review/review-session-value-spine";
 import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
+import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import { loadArtifactReviewQueue } from "@/lib/intake/review-queue";
 import { loadOperationalReviewDashboard } from "@/lib/review/operational-review";
+import {
+  submitArtifactCandidateFromIntakeAction,
+  submitArtifactCandidateIssueDispositionInlineAction,
+  submitArtifactSectionDispositionInlineAction,
+  submitFramingBulkApproveFromIntakeAction
+} from "../intake/actions";
 import { submitArtifactBulkReviewAction, submitArtifactCandidateReviewAction } from "./actions";
 
 type ReviewPageProps = {
@@ -1010,6 +1018,32 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         queue.items
       )
     : [];
+  const selectedFramingWorkspace =
+    selectedCandidate && selectedImportIntent === "framing"
+      ? await loadArtifactIntakeWorkspace({
+          sessionId: selectedCandidate.intakeSession?.id ?? null,
+          fileId: selectedCandidate.file?.id ?? null
+        })
+      : null;
+  const selectedFramingSession =
+    selectedFramingWorkspace?.state === "ready"
+      ? selectedFramingWorkspace.sessions.find((session) => session.id === selectedCandidate?.intakeSession?.id) ?? null
+      : null;
+  const selectedFramingFile =
+    selectedFramingSession?.files.find((file) => file.id === selectedCandidate?.file?.id) ?? null;
+  const selectedFramingFileCandidates = selectedFramingFile
+    ? (selectedFramingSession?.candidates ?? []).filter((candidate) => candidate.fileId === selectedFramingFile.id)
+    : [];
+  const selectedFramingWorkspaceCandidate =
+    selectedFramingFileCandidates.find((candidate) => candidate.id === selectedCandidate?.id) ?? null;
+  const showImportStyleFramingReview = Boolean(
+    selectedCandidate &&
+      selectedImportIntent === "framing" &&
+      selectedFramingWorkspace?.state === "ready" &&
+      selectedFramingSession &&
+      selectedFramingFile &&
+      selectedFramingWorkspaceCandidate
+  );
   const selectedCandidateOutcomeOptions = queue.projectOutcomes ?? [];
   const selectedCandidateImportedEpicOptions = selectedCandidate ? getImportedEpicOptions(queue.items, selectedCandidate) : [];
   const selectedOutcomeCandidateId =
@@ -1496,6 +1530,45 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   </CardDescription>
                 </CardHeader>
               </Card>
+            ) : showImportStyleFramingReview &&
+              selectedFramingWorkspace?.state === "ready" &&
+              selectedFramingSession &&
+              selectedFramingFile &&
+              selectedFramingWorkspaceCandidate ? (
+              <div className="space-y-6">
+                <Card className="border-border/70 shadow-sm">
+                  <CardHeader>
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <CardTitle>Framing review uses the import workspace</CardTitle>
+                        <CardDescription className="mt-2">
+                          This framing item is shown with the same value spine, field editing and approve flow as Import,
+                          so you do not have to interpret two different UIs for the same material.
+                        </CardDescription>
+                      </div>
+                      <Button asChild className="gap-2" variant="secondary">
+                        <Link href={buildReviewHref({ reviewStatusFilter, findingFilter })}>
+                          Back to backlog
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+
+                <ArtifactIntakeReviewWorkspace
+                  fileCandidates={selectedFramingFileCandidates}
+                  projectEpics={selectedFramingWorkspace.projectEpics}
+                  projectOutcomes={selectedFramingWorkspace.projectOutcomes}
+                  selectedCandidate={selectedFramingWorkspaceCandidate}
+                  selectedFile={selectedFramingFile}
+                  session={selectedFramingSession}
+                  submitAction={submitArtifactCandidateFromIntakeAction}
+                  submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
+                  submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
+                  submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
+                />
+              </div>
             ) : (
               <div className="grid gap-6 2xl:grid-cols-[minmax(340px,0.88fr)_minmax(0,1.12fr)]">
                 <div className="space-y-6">
