@@ -1018,32 +1018,6 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         queue.items
       )
     : [];
-  const selectedFramingWorkspace =
-    selectedCandidate && selectedImportIntent === "framing"
-      ? await loadArtifactIntakeWorkspace({
-          sessionId: selectedCandidate.intakeSession?.id ?? null,
-          fileId: selectedCandidate.file?.id ?? null
-        })
-      : null;
-  const selectedFramingSession =
-    selectedFramingWorkspace?.state === "ready"
-      ? selectedFramingWorkspace.sessions.find((session) => session.id === selectedCandidate?.intakeSession?.id) ?? null
-      : null;
-  const selectedFramingFile =
-    selectedFramingSession?.files.find((file) => file.id === selectedCandidate?.file?.id) ?? null;
-  const selectedFramingFileCandidates = selectedFramingFile
-    ? (selectedFramingSession?.candidates ?? []).filter((candidate) => candidate.fileId === selectedFramingFile.id)
-    : [];
-  const selectedFramingWorkspaceCandidate =
-    selectedFramingFileCandidates.find((candidate) => candidate.id === selectedCandidate?.id) ?? null;
-  const showImportStyleFramingReview = Boolean(
-    selectedCandidate &&
-      selectedImportIntent === "framing" &&
-      selectedFramingWorkspace?.state === "ready" &&
-      selectedFramingSession &&
-      selectedFramingFile &&
-      selectedFramingWorkspaceCandidate
-  );
   const selectedCandidateOutcomeOptions = queue.projectOutcomes ?? [];
   const selectedCandidateImportedEpicOptions = selectedCandidate ? getImportedEpicOptions(queue.items, selectedCandidate) : [];
   const selectedOutcomeCandidateId =
@@ -1088,6 +1062,43 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
       return finding.category === findingFilter;
     }) ?? [];
+  const visibleFramingItems = sortReviewCandidates(
+    visibleItems.filter((candidate) => (candidate.intakeSession?.importIntent ?? "framing") === "framing"),
+    queue.items
+  );
+  const activeFramingCandidate =
+    selectedCandidate?.intakeSession?.importIntent === "framing"
+      ? selectedCandidate
+      : !selectedCandidate
+        ? visibleFramingItems[0] ?? null
+        : null;
+  const activeFramingWorkspace =
+    activeFramingCandidate
+      ? await loadArtifactIntakeWorkspace({
+          sessionId: activeFramingCandidate.intakeSession?.id ?? null,
+          fileId: activeFramingCandidate.file?.id ?? null
+        })
+      : null;
+  const activeFramingSession =
+    activeFramingWorkspace?.state === "ready"
+      ? activeFramingWorkspace.sessions.find((session) => session.id === activeFramingCandidate?.intakeSession?.id) ?? null
+      : null;
+  const activeFramingFile =
+    activeFramingSession?.files.find((file) => file.id === activeFramingCandidate?.file?.id) ?? null;
+  const activeFramingFileCandidates = activeFramingFile
+    ? (activeFramingSession?.candidates ?? []).filter((candidate) => candidate.fileId === activeFramingFile.id)
+    : [];
+  const activeFramingWorkspaceCandidate =
+    activeFramingFileCandidates.find((candidate) => candidate.id === activeFramingCandidate?.id) ??
+    activeFramingFileCandidates[0] ??
+    null;
+  const showImportStyleFramingReview = Boolean(
+    activeFramingCandidate &&
+      activeFramingWorkspace?.state === "ready" &&
+      activeFramingSession &&
+      activeFramingFile &&
+      activeFramingWorkspaceCandidate
+  );
 
   const importIntentGroups = (["framing", "design"] as const)
     .map((importIntent) => {
@@ -1098,6 +1109,12 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           id: string;
           label: string;
           fileNames: string[];
+          files: Array<{
+            id: string;
+            fileName: string;
+            candidateId: string;
+            itemCount: number;
+          }>;
           items: typeof items;
         }
       >();
@@ -1111,6 +1128,17 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           if (!existingSession.fileNames.includes(candidate.file.fileName)) {
             existingSession.fileNames.push(candidate.file.fileName);
           }
+          const existingFile = existingSession.files.find((file) => file.id === candidate.file.id);
+          if (existingFile) {
+            existingFile.itemCount += 1;
+          } else {
+            existingSession.files.push({
+              id: candidate.file.id,
+              fileName: candidate.file.fileName,
+              candidateId: candidate.id,
+              itemCount: 1
+            });
+          }
           continue;
         }
 
@@ -1118,6 +1146,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           id: sessionKey,
           label: candidate.intakeSession?.label || candidate.file.fileName,
           fileNames: [candidate.file.fileName],
+          files: [
+            {
+              id: candidate.file.id,
+              fileName: candidate.file.fileName,
+              candidateId: candidate.id,
+              itemCount: 1
+            }
+          ],
           items: [candidate]
         });
       }
@@ -1129,6 +1165,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         sessions: [...sessions.values()]
           .map((sessionGroup) => ({
             ...sessionGroup,
+            files: [...sessionGroup.files].sort((left, right) => compareText(left.fileName, right.fileName)),
             items: sortReviewCandidates(sessionGroup.items, queue.items)
           }))
           .sort((left, right) => compareText(left.label, right.label))
@@ -1401,9 +1438,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardHeader>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <CardTitle>Imported review backlog</CardTitle>
+                    <CardTitle>Imported review sessions</CardTitle>
                     <CardDescription>
-                      Review imported objects here, then approve them into Framing or Design. If the import target was Framing, imported stories become Story Ideas.
+                      Framing opens in the same value spine workspace as Import. Design keeps the bulk review backlog below.
                     </CardDescription>
                   </div>
                   {reviewStatusFilter !== "all" || importIntentFilter !== "all" ? (
@@ -1424,66 +1461,100 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                 ) : (
                   importIntentGroups.map((intentGroup) => (
                     <div className="space-y-4" key={intentGroup.importIntent}>
-                      <form
-                        action={submitArtifactBulkReviewAction}
-                        className="rounded-2xl border border-border/70 bg-muted/20 p-4"
-                        id={`bulk-review-${intentGroup.importIntent}`}
-                      >
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      {intentGroup.importIntent === "framing" ? (
+                        <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
                           <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-medium text-foreground">{intentGroup.label}</p>
                               <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                {intentGroup.items.length} {intentGroup.importIntent === "design" ? "Delivery" : "Story Idea"} candidate(s)
+                                {intentGroup.sessions.length} session{intentGroup.sessions.length === 1 ? "" : "s"}
                               </span>
                             </div>
                             <p className="text-sm leading-6 text-muted-foreground">
-                              {intentGroup.importIntent === "design"
-                                ? "Approve checked rows to create Delivery Stories in Design. Linked Outcome and Epic candidates are promoted automatically when needed."
-                                : "Approve checked rows to create Framing records. Imported stories become Story Ideas, and linked Outcome and Epic candidates are promoted automatically when needed."}
+                              Open a framing import below to review it in the same indented value spine workspace as Import.
                             </p>
                           </div>
-                          <div className="flex flex-col gap-3 lg:min-w-[320px]">
-                            <textarea
-                              className="min-h-20 rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                              name="bulkReviewComment"
-                              placeholder="Optional decision note for all checked candidates"
-                            />
-                            <div className="flex flex-wrap gap-2">
-                              <Button className="gap-2" name="bulkIntent" type="submit" value="approve">
-                                <ShieldCheck className="h-4 w-4" />
-                                {intentGroup.importIntent === "design" ? "Approve selected as Delivery Stories" : "Approve selected as Story Ideas"}
-                              </Button>
-                              <Button className="gap-2" name="bulkIntent" type="submit" value="reject" variant="secondary">
-                                <CircleAlert className="h-4 w-4" />
-                                Reject selected
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </form>
 
-                      {intentGroup.sessions.map((group) =>
-                        intentGroup.importIntent === "framing" ? (
-                          <ReviewSessionValueSpine
-                            bulkFormId={`bulk-review-${intentGroup.importIntent}`}
-                            candidates={group.items}
-                            description={`Same hierarchy as Import. File${group.fileNames.length === 1 ? "" : "s"}: ${group.fileNames.join(", ")}.`}
-                            key={`${intentGroup.importIntent}-${group.id}`}
-                            projectEpics={queue.projectEpics}
-                            projectOutcomes={queue.projectOutcomes}
-                            reviewHref={(candidateId) =>
-                              buildReviewHref({
-                                candidateId,
-                                reviewStatusFilter,
-                                findingFilter,
-                                importIntent: intentGroup.importIntent
-                              })
-                            }
-                            selectedCandidateId={selectedCandidate?.id ?? null}
-                            title="Framing value spine"
-                          />
-                        ) : (
+                          {intentGroup.sessions.map((group) => (
+                            <CollapsibleSection
+                              badge={`${group.items.length}`}
+                              defaultOpen={activeFramingSession ? group.id === activeFramingSession.id : true}
+                              description={`Files: ${group.fileNames.join(", ")}.`}
+                              key={`${intentGroup.importIntent}-${group.id}`}
+                              title={group.label}
+                            >
+                              <div className="grid gap-3">
+                                {group.files.map((file) => {
+                                  const isActive = activeFramingFile?.id === file.id;
+
+                                  return (
+                                    <Link
+                                      className={`rounded-2xl border px-4 py-3 text-sm transition ${
+                                        isActive
+                                          ? "border-primary/40 bg-primary/5 text-foreground"
+                                          : "border-border/70 bg-background/80 text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                                      }`}
+                                      href={buildReviewHref({
+                                        candidateId: file.candidateId,
+                                        reviewStatusFilter,
+                                        findingFilter,
+                                        importIntent: intentGroup.importIntent
+                                      })}
+                                      key={file.id}
+                                    >
+                                      <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <span className="font-medium">{file.fileName}</span>
+                                        <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium">
+                                          {file.itemCount} item{file.itemCount === 1 ? "" : "s"}
+                                        </span>
+                                      </div>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </CollapsibleSection>
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          <form
+                            action={submitArtifactBulkReviewAction}
+                            className="rounded-2xl border border-border/70 bg-muted/20 p-4"
+                            id={`bulk-review-${intentGroup.importIntent}`}
+                          >
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                              <div className="space-y-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-medium text-foreground">{intentGroup.label}</p>
+                                  <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                    {intentGroup.items.length} Delivery candidate(s)
+                                  </span>
+                                </div>
+                                <p className="text-sm leading-6 text-muted-foreground">
+                                  Approve checked rows to create Delivery Stories in Design. Linked Outcome and Epic candidates are promoted automatically when needed.
+                                </p>
+                              </div>
+                              <div className="flex flex-col gap-3 lg:min-w-[320px]">
+                                <textarea
+                                  className="min-h-20 rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                                  name="bulkReviewComment"
+                                  placeholder="Optional decision note for all checked candidates"
+                                />
+                                <div className="flex flex-wrap gap-2">
+                                  <Button className="gap-2" name="bulkIntent" type="submit" value="approve">
+                                    <ShieldCheck className="h-4 w-4" />
+                                    Approve selected as Delivery Stories
+                                  </Button>
+                                  <Button className="gap-2" name="bulkIntent" type="submit" value="reject" variant="secondary">
+                                    <CircleAlert className="h-4 w-4" />
+                                    Reject selected
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+
+                          {intentGroup.sessions.map((group) => (
                           <CollapsibleSection
                             badge={`${group.items.length}`}
                             defaultOpen={selectedCandidate ? group.items.some((candidate) => candidate.id === selectedCandidate.id) : true}
@@ -1513,7 +1584,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                               />
                             )}
                           </CollapsibleSection>
-                        )
+                          ))}
+                        </>
                       )}
                     </div>
                   ))
@@ -1521,7 +1593,24 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </CardContent>
             </Card>
 
-            {!selectedCandidate ? (
+            {showImportStyleFramingReview &&
+            activeFramingWorkspace?.state === "ready" &&
+            activeFramingSession &&
+            activeFramingFile &&
+            activeFramingWorkspaceCandidate ? (
+              <ArtifactIntakeReviewWorkspace
+                fileCandidates={activeFramingFileCandidates}
+                projectEpics={activeFramingWorkspace.projectEpics}
+                projectOutcomes={activeFramingWorkspace.projectOutcomes}
+                selectedCandidate={activeFramingWorkspaceCandidate}
+                selectedFile={activeFramingFile}
+                session={activeFramingSession}
+                submitAction={submitArtifactCandidateFromIntakeAction}
+                submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
+                submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
+                submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
+              />
+            ) : !selectedCandidate ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Choose one item to start</CardTitle>
@@ -1530,45 +1619,6 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   </CardDescription>
                 </CardHeader>
               </Card>
-            ) : showImportStyleFramingReview &&
-              selectedFramingWorkspace?.state === "ready" &&
-              selectedFramingSession &&
-              selectedFramingFile &&
-              selectedFramingWorkspaceCandidate ? (
-              <div className="space-y-6">
-                <Card className="border-border/70 shadow-sm">
-                  <CardHeader>
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div>
-                        <CardTitle>Framing review uses the import workspace</CardTitle>
-                        <CardDescription className="mt-2">
-                          This framing item is shown with the same value spine, field editing and approve flow as Import,
-                          so you do not have to interpret two different UIs for the same material.
-                        </CardDescription>
-                      </div>
-                      <Button asChild className="gap-2" variant="secondary">
-                        <Link href={buildReviewHref({ reviewStatusFilter, findingFilter })}>
-                          Back to backlog
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardHeader>
-                </Card>
-
-                <ArtifactIntakeReviewWorkspace
-                  fileCandidates={selectedFramingFileCandidates}
-                  projectEpics={selectedFramingWorkspace.projectEpics}
-                  projectOutcomes={selectedFramingWorkspace.projectOutcomes}
-                  selectedCandidate={selectedFramingWorkspaceCandidate}
-                  selectedFile={selectedFramingFile}
-                  session={selectedFramingSession}
-                  submitAction={submitArtifactCandidateFromIntakeAction}
-                  submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
-                  submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
-                  submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
-                />
-              </div>
             ) : (
               <div className="grid gap-6 2xl:grid-cols-[minmax(340px,0.88fr)_minmax(0,1.12fr)]">
                 <div className="space-y-6">

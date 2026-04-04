@@ -3,6 +3,79 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import ReviewPage from "@/app/(protected)/review/page";
 import { loadArtifactReviewQueue } from "@/lib/intake/review-queue";
 
+const { loadArtifactIntakeWorkspaceMock } = vi.hoisted(() => ({
+  loadArtifactIntakeWorkspaceMock: vi.fn(async () => ({
+    state: "ready",
+    organizationName: "AAS Demo Organization",
+    projectOutcomes: [
+      {
+        id: "project-outcome-1",
+        key: "OUT-001",
+        title: "Primary project outcome"
+      }
+    ],
+    projectEpics: [
+      {
+        id: "candidate-epic-1",
+        key: "EPC-001",
+        title: "Imported epic",
+        outcomeId: "project-outcome-1"
+      }
+    ],
+    sessions: [
+      {
+        id: "session-1",
+        label: "Artifact intake 2026-03-23 21:00",
+        importIntent: "framing",
+        files: [
+          {
+            id: "file-1",
+            fileName: "story-pack.md"
+          }
+        ],
+        candidates: [
+          {
+            id: "candidate-story-1",
+            fileId: "file-1",
+            type: "story",
+            title: "Imported reviewable story",
+            reviewStatus: "edited",
+            draftRecord: {
+              key: "SC-001",
+              title: "Imported reviewable story",
+              valueIntent: "Keep imported work traceable",
+              expectedBehavior: null,
+              acceptanceCriteria: [],
+              storyType: "outcome_delivery",
+              outcomeCandidateId: "project-outcome-1",
+              epicCandidateId: "candidate-epic-1"
+            },
+            complianceResult: {
+              findings: []
+            },
+            issueProgress: {
+              total: 0,
+              resolved: 0,
+              unresolved: 0,
+              categories: {
+                missing: 0,
+                uncertain: 0,
+                humanOnly: 0,
+                blocked: 0,
+                unmapped: 0
+              }
+            },
+            file: {
+              id: "file-1",
+              fileName: "story-pack.md"
+            }
+          }
+        ]
+      }
+    ]
+  }))
+}));
+
 vi.mock("@/lib/intake/review-queue", () => ({
   loadArtifactReviewQueue: vi.fn(async () => ({
     state: "ready",
@@ -131,6 +204,29 @@ vi.mock("@/lib/intake/review-queue", () => ({
   }))
 }));
 
+vi.mock("@/lib/intake/workspace", () => ({
+  loadArtifactIntakeWorkspace: loadArtifactIntakeWorkspaceMock
+}));
+
+vi.mock("@/components/intake/artifact-intake-review-workspace", () => ({
+  ArtifactIntakeReviewWorkspace: ({
+    session,
+    selectedFile,
+    selectedCandidate
+  }: {
+    session: { label: string };
+    selectedFile: { fileName: string };
+    selectedCandidate: { title: string };
+  }) => (
+    <div>
+      <h2>Framing import workspace</h2>
+      <p>{session.label}</p>
+      <p>{selectedFile.fileName}</p>
+      <p>{selectedCandidate.title}</p>
+    </div>
+  )
+}));
+
 vi.mock("@/lib/review/operational-review", () => ({
   loadOperationalReviewDashboard: vi.fn(async () => ({
     state: "ready",
@@ -183,16 +279,15 @@ describe("Review queue page", () => {
     expect(screen.getByRole("heading", { name: "Human review lanes" })).toBeDefined();
     expect(screen.getAllByText("Framing approvals").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Delivery review").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Imported review backlog" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Imported review sessions" })).toBeDefined();
     expect(screen.getByText(/Use this page whenever you want one answer to the question/i)).toBeDefined();
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
-    expect(screen.getAllByRole("link", { name: "Open" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Framing value spine").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Open/i }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
-    expect(screen.getByText(/Same hierarchy as Import\./i)).toBeDefined();
-    expect(screen.getByText("Choose one item to start")).toBeDefined();
+    expect(screen.getByText(/same indented value spine workspace as Import/i)).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Framing import workspace" })).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });
 
@@ -371,15 +466,9 @@ describe("Review queue page", () => {
 
     expect(screen.getAllByRole("heading", { name: "Human Review dashboard", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getByText("Open human review help")).toBeDefined();
-    expect(screen.getAllByText("Framing value spine").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Parsed candidate" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Focused correction workspace" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Framing import workspace" })).toBeDefined();
     expect(screen.getAllByText("Imported reviewable story").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Risk acceptance status must be confirmed by a human reviewer\./)).toBeDefined();
-    expect(screen.getAllByRole("button", { name: "Approve as Story Idea" }).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: "Mark not relevant" })).toBeDefined();
-    expect(screen.getAllByDisplayValue("SC-001").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Project epic").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("story-pack.md").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });
 });
