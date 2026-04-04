@@ -1,5 +1,4 @@
 import type { MembershipRole } from "@aas-companion/domain";
-import { Prisma } from "@prisma/client";
 import { prisma } from "../client";
 import { withDevTiming } from "../dev-timing";
 
@@ -40,6 +39,14 @@ function slugifyProjectName(value: string) {
 
 function normalizeProjectName(value: string) {
   return value.trim().replace(/\s+/g, " ");
+}
+
+function isPrismaKnownRequestError(error: unknown): error is { code: string } {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return "code" in error && typeof error.code === "string" && "name" in error && error.name === "PrismaClientKnownRequestError";
 }
 
 function toMembershipContext(membership: {
@@ -466,7 +473,7 @@ export async function createOrganizationContextForUser(input: {
     try {
       return await createOrganizationWithSlug(baseSlug);
     } catch (error) {
-      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+      if (!isPrismaKnownRequestError(error) || error.code !== "P2002") {
         throw error;
       }
 
