@@ -19,6 +19,10 @@ function getLogTone(status: string) {
     return "border-red-200 bg-red-50/80 text-red-900";
   }
 
+  if (status === "started") {
+    return "border-amber-200 bg-amber-50/80 text-amber-900";
+  }
+
   if (status === "success") {
     return "border-emerald-200 bg-emerald-50/80 text-emerald-900";
   }

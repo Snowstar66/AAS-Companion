@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { appendActivityEvent } from "@aas-companion/db";
 import {
   applyApprovedArtifactFileCarryForwardToOutcomeService,
@@ -9,6 +9,8 @@ import {
   createNativeEpicFromOutcomeService,
   getArtifactCandidateService,
   promoteArtifactCandidateService,
+  reviewArtifactCandidatesBulkService,
+  reviewArtifactFileSectionDispositionsBulkService,
   reviewArtifactFileSectionDispositionService,
   reviewArtifactCandidateService,
   updateArtifactFileCarryForwardItemsService
@@ -97,7 +99,7 @@ async function recordOperationalLog(input: {
   actorId?: string | null;
   scope: "import" | "approval";
   action: string;
-  status: "success" | "error";
+  status: "started" | "success" | "error";
   summary: string;
   detail?: string | null;
   durationMs?: number | null;
@@ -123,19 +125,6 @@ async function recordOperationalLog(input: {
   } catch {
     // Logging must never block the primary workflow.
   }
-}
-
-async function runSequentially<TItem, TResult>(
-  items: TItem[],
-  work: (item: TItem) => Promise<TResult>
-) {
-  const results: TResult[] = [];
-
-  for (const item of items) {
-    results.push(await work(item));
-  }
-
-  return results;
 }
 
 export async function uploadArtifactIntakeFilesAction(formData: FormData) {
@@ -425,7 +414,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     .filter(Boolean);
   const totalSelectedItemCount = selectedCandidateIds.length + selectedCarryForwardSectionIds.length;
 
-  async function logApproval(status: "success" | "error", summary: string, detail?: string | null) {
+  async function logApproval(status: "started" | "success" | "error", summary: string, detail?: string | null) {
     await recordOperationalLog({
       organizationId: session.organization.organizationId,
       entityType: fileId ? "artifact_intake_file" : "organization",
@@ -453,6 +442,13 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     );
   }
 
+  await logApproval(
+    "started",
+    `${decision === "reject" ? "Rejecting" : "Approving"} ${totalSelectedItemCount} framing item(s).`,
+    sessionId ? `Session ${sessionId}` : null
+  );
+
+  try {
   if (selectedCandidateIds.length === 0 && selectedCarryForwardSectionIds.length === 0) {
     redirect(
       buildRedirect("/intake", {
@@ -564,55 +560,52 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
 
   if (decision === "reject") {
-    const carryForwardRejectResults = await runSequentially(selectedCarryForwardSectionIds, (sectionId) =>
-      reviewArtifactFileSectionDispositionService({
+    const carryForwardRejectResults = await reviewArtifactFileSectionDispositionsBulkService(
+      selectedCarryForwardSectionIds.map((sectionId) => ({
         organizationId: session.organization.organizationId,
         actorId: session.userId,
         fileId,
         sectionId,
         action: "not_relevant",
         note: "Rejected from the framing import spine."
-      })
+      }))
     );
-    const failedCarryForwardReject = carryForwardRejectResults.find((result) => !result.ok);
 
-    if (failedCarryForwardReject && !failedCarryForwardReject.ok) {
+    if (!carryForwardRejectResults.ok) {
       await redirectWithApprovalError(
-        failedCarryForwardReject.errors[0]?.message ?? "Selected framing constraints could not be rejected."
+        carryForwardRejectResults.errors[0]?.message ?? "Selected framing constraints could not be rejected."
       );
     }
 
-    const candidateRejectResults = await runSequentially(candidates, (candidate) =>
-      reviewArtifactCandidateService({
+    const candidateRejectResults = await reviewArtifactCandidatesBulkService(
+      candidates.map((candidate) => ({
         organizationId: session.organization.organizationId,
         actorId: session.userId,
         candidateId: candidate.id,
         reviewStatus: "rejected",
         reviewComment: "Rejected from the framing import spine."
-      })
+      }))
     );
-    const failedCandidateReject = candidateRejectResults.find((result) => !result.ok);
 
-    if (failedCandidateReject && !failedCandidateReject.ok) {
+    if (!candidateRejectResults.ok) {
       await redirectWithApprovalError(
-        failedCandidateReject.errors[0]?.message ?? "One or more selected framing items could not be rejected."
+        candidateRejectResults.errors[0]?.message ?? "One or more selected framing items could not be rejected."
       );
     }
 
-    const suppressedRejectResults = await runSequentially(suppressedCandidateIds, (candidateId) =>
-      reviewArtifactCandidateService({
+    const suppressedRejectResults = await reviewArtifactCandidatesBulkService(
+      suppressedCandidateIds.map((candidateId) => ({
         organizationId: session.organization.organizationId,
         actorId: session.userId,
         candidateId,
         reviewStatus: "rejected",
         reviewComment: "Merged into the primary imported Outcome in the framing spine."
-      })
+      }))
     );
-    const failedSuppressedReject = suppressedRejectResults.find((result) => !result.ok);
 
-    if (failedSuppressedReject && !failedSuppressedReject.ok) {
+    if (!suppressedRejectResults.ok) {
       await redirectWithApprovalError(
-        failedSuppressedReject.errors[0]?.message ?? "One or more merged Outcome candidates could not be cleared."
+        suppressedRejectResults.errors[0]?.message ?? "One or more merged Outcome candidates could not be cleared."
       );
     }
 
@@ -663,43 +656,41 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     }
   }
 
-  const carryForwardConfirmResults = await runSequentially(selectedCarryForwardSectionIds, (sectionId) =>
-    reviewArtifactFileSectionDispositionService({
+  const carryForwardConfirmResults = await reviewArtifactFileSectionDispositionsBulkService(
+    selectedCarryForwardSectionIds.map((sectionId) => ({
       organizationId: session.organization.organizationId,
       actorId: session.userId,
       fileId,
       sectionId,
       action: "confirmed",
       note: "Approved from the framing import spine."
-    })
+    }))
   );
-  const failedCarryForwardConfirm = carryForwardConfirmResults.find((result) => !result.ok);
 
-  if (failedCarryForwardConfirm && !failedCarryForwardConfirm.ok) {
+  if (!carryForwardConfirmResults.ok) {
     await redirectWithApprovalError(
-      failedCarryForwardConfirm.errors[0]?.message ?? "Selected framing constraints could not be approved."
+      carryForwardConfirmResults.errors[0]?.message ?? "Selected framing constraints could not be approved."
     );
   }
 
-  const leftoverDispositionResults = await runSequentially(leftoverSectionIds, (sectionId) =>
-    reviewArtifactFileSectionDispositionService({
+  const leftoverDispositionResults = await reviewArtifactFileSectionDispositionsBulkService(
+    leftoverSectionIds.map((sectionId) => ({
       organizationId: session.organization.organizationId,
       actorId: session.userId,
       fileId,
       sectionId,
       action: "not_relevant",
       note: "Ignored during framing spine approval."
-    })
+    }))
   );
-  const failedLeftoverDisposition = leftoverDispositionResults.find((result) => !result.ok);
 
-  if (failedLeftoverDisposition && !failedLeftoverDisposition.ok) {
+  if (!leftoverDispositionResults.ok) {
     await redirectWithApprovalError(
-      failedLeftoverDisposition.errors[0]?.message ?? "Leftover cleanup could not be saved."
+      leftoverDispositionResults.errors[0]?.message ?? "Leftover cleanup could not be saved."
     );
   }
 
-  const candidatePreparationResults = await runSequentially(candidates, (candidate) => {
+  const candidatePreparationResults = await reviewArtifactCandidatesBulkService(candidates.map((candidate) => {
       const currentOutcomeLink =
         candidate.type === "story"
           ? readResolvedStoryOutcomeSelection(candidate)
@@ -753,36 +744,34 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
                 epicCandidateId: usesFallbackEpic ? null : currentEpicLink || null
               };
 
-      return reviewArtifactCandidateService({
+      return {
         organizationId: session.organization.organizationId,
         actorId: session.userId,
         candidateId: candidate.id,
         reviewStatus: "confirmed",
         reviewComment: "Approved from the framing import spine.",
         draftRecord
-      });
-    });
-  const failedCandidatePreparation = candidatePreparationResults.find((result) => !result.ok);
+      };
+    }));
 
-  if (failedCandidatePreparation && !failedCandidatePreparation.ok) {
+  if (!candidatePreparationResults.ok) {
     await redirectWithApprovalError(
-      failedCandidatePreparation.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
+      candidatePreparationResults.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
     );
   }
-  const suppressedCleanupResults = await runSequentially(suppressedCandidateIds, (candidateId) =>
-    reviewArtifactCandidateService({
+  const suppressedCleanupResults = await reviewArtifactCandidatesBulkService(
+    suppressedCandidateIds.map((candidateId) => ({
       organizationId: session.organization.organizationId,
       actorId: session.userId,
       candidateId,
       reviewStatus: "rejected",
       reviewComment: "Merged into the primary imported Outcome in the framing spine."
-    })
+    }))
   );
-  const failedSuppressedCleanup = suppressedCleanupResults.find((result) => !result.ok);
 
-  if (failedSuppressedCleanup && !failedSuppressedCleanup.ok) {
+  if (!suppressedCleanupResults.ok) {
     await redirectWithApprovalError(
-      failedSuppressedCleanup.errors[0]?.message ?? "Merged Outcome cleanup could not be saved."
+      suppressedCleanupResults.errors[0]?.message ?? "Merged Outcome cleanup could not be saved."
     );
   }
 
@@ -937,6 +926,25 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
           : `Approved ${promotedCount} selected framing item(s) and applied ${selectedCarryForwardSectionIds.length} approved constraint item(s).`
     })
   );
+  } catch (error) {
+    unstable_rethrow(error);
+
+    await logApproval(
+      "error",
+      error instanceof Error ? error.message : "Framing approval failed unexpectedly.",
+      error instanceof Error ? error.stack?.split("\n").slice(0, 3).join(" | ") ?? null : null
+    );
+
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message:
+          error instanceof Error ? error.message : "Framing approval failed unexpectedly before a response could be completed."
+      })
+    );
+  }
 }
 
 export async function submitArtifactSectionDispositionAction(formData: FormData) {

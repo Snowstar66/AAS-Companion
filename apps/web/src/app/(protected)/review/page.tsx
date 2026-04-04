@@ -313,23 +313,71 @@ function getCandidatePreviewRows(candidate: ReviewCandidate) {
 }
 
 function getCandidateRelationshipSummary(candidate: ReviewCandidate, allCandidates: ReviewQueue["items"]) {
-  if (candidate.type !== "story") {
-    return null;
+  const outcomeCandidateId = candidate.draftRecord?.outcomeCandidateId ?? candidate.inferredOutcomeCandidateId ?? null;
+  const epicCandidateId = candidate.draftRecord?.epicCandidateId ?? candidate.inferredEpicCandidateId ?? null;
+  const outcomeCandidate = outcomeCandidateId ? allCandidates.find((entry) => entry.id === outcomeCandidateId) : null;
+  const epicCandidate = epicCandidateId ? allCandidates.find((entry) => entry.id === epicCandidateId) : null;
+
+  if (candidate.type === "outcome") {
+    return "Outcome root";
   }
 
-  const epicCandidate = candidate.draftRecord?.epicCandidateId
-    ? allCandidates.find((entry) => entry.id === candidate.draftRecord?.epicCandidateId)
-    : null;
-  const outcomeCandidate = candidate.draftRecord?.outcomeCandidateId
-    ? allCandidates.find((entry) => entry.id === candidate.draftRecord?.outcomeCandidateId)
-    : null;
+  if (candidate.type === "epic") {
+    return outcomeCandidate ? `Outcome -> ${outcomeCandidate.title}` : "Outcome -> needs linkage";
+  }
 
-  const parts = [
-    epicCandidate ? `Epic: ${epicCandidate.title}` : null,
-    outcomeCandidate ? `Outcome: ${outcomeCandidate.title}` : null
-  ].filter((value): value is string => Boolean(value));
+  return [
+    outcomeCandidate ? `Outcome -> ${outcomeCandidate.title}` : "Outcome -> needs linkage",
+    epicCandidate ? `Epic -> ${epicCandidate.title}` : "Epic -> needs linkage"
+  ].join(" | ");
+}
 
-  return parts.length > 0 ? parts.join(" · ") : null;
+function compareText(left: string | null | undefined, right: string | null | undefined) {
+  return (left ?? "").localeCompare(right ?? "", "sv", { numeric: true, sensitivity: "base" });
+}
+
+function getReviewHierarchyWeight(candidate: ReviewCandidate) {
+  return candidate.type === "outcome" ? 0 : candidate.type === "epic" ? 1 : 2;
+}
+
+function getReviewCandidateSortKey(candidate: ReviewCandidate, allCandidates: ReviewQueue["items"]) {
+  const linkedOutcome =
+    candidate.draftRecord?.outcomeCandidateId
+      ? allCandidates.find((entry) => entry.id === candidate.draftRecord?.outcomeCandidateId)
+      : null;
+  const linkedEpic =
+    candidate.draftRecord?.epicCandidateId
+      ? allCandidates.find((entry) => entry.id === candidate.draftRecord?.epicCandidateId)
+      : null;
+
+  return {
+    sessionLabel: candidate.intakeSession?.label ?? "",
+    fileName: candidate.file.fileName,
+    hierarchyWeight: getReviewHierarchyWeight(candidate),
+    linkedOutcomeTitle: linkedOutcome?.title ?? candidate.title,
+    linkedEpicTitle: linkedEpic?.title ?? candidate.title,
+    sourceMarker: candidate.sourceSectionMarker ?? "",
+    displayKey: getDisplayedCandidateKey(allCandidates, candidate, candidate.intakeSession?.importIntent ?? "framing"),
+    title: candidate.draftRecord?.title ?? candidate.title
+  };
+}
+
+function sortReviewCandidates(candidates: ReviewQueue["items"], allCandidates: ReviewQueue["items"]) {
+  return [...candidates].sort((left, right) => {
+    const leftKey = getReviewCandidateSortKey(left, allCandidates);
+    const rightKey = getReviewCandidateSortKey(right, allCandidates);
+
+    return (
+      compareText(leftKey.sessionLabel, rightKey.sessionLabel) ||
+      compareText(leftKey.fileName, rightKey.fileName) ||
+      leftKey.hierarchyWeight - rightKey.hierarchyWeight ||
+      compareText(leftKey.linkedOutcomeTitle, rightKey.linkedOutcomeTitle) ||
+      compareText(leftKey.linkedEpicTitle, rightKey.linkedEpicTitle) ||
+      compareText(leftKey.displayKey, rightKey.displayKey) ||
+      compareText(leftKey.sourceMarker, rightKey.sourceMarker) ||
+      compareText(leftKey.title, rightKey.title)
+    );
+  });
 }
 
 function describeCandidateOption(candidate: ReviewCandidate) {
@@ -794,7 +842,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const completedCount = backlogSummary.approved + backlogSummary.discarded;
   const remainingCount = Math.max(queue.summary.total - completedCount, 0);
   const completionPercent = queue.summary.total > 0 ? Math.round((completedCount / queue.summary.total) * 100) : 0;
-  const visibleItems = queue.items.filter((candidate) => {
+  const sortedQueueItems = sortReviewCandidates(queue.items, queue.items);
+  const visibleItems = sortedQueueItems.filter((candidate) => {
     if (importIntentFilter !== "all" && (candidate.intakeSession?.importIntent ?? "framing") !== importIntentFilter) {
       return false;
     }
@@ -810,7 +859,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const selectedCandidateState = selectedCandidate ? getBacklogState(selectedCandidate) : null;
   const selectedImportIntent = selectedCandidate?.intakeSession?.importIntent ?? "framing";
   const selectedSessionCandidates = selectedCandidate
-    ? queue.items.filter((candidate) => candidate.intakeSession?.id === selectedCandidate.intakeSession?.id)
+    ? sortReviewCandidates(
+        queue.items.filter((candidate) => candidate.intakeSession?.id === selectedCandidate.intakeSession?.id),
+        queue.items
+      )
     : [];
   const selectedCandidateOutcomeOptions = queue.projectOutcomes ?? [];
   const selectedCandidateImportedEpicOptions = selectedCandidate ? getImportedEpicOptions(queue.items, selectedCandidate) : [];
@@ -911,7 +963,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const firstInProgressOperational = operationalReview.items.find((item) => item.status === "ready") ?? null;
   const firstReadyToStart = operationalReview.items.find((item) => item.workflow === "delivery_start") ?? null;
   const firstImportedCandidate =
-    queue.items.find((candidate) => {
+    sortedQueueItems.find((candidate) => {
       const state = getBacklogState(candidate);
       return state === "needs_action" || state === "needs_confirmation" || state === "pending";
     }) ?? null;

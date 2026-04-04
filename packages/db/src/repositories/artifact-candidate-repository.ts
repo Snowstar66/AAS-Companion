@@ -24,6 +24,7 @@ import { createOutcome, updateOutcome } from "./outcome-repository";
 import { createStory } from "./story-repository";
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
+type ParsedArtifactCandidateReviewActionInput = ReturnType<typeof artifactCandidateReviewActionInputSchema.parse>;
 
 function getUnmappedSectionContext(input: {
   mappedArtifacts: unknown;
@@ -798,10 +799,10 @@ export async function getArtifactCandidateById(organizationId: string, candidate
   });
 }
 
-export async function reviewArtifactCandidate(input: unknown) {
-  const parsed = artifactCandidateReviewActionInputSchema.parse(input);
-
-  return prisma.$transaction(async (tx) => {
+async function reviewArtifactCandidateWithinTransaction(
+  parsed: ParsedArtifactCandidateReviewActionInput,
+  tx: Prisma.TransactionClient
+) {
     const existing = await tx.artifactAasCandidate.findFirst({
       where: {
         organizationId: parsed.organizationId,
@@ -988,6 +989,25 @@ export async function reviewArtifactCandidate(input: unknown) {
     }
 
     return parseCandidateRecord(updated);
+}
+
+export async function reviewArtifactCandidate(input: unknown) {
+  const parsed = artifactCandidateReviewActionInputSchema.parse(input);
+
+  return prisma.$transaction(async (tx) => reviewArtifactCandidateWithinTransaction(parsed, tx));
+}
+
+export async function reviewArtifactCandidatesBulk(inputs: unknown[]) {
+  const parsedInputs = inputs.map((input) => artifactCandidateReviewActionInputSchema.parse(input));
+
+  return prisma.$transaction(async (tx) => {
+    const results = [];
+
+    for (const parsed of parsedInputs) {
+      results.push(await reviewArtifactCandidateWithinTransaction(parsed, tx));
+    }
+
+    return results;
   });
 }
 

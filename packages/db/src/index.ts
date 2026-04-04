@@ -4,7 +4,8 @@ export {
   createArtifactIntakeSession,
   getArtifactIntakeFileById,
   listArtifactIntakeSessions,
-  reviewArtifactFileSectionDisposition
+  reviewArtifactFileSectionDisposition,
+  reviewArtifactFileSectionDispositionsBulk
 } from "./repositories/artifact-intake-repository";
 export {
   applyApprovedArtifactFileCarryForwardToOutcome,
@@ -12,6 +13,7 @@ export {
   listArtifactCandidatesForOrganization,
   promoteArtifactCandidate,
   reviewArtifactCandidate,
+  reviewArtifactCandidatesBulk,
   updateArtifactFileCarryForwardItems
 } from "./repositories/artifact-candidate-repository";
 export {

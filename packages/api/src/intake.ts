@@ -8,7 +8,9 @@ import {
   listArtifactIntakeSessions,
   promoteArtifactCandidate,
   reviewArtifactFileSectionDisposition,
+  reviewArtifactFileSectionDispositionsBulk,
   reviewArtifactCandidate,
+  reviewArtifactCandidatesBulk,
   updateArtifactFileCarryForwardItems
 } from "@aas-companion/db";
 import {
@@ -193,6 +195,17 @@ export async function reviewArtifactFileSectionDispositionService(input: unknown
   }
 }
 
+export async function reviewArtifactFileSectionDispositionsBulkService(inputs: unknown[]) {
+  try {
+    return success(await reviewArtifactFileSectionDispositionsBulk(inputs));
+  } catch (error) {
+    return failure({
+      code: "artifact_section_bulk_review_failed",
+      message: error instanceof Error ? error.message : "Artifact section dispositions could not be saved."
+    });
+  }
+}
+
 export async function promoteArtifactCandidateService(input: {
   organizationId: string;
   candidateId: string;
@@ -210,6 +223,17 @@ export async function promoteArtifactCandidateService(input: {
     return failure({
       code: "artifact_candidate_promotion_blocked",
       message: error instanceof Error ? error.message : "Artifact candidate promotion is blocked."
+    });
+  }
+}
+
+export async function reviewArtifactCandidatesBulkService(inputs: unknown[]) {
+  try {
+    return success(await reviewArtifactCandidatesBulk(inputs));
+  } catch (error) {
+    return failure({
+      code: "artifact_candidate_bulk_review_failed",
+      message: error instanceof Error ? error.message : "Artifact candidate reviews could not be saved."
     });
   }
 }

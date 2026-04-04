@@ -72,6 +72,20 @@ function storyDescription(candidate: ReviewCandidateNode) {
   return selected;
 }
 
+function compareDisplayText(left: string | null | undefined, right: string | null | undefined) {
+  return (left ?? "").localeCompare(right ?? "", "sv", { numeric: true, sensitivity: "base" });
+}
+
+function compareCandidatesBySpine(candidates: ReviewCandidateNode[], left: ReviewCandidateNode, right: ReviewCandidateNode) {
+  const keyOrder = compareDisplayText(getDisplayedKey(candidates, left), getDisplayedKey(candidates, right));
+
+  if (keyOrder !== 0) {
+    return keyOrder;
+  }
+
+  return compareDisplayText(left.draftRecord?.title ?? left.title, right.draftRecord?.title ?? right.title);
+}
+
 function getStatusTone(candidate: ReviewCandidateNode) {
   if (candidate.reviewStatus === "promoted") {
     return "border-emerald-200 bg-emerald-50 text-emerald-800";
@@ -182,9 +196,9 @@ export function ReviewSessionValueSpine(props: {
 }) {
   const collapsed = collapseOutcomeCandidates(props.candidates);
   const candidates = collapsed.candidates;
-  const outcomes = candidates.filter((candidate) => candidate.type === "outcome");
-  const epics = candidates.filter((candidate) => candidate.type === "epic");
-  const stories = candidates.filter((candidate) => candidate.type === "story");
+  const outcomes = candidates.filter((candidate) => candidate.type === "outcome").sort((left, right) => compareCandidatesBySpine(candidates, left, right));
+  const epics = candidates.filter((candidate) => candidate.type === "epic").sort((left, right) => compareCandidatesBySpine(candidates, left, right));
+  const stories = candidates.filter((candidate) => candidate.type === "story").sort((left, right) => compareCandidatesBySpine(candidates, left, right));
   const rootOutcome =
     outcomes[0] ??
     (props.projectOutcomes.length === 1
@@ -258,9 +272,9 @@ export function ReviewSessionValueSpine(props: {
             </summary>
             <div className="space-y-3 border-t border-border/70 px-4 py-4">
               {groupedEpics.map((epic) => {
-                const epicStories = stories.filter(
-                  (story) => (story.draftRecord?.epicCandidateId ?? story.inferredEpicCandidateId ?? "") === epic.id
-                );
+                const epicStories = stories
+                  .filter((story) => (story.draftRecord?.epicCandidateId ?? story.inferredEpicCandidateId ?? "") === epic.id)
+                  .sort((left, right) => compareCandidatesBySpine(candidates, left, right));
 
                 return (
                   <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={epic.id} open>
