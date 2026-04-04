@@ -47,7 +47,7 @@ for (const pkg of packages) {
   const tsconfigPath = path.join(packageRoot, "tsconfig.json");
 
   console.log(`\n[build:web-runtime-packages] Building ${pkg.name}...`);
-  rmSync(distDir, { recursive: true, force: true });
+  rmSync(distDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   mkdirSync(distDir, { recursive: true });
 
   await run(
