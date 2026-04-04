@@ -188,9 +188,8 @@ describe("Review queue page", () => {
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
-    expect(screen.getAllByDisplayValue("candidate-story-1").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: "Open focused workspace" })).toBeDefined();
-    expect(screen.getByText("Expand to fix fields and approve here")).toBeDefined();
+    expect(screen.getAllByRole("link", { name: "Open" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Artifact intake 2026-03-23 21:00").length).toBeGreaterThan(0);
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
     expect(screen.getByText(/Sorted as Outcome -> Epic -> Story Idea\./i)).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();
@@ -381,6 +380,6 @@ describe("Review queue page", () => {
     expect(screen.getAllByRole("button", { name: "Approve as Story Idea" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Mark not relevant" })).toBeDefined();
     expect(screen.getAllByDisplayValue("SC-001").length).toBeGreaterThan(0);
-    expect(screen.getByText("Story Ideas in Framing")).toBeDefined();
+    expect(screen.getAllByText("Project epic").length).toBeGreaterThan(0);
   });
 });

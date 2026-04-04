@@ -292,6 +292,7 @@ function getCandidatePreviewRows(candidate: ReviewCandidate) {
   return rows.slice(0, 8);
 }
 
+// Retained for possible future reuse when richer backlog cards return.
 function getCandidateRelationshipSummary(candidate: ReviewCandidate, allCandidates: ReviewQueue["items"]) {
   const outcomeCandidateId = candidate.draftRecord?.outcomeCandidateId ?? candidate.inferredOutcomeCandidateId ?? null;
   const epicCandidateId = candidate.draftRecord?.epicCandidateId ?? candidate.inferredEpicCandidateId ?? null;
@@ -358,141 +359,6 @@ function sortReviewCandidates(candidates: ReviewQueue["items"], allCandidates: R
       compareText(leftKey.title, rightKey.title)
     );
   });
-}
-
-type ReviewHierarchyEpicGroup = {
-  id: string;
-  label: string;
-  epicCandidate: ReviewCandidate | null;
-  stories: ReviewCandidate[];
-};
-
-function buildReviewHierarchy(input: {
-  candidates: ReviewQueue["items"];
-  allCandidates: ReviewQueue["items"];
-  projectOutcomes: ReviewQueue["projectOutcomes"];
-  projectEpics: ReviewQueue["projectEpics"];
-}) {
-  const sortedCandidates = sortReviewCandidates(input.candidates, input.allCandidates);
-  const outcomeGroups = new Map<
-    string,
-    {
-      id: string;
-      label: string;
-      outcomeCandidate: ReviewCandidate | null;
-      epics: Map<string, ReviewHierarchyEpicGroup>;
-      unlinkedStories: ReviewCandidate[];
-    }
-  >();
-
-  function ensureOutcomeGroup(candidate: ReviewCandidate) {
-    const linkedImportedOutcomeId = candidate.type === "outcome"
-      ? candidate.id
-      : candidate.draftRecord?.outcomeCandidateId ?? candidate.inferredOutcomeCandidateId ?? "";
-    const importedOutcome = linkedImportedOutcomeId
-      ? input.allCandidates.find((entry) => entry.id === linkedImportedOutcomeId && entry.type === "outcome") ?? null
-      : null;
-    const projectOutcome = linkedImportedOutcomeId
-      ? input.projectOutcomes.find((entry) => entry.id === linkedImportedOutcomeId) ?? null
-      : null;
-    const groupId = importedOutcome
-      ? `outcome:${importedOutcome.id}`
-      : projectOutcome
-        ? `project-outcome:${projectOutcome.id}`
-        : "outcome:unlinked";
-    const label = importedOutcome
-      ? describeCandidateOption(importedOutcome)
-      : projectOutcome
-        ? describeProjectOutcomeOption(projectOutcome)
-        : "Outcome linkage needed";
-    const existing = outcomeGroups.get(groupId);
-
-    if (existing) {
-      if (!existing.outcomeCandidate && importedOutcome) {
-        existing.outcomeCandidate = importedOutcome;
-      }
-
-      return existing;
-    }
-
-    const created: {
-      id: string;
-      label: string;
-      outcomeCandidate: ReviewCandidate | null;
-      epics: Map<string, ReviewHierarchyEpicGroup>;
-      unlinkedStories: ReviewCandidate[];
-    } = {
-      id: groupId,
-      label,
-      outcomeCandidate: importedOutcome,
-      epics: new Map<string, ReviewHierarchyEpicGroup>(),
-      unlinkedStories: []
-    };
-    outcomeGroups.set(groupId, created);
-    return created;
-  }
-
-  for (const candidate of sortedCandidates) {
-    const outcomeGroup = ensureOutcomeGroup(candidate);
-
-    if (candidate.type === "outcome") {
-      outcomeGroup.outcomeCandidate = candidate;
-      outcomeGroup.label = describeCandidateOption(candidate);
-      continue;
-    }
-
-    const linkedEpicId =
-      candidate.type === "epic"
-        ? candidate.id
-        : candidate.draftRecord?.epicCandidateId ?? candidate.inferredEpicCandidateId ?? "";
-    const importedEpic = linkedEpicId
-      ? input.allCandidates.find((entry) => entry.id === linkedEpicId && entry.type === "epic") ?? null
-      : null;
-    const projectEpic = linkedEpicId
-      ? input.projectEpics.find((entry) => entry.id === linkedEpicId) ?? null
-      : null;
-
-    if (candidate.type === "story" && !importedEpic && !projectEpic) {
-      outcomeGroup.unlinkedStories.push(candidate);
-      continue;
-    }
-
-    const epicGroupId = importedEpic
-      ? `epic:${importedEpic.id}`
-      : projectEpic
-        ? `project-epic:${projectEpic.id}`
-        : `epic:${candidate.id}`;
-    const epicGroupLabel = importedEpic
-      ? describeCandidateOption(importedEpic)
-      : projectEpic
-        ? describeProjectEpicOption(projectEpic)
-        : candidate.title;
-    const existingEpicGroup: ReviewHierarchyEpicGroup = outcomeGroup.epics.get(epicGroupId) ?? {
-      id: epicGroupId,
-      label: epicGroupLabel,
-      epicCandidate: importedEpic ?? (candidate.type === "epic" ? candidate : null),
-      stories: []
-    };
-
-    if (candidate.type === "epic") {
-      existingEpicGroup.epicCandidate = candidate;
-      existingEpicGroup.label = describeCandidateOption(candidate);
-    } else {
-      existingEpicGroup.stories.push(candidate);
-    }
-
-    outcomeGroup.epics.set(epicGroupId, existingEpicGroup);
-  }
-
-  return [...outcomeGroups.values()]
-    .map((outcomeGroup) => ({
-      id: outcomeGroup.id,
-      label: outcomeGroup.label,
-      outcomeCandidate: outcomeGroup.outcomeCandidate,
-      epics: [...outcomeGroup.epics.values()].sort((left, right) => compareText(left.label, right.label)),
-      unlinkedStories: sortReviewCandidates(outcomeGroup.unlinkedStories, input.allCandidates)
-    }))
-    .sort((left, right) => compareText(left.label, right.label));
 }
 
 function describeCandidateOption(candidate: ReviewCandidate) {
@@ -562,6 +428,7 @@ function getImportedEpicOptions(
   );
 }
 
+// Retained for possible future reuse when inline backlog editing returns.
 function CandidateInlineEditor(props: {
   allCandidates: ReviewQueue["items"];
   projectOutcomes: ReviewQueue["projectOutcomes"];
@@ -823,6 +690,84 @@ function CandidateInlineEditor(props: {
   );
 }
 
+// Retained for possible future reuse when compact backlog rows return.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function ReviewBacklogSpineRow(props: {
+  candidate: ReviewCandidate;
+  allCandidates: ReviewQueue["items"];
+  selectedCandidateId?: string | null;
+  reviewStatusFilter?: string;
+  findingFilter?: string;
+  importIntentFilter?: string;
+  indentClassName?: string;
+}) {
+  const { candidate, allCandidates, selectedCandidateId, reviewStatusFilter, findingFilter, importIntentFilter, indentClassName } = props;
+  const isSelected = candidate.id === selectedCandidateId;
+  const isFinal = candidate.reviewStatus === "promoted" || candidate.reviewStatus === "rejected";
+  const displayedKey = getDisplayedCandidateKey(
+    allCandidates,
+    candidate,
+    candidate.intakeSession?.importIntent ?? "framing"
+  );
+  const summary =
+    candidate.type === "outcome"
+      ? candidate.draftRecord?.outcomeStatement ?? candidate.summary
+      : candidate.type === "epic"
+        ? candidate.draftRecord?.purpose ?? candidate.summary
+        : candidate.draftRecord?.valueIntent ?? candidate.summary;
+
+  return (
+    <div className={`${indentClassName ?? ""} rounded-2xl border border-border/70 bg-background/80 p-4`}>
+      <div className="flex items-start gap-3">
+        <input
+          className="mt-1 h-4 w-4 rounded border-border text-primary"
+          defaultChecked={false}
+          disabled={isFinal}
+          form={`bulk-review-${candidate.intakeSession?.importIntent ?? "framing"}`}
+          name="candidateIds"
+          type="checkbox"
+          value={candidate.id}
+        />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {getCandidateObjectLabel(candidate)}
+            </span>
+            <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getBacklogBadgeClasses(getBacklogState(candidate))}`}>
+              {getBacklogLabel(getBacklogState(candidate))}
+            </span>
+            {isSelected ? (
+              <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-900">
+                Selected
+              </span>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium text-foreground">
+              {displayedKey} {candidate.draftRecord?.title ?? candidate.title}
+            </p>
+            <Button asChild size="sm" variant={isSelected ? "default" : "secondary"}>
+              <Link
+                href={buildReviewHref({
+                  candidateId: candidate.id,
+                  reviewStatusFilter,
+                  findingFilter: findingFilter ?? "all",
+                  importIntent: importIntentFilter
+                })}
+              >
+                Open
+              </Link>
+            </Button>
+          </div>
+          {summary ? <p className="text-sm leading-6 text-muted-foreground">{summary}</p> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Retained for possible future reuse when richer backlog cards return.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ReviewQueueCandidateCard(props: {
   allCandidates: ReviewQueue["items"];
   projectOutcomes: ReviewQueue["projectOutcomes"];
@@ -1495,106 +1440,23 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           {group.items.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No review items are currently in this import session.</p>
                           ) : (
-                            <div className="space-y-4">
-                              {buildReviewHierarchy({
-                                candidates: group.items,
-                                allCandidates: queue.items,
-                                projectOutcomes: queue.projectOutcomes,
-                                projectEpics: queue.projectEpics
-                              }).map((outcomeGroup) => (
-                                <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={outcomeGroup.id}>
-                                  <div className="mb-4 flex flex-wrap items-center gap-2">
-                                    <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
-                                      Outcome
-                                    </span>
-                                    <p className="font-medium text-foreground">{outcomeGroup.label}</p>
-                                  </div>
-
-                                  {outcomeGroup.outcomeCandidate ? (
-                                      <ReviewQueueCandidateCard
-                                        allCandidates={queue.items}
-                                        candidate={outcomeGroup.outcomeCandidate}
-                                        importIntentFilter={importIntentFilter}
-                                        isSelected={selectedCandidate?.id === outcomeGroup.outcomeCandidate.id}
-                                        projectEpics={queue.projectEpics}
-                                        projectOutcomes={queue.projectOutcomes}
-                                      reviewStatusFilter={reviewStatusFilter}
-                                    />
-                                  ) : null}
-
-                                  <div className="mt-4 space-y-4">
-                                    {outcomeGroup.epics.map((epicGroup) => (
-                                      <div className="ml-4 rounded-2xl border border-border/70 bg-background/80 p-4" key={epicGroup.id}>
-                                        <div className="mb-4 flex flex-wrap items-center gap-2">
-                                          <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-800">
-                                            Epic
-                                          </span>
-                                          <p className="font-medium text-foreground">{epicGroup.label}</p>
-                                          <span className="rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                                            {epicGroup.stories.length} {intentGroup.importIntent === "design" ? "delivery stories" : "story ideas"}
-                                          </span>
-                                        </div>
-
-                                        {epicGroup.epicCandidate ? (
-                                          <ReviewQueueCandidateCard
-                                            allCandidates={queue.items}
-                                            candidate={epicGroup.epicCandidate}
-                                            importIntentFilter={importIntentFilter}
-                                            isSelected={selectedCandidate?.id === epicGroup.epicCandidate.id}
-                                            projectEpics={queue.projectEpics}
-                                            projectOutcomes={queue.projectOutcomes}
-                                            reviewStatusFilter={reviewStatusFilter}
-                                          />
-                                        ) : null}
-
-                                        <div className="mt-4 space-y-3">
-                                          {epicGroup.stories.map((story) => (
-                                            <div className="ml-4" key={story.id}>
-                                              <ReviewQueueCandidateCard
-                                                allCandidates={queue.items}
-                                                candidate={story}
-                                                importIntentFilter={importIntentFilter}
-                                                isSelected={selectedCandidate?.id === story.id}
-                                                projectEpics={queue.projectEpics}
-                                                projectOutcomes={queue.projectOutcomes}
-                                                reviewStatusFilter={reviewStatusFilter}
-                                              />
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    ))}
-
-                                    {outcomeGroup.unlinkedStories.length > 0 ? (
-                                      <div className="ml-4 rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
-                                        <div className="mb-3 flex flex-wrap items-center gap-2">
-                                          <span className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-900">
-                                            Epic linkage needed
-                                          </span>
-                                          <p className="text-sm text-amber-900">
-                                            These {intentGroup.importIntent === "design" ? "delivery stories" : "story ideas"} still need an Epic link.
-                                          </p>
-                                        </div>
-                                        <div className="space-y-3">
-                                          {outcomeGroup.unlinkedStories.map((story) => (
-                                            <ReviewQueueCandidateCard
-                                              allCandidates={queue.items}
-                                              candidate={story}
-                                              importIntentFilter={importIntentFilter}
-                                              isSelected={selectedCandidate?.id === story.id}
-                                              key={story.id}
-                                              projectEpics={queue.projectEpics}
-                                              projectOutcomes={queue.projectOutcomes}
-                                              reviewStatusFilter={reviewStatusFilter}
-                                            />
-                                          ))}
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                            <ReviewSessionValueSpine
+                              bulkFormId={`bulk-review-${intentGroup.importIntent}`}
+                              candidates={group.items}
+                              description={`Approve or reject directly from this import spine. Grouped as Outcome -> Epic -> ${intentGroup.importIntent === "design" ? "Delivery Story" : "Story Idea"}.`}
+                              projectEpics={queue.projectEpics}
+                              projectOutcomes={queue.projectOutcomes}
+                              reviewHref={(candidateId) =>
+                                buildReviewHref({
+                                  candidateId,
+                                  reviewStatusFilter,
+                                  findingFilter,
+                                  importIntent: intentGroup.importIntent
+                                })
+                              }
+                              selectedCandidateId={selectedCandidate?.id ?? null}
+                              title={group.label}
+                            />
                           )}
                         </CollapsibleSection>
                       ))}
@@ -1662,6 +1524,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   {selectedImportIntent === "framing" && selectedSessionCandidates.length > 0 ? (
                     <ReviewSessionValueSpine
                       candidates={selectedSessionCandidates}
+                      projectEpics={queue.projectEpics}
                       projectOutcomes={queue.projectOutcomes}
                       reviewHref={(candidateId) =>
                         buildReviewHref({

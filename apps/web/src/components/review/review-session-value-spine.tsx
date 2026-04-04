@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { Button } from "@aas-companion/ui";
 
 type ReviewCandidateNode = {
   id: string;
@@ -28,6 +29,13 @@ type ReviewOutcomeOption = {
   id: string;
   key: string;
   title: string;
+};
+
+type ReviewEpicOption = {
+  id: string;
+  key: string;
+  title: string;
+  outcomeId: string;
 };
 
 function normalizeText(value: string | null | undefined) {
@@ -190,9 +198,13 @@ function collapseOutcomeCandidates(candidates: ReviewCandidateNode[]) {
 
 export function ReviewSessionValueSpine(props: {
   candidates: ReviewCandidateNode[];
-  selectedCandidateId: string;
+  selectedCandidateId?: string | null;
   reviewHref: (candidateId: string) => string;
   projectOutcomes: ReviewOutcomeOption[];
+  projectEpics?: ReviewEpicOption[] | undefined;
+  bulkFormId?: string | undefined;
+  title?: string | undefined;
+  description?: string | undefined;
 }) {
   const collapsed = collapseOutcomeCandidates(props.candidates);
   const candidates = collapsed.candidates;
@@ -215,18 +227,47 @@ export function ReviewSessionValueSpine(props: {
           }
         }
       : null);
+  const projectEpics = props.projectEpics ?? [];
   const epicOutcomeMap = new Map(
-    epics.map((epic) => [epic.id, epic.draftRecord?.outcomeCandidateId ?? epic.inferredOutcomeCandidateId ?? rootOutcome?.id ?? ""] as const)
+    [
+      ...epics.map((epic) => [epic.id, epic.draftRecord?.outcomeCandidateId ?? epic.inferredOutcomeCandidateId ?? rootOutcome?.id ?? ""] as const),
+      ...projectEpics.map((epic) => [epic.id, epic.outcomeId] as const)
+    ]
+  );
+  const referencedProjectEpicIds = new Set(
+    stories
+      .map((story) => story.draftRecord?.epicCandidateId ?? story.inferredEpicCandidateId ?? "")
+      .filter((epicId) => projectEpics.some((epic) => epic.id === epicId))
   );
 
-  const groupedEpics = epics.filter((epic) => {
-    if (!rootOutcome) {
-      return true;
-    }
+  const groupedEpics = [
+    ...epics
+      .filter((epic) => {
+        if (!rootOutcome) {
+          return true;
+        }
 
-    const linkedOutcomeId = epic.draftRecord?.outcomeCandidateId ?? epic.inferredOutcomeCandidateId ?? rootOutcome.id;
-    return linkedOutcomeId === rootOutcome.id;
-  });
+        const linkedOutcomeId = epic.draftRecord?.outcomeCandidateId ?? epic.inferredOutcomeCandidateId ?? rootOutcome.id;
+        return linkedOutcomeId === rootOutcome.id;
+      })
+      .map((epic) => ({
+        id: epic.id,
+        imported: true as const,
+        candidate: epic,
+        title: epic.draftRecord?.title ?? epic.title,
+        summary: epic.draftRecord?.purpose ?? epic.summary
+      })),
+    ...projectEpics
+      .filter((epic) => referencedProjectEpicIds.has(epic.id))
+      .filter((epic) => !rootOutcome || epic.outcomeId === rootOutcome.id)
+      .map((epic) => ({
+        id: epic.id,
+        imported: false as const,
+        candidate: null,
+        title: `${epic.key} ${epic.title}`,
+        summary: "Existing project Epic"
+      }))
+  ].sort((left, right) => compareDisplayText(left.title, right.title));
 
   const rootStories = stories.filter((story) => {
     const epicId = story.draftRecord?.epicCandidateId ?? story.inferredEpicCandidateId ?? "";
@@ -241,17 +282,29 @@ export function ReviewSessionValueSpine(props: {
   return (
     <div className="rounded-3xl border border-border/70 bg-background shadow-sm">
       <div className="border-b border-border/70 px-6 py-5">
-        <h3 className="font-semibold text-foreground">Imported value spine</h3>
+        <h3 className="font-semibold text-foreground">{props.title ?? "Imported value spine"}</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Read this import as one hierarchy before you change the focused candidate. The selected node is highlighted in the spine.
+          {props.description ??
+            "Read this import as one hierarchy before you change the focused candidate. The selected node is highlighted in the spine."}
         </p>
       </div>
       <div className="space-y-3 px-4 py-4">
         {rootOutcome ? (
           <details className="rounded-2xl border border-border/70 bg-background" open>
             <summary className="flex list-none items-start justify-between gap-3 px-4 py-4">
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
+                  {"reviewStatus" in rootOutcome && props.bulkFormId ? (
+                    <input
+                      className="h-4 w-4 rounded border-border text-primary"
+                      defaultChecked={false}
+                      disabled={rootOutcome.reviewStatus === "promoted" || rootOutcome.reviewStatus === "rejected"}
+                      form={props.bulkFormId}
+                      name="candidateIds"
+                      type="checkbox"
+                      value={rootOutcome.id}
+                    />
+                  ) : null}
                   <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
                     Outcome
                   </span>
@@ -260,13 +313,27 @@ export function ReviewSessionValueSpine(props: {
                       {getStatusLabel(rootOutcome)}
                     </span>
                   ) : null}
+                  {"reviewStatus" in rootOutcome && rootOutcome.id === props.selectedCandidateId ? (
+                    <span className="inline-flex rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-900">
+                      Selected
+                    </span>
+                  ) : null}
                 </div>
-                <p className="mt-2 font-medium text-foreground">
-                  {rootOutcome.draftRecord?.key ?? rootOutcome.id} {rootOutcome.draftRecord?.title ?? rootOutcome.title}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {rootOutcome.draftRecord?.outcomeStatement ?? rootOutcome.summary}
-                </p>
+                <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">
+                      {rootOutcome.draftRecord?.key ?? rootOutcome.id} {rootOutcome.draftRecord?.title ?? rootOutcome.title}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {rootOutcome.draftRecord?.outcomeStatement ?? rootOutcome.summary}
+                    </p>
+                  </div>
+                  {"reviewStatus" in rootOutcome ? (
+                    <Button asChild size="sm" variant={rootOutcome.id === props.selectedCandidateId ? "default" : "secondary"}>
+                      <Link href={props.reviewHref(rootOutcome.id)}>Open</Link>
+                    </Button>
+                  ) : null}
+                </div>
               </div>
               <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
             </summary>
@@ -279,22 +346,49 @@ export function ReviewSessionValueSpine(props: {
                 return (
                   <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={epic.id} open>
                     <summary className="flex list-none items-start justify-between gap-3 px-4 py-4">
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
+                          {props.bulkFormId && epic.candidate ? (
+                            <input
+                              className="h-4 w-4 rounded border-border text-primary"
+                              defaultChecked={false}
+                              disabled={epic.candidate.reviewStatus === "promoted" || epic.candidate.reviewStatus === "rejected"}
+                              form={props.bulkFormId}
+                              name="candidateIds"
+                              type="checkbox"
+                              value={epic.candidate.id}
+                            />
+                          ) : null}
                           <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-800">
-                            Epic
+                            {epic.candidate ? "Epic" : "Project epic"}
                           </span>
-                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusTone(epic)}`}>
-                            {getStatusLabel(epic)}
-                          </span>
+                          {epic.candidate ? (
+                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusTone(epic.candidate)}`}>
+                              {getStatusLabel(epic.candidate)}
+                            </span>
+                          ) : null}
                           <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                             {epicStories.length} linked
                           </span>
+                          {epic.id === props.selectedCandidateId ? (
+                            <span className="inline-flex rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-900">
+                              Selected
+                            </span>
+                          ) : null}
                         </div>
-                        <p className="mt-2 font-medium text-foreground">
-                          {getDisplayedKey(candidates, epic)} {epic.draftRecord?.title ?? epic.title}
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">{epic.draftRecord?.purpose ?? epic.summary}</p>
+                        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground">
+                              {epic.candidate ? getDisplayedKey(candidates, epic.candidate) : null} {epic.title}
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">{epic.summary}</p>
+                          </div>
+                          {epic.candidate ? (
+                            <Button asChild size="sm" variant={epic.id === props.selectedCandidateId ? "default" : "secondary"}>
+                              <Link href={props.reviewHref(epic.id)}>Open</Link>
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
                       <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
                     </summary>
@@ -303,35 +397,56 @@ export function ReviewSessionValueSpine(props: {
                         const selected = story.id === props.selectedCandidateId;
 
                         return (
-                          <Link
-                            className={`ml-4 block rounded-2xl border p-4 transition ${
+                          <div
+                            className={`ml-4 rounded-2xl border p-4 transition ${
                               selected
                                 ? "border-emerald-300 bg-emerald-50/80 shadow-sm"
                                 : "border-border/70 bg-muted/10 hover:border-emerald-200"
                             }`}
-                            href={props.reviewHref(story.id)}
                             key={story.id}
                           >
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
-                                {story.intakeSession?.importIntent === "design" ? "Delivery story" : "Story idea"}
-                              </span>
-                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusTone(story)}`}>
-                                {getStatusLabel(story)}
-                              </span>
-                              {selected ? (
-                                <span className="inline-flex rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-900">
-                                  Selected
-                                </span>
+                            <div className="flex items-start gap-3">
+                              {props.bulkFormId ? (
+                                <input
+                                  className="mt-1 h-4 w-4 rounded border-border text-primary"
+                                  defaultChecked={false}
+                                  disabled={story.reviewStatus === "promoted" || story.reviewStatus === "rejected"}
+                                  form={props.bulkFormId}
+                                  name="candidateIds"
+                                  type="checkbox"
+                                  value={story.id}
+                                />
                               ) : null}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
+                                    {story.intakeSession?.importIntent === "design" ? "Delivery story" : "Story idea"}
+                                  </span>
+                                  <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusTone(story)}`}>
+                                    {getStatusLabel(story)}
+                                  </span>
+                                  {selected ? (
+                                    <span className="inline-flex rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-900">
+                                      Selected
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-medium text-foreground">
+                                      {getDisplayedKey(candidates, story)} {story.draftRecord?.title ?? story.title}
+                                    </p>
+                                    {storyDescription(story) ? (
+                                      <p className="mt-1 text-sm text-muted-foreground">{storyDescription(story)}</p>
+                                    ) : null}
+                                  </div>
+                                  <Button asChild size="sm" variant={selected ? "default" : "secondary"}>
+                                    <Link href={props.reviewHref(story.id)}>Open</Link>
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                            <p className="mt-2 font-medium text-foreground">
-                              {getDisplayedKey(candidates, story)} {story.draftRecord?.title ?? story.title}
-                            </p>
-                            {storyDescription(story) ? (
-                              <p className="mt-1 text-sm text-muted-foreground">{storyDescription(story)}</p>
-                            ) : null}
-                          </Link>
+                          </div>
                         );
                       })}
                     </div>
@@ -344,30 +459,56 @@ export function ReviewSessionValueSpine(props: {
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-900">Epic linkage needed</p>
                   <div className="mt-3 space-y-3">
                     {rootStories.map((story) => (
-                      <Link
+                      <div
                         className={`block rounded-2xl border p-4 transition ${
                           story.id === props.selectedCandidateId
                             ? "border-emerald-300 bg-white shadow-sm"
                             : "border-amber-200 bg-white/90 hover:border-emerald-200"
                         }`}
-                        href={props.reviewHref(story.id)}
                         key={story.id}
                       >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
-                            {story.intakeSession?.importIntent === "design" ? "Delivery story" : "Story idea"}
-                          </span>
-                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusTone(story)}`}>
-                            {getStatusLabel(story)}
-                          </span>
+                        <div className="flex items-start gap-3">
+                          {props.bulkFormId ? (
+                            <input
+                              className="mt-1 h-4 w-4 rounded border-border text-primary"
+                              defaultChecked={false}
+                              disabled={story.reviewStatus === "promoted" || story.reviewStatus === "rejected"}
+                              form={props.bulkFormId}
+                              name="candidateIds"
+                              type="checkbox"
+                              value={story.id}
+                            />
+                          ) : null}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
+                                {story.intakeSession?.importIntent === "design" ? "Delivery story" : "Story idea"}
+                              </span>
+                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusTone(story)}`}>
+                                {getStatusLabel(story)}
+                              </span>
+                              {story.id === props.selectedCandidateId ? (
+                                <span className="inline-flex rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-900">
+                                  Selected
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-foreground">
+                                  {getDisplayedKey(candidates, story)} {story.draftRecord?.title ?? story.title}
+                                </p>
+                                {storyDescription(story) ? (
+                                  <p className="mt-1 text-sm text-muted-foreground">{storyDescription(story)}</p>
+                                ) : null}
+                              </div>
+                              <Button asChild size="sm" variant={story.id === props.selectedCandidateId ? "default" : "secondary"}>
+                                <Link href={props.reviewHref(story.id)}>Open</Link>
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        <p className="mt-2 font-medium text-foreground">
-                          {getDisplayedKey(candidates, story)} {story.draftRecord?.title ?? story.title}
-                        </p>
-                        {storyDescription(story) ? (
-                          <p className="mt-1 text-sm text-muted-foreground">{storyDescription(story)}</p>
-                        ) : null}
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
