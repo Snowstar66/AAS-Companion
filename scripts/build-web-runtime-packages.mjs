@@ -1,3 +1,4 @@
+import { mkdirSync, rmSync } from "node:fs";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,7 +15,7 @@ const packages = [
   { name: "@aas-companion/api", dir: "packages/api" }
 ];
 
-function run(command, args, cwd) {
+function run(command, args, cwd, label) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
@@ -24,12 +25,12 @@ function run(command, args, cwd) {
 
     child.on("exit", (code, signal) => {
       if (signal) {
-        reject(new Error(`Command terminated by signal ${signal}`));
+        reject(new Error(`${label} terminated by signal ${signal}`));
         return;
       }
 
       if (code !== 0) {
-        reject(new Error(`Command failed with exit code ${code}`));
+        reject(new Error(`${label} failed with exit code ${code}`));
         return;
       }
 
@@ -43,16 +44,18 @@ function run(command, args, cwd) {
 for (const pkg of packages) {
   const packageRoot = path.join(repoRoot, pkg.dir);
   const distDir = path.join(packageRoot, "dist");
-  const tsBuildInfoFile = path.join(distDir, ".tsbuildinfo");
+  const tsconfigPath = path.join(packageRoot, "tsconfig.json");
 
   console.log(`\n[build:web-runtime-packages] Building ${pkg.name}...`);
+  rmSync(distDir, { recursive: true, force: true });
+  mkdirSync(distDir, { recursive: true });
 
   await run(
     process.execPath,
     [
       tscBin,
       "--project",
-      "tsconfig.json",
+      tsconfigPath,
       "--outDir",
       distDir,
       "--declaration",
@@ -61,9 +64,9 @@ for (const pkg of packages) {
       "--sourceMap",
       "false",
       "--incremental",
-      "--tsBuildInfoFile",
-      tsBuildInfoFile
+      "false"
     ],
-    packageRoot
+    repoRoot,
+    `[build:web-runtime-packages] ${pkg.name}`
   );
 }
