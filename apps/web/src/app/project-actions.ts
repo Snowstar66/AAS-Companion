@@ -52,6 +52,7 @@ export async function createProjectAction(formData: FormData) {
   await setOrganizationContextCookie(project);
 
   revalidatePath("/");
+  revalidatePath("/admin");
   redirect(`/framing?projectCreated=1`);
 }
 
@@ -128,6 +129,7 @@ export async function deleteCurrentProjectAction() {
 
   await clearOrganizationContextCookie();
   revalidatePath("/");
+  revalidatePath("/admin");
 
   redirect(
     buildHomeRedirect({

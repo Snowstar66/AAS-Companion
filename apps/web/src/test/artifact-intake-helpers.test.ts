@@ -639,6 +639,12 @@ describe("artifact intake helpers", () => {
     expect(storyCandidates.some((candidate) => candidate.title.includes("Skapa hushållsprofil"))).toBe(true);
     expect(storyCandidates.some((candidate) => candidate.title.includes("Registrera artikel i förråd"))).toBe(true);
     expect(storyCandidates.every((candidate) => Boolean(candidate.draftRecord?.epicCandidateId || candidate.inferredEpicCandidateId))).toBe(true);
+    const epic001 = epicCandidates.find((candidate) => candidate.draftRecord?.key === "EPIC-001");
+    const epic002 = epicCandidates.find((candidate) => candidate.draftRecord?.key === "EPIC-002");
+    const story001 = storyCandidates.find((candidate) => candidate.draftRecord?.key === "STORY-001");
+    const story002 = storyCandidates.find((candidate) => candidate.draftRecord?.key === "STORY-002");
+    expect(story001?.draftRecord?.epicCandidateId ?? story001?.inferredEpicCandidateId).toBe(epic001?.id);
+    expect(story002?.draftRecord?.epicCandidateId ?? story002?.inferredEpicCandidateId).toBe(epic002?.id);
     expect(mapping.carryForwardItems.map((item) => item.category)).toEqual(
       expect.arrayContaining(["nfr_constraint", "solution_constraint"])
     );

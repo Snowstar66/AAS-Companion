@@ -1192,6 +1192,11 @@ function FramingImportSpine(props: {
                                             ))}
                                           </select>
                                         </label>
+                                        <input
+                                          name={`candidate:${story.id}:originalEpicCandidateId`}
+                                          type="hidden"
+                                          value={resolveImportedEpicLink(story) || epic.id}
+                                        />
                                         <label className="space-y-2 md:col-span-2">
                                           <span className="text-sm font-medium text-foreground">Value intent</span>
                                           <textarea
@@ -1330,6 +1335,15 @@ function FramingImportSpine(props: {
                                           ))}
                                         </select>
                                       </label>
+                                      <input
+                                        name={`candidate:${story.id}:originalEpicCandidateId`}
+                                        type="hidden"
+                                        value={
+                                          resolveImportedEpicLink(story) ||
+                                          props.defaultBulkEpicCandidateId ||
+                                          FALLBACK_EPIC_OPTION_VALUE
+                                        }
+                                      />
                                       <label className="space-y-2 md:col-span-2">
                                         <span className="text-sm font-medium text-foreground">Value intent</span>
                                         <textarea

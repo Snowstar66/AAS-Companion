@@ -1,4 +1,5 @@
 import type { MembershipRole } from "@aas-companion/domain";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../client";
 import { withDevTiming } from "../dev-timing";
 
@@ -37,13 +38,36 @@ function slugifyProjectName(value: string) {
     .slice(0, 48);
 }
 
-async function createUniqueOrganizationSlug(baseName: string) {
+function normalizeProjectName(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function toMembershipContext(membership: {
+  role: string;
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}) {
+  return {
+    organizationId: membership.organization.id,
+    organizationName: membership.organization.name,
+    organizationSlug: membership.organization.slug,
+    role: membership.role as MembershipRole
+  } satisfies OrganizationMembershipContext;
+}
+
+async function createUniqueOrganizationSlug(
+  baseName: string,
+  db: Pick<typeof prisma, "organization"> = prisma
+) {
   const baseSlug = slugifyProjectName(baseName) || "project";
   let candidate = baseSlug;
   let index = 2;
 
   for (;;) {
-    const existing = await prisma.organization.findUnique({
+    const existing = await db.organization.findUnique({
       where: {
         slug: candidate
       },
@@ -59,6 +83,63 @@ async function createUniqueOrganizationSlug(baseName: string) {
     candidate = `${baseSlug}-${index}`;
     index += 1;
   }
+}
+
+async function findOrganizationContextForUserByName(
+  db: Pick<typeof prisma, "membership">,
+  input: {
+    userId: string;
+    organizationName: string;
+  }
+) {
+  const normalizedName = normalizeProjectName(input.organizationName);
+
+  if (!normalizedName) {
+    return null;
+  }
+
+  const membership = await db.membership.findFirst({
+    where: {
+      userId: input.userId,
+      organization: {
+        name: {
+          equals: normalizedName,
+          mode: "insensitive"
+        }
+      }
+    },
+    include: {
+      organization: true
+    }
+  });
+
+  return membership ? toMembershipContext(membership) : null;
+}
+
+async function findOrganizationContextForUserBySlug(
+  db: Pick<typeof prisma, "membership">,
+  input: {
+    userId: string;
+    slug: string;
+  }
+) {
+  if (!input.slug.trim()) {
+    return null;
+  }
+
+  const membership = await db.membership.findFirst({
+    where: {
+      userId: input.userId,
+      organization: {
+        slug: input.slug
+      }
+    },
+    include: {
+      organization: true
+    }
+  });
+
+  return membership ? toMembershipContext(membership) : null;
 }
 
 export async function listOrganizationContextsForUser(userId: string): Promise<OrganizationMembershipContext[]> {
@@ -314,7 +395,17 @@ export async function createOrganizationContextForUser(input: {
   role?: MembershipRole;
 }) {
   const role = input.role ?? "value_owner";
-  const slug = await createUniqueOrganizationSlug(input.organizationName);
+  const organizationName = normalizeProjectName(input.organizationName);
+  const baseSlug = slugifyProjectName(organizationName) || "project";
+
+  const existingProject = await findOrganizationContextForUserByName(prisma, {
+    userId: input.userId,
+    organizationName
+  });
+
+  if (existingProject) {
+    return existingProject;
+  }
 
   return prisma.$transaction(async (tx) => {
     await tx.appUser.upsert({
@@ -332,29 +423,66 @@ export async function createOrganizationContextForUser(input: {
       }
     });
 
-    const organization = await tx.organization.create({
-      data: {
-        id: buildId("org"),
-        name: input.organizationName,
-        slug
-      }
-    });
-
-    await tx.membership.create({
-      data: {
-        id: buildId("membership"),
-        organizationId: organization.id,
+    const existingProjectInTransaction =
+      (await findOrganizationContextForUserByName(tx, {
         userId: input.userId,
-        role
-      }
-    });
+        organizationName
+      })) ??
+      (await findOrganizationContextForUserBySlug(tx, {
+        userId: input.userId,
+        slug: baseSlug
+      }));
 
-    return {
-      organizationId: organization.id,
-      organizationName: organization.name,
-      organizationSlug: organization.slug,
-      role
-    } satisfies OrganizationMembershipContext;
+    if (existingProjectInTransaction) {
+      return existingProjectInTransaction;
+    }
+
+    async function createOrganizationWithSlug(slug: string) {
+      const organization = await tx.organization.create({
+        data: {
+          id: buildId("org"),
+          name: organizationName,
+          slug
+        }
+      });
+
+      await tx.membership.create({
+        data: {
+          id: buildId("membership"),
+          organizationId: organization.id,
+          userId: input.userId,
+          role
+        }
+      });
+
+      return {
+        organizationId: organization.id,
+        organizationName: organization.name,
+        organizationSlug: organization.slug,
+        role
+      } satisfies OrganizationMembershipContext;
+    }
+
+    try {
+      return await createOrganizationWithSlug(baseSlug);
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+        throw error;
+      }
+
+      const existingAfterConflict = await findOrganizationContextForUserBySlug(tx, {
+        userId: input.userId,
+        slug: baseSlug
+      });
+
+      if (existingAfterConflict) {
+        return existingAfterConflict;
+      }
+
+      const slug = await createUniqueOrganizationSlug(organizationName, tx);
+
+      return createOrganizationWithSlug(slug);
+    }
   });
 }
 
@@ -390,4 +518,48 @@ export async function deleteOrganizationContextForUser(input: {
     organizationSlug: membership.organization.slug,
     role: membership.role as MembershipRole
   } satisfies OrganizationMembershipContext;
+}
+
+export async function hardDeleteOrganizationContextsForUser(input: {
+  organizationIds: string[];
+  userId: string;
+}) {
+  const organizationIds = [...new Set(input.organizationIds.map((value) => value.trim()).filter(Boolean))];
+
+  if (organizationIds.length === 0) {
+    return [];
+  }
+
+  const memberships = await prisma.membership.findMany({
+    where: {
+      userId: input.userId,
+      organizationId: {
+        in: organizationIds
+      }
+    },
+    include: {
+      organization: true
+    },
+    orderBy: {
+      organization: {
+        name: "asc"
+      }
+    }
+  });
+
+  if (memberships.length === 0) {
+    return [];
+  }
+
+  await prisma.$transaction(async (tx) => {
+    for (const membership of memberships) {
+      await tx.organization.delete({
+        where: {
+          id: membership.organizationId
+        }
+      });
+    }
+  });
+
+  return memberships.map((membership) => toMembershipContext(membership));
 }

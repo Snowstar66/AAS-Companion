@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, CircleHelp, Compass, Eye, EyeOff, FileSearch, Inbox, LayoutDashboard, LibraryBig, Shield, Workflow } from "lucide-react";
+import { BriefcaseBusiness, CircleHelp, Compass, Eye, EyeOff, FileSearch, Inbox, LayoutDashboard, LibraryBig, Settings2, Shield, Workflow } from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain/navigation";
 
 const icons = {
   "/": LayoutDashboard,
+  "/admin": Settings2,
   "/intake": Inbox,
   "/review": FileSearch,
   "/framing": Compass,

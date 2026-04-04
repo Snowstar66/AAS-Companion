@@ -485,12 +485,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                             className="h-11 min-w-0 flex-1 rounded-2xl border border-sky-200 bg-background px-4 text-sm outline-none transition focus:border-primary"
                             name="projectName"
                             placeholder="New project name"
+                            required
                             type="text"
                           />
-                          <Button className="gap-2 sm:shrink-0" type="submit">
-                            Create and open project
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
+                          <PendingFormButton
+                            className="gap-2 sm:shrink-0"
+                            icon={<ArrowRight className="h-4 w-4" />}
+                            label="Create and open project"
+                            pendingLabel="Creating project..."
+                            showPendingCursor
+                          />
                         </form>
                       ) : (
                         <Button asChild className="gap-2">
@@ -511,10 +515,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">Demo remains separate from normal projects and opens only when chosen explicitly.</p>
                         {hasAuthenticatedUser ? (
                           <form action={openDemoProjectAction} className="mt-4">
-                            <Button className="gap-2 w-full" type="submit" variant="secondary">
-                              {isDemoSession ? "Re-open demo project" : "Open demo project"}
-                              <ArrowRight className="h-4 w-4" />
-                            </Button>
+                            <PendingFormButton
+                              className="gap-2 w-full"
+                              icon={<ArrowRight className="h-4 w-4" />}
+                              label={isDemoSession ? "Re-open demo project" : "Open demo project"}
+                              pendingLabel="Opening demo..."
+                              showPendingCursor
+                              variant="secondary"
+                            />
                           </form>
                         ) : (
                           <Button asChild className="mt-4 gap-2 w-full" variant="secondary">
@@ -539,17 +547,24 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                         {(hasActiveProject || isDemoSession) ? (
                           <div className="mt-4 flex flex-wrap gap-3">
                             <form action={clearActiveProjectAction}>
-                              <Button className="gap-2" type="submit" variant="secondary">
-                                <LogOut className="h-4 w-4" />
-                                {isDemoSession ? "Leave demo project" : "Leave current project"}
-                              </Button>
+                              <PendingFormButton
+                                className="gap-2"
+                                icon={<LogOut className="h-4 w-4" />}
+                                label={isDemoSession ? "Leave demo project" : "Leave current project"}
+                                pendingLabel={isDemoSession ? "Leaving demo..." : "Leaving project..."}
+                                showPendingCursor
+                                variant="secondary"
+                              />
                             </form>
                             {hasActiveProject && !isDemoSession ? (
                               <form action={deleteCurrentProjectAction}>
-                                <Button className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95" type="submit">
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete project
-                                </Button>
+                                <PendingFormButton
+                                  className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95"
+                                  icon={<Trash2 className="h-4 w-4" />}
+                                  label="Delete project"
+                                  pendingLabel="Deleting project..."
+                                  showPendingCursor
+                                />
                               </form>
                             ) : null}
                           </div>

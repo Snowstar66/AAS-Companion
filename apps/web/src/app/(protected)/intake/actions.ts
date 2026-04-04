@@ -391,6 +391,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }) {
     return (
       readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
+      readDynamicField(formData, "candidate", candidate.id, "originalEpicCandidateId") ||
       candidate.draftRecord?.epicCandidateId?.trim() ||
       candidate.inferredEpicCandidateId?.trim() ||
       targetEpicCandidateId ||
