@@ -18,9 +18,23 @@ function run(command, args, cwd, label) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      stdio: "inherit",
+      stdio: ["ignore", "pipe", "pipe"],
       env: process.env,
       shell: process.platform === "win32" && command !== process.execPath
+    });
+    let stdout = "";
+    let stderr = "";
+
+    child.stdout?.on("data", (chunk) => {
+      const text = chunk.toString();
+      stdout += text;
+      process.stdout.write(text);
+    });
+
+    child.stderr?.on("data", (chunk) => {
+      const text = chunk.toString();
+      stderr += text;
+      process.stderr.write(text);
     });
 
     child.on("exit", (code, signal) => {
@@ -30,7 +44,19 @@ function run(command, args, cwd, label) {
       }
 
       if (code !== 0) {
-        reject(new Error(`${label} failed with exit code ${code}`));
+        const diagnosticTail = `${stdout}\n${stderr}`
+          .split(/\r?\n/)
+          .map((line) => line.trimEnd())
+          .filter(Boolean)
+          .slice(-40)
+          .join("\n");
+        reject(
+          new Error(
+            diagnosticTail
+              ? `${label} failed with exit code ${code}\n--- recent output ---\n${diagnosticTail}`
+              : `${label} failed with exit code ${code}`
+          )
+        );
         return;
       }
 
