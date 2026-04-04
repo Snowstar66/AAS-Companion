@@ -61,3 +61,28 @@ export async function listActivityEventsForEntity(organizationId: string, entity
     }
   });
 }
+
+export async function listOperationalActivityEventsForOrganization(input: {
+  organizationId: string;
+  limit?: number;
+}) {
+  return prisma.activityEvent.findMany({
+    where: {
+      organizationId: input.organizationId,
+      eventType: "operational_log_recorded"
+    },
+    include: {
+      actor: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    take: Math.max(1, Math.min(input.limit ?? 40, 100))
+  });
+}

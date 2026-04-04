@@ -14,7 +14,11 @@ export {
   reviewArtifactCandidate,
   updateArtifactFileCarryForwardItems
 } from "./repositories/artifact-candidate-repository";
-export { appendActivityEvent, listActivityEventsForEntity } from "./repositories/activity-repository";
+export {
+  appendActivityEvent,
+  listActivityEventsForEntity,
+  listOperationalActivityEventsForOrganization
+} from "./repositories/activity-repository";
 export {
   archiveGovernedObject,
   getGovernedRemovalState,

@@ -28,7 +28,7 @@ import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk
 import { WorkspaceStatusSummary } from "@/components/workspace/story-workspace-shared";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOrganizationUsersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
-import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
+import { buildFramingBriefExport, buildHumanFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { getInlineGuidance } from "@/lib/help/aas-help";
 
@@ -212,6 +212,11 @@ export function FramingOutcomeSection({
   const isArchived = outcome.lifecycleState === "archived";
   const framingHref = `/framing?outcomeId=${outcome.id}`;
   const framingBriefExport = buildFramingBriefExport({
+    outcome,
+    blockers,
+    tollgate
+  });
+  const humanFramingBrief = buildHumanFramingBriefExport({
     outcome,
     blockers,
     tollgate
@@ -989,12 +994,18 @@ export function FramingOutcomeSection({
           description="Expand when you want to export the customer handshake into another AI tool or workflow."
           teaser={
             <p className="leading-6 text-muted-foreground">
-              Includes AI-friendly Markdown, structured JSON, UX sketch references and approval context for the next step.
+              Includes one human-readable Framing Brief and one structured AI Delivery Handoff with approval context and UX references.
             </p>
           }
-          title="Export framing brief"
+          title="Export framing packages"
         >
-          <FramingBriefExportPanel embedded disabled={isArchived} markdown={framingBriefExport.markdown} payload={framingBriefExport.payload} />
+          <FramingBriefExportPanel
+            aiMarkdown={framingBriefExport.markdown}
+            aiPayload={framingBriefExport.payload}
+            embedded
+            disabled={isArchived}
+            humanBrief={humanFramingBrief}
+          />
         </CollapsibleFramingPanel>
       </FramingGuidanceShell>
     </section>

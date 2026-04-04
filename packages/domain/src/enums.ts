@@ -144,6 +144,7 @@ export const activityEventTypes = [
   "artifact_candidate_promoted",
   "artifact_file_section_disposition_recorded",
   "artifact_file_carry_forward_applied",
+  "operational_log_recorded",
   "imported_progression_blocked",
   "imported_progression_allowed"
 ] as const;

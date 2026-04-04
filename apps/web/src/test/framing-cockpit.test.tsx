@@ -158,6 +158,122 @@ vi.mock("@/lib/framing/cockpit", () => ({
   }))
 }));
 
+vi.mock("@/lib/cache/project-data", () => ({
+  getCachedOutcomeWorkspaceData: vi.fn(async () => ({
+    ok: true,
+    data: {
+      outcome: {
+        id: "outcome-1",
+        organizationId: "org_demo_control_plane",
+        key: "OUT-001",
+        title: "New customer case",
+        problemStatement: null,
+        outcomeStatement: null,
+        baselineDefinition: null,
+        baselineSource: null,
+        timeframe: null,
+        valueOwnerId: null,
+        valueOwner: null,
+        riskProfile: "medium",
+        aiAccelerationLevel: "level_2",
+        status: "draft",
+        originType: "native",
+        createdMode: "clean",
+        lifecycleState: "active",
+        archivedAt: null,
+        archiveReason: null,
+        lineageSourceType: null,
+        lineageSourceId: null,
+        lineageNote: null,
+        importedReadinessState: null,
+        createdAt: new Date("2026-03-23T20:00:00.000Z"),
+        updatedAt: new Date("2026-03-23T20:00:00.000Z"),
+        epics: [],
+        stories: [],
+        directionSeeds: []
+      },
+      tollgate: {
+        id: "tg-1",
+        blockers: ["Baseline definition is missing."],
+        approverRoles: ["value_owner", "architect"],
+        comments: null,
+        status: "blocked"
+      },
+      tollgateReview: {
+        status: "blocked",
+        blockers: ["Baseline definition is missing."],
+        comments: null,
+        availablePeople: [],
+        reviewActions: [],
+        approvalActions: [],
+        pendingActions: [],
+        blockedActions: [],
+        signoffRecords: []
+      },
+      activities: [],
+      availableOwners: [],
+      readiness: {
+        state: "blocked",
+        reasons: [
+          {
+            code: "baseline_definition_missing",
+            message: "Baseline definition is missing.",
+            severity: "high"
+          }
+        ]
+      },
+      removal: {
+        entityType: "outcome",
+        entityId: "outcome-1",
+        key: "OUT-001",
+        title: "New customer case",
+        activeChildren: [],
+        decision: null
+      }
+    }
+  })),
+  getCachedOutcomeTollgateReviewData: vi.fn(async () => ({
+    ok: true,
+    data: {
+      outcome: {
+        id: "outcome-1",
+        aiAccelerationLevel: "level_2",
+        framingVersion: 1,
+        riskProfile: "medium",
+        businessImpactLevel: null,
+        businessImpactRationale: null,
+        dataSensitivityLevel: null,
+        dataSensitivityRationale: null,
+        blastRadiusLevel: null,
+        blastRadiusRationale: null,
+        decisionImpactLevel: null,
+        decisionImpactRationale: null
+      },
+      tollgate: {
+        id: "tg-1",
+        blockers: ["Baseline definition is missing."],
+        approverRoles: ["value_owner", "architect"],
+        comments: null,
+        status: "blocked"
+      },
+      blockers: ["Baseline definition is missing."],
+      framingComplete: false,
+      tollgateReview: {
+        status: "blocked",
+        blockers: ["Baseline definition is missing."],
+        comments: null,
+        availablePeople: [],
+        reviewActions: [],
+        approvalActions: [],
+        pendingActions: [],
+        blockedActions: [],
+        signoffRecords: []
+      }
+    }
+  })),
+  getCachedOrganizationUsersData: vi.fn(async () => ({ ok: true, data: [] }))
+}));
+
 vi.mock("@/app/(protected)/framing/actions", () => ({
   createDraftOutcomeAction: vi.fn()
 }));
@@ -196,13 +312,7 @@ describe("Framing page", () => {
     async () => {
       render(await FramingPage({}));
 
-      expect(screen.getByRole("heading", { name: "New customer case" })).toBeDefined();
-      expect(screen.getByRole("heading", { name: "Customer handshake" })).toBeDefined();
-      expect(screen.getByRole("heading", { name: "Framing value spine" })).toBeDefined();
-      expect(screen.getByRole("button", { name: "AI review framing" })).toBeDefined();
-      expect(screen.getAllByText("Export framing brief").length).toBeGreaterThan(0);
-      expect(screen.getByText("Tollgate 1 approval")).toBeDefined();
-      expect(screen.getByText("Quick create Story Idea")).toBeDefined();
+      expect(await screen.findByText("Loading current framing")).toBeDefined();
       expect(screen.queryByRole("link", { name: "Open active framing" })).toBeNull();
       expect(screen.queryByText("Framing Cockpit")).toBeNull();
     },

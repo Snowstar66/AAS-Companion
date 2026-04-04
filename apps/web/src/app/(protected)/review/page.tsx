@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, FileSearch, GitBranch, ShieldCheck } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
+import { ReviewSessionValueSpine } from "@/components/review/review-session-value-spine";
 import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
 import { loadArtifactReviewQueue } from "@/lib/intake/review-queue";
@@ -282,7 +283,7 @@ function getCandidatePreviewRows(candidate: ReviewCandidate) {
   if (candidate.type === "story") {
     const acceptanceCriteria = candidate.draftRecord?.acceptanceCriteria ?? [];
 
-    if (candidate.draftRecord?.storyType) {
+    if (candidate.intakeSession?.importIntent === "design" && candidate.draftRecord?.storyType) {
       rows.push({ label: "Story type", value: formatLabel(candidate.draftRecord.storyType) });
     }
     if (candidate.draftRecord?.valueIntent) {
@@ -291,7 +292,7 @@ function getCandidatePreviewRows(candidate: ReviewCandidate) {
     if (candidate.draftRecord?.expectedBehavior) {
       rows.push({ label: "Expected behavior", value: candidate.draftRecord.expectedBehavior });
     }
-    if (acceptanceCriteria.length > 0) {
+    if (candidate.intakeSession?.importIntent === "design" && acceptanceCriteria.length > 0) {
       rows.push({ label: "Acceptance criteria", value: acceptanceCriteria.join(" | ") });
     }
   }
@@ -807,6 +808,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
   const selectedCandidate = queue.selectedCandidate;
   const selectedCandidateState = selectedCandidate ? getBacklogState(selectedCandidate) : null;
+  const selectedImportIntent = selectedCandidate?.intakeSession?.importIntent ?? "framing";
+  const selectedSessionCandidates = selectedCandidate
+    ? queue.items.filter((candidate) => candidate.intakeSession?.id === selectedCandidate.intakeSession?.id)
+    : [];
   const selectedCandidateOutcomeOptions = queue.projectOutcomes ?? [];
   const selectedCandidateImportedEpicOptions = selectedCandidate ? getImportedEpicOptions(queue.items, selectedCandidate) : [];
   const selectedOutcomeCandidateId =
@@ -1359,6 +1364,22 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                     </CardContent>
                   </Card>
 
+                  {selectedImportIntent === "framing" && selectedSessionCandidates.length > 0 ? (
+                    <ReviewSessionValueSpine
+                      candidates={selectedSessionCandidates}
+                      projectOutcomes={queue.projectOutcomes}
+                      reviewHref={(candidateId) =>
+                        buildReviewHref({
+                          candidateId,
+                          reviewStatusFilter,
+                          findingFilter,
+                          importIntent: selectedImportIntent
+                        })
+                      }
+                      selectedCandidateId={selectedCandidate.id}
+                    />
+                  ) : null}
+
                   <Card className="border-border/70 shadow-sm">
                     <CardHeader>
                       <CardTitle>Parsed candidate</CardTitle>
@@ -1573,14 +1594,18 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
                             {selectedCandidate.type === "story" ? (
                               <>
-                                <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Story type</span>
-                                  <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.storyType ?? "outcome_delivery"} name="storyType">
-                                    <option value="outcome_delivery">Outcome delivery</option>
-                                    <option value="governance">Governance</option>
-                                    <option value="enablement">Enablement</option>
-                                  </select>
-                                </label>
+                                {selectedCandidate.intakeSession?.importIntent === "design" ? (
+                                  <label className="space-y-2">
+                                    <span className="text-sm font-medium text-foreground">Story type</span>
+                                    <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.storyType ?? "outcome_delivery"} name="storyType">
+                                      <option value="outcome_delivery">Outcome delivery</option>
+                                      <option value="governance">Governance</option>
+                                      <option value="enablement">Enablement</option>
+                                    </select>
+                                  </label>
+                                ) : (
+                                  <input name="storyType" type="hidden" value={selectedCandidate.draftRecord?.storyType ?? "outcome_delivery"} />
+                                )}
                                 <label className="space-y-2">
                                   <span className="text-sm font-medium text-foreground">Value intent</span>
                                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.valueIntent ?? ""} name="valueIntent" />
@@ -1589,22 +1614,33 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                   <span className="text-sm font-medium text-foreground">Expected behavior</span>
                                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.expectedBehavior ?? ""} name="expectedBehavior" />
                                 </label>
-                                <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
-                                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={(selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")} name="acceptanceCriteria" />
-                                </label>
-                                <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">AI usage scope</span>
-                                  <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={(selectedCandidate.draftRecord?.aiUsageScope ?? []).join(", ")} name="aiUsageScope" type="text" />
-                                </label>
-                                <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Test Definition</span>
-                                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.testDefinition ?? ""} name="testDefinition" />
-                                </label>
-                                <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Definition of Done</span>
-                                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={(selectedCandidate.draftRecord?.definitionOfDone ?? []).join("\n")} name="definitionOfDone" />
-                                </label>
+                                {selectedCandidate.intakeSession?.importIntent === "design" ? (
+                                  <>
+                                    <label className="space-y-2">
+                                      <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                                      <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={(selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")} name="acceptanceCriteria" />
+                                    </label>
+                                    <label className="space-y-2">
+                                      <span className="text-sm font-medium text-foreground">AI usage scope</span>
+                                      <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={(selectedCandidate.draftRecord?.aiUsageScope ?? []).join(", ")} name="aiUsageScope" type="text" />
+                                    </label>
+                                    <label className="space-y-2">
+                                      <span className="text-sm font-medium text-foreground">Test Definition</span>
+                                      <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.testDefinition ?? ""} name="testDefinition" />
+                                    </label>
+                                    <label className="space-y-2">
+                                      <span className="text-sm font-medium text-foreground">Definition of Done</span>
+                                      <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={(selectedCandidate.draftRecord?.definitionOfDone ?? []).join("\n")} name="definitionOfDone" />
+                                    </label>
+                                  </>
+                                ) : (
+                                  <>
+                                    <input name="acceptanceCriteria" type="hidden" value="" />
+                                    <input name="aiUsageScope" type="hidden" value="" />
+                                    <input name="testDefinition" type="hidden" value="" />
+                                    <input name="definitionOfDone" type="hidden" value="" />
+                                  </>
+                                )}
                                 <div className="grid gap-4 sm:grid-cols-2">
                                   <label className="space-y-2">
                                     <span className="text-sm font-medium text-foreground">Linked Outcome</span>

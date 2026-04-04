@@ -160,11 +160,11 @@ export function buildFramingBriefExportPackage(input: {
   const fileBaseName = input.payload.handshake.outcome_key.toLowerCase();
   const entries: ZipEntry[] = [
     {
-      path: `${fileBaseName}-framing-brief.md`,
+      path: `${fileBaseName}-ai-delivery-handoff.md`,
       data: encoder.encode(input.markdown)
     },
     {
-      path: `${fileBaseName}-framing-brief.json`,
+      path: `${fileBaseName}-ai-delivery-handoff.json`,
       data: encoder.encode(JSON.stringify(input.payload, null, 2))
     }
   ];
@@ -188,16 +188,16 @@ export function buildFramingBriefExportPackage(input: {
   }
 
   const readme = [
-    "# Framing Brief Package",
+    "# AI Delivery Handoff Package",
     "",
     `Outcome: ${input.payload.handshake.outcome_key} - ${input.payload.handshake.outcome_title}`,
     "",
     "Contents:",
-    `- ${fileBaseName}-framing-brief.md`,
-    `- ${fileBaseName}-framing-brief.json`,
+    `- ${fileBaseName}-ai-delivery-handoff.md`,
+    `- ${fileBaseName}-ai-delivery-handoff.json`,
     "- ux-sketches/... linked to the correct Story Idea",
     "",
-    "Use the markdown brief for direct AI handoff, and the JSON plus ux-sketches folder when the next step should preserve structure and visual references together."
+    "Use the markdown handoff for direct AI transfer, and the JSON plus ux-sketches folder when the next step should preserve structure and visual references together."
   ].join("\n");
 
   entries.unshift({
@@ -207,6 +207,6 @@ export function buildFramingBriefExportPackage(input: {
 
   return {
     blob: createStoredZip(entries),
-    filename: `${fileBaseName}-framing-package.zip`
+    filename: `${fileBaseName}-ai-delivery-handoff-package.zip`
   };
 }

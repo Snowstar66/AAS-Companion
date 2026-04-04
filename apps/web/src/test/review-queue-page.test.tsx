@@ -280,13 +280,18 @@ describe("Review queue page", () => {
               uncertain: 0,
               humanOnly: 1,
               blocked: 0,
-              unmapped: 0
-            }
-          },
-          file: {
-            id: "file-1",
-            fileName: "story-pack.md"
+            unmapped: 0
           }
+        },
+        intakeSession: {
+          id: "session-1",
+          label: "Artifact intake 2026-03-23 21:00",
+          importIntent: "framing"
+        },
+        file: {
+          id: "file-1",
+          fileName: "story-pack.md"
+        }
         }
       ],
       selectedCandidate: {
@@ -349,7 +354,8 @@ describe("Review queue page", () => {
         },
         intakeSession: {
           id: "session-1",
-          label: "Artifact intake 2026-03-23 21:00"
+          label: "Artifact intake 2026-03-23 21:00",
+          importIntent: "framing"
         },
         file: {
           id: "file-1",
@@ -366,6 +372,7 @@ describe("Review queue page", () => {
 
     expect(screen.getAllByRole("heading", { name: "Human Review dashboard", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getByText("Open human review help")).toBeDefined();
+    expect(screen.getByText("Imported value spine")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Parsed candidate" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Focused correction workspace" })).toBeDefined();

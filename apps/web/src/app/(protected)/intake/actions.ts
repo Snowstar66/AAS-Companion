@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { appendActivityEvent } from "@aas-companion/db";
 import {
   applyApprovedArtifactFileCarryForwardToOutcomeService,
   createArtifactIntakeSessionService,
@@ -89,8 +90,57 @@ function redirectDemoIntakeBlocked() {
   );
 }
 
+async function recordOperationalLog(input: {
+  organizationId: string;
+  entityType: "organization" | "artifact_intake_session" | "artifact_intake_file";
+  entityId: string;
+  actorId?: string | null;
+  scope: "import" | "approval";
+  action: string;
+  status: "success" | "error";
+  summary: string;
+  detail?: string | null;
+  durationMs?: number | null;
+  itemCount?: number | null;
+}) {
+  try {
+    await appendActivityEvent({
+      organizationId: input.organizationId,
+      entityType: input.entityType,
+      entityId: input.entityId,
+      eventType: "operational_log_recorded",
+      actorId: input.actorId ?? null,
+      metadata: {
+        scope: input.scope,
+        action: input.action,
+        status: input.status,
+        summary: input.summary,
+        detail: input.detail ?? null,
+        durationMs: input.durationMs ?? null,
+        itemCount: input.itemCount ?? null
+      }
+    });
+  } catch {
+    // Logging must never block the primary workflow.
+  }
+}
+
+async function runSequentially<TItem, TResult>(
+  items: TItem[],
+  work: (item: TItem) => Promise<TResult>
+) {
+  const results: TResult[] = [];
+
+  for (const item of items) {
+    results.push(await work(item));
+  }
+
+  return results;
+}
+
 export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   const session = await requireActiveProjectSession();
+  const startedAt = Date.now();
 
   if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
     redirectDemoIntakeBlocked();
@@ -130,6 +180,19 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   });
 
   if (!result.ok) {
+    await recordOperationalLog({
+      organizationId: session.organization.organizationId,
+      entityType: "organization",
+      entityId: session.organization.organizationId,
+      actorId: session.userId,
+      scope: "import",
+      action: "artifact_intake_upload",
+      status: "error",
+      summary: result.errors[0]?.message ?? "Import upload failed.",
+      durationMs: Date.now() - startedAt,
+      itemCount: preparedFiles.length
+    });
+
     redirect(
       buildRedirect("/intake", {
         error: result.errors[0]?.message ?? "Import upload failed."
@@ -149,6 +212,20 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
           ? `Uploaded ${result.data.uploadedCount} file(s) into a new ${importIntent} import. ${result.data.rejectedCount} file(s) were rejected with clear feedback while the accepted files were classified and mapped for review.`
         : `Uploaded ${result.data.uploadedCount} file(s) into a new ${importIntent} import session and mapped them into reviewable candidates.`;
   const message = result.data.processingNote ? `${baseMessage} ${result.data.processingNote}` : baseMessage;
+
+  await recordOperationalLog({
+    organizationId: session.organization.organizationId,
+    entityType: "artifact_intake_session",
+    entityId: result.data.sessionId,
+    actorId: session.userId,
+    scope: "import",
+    action: "artifact_intake_upload",
+    status: "success",
+    summary: `Imported ${result.data.uploadedCount} file(s) for ${importIntent}.`,
+    detail: result.data.processingModeUsed,
+    durationMs: Date.now() - startedAt,
+    itemCount: result.data.uploadedCount
+  });
 
   redirect(
     buildRedirect("/intake", {
@@ -319,6 +396,7 @@ export async function submitArtifactCandidateFromIntakeAction(formData: FormData
 
 export async function submitFramingBulkApproveFromIntakeAction(formData: FormData) {
   const session = await requireActiveProjectSession();
+  const startedAt = Date.now();
 
   if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
     redirectDemoIntakeBlocked();
@@ -345,6 +423,35 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     .getAll("leftoverSectionIds")
     .map((value) => String(value))
     .filter(Boolean);
+  const totalSelectedItemCount = selectedCandidateIds.length + selectedCarryForwardSectionIds.length;
+
+  async function logApproval(status: "success" | "error", summary: string, detail?: string | null) {
+    await recordOperationalLog({
+      organizationId: session.organization.organizationId,
+      entityType: fileId ? "artifact_intake_file" : "organization",
+      entityId: fileId || session.organization.organizationId,
+      actorId: session.userId,
+      scope: "approval",
+      action: decision === "reject" ? "framing_bulk_reject" : "framing_bulk_approve",
+      status,
+      summary,
+      detail: detail ?? null,
+      durationMs: Date.now() - startedAt,
+      itemCount: totalSelectedItemCount
+    });
+  }
+
+  async function redirectWithApprovalError(message: string, detail?: string | null): Promise<never> {
+    await logApproval("error", message, detail);
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId,
+        fileId,
+        message
+      })
+    );
+  }
 
   if (selectedCandidateIds.length === 0 && selectedCarryForwardSectionIds.length === 0) {
     redirect(
@@ -366,13 +473,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const failedLookup = candidateResults.find((entry) => !entry.result.ok || !entry.result.data);
 
   if (failedLookup && !failedLookup.result.ok) {
-    redirect(
-      buildRedirect("/intake", {
-        status: "error",
-        sessionId,
-        fileId,
-        message: failedLookup.result.errors[0]?.message ?? "One or more imported candidates could not be loaded for bulk approval."
-      })
+    await redirectWithApprovalError(
+      failedLookup.result.errors[0]?.message ?? "One or more imported candidates could not be loaded for bulk approval."
     );
   }
 
@@ -462,76 +564,55 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
 
   if (decision === "reject") {
-    const carryForwardRejectResults = await Promise.all(
-      selectedCarryForwardSectionIds.map((sectionId) =>
-        reviewArtifactFileSectionDispositionService({
-          organizationId: session.organization.organizationId,
-          actorId: session.userId,
-          fileId,
-          sectionId,
-          action: "not_relevant",
-          note: "Rejected from the framing import spine."
-        })
-      )
+    const carryForwardRejectResults = await runSequentially(selectedCarryForwardSectionIds, (sectionId) =>
+      reviewArtifactFileSectionDispositionService({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        fileId,
+        sectionId,
+        action: "not_relevant",
+        note: "Rejected from the framing import spine."
+      })
     );
     const failedCarryForwardReject = carryForwardRejectResults.find((result) => !result.ok);
 
     if (failedCarryForwardReject && !failedCarryForwardReject.ok) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: failedCarryForwardReject.errors[0]?.message ?? "Selected framing constraints could not be rejected."
-        })
+      await redirectWithApprovalError(
+        failedCarryForwardReject.errors[0]?.message ?? "Selected framing constraints could not be rejected."
       );
     }
 
-    const candidateRejectResults = await Promise.all(
-      candidates.map((candidate) =>
-        reviewArtifactCandidateService({
-          organizationId: session.organization.organizationId,
-          actorId: session.userId,
-          candidateId: candidate.id,
-          reviewStatus: "rejected",
-          reviewComment: "Rejected from the framing import spine."
-        })
-      )
+    const candidateRejectResults = await runSequentially(candidates, (candidate) =>
+      reviewArtifactCandidateService({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        candidateId: candidate.id,
+        reviewStatus: "rejected",
+        reviewComment: "Rejected from the framing import spine."
+      })
     );
     const failedCandidateReject = candidateRejectResults.find((result) => !result.ok);
 
     if (failedCandidateReject && !failedCandidateReject.ok) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: failedCandidateReject.errors[0]?.message ?? "One or more selected framing items could not be rejected."
-        })
+      await redirectWithApprovalError(
+        failedCandidateReject.errors[0]?.message ?? "One or more selected framing items could not be rejected."
       );
     }
 
-    const suppressedRejectResults = await Promise.all(
-      suppressedCandidateIds.map((candidateId) =>
-        reviewArtifactCandidateService({
-          organizationId: session.organization.organizationId,
-          actorId: session.userId,
-          candidateId,
-          reviewStatus: "rejected",
-          reviewComment: "Merged into the primary imported Outcome in the framing spine."
-        })
-      )
+    const suppressedRejectResults = await runSequentially(suppressedCandidateIds, (candidateId) =>
+      reviewArtifactCandidateService({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        candidateId,
+        reviewStatus: "rejected",
+        reviewComment: "Merged into the primary imported Outcome in the framing spine."
+      })
     );
     const failedSuppressedReject = suppressedRejectResults.find((result) => !result.ok);
 
     if (failedSuppressedReject && !failedSuppressedReject.ok) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: failedSuppressedReject.errors[0]?.message ?? "One or more merged Outcome candidates could not be cleared."
-        })
+      await redirectWithApprovalError(
+        failedSuppressedReject.errors[0]?.message ?? "One or more merged Outcome candidates could not be cleared."
       );
     }
 
@@ -539,6 +620,11 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     revalidatePath("/review");
     revalidatePath("/workspace");
     revalidatePath("/");
+
+    await logApproval(
+      "success",
+      `Rejected ${selectedCandidateIds.length + selectedCarryForwardSectionIds.length} selected framing item(s).`
+    );
 
     redirect(
       buildRedirect("/intake", {
@@ -571,69 +657,49 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     });
 
     if (!updateCarryForwardResult.ok) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: updateCarryForwardResult.errors[0]?.message ?? "Constraint edits could not be saved for approval."
-        })
+      await redirectWithApprovalError(
+        updateCarryForwardResult.errors[0]?.message ?? "Constraint edits could not be saved for approval."
       );
     }
   }
 
-  const carryForwardConfirmResults = await Promise.all(
-    selectedCarryForwardSectionIds.map((sectionId) =>
-      reviewArtifactFileSectionDispositionService({
-        organizationId: session.organization.organizationId,
-        actorId: session.userId,
-        fileId,
-        sectionId,
-        action: "confirmed",
-        note: "Approved from the framing import spine."
-      })
-    )
+  const carryForwardConfirmResults = await runSequentially(selectedCarryForwardSectionIds, (sectionId) =>
+    reviewArtifactFileSectionDispositionService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "confirmed",
+      note: "Approved from the framing import spine."
+    })
   );
   const failedCarryForwardConfirm = carryForwardConfirmResults.find((result) => !result.ok);
 
   if (failedCarryForwardConfirm && !failedCarryForwardConfirm.ok) {
-    redirect(
-      buildRedirect("/intake", {
-        status: "error",
-        sessionId,
-        fileId,
-        message: failedCarryForwardConfirm.errors[0]?.message ?? "Selected framing constraints could not be approved."
-      })
+    await redirectWithApprovalError(
+      failedCarryForwardConfirm.errors[0]?.message ?? "Selected framing constraints could not be approved."
     );
   }
 
-  const leftoverDispositionResults = await Promise.all(
-    leftoverSectionIds.map((sectionId) =>
-      reviewArtifactFileSectionDispositionService({
-        organizationId: session.organization.organizationId,
-        actorId: session.userId,
-        fileId,
-        sectionId,
-        action: "not_relevant",
-        note: "Ignored during framing spine approval."
-      })
-    )
+  const leftoverDispositionResults = await runSequentially(leftoverSectionIds, (sectionId) =>
+    reviewArtifactFileSectionDispositionService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "not_relevant",
+      note: "Ignored during framing spine approval."
+    })
   );
   const failedLeftoverDisposition = leftoverDispositionResults.find((result) => !result.ok);
 
   if (failedLeftoverDisposition && !failedLeftoverDisposition.ok) {
-    redirect(
-      buildRedirect("/intake", {
-        status: "error",
-        sessionId,
-        fileId,
-        message: failedLeftoverDisposition.errors[0]?.message ?? "Leftover cleanup could not be saved."
-      })
+    await redirectWithApprovalError(
+      failedLeftoverDisposition.errors[0]?.message ?? "Leftover cleanup could not be saved."
     );
   }
 
-  const candidatePreparationResults = await Promise.all(
-    candidates.map((candidate) => {
+  const candidatePreparationResults = await runSequentially(candidates, (candidate) => {
       const currentOutcomeLink =
         candidate.type === "story"
           ? readResolvedStoryOutcomeSelection(candidate)
@@ -695,41 +761,28 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
         reviewComment: "Approved from the framing import spine.",
         draftRecord
       });
-    })
-  );
+    });
   const failedCandidatePreparation = candidatePreparationResults.find((result) => !result.ok);
 
   if (failedCandidatePreparation && !failedCandidatePreparation.ok) {
-    redirect(
-      buildRedirect("/intake", {
-        status: "error",
-        sessionId,
-        fileId,
-        message: failedCandidatePreparation.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
-      })
+    await redirectWithApprovalError(
+      failedCandidatePreparation.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
     );
   }
-  const suppressedCleanupResults = await Promise.all(
-    suppressedCandidateIds.map((candidateId) =>
-      reviewArtifactCandidateService({
-        organizationId: session.organization.organizationId,
-        actorId: session.userId,
-        candidateId,
-        reviewStatus: "rejected",
-        reviewComment: "Merged into the primary imported Outcome in the framing spine."
-      })
-    )
+  const suppressedCleanupResults = await runSequentially(suppressedCandidateIds, (candidateId) =>
+    reviewArtifactCandidateService({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      candidateId,
+      reviewStatus: "rejected",
+      reviewComment: "Merged into the primary imported Outcome in the framing spine."
+    })
   );
   const failedSuppressedCleanup = suppressedCleanupResults.find((result) => !result.ok);
 
   if (failedSuppressedCleanup && !failedSuppressedCleanup.ok) {
-    redirect(
-      buildRedirect("/intake", {
-        status: "error",
-        sessionId,
-        fileId,
-        message: failedSuppressedCleanup.errors[0]?.message ?? "Merged Outcome cleanup could not be saved."
-      })
+    await redirectWithApprovalError(
+      failedSuppressedCleanup.errors[0]?.message ?? "Merged Outcome cleanup could not be saved."
     );
   }
 
@@ -773,35 +826,25 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     })
   ) {
     if (!resolvedOutcomeId) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: "Choose or approve an Outcome before creating the Fallback Epic."
-        })
-      );
+      await redirectWithApprovalError("Choose or approve an Outcome before creating the Fallback Epic.");
     }
+
+    const fallbackOutcomeId = resolvedOutcomeId as string;
 
     const fallbackEpicResult = await createNativeEpicFromOutcomeService({
       organizationId: session.organization.organizationId,
-      outcomeId: resolvedOutcomeId,
+      outcomeId: fallbackOutcomeId,
       actorId: session.userId,
       title: "Fallback Epic"
     });
 
     if (!fallbackEpicResult.ok) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: fallbackEpicResult.errors[0]?.message ?? "Fallback Epic could not be created."
-        })
+      await redirectWithApprovalError(
+        fallbackEpicResult.errors[0]?.message ?? "Fallback Epic could not be created."
       );
     }
 
-    resolvedFallbackEpicId = fallbackEpicResult.data.id;
+    resolvedFallbackEpicId = fallbackEpicResult.ok ? fallbackEpicResult.data.id : null;
   }
 
   for (const candidate of orderedCandidates.filter((entry) => entry.type === "story")) {
@@ -810,6 +853,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       const currentEpicLink = story ? readResolvedStoryEpicSelection(story) : "";
 
       if (!currentEpicLink || currentEpicLink === FALLBACK_EPIC_OPTION_VALUE) {
+        const fallbackOutcomeId = resolvedOutcomeId as string;
+
         const fallbackReviewResult = await reviewArtifactCandidateService({
           organizationId: session.organization.organizationId,
           actorId: session.userId,
@@ -818,18 +863,13 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
           reviewComment: "Approved from the framing import spine.",
           draftRecord: {
             epicCandidateId: resolvedFallbackEpicId,
-            outcomeCandidateId: resolvedOutcomeId
+            outcomeCandidateId: fallbackOutcomeId
           }
         });
 
         if (!fallbackReviewResult.ok) {
-          redirect(
-            buildRedirect("/intake", {
-              status: "error",
-              sessionId,
-              fileId,
-              message: fallbackReviewResult.errors[0]?.message ?? "Fallback Epic could not be linked to the selected Story Idea."
-            })
+          await redirectWithApprovalError(
+            fallbackReviewResult.errors[0]?.message ?? "Fallback Epic could not be linked to the selected Story Idea."
           );
         }
       }
@@ -852,31 +892,21 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
 
   if (selectedCarryForwardSectionIds.length > 0) {
     if (!resolvedOutcomeId) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: "Approve or choose a framing Outcome before applying imported constraints."
-        })
-      );
+      await redirectWithApprovalError("Approve or choose a framing Outcome before applying imported constraints.");
     }
+
+    const approvedOutcomeId = resolvedOutcomeId as string;
 
     const carryForwardApplyResult = await applyApprovedArtifactFileCarryForwardToOutcomeService({
       organizationId: session.organization.organizationId,
       actorId: session.userId,
-      outcomeId: resolvedOutcomeId,
+      outcomeId: approvedOutcomeId,
       fileId
     });
 
     if (!carryForwardApplyResult.ok) {
-      redirect(
-        buildRedirect("/intake", {
-          status: "error",
-          sessionId,
-          fileId,
-          message: carryForwardApplyResult.errors[0]?.message ?? "Constraints could not be applied to the framing Outcome."
-        })
+      await redirectWithApprovalError(
+        carryForwardApplyResult.errors[0]?.message ?? "Constraints could not be applied to the framing Outcome."
       );
     }
   }
@@ -887,6 +917,14 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   revalidatePath("/stories");
   revalidatePath("/workspace");
   revalidatePath("/");
+
+  await logApproval(
+    failures.length > 0 ? "error" : "success",
+    failures.length > 0
+      ? `Approved ${promotedCount} framing item(s), but ${failures.length} still need attention.`
+      : `Approved ${promotedCount} framing item(s) and applied ${selectedCarryForwardSectionIds.length} constraint item(s).`,
+    failures.length > 0 ? failures.slice(0, 3).join(" | ") : null
+  );
 
   redirect(
     buildRedirect("/intake", {

@@ -76,6 +76,30 @@ vi.mock("@/lib/home/dashboard", () => ({
   }))
 }));
 
+vi.mock("@/lib/admin/operational-logs", () => ({
+  loadOperationalLogs: vi.fn(async () => ({
+    state: "ready",
+    organizationName: "Hemmakoll",
+    message: "Recent operational activity for the active project.",
+    items: [
+      {
+        id: "log-1",
+        entityType: "artifact_intake_file",
+        entityId: "file-1",
+        createdAt: new Date("2026-04-04T11:30:00.000Z"),
+        actorName: "Pontus",
+        scope: "approval",
+        action: "framing_bulk_approve",
+        status: "error",
+        summary: "Approval stalled while promoting imported framing items.",
+        detail: "Transaction API error: Unable to start a transaction in the given time.",
+        durationMs: 48123,
+        itemCount: 12
+      }
+    ]
+  }))
+}));
+
 describe("Admin page", () => {
   it("renders a bulk cleanup surface for projects", async () => {
     render(await AdminPage({}));
@@ -85,5 +109,7 @@ describe("Admin page", () => {
     expect(screen.getByRole("checkbox", { name: /Hemmakoll/i })).toBeDefined();
     expect(screen.getByRole("checkbox", { name: /Test Project/i })).toBeDefined();
     expect(screen.getByRole("button", { name: "Hard delete selected projects" })).toBeDefined();
+    expect(screen.getByText("Operational logs")).toBeDefined();
+    expect(screen.getByText(/Transaction API error: Unable to start a transaction in the given time\./i)).toBeDefined();
   });
 });

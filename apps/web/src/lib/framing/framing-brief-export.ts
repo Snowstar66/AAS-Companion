@@ -163,6 +163,12 @@ export type FramingBriefExportPayload = {
   };
 };
 
+export type HumanFramingBriefExport = {
+  title: string;
+  markdown: string;
+  filename: string;
+};
+
 function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
@@ -559,4 +565,95 @@ export function buildFramingBriefExport(input: {
   ].join("\n");
 
   return { payload, markdown };
+}
+
+export function buildHumanFramingBriefExport(input: {
+  outcome: FramingBriefOutcome;
+  blockers: string[];
+  tollgate?: {
+    approvalSnapshot?: unknown;
+    status?: string | null;
+    approvedVersion?: number | null;
+  } | null;
+  exportedAt?: Date;
+}): HumanFramingBriefExport {
+  const aiExport = buildFramingBriefExport(input);
+  const payload = aiExport.payload;
+  const key = payload.handshake.outcome_key;
+  const title = payload.handshake.outcome_title;
+  const epics = payload.framing_structure.epics;
+  const storyIdeaCount = payload.framing_structure.story_idea_count;
+  const signoffs = payload.approvals.signoffs;
+  const exportedAt = payload.metadata.exported_at;
+  const filename = `${key.toLowerCase()}-framing-brief-human.md`;
+  const markdown = [
+    "# Framing Brief",
+    "",
+    `${key} - ${title}`,
+    "",
+    "## Outcome",
+    payload.handshake.outcome_statement ?? payload.handshake.problem_statement ?? "Outcome statement is not captured yet.",
+    "",
+    "## Why this matters",
+    payload.handshake.problem_statement ?? "Problem statement is not captured yet.",
+    "",
+    "## Baseline",
+    `Definition: ${payload.baseline.definition ?? "Not captured yet"}`,
+    `Source: ${payload.baseline.source ?? "Not captured yet"}`,
+    "",
+    "## Framing constraints",
+    payload.handshake.constraints ?? "No consolidated framing constraints are captured yet.",
+    "",
+    "## Value spine",
+    `Epics: ${epics.length}`,
+    `Story Ideas: ${storyIdeaCount}`,
+    "",
+    ...(epics.length > 0
+      ? epics.flatMap((epic) => [
+          `### ${epic.key} - ${epic.title}`,
+          `Scope boundary: ${epic.scope_boundary ?? "Not captured yet"}`,
+          ...(epic.story_ideas.length > 0
+            ? epic.story_ideas.map(
+                (storyIdea) =>
+                  `- ${storyIdea.key} - ${storyIdea.title}${storyIdea.value_intent ? `: ${storyIdea.value_intent}` : ""}`
+              )
+            : ["- No Story Ideas are linked yet."]),
+          ""
+        ])
+      : ["No Epics are captured yet.", ""]),
+    ...(payload.framing_structure.unassigned_story_ideas.length > 0
+      ? [
+          "## Story Ideas still without Epic",
+          ...payload.framing_structure.unassigned_story_ideas.map(
+            (storyIdea) =>
+              `- ${storyIdea.key} - ${storyIdea.title}${storyIdea.value_intent ? `: ${storyIdea.value_intent}` : ""}`
+          ),
+          ""
+        ]
+      : []),
+    "## Approval context",
+    `Status: ${payload.approvals.status === "approved" ? "Approved" : "Not yet approved"}`,
+    `Approved version: ${payload.approvals.approved_version ?? "Not captured yet"}`,
+    `Approved at: ${payload.approvals.approved_at ?? "Not captured yet"}`,
+    ...(signoffs.length > 0
+      ? signoffs.map(
+          (signoff) =>
+            `- ${signoff.role ?? "Approval role"}: ${signoff.person ?? "Unknown"} (${signoff.side ?? "side not captured"})`
+        )
+      : ["- No signoffs are recorded yet."]),
+    "",
+    "## Notes for the next conversation",
+    "- Treat this brief as framing guidance, not as final implementation detail.",
+    "- Preserve the value spine links when you refine Epics and Story Ideas further.",
+    ...(payload.baseline.warnings.length > 0 ? payload.baseline.warnings.map((warning) => `- Warning: ${warning}`) : []),
+    "",
+    "## Export metadata",
+    `Exported at: ${exportedAt}`
+  ].join("\n");
+
+  return {
+    title: `${key} - ${title}`,
+    markdown,
+    filename
+  };
 }
