@@ -31,6 +31,8 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
   const pathname = usePathname() ?? "/";
   const returnTo = pathname === "/help" ? "/" : pathname;
   const [guidanceVisible, setGuidanceVisible] = useState(true);
+  const adminItem = primaryNavigation.find((item) => item.href === "/admin") ?? null;
+  const mainNavigationItems = primaryNavigation.filter((item) => item.href !== "/admin");
 
   useEffect(() => {
     const stored = window.localStorage.getItem(GUIDANCE_STORAGE_KEY);
@@ -77,7 +79,7 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
         </div>
 
         <nav className="space-y-2">
-          {primaryNavigation.map((item) => {
+          {mainNavigationItems.map((item) => {
             const Icon = icons[item.href as keyof typeof icons] ?? LayoutDashboard;
             const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
             const href =
@@ -106,7 +108,33 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
           })}
         </nav>
 
-        <div className="mt-auto border-t border-white/10 pt-4">
+        <div className="mt-auto space-y-3 border-t border-white/10 pt-4">
+          {adminItem ? (
+            <Link
+              className={`flex items-start gap-3 rounded-2xl px-3 py-3 transition ${
+                pathname === adminItem.href || pathname.startsWith(`${adminItem.href}/`)
+                  ? "border border-white/20 bg-white text-slate-950 shadow-sm"
+                  : "bg-white/5 text-slate-100 hover:bg-white/10"
+              }`}
+              href={adminItem.href}
+            >
+              <Settings2
+                className={`mt-0.5 h-4 w-4 shrink-0 ${
+                  pathname === adminItem.href || pathname.startsWith(`${adminItem.href}/`) ? "text-primary" : "text-slate-300"
+                }`}
+              />
+              <div>
+                <p className="font-medium">{adminItem.label}</p>
+                <p
+                  className={`mt-1 text-sm leading-5 ${
+                    pathname === adminItem.href || pathname.startsWith(`${adminItem.href}/`) ? "text-slate-600" : "text-slate-300"
+                  }`}
+                >
+                  {adminItem.description}
+                </p>
+              </div>
+            </Link>
+          ) : null}
           <button
             className="inline-flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/8 hover:text-white"
             onClick={() => setGuidanceVisible((current) => !current)}

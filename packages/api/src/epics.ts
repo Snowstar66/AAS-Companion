@@ -173,21 +173,28 @@ export async function createNativeEpicFromOutcomeService(input: {
   const epics = await listEpics(input.organizationId, { includeArchived: true });
   const key = buildNextKey(epics.map((epic) => epic.key), "EPC");
 
-  return success(
-    await createEpic({
-      organizationId: input.organizationId,
-      outcomeId: outcome.id,
-      key,
-      title: input.title?.trim() || "New epic",
-      purpose: "Describe the value area this Epic advances.",
-      scopeBoundary: "Describe what this Epic includes, excludes, or leaves for later.",
-      riskNote: null,
-      status: "draft",
-      originType: "native",
-      createdMode: "clean",
-      actorId: input.actorId ?? null
-    })
-  );
+  try {
+    return success(
+      await createEpic({
+        organizationId: input.organizationId,
+        outcomeId: outcome.id,
+        key,
+        title: input.title?.trim() || "New epic",
+        purpose: "Describe the value area this Epic advances.",
+        scopeBoundary: "Describe what this Epic includes, excludes, or leaves for later.",
+        riskNote: null,
+        status: "draft",
+        originType: "native",
+        createdMode: "clean",
+        actorId: input.actorId ?? null
+      })
+    );
+  } catch (error) {
+    return failure({
+      code: "epic_create_failed",
+      message: error instanceof Error ? error.message : "Epic could not be created from the selected Outcome."
+    });
+  }
 }
 
 export async function createNativeDirectionSeedFromEpicService(input: {

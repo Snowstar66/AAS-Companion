@@ -163,7 +163,14 @@ export async function reviewArtifactCandidateService(input: unknown) {
     });
   }
 
-  return success(await reviewArtifactCandidate(parsed.data));
+  try {
+    return success(await reviewArtifactCandidate(parsed.data));
+  } catch (error) {
+    return failure({
+      code: "artifact_candidate_review_failed",
+      message: error instanceof Error ? error.message : "Artifact candidate review could not be saved."
+    });
+  }
 }
 
 export async function reviewArtifactFileSectionDispositionService(input: unknown) {
@@ -176,7 +183,14 @@ export async function reviewArtifactFileSectionDispositionService(input: unknown
     });
   }
 
-  return success(await reviewArtifactFileSectionDisposition(parsed.data));
+  try {
+    return success(await reviewArtifactFileSectionDisposition(parsed.data));
+  } catch (error) {
+    return failure({
+      code: "artifact_section_review_failed",
+      message: error instanceof Error ? error.message : "Artifact section disposition could not be saved."
+    });
+  }
 }
 
 export async function promoteArtifactCandidateService(input: {

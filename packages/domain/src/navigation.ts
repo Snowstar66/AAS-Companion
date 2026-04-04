@@ -17,11 +17,6 @@ export const primaryNavigation: NavigationItem[] = [
     description: "Open, resume, or create projects."
   },
   {
-    label: "Admin",
-    href: "/admin",
-    description: "Bulk cleanup and hard deletion of test projects."
-  },
-  {
     label: "Framing",
     href: "/framing",
     description: "Business case, baseline, owner, and direction."
@@ -55,6 +50,11 @@ export const primaryNavigation: NavigationItem[] = [
     label: "Help",
     href: "/help",
     description: "Method guide, process flow, and key concepts."
+  },
+  {
+    label: "Admin",
+    href: "/admin",
+    description: "Bulk cleanup and hard deletion of test projects."
   }
 ];
 
