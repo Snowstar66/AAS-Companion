@@ -1429,37 +1429,58 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                         </div>
                       </form>
 
-                      {intentGroup.sessions.map((group) => (
-                        <CollapsibleSection
-                          badge={`${group.items.length}`}
-                          defaultOpen={selectedCandidate ? group.items.some((candidate) => candidate.id === selectedCandidate.id) : true}
-                          description={`Files: ${group.fileNames.join(", ")}. Sorted as Outcome -> Epic -> ${intentGroup.importIntent === "design" ? "Delivery Story" : "Story Idea"}.`}
-                          key={`${intentGroup.importIntent}-${group.id}`}
-                          title={group.label}
-                        >
-                          {group.items.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No review items are currently in this import session.</p>
-                          ) : (
-                            <ReviewSessionValueSpine
-                              bulkFormId={`bulk-review-${intentGroup.importIntent}`}
-                              candidates={group.items}
-                              description={`Approve or reject directly from this import spine. Grouped as Outcome -> Epic -> ${intentGroup.importIntent === "design" ? "Delivery Story" : "Story Idea"}.`}
-                              projectEpics={queue.projectEpics}
-                              projectOutcomes={queue.projectOutcomes}
-                              reviewHref={(candidateId) =>
-                                buildReviewHref({
-                                  candidateId,
-                                  reviewStatusFilter,
-                                  findingFilter,
-                                  importIntent: intentGroup.importIntent
-                                })
-                              }
-                              selectedCandidateId={selectedCandidate?.id ?? null}
-                              title={group.label}
-                            />
-                          )}
-                        </CollapsibleSection>
-                      ))}
+                      {intentGroup.sessions.map((group) =>
+                        intentGroup.importIntent === "framing" ? (
+                          <ReviewSessionValueSpine
+                            bulkFormId={`bulk-review-${intentGroup.importIntent}`}
+                            candidates={group.items}
+                            description={`Same hierarchy as Import. File${group.fileNames.length === 1 ? "" : "s"}: ${group.fileNames.join(", ")}.`}
+                            key={`${intentGroup.importIntent}-${group.id}`}
+                            projectEpics={queue.projectEpics}
+                            projectOutcomes={queue.projectOutcomes}
+                            reviewHref={(candidateId) =>
+                              buildReviewHref({
+                                candidateId,
+                                reviewStatusFilter,
+                                findingFilter,
+                                importIntent: intentGroup.importIntent
+                              })
+                            }
+                            selectedCandidateId={selectedCandidate?.id ?? null}
+                            title="Framing value spine"
+                          />
+                        ) : (
+                          <CollapsibleSection
+                            badge={`${group.items.length}`}
+                            defaultOpen={selectedCandidate ? group.items.some((candidate) => candidate.id === selectedCandidate.id) : true}
+                            description={`Files: ${group.fileNames.join(", ")}. Sorted as Outcome -> Epic -> ${intentGroup.importIntent === "design" ? "Delivery Story" : "Story Idea"}.`}
+                            key={`${intentGroup.importIntent}-${group.id}`}
+                            title={group.label}
+                          >
+                            {group.items.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">No review items are currently in this import session.</p>
+                            ) : (
+                              <ReviewSessionValueSpine
+                                bulkFormId={`bulk-review-${intentGroup.importIntent}`}
+                                candidates={group.items}
+                                description={`Approve or reject directly from this import spine. Grouped as Outcome -> Epic -> ${intentGroup.importIntent === "design" ? "Delivery Story" : "Story Idea"}.`}
+                                projectEpics={queue.projectEpics}
+                                projectOutcomes={queue.projectOutcomes}
+                                reviewHref={(candidateId) =>
+                                  buildReviewHref({
+                                    candidateId,
+                                    reviewStatusFilter,
+                                    findingFilter,
+                                    importIntent: intentGroup.importIntent
+                                  })
+                                }
+                                selectedCandidateId={selectedCandidate?.id ?? null}
+                                title={group.label}
+                              />
+                            )}
+                          </CollapsibleSection>
+                        )
+                      )}
                     </div>
                   ))
                 )}
@@ -1535,6 +1556,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                         })
                       }
                       selectedCandidateId={selectedCandidate.id}
+                      title="Framing value spine"
+                      description="Same hierarchy as Import. Read the selected file as one Outcome -> Epic -> Story Idea spine while you review."
                     />
                   ) : null}
 

@@ -287,6 +287,17 @@ export function ReviewSessionValueSpine(props: {
           {props.description ??
             "Read this import as one hierarchy before you change the focused candidate. The selected node is highlighted in the spine."}
         </p>
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+            Outcomes {outcomes.length || (rootOutcome ? 1 : 0)}
+          </span>
+          <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+            Epics {groupedEpics.length}
+          </span>
+          <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+            Story ideas {stories.length}
+          </span>
+        </div>
       </div>
       <div className="space-y-3 px-4 py-4">
         {rootOutcome ? (

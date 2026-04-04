@@ -210,13 +210,15 @@ export async function promoteArtifactCandidateService(input: {
   organizationId: string;
   candidateId: string;
   actorId?: string | null;
+  disableAutoPromoteDependencies?: boolean;
 }) {
   try {
     return success(
       await promoteArtifactCandidate({
         organizationId: input.organizationId,
         candidateId: input.candidateId,
-        actorId: input.actorId ?? null
+        actorId: input.actorId ?? null,
+        disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false
       })
     );
   } catch (error) {

@@ -189,9 +189,9 @@ describe("Review queue page", () => {
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
     expect(screen.getAllByRole("link", { name: "Open" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Artifact intake 2026-03-23 21:00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Framing value spine").length).toBeGreaterThan(0);
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
-    expect(screen.getByText(/Sorted as Outcome -> Epic -> Story Idea\./i)).toBeDefined();
+    expect(screen.getByText(/Same hierarchy as Import\./i)).toBeDefined();
     expect(screen.getByText("Choose one item to start")).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });
@@ -371,7 +371,7 @@ describe("Review queue page", () => {
 
     expect(screen.getAllByRole("heading", { name: "Human Review dashboard", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getByText("Open human review help")).toBeDefined();
-    expect(screen.getByText("Imported value spine")).toBeDefined();
+    expect(screen.getAllByText("Framing value spine").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Parsed candidate" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Correction queue" })).toBeDefined();
     expect(screen.getByRole("heading", { name: "Focused correction workspace" })).toBeDefined();

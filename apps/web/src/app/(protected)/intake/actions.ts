@@ -810,7 +810,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     const promoteResult = await promoteArtifactCandidateService({
       organizationId: session.organization.organizationId,
       candidateId: candidate.id,
-      actorId: session.userId
+      actorId: session.userId,
+      disableAutoPromoteDependencies: true
     });
 
     if (!promoteResult.ok) {
@@ -885,7 +886,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     const promoteResult = await promoteArtifactCandidateService({
       organizationId: session.organization.organizationId,
       candidateId: candidate.id,
-      actorId: session.userId
+      actorId: session.userId,
+      disableAutoPromoteDependencies: true
     });
 
     if (!promoteResult.ok) {

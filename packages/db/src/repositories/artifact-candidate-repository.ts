@@ -1033,9 +1033,11 @@ export async function promoteArtifactCandidate(input: {
   organizationId: string;
   candidateId: string;
   actorId?: string | null;
+  disableAutoPromoteDependencies?: boolean;
 }) {
-  return prisma.$transaction(async (tx) => {
-    const seen = new Set<string>();
+  return prisma.$transaction(
+    async (tx) => {
+      const seen = new Set<string>();
 
     async function autoPromoteDependencyCandidate(dependencyCandidateId: string | null | undefined, label: string) {
       if (!dependencyCandidateId) {
@@ -1065,6 +1067,10 @@ export async function promoteArtifactCandidate(input: {
       }
 
       if (!dependencyCandidate.promotedEntityId) {
+        if (input.disableAutoPromoteDependencies) {
+          return dependencyCandidate;
+        }
+
         if (dependencyCandidate.reviewStatus !== "confirmed" && dependencyCandidate.reviewStatus !== "edited") {
           await tx.artifactAasCandidate.update({
             where: { id: dependencyCandidate.id },
@@ -1561,6 +1567,11 @@ export async function promoteArtifactCandidate(input: {
       }
     }
 
-    return promoteCandidateWithinTransaction(input.candidateId);
-  });
+      return promoteCandidateWithinTransaction(input.candidateId);
+    },
+    {
+      maxWait: 10_000,
+      timeout: 60_000
+    }
+  );
 }
