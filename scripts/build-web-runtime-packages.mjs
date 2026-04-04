@@ -43,15 +43,16 @@ function run(command, args, cwd) {
 for (const pkg of packages) {
   const packageRoot = path.join(repoRoot, pkg.dir);
   const distDir = path.join(packageRoot, "dist");
-  const tsconfigPath = path.join(packageRoot, "tsconfig.json");
   const tsBuildInfoFile = path.join(distDir, ".tsbuildinfo");
+
+  console.log(`\n[build:web-runtime-packages] Building ${pkg.name}...`);
 
   await run(
     process.execPath,
     [
       tscBin,
       "--project",
-      tsconfigPath,
+      "tsconfig.json",
       "--outDir",
       distDir,
       "--declaration",
@@ -63,6 +64,6 @@ for (const pkg of packages) {
       "--tsBuildInfoFile",
       tsBuildInfoFile
     ],
-    repoRoot
+    packageRoot
   );
 }
