@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "..");
-const tscBin = path.join(repoRoot, "node_modules", "typescript", "bin", "tsc");
 
 const packages = [
   { name: "@aas-companion/config", dir: "packages/config" },
@@ -51,33 +50,9 @@ for (const pkg of packages) {
   mkdirSync(distDir, { recursive: true });
 
   if (process.platform === "win32") {
-    const tsconfigPath = path.join(packageRoot, "tsconfig.json");
-
-    await run(
-      process.execPath,
-      [
-        tscBin,
-        "--project",
-        tsconfigPath,
-        "--outDir",
-        distDir,
-        "--declaration",
-        "--declarationMap",
-        "false",
-        "--sourceMap",
-        "false",
-        "--incremental",
-        "false"
-      ],
-      repoRoot,
-      `[build:web-runtime-packages] ${pkg.name}`
-    );
-  } else {
     await run(
       "pnpm",
       [
-        "--filter",
-        pkg.name,
         "exec",
         "tsc",
         "--project",
@@ -92,7 +67,28 @@ for (const pkg of packages) {
         "--incremental",
         "false"
       ],
-      repoRoot,
+      packageRoot,
+      `[build:web-runtime-packages] ${pkg.name}`
+    );
+  } else {
+    await run(
+      "pnpm",
+      [
+        "exec",
+        "tsc",
+        "--project",
+        "tsconfig.json",
+        "--outDir",
+        "dist",
+        "--declaration",
+        "--declarationMap",
+        "false",
+        "--sourceMap",
+        "false",
+        "--incremental",
+        "false"
+      ],
+      packageRoot,
       `[build:web-runtime-packages] ${pkg.name}`
     );
   }
