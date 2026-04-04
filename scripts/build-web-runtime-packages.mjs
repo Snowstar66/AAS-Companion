@@ -20,7 +20,8 @@ function run(command, args, cwd, label) {
     const child = spawn(command, args, {
       cwd,
       stdio: "inherit",
-      env: process.env
+      env: process.env,
+      shell: process.platform === "win32" && command !== process.execPath
     });
 
     child.on("exit", (code, signal) => {
@@ -44,29 +45,55 @@ function run(command, args, cwd, label) {
 for (const pkg of packages) {
   const packageRoot = path.join(repoRoot, pkg.dir);
   const distDir = path.join(packageRoot, "dist");
-  const tsconfigPath = path.join(packageRoot, "tsconfig.json");
 
   console.log(`\n[build:web-runtime-packages] Building ${pkg.name}...`);
   rmSync(distDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   mkdirSync(distDir, { recursive: true });
 
-  await run(
-    process.execPath,
-    [
-      tscBin,
-      "--project",
-      tsconfigPath,
-      "--outDir",
-      distDir,
-      "--declaration",
-      "--declarationMap",
-      "false",
-      "--sourceMap",
-      "false",
-      "--incremental",
-      "false"
-    ],
-    repoRoot,
-    `[build:web-runtime-packages] ${pkg.name}`
-  );
+  if (process.platform === "win32") {
+    const tsconfigPath = path.join(packageRoot, "tsconfig.json");
+
+    await run(
+      process.execPath,
+      [
+        tscBin,
+        "--project",
+        tsconfigPath,
+        "--outDir",
+        distDir,
+        "--declaration",
+        "--declarationMap",
+        "false",
+        "--sourceMap",
+        "false",
+        "--incremental",
+        "false"
+      ],
+      repoRoot,
+      `[build:web-runtime-packages] ${pkg.name}`
+    );
+  } else {
+    await run(
+      "pnpm",
+      [
+        "--filter",
+        pkg.name,
+        "exec",
+        "tsc",
+        "--project",
+        "tsconfig.json",
+        "--outDir",
+        "dist",
+        "--declaration",
+        "--declarationMap",
+        "false",
+        "--sourceMap",
+        "false",
+        "--incremental",
+        "false"
+      ],
+      repoRoot,
+      `[build:web-runtime-packages] ${pkg.name}`
+    );
+  }
 }
