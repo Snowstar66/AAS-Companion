@@ -175,96 +175,96 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
 const helpPatternsSv: Partial<Record<WorkspaceHelpKey, HelpPattern>> = {
   "framing.handshake": {
     title: "Kundhandshake",
-    summary: "Anvand Framing for att enas om affarsproblem, mal-effekt, baseline, agare, designriktning och avsedd AI-niva innan djupare design startar.",
-    purpose: "Skapa en gemensam handshake mellan kund och leverans for aktuellt projekt och aktuellt business case.",
-    belongs: "Problemformulering, onskat outcome, baseline, agare, grov funktionell riktning och avsedd AI-accelerationsniva.",
+    summary: "Använd Framing för att enas om affärsproblem, mål-effekt, baseline, ägare, designriktning och avsedd AI-nivå innan djupare design startar.",
+    purpose: "Skapa en gemensam handshake mellan kund och leverans för aktuellt projekt och aktuellt business case.",
+    belongs: "Problemformulering, önskat outcome, baseline, ägare, grov funktionell riktning och avsedd AI-accelerationsnivå.",
     avoid: "Detaljerade user stories, detaljerade tester, implementationsnedbrytning eller approval-mekanik.",
-    nextStep: "Nar handshaken ar stabil, fortsatt till Design / Value Spine for att bryta ned caset vidare.",
+    nextStep: "När handshaken är stabil, fortsätt till Design / Value Spine för att bryta ned caset vidare.",
     aiLevelNotes: aiLevelNotesSv
   },
   "framing.problem": {
     title: "Problemformulering",
-    summary: "Namnge det verkliga nulagesproblemet innan du pratar om svaret.",
-    purpose: "Forankra caset i kundens nuvarande verklighet.",
-    belongs: "Nuvarande smarta, friktion, forsening, kostnad, risk, missat varde eller bevis for att dagens lage inte ar tillrackligt bra.",
-    avoid: "Onskat framtida lage, featurelistor, arkitektur eller formuleringar som redan forutsatter losningen."
+    summary: "Namnge det verkliga nulägesproblemet innan du pratar om svaret.",
+    purpose: "Förankra caset i kundens nuvarande verklighet.",
+    belongs: "Nuvarande smärta, friktion, försening, kostnad, risk, missat värde eller bevis för att dagens läge inte är tillräckligt bra.",
+    avoid: "Önskat framtida läge, featurelistor, arkitektur eller formuleringar som redan förutsätter lösningen."
   },
   "framing.outcome": {
-    title: "Onskat outcome",
+    title: "Önskat outcome",
     summary: "Beskriv effekten som ska bli sann om caset lyckas.",
-    purpose: "Gor den avsedda affarseffekten explicit.",
-    belongs: "Maleffekt, forbattrat lage, matbar forandring, operativ forskjutning eller affarsresultat vart att betala for.",
+    purpose: "Gör den avsedda affärseffekten explicit.",
+    belongs: "Måleffekt, förbättrat läge, mätbar förändring, operativ förskjutning eller affärsresultat värt att betala för.",
     avoid: "Features, komponentnamn, implementationstasks eller arkitekturval."
   },
   "framing.baseline_definition": {
     title: "Baseline-definition",
-    summary: "Beskriv startlaget som senare forbattring ska jamforas mot.",
-    purpose: "Skapa referenspunkten for forbattring.",
-    belongs: "Nuvarande throughput, kvalitet, kostnad, lead time, felgrad, incidentlast, MTTR eller annat matt pa startlaget.",
-    avoid: "Mallaget, vag optimism eller en baseline utan operativ betydelse."
+    summary: "Beskriv startläget som senare förbättring ska jämföras mot.",
+    purpose: "Skapa referenspunkten för förbättring.",
+    belongs: "Nuvarande throughput, kvalitet, kostnad, lead time, felgrad, incidentlast, MTTR eller annat mått på startläget.",
+    avoid: "Målläget, vag optimism eller en baseline utan operativ betydelse."
   },
   "framing.baseline_source": {
-    title: "Baseline-kalla",
-    summary: "Visa var baseline-beviset kommer fran sa att andra kan lita pa det.",
-    purpose: "Halla baselinen tillforlitlig och granskningsbar.",
-    belongs: "Namngiven dashboard, rapport, intressentkalla, servicedata, workshopanteckning eller observerat operativt underlag.",
-    avoid: "Obekraftade gissningar, dolda antaganden eller 'alla vet att det ar sa'."
+    title: "Baseline-källa",
+    summary: "Visa var baseline-beviset kommer från så att andra kan lita på det.",
+    purpose: "Hålla baselinen tillförlitlig och granskningsbar.",
+    belongs: "Namngiven dashboard, rapport, intressentkälla, servicedata, workshopanteckning eller observerat operativt underlag.",
+    avoid: "Obekräftade gissningar, dolda antaganden eller 'alla vet att det är så'."
   },
   "framing.solution_context": {
-    title: "Losningskontext",
-    summary: "Fa med den omgivande kontext som Design maste arva innan losningsdetaljer borjar.",
-    purpose: "Gor framingens forutsattningar tydliga utan att lasa designen for tidigt.",
-    belongs: "Affarskontext, anvandningskontext, befintligt landskap, overgripande integrationsforvantningar, operativa realiteter, utrullningsberoenden och compliance-kontext.",
+    title: "Lösningskontext",
+    summary: "Få med den omgivande kontext som Design måste ärva innan lösningsdetaljer börjar.",
+    purpose: "Gör framingens förutsättningar tydliga utan att låsa designen för tidigt.",
+    belongs: "Affärskontext, användningskontext, befintligt landskap, övergripande integrationsförväntningar, operativa realiteter, utrullningsberoenden och compliance-kontext.",
     avoid: "Arkitekturstruktur, teknikval, API-kontrakt, datamodeller eller implementationsdetalj."
   },
   "framing.solution_constraints": {
     title: "Constraints",
-    summary: "Lista det icke-forhandlingsbara som Design maste respektera.",
-    purpose: "Behall viktiga granser samtidigt som designalternativen halls oppna.",
-    belongs: "Operativa constraints, affarsvillkor, compliance-granser, integrationer som maste behallas, sekvenseringsgranser, kontinuitetskrav och review-skyldigheter.",
+    summary: "Lista det icke-förhandlingsbara som Design måste respektera.",
+    purpose: "Behåll viktiga gränser samtidigt som designalternativen hålls öppna.",
+    belongs: "Operativa constraints, affärsvillkor, compliance-gränser, integrationer som måste behållas, sekvenseringsgränser, kontinuitetskrav och review-skyldigheter.",
     avoid: "Preskriptiva byggsteg, ramverksval, implementationsmonster eller pseudoarkitektur."
   },
   "framing.non_functional_requirements": {
     title: "Non-functional requirements",
-    summary: "Fanga kvalitetsattributen som maste vara sanna nar losningen designas och levereras.",
-    purpose: "Gor tvargaende kvalitetskrav tydliga innan Design och leveransdetaljer tar over.",
-    belongs: "Prestandamal, tillganglighetsforvantningar, sakerhetskrav, privacy-forvantningar, compliance-krav, tillganglighetskrav, resiliensbehov och observability-behov.",
-    avoid: "Feature-ideer, UI-onskemal, implementationsrecept eller krav som bara upprepar det onskade affarsoutcomet."
+    summary: "Fånga kvalitetsattributen som måste vara sanna när lösningen designas och levereras.",
+    purpose: "Gör tvärgående kvalitetskrav tydliga innan Design och leveransdetaljer tar över.",
+    belongs: "Prestandamål, tillgänglighetsförväntningar, säkerhetskrav, privacy-förväntningar, compliance-krav, tillgänglighetskrav, resiliensbehov och observability-behov.",
+    avoid: "Feature-idéer, UI-önskemål, implementationsrecept eller krav som bara upprepar det önskade affärsoutcomet."
   },
   "framing.data_sensitivity": {
-    title: "Datakanslighet",
-    summary: "Beskriv vilken typ av data som ar inblandad och varfor det andrar risk- eller kontrollbehov.",
-    purpose: "Synliggor risk- och governancebehov tidigt i Framing.",
+    title: "Datakänslighet",
+    summary: "Beskriv vilken typ av data som är inblandad och varför det ändrar risk- eller kontrollbehov.",
+    purpose: "Synliggör risk- och governancebehov tidigt i Framing.",
     belongs: "Persondata, kommersiell data, reglerad data, intern data, supportdata och varfor det spelar roll.",
     avoid: "Schemadesign, lagringsmekanik, falt-for-falt-implementation eller detaljerad sakerhetsarkitektur."
   },
   "framing.delivery_type": {
     title: "Leveranstyp",
-    summary: "Valj den projektlogik som ska styra forvantningarna i Framing redan fran start.",
-    purpose: "Gor den forvantade leveransformen tydlig utan att glida in i losningsdesign.",
-    belongs: "Om detta framst ar Application Development, Application Transformation eller Application Management, och darfor vilken baseline och vilket bevis som betyder mest.",
+    summary: "Välj den projektlogik som ska styra förväntningarna i Framing redan från start.",
+    purpose: "Gör den förväntade leveransformen tydlig utan att glida in i lösningsdesign.",
+    belongs: "Om detta främst är Application Development, Application Transformation eller Application Management, och därför vilken baseline och vilket bevis som betyder mest.",
     avoid: "Sprintplanering, staffingdetaljer, exekveringskoreografi eller verktygsbeslut."
   },
   "framing.value_owner": {
     title: "Value owner",
-    summary: "Valj den verkliga manniska som kan sta bakom varde, baseline och godkannande.",
+    summary: "Välj den verkliga människa som kan stå bakom värde, baseline och godkännande.",
     purpose: "Placera affarsansvaret pa en verklig person.",
     belongs: "Person pa kundsidan som kan validera varde, baseline, prioritet och om caset ar vart att gora nu.",
     avoid: "Styrgrupper, teamnamn, alias eller platshallare utan ansvarig manniska."
   },
   "framing.timeframe": {
     title: "Tidsram",
-    summary: "Fanga varfor tajmingen spelar roll pa affarsniva.",
-    purpose: "Satt ett realistiskt affarsfonster for forandringen.",
-    belongs: "Pilotfonster, sasong, kvartal, kontraktshorisont, lanseringsfonster, compliance-deadline eller beslutspunkt.",
+    summary: "Fånga varför tajmingen spelar roll på affärsnivå.",
+    purpose: "Sätt ett realistiskt affärsfönster för förändringen.",
+    belongs: "Pilotfönster, säsong, kvartal, kontraktshorisont, lanseringsfönster, compliance-deadline eller beslutspunkt.",
     avoid: "Sprint-for-sprint-sekvensering, backlogplanering eller datum pa taskniva."
   },
   "framing.ai_level": {
-    title: "AI-accelerationsniva",
-    summary: "Bestam exekveringsmonster forst, lat det mappas till AI-accelerationsniva och beskriv sedan forvantad AI-anvandning i senare faser.",
-    purpose: "Klassificera AI-anvandning enligt AAS-operativ modell innan Tollgate 1.",
+    title: "AI-accelerationsnivå",
+    summary: "Bestäm exekveringsmönster först, låt det mappas till AI-accelerationsnivå och beskriv sedan förväntad AI-användning i senare faser.",
+    purpose: "Klassificera AI-användning enligt AAS-operativ modell innan Tollgate 1.",
     belongs: "Exekveringsmonster, harledd AI-niva, forvantat BMAD-stod genom livscykeln, explicit risk och kvarhållen mansklig beslutsratt.",
-    avoid: "Verktygsnamnsbaserad klassificering, konkurrerande AI-taxonomier eller att behandla risk som det som direkt bestammer AI-nivan.",
+    avoid: "Verktygsnamnsbaserad klassificering, konkurrerande AI-taxonomier eller att behandla risk som det som direkt bestämmer AI-nivån.",
     aiLevelNotes: aiLevelNotesSv
   },
   "framing.design_direction": {

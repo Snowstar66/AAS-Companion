@@ -58,7 +58,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
     story.epic.scopeBoundary?.trim() ||
     t(
       `This delivery story should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`,
-      `Den har leveransstoryn ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
+      `Den här leveransstoryn ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
     );
   const statusTone =
     storyUx.tone === "success"
@@ -67,11 +67,11 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
         ? "ready_for_review"
         : "needs_action";
   const completeItems = [
-    valueSpineValidation.state === "ready" ? t("Value Spine validation is complete", "Value Spine-valideringen ar klar") : null,
+    valueSpineValidation.state === "ready" ? t("Value Spine validation is complete", "Value Spine-valideringen är klar") : null,
     story.acceptanceCriteria.length > 0 ? t("Acceptance criteria are present", "Acceptanskriterier finns") : null,
     story.testDefinition?.trim() ? t("Test definition is present", "Testdefinition finns") : null,
     story.definitionOfDone.length > 0 ? t("Definition of Done is present", "Definition of Done finns") : null,
-    story.status === "in_progress" ? t("Build is already in progress", "Build ar redan igang") : null
+    story.status === "in_progress" ? t("Build is already in progress", "Build är redan igång") : null
   ].filter((value): value is string => Boolean(value));
 
   return (
@@ -113,7 +113,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   <p className="mt-3 max-w-4xl text-sm leading-6 text-muted-foreground">
                     {t(
                       "This record is an execution unit for design and build. Keep Value Spine integrity, delivery inputs and build-start clarity explicit.",
-                      "Den har posten ar en exekveringsenhet for design och build. Hall Value Spine-integritet, leveransindata och build-starttydlighet explicita."
+                      "Den här posten är en exekveringsenhet för design och build. Håll Value Spine-integritet, leveransindata och build-starttydlighet explicita."
                     )}
                   </p>
                 </div>
@@ -122,7 +122,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               {!isArchived ? (
                 <Button asChild className="gap-2" variant={blockers.length === 0 ? "default" : "secondary"}>
                   <Link href={`/handoff/${story.id}`}>
-                    {t("Open build package", "Oppna byggpaket")}
+                    {t("Open build package", "Öppna byggpaket")}
                     <FileJson2 className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -155,18 +155,18 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               <CardDescription>
                 {t(
                   "Keep this focused on one testable delivery unit and the inputs needed before build starts.",
-                  "Hall den har fokuserad pa en testbar leveransenhet och den indata som behovs innan build startar."
+                  "Håll den här fokuserad på en testbar leveransenhet och den indata som behövs innan build startar."
                 )}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-ai-level">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("AI level", "AI-niva")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("AI level", "AI-nivå")}</p>
                 <p className="mt-2 font-semibold text-foreground">{formatAiLevel(story.aiAccelerationLevel)}</p>
                 <p className="mt-2 leading-6 text-muted-foreground">
                   {t(
                     "This comes from the current Framing and affects governance requirements for the Story.",
-                    "Det har kommer fran aktuell Framing och paverkar governancekraven for storyn."
+                    "Det här kommer från aktuell Framing och påverkar governancekraven för storyn."
                   )}
                 </p>
               </div>
@@ -227,7 +227,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   </ul>
                 ) : (
                   <p className="mt-2 leading-6 text-muted-foreground">
-                    {t("No blockers remain. This Delivery Story is ready for review.", "Inga blockerare aterstar. Den har leveransstoryn ar redo for review.")}
+                    {t("No blockers remain. This Delivery Story is ready for review.", "Inga blockerare återstår. Den här leveransstoryn är redo för review.")}
                   </p>
                 )}
                 {valueSpineBlockers.length > 0 ? (
@@ -244,11 +244,11 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               missingReadinessFields.length === 0
                 ? t(
                     "All required design inputs are present. Review and approval can continue without more field edits.",
-                    "All obligatorisk designindata finns. Review och godkannande kan fortsatta utan fler faltandringar."
+                    "All obligatorisk designindata finns. Review och godkännande kan fortsätta utan fler fältändringar."
                   )
                 : t(
                     "Fields highlighted below still need input before the Story can move forward.",
-                    "Falten nedan behover fortfarande fyllas i innan storyn kan ga vidare."
+                    "Fälten nedan behöver fortfarande fyllas i innan storyn kan gå vidare."
                   )
             }
             id="story-handoff-inputs"
@@ -279,7 +279,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 {!readinessFields[0].complete ? <p className="text-sm text-amber-800">{readinessFields[0].help}</p> : null}
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">{t("AI Usage Scope", "AI-anvandningsomfang")}</span>
+                <span className="text-sm font-medium text-foreground">{t("AI Usage Scope", "AI-användningsomfång")}</span>
                 <input
                   className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                   defaultValue={story.aiUsageScope.join(", ")}
@@ -342,7 +342,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               <PendingFormButton
                 className="gap-2"
                 icon={<ArrowRight className="h-4 w-4" />}
-                label={t("Save Story changes", "Spara storyandringar")}
+                label={t("Save Story changes", "Spara storyändringar")}
                 pendingLabel={t("Saving Story...", "Sparar story...")}
               />
             ) : null}
@@ -350,7 +350,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               <Link href={`/epics/${story.epicId}`}>{t("Back to current Epic", "Tillbaka till aktuell Epic")}</Link>
             </Button>
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/framing?outcomeId=${story.outcomeId}`}>{t("Open current Framing", "Oppna aktuell Framing")}</Link>
+              <Link href={`/framing?outcomeId=${story.outcomeId}`}>{t("Open current Framing", "Öppna aktuell Framing")}</Link>
             </Button>
           </div>
         </form>
@@ -359,7 +359,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           defaultOpen={false}
           description={t(
             "Keep the connection back to the framing-level Story Idea visible, but secondary to delivery execution.",
-            "Behall kopplingen tillbaka till Story Idean pa framingniva synlig, men sekundar i forhallande till leveransexekveringen."
+            "Behåll kopplingen tillbaka till Story Idean på framingnivå synlig, men sekundär i förhållande till leveransexekveringen."
           )}
           title={t("Origin Story Idea", "Ursprunglig storyide")}
         >
@@ -373,11 +373,11 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   </p>
                   <p className="mt-2 text-foreground">
                     <span className="font-medium">{t("Value intent", "Value intent")}:</span>{" "}
-                    {originStoryIdea.valueIntent || t("No framing-level value intent is currently stored.", "Inget value intent pa framingniva finns sparat just nu.")}
+                    {originStoryIdea.valueIntent || t("No framing-level value intent is currently stored.", "Inget value intent på framingnivå finns sparat just nu.")}
                   </p>
                   <p className="mt-2 text-foreground">
                     <span className="font-medium">{t("Expected behavior", "Forvantat beteende")}:</span>{" "}
-                    {originStoryIdea.expectedBehavior || t("No framing-level expected behavior is currently stored.", "Inget expected behavior pa framingniva finns sparat just nu.")}
+                    {originStoryIdea.expectedBehavior || t("No framing-level expected behavior is currently stored.", "Inget expected behavior på framingnivå finns sparat just nu.")}
                   </p>
                 </div>
                 <Button asChild className="gap-2" size="sm" variant="secondary">
@@ -388,7 +388,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                         : `/story-ideas/${originStoryIdea.seedId}`
                     }
                   >
-                    {t("Open Story Idea", "Oppna storyide")}
+                    {t("Open Story Idea", "Öppna storyidé")}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -398,7 +398,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
               {t(
                 "No direct Story Idea link is recorded for this Delivery Story. It still remains valid as long as Outcome and Epic links are present.",
-                "Ingen direkt Story Idea-lank ar registrerad for den har Delivery Storyn. Den ar fortfarande giltig sa lange Outcome- och Epic-lankar finns."
+                "Ingen direkt Story Idea-länk är registrerad för den här Delivery Storyn. Den är fortfarande giltig så länge Outcome- och Epic-länkar finns."
               )}
             </div>
           )}
@@ -408,7 +408,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           defaultOpen={false}
           description={t(
             "Open this only when you need to check where the Delivery Story sits in the current branch.",
-            "Oppna detta bara nar du behover kontrollera var Delivery Storyn ligger i den aktuella grenen."
+            "Öppna detta bara när du behöver kontrollera var Delivery Storyn ligger i den aktuella grenen."
           )}
           title={t("Branch context", "Grenkontext")}
         >
@@ -417,11 +417,11 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               language={language}
               emptyEpicMessage={t(
                 "This Story is already inside an active Framing branch, so no sibling Framing branches are shown here.",
-                "Den har storyn ligger redan i en aktiv Framing-gren, sa inga syskon-grenar visas har."
+                "Den här storyn ligger redan i en aktiv Framing-gren, så inga syskon-grenar visas här."
               )}
               emptyStoryMessage={t(
                 "This view is already scoped to the current Story branch.",
-                "Den har vyn ar redan avgransad till den aktuella storygrenen."
+                "Den här vyn är redan avgränsad till den aktuella storygrenen."
               )}
               epics={[
                 {
@@ -495,7 +495,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             <CardDescription>
               {t(
                 "This tool keeps Delivery Stories as a design and traceability view. Per-story human approval lanes are not used here.",
-                "Det har verktyget behaller Delivery Stories som en design- och sparbarhetsvy. Per-story-lanes for manskligt godkannande används inte har."
+                "Det här verktyget behåller Delivery Stories som en design- och spårbarhetsvy. Per-story-lanes för mänskligt godkännande används inte här."
               )}
             </CardDescription>
           </CardHeader>
@@ -508,14 +508,14 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
                 {t(
                   "Clear the remaining blockers before relying on this Delivery Story as a complete design input for BMAD or downstream build tooling.",
-                  "Los kvarvarande blockerare innan du lutar dig mot den har Delivery Storyn som komplett designindata for BMAD eller nedstroms build-verktyg."
+                  "Lös kvarvarande blockerare innan du lutar dig mot den här Delivery Storyn som komplett designindata för BMAD eller nedströms build-verktyg."
                 )}
               </div>
             ) : (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
                 {t(
                   "This Delivery Story is complete enough to export into external build work or AI-assisted implementation.",
-                  "Den har Delivery Storyn ar tillrackligt komplett for att exporteras till externt build-arbete eller AI-assisterad implementation."
+                  "Den här Delivery Storyn är tillräckligt komplett för att exporteras till externt build-arbete eller AI-assisterad implementation."
                 )}
               </div>
             )}
@@ -528,14 +528,14 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             <CardDescription>
               {t(
                 "Check whether the project is staffed strongly enough for this Story's AI level.",
-                "Kontrollera om projektet ar tillrackligt bemannat for den har storyns AI-niva."
+                "Kontrollera om projektet är tillräckligt bemannat för den här storyns AI-nivå."
               )}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/governance?view=readiness&sourceEntity=story&sourceId=${story.id}&level=${story.aiAccelerationLevel}`}>
-                {t("Open Governance readiness", "Oppna Governance-beredskap")}
+                {t("Open Governance readiness", "Öppna Governance-beredskap")}
               </Link>
             </Button>
           </CardContent>
@@ -545,13 +545,13 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           defaultOpen={false}
           description={t(
             "Operational history is useful, but not usually the first thing needed to move work forward.",
-            "Operativ historik ar anvandbar, men oftast inte det forsta som behovs for att fora arbetet framat."
+            "Operativ historik är användbar, men oftast inte det första som behövs för att föra arbetet framåt."
           )}
           title={t("Latest activity", "Senaste aktivitet")}
         >
           <div className="space-y-3 text-sm text-muted-foreground">
             {activities.length === 0 ? (
-              <p>{t("No activity has been recorded yet for this Story.", "Ingen aktivitet har registrerats annu for den har storyn.")}</p>
+              <p>{t("No activity has been recorded yet for this Story.", "Ingen aktivitet har registrerats ännu för den här storyn.")}</p>
             ) : (
               activities.map((activity) => (
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={activity.id}>
@@ -567,7 +567,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           defaultOpen={false}
           description={t(
             "Archive, restore and delete controls stay available without displacing primary Story work.",
-            "Arkivera-, aterstall- och delete-kontroller finns kvar utan att tranga undan det primara storyarbetet."
+            "Arkivera-, återställ- och delete-kontroller finns kvar utan att tränga undan det primära storyarbetet."
           )}
           id="story-lifecycle"
           title={t("Lifecycle controls", "Livscykelkontroller")}
@@ -591,12 +591,12 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             defaultOpen={false}
             description={t(
               "Imported lineage is still accessible when you need to trace the source material.",
-              "Importerad lineage ar fortfarande tillganglig nar du behover spora kallmaterialet."
+              "Importerad lineage är fortfarande tillgänglig när du behöver spåra källmaterialet."
             )}
             title={t("Imported lineage", "Importerad lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/review?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Oppna kallkandidatens review")}</Link>
+              <Link href={`/review?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}
@@ -606,7 +606,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             defaultOpen={false}
             description={t(
               "Imported build blockers remain visible here until the linked source material is fully resolved.",
-              "Importerade build-blockerare forblir synliga har tills det lankade kallmaterialet ar helt utrett."
+              "Importerade build-blockerare förblir synliga här tills det länkade källmaterialet är helt utrett."
             )}
             title={t("Imported build blockers", "Importerade build-blockerare")}
           >

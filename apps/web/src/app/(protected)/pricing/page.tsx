@@ -27,7 +27,7 @@ async function getServerLanguage(): Promise<AppLanguage> {
 }
 
 function formatAiLevel(value: string | null | undefined, language: AppLanguage) {
-  return value ? value.replaceAll("_", " ") : language === "sv" ? "Inte vald annu" : "Not selected yet";
+  return value ? value.replaceAll("_", " ") : language === "sv" ? "Inte vald ännu" : "Not selected yet";
 }
 
 function formatSignalValue(value: string, language: AppLanguage) {
@@ -52,34 +52,34 @@ function getCopy(language: AppLanguage) {
   if (language === "sv") {
     return {
       sectionLabel: "Pricing",
-      unavailable: "Ej tillganglig",
-      unavailableTitle: "Pricing ar inte tillganglig",
+      unavailable: "Ej tillgänglig",
+      unavailableTitle: "Pricing är inte tillgänglig",
       unavailableDescription: "Pricing-arbetsytan kunde inte laddas.",
-      backHome: "Tillbaka till Home",
+      backHome: "Tillbaka till Hem",
       projectSection: "Projektsektion",
       heroBadge: "Commercial fit",
       heroTitle: "Pricing guidance",
       heroDescription:
-        "Pricing ar enbart vagledande. Den har sidan anvander aktiv projektkontext for att foresla en lamplig AAS-prismodell och visa vad som fortfarande blockerar kommersiell trygghet.",
-      warningTitle: "Pricing ar inte samma sak som approval",
+        "Pricing är enbart vägledande. Den här sidan använder aktiv projektkontext för att föreslå en lämplig AAS-prismodell och visa vad som fortfarande blockerar kommersiell trygghet.",
+      warningTitle: "Pricing är inte samma sak som approval",
       warningBody:
         "Human Review, governance-validering, Value Spine-progression och tollgates ligger fortfarande separat. Pricing rekommenderar en modell, men skapar ingen genvag runt AAS-kontroller.",
       classification: "Projektklassificering",
       readiness: "Pricing-readiness",
       recommended: "Rekommenderad modell",
-      currentAi: "Nuvarande AI-niva",
+      currentAi: "Nuvarande AI-nivå",
       pricingContext: "Pricing-kontext",
       anchoredTo: (key: string) => `Kommersiell vagledning ar just nu forankrad i ${key} i det aktiva projektet.`,
       contextFallback:
-        "Pricing kan laddas innan Framing ar klar, men den forblir konservativ tills en projektgren finns.",
-      openFraming: "Oppna Framing",
-      openValueSpine: "Oppna Value Spine",
-      openGovernance: "Oppna Governance",
+        "Pricing kan laddas innan Framing är klar, men den förblir konservativ tills en projektgren finns.",
+      openFraming: "Öppna Framing",
+      openValueSpine: "Öppna Value Spine",
+      openGovernance: "Öppna Governance",
       riskProfile: "riskprofil",
       missingOutcome: "Outcome-beskrivning saknas fortfarande.",
-      noActiveFraming: "Ingen aktiv Framing-gren annu",
+      noActiveFraming: "Ingen aktiv Framing-gren ännu",
       noActiveFramingBody:
-        "Pricing visas fortfarande, men faller tillbaka till en forsiktig rekommendation tills en riktig projektgren finns.",
+        "Pricing visas fortfarande, men faller tillbaka till en försiktig rekommendation tills en riktig projektgren finns.",
       governanceSignal: "Nuvarande governance-signal",
       switchBranch: "Byt pricing-gren",
       baselineExists: "Baseline finns",
@@ -87,15 +87,15 @@ function getCopy(language: AppLanguage) {
       scopeStability: "Scope-stabilitet",
       importedLineage: "Importerad lineage",
       lineageDescription: (epics: number, stories: number) => `Synligt i vald gren: ${epics} epics, ${stories} stories.`,
-      whyRecommended: "Varfor denna modell rekommenderas",
+      whyRecommended: "Varför denna modell rekommenderas",
       whyRecommendedBody:
         "Rekommendationen uppdateras med Framing-, Value Spine- och governance-signaler, men valjer inget automatiskt.",
-      simpleFlow: "Enkel valjlogik",
-      processGuardrails: "Processracken",
-      processGuardrailsBody: "Dessa AAS-kontroller galler fortfarande aven nar pricing-vagledningen ser stark ut.",
+      simpleFlow: "Enkel väljlogik",
+      processGuardrails: "Processräcken",
+      processGuardrailsBody: "Dessa AAS-kontroller gäller fortfarande även när pricing-vägledningen ser stark ut.",
       blockingItems: "Blockerande punkter",
-      blockingItemsBody: "Dessa fragor gor att pricing-laget inte ar i ett rent gront tillstand.",
-      noBlocking: "Inga blockerande pricing-fragor ar synliga just nu.",
+      blockingItemsBody: "Dessa frågor gör att pricing-läget inte är i ett rent grönt tillstånd.",
+      noBlocking: "Inga blockerande pricing-frågor är synliga just nu.",
       visibleRisks: "Risker att halla synliga",
       visibleRisksBody: "Dessa punkter blockerar inte all pricing-diskussion, men de ska forbli explicita.",
       noVisibleRisks: "Inga ytterligare pricing-risker ar synliga just nu.",
@@ -171,7 +171,7 @@ function translatePricingItem(input: { key: string; title: string; description: 
   const translations: Record<string, { title: string; description: string }> = {
     value_spine_missing: {
       title: "Ingen aktiv Framing-gren",
-      description: "Pricing kan granskas innan designen ar klar, men den behover fortfarande en aktiv Framing-gren sa att den kommersiella diskussionen ar kopplad till en riktig projektkontext."
+      description: "Pricing kan granskas innan designen är klar, men den behöver fortfarande en aktiv Framing-gren så att den kommersiella diskussionen är kopplad till en riktig projektkontext."
     },
     missing_baseline: {
       title: "Baseline saknas",
@@ -186,15 +186,15 @@ function translatePricingItem(input: { key: string; title: string; description: 
       description: "De synliga scope-granserna ar fortfarande for losa for en stark kommersiell rekommendation."
     },
     governance_gap: {
-      title: "Governance stoder annu inte vald AI-niva",
-      description: "Pricing forblir endast vagledande, och starkare kommersiell trygghet bor forbli blockerad tills governance-tackningen stoder vald accelerationsniva."
+      title: "Governance stöder ännu inte vald AI-nivå",
+      description: "Pricing förblir endast vägledande, och starkare kommersiell trygghet bör förbli blockerad tills governance-täckningen stöder vald accelerationsnivå."
     },
     governance_attention: {
-      title: "Governance behover fortfarande uppmarksamhet",
-      description: "Namngiven bemanning eller supervision finns delvis, men AI-nivan ar inte tillrackligt ren for att pricing ska betraktas som kommersiellt trygg."
+      title: "Governance behöver fortfarande uppmärksamhet",
+      description: "Namngiven bemanning eller supervision finns delvis, men AI-nivån är inte tillräckligt ren för att pricing ska betraktas som kommersiellt trygg."
     },
     ai_level_mismatch: {
-      title: "AI-nivan ar lag for en efficiency-share-modell",
+      title: "AI-nivån är låg för en efficiency-share-modell",
       description: "Controlled Efficiency Share ar mer trovärdig nar projektet siktar pa minst level 2-acceleration med explicit governance."
     },
     high_ai_low_commercial_certainty: {
@@ -270,7 +270,7 @@ function translateModel(input: { key: string; title: string; tagline: string; wh
     structured_tm: {
       key: input.key,
       title: "Structured T&M",
-      tagline: "Sakrast som fallback nar framing ar ofullstandig, scope ar instabilt eller governance fortfarande behover arbete.",
+      tagline: "Säkrast som fallback när framing är ofullständig, scope är instabilt eller governance fortfarande behöver arbete.",
       whenToUse: "Anvand nar den kommersiella formen ska vara flexibel medan Framing, governance eller scope-sakerhet fortfarande mognar.",
       strengths: [
         "Absorberar osakerhet battre an gain-share eller kontraktstunga modeller.",
@@ -280,7 +280,7 @@ function translateModel(input: { key: string; title: string; tagline: string; wh
       risks: [
         "Ger svagare kommersiell havstang runt effektivitetsoutcomes.",
         "Kan dolja svag framing om den ligger kvar for lange.",
-        "Kravar aktiv governance-disciplin for att undvika drift."
+        "Kräver aktiv governance-disciplin för att undvika drift."
       ]
     }
   };

@@ -76,7 +76,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
         description: "Upload and parse external source artifacts."
       },
       "/review": {
-        label: "Mänsklig granskning",
+        label: "Human Review",
         description: "Review, correct, confirm, and approve imports."
       },
       "/governance": {
@@ -98,7 +98,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       Pricing: "Pricing",
       "Value Spine": "Value Spine",
       Import: "Import",
-      "Human Review": "Mänsklig granskning",
+      "Human Review": "Human Review",
       Governance: "Governance",
       Help: "Help",
       Admin: "Admin",
@@ -162,7 +162,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
         description: "Ladda upp och tolka externa källartefakter."
       },
       "/review": {
-        label: "Human Review",
+        label: "Mänsklig granskning",
         description: "Granska, korrigera, bekräfta och godkänn importer."
       },
       "/governance": {
@@ -184,7 +184,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       Pricing: "Prissättning",
       "Value Spine": "Value Spine",
       Import: "Import",
-      "Human Review": "Human Review",
+      "Human Review": "Mänsklig granskning",
       Governance: "Governance",
       Help: "Hjälp",
       Admin: "Admin",
@@ -198,7 +198,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       "Build Start": "Byggstart",
       "Loading workspace": "Laddar arbetsyta",
       "Application error": "Applikationsfel",
-      "Framing Cockpit": "Framing Cockpit",
+      "Framing Cockpit": "Framingcockpit",
       "Control Plane Foundation": "AAS Control Plane",
       "Project section": "Projektsektion",
       "Project selector": "Projektval",

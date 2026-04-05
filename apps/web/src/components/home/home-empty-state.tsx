@@ -27,7 +27,7 @@ export function HomeEmptyState({ title, description }: HomeEmptyStateProps) {
         <p className="text-sm leading-6 text-muted-foreground">
           {t(
             "Home is wired up, but it still needs real or Demo records in the current project before status indicators can populate.",
-            "Home ar uppkopplad, men den behover fortfarande riktiga eller Demo-poster i det aktuella projektet innan statusindikatorer kan visas."
+            "Home är uppkopplad, men den behöver fortfarande riktiga eller Demo-poster i det aktuella projektet innan statusindikatorer kan visas."
           )}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">

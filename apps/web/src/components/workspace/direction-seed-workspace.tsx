@@ -104,7 +104,7 @@ export function DirectionSeedWorkspace({
     epic.scopeBoundary?.trim() ||
     t(
       `This story idea should contribute clearly to Epic ${epic.key} ${epic.title}.`,
-      `Den har storyiden ska tydligt bidra till Epic ${epic.key} ${epic.title}.`
+      `Den här storyidén ska tydligt bidra till Epic ${epic.key} ${epic.title}.`
     );
   const uxSketches =
     seed.uxSketches && seed.uxSketches.length > 0
@@ -120,10 +120,10 @@ export function DirectionSeedWorkspace({
           ]
         : [];
   const completeItems = [
-    seed.shortDescription?.trim() ? t("Value intent is captured", "Value intent ar ifylld") : null,
-    seed.expectedBehavior?.trim() ? t("Expected behavior is captured", "Expected behavior ar ifylld") : null,
+    seed.shortDescription?.trim() ? t("Value intent is captured", "Value intent är ifyllt") : null,
+    seed.expectedBehavior?.trim() ? t("Expected behavior is captured", "Expected behavior är ifyllt") : null,
     epic.id ? t(`Linked to Epic ${epic.key}`, `Lankad till Epic ${epic.key}`) : null,
-    outcome.status === "active" ? t(`Parent Framing ${outcome.key} is approved`, `Overordnad Framing ${outcome.key} ar godkand`) : null
+    outcome.status === "active" ? t(`Parent Framing ${outcome.key} is approved`, `Överordnad Framing ${outcome.key} är godkänd`) : null
   ].filter((value): value is string => Boolean(value));
   const nextActionLabel =
     ideaBlockers.length > 0
@@ -135,16 +135,16 @@ export function DirectionSeedWorkspace({
     ideaBlockers.length > 0
       ? t(
           "Clear the listed blockers so this Story Idea is complete enough for review.",
-          "Los blockerarna nedan sa att storyiden blir tillrackligt komplett for granskning."
+          "Lös blockerarna nedan så att storyidén blir tillräckligt komplett för granskning."
         )
       : outcome.status === "active"
         ? t(
             "This Story Idea already sits inside approved Framing and can now guide design and delivery decomposition.",
-            "Den har storyiden ligger redan i godkand Framing och kan nu styra design och vidare nedbrytning mot leverans."
+            "Den här storyidén ligger redan i godkänd Framing och kan nu styra design och vidare nedbrytning mot leverans."
           )
         : t(
             "This Story Idea is complete enough for Framing review and Tollgate conversation.",
-            "Den har storyiden ar tillrackligt komplett for Framing-review och Tollgate-dialog."
+            "Den här storyidén är tillräckligt komplett för Framing-review och Tollgate-dialog."
           );
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
@@ -169,13 +169,13 @@ export function DirectionSeedWorkspace({
                 <CardDescription className="mt-2 max-w-4xl">
                   {t(
                     "Describe this Story Idea so it is clear enough to guide design and AI refinement, but not detailed enough to become a delivery specification.",
-                    "Beskriv storyiden sa att den ar tydlig nog att styra design och AI-foradling, men inte sa detaljerad att den blir en leveransspecifikation."
+                    "Beskriv storyidén så att den är tydlig nog att styra design och AI-förädling, men inte så detaljerad att den blir en leveransspecifikation."
                   )}
                 </CardDescription>
                 <p className="mt-3 max-w-4xl text-sm leading-6 text-muted-foreground">
                   {t(
                     "This is a dedicated Story Idea view. Keep the focus on framing intent, not delivery workflow.",
-                    "Detta ar en dedikerad Story Idea-vy. Hall fokus pa framing-intent, inte pa leveransworkflow."
+                    "Detta är en dedikerad Story Idea-vy. Håll fokus på framing-intent, inte på leveransworkflow."
                   )}
                 </p>
               </div>
@@ -183,7 +183,7 @@ export function DirectionSeedWorkspace({
           </CardHeader>
           <CardContent className="grid gap-4">
             <WorkspaceStatusSummary
-              blockerEmptyText={t("No Story Idea blockers are visible right now.", "Inga blockerare for storyiden ar synliga just nu.")}
+              blockerEmptyText={t("No Story Idea blockers are visible right now.", "Inga blockerare för storyidén är synliga just nu.")}
               blockers={ideaBlockers}
               completeItems={completeItems}
               nextActionDetail={nextActionDetail}
@@ -208,12 +208,12 @@ export function DirectionSeedWorkspace({
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("AI level", "AI-niva")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("AI level", "AI-nivå")}</p>
                 <p className="mt-2 font-semibold text-foreground">{formatAiLevel(outcome.aiAccelerationLevel)}</p>
                 <p className="mt-2 leading-6 text-muted-foreground">
                   {t(
                     "This comes from the current Framing and affects governance expectations for the Story Idea.",
-                    "Detta kommer fran aktuell Framing och paverkar governance-forvantningarna for storyiden."
+                    "Detta kommer från aktuell Framing och påverkar governance-förväntningarna för storyidén."
                   )}
                 </p>
               </div>
@@ -261,7 +261,7 @@ export function DirectionSeedWorkspace({
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-2 leading-6 text-muted-foreground">{t("No blockers remain. This Story Idea is ready for review.", "Inga blockerare aterstar. Storyiden ar redo for review.")}</p>
+                  <p className="mt-2 leading-6 text-muted-foreground">{t("No blockers remain. This Story Idea is ready for review.", "Inga blockerare återstår. Storyidén är redo för review.")}</p>
                 )}
               </div>
             </CardContent>
@@ -270,8 +270,8 @@ export function DirectionSeedWorkspace({
           <div className="flex flex-col gap-3 sm:flex-row">
             {!isArchived ? (
               <StoryIdeaInlineSaveButton
-                label={t("Save Story Idea", "Spara storyide")}
-                pendingLabel={t("Saving Story Idea...", "Sparar storyide...")}
+                label={t("Save Story Idea", "Spara storyidé")}
+                pendingLabel={t("Saving Story Idea...", "Sparar storyidé...")}
                 saveAction={saveInlineAction}
               />
             ) : null}
@@ -293,7 +293,7 @@ export function DirectionSeedWorkspace({
               <Link href={`/epics/${epic.id}`}>{t("Back to current Epic", "Tillbaka till aktuell Epic")}</Link>
             </Button>
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/framing?outcomeId=${outcome.id}`}>{t("Open current Framing", "Oppna aktuell Framing")}</Link>
+              <Link href={`/framing?outcomeId=${outcome.id}`}>{t("Open current Framing", "Öppna aktuell Framing")}</Link>
             </Button>
           </div>
         </form>
@@ -318,12 +318,12 @@ export function DirectionSeedWorkspace({
                         {deliveryStory.key} {deliveryStory.title}
                       </p>
                       <p className="mt-2 leading-6 text-muted-foreground">
-                        {deliveryStory.valueIntent?.trim() || t("This Delivery Story still needs a clearer value intent.", "Den har Delivery Storyn behover fortfarande ett tydligare value intent.")}
+                        {deliveryStory.valueIntent?.trim() || t("This Delivery Story still needs a clearer value intent.", "Den här Delivery Storyn behöver fortfarande ett tydligare value intent.")}
                       </p>
                     </div>
                     <Button asChild className="gap-2" size="sm" variant="secondary">
                       <Link href={`/stories/${deliveryStory.id}`}>
-                        {t("Open Delivery Story", "Oppna Delivery Story")}
+                        {t("Open Delivery Story", "Öppna Delivery Story")}
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -333,7 +333,7 @@ export function DirectionSeedWorkspace({
             </div>
           ) : (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-              {t("No Delivery Stories are linked to this Story Idea yet.", "Inga Delivery Stories ar lankade till den har storyiden annu.")}
+              {t("No Delivery Stories are linked to this Story Idea yet.", "Inga Delivery Stories är länkade till den här storyidén ännu.")}
             </div>
           )}
         </SecondaryPanel>
@@ -342,7 +342,7 @@ export function DirectionSeedWorkspace({
           defaultOpen={false}
           description={t(
             "Open this only when you need to check where the Story Idea sits in the current branch.",
-            "Oppna detta bara nar du behover kontrollera var storyiden ligger i den aktuella grenen."
+            "Öppna detta bara när du behöver kontrollera var storyidén ligger i den aktuella grenen."
           )}
           title={t("Branch context", "Grenkontext")}
         >
@@ -353,7 +353,7 @@ export function DirectionSeedWorkspace({
                 {outcome.key} {outcome.title}
               </p>
               <p className="mt-2 leading-6 text-muted-foreground">
-                {outcome.outcomeStatement?.trim() || t("Outcome statement is not yet described in this Framing.", "Outcome statement ar inte beskriven i den har Framing an.")}
+                {outcome.outcomeStatement?.trim() || t("Outcome statement is not yet described in this Framing.", "Outcome statement är inte beskriven i den här Framing ännu.")}
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">

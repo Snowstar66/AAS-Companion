@@ -101,33 +101,33 @@ export async function OutcomeTollgateApprovalSection(props: {
   );
   const primaryStatusTitle = currentVersionApproved
     ? language === "sv"
-      ? "Tollgate 1 ar godkand for aktuell Framing-version."
+        ? "Tollgate 1 är godkänd för aktuell Framing-version."
       : "Tollgate 1 is approved for the current Framing version."
     : hasPartialApprovals
       ? language === "sv"
-        ? "Framing-godkannanden pagar for aktuell version."
+        ? "Framing-godkännanden pågår för aktuell version."
         : "Framing approvals are in progress for the current version."
       : language === "sv"
-        ? "Tollgate 1-godkannanden kan registreras nu."
+        ? "Tollgate 1-godkännanden kan registreras nu."
         : "Tollgate 1 approvals can be recorded now.";
   const primaryStatusDetail = currentVersionApproved
     ? language === "sv"
-      ? `De godkannanderoller som kravs for aktuell AI-niva har signerat Framing-version ${currentFramingVersion}${latestApprovalRecord ? ` den ${formatDateTime(latestApprovalRecord.createdAt)}` : ""}.`
+      ? `De godkännanderoller som krävs för aktuell AI-nivå har signerat Framing-version ${currentFramingVersion}${latestApprovalRecord ? ` den ${formatDateTime(latestApprovalRecord.createdAt)}` : ""}.`
       : `The required approval roles for the current AI level signed off on Framing version ${currentFramingVersion}${latestApprovalRecord ? ` on ${formatDateTime(latestApprovalRecord.createdAt)}` : ""}.`
     : versionRecommendationVisible
       ? language === "sv"
-        ? `Framing andrades efter version ${approvedVersion}. Ett nytt godkannande rekommenderas for version ${currentFramingVersion}.`
+        ? `Framing ändrades efter version ${approvedVersion}. Ett nytt godkännande rekommenderas för version ${currentFramingVersion}.`
         : `Framing changed after version ${approvedVersion}. A fresh approval is recommended for version ${currentFramingVersion}.`
       : visibleBlockers.length > 0
         ? language === "sv"
           ? "Godkannanden ar fortfarande tillatna, men de oppna varningarna nedan bor granskas innan du forlitar dig pa denna Framing som stabil baseline."
           : "Approvals are still allowed, but the open warnings below should be reviewed before you rely on this Framing as a stable baseline."
         : language === "sv"
-          ? "Framingen ser tillrackligt komplett ut. Registrera de godkannanden som kravs for aktuell AI-niva nedan."
+          ? "Framingen ser tillräckligt komplett ut. Registrera de godkännanden som krävs för aktuell AI-nivå nedan."
           : "The Framing looks complete enough. Record the required approvals for the current AI level below.";
   const riskSummaryRows = [
     {
-      label: language === "sv" ? "AI-niva" : "AI Level",
+      label: language === "sv" ? "AI-nivå" : "AI Level",
       value: outcome.aiAccelerationLevel.replaceAll("_", " ")
     },
     {
@@ -165,12 +165,12 @@ export async function OutcomeTollgateApprovalSection(props: {
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>
-            <LocalizedText en="Tollgate 1 approval" sv="Tollgate 1-godkannande" />
+                <LocalizedText en="Tollgate 1 approval" sv="Tollgate 1-godkännande" />
           </CardTitle>
           <CardDescription>
             <LocalizedText
               en="Tollgate 1 applies to the Framing brief as a whole. Record approvals directly from the required roles for the current AI level."
-              sv="Tollgate 1 galler hela Framing-briefen. Registrera godkannanden direkt fran de roller som kravs for aktuell AI-niva."
+              sv="Tollgate 1 gäller hela Framing-briefen. Registrera godkännanden direkt från de roller som krävs för aktuell AI-nivå."
             />
           </CardDescription>
         </CardHeader>
@@ -188,17 +188,17 @@ export async function OutcomeTollgateApprovalSection(props: {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    <LocalizedText en="Approval overview" sv="Oversikt over godkannanden" />
+                    <LocalizedText en="Approval overview" sv="Översikt över godkännanden" />
                   </p>
                   <p className="mt-2 leading-6 text-foreground">
                     {language === "sv"
-                      ? `Version ${currentFramingVersion} och ${completedApprovals.length} av ${tollgateReview.approvalActions.length} godkannanden registrerade`
+                      ? `Version ${currentFramingVersion} och ${completedApprovals.length} av ${tollgateReview.approvalActions.length} godkännanden registrerade`
                       : `Version ${currentFramingVersion} and ${completedApprovals.length} of ${tollgateReview.approvalActions.length} approvals recorded`}
                   </p>
                 </div>
                 {versionRecommendationVisible ? (
                   <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
-                    <LocalizedText en="New approval recommended" sv="Nytt godkannande rekommenderas" />
+                    <LocalizedText en="New approval recommended" sv="Nytt godkännande rekommenderas" />
                   </span>
                 ) : null}
               </div>
@@ -231,7 +231,7 @@ export async function OutcomeTollgateApprovalSection(props: {
 
             <div className="rounded-2xl border border-sky-200 bg-sky-50/55 p-4 text-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                <LocalizedText en="AI and risk summary for approval" sv="AI- och risksammanfattning for godkannande" />
+                <LocalizedText en="AI and risk summary for approval" sv="AI- och risksammanfattning för godkännande" />
               </p>
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
                 {riskSummaryRows.map((row) => (
@@ -247,7 +247,7 @@ export async function OutcomeTollgateApprovalSection(props: {
           {visibleBlockers.length > 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
               <p className="font-medium">
-                <LocalizedText en="Warnings before relying on this approval" sv="Varningar innan du forlitar dig pa detta godkannande" />
+                <LocalizedText en="Warnings before relying on this approval" sv="Varningar innan du förlitar dig på detta godkännande" />
               </p>
               <ul className="mt-3 space-y-2">
                 {visibleBlockers.map((blocker) => (
@@ -262,14 +262,14 @@ export async function OutcomeTollgateApprovalSection(props: {
               <Button asChild className="gap-2" variant="secondary">
                 <Link href={`/outcomes/${props.outcomeId}/approval-document`}>
                   {approvedVersion === currentFramingVersion
-                    ? (language === "sv" ? "Oppna godkant framingdokument" : "Open approved framing document")
-                    : (language === "sv" ? "Oppna senast godkanda framingdokumentet" : "Open last approved framing document")}
+                    ? (language === "sv" ? "Öppna godkänt framingdokument" : "Open approved framing document")
+                    : (language === "sv" ? "Öppna senast godkända framingdokumentet" : "Open last approved framing document")}
                 </Link>
               </Button>
               <p className="text-sm text-muted-foreground">
                 <LocalizedText
                   en="Open the saved approval record and print it as a PDF with the full Framing, approvals and dates."
-                  sv="Oppna det sparade godkannandet och skriv ut det som PDF med full Framing, godkannanden och datum."
+                  sv="Öppna det sparade godkännandet och skriv ut det som PDF med full Framing, godkännanden och datum."
                 />
               </p>
             </div>
@@ -302,7 +302,7 @@ export async function OutcomeTollgateApprovalSection(props: {
                     {hasAssignedPeople
                       ? action.assignedPeople.map((person) => `${person.fullName} (${person.roleTitle})`).join(", ")
                       : language === "sv"
-                        ? "Ingen aktiv person ar tilldelad den har godkannanderollen annu."
+                        ? "Ingen aktiv person är tilldelad den här godkännanderollen ännu."
                         : "No active person is assigned for this approval role yet."}
                   </p>
                 </div>
@@ -319,11 +319,11 @@ export async function OutcomeTollgateApprovalSection(props: {
                     </div>
                   ) : props.isArchived ? (
                     <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-3 text-muted-foreground">
-                      <LocalizedText en="Restore the Framing brief to continue approvals." sv="Aterstall Framing-briefen for att fortsatta godkannanden." />
+                      <LocalizedText en="Restore the Framing brief to continue approvals." sv="Återställ Framing-briefen för att fortsätta godkännanden." />
                     </div>
                   ) : (
                     <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
-                      <LocalizedText en="Pending approval" sv="Vantar pa godkannande" />
+                      <LocalizedText en="Pending approval" sv="Väntar på godkännande" />
                     </p>
                   )}
                 </div>
@@ -387,13 +387,13 @@ export async function OutcomeTollgateApprovalSection(props: {
                         <span className="leading-6 text-foreground">
                           <LocalizedText
                             en="I confirm that the named role reviewed this Framing version and approves moving it through Tollgate 1."
-                            sv="Jag bekraftar att den namngivna rollen har granskat denna Framing-version och godkanner att den passerar Tollgate 1."
+                            sv="Jag bekräftar att den namngivna rollen har granskat denna Framing-version och godkänner att den passerar Tollgate 1."
                           />
                         </span>
                       </label>
                       <Button className="gap-2" type="submit">
                         <CircleCheckBig className="h-4 w-4" />
-                        <LocalizedText en="Record approval" sv="Registrera godkannande" />
+                        <LocalizedText en="Record approval" sv="Registrera godkännande" />
                       </Button>
                     </div>
                   </form>
@@ -401,7 +401,7 @@ export async function OutcomeTollgateApprovalSection(props: {
                   <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                     <LocalizedText
                       en="Assign an active human role for this approval lane before recording the decision."
-                      sv="Tilldela en aktiv mansklig roll till detta godkannandespar innan beslutet registreras."
+                      sv="Tilldela en aktiv mänsklig roll till detta godkännandespår innan beslutet registreras."
                     />
                   </div>
                 )

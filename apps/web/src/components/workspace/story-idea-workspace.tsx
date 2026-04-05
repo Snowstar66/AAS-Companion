@@ -59,7 +59,7 @@ export function StoryIdeaWorkspace({
   const { activities, derivedDeliveryStories = [], originStoryIdea, removal, story } = data;
   const guidance = t(
     "Keep this at framing level: clear enough to guide design, UX, and AI refinement without turning it into a detailed delivery specification.",
-    "Hall den har posten pa framingniva: tydlig nog att styra design, UX och AI-foradling, men utan att gora den till en detaljerad leveransspecifikation."
+    "Håll den här posten på framingnivå: tydlig nog att styra design, UX och AI-förädling, men utan att göra den till en detaljerad leveransspecifikation."
   );
   const readinessFields = getReadinessFieldStatus(story);
   const epicAlignmentText =
@@ -67,7 +67,7 @@ export function StoryIdeaWorkspace({
     story.epic.scopeBoundary?.trim() ||
     t(
       `This story idea should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`,
-      `Den har storyiden ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
+      `Den här storyidén ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
     );
   const ideaBlockers = getStoryIdeaBlockers({
     valueIntent: story.valueIntent,
@@ -108,7 +108,7 @@ export function StoryIdeaWorkspace({
           )
         : t(
             "This Story Idea is complete enough for Framing review and Tollgate conversation.",
-            "Den har Story Idean ar tillrackligt komplett for Framing-review och Tollgate-samtal."
+            "Den här Story Idean är tillräckligt komplett för Framing-review och Tollgate-samtal."
           );
   const uxSketches: Array<{ id: string; name: string; contentType: string; dataUrl: string }> =
     story.uxSketches && story.uxSketches.length > 0
@@ -148,7 +148,7 @@ export function StoryIdeaWorkspace({
                 <p className="mt-3 max-w-4xl text-sm leading-6 text-muted-foreground">
                   {t(
                     "This record is still framing-level intent. Keep it directional, clear and useful for design and AI refinement without turning it into a delivery specification.",
-                    "Den har posten ar fortfarande intention pa framingniva. Hall den riktad, tydlig och anvandbar for design och AI-foradling utan att gora den till en leveransspecifikation."
+                    "Den här posten är fortfarande intention på framingnivå. Håll den riktad, tydlig och användbar för design och AI-förädling utan att göra den till en leveransspecifikation."
                   )}
                 </p>
               </div>
@@ -180,7 +180,7 @@ export function StoryIdeaWorkspace({
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-ai-level">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("AI level", "AI-niva")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("AI level", "AI-nivå")}</p>
                 <p className="mt-2 font-semibold text-foreground">{formatAiLevel(story.aiAccelerationLevel)}</p>
                 <p className="mt-2 leading-6 text-muted-foreground">
                   {t(
@@ -235,7 +235,7 @@ export function StoryIdeaWorkspace({
                   </ul>
                 ) : (
                   <p className="mt-2 leading-6 text-muted-foreground">
-                    {t("No blockers remain. This Story Idea is ready for review.", "Inga blockerare aterstar. Den har storyiden ar redo for review.")}
+                    {t("No blockers remain. This Story Idea is ready for review.", "Inga blockerare återstår. Den här storyidén är redo för review.")}
                   </p>
                 )}
               </div>
@@ -276,7 +276,7 @@ export function StoryIdeaWorkspace({
                 {!readinessFields[0].complete ? <p className="text-sm text-amber-800">{readinessFields[0].help}</p> : null}
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">{t("AI Usage Scope", "AI-anvandningsomfang")}</span>
+                <span className="text-sm font-medium text-foreground">{t("AI Usage Scope", "AI-användningsomfång")}</span>
                 <input
                   className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                   defaultValue={story.aiUsageScope.join(", ")}
@@ -337,7 +337,7 @@ export function StoryIdeaWorkspace({
           <div className="flex flex-col gap-3 sm:flex-row">
             {!isArchived ? (
               <StoryIdeaInlineSaveButton
-                label={t("Save Story changes", "Spara storyandringar")}
+                label={t("Save Story changes", "Spara storyändringar")}
                 pendingLabel={t("Saving Story...", "Sparar story...")}
                 saveAction={saveInlineAction}
               />
@@ -346,11 +346,11 @@ export function StoryIdeaWorkspace({
               <Link href={`/epics/${story.epicId}`}>{t("Back to current Epic", "Tillbaka till aktuell epic")}</Link>
             </Button>
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/framing?outcomeId=${story.outcomeId}`}>{t("Open current Framing", "Oppna aktuell Framing")}</Link>
+              <Link href={`/framing?outcomeId=${story.outcomeId}`}>{t("Open current Framing", "Öppna aktuell Framing")}</Link>
             </Button>
             {deliveryViewHref ? (
               <Button asChild className="gap-2" variant="secondary">
-                <Link href={deliveryViewHref}>{t("Open Delivery Story view", "Oppna Delivery Story-vy")}</Link>
+                <Link href={deliveryViewHref}>{t("Open Delivery Story view", "Öppna Delivery Story-vy")}</Link>
               </Button>
             ) : null}
           </div>
@@ -377,13 +377,13 @@ export function StoryIdeaWorkspace({
                         {deliveryStory.valueIntent?.trim() ||
                           t(
                             "This Delivery Story still needs a clearer value intent.",
-                            "Den har Delivery Storyn behover fortfarande ett tydligare value intent."
+                            "Den här Delivery Storyn behöver fortfarande ett tydligare value intent."
                           )}
                       </p>
                     </div>
                     <Button asChild className="gap-2" size="sm" variant="secondary">
                       <Link href={`/stories/${deliveryStory.id}`}>
-                        {t("Open Delivery Story", "Oppna leveransstory")}
+                        {t("Open Delivery Story", "Öppna leveransstory")}
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -395,12 +395,12 @@ export function StoryIdeaWorkspace({
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
               {t(
                 "This Story Idea has traceability through a linked seed, but no Delivery Stories have been created from it yet.",
-                "Den har Story Idean har sparbarhet via ett lankat seed, men inga Delivery Stories har annu skapats fran den."
+                "Den här Story Idean har spårbarhet via ett länkat seed, men inga Delivery Stories har ännu skapats från den."
               )}
             </div>
           ) : (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-              {t("No Delivery Stories are linked to this Story Idea yet.", "Inga Delivery Stories ar lankade till den har Story Idean annu.")}
+              {t("No Delivery Stories are linked to this Story Idea yet.", "Inga Delivery Stories är länkade till den här Story Idean ännu.")}
             </div>
           )}
         </SecondaryPanel>
@@ -409,7 +409,7 @@ export function StoryIdeaWorkspace({
           defaultOpen={false}
           description={t(
             "Open this only when you need to check where the Story Idea sits in the current branch.",
-            "Oppna detta bara nar du behover kontrollera var Story Idean ligger i den aktuella grenen."
+            "Öppna detta bara när du behöver kontrollera var Story Idean ligger i den aktuella grenen."
           )}
           title={t("Branch context", "Grenkontext")}
         >
@@ -422,7 +422,7 @@ export function StoryIdeaWorkspace({
                 </p>
                 <p className="mt-2 leading-6 text-muted-foreground">
                   {story.outcome.outcomeStatement?.trim() ||
-                    t("Outcome statement is not yet described in this Framing.", "Outcome statement ar annu inte beskriven i den har Framing-vyn.")}
+                    t("Outcome statement is not yet described in this Framing.", "Outcome statement är ännu inte beskriven i den här Framing-vyn.")}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
@@ -442,16 +442,16 @@ export function StoryIdeaWorkspace({
           defaultOpen={false}
           description={t(
             "Delivery review only becomes active after the Story Idea is turned into a Delivery Story.",
-            "Leveransgranskning blir forst aktiv nar Story Idean har blivit en Delivery Story."
+            "Leveransgranskning blir först aktiv när Story Idean har blivit en Delivery Story."
           )}
           title={t("Delivery review later", "Leveransgranskning senare")}
         >
           <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">{t("This is still a Story Idea.", "Det har ar fortfarande en storyide.")}</p>
+              <p className="font-medium text-foreground">{t("This is still a Story Idea.", "Det här är fortfarande en storyidé.")}</p>
             <p className="mt-2 leading-6">
               {t(
                 "Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build start controls appear after this idea is transformed into a Delivery Story.",
-                "Behall fokus pa Value Intent, Expected Behavior och Epic Alignment. Leveransgranskning, build readiness och build-startkontroller visas forst nar iden har omvandlats till en Delivery Story."
+                "Behåll fokus på Value Intent, Expected Behavior och Epic Alignment. Leveransgranskning, build readiness och build-startkontroller visas först när idén har omvandlats till en Delivery Story."
               )}
             </p>
             {blockers.length > 0 ? (
@@ -468,14 +468,14 @@ export function StoryIdeaWorkspace({
             <CardDescription>
               {t(
                 "Check whether the project is staffed strongly enough for this Story's AI level.",
-                "Kontrollera om projektet ar tillrackligt bemannat for den har storyns AI-niva."
+                "Kontrollera om projektet är tillräckligt bemannat för den här storyns AI-nivå."
               )}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/governance?view=readiness&sourceEntity=story&sourceId=${story.id}&level=${story.aiAccelerationLevel}`}>
-                {t("Open Governance readiness", "Oppna Governance-beredskap")}
+                {t("Open Governance readiness", "Öppna Governance-beredskap")}
               </Link>
             </Button>
           </CardContent>
@@ -485,13 +485,13 @@ export function StoryIdeaWorkspace({
           defaultOpen={false}
           description={t(
             "Operational history is useful, but not usually the first thing needed to move work forward.",
-            "Operativ historik ar anvandbar, men oftast inte det forsta som behovs for att fora arbetet framat."
+            "Operativ historik är användbar, men oftast inte det första som behövs för att föra arbetet framåt."
           )}
           title={t("Latest activity", "Senaste aktivitet")}
         >
           <div className="space-y-3 text-sm text-muted-foreground">
             {activities.length === 0 ? (
-              <p>{t("No activity has been recorded yet for this Story.", "Ingen aktivitet har registrerats annu for den har storyn.")}</p>
+              <p>{t("No activity has been recorded yet for this Story.", "Ingen aktivitet har registrerats ännu för den här storyn.")}</p>
             ) : (
               activities.map((activity) => (
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={activity.id}>
@@ -507,7 +507,7 @@ export function StoryIdeaWorkspace({
           defaultOpen={false}
           description={t(
             "Archive, restore and delete controls stay available without displacing primary Story work.",
-            "Arkivera-, aterstall- och delete-kontroller finns kvar utan att tranga undan det primara storyarbetet."
+            "Arkivera-, återställ- och delete-kontroller finns kvar utan att tränga undan det primära storyarbetet."
           )}
           id="story-lifecycle"
           title={t("Lifecycle controls", "Livscykelkontroller")}
@@ -531,12 +531,12 @@ export function StoryIdeaWorkspace({
             defaultOpen={false}
             description={t(
               "Imported lineage is still accessible when you need to trace the source material.",
-              "Importerad lineage ar fortfarande tillganglig nar du behover spora kallmaterialet."
+              "Importerad lineage är fortfarande tillgänglig när du behöver spåra källmaterialet."
             )}
             title={t("Imported lineage", "Importerad lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/review?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Oppna kallkandidatens review")}</Link>
+              <Link href={`/review?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}
