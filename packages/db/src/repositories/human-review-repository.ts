@@ -17,14 +17,40 @@ export async function getHumanReviewSnapshot(organizationId: string) {
         lifecycleState: "active"
       },
       orderBy: {
-        createdAt: "asc"
+        updatedAt: "desc"
       },
       select: {
         id: true,
         key: true,
         title: true,
+        outcomeStatement: true,
+        baselineDefinition: true,
+        valueOwnerId: true,
+        riskProfile: true,
         aiAccelerationLevel: true,
-        status: true
+        aiUsageRole: true,
+        aiExecutionPattern: true,
+        aiUsageIntent: true,
+        businessImpactLevel: true,
+        businessImpactRationale: true,
+        dataSensitivityLevel: true,
+        dataSensitivityRationale: true,
+        blastRadiusLevel: true,
+        blastRadiusRationale: true,
+        decisionImpactLevel: true,
+        decisionImpactRationale: true,
+        aiLevelJustification: true,
+        status: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            epics: {
+              where: {
+                lifecycleState: "active"
+              }
+            }
+          }
+        }
       }
     }),
     prisma.tollgate.findMany({

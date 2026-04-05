@@ -1,5 +1,6 @@
 import { getHumanReviewSnapshot } from "@aas-companion/db";
 import {
+  getOutcomeFramingReadiness,
   getTollgateDecisionProfile,
   summarizeTollgateFromSignoffs,
   type SignoffDecisionRequirement
@@ -27,6 +28,20 @@ type HumanReviewDashboardItem = {
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function normalizeAiUsageRole(value: string | null | undefined) {
+  return value === "support" ||
+    value === "generation" ||
+    value === "validation" ||
+    value === "decision_support" ||
+    value === "automation"
+    ? value
+    : null;
+}
+
+function normalizeAiExecutionPattern(value: string | null | undefined) {
+  return value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null;
 }
 
 function getPendingRoleGap(
@@ -96,8 +111,13 @@ export async function getHumanReviewDashboardService(organizationId: string) {
     }
 
     const signoffsByTollgateId = new Map<string, typeof snapshot.signoffRecords>();
+    const signoffsByEntityId = new Map<string, typeof snapshot.signoffRecords>();
 
     for (const signoff of snapshot.signoffRecords) {
+      const entityScoped = signoffsByEntityId.get(signoff.entityId) ?? [];
+      entityScoped.push(signoff);
+      signoffsByEntityId.set(signoff.entityId, entityScoped);
+
       if (!signoff.tollgateId) {
         continue;
       }
@@ -109,16 +129,35 @@ export async function getHumanReviewDashboardService(organizationId: string) {
 
     const outcomeItems: HumanReviewDashboardItem[] = snapshot.outcomes.flatMap<HumanReviewDashboardItem>((outcome) => {
       const tollgate = tollgatesByEntityKey.get(`outcome:${outcome.id}:tg1_baseline`);
-
-      if (!tollgate) {
-        return [];
-      }
-
+      const fallbackBlockers = getOutcomeFramingReadiness({
+        title: outcome.title,
+        outcomeStatement: outcome.outcomeStatement,
+        baselineDefinition: outcome.baselineDefinition,
+        valueOwnerId: outcome.valueOwnerId,
+        riskProfile: outcome.riskProfile,
+        aiAccelerationLevel: outcome.aiAccelerationLevel,
+        status: outcome.status,
+        aiUsageRole: normalizeAiUsageRole(outcome.aiUsageRole),
+        aiExecutionPattern: normalizeAiExecutionPattern(outcome.aiExecutionPattern),
+        aiUsageIntent: outcome.aiUsageIntent,
+        businessImpactLevel: outcome.businessImpactLevel,
+        businessImpactRationale: outcome.businessImpactRationale,
+        dataSensitivityLevel: outcome.dataSensitivityLevel,
+        dataSensitivityRationale: outcome.dataSensitivityRationale,
+        blastRadiusLevel: outcome.blastRadiusLevel,
+        blastRadiusRationale: outcome.blastRadiusRationale,
+        decisionImpactLevel: outcome.decisionImpactLevel,
+        decisionImpactRationale: outcome.decisionImpactRationale,
+        aiLevelJustification: outcome.aiLevelJustification,
+        riskAcceptedAt: null,
+        riskAcceptedByValueOwnerId: null,
+        epicCount: outcome._count.epics
+      }).reasons.map((reason) => reason.message);
       const profile = getTollgateDecisionProfile({
         tollgateType: "tg1_baseline",
         aiAccelerationLevel: outcome.aiAccelerationLevel
       });
-      const signoffs = (tollgate.id ? signoffsByTollgateId.get(tollgate.id) ?? [] : []).map((record) => ({
+      const signoffs = (tollgate?.id ? signoffsByTollgateId.get(tollgate.id) ?? [] : signoffsByEntityId.get(outcome.id) ?? []).map((record) => ({
         ...record,
         tollgateType: record.tollgateType ?? undefined,
         tollgateId: record.tollgateId ?? undefined,
@@ -127,7 +166,7 @@ export async function getHumanReviewDashboardService(organizationId: string) {
         createdBy: record.createdBy ?? undefined
       }));
       const summary = summarizeTollgateFromSignoffs({
-        blockers: tollgate.blockers,
+        blockers: tollgate?.blockers ?? fallbackBlockers,
         profile,
         ignoreBlockers: true,
         signoffs
@@ -138,7 +177,7 @@ export async function getHumanReviewDashboardService(organizationId: string) {
       }
 
       const roleGap = getPendingRoleGap(summary.pendingRequirements, snapshot.partyRoleEntries);
-      const blocker = tollgate.blockers[0] ?? roleGap ?? null;
+      const blocker = tollgate?.blockers[0] ?? fallbackBlockers[0] ?? roleGap ?? null;
 
       return [
         {
@@ -161,7 +200,7 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           context: "Framing / Tollgate 1 approvals",
           blocker,
           pendingLaneCount: summary.pendingRequirements.length,
-          updatedAt: tollgate.updatedAt
+          updatedAt: tollgate?.updatedAt ?? outcome.updatedAt
         }
       ];
     });
