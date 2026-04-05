@@ -115,10 +115,13 @@ type FieldValidationNote = {
   message: string;
 };
 
+type AppLanguage = "en" | "sv";
+
 type ArtifactIntakeReviewWorkspaceProps = {
   session: IntakeArtifactSession;
   selectedFile: IntakeArtifactFile;
   fileCandidates: IntakeArtifactCandidate[];
+  language?: AppLanguage | undefined;
   projectOutcomes: ProjectOutcomeOption[];
   projectEpics: ProjectEpicOption[];
   selectedCandidate: IntakeArtifactCandidate | null;
@@ -136,6 +139,10 @@ type ArtifactIntakeReviewWorkspaceProps = {
     action: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
   }) => Promise<{ ok: true; selectedAction: "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked" } | { ok: false; message: string }>;
 };
+
+function t(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
 
 function intakeHref(
   sessionId: string,
@@ -419,36 +426,36 @@ function isActionableFramingCarryForwardAction(action: string | null | undefined
   return action !== "confirmed" && action !== "corrected" && action !== "not_relevant";
 }
 
-function carryForwardCategoryLabel(category: ArtifactCarryForwardItem["category"]) {
+function carryForwardCategoryLabel(category: ArtifactCarryForwardItem["category"], language: AppLanguage) {
   if (category === "ux_principle") {
-    return "UX principle";
+    return t(language, "UX principle", "UX-princip");
   }
 
   if (category === "nfr_constraint") {
-    return "Non-functional requirement";
+    return t(language, "Non-functional requirement", "Icke-funktionellt krav");
   }
 
   if (category === "solution_constraint") {
-    return "Solution constraint";
+    return t(language, "Solution constraint", "Lösningsbegränsning");
   }
 
   if (category === "additional_requirement") {
-    return "Additional requirement";
+    return t(language, "Additional requirement", "Ytterligare krav");
   }
 
-  return "Design input";
+  return t(language, "Design input", "Designunderlag");
 }
 
-function carryForwardUseLabel(recommendedUse: ArtifactCarryForwardItem["recommendedUse"]) {
+function carryForwardUseLabel(recommendedUse: ArtifactCarryForwardItem["recommendedUse"], language: AppLanguage) {
   if (recommendedUse === "cross_cutting_requirement") {
-    return "Carry forward as cross-cutting requirement";
+    return t(language, "Carry forward as cross-cutting requirement", "Ta vidare som tvärgående krav");
   }
 
   if (recommendedUse === "framing_constraint") {
-    return "Carry forward as framing constraint";
+    return t(language, "Carry forward as framing constraint", "Ta vidare som framing-begränsning");
   }
 
-  return "Carry forward to design";
+  return t(language, "Carry forward to design", "Ta vidare till design");
 }
 
 function collapseFramingCandidatesForDisplay(fileCandidates: IntakeArtifactCandidate[]) {
@@ -549,6 +556,7 @@ function collapseFramingCandidatesForDisplay(fileCandidates: IntakeArtifactCandi
 
 function framingCandidateStatus(
   candidate: IntakeArtifactCandidate,
+  language: AppLanguage,
   context?: {
     resolvedKey?: string | null | undefined;
     resolvedOutcomeLink?: string | null | undefined;
@@ -557,7 +565,7 @@ function framingCandidateStatus(
 ) {
   if (candidate.reviewStatus === "rejected") {
     return {
-      label: "Rejected",
+      label: t(language, "Rejected", "Avvisad"),
       tone: "border-slate-300 bg-slate-100 text-slate-700"
     };
   }
@@ -585,25 +593,25 @@ function framingCandidateStatus(
 
   return isReady
     ? {
-        label: "Ready",
+        label: t(language, "Ready", "Redo"),
         tone: "border-emerald-200 bg-emerald-50 text-emerald-700"
       }
     : {
-        label: "Missing required fields",
+        label: t(language, "Missing required fields", "Saknar obligatoriska fält"),
         tone: "border-amber-200 bg-amber-50 text-amber-800"
       };
 }
 
-function framingConstraintStatus(action: string | null | undefined) {
+function framingConstraintStatus(action: string | null | undefined, language: AppLanguage) {
   if (action === "not_relevant") {
     return {
-      label: "Rejected",
+      label: t(language, "Rejected", "Avvisad"),
       tone: "border-slate-300 bg-slate-100 text-slate-700"
     };
   }
 
   return {
-    label: "Ready",
+    label: t(language, "Ready", "Redo"),
     tone: "border-emerald-200 bg-emerald-50 text-emerald-700"
   };
 }
@@ -628,7 +636,7 @@ function CollapsibleReviewPanel(props: {
   );
 }
 
-function resolveFieldValidationNotes(candidate: IntakeArtifactCandidate | null): FieldValidationNote[] {
+function resolveFieldValidationNotes(candidate: IntakeArtifactCandidate | null, language: AppLanguage): FieldValidationNote[] {
   if (!candidate?.complianceResult) {
     return [];
   }
@@ -638,43 +646,43 @@ function resolveFieldValidationNotes(candidate: IntakeArtifactCandidate | null):
   for (const finding of candidate.complianceResult.findings) {
     const mappedFields =
       finding.code === "story_outcome_link_missing"
-        ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
+        ? [{ fieldName: "outcomeCandidateId", label: t(language, "Outcome destination", "Outcome-destination") }]
         : finding.code === "story_epic_link_missing"
-          ? [{ fieldName: "epicCandidateId", label: "Epic destination" }]
+          ? [{ fieldName: "epicCandidateId", label: t(language, "Epic destination", "Epic-destination") }]
           : finding.code === "epic_outcome_link_missing"
-            ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
+            ? [{ fieldName: "outcomeCandidateId", label: t(language, "Outcome destination", "Outcome-destination") }]
               : finding.code === "candidate_relationship_uncertain"
                 ? candidate.type === "story"
-                  ? [{ fieldName: "epicCandidateId", label: "Epic destination" }]
+                  ? [{ fieldName: "epicCandidateId", label: t(language, "Epic destination", "Epic-destination") }]
                   : candidate.type === "epic"
-                    ? [{ fieldName: "outcomeCandidateId", label: "Outcome destination" }]
+                    ? [{ fieldName: "outcomeCandidateId", label: t(language, "Outcome destination", "Outcome-destination") }]
                     : []
               : finding.code === "story_value_intent_missing" || finding.code === "story_value_intent_too_thin"
-                ? [{ fieldName: "valueIntent", label: "Value intent" }]
+                ? [{ fieldName: "valueIntent", label: t(language, "Value intent", "Value intent") }]
                 : finding.code === "story_expected_behavior_missing" || finding.code === "story_expected_behavior_too_thin"
-                  ? [{ fieldName: "expectedBehavior", label: "Expected behavior" }]
+                  ? [{ fieldName: "expectedBehavior", label: t(language, "Expected behavior", "Förväntat beteende") }]
                   : finding.code === "story_key_missing"
-                    ? [{ fieldName: "key", label: "Key" }]
+                    ? [{ fieldName: "key", label: t(language, "Key", "Nyckel") }]
                     : finding.code === "outcome_statement_missing"
-                      ? [{ fieldName: "outcomeStatement", label: "Outcome statement" }]
+                      ? [{ fieldName: "outcomeStatement", label: t(language, "Outcome statement", "Outcome-beskrivning") }]
                       : finding.code === "baseline_definition_missing"
-                        ? [{ fieldName: "baselineDefinition", label: "Baseline definition" }]
+                        ? [{ fieldName: "baselineDefinition", label: t(language, "Baseline definition", "Baseline-definition") }]
                         : finding.code === "baseline_source_missing"
-                          ? [{ fieldName: "baselineSource", label: "Baseline source" }]
+                          ? [{ fieldName: "baselineSource", label: t(language, "Baseline source", "Baseline-källa") }]
                           : finding.code === "epic_purpose_missing"
-                            ? [{ fieldName: "purpose", label: "Purpose" }]
+                            ? [{ fieldName: "purpose", label: t(language, "Purpose", "Syfte") }]
                             : finding.code === "epic_scope_boundary_missing"
-                              ? [{ fieldName: "scopeBoundary", label: "Scope boundary" }]
+                              ? [{ fieldName: "scopeBoundary", label: t(language, "Scope boundary", "Scope-gräns") }]
                               : finding.code === "ai_acceleration_human_only"
-                                ? [{ fieldName: "aiAccelerationLevel", label: "AI level" }]
+                                ? [{ fieldName: "aiAccelerationLevel", label: t(language, "AI level", "AI-nivå") }]
                                 : finding.code === "risk_acceptance_human_only"
-                                  ? [{ fieldName: "riskAcceptanceStatus", label: "Risk acceptance status" }]
+                                  ? [{ fieldName: "riskAcceptanceStatus", label: t(language, "Risk acceptance status", "Status för riskacceptans") }]
                                   : finding.code === "risk_profile_human_only"
-                                    ? [{ fieldName: "riskProfile", label: "Risk profile" }]
+                                    ? [{ fieldName: "riskProfile", label: t(language, "Risk profile", "Riskprofil") }]
                                     : finding.code === "baseline_validity_human_only"
-                                      ? [{ fieldName: "baselineValidity", label: "Baseline validity" }]
+                                      ? [{ fieldName: "baselineValidity", label: t(language, "Baseline validity", "Baseline-giltighet") }]
                                       : finding.code === "value_owner_human_only"
-                                        ? [{ fieldName: "valueOwnerId", label: "Value owner" }]
+                                        ? [{ fieldName: "valueOwnerId", label: t(language, "Value owner", "Value owner") }]
                                         : [];
 
     for (const mappedField of mappedFields) {
@@ -691,6 +699,7 @@ function resolveFieldValidationNotes(candidate: IntakeArtifactCandidate | null):
 
 function FramingImportSpine(props: {
   session: IntakeArtifactSession;
+  language: AppLanguage;
   selectedFile: IntakeArtifactFile;
   importedOutcomeCandidates: IntakeArtifactCandidate[];
   importedEpicCandidates: IntakeArtifactCandidate[];
@@ -709,11 +718,12 @@ function FramingImportSpine(props: {
     props.importedEpicCandidates.length > 0 ||
     props.importedStoryCandidates.length > 0 ||
     props.carryForwardItems.length > 0;
+  const language = props.language;
   const projectEpicOptions = [
     {
       id: FALLBACK_EPIC_OPTION_VALUE,
       key: "EPC-AUTO",
-      title: "Fallback Epic",
+      title: t(language, "Fallback Epic", "Reserv-epic"),
       outcomeId: props.defaultTargetOutcomeId
     },
     ...props.projectEpicOptionsForTarget
@@ -721,11 +731,11 @@ function FramingImportSpine(props: {
   const storyEpicOptions = [
     ...props.importedEpicCandidates.map((candidate) => ({
       id: candidate.id,
-      label: `Imported Epic: ${candidate.title}`
+      label: t(language, `Imported Epic: ${candidate.title}`, `Importerat epic: ${candidate.title}`)
     })),
     ...projectEpicOptions.map((candidate) => ({
       id: candidate.id,
-      label: `Project Epic: ${describeProjectEpic(candidate)}`
+      label: t(language, `Project Epic: ${describeProjectEpic(candidate)}`, `Projekt-epic: ${describeProjectEpic(candidate)}`)
     }))
   ];
   const importedOutcomeIdSet = new Set(props.importedOutcomeCandidates.map((candidate) => candidate.id));
@@ -768,23 +778,30 @@ function FramingImportSpine(props: {
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
-        <CardTitle>Framing value spine</CardTitle>
+        <CardTitle>{t(language, "Framing value spine", "Framingens value spine")}</CardTitle>
         <CardDescription>
-          Review imported framing content directly in one spine. Open the nodes you want to complete, mark the objects
-          you want to act on, then approve or reject only that selection.
+          {t(
+            language,
+            "Review imported framing content directly in one spine. Open the nodes you want to complete, mark the objects you want to act on, then approve or reject only that selection.",
+            "Granska importerat framinginnehåll direkt i en enda spine. Öppna noderna du vill komplettera, markera objekten du vill agera på och godkänn eller avvisa bara det urvalet."
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2 text-xs">
-          {compactMetric("Outcomes", props.importedOutcomeCandidates.length)}
-          {compactMetric("Epics", props.importedEpicCandidates.length)}
-          {compactMetric("Story ideas", props.importedStoryCandidates.length)}
-          {compactMetric("Constraints", props.carryForwardItems.length)}
-          {compactMetric("Hidden leftovers", props.fileLeftovers.length)}
+          {compactMetric(t(language, "Outcomes", "Outcomes"), props.importedOutcomeCandidates.length)}
+          {compactMetric(t(language, "Epics", "Epics"), props.importedEpicCandidates.length)}
+          {compactMetric(t(language, "Story ideas", "Story ideas"), props.importedStoryCandidates.length)}
+          {compactMetric(t(language, "Constraints", "Begränsningar"), props.carryForwardItems.length)}
+          {compactMetric(t(language, "Hidden leftovers", "Dolda restposter"), props.fileLeftovers.length)}
         </div>
         {!hasActionableItems ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
-            All imported framing objects in this file are already processed. Only hidden leftovers remain, and they stay out of the active spine.
+            {t(
+              language,
+              "All imported framing objects in this file are already processed. Only hidden leftovers remain, and they stay out of the active spine.",
+              "Alla importerade framingobjekt i filen är redan hanterade. Bara dolda restposter återstår och de ligger utanför den aktiva spinen."
+            )}
           </div>
         ) : null}
         {props.submitFramingBulkApproveAction && hasActionableItems ? (
@@ -792,16 +809,16 @@ function FramingImportSpine(props: {
             <input name="sessionId" type="hidden" value={props.session.id} />
             <input name="fileId" type="hidden" value={props.selectedFile.id} />
             <div className="rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">Outcome target</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">{t(language, "Outcome target", "Outcome-mål")}</p>
               {props.outcomeCandidateOptions.length > 1 ? (
                 <label className="mt-3 block space-y-2">
-                  <span className="text-sm font-medium text-foreground">Project Outcome to update or attach to</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Project Outcome to update or attach to", "Projekt-Outcome att uppdatera eller koppla till")}</span>
                   <select
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                     defaultValue=""
                     name="targetOutcomeId"
                   >
-                    <option value="">Select project Outcome</option>
+                    <option value="">{t(language, "Select project Outcome", "Välj projekt-Outcome")}</option>
                     {props.outcomeCandidateOptions.map((candidate) => (
                       <option key={candidate.id} value={candidate.id}>
                         {describeProjectOutcome(candidate)}
@@ -814,17 +831,20 @@ function FramingImportSpine(props: {
                   <input name="targetOutcomeId" type="hidden" value={props.defaultTargetOutcomeId} />
                   <p className="mt-2 font-medium text-foreground">{describeProjectOutcome(props.outcomeCandidateOptions[0]!)}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    The project already has one Outcome, so imported framing content will use it automatically.
+                    {t(language, "The project already has one Outcome, so imported framing content will use it automatically.", "Projektet har redan ett Outcome, så importerat framinginnehåll använder det automatiskt.")}
                   </p>
                 </>
               ) : props.importedOutcomeCandidates.length > 0 ? (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  No Outcome exists in the project yet. Approving a selected imported Outcome will create it first.
+                  {t(language, "No Outcome exists in the project yet. Approving a selected imported Outcome will create it first.", "Det finns ännu inget Outcome i projektet. Om du godkänner ett valt importerat Outcome skapas det först.")}
                 </p>
               ) : (
                 <p className="mt-2 text-sm text-amber-800">
-                  This import has no Outcome and the project has no existing Outcome. Approve or create an Outcome
-                  before Epics, Story Ideas, or constraints can be attached.
+                  {t(
+                    language,
+                    "This import has no Outcome and the project has no existing Outcome. Approve or create an Outcome before Epics, Story Ideas, or constraints can be attached.",
+                    "Importen saknar Outcome och projektet har inget befintligt Outcome. Godkänn eller skapa ett Outcome innan Epics, Story Ideas eller begränsningar kan kopplas in."
+                  )}
                 </p>
               )}
             </div>
@@ -850,7 +870,7 @@ function FramingImportSpine(props: {
                   }
                 );
                 const outcomeStatus = outcomeCandidate
-                  ? framingCandidateStatus(outcomeCandidate, {
+                  ? framingCandidateStatus(outcomeCandidate, language, {
                       resolvedKey:
                         outcomeCandidate.draftRecord?.key && !isLegacyImportKey(outcomeCandidate.draftRecord.key)
                           ? outcomeCandidate.draftRecord.key
@@ -868,7 +888,7 @@ function FramingImportSpine(props: {
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
-                              Outcome
+                              {t(language, "Outcome", "Outcome")}
                             </span>
                             {outcomeStatus ? (
                               <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${outcomeStatus.tone}`}>
@@ -883,12 +903,12 @@ function FramingImportSpine(props: {
                                   : buildSuggestedCandidateKey(props.session, outcomeCandidate))} ${outcomeCandidate.title}`
                               : props.defaultTargetOutcomeId
                                 ? describeProjectOutcome(props.outcomeCandidateOptions.find((candidate) => candidate.id === props.defaultTargetOutcomeId) ?? props.outcomeCandidateOptions[0]!)
-                                : "Outcome required"}
+                                : t(language, "Outcome required", "Outcome krävs")}
                           </p>
                           <p className="mt-1 text-sm text-muted-foreground">
                             {outcomeCandidate
                               ? outcomeCandidate.draftRecord?.outcomeStatement ?? outcomeCandidate.summary
-                              : "Imported Epics, Story Ideas, and constraints will attach to the selected project Outcome."}
+                              : t(language, "Imported Epics, Story Ideas, and constraints will attach to the selected project Outcome.", "Importerade Epics, Story Ideas och begränsningar kopplas till valt projekt-Outcome.")}
                           </p>
                         </div>
                       </div>
@@ -898,7 +918,7 @@ function FramingImportSpine(props: {
                       {outcomeCandidate ? (
                         <div className="grid gap-4 md:grid-cols-2">
                           <label className="space-y-2">
-                            <span className="text-sm font-medium text-foreground">Key</span>
+                            <span className="text-sm font-medium text-foreground">{t(language, "Key", "Nyckel")}</span>
                             <input
                               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                               defaultValue={
@@ -911,7 +931,7 @@ function FramingImportSpine(props: {
                             />
                           </label>
                           <label className="space-y-2">
-                            <span className="text-sm font-medium text-foreground">Title</span>
+                            <span className="text-sm font-medium text-foreground">{t(language, "Title", "Titel")}</span>
                             <input
                               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                               defaultValue={outcomeCandidate.draftRecord?.title ?? outcomeCandidate.title}
@@ -920,7 +940,7 @@ function FramingImportSpine(props: {
                             />
                           </label>
                           <label className="space-y-2 md:col-span-2">
-                            <span className="text-sm font-medium text-foreground">Outcome statement</span>
+                            <span className="text-sm font-medium text-foreground">{t(language, "Outcome statement", "Outcome-beskrivning")}</span>
                             <textarea
                               className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                               defaultValue={outcomeCandidate.draftRecord?.outcomeStatement ?? ""}
@@ -928,7 +948,7 @@ function FramingImportSpine(props: {
                             />
                           </label>
                           <label className="space-y-2">
-                            <span className="text-sm font-medium text-foreground">Baseline definition</span>
+                            <span className="text-sm font-medium text-foreground">{t(language, "Baseline definition", "Baseline-definition")}</span>
                             <textarea
                               className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                               defaultValue={outcomeCandidate.draftRecord?.baselineDefinition ?? ""}
@@ -936,7 +956,7 @@ function FramingImportSpine(props: {
                             />
                           </label>
                           <label className="space-y-2">
-                            <span className="text-sm font-medium text-foreground">Baseline source</span>
+                            <span className="text-sm font-medium text-foreground">{t(language, "Baseline source", "Baseline-källa")}</span>
                             <textarea
                               className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                               defaultValue={outcomeCandidate.draftRecord?.baselineSource ?? ""}
@@ -944,7 +964,7 @@ function FramingImportSpine(props: {
                             />
                           </label>
                           <label className="space-y-2 md:col-span-2">
-                            <span className="text-sm font-medium text-foreground">Timeframe</span>
+                            <span className="text-sm font-medium text-foreground">{t(language, "Timeframe", "Tidsram")}</span>
                             <input
                               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                               defaultValue={outcomeCandidate.draftRecord?.timeframe ?? ""}
@@ -957,9 +977,9 @@ function FramingImportSpine(props: {
 
                       {props.carryForwardItems.length > 0 && index === 0 ? (
                         <div className="space-y-3 rounded-2xl border border-border/70 bg-muted/15 p-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Outcome constraints</p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Outcome constraints", "Outcome-begränsningar")}</p>
                           {props.carryForwardItems.map((item) => {
-                            const constraintState = framingConstraintStatus(props.selectedFile.sectionDispositions[item.sourceSection.id]?.action ?? null);
+                            const constraintState = framingConstraintStatus(props.selectedFile.sectionDispositions[item.sourceSection.id]?.action ?? null, language);
 
                             return (
                               <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={item.id}>
@@ -969,7 +989,7 @@ function FramingImportSpine(props: {
                                     <div>
                                       <div className="flex flex-wrap items-center gap-2">
                                         <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                          {carryForwardCategoryLabel(item.category)}
+                                          {carryForwardCategoryLabel(item.category, language)}
                                         </span>
                                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${constraintState.tone}`}>
                                           {constraintState.label}
@@ -983,7 +1003,7 @@ function FramingImportSpine(props: {
                                 </summary>
                                 <div className="space-y-4 border-t border-border/70 px-4 py-4">
                                   <label className="space-y-2">
-                                    <span className="text-sm font-medium text-foreground">Title</span>
+                                    <span className="text-sm font-medium text-foreground">{t(language, "Title", "Titel")}</span>
                                     <input
                                       className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                       defaultValue={item.title}
@@ -992,7 +1012,7 @@ function FramingImportSpine(props: {
                                     />
                                   </label>
                                   <label className="space-y-2">
-                                    <span className="text-sm font-medium text-foreground">Text</span>
+                                    <span className="text-sm font-medium text-foreground">{t(language, "Text", "Text")}</span>
                                     <textarea
                                       className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                       defaultValue={item.summary}
@@ -1000,10 +1020,10 @@ function FramingImportSpine(props: {
                                     />
                                   </label>
                                   <label className="space-y-2">
-                                    <span className="text-sm font-medium text-foreground">Constraint category</span>
+                                    <span className="text-sm font-medium text-foreground">{t(language, "Constraint category", "Kategori")}</span>
                                     <input
                                       className="h-11 w-full rounded-2xl border border-border bg-muted/20 px-4 text-sm text-muted-foreground"
-                                      defaultValue="Stored under the Outcome constraint field"
+                                      defaultValue={t(language, "Stored under the Outcome constraint field", "Lagrar under Outcome-fältet för begränsningar")}
                                       disabled
                                       readOnly
                                       type="text"
@@ -1022,7 +1042,7 @@ function FramingImportSpine(props: {
                       ) : null}
 
                       {epicNodes.map((epic) => {
-                        const epicStatus = framingCandidateStatus(epic, {
+                        const epicStatus = framingCandidateStatus(epic, language, {
                           resolvedKey:
                             epic.draftRecord?.key && !isLegacyImportKey(epic.draftRecord.key)
                               ? epic.draftRecord.key
@@ -1042,13 +1062,13 @@ function FramingImportSpine(props: {
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-800">
-                                      Epic
+                                      {t(language, "Epic", "Epic")}
                                     </span>
                                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${epicStatus.tone}`}>
                                       {epicStatus.label}
                                     </span>
                                     <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                      {epicStories.length} {epicStories.length === 1 ? "story idea" : "story ideas"}
+                                      {epicStories.length} {epicStories.length === 1 ? t(language, "story idea", "story idea") : t(language, "story ideas", "story ideas")}
                                     </span>
                                   </div>
                                   <p className="mt-2 font-medium text-foreground">
@@ -1065,7 +1085,7 @@ function FramingImportSpine(props: {
                             <div className="space-y-4 border-t border-border/70 px-4 py-4">
                               <div className="grid gap-4 md:grid-cols-2">
                                 <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Key</span>
+                                  <span className="text-sm font-medium text-foreground">{t(language, "Key", "Nyckel")}</span>
                                   <input
                                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                     defaultValue={
@@ -1078,7 +1098,7 @@ function FramingImportSpine(props: {
                                   />
                                 </label>
                                 <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Title</span>
+                                  <span className="text-sm font-medium text-foreground">{t(language, "Title", "Titel")}</span>
                                   <input
                                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                     defaultValue={epic.draftRecord?.title ?? epic.title}
@@ -1087,7 +1107,7 @@ function FramingImportSpine(props: {
                                   />
                                 </label>
                                 <label className="space-y-2 md:col-span-2">
-                                  <span className="text-sm font-medium text-foreground">Purpose</span>
+                                  <span className="text-sm font-medium text-foreground">{t(language, "Purpose", "Syfte")}</span>
                                   <textarea
                                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                     defaultValue={epic.draftRecord?.purpose ?? epic.summary}
@@ -1095,7 +1115,7 @@ function FramingImportSpine(props: {
                                   />
                                 </label>
                                 <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Scope boundary</span>
+                                  <span className="text-sm font-medium text-foreground">{t(language, "Scope boundary", "Scope-gräns")}</span>
                                   <textarea
                                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                     defaultValue={epic.draftRecord?.scopeBoundary ?? ""}
@@ -1103,7 +1123,7 @@ function FramingImportSpine(props: {
                                   />
                                 </label>
                                 <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Risk note</span>
+                                  <span className="text-sm font-medium text-foreground">{t(language, "Risk note", "Risknotering")}</span>
                                   <textarea
                                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                     defaultValue={epic.draftRecord?.riskNote ?? ""}
@@ -1118,7 +1138,7 @@ function FramingImportSpine(props: {
                               </div>
 
                               {epicStories.map((story) => {
-                                const storyStatus = framingCandidateStatus(story, {
+                                const storyStatus = framingCandidateStatus(story, language, {
                                   resolvedKey:
                                     story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
                                       ? story.draftRecord.key
@@ -1141,7 +1161,7 @@ function FramingImportSpine(props: {
                                         <div>
                                           <div className="flex flex-wrap items-center gap-2">
                                             <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
-                                              Story idea
+                                              {t(language, "Story idea", "Story idea")}
                                             </span>
                                             <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${storyStatus.tone}`}>
                                               {storyStatus.label}
@@ -1158,8 +1178,8 @@ function FramingImportSpine(props: {
                                           ) : null}
                                           <p className="mt-2 text-xs text-muted-foreground">
                                             {parentEpic
-                                              ? `Linked to imported Epic ${parentEpic.title}.`
-                                              : "Will use the selected project Epic if no imported Epic is linked."}
+                                              ? t(language, `Linked to imported Epic ${parentEpic.title}.`, `Kopplad till importerat epic ${parentEpic.title}.`)
+                                              : t(language, "Will use the selected project Epic if no imported Epic is linked.", "Använder valt projekt-epic om inget importerat epic är länkat.")}
                                           </p>
                                         </div>
                                       </div>
@@ -1168,7 +1188,7 @@ function FramingImportSpine(props: {
                                     <div className="space-y-4 border-t border-border/70 px-4 py-4">
                                       <div className="grid gap-4 md:grid-cols-2">
                                         <label className="space-y-2">
-                                          <span className="text-sm font-medium text-foreground">Key</span>
+                                          <span className="text-sm font-medium text-foreground">{t(language, "Key", "Nyckel")}</span>
                                           <input
                                             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                             defaultValue={
@@ -1181,7 +1201,7 @@ function FramingImportSpine(props: {
                                           />
                                         </label>
                                         <label className="space-y-2">
-                                          <span className="text-sm font-medium text-foreground">Title</span>
+                                          <span className="text-sm font-medium text-foreground">{t(language, "Title", "Titel")}</span>
                                           <input
                                             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                             defaultValue={story.draftRecord?.title ?? story.title}
@@ -1190,7 +1210,7 @@ function FramingImportSpine(props: {
                                           />
                                         </label>
                                         <label className="space-y-2">
-                                          <span className="text-sm font-medium text-foreground">Linked Epic</span>
+                                          <span className="text-sm font-medium text-foreground">{t(language, "Linked Epic", "Länkat epic")}</span>
                                           <select
                                             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                             defaultValue={resolveImportedEpicLink(story) || epic.id}
@@ -1209,7 +1229,7 @@ function FramingImportSpine(props: {
                                           value={resolveImportedEpicLink(story) || epic.id}
                                         />
                                         <label className="space-y-2 md:col-span-2">
-                                          <span className="text-sm font-medium text-foreground">Value intent</span>
+                                          <span className="text-sm font-medium text-foreground">{t(language, "Value intent", "Value intent")}</span>
                                           <textarea
                                             className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                             defaultValue={story.draftRecord?.valueIntent ?? story.summary}
@@ -1217,7 +1237,7 @@ function FramingImportSpine(props: {
                                           />
                                         </label>
                                         <label className="space-y-2 md:col-span-2">
-                                          <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                                          <span className="text-sm font-medium text-foreground">{t(language, "Expected behavior", "Förväntat beteende")}</span>
                                           <textarea
                                             className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                             defaultValue={story.draftRecord?.expectedBehavior ?? ""}
@@ -1250,19 +1270,19 @@ function FramingImportSpine(props: {
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="inline-flex rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-900">
-                                  Epic linkage
+                                  {t(language, "Epic linkage", "Epic-koppling")}
                                 </span>
                               </div>
-                              <p className="mt-2 font-medium text-foreground">Story ideas that still need an Epic</p>
+                              <p className="mt-2 font-medium text-foreground">{t(language, "Story ideas that still need an Epic", "Story ideas som fortfarande behöver ett epic")}</p>
                               <p className="mt-1 text-sm text-muted-foreground">
-                                Choose an imported Epic, a project Epic, or let these stories land in `Fallback Epic`.
+                                {t(language, "Choose an imported Epic, a project Epic, or let these stories land in `Fallback Epic`.", "Välj ett importerat epic, ett projekt-epic, eller låt de här stories landa i `Reserv-epic`.")}
                               </p>
                             </div>
                             <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
                           </summary>
                           <div className="space-y-4 border-t border-border/70 px-4 py-4">
                             {freeStandingStories.map((story) => {
-                                const storyStatus = framingCandidateStatus(story, {
+                                const storyStatus = framingCandidateStatus(story, language, {
                                   resolvedKey:
                                     story.draftRecord?.key && !isLegacyImportKey(story.draftRecord.key)
                                       ? story.draftRecord.key
@@ -1285,7 +1305,7 @@ function FramingImportSpine(props: {
                                       <div>
                                         <div className="flex flex-wrap items-center gap-2">
                                           <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
-                                            Story idea
+                                            {t(language, "Story idea", "Story idea")}
                                           </span>
                                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${storyStatus.tone}`}>
                                             {storyStatus.label}
@@ -1307,7 +1327,7 @@ function FramingImportSpine(props: {
                                   <div className="space-y-4 border-t border-border/70 px-4 py-4">
                                     <div className="grid gap-4 md:grid-cols-2">
                                       <label className="space-y-2">
-                                        <span className="text-sm font-medium text-foreground">Key</span>
+                                        <span className="text-sm font-medium text-foreground">{t(language, "Key", "Nyckel")}</span>
                                         <input
                                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                           defaultValue={
@@ -1320,7 +1340,7 @@ function FramingImportSpine(props: {
                                         />
                                       </label>
                                       <label className="space-y-2">
-                                        <span className="text-sm font-medium text-foreground">Title</span>
+                                        <span className="text-sm font-medium text-foreground">{t(language, "Title", "Titel")}</span>
                                         <input
                                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                           defaultValue={story.draftRecord?.title ?? story.title}
@@ -1329,7 +1349,7 @@ function FramingImportSpine(props: {
                                         />
                                       </label>
                                       <label className="space-y-2 md:col-span-2">
-                                        <span className="text-sm font-medium text-foreground">Linked Epic</span>
+                                        <span className="text-sm font-medium text-foreground">{t(language, "Linked Epic", "Länkat epic")}</span>
                                         <select
                                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                           defaultValue={
@@ -1356,7 +1376,7 @@ function FramingImportSpine(props: {
                                         }
                                       />
                                       <label className="space-y-2 md:col-span-2">
-                                        <span className="text-sm font-medium text-foreground">Value intent</span>
+                                        <span className="text-sm font-medium text-foreground">{t(language, "Value intent", "Value intent")}</span>
                                         <textarea
                                           className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                           defaultValue={story.draftRecord?.valueIntent ?? story.summary}
@@ -1364,7 +1384,7 @@ function FramingImportSpine(props: {
                                         />
                                       </label>
                                       <label className="space-y-2 md:col-span-2">
-                                        <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                                        <span className="text-sm font-medium text-foreground">{t(language, "Expected behavior", "Förväntat beteende")}</span>
                                         <textarea
                                           className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                           defaultValue={story.draftRecord?.expectedBehavior ?? ""}
@@ -1411,6 +1431,7 @@ function FramingImportSpine(props: {
 
 export function ArtifactIntakeReviewWorkspace({
   session,
+  language = "en",
   selectedFile,
   fileCandidates,
   projectOutcomes,
@@ -1503,7 +1524,7 @@ export function ArtifactIntakeReviewWorkspace({
     ? (projectEpics ?? []).filter((epic) => epic.outcomeId === defaultTargetOutcomeId)
     : (projectEpics ?? []);
   const defaultBulkEpicCandidateId = projectEpicOptionsForTarget.length === 1 ? projectEpicOptionsForTarget[0]?.id ?? "" : "";
-  const fieldValidationNotes = resolveFieldValidationNotes(selectedCandidate);
+  const fieldValidationNotes = resolveFieldValidationNotes(selectedCandidate, language);
   const fieldValidationMap = new Map<string, FieldValidationNote[]>();
 
   for (const note of fieldValidationNotes) {
@@ -1533,6 +1554,7 @@ export function ArtifactIntakeReviewWorkspace({
           importedEpicCandidates={importedEpicCandidates}
           importedOutcomeCandidates={importedOutcomeCandidates}
           importedStoryCandidates={importedStoryCandidates}
+          language={language}
           outcomeCandidateOptions={outcomeCandidateOptions}
           projectEpicOptionsForTarget={projectEpicOptionsForTarget}
           selectedFile={selectedFile}
@@ -1545,26 +1567,29 @@ export function ArtifactIntakeReviewWorkspace({
       {carryForwardItems.length > 0 && session.importIntent !== "framing" ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Carry forward to design</CardTitle>
+            <CardTitle>{t(language, "Carry forward to design", "Ta vidare till design")}</CardTitle>
             <CardDescription>
-              These sections were recognized as useful design or constraint input, so they are kept visible here
-              instead of being treated as leftovers.
+              {t(
+                language,
+                "These sections were recognized as useful design or constraint input, so they are kept visible here instead of being treated as leftovers.",
+                "De här sektionerna bedömdes vara användbart design- eller begränsningsunderlag, så de visas här i stället för att behandlas som restposter."
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs">
-              {compactMetric("Carry-forward items", carryForwardItems.length)}
-              {compactMetric("Pending decisions", unresolvedCarryForwardCount)}
+              {compactMetric(t(language, "Carry-forward items", "Vidareförda poster"), carryForwardItems.length)}
+              {compactMetric(t(language, "Pending decisions", "Väntande beslut"), unresolvedCarryForwardCount)}
             </div>
             <div className="grid gap-3">
               {carryForwardItemStates.map(({ item, selectedAction, dispositionLabel, status, tone }) => (
                 <div className={`rounded-2xl border p-4 ${tone}`} key={item.id}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
-                      {carryForwardCategoryLabel(item.category)}
+                      {carryForwardCategoryLabel(item.category, language)}
                     </span>
                     <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                      {carryForwardUseLabel(item.recommendedUse)}
+                      {carryForwardUseLabel(item.recommendedUse, language)}
                     </span>
                   </div>
                   <p className="mt-3 font-medium text-foreground">{item.title}</p>
@@ -1582,16 +1607,16 @@ export function ArtifactIntakeReviewWorkspace({
                     actions={
                       session.importIntent === "framing"
                         ? [
-                            { label: "Approve into Framing", value: "confirmed" as const },
-                            { label: "Reject", value: "not_relevant" as const },
-                            { label: "Keep pending", value: "pending" as const },
-                            { label: "Mark blocker", value: "blocked" as const }
+                            { label: t(language, "Approve into Framing", "Godkänn till Framing"), value: "confirmed" as const },
+                            { label: t(language, "Reject", "Avvisa"), value: "not_relevant" as const },
+                            { label: t(language, "Keep pending", "Behåll väntande"), value: "pending" as const },
+                            { label: t(language, "Mark blocker", "Markera blockerare"), value: "blocked" as const }
                           ]
                         : [
-                            { label: "Confirm", value: "confirmed" as const },
-                            { label: "Not relevant", value: "not_relevant" as const },
-                            { label: "Keep pending", value: "pending" as const },
-                            { label: "Mark blocker", value: "blocked" as const }
+                            { label: t(language, "Confirm", "Bekräfta"), value: "confirmed" as const },
+                            { label: t(language, "Not relevant", "Inte relevant"), value: "not_relevant" as const },
+                            { label: t(language, "Keep pending", "Behåll väntande"), value: "pending" as const },
+                            { label: t(language, "Mark blocker", "Markera blockerare"), value: "blocked" as const }
                           ]
                     }
                     fileId={selectedFile.id}
@@ -1613,25 +1638,25 @@ export function ArtifactIntakeReviewWorkspace({
       {session.importIntent !== "framing" ? (
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Review leftovers</CardTitle>
+          <CardTitle>{t(language, "Review leftovers", "Granska restposter")}</CardTitle>
           <CardDescription>
-            Only leftover material that still needs a human decision is shown here. Supporting noise is summarized first so it is easier to reject and move on.
+            {t(language, "Only leftover material that still needs a human decision is shown here. Supporting noise is summarized first so it is easier to reject and move on.", "Här visas bara restmaterial som fortfarande behöver ett mänskligt beslut. Stödbrus sammanfattas först så att det blir enklare att avvisa och gå vidare.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {progress?.categories.unmapped ? (
             <div className="flex flex-wrap gap-2 text-xs">
-              {compactMetric("Review leftovers", progress.categories.unmapped)}
+              {compactMetric(t(language, "Review leftovers", "Granska restposter"), progress.categories.unmapped)}
             </div>
           ) : null}
           {leftoverGroups.length > 0 ? (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Leftover summary</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Leftover summary", "Sammanfattning av restposter")}</p>
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 {leftoverGroups.map((group) => (
                   <div className="rounded-2xl border border-border/70 bg-background/80 p-4" key={`${group.title}-${group.preview}`}>
                     <p className="font-medium text-foreground">{group.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{group.count} section(s)</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{t(language, `${group.count} section(s)`, `${group.count} sektion(er)`)}</p>
                     <p className="mt-2 text-sm text-muted-foreground">{group.preview}</p>
                   </div>
                 ))}
@@ -1657,17 +1682,17 @@ export function ArtifactIntakeReviewWorkspace({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                      {unresolved} unresolved
+                      {t(language, `${unresolved} unresolved`, `${unresolved} olösta`)}
                     </span>
                     <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                      {resolved} resolved
+                      {t(language, `${resolved} resolved`, `${resolved} lösta`)}
                     </span>
                   </div>
                 </div>
 
                 {group.items.length === 0 ? (
                   <div className="mt-4 rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
-                    No items currently belong to this queue section for the selected artifact.
+                    {t(language, "No items currently belong to this queue section for the selected artifact.", "Inga poster tillhör just nu den här kösektionen för det valda underlaget.")}
                   </div>
                 ) : (
                   <div className="mt-4 space-y-3">
@@ -1693,19 +1718,19 @@ export function ArtifactIntakeReviewWorkspace({
                               </span>
                               <p className="font-medium text-foreground">{item.title}</p>
                               <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                {item.actionScope === "section" ? "Source section" : "Candidate issue"}
+                                {item.actionScope === "section" ? t(language, "Source section", "Källsektion") : t(language, "Candidate issue", "Kandidatfråga")}
                               </span>
                             </div>
                             <p className="mt-1 text-sm text-muted-foreground">{summarizeReviewText(item.description, 180)}</p>
                             <p className="mt-2 text-xs text-muted-foreground">{item.context}</p>
                             {item.dispositionLabel ? (
                               <p className="mt-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                                Disposition: {item.dispositionLabel}
+                                {t(language, "Disposition", "Disposition")}: {item.dispositionLabel}
                               </p>
                             ) : null}
                             {item.dispositionLabel === "blocked" ? (
                               <p className="mt-2 text-xs text-rose-700">
-                                This item remains in the queue and continues to block import approval.
+                                {t(language, "This item remains in the queue and continues to block import approval.", "Den här posten ligger kvar i kön och fortsätter blockera importgodkännande.")}
                               </p>
                             ) : null}
                           </div>
@@ -1727,14 +1752,14 @@ export function ArtifactIntakeReviewWorkspace({
                           {item.actionScope === "section" ? (
                             <Button asChild className="gap-2" size="sm" variant="secondary">
                               <Link href={item.href} prefetch={false}>
-                                View source section
+                                {t(language, "View source section", "Visa källsektion")}
                                 <GitBranch className="h-4 w-4" />
                               </Link>
                             </Button>
                           ) : item.actionScope === "candidate" ? (
                             <Button asChild className="gap-2" size="sm" variant="secondary">
                               <Link href={item.href} prefetch={false}>
-                                Open fields to fix
+                                {t(language, "Open fields to fix", "Öppna fält att rätta")}
                                 <GitBranch className="h-4 w-4" />
                               </Link>
                             </Button>
@@ -1766,7 +1791,7 @@ export function ArtifactIntakeReviewWorkspace({
 
       <div className="space-y-6">
         <div className="space-y-6">
-          <CollapsibleReviewPanel defaultOpen={false} title="Full imported source artifact">
+          <CollapsibleReviewPanel defaultOpen={false} title={t(language, "Full imported source artifact", "Fullständigt importerat källunderlag")}>
             <div className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1">
@@ -1776,14 +1801,14 @@ export function ArtifactIntakeReviewWorkspace({
                 {selectedFile.extension}
               </span>
               <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1">
-                {selectedFile.uncertainSectionCount} uncertain section(s)
+                {t(language, `${selectedFile.uncertainSectionCount} uncertain section(s)`, `${selectedFile.uncertainSectionCount} osäkra sektion(er)`)}
               </span>
             </div>
 
             {selectedFile.parsedArtifacts?.sections.length ? (
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Source structure
+                  {t(language, "Source structure", "Källstruktur")}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {selectedFile.parsedArtifacts.sections.map((section) => (
@@ -1814,7 +1839,7 @@ export function ArtifactIntakeReviewWorkspace({
               <details className="group rounded-2xl border border-border/70 bg-muted/10">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Parsed sections</p>
+                    <p className="text-sm font-semibold text-foreground">{t(language, "Parsed sections", "Tolkade sektioner")}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Expand to inspect how each section was interpreted and whether it already became a candidate or
                       still needs a human decision.
@@ -1830,17 +1855,17 @@ export function ArtifactIntakeReviewWorkspace({
                       ? {
                           badge: `${mappedCandidate.type} candidate`,
                           tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
-                          description: `Already interpreted into ${mappedCandidate.title}. Adjust the candidate workspace if the governed fields need correction.`
+                          description: t(language, `Already interpreted into ${mappedCandidate.title}. Adjust the candidate workspace if the governed fields need correction.`, `Redan tolkat till ${mappedCandidate.title}. Justera kandidatens workspace om de styrda fälten behöver rättas.`)
                         }
                       : unmappedSourceSectionIds.has(sourceSectionId)
                         ? {
-                            badge: "Review leftover",
+                            badge: t(language, "Review leftover", "Granska restpost"),
                             tone: "border-amber-200 bg-amber-50 text-amber-800",
                             description:
                               "This section could not be placed confidently into a mapped Outcome, Epic, or Story candidate. Review it in the Correction queue, then absorb it, dismiss it, or keep it pending."
                           }
                         : {
-                            badge: "Supporting context",
+                            badge: t(language, "Supporting context", "Stödjande kontext"),
                             tone: "border-border/70 bg-muted/20 text-muted-foreground",
                             description:
                               "Parsed for traceability, but not currently treated as a standalone candidate or queue item."
@@ -1900,30 +1925,30 @@ export function ArtifactIntakeReviewWorkspace({
                 <CardHeader>
                   <CardTitle>
                     {selectedCandidate.type === "story"
-                      ? `Save and approve ${importedStoryLabel(session.importIntent)} import`
-                      : "Save and approve import"}
+                      ? t(language, `Save and approve ${importedStoryLabel(session.importIntent)} import`, `Spara och godkänn import av ${importedStoryLabel(session.importIntent)}`)
+                      : t(language, "Save and approve import", "Spara och godkänn import")}
                   </CardTitle>
                   <CardDescription>
                     {selectedCandidate.type === "story"
                       ? session.importIntent === "design"
-                        ? "This imported story will become a Delivery Story when approved."
-                        : "This imported story will become a Story Idea in Framing when approved."
-                      : "Review the imported candidate, make corrections, then approve it into governed project records."}
+                        ? t(language, "This imported story will become a Delivery Story when approved.", "Den här importerade storyn blir en Delivery Story när den godkänns.")
+                        : t(language, "This imported story will become a Story Idea in Framing when approved.", "Den här importerade storyn blir en Story Idea i Framing när den godkänns.")
+                      : t(language, "Review the imported candidate, make corrections, then approve it into governed project records.", "Granska den importerade kandidaten, gör rättningar och godkänn den sedan in i styrda projektposter.")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Imported record</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Imported record", "Importerad post")}</p>
                     {fieldValidationNotes.length > 0 ? (
                       <p className="mt-1 text-sm text-amber-700">
-                        Needs review: {[...new Set(fieldValidationNotes.map((note) => note.label))].join(", ")}
+                        {t(language, "Needs review", "Behöver granskas")}: {[...new Set(fieldValidationNotes.map((note) => note.label))].join(", ")}
                       </p>
                     ) : null}
                   </div>
 
                   {!quickEditFieldNames.has("key") ? (
                     <label className="space-y-2">
-                      <span className="text-sm font-medium text-foreground">Key</span>
+                      <span className="text-sm font-medium text-foreground">{t(language, "Key", "Nyckel")}</span>
                       <input
                         className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "key")}
                         defaultValue={displayedCandidateKeyValue}
@@ -1937,13 +1962,13 @@ export function ArtifactIntakeReviewWorkspace({
                       ))}
                       {selectedCandidate.type === "story" && (isLegacyImportKey(selectedCandidate.draftRecord?.key) || !selectedCandidate.draftRecord?.key) ? (
                         <p className="text-xs text-muted-foreground">
-                          Suggested simple project key. A unique `SC-###` value is assigned automatically if you approve without changing it.
+                          {t(language, "Suggested simple project key. A unique `SC-###` value is assigned automatically if you approve without changing it.", "Föreslagen enkel projektnyckel. Ett unikt `SC-###`-värde tilldelas automatiskt om du godkänner utan att ändra det.")}
                         </p>
                       ) : null}
                     </label>
                   ) : null}
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Title</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Title", "Titel")}</span>
                     <input
                       className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "title")}
                       defaultValue={selectedCandidate.draftRecord?.title ?? selectedCandidate.title}
@@ -1961,7 +1986,7 @@ export function ArtifactIntakeReviewWorkspace({
                     <>
                       {!quickEditFieldNames.has("outcomeStatement") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Outcome statement</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Outcome statement", "Outcome-beskrivning")}</span>
                           <textarea
                             className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "outcomeStatement")}
                             defaultValue={selectedCandidate.draftRecord?.outcomeStatement ?? ""}
@@ -1976,7 +2001,7 @@ export function ArtifactIntakeReviewWorkspace({
                       ) : null}
                       {!quickEditFieldNames.has("baselineDefinition") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Baseline definition</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Baseline definition", "Baseline-definition")}</span>
                           <textarea
                             className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "baselineDefinition")}
                             defaultValue={selectedCandidate.draftRecord?.baselineDefinition ?? ""}
@@ -1991,7 +2016,7 @@ export function ArtifactIntakeReviewWorkspace({
                       ) : null}
                       {!quickEditFieldNames.has("baselineSource") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Baseline source</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Baseline source", "Baseline-källa")}</span>
                           <textarea
                             className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "baselineSource")}
                             defaultValue={selectedCandidate.draftRecord?.baselineSource ?? ""}
@@ -2010,7 +2035,7 @@ export function ArtifactIntakeReviewWorkspace({
                   {selectedCandidate.type === "epic" ? (
                     <>
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Purpose</span>
+                        <span className="text-sm font-medium text-foreground">{t(language, "Purpose", "Syfte")}</span>
                         <textarea
                           className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "purpose")}
                           defaultValue={selectedCandidate.draftRecord?.purpose ?? ""}
@@ -2024,7 +2049,7 @@ export function ArtifactIntakeReviewWorkspace({
                       </label>
                       {!quickEditFieldNames.has("scopeBoundary") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Scope boundary</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Scope boundary", "Scope-gräns")}</span>
                           <textarea
                             className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "scopeBoundary")}
                             defaultValue={selectedCandidate.draftRecord?.scopeBoundary ?? ""}
@@ -2038,7 +2063,7 @@ export function ArtifactIntakeReviewWorkspace({
                         </label>
                       ) : null}
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Risk note</span>
+                        <span className="text-sm font-medium text-foreground">{t(language, "Risk note", "Risknotering")}</span>
                         <textarea
                           className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                           defaultValue={selectedCandidate.draftRecord?.riskNote ?? ""}
@@ -2046,24 +2071,24 @@ export function ArtifactIntakeReviewWorkspace({
                         />
                       </label>
                       <div className="pt-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Destination</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Destination", "Destination")}</p>
                       </div>
                       {!quickEditFieldNames.has("outcomeCandidateId") ? (
                         outcomeCandidateOptions.length === 1 && selectedOutcomeCandidateId ? (
                           <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-foreground">
                             <input name="outcomeCandidateId" type="hidden" value={selectedOutcomeCandidateId} />
-                            <p className="font-medium">Outcome destination</p>
+                            <p className="font-medium">{t(language, "Outcome destination", "Outcome-destination")}</p>
                             <p className="mt-1 text-muted-foreground">{describeProjectOutcome(outcomeCandidateOptions[0]!)}</p>
                           </div>
                         ) : (
                           <label className="space-y-2">
-                            <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                            <span className="text-sm font-medium text-foreground">{t(language, "Linked imported Outcome", "Länkat importerat Outcome")}</span>
                             <select
                               className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "outcomeCandidateId")}
                               defaultValue={selectedOutcomeCandidateId}
                               name="outcomeCandidateId"
                             >
-                              <option value="">Select project Outcome</option>
+                              <option value="">{t(language, "Select project Outcome", "Välj projekt-Outcome")}</option>
                               {outcomeCandidateOptions.map((candidate) => (
                                 <option key={candidate.id} value={candidate.id}>
                                   {describeProjectOutcome(candidate)}
@@ -2084,19 +2109,19 @@ export function ArtifactIntakeReviewWorkspace({
                   {selectedCandidate.type === "story" ? (
                     <>
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Story type</span>
+                        <span className="text-sm font-medium text-foreground">{t(language, "Story type", "Storytyp")}</span>
                         <select
                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                           defaultValue={selectedCandidate.draftRecord?.storyType ?? "outcome_delivery"}
                           name="storyType"
                         >
-                          <option value="outcome_delivery">Outcome delivery</option>
+                          <option value="outcome_delivery">{t(language, "Outcome delivery", "Outcome delivery")}</option>
                           <option value="governance">Governance</option>
                           <option value="enablement">Enablement</option>
                         </select>
                       </label>
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Value intent</span>
+                        <span className="text-sm font-medium text-foreground">{t(language, "Value intent", "Value intent")}</span>
                         <textarea
                           className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "valueIntent")}
                           defaultValue={selectedCandidate.draftRecord?.valueIntent ?? ""}
@@ -2109,7 +2134,7 @@ export function ArtifactIntakeReviewWorkspace({
                           ))}
                       </label>
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Expected behavior</span>
+                        <span className="text-sm font-medium text-foreground">{t(language, "Expected behavior", "Förväntat beteende")}</span>
                         <textarea
                           className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "expectedBehavior")}
                           defaultValue={selectedCandidate.draftRecord?.expectedBehavior ?? ""}
@@ -2123,7 +2148,7 @@ export function ArtifactIntakeReviewWorkspace({
                       </label>
                       {!quickEditFieldNames.has("acceptanceCriteria") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Acceptance criteria", "Acceptanskriterier")}</span>
                           <textarea
                             className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "acceptanceCriteria")}
                             defaultValue={(selectedCandidate.draftRecord?.acceptanceCriteria ?? []).join("\n")}
@@ -2137,7 +2162,7 @@ export function ArtifactIntakeReviewWorkspace({
                         </label>
                       ) : null}
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">AI usage scope</span>
+                        <span className="text-sm font-medium text-foreground">{t(language, "AI usage scope", "AI-användningsomfång")}</span>
                         <input
                           className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "aiUsageScope")}
                           defaultValue={(selectedCandidate.draftRecord?.aiUsageScope ?? []).join(", ")}
@@ -2147,7 +2172,7 @@ export function ArtifactIntakeReviewWorkspace({
                       </label>
                       {!quickEditFieldNames.has("testDefinition") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Test Definition</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Test Definition", "Testdefinition")}</span>
                           <textarea
                             className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "testDefinition")}
                             defaultValue={selectedCandidate.draftRecord?.testDefinition ?? ""}
@@ -2162,7 +2187,7 @@ export function ArtifactIntakeReviewWorkspace({
                       ) : null}
                       {!quickEditFieldNames.has("definitionOfDone") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Definition of Done</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Definition of Done", "Definition of Done")}</span>
                           <textarea
                             className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "definitionOfDone")}
                             defaultValue={(selectedCandidate.draftRecord?.definitionOfDone ?? []).join("\n")}
@@ -2176,9 +2201,9 @@ export function ArtifactIntakeReviewWorkspace({
                         </label>
                       ) : null}
                       <div className="pt-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Destination</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Destination", "Destination")}</p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Outcome is fixed automatically when the project only has one Outcome. Choose the Epic once here.
+                          {t(language, "Outcome is fixed automatically when the project only has one Outcome. Choose the Epic once here.", "Outcome låses automatiskt när projektet bara har ett Outcome. Välj epic här en gång.")}
                         </p>
                       </div>
                       {!quickEditFieldNames.has("outcomeCandidateId") || !quickEditFieldNames.has("epicCandidateId") ? (
@@ -2188,18 +2213,18 @@ export function ArtifactIntakeReviewWorkspace({
                               outcomeCandidateOptions.length === 1 && selectedOutcomeCandidateId ? (
                                 <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-foreground">
                                   <input name="outcomeCandidateId" type="hidden" value={selectedOutcomeCandidateId} />
-                                  <p className="font-medium">Outcome destination</p>
+                                  <p className="font-medium">{t(language, "Outcome destination", "Outcome-destination")}</p>
                                   <p className="mt-1 text-muted-foreground">{describeProjectOutcome(outcomeCandidateOptions[0]!)}</p>
                                 </div>
                               ) : (
                                 <label className="space-y-2">
-                                  <span className="text-sm font-medium text-foreground">Linked imported Outcome</span>
+                                  <span className="text-sm font-medium text-foreground">{t(language, "Linked imported Outcome", "Länkat importerat Outcome")}</span>
                                   <select
                                     className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "outcomeCandidateId")}
                                     defaultValue={selectedOutcomeCandidateId}
                                     name="outcomeCandidateId"
                                   >
-                                    <option value="">Select project Outcome</option>
+                                    <option value="">{t(language, "Select project Outcome", "Välj projekt-Outcome")}</option>
                                     {outcomeCandidateOptions.map((candidate) => (
                                       <option key={candidate.id} value={candidate.id}>
                                         {describeProjectOutcome(candidate)}
@@ -2216,13 +2241,13 @@ export function ArtifactIntakeReviewWorkspace({
                             ) : null}
                             {!quickEditFieldNames.has("epicCandidateId") ? (
                               <label className="space-y-2">
-                                <span className="text-sm font-medium text-foreground">Linked imported Epic</span>
+                                <span className="text-sm font-medium text-foreground">{t(language, "Linked imported Epic", "Länkat importerat epic")}</span>
                                 <select
                                   className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "epicCandidateId")}
                                   defaultValue={selectedEpicCandidateId}
                                   name="epicCandidateId"
                                 >
-                                  <option value="">Select project Epic</option>
+                                  <option value="">{t(language, "Select project Epic", "Välj projekt-epic")}</option>
                                   {epicCandidateOptions.map((candidate) => (
                                     <option key={candidate.id} value={candidate.id}>
                                       {describeProjectEpic(candidate)}
@@ -2245,12 +2270,12 @@ export function ArtifactIntakeReviewWorkspace({
                     <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
                       <div className="mb-3 flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-medium text-foreground">Human-only decisions</p>
+                        <p className="text-sm font-medium text-foreground">{t(language, "Human-only decisions", "Endast mänskliga beslut")}</p>
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                       {!quickEditFieldNames.has("valueOwnerId") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Value Owner</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Value Owner", "Value Owner")}</span>
                           <input
                             className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "valueOwnerId")}
                             defaultValue={selectedCandidate.humanDecisions?.valueOwnerId ?? ""}
@@ -2266,15 +2291,15 @@ export function ArtifactIntakeReviewWorkspace({
                       ) : null}
                       {!quickEditFieldNames.has("baselineValidity") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Baseline validity</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Baseline validity", "Baseline-giltighet")}</span>
                           <select
                             className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "baselineValidity")}
                             defaultValue={selectedCandidate.humanDecisions?.baselineValidity ?? ""}
                             name="baselineValidity"
                           >
-                            <option value="">Unresolved</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="needs_follow_up">Needs follow-up</option>
+                            <option value="">{t(language, "Unresolved", "Oklart")}</option>
+                            <option value="confirmed">{t(language, "Confirmed", "Bekräftad")}</option>
+                            <option value="needs_follow_up">{t(language, "Needs follow-up", "Behöver uppföljning")}</option>
                           </select>
                           {fieldNotes("baselineValidity").map((note) => (
                             <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
@@ -2285,13 +2310,13 @@ export function ArtifactIntakeReviewWorkspace({
                       ) : null}
                       {!quickEditFieldNames.has("aiAccelerationLevel") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">AI level</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "AI level", "AI-nivå")}</span>
                           <select
                             className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "aiAccelerationLevel")}
                             defaultValue={selectedCandidate.humanDecisions?.aiAccelerationLevel ?? ""}
                             name="aiAccelerationLevel"
                           >
-                            <option value="">Unresolved</option>
+                            <option value="">{t(language, "Unresolved", "Oklart")}</option>
                             <option value="level_1">Level 1</option>
                             <option value="level_2">Level 2</option>
                             <option value="level_3">Level 3</option>
@@ -2305,16 +2330,16 @@ export function ArtifactIntakeReviewWorkspace({
                       ) : null}
                       {!quickEditFieldNames.has("riskProfile") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Risk profile</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Risk profile", "Riskprofil")}</span>
                           <select
                             className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "riskProfile")}
                             defaultValue={selectedCandidate.humanDecisions?.riskProfile ?? ""}
                             name="riskProfile"
                           >
-                            <option value="">Unresolved</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
+                            <option value="">{t(language, "Unresolved", "Oklart")}</option>
+                            <option value="low">{t(language, "Low", "Låg")}</option>
+                            <option value="medium">{t(language, "Medium", "Medel")}</option>
+                            <option value="high">{t(language, "High", "Hög")}</option>
                           </select>
                           {fieldNotes("riskProfile").map((note) => (
                             <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
@@ -2325,15 +2350,15 @@ export function ArtifactIntakeReviewWorkspace({
                       ) : null}
                       {!quickEditFieldNames.has("riskAcceptanceStatus") ? (
                         <label className="space-y-2">
-                          <span className="text-sm font-medium text-foreground">Risk acceptance status</span>
+                          <span className="text-sm font-medium text-foreground">{t(language, "Risk acceptance status", "Status för riskacceptans")}</span>
                           <select
                             className={withValidationTone("h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary", "riskAcceptanceStatus")}
                             defaultValue={selectedCandidate.humanDecisions?.riskAcceptanceStatus ?? ""}
                             name="riskAcceptanceStatus"
                           >
-                            <option value="">Unresolved</option>
-                            <option value="accepted">Accepted</option>
-                            <option value="needs_review">Needs review</option>
+                            <option value="">{t(language, "Unresolved", "Oklart")}</option>
+                            <option value="accepted">{t(language, "Accepted", "Accepterad")}</option>
+                            <option value="needs_review">{t(language, "Needs review", "Behöver granskas")}</option>
                           </select>
                           {fieldNotes("riskAcceptanceStatus").map((note) => (
                             <p className="text-xs text-amber-700" key={`${note.fieldName}-${note.message}`}>
@@ -2347,7 +2372,7 @@ export function ArtifactIntakeReviewWorkspace({
                   ) : null}
 
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Review comment</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Review comment", "Granskningskommentar")}</span>
                     <textarea
                       className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                       defaultValue={selectedCandidate.reviewComment ?? ""}
@@ -2365,9 +2390,9 @@ export function ArtifactIntakeReviewWorkspace({
 
                   {selectedCandidate.promotedEntityId ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                      Imported into the project as governed{" "}
+                      {t(language, "Imported into the project as governed", "Importerad till projektet som styrd")}{" "}
                       {promotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType, session.importIntent)} with ID{" "}
-                      {selectedCandidate.promotedEntityId}. It now continues like native project work.
+                      {selectedCandidate.promotedEntityId}. {t(language, "It now continues like native project work.", "Den fortsätter nu som nativt projektarbete.")}
                     </div>
                   ) : null}
                 </CardContent>
@@ -2376,10 +2401,9 @@ export function ArtifactIntakeReviewWorkspace({
             ) : (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>No mapped candidate selected</CardTitle>
+                  <CardTitle>{t(language, "No mapped candidate selected", "Ingen mappad kandidat vald")}</CardTitle>
                   <CardDescription>
-                    Full source and the correction queue stay available even when the selected artifact currently has no
-                    candidate to edit.
+                    {t(language, "Full source and the correction queue stay available even when the selected artifact currently has no candidate to edit.", "Full källa och korrektionskön finns kvar även när det valda underlaget just nu saknar kandidat att redigera.")}
                   </CardDescription>
                 </CardHeader>
               </Card>

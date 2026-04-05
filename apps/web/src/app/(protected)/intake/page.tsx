@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { CheckCircle2, CircleAlert, Inbox } from "lucide-react";
 import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
@@ -20,6 +21,8 @@ import {
 type ArtifactIntakePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+type AppLanguage = "en" | "sv";
 
 type BacklogRow = {
   kind: "candidate" | "leftovers";
@@ -84,8 +87,18 @@ function buildIntakeHref(sessionId: string, fileId: string, candidateId?: string
   return `/intake?${params.toString()}`;
 }
 
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default async function ArtifactIntakePage({ searchParams }: ArtifactIntakePageProps) {
   const query = searchParams ? await searchParams : {};
+  const serverLanguage = await getServerLanguage();
   const session = await requireProtectedSession();
   const sessionId = getParamValue(query.sessionId);
   const fileId = getParamValue(query.fileId);
@@ -571,6 +584,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
             {selectedSession && selectedFile ? (
               <ArtifactIntakeReviewWorkspace
                 fileCandidates={selectedFileCandidates}
+                language={serverLanguage}
                 projectEpics={workspace.projectEpics}
                 projectOutcomes={workspace.projectOutcomes}
                 selectedCandidate={selectedCandidate}

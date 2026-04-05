@@ -77,6 +77,10 @@ type FramingOutcomeSectionProps = {
   initialReviewFramingState: ReviewOutcomeFramingAiActionState;
 };
 
+function translate(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
 function getOriginLabel(originType: string, language: "en" | "sv") {
   if (originType === "seeded") return "Demo";
   if (originType === "native") return language === "sv" ? "Nativ" : "Native";
@@ -536,7 +540,7 @@ export function FramingOutcomeSection({
     riskProfile: outcome.riskProfile,
     aiAccelerationLevel: outcome.aiAccelerationLevel
   }).map((reason) => reason.message);
-  const aiRiskStatusLabel = aiRiskBlockers.length > 0 ? "Needs action" : "Ready for review";
+  const aiRiskStatusLabel = aiRiskBlockers.length > 0 ? translate(language, "Needs action", "Behöver åtgärd") : translate(language, "Ready for review", "Redo för granskning");
   const aiRiskBadgeClasses =
     aiRiskBlockers.length > 0
       ? "border-amber-200 bg-amber-50 text-amber-900"
@@ -568,15 +572,15 @@ export function FramingOutcomeSection({
     outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null;
   const structuredConstraints = parseFramingConstraintBundle(outcome.solutionConstraints ?? null);
   const framingCompleteItems = [
-    outcome.outcomeStatement?.trim() ? "Outcome statement is captured" : null,
-    outcome.baselineDefinition?.trim() ? "Baseline is defined" : null,
-    outcome.valueOwnerId ? "Value owner is assigned" : null,
+    outcome.outcomeStatement?.trim() ? translate(language, "Outcome statement is captured", "Outcome-beskrivning finns") : null,
+    outcome.baselineDefinition?.trim() ? translate(language, "Baseline is defined", "Baseline finns") : null,
+    outcome.valueOwnerId ? translate(language, "Value owner is assigned", "Value owner är satt") : null,
     derivedRiskProfile && blockers.every((blocker) => !blocker.toLowerCase().includes("risk") && !blocker.toLowerCase().includes("ai "))
-      ? "AI and risk decision is structured"
+      ? translate(language, "AI and risk decision is structured", "AI- och riskbeslutet är strukturerat")
       : null,
-    outcome.epics.length > 0 ? `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"} created` : null,
+    outcome.epics.length > 0 ? translate(language, `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"} created`, `${outcome.epics.length} Epic skapade`) : null,
     tollgate?.status === "approved"
-      ? `Tollgate 1 approved${formatDateTime(tollgate.updatedAt) ? ` on ${formatDateTime(tollgate.updatedAt)}` : ""}`
+      ? translate(language, `Tollgate 1 approved${formatDateTime(tollgate.updatedAt) ? ` on ${formatDateTime(tollgate.updatedAt)}` : ""}`, `Tollgate 1 godkänd${formatDateTime(tollgate.updatedAt) ? ` ${formatDateTime(tollgate.updatedAt)}` : ""}`)
       : null
   ].filter((value): value is string => Boolean(value));
   const framingWarnings = blockers;
@@ -584,48 +588,48 @@ export function FramingOutcomeSection({
     tollgate?.status === "approved"
       ? `Tollgate 1 approved for Framing version ${tollgate.approvedVersion ?? outcome.framingVersion}${formatDateTime(tollgate.updatedAt) ? ` on ${formatDateTime(tollgate.updatedAt)}` : ""}.`
       : framingWarnings.length > 0
-        ? `${framingWarnings.length} warning${framingWarnings.length === 1 ? "" : "s"} should be reviewed before you rely on this Framing.`
-        : "Framing is complete enough to collect the required Tollgate 1 approvals.";
+        ? translate(language, `${framingWarnings.length} warning${framingWarnings.length === 1 ? "" : "s"} should be reviewed before you rely on this Framing.`, `${framingWarnings.length} varning${framingWarnings.length === 1 ? "" : "ar"} bör granskas innan du litar på den här Framing-versionen.`)
+        : translate(language, "Framing is complete enough to collect the required Tollgate 1 approvals.", "Framingen är tillräckligt komplett för att samla in nödvändiga Tollgate 1-godkännanden.");
   const framingNextActionLabel =
     tollgate?.status === "approved"
       ? framingWarnings.length > 0
-        ? "Review warnings"
-        : "Export Framing and start design"
+        ? translate(language, "Review warnings", "Granska varningar")
+        : translate(language, "Export Framing and start design", "Exportera Framing och starta design")
       : framingWarnings.length > 0
-        ? "Review warnings and collect approvals"
-        : "Collect Tollgate 1 approvals";
+        ? translate(language, "Review warnings and collect approvals", "Granska varningar och samla godkännanden")
+        : translate(language, "Collect Tollgate 1 approvals", "Samla Tollgate 1-godkännanden");
   const framingNextActionDetail =
     tollgate?.status === "approved"
       ? framingWarnings.length > 0
-        ? "Tollgate 1 is already approved, but the open warnings should still be reviewed before you rely on this Framing version."
-        : "Use the approved Framing as the decision baseline, export it if needed, and continue into design."
+        ? translate(language, "Tollgate 1 is already approved, but the open warnings should still be reviewed before you rely on this Framing version.", "Tollgate 1 är redan godkänd, men de öppna varningarna bör fortfarande granskas innan du förlitar dig på den här Framing-versionen.")
+        : translate(language, "Use the approved Framing as the decision baseline, export it if needed, and continue into design.", "Använd den godkända Framingen som beslutsbaseline, exportera den vid behov och gå vidare till design.")
       : framingWarnings.length > 0
-        ? "Approvals are still possible now, but the open warnings should be reviewed before you rely on the Framing as a stable baseline."
-        : "Framing is complete enough to collect the required Tollgate 1 approvals for the current AI level.";
+        ? translate(language, "Approvals are still possible now, but the open warnings should be reviewed before you rely on the Framing as a stable baseline.", "Godkännanden är fortfarande möjliga nu, men de öppna varningarna bör granskas innan du använder Framingen som stabil baseline.")
+        : translate(language, "Framing is complete enough to collect the required Tollgate 1 approvals for the current AI level.", "Framingen är tillräckligt komplett för att samla in nödvändiga Tollgate 1-godkännanden för aktuell AI-nivå.");
   const aiAndRiskTeaser = [
-    `AI Level ${outcome.aiAccelerationLevel.replace("level_", "")}`,
-    `Risk ${derivedRiskProfile ? derivedRiskProfile.charAt(0).toUpperCase() + derivedRiskProfile.slice(1) : "Not determined"}`,
-    aiRiskBlockers.length > 0 ? `${aiRiskBlockers.length} action item${aiRiskBlockers.length === 1 ? "" : "s"}` : "Ready to review",
-    aiRiskBlockers.length > 0 ? "Expand to complete the missing classifications." : "Expand to review the rationale and governance fit."
+    translate(language, `AI Level ${outcome.aiAccelerationLevel.replace("level_", "")}`, `AI-nivå ${outcome.aiAccelerationLevel.replace("level_", "")}`),
+    translate(language, `Risk ${derivedRiskProfile ? derivedRiskProfile.charAt(0).toUpperCase() + derivedRiskProfile.slice(1) : "Not determined"}`, `Risk ${derivedRiskProfile ? derivedRiskProfile.charAt(0).toUpperCase() + derivedRiskProfile.slice(1) : "Inte fastställd"}`),
+    aiRiskBlockers.length > 0 ? translate(language, `${aiRiskBlockers.length} action item${aiRiskBlockers.length === 1 ? "" : "s"}`, `${aiRiskBlockers.length} åtgärdspunkt${aiRiskBlockers.length === 1 ? "" : "er"}`) : translate(language, "Ready to review", "Redo för granskning"),
+    aiRiskBlockers.length > 0 ? translate(language, "Expand to complete the missing classifications.", "Öppna för att komplettera de saknade klassificeringarna.") : translate(language, "Expand to review the rationale and governance fit.", "Öppna för att granska motivering och governance-passning.")
   ];
   const structureTeaser = [
-    `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"}`,
-    `${visibleStoryIdeaCount} Story Idea${visibleStoryIdeaCount === 1 ? "" : "s"}`,
+    translate(language, `${outcome.epics.length} Epic${outcome.epics.length === 1 ? "" : "s"}`, `${outcome.epics.length} Epic`),
+    translate(language, `${visibleStoryIdeaCount} Story Idea${visibleStoryIdeaCount === 1 ? "" : "s"}`, `${visibleStoryIdeaCount} Story Idea`),
     outcome.epics.length === 0
-      ? "Expand to create the first Epic and Story Ideas."
-      : "Expand to create new items and inspect the framing hierarchy."
+      ? translate(language, "Expand to create the first Epic and Story Ideas.", "Öppna för att skapa första Epic och Story Ideas.")
+      : translate(language, "Expand to create new items and inspect the framing hierarchy.", "Öppna för att skapa nya poster och granska framing-hierarkin.")
   ];
 
   return (
     <section className="space-y-6">
       {search.created ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Clean native case created and ready for framing work.
+          {translate(language, "Clean native case created and ready for framing work.", "Rent nativt case skapat och redo för framingarbete.")}
         </div>
       ) : null}
       {search.saveState === "success" ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Outcome changes were saved successfully.
+          {translate(language, "Outcome changes were saved successfully.", "Outcome-ändringarna sparades.")}
         </div>
       ) : null}
       {search.saveState === "error" && search.saveMessage ? (
@@ -635,27 +639,27 @@ export function FramingOutcomeSection({
       ) : null}
       {search.submitState === "blocked" ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Framing still has open recommendations. Approvals are allowed, but a fresh approval is recommended after the blockers are cleared.
+          {translate(language, "Framing still has open recommendations. Approvals are allowed, but a fresh approval is recommended after the blockers are cleared.", "Framingen har fortfarande öppna rekommendationer. Godkännanden är tillåtna, men ett nytt godkännande rekommenderas när blockerarna är lösta.")}
         </div>
       ) : null}
       {search.submitState === "ready" ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          A Framing approval was recorded. Remaining approver roles are still shown below.
+          {translate(language, "A Framing approval was recorded. Remaining approver roles are still shown below.", "Ett Framing-godkännande registrerades. Kvarvarande godkännanderoller visas fortfarande nedan.")}
         </div>
       ) : null}
       {search.submitState === "approved" ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Required sign-offs are complete. Tollgate 1 is now approved.
+          {translate(language, "Required sign-offs are complete. Tollgate 1 is now approved.", "Nödvändiga sign-offs är klara. Tollgate 1 är nu godkänd.")}
         </div>
       ) : null}
       {search.lifecycleState === "archived" ? (
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-          Outcome archived. It is now removed from active working views but still traceable here.
+          {translate(language, "Outcome archived. It is now removed from active working views but still traceable here.", "Outcome arkiverad. Den är nu borttagen från aktiva arbetsvyer men fortfarande spårbar här.")}
         </div>
       ) : null}
       {search.lifecycleState === "restored" ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Outcome restored to active work.
+          {translate(language, "Outcome restored to active work.", "Outcome återställd till aktivt arbete.")}
         </div>
       ) : null}
       {search.lifecycleState === "error" && search.saveMessage ? (
@@ -665,7 +669,7 @@ export function FramingOutcomeSection({
       ) : null}
       {isArchived ? (
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-          This Outcome is archived and currently read-only. Restore it to continue active framing work.
+          {translate(language, "This Outcome is archived and currently read-only. Restore it to continue active framing work.", "Det här Outcome är arkiverat och just nu skrivskyddat. Återställ det för att fortsätta aktivt framingarbete.")}
         </div>
       ) : null}
 
