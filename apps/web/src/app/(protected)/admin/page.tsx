@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { AlertTriangle, DatabaseZap, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
@@ -9,6 +10,8 @@ import { clearOperationalLogsAction, hardDeleteProjectsAction } from "./actions"
 type AdminPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+type AppLanguage = "en" | "sv";
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -30,13 +33,31 @@ function getLogTone(status: string) {
   return "border-border/70 bg-background text-foreground";
 }
 
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const query = searchParams ? await searchParams : {};
+  const language = await getServerLanguage();
+  const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const flashError = getParamValue(query.error);
   const flashMessage = getParamValue(query.message);
   const { activeProject, canManageProjects, isDemoSession, projects } = await loadHomeDashboard();
   const operationalLogs =
-    activeProject && !isDemoSession ? await loadOperationalLogs(30) : { state: "unavailable" as const, items: [], message: "Open a normal active project to inspect operational logs.", organizationName: activeProject?.organizationName ?? "Unknown project" };
+    activeProject && !isDemoSession
+      ? await loadOperationalLogs(30, language)
+      : {
+          state: "unavailable" as const,
+          items: [],
+          message: t("Open a normal active project to inspect operational logs.", "Öppna ett vanligt aktivt projekt för att granska operativa loggar."),
+          organizationName: activeProject?.organizationName ?? t("Unknown project", "Okänt projekt")
+        };
 
   return (
     <AppShell
@@ -44,8 +65,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       hideRightRail
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Admin",
-        badge: "Cleanup"
+        title: t("Admin", "Admin"),
+        badge: t("Cleanup", "Rensning")
       }}
     >
       <section className="space-y-6">
@@ -54,20 +75,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-white/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-red-900">
                 <DatabaseZap className="h-3.5 w-3.5" />
-                Admin cleanup
+                {t("Admin cleanup", "Adminrensning")}
               </div>
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Aggressive project cleanup</h1>
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{t("Aggressive project cleanup", "Aggressiv projektrensning")}</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  Use this page to remove test projects completely. Deletion is hard and cascades through framing,
-                  imports, review data, stories, tollgates, and activity history.
+                  {t(
+                    "Use this page to remove test projects completely. Deletion is hard and cascades through framing, imports, review data, stories, tollgates, and activity history.",
+                    "Använd den här sidan för att ta bort testprojekt helt. Borttagningen är hård och går igenom framing, importer, reviewdata, stories, tollgates och aktivitetshistorik."
+                  )}
                 </p>
               </div>
             </div>
             <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm leading-6 text-red-900 lg:max-w-sm">
-              <p className="font-semibold">No undo</p>
+              <p className="font-semibold">{t("No undo", "Ingen ångra")}</p>
               <p className="mt-2">
-                This page is intentionally blunt. Only select projects you truly want to purge from the database.
+                {t("This page is intentionally blunt. Only select projects you truly want to purge from the database.", "Den här sidan är medvetet hård. Välj bara projekt som du verkligen vill rensa bort från databasen.")}
               </p>
             </div>
           </div>
@@ -83,26 +106,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         ) : null}
 
         {!canManageProjects || isDemoSession ? (
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>Admin cleanup is unavailable</CardTitle>
-              <CardDescription>Open a normal signed-in project account before trying to remove persisted data.</CardDescription>
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+              <CardTitle>{t("Admin cleanup is unavailable", "Adminrensning är inte tillgänglig")}</CardTitle>
+              <CardDescription>{t("Open a normal signed-in project account before trying to remove persisted data.", "Öppna ett vanligt inloggat projektkonto innan du försöker ta bort sparad data.")}</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Demo stays isolated on purpose, so destructive cleanup is disabled there.
+              {t("Demo stays isolated on purpose, so destructive cleanup is disabled there.", "Demo är medvetet isolerad, så destruktiv rensning är avstängd där.")}
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>Projects</CardTitle>
-                <CardDescription>Mark one or more projects, then hard delete the selection in one operation.</CardDescription>
+                <CardTitle>{t("Projects", "Projekt")}</CardTitle>
+                <CardDescription>{t("Mark one or more projects, then hard delete the selection in one operation.", "Markera ett eller flera projekt och hårdradera sedan urvalet i en operation.")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {projects.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-                    No removable normal projects exist for this account right now.
+                    {t("No removable normal projects exist for this account right now.", "Det finns inga borttagbara vanliga projekt för det här kontot just nu.")}
                   </div>
                 ) : (
                   <form action={hardDeleteProjectsAction} className="space-y-4">
@@ -110,8 +133,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       <div className="flex items-start gap-2">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                         <p>
-                          Hard delete removes the selected projects entirely. If the active project is included, the app
-                          will also clear the active project context.
+                          {t(
+                            "Hard delete removes the selected projects entirely. If the active project is included, the app will also clear the active project context.",
+                            "Hårdradering tar bort de valda projekten helt. Om det aktiva projektet ingår rensar appen också den aktiva projektkontexten."
+                          )}
                         </p>
                       </div>
                     </div>
@@ -137,7 +162,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                               <p className="text-base font-semibold text-foreground">{project.organizationName}</p>
                               {project.isActive ? (
                                 <span className="inline-flex rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-800">
-                                  Active project
+                                  {t("Active project", "Aktivt projekt")}
                                 </span>
                               ) : null}
                               <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
@@ -146,16 +171,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             </div>
                             <div className="flex flex-wrap gap-2 text-xs">
                               <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                Outcomes <span className="ml-1 font-semibold text-foreground">{project.counts.outcomes}</span>
+                                {t("Outcomes", "Outcomes")} <span className="ml-1 font-semibold text-foreground">{project.counts.outcomes}</span>
                               </span>
                               <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                Epics <span className="ml-1 font-semibold text-foreground">{project.counts.epics}</span>
+                                {t("Epics", "Epics")} <span className="ml-1 font-semibold text-foreground">{project.counts.epics}</span>
                               </span>
                               <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                Stories <span className="ml-1 font-semibold text-foreground">{project.counts.stories}</span>
+                                {t("Stories", "Stories")} <span className="ml-1 font-semibold text-foreground">{project.counts.stories}</span>
                               </span>
                               <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                Events <span className="ml-1 font-semibold text-foreground">{project.counts.activityEvents}</span>
+                                {t("Events", "Händelser")} <span className="ml-1 font-semibold text-foreground">{project.counts.activityEvents}</span>
                               </span>
                             </div>
                           </div>
@@ -164,12 +189,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50/45 p-4">
-                      <p className="text-sm text-red-900">Selected projects will be deleted permanently from the database.</p>
+                      <p className="text-sm text-red-900">{t("Selected projects will be deleted permanently from the database.", "Valda projekt raderas permanent från databasen.")}</p>
                       <PendingFormButton
                         className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95"
                         icon={<Trash2 className="h-4 w-4" />}
-                        label="Hard delete selected projects"
-                        pendingLabel="Deleting selected projects..."
+                        label={t("Hard delete selected projects", "Hårdradera valda projekt")}
+                        pendingLabel={t("Deleting selected projects...", "Raderar valda projekt...")}
                         showPendingCursor
                       />
                     </div>
@@ -182,16 +207,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <CardHeader>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <CardTitle>Operational logs</CardTitle>
+                    <CardTitle>{t("Operational logs", "Operativa loggar")}</CardTitle>
                     <CardDescription>
-                      Lightweight troubleshooting for the active project. Slow or failed imports and approvals show up here with timing.
+                      {t(
+                        "Lightweight troubleshooting for the active project. Slow or failed imports and approvals show up here with timing.",
+                        "Lättviktig felsökning för det aktiva projektet. Långsamma eller misslyckade importer och godkännanden visas här med tidmätning."
+                      )}
                     </CardDescription>
                   </div>
                   <form action={clearOperationalLogsAction}>
                     <PendingFormButton
                       className="gap-2"
-                      label="Clear all logs"
-                      pendingLabel="Clearing logs..."
+                      label={t("Clear all logs", "Rensa alla loggar")}
+                      pendingLabel={t("Clearing logs...", "Rensar loggar...")}
                       showPendingCursor
                       variant="secondary"
                     />
@@ -204,7 +232,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 </div>
                 {operationalLogs.state !== "ready" || operationalLogs.items.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-background/70 p-5 text-sm text-muted-foreground">
-                    No operational logs are visible yet for the active project.
+                    {t("No operational logs are visible yet for the active project.", "Inga operativa loggar syns ännu för det aktiva projektet.")}
                   </div>
                 ) : (
                   <div className="space-y-3">

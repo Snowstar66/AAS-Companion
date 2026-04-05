@@ -1841,8 +1841,11 @@ export function ArtifactIntakeReviewWorkspace({
                   <div>
                     <p className="text-sm font-semibold text-foreground">{t(language, "Parsed sections", "Tolkade sektioner")}</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Expand to inspect how each section was interpreted and whether it already became a candidate or
-                      still needs a human decision.
+                      {t(
+                        language,
+                        "Expand to inspect how each section was interpreted and whether it already became a candidate or still needs a human decision.",
+                        "Öppna för att granska hur varje sektion tolkades och om den redan blev en kandidat eller fortfarande behöver ett mänskligt beslut."
+                      )}
                     </p>
                   </div>
                   <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
@@ -1862,13 +1865,21 @@ export function ArtifactIntakeReviewWorkspace({
                             badge: t(language, "Review leftover", "Granska restpost"),
                             tone: "border-amber-200 bg-amber-50 text-amber-800",
                             description:
-                              "This section could not be placed confidently into a mapped Outcome, Epic, or Story candidate. Review it in the Correction queue, then absorb it, dismiss it, or keep it pending."
+                              t(
+                                language,
+                                "This section could not be placed confidently into a mapped Outcome, Epic, or Story candidate. Review it in the Correction queue, then absorb it, dismiss it, or keep it pending.",
+                                "Den här sektionen kunde inte placeras säkert i en mappad Outcome-, Epic- eller Story-kandidat. Granska den i korrektionskön och absorbera, avfärda eller behåll den som väntande."
+                              )
                           }
                         : {
                             badge: t(language, "Supporting context", "Stödjande kontext"),
                             tone: "border-border/70 bg-muted/20 text-muted-foreground",
                             description:
-                              "Parsed for traceability, but not currently treated as a standalone candidate or queue item."
+                              t(
+                                language,
+                                "Parsed for traceability, but not currently treated as a standalone candidate or queue item.",
+                                "Tolkad för spårbarhet, men behandlas just nu inte som en fristående kandidat eller köpost."
+                              )
                           };
 
                     return (
@@ -2391,7 +2402,7 @@ export function ArtifactIntakeReviewWorkspace({
                   {selectedCandidate.promotedEntityId ? (
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
                       {t(language, "Imported into the project as governed", "Importerad till projektet som styrd")}{" "}
-                      {promotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType, session.importIntent)} with ID{" "}
+                      {promotedEntityLabel(selectedCandidate.type, selectedCandidate.promotedEntityType, session.importIntent)} {t(language, "with ID", "med ID")}{" "}
                       {selectedCandidate.promotedEntityId}. {t(language, "It now continues like native project work.", "Den fortsätter nu som nativt projektarbete.")}
                     </div>
                   ) : null}

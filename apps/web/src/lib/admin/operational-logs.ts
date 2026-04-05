@@ -2,6 +2,8 @@ import { unstable_rethrow } from "next/navigation";
 import { listOperationalActivityEventsService } from "@aas-companion/api";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 
+type AppLanguage = "en" | "sv";
+
 function readString(value: unknown) {
   return typeof value === "string" ? value : null;
 }
@@ -10,7 +12,11 @@ function readNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-export async function loadOperationalLogs(limit = 40) {
+function translate(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+export async function loadOperationalLogs(limit = 40, language: AppLanguage = "en") {
   try {
     const organization = await requireOrganizationContext();
     const result = await listOperationalActivityEventsService({
@@ -23,7 +29,7 @@ export async function loadOperationalLogs(limit = 40) {
         state: "unavailable" as const,
         organizationName: organization.organizationName,
         items: [],
-        message: result.errors[0]?.message ?? "Operational logs could not be loaded."
+        message: result.errors[0]?.message ?? translate(language, "Operational logs could not be loaded.", "Operativa loggar kunde inte laddas.")
       };
     }
 
@@ -38,26 +44,28 @@ export async function loadOperationalLogs(limit = 40) {
           entityId: event.entityId,
           createdAt: event.createdAt,
           actorName: event.actor?.fullName ?? event.actor?.email ?? null,
-          scope: readString(metadata.scope) ?? "operation",
-          action: readString(metadata.action) ?? "unnamed_action",
-          status: readString(metadata.status) ?? "info",
-          summary: readString(metadata.summary) ?? "Operational event",
+          scope: readString(metadata.scope) ?? translate(language, "operation", "operation"),
+          action: readString(metadata.action) ?? translate(language, "unnamed_action", "namnlös_åtgärd"),
+          status: readString(metadata.status) ?? translate(language, "info", "info"),
+          summary: readString(metadata.summary) ?? translate(language, "Operational event", "Operativ händelse"),
           detail: readString(metadata.detail) ?? null,
           durationMs: readNumber(metadata.durationMs),
           itemCount: readNumber(metadata.itemCount)
         };
       }),
-      message: "Recent operational activity for the active project."
+      message: translate(language, "Recent operational activity for the active project.", "Senaste operativa aktiviteten för det aktiva projektet.")
     };
   } catch (error) {
     unstable_rethrow(error);
 
     return {
       state: "unavailable" as const,
-      organizationName: "Unknown project",
+      organizationName: translate(language, "Unknown project", "Okänt projekt"),
       items: [],
       message:
-        error instanceof Error ? `Operational logs are unavailable right now: ${error.message}` : "Operational logs are unavailable right now."
+        error instanceof Error
+          ? translate(language, `Operational logs are unavailable right now: ${error.message}`, `Operativa loggar är inte tillgängliga just nu: ${error.message}`)
+          : translate(language, "Operational logs are unavailable right now.", "Operativa loggar är inte tillgängliga just nu.")
     };
   }
 }

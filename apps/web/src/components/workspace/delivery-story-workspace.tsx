@@ -47,7 +47,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
     blockers,
     pendingActionCount: 0,
     blockedActionCount: 0
-  });
+  }, language);
   const readinessFields = getReadinessFieldStatus(story);
   const missingReadinessFields = readinessFields.filter((field) => !field.complete);
   const primaryNextStepLabel = storyUx.nextActions[0]?.label ?? t("Continue Story", "Fortsatt storyarbete");
@@ -60,7 +60,12 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
       `This delivery story should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`,
       `Den har delivery storyn ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
     );
-  const statusTone = storyUx.statusLabel === "Approved" ? "approved" : storyUx.statusLabel === "Ready for review" ? "ready_for_review" : "needs_action";
+  const statusTone =
+    storyUx.tone === "success"
+      ? "approved"
+      : storyUx.readinessLabel === t("Design ready", "Designredo")
+        ? "ready_for_review"
+        : "needs_action";
   const completeItems = [
     valueSpineValidation.state === "ready" ? t("Value Spine validation is complete", "Value Spine-valideringen ar klar") : null,
     story.acceptanceCriteria.length > 0 ? t("Acceptance criteria are present", "Acceptanskriterier finns") : null,
@@ -409,6 +414,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
         >
           <div id="story-value-spine">
             <FramingValueSpineTree
+              language={language}
               emptyEpicMessage={t(
                 "This Story is already inside an active Framing branch, so no sibling Framing branches are shown here.",
                 "Den har storyn ligger redan i en aktiv Framing-gren, sa inga syskon-grenar visas har."

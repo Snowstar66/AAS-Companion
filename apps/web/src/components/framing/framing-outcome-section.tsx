@@ -1220,6 +1220,7 @@ export function FramingOutcomeSection({
                       ? "Läs den aktiva grenen som en sammanhållen framingbrief med Epics och Story Ideas i den hierarki som Design kommer att ärva."
                       : "Read the active branch as one framing brief with Epics and Story Ideas in the hierarchy Design will inherit."
                   }
+                  language={language}
                   embedded
                   emptyEpicMessage={
                     isArchived

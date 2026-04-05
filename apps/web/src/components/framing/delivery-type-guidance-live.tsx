@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, CircleHelp } from "lucide-react";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 
 type DeliveryTypeValue = "AD" | "AT" | "AM";
 
@@ -288,6 +289,8 @@ export function DeliveryTypeSelect(props: {
   id?: string | undefined;
   name: string;
 }) {
+  const { language } = useAppChromeLanguage();
+  const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const { setValue } = useDeliveryTypeGuidance();
 
   return (
@@ -302,7 +305,7 @@ export function DeliveryTypeSelect(props: {
         setValue(nextValue === "AD" || nextValue === "AT" || nextValue === "AM" ? nextValue : null);
       }}
     >
-      <option value="">Select delivery type</option>
+      <option value="">{t("Select delivery type", "Välj leveranstyp")}</option>
       <option value="AD">Application Development (AD)</option>
       <option value="AT">Application Transformation (AT)</option>
       <option value="AM">Application Management (AM)</option>
@@ -311,6 +314,8 @@ export function DeliveryTypeSelect(props: {
 }
 
 export function DeliveryTypeHelpCard() {
+  const { language } = useAppChromeLanguage();
+  const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const { value } = useDeliveryTypeGuidance();
   const selectedProfile = getDeliveryTypeProfile(value);
 
@@ -320,13 +325,16 @@ export function DeliveryTypeHelpCard() {
         <span className="inline-flex rounded-full border border-border/70 bg-background/90 p-1 text-muted-foreground">
           <CircleHelp className="h-3.5 w-3.5" />
         </span>
-        <span>What project type means in Framing</span>
+        <span>{t("What project type means in Framing", "Vad projekttyp betyder i Framing")}</span>
         <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
       </summary>
       <div className="space-y-4 border-t border-border/70 px-4 py-4">
         <p className="text-sm leading-6 text-muted-foreground">
-          The selected project type changes how Framing should approach baseline, outcomes, evidence, risk, and the shape of Epics.
-          {selectedProfile ? ` Current selection: ${selectedProfile.label}.` : ""}
+          {t(
+            "The selected project type changes how Framing should approach baseline, outcomes, evidence, risk, and the shape of Epics.",
+            "Den valda projekttypen ändrar hur Framing bör hantera baseline, outcomes, bevis, risk och formen på Epics."
+          )}
+          {selectedProfile ? ` ${t("Current selection", "Nuvarande val")}: ${selectedProfile.label}.` : ""}
         </p>
         <div className="grid gap-4 xl:grid-cols-3">
           {(Object.entries(deliveryTypeProfiles) as Array<[DeliveryTypeValue, DeliveryTypeProfile]>).map(([key, profile]) => (
@@ -344,22 +352,22 @@ export function DeliveryTypeHelpCard() {
                 </div>
                 <div className="space-y-2 text-sm leading-6 text-muted-foreground">
                   <p>
-                    <strong className="text-foreground">Baseline:</strong> {profile.baselinePosition}
+                    <strong className="text-foreground">{t("Baseline:", "Baseline:")}</strong> {profile.baselinePosition}
                   </p>
                   <p>
-                    <strong className="text-foreground">Outcome:</strong> {profile.outcomeType}
+                    <strong className="text-foreground">{t("Outcome:", "Outcome:")}</strong> {profile.outcomeType}
                   </p>
                   <p>
-                    <strong className="text-foreground">Evidence:</strong> {profile.evidenceNeed}
+                    <strong className="text-foreground">{t("Evidence:", "Bevis:")}</strong> {profile.evidenceNeed}
                   </p>
                   <p>
-                    <strong className="text-foreground">Epics:</strong> {profile.epicExamples}
+                    <strong className="text-foreground">{t("Epics:", "Epics:")}</strong> {profile.epicExamples}
                   </p>
                   <p>
-                    <strong className="text-foreground">Risk:</strong> {profile.riskType}
+                    <strong className="text-foreground">{t("Risk:", "Risk:")}</strong> {profile.riskType}
                   </p>
                   <p>
-                    <strong className="text-foreground">Governance:</strong> {profile.governanceNeeds}
+                    <strong className="text-foreground">{t("Governance:", "Governance:")}</strong> {profile.governanceNeeds}
                   </p>
                 </div>
               </div>

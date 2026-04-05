@@ -103,6 +103,7 @@ type FramingValueSpineTreeProps = {
   title?: string | undefined;
   description?: string | undefined;
   embedded?: boolean | undefined;
+  language?: "en" | "sv" | undefined;
 };
 
 type StoryIdeaFeedback = {
@@ -154,6 +155,10 @@ function joinMeta(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(" | ");
 }
 
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
 function getStorySurfaceClasses(story: TreeStory, needsAttention: boolean, isReviewing: boolean, isReady: boolean) {
   if (story.isCurrent) {
     return "border-primary/30 bg-primary/5";
@@ -187,7 +192,15 @@ function getFeedbackToneClasses(status: StoryIdeaDeliveryFeedbackStatus) {
   }
 }
 
-function DeliveryStoryChildRow({ story, emphasis = "linked" }: { story: TreeStory; emphasis?: "linked" | "additional" }) {
+function DeliveryStoryChildRow({
+  story,
+  emphasis = "linked",
+  language
+}: {
+  story: TreeStory;
+  emphasis?: "linked" | "additional";
+  language: "en" | "sv";
+}) {
   const storyUx = getStoryUxModel({
     id: story.id,
     key: story.key,
@@ -199,13 +212,13 @@ function DeliveryStoryChildRow({ story, emphasis = "linked" }: { story: TreeStor
     tollgateStatus: story.tollgateStatus ?? null,
     pendingActionCount: story.pendingActionCount ?? 0,
     blockedActionCount: story.blockedActionCount ?? 0
-  });
+  }, language);
   const missingInputs = getMissingStoryInputs(story);
   const deliveryDescription = story.expectedBehavior?.trim() || storyUx.statusDetail;
   const structureMeta = joinMeta([
-    `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`,
+    t(language, `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`, `Acceptanskriterier: ${story.acceptanceCriteria?.length ?? 0}`),
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
-    story.testDefinition ? "Test path defined" : "Test path missing"
+    story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")
   ]);
 
   return (
@@ -217,7 +230,7 @@ function DeliveryStoryChildRow({ story, emphasis = "linked" }: { story: TreeStor
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Delivery Story</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Delivery Story", "Delivery Story")}</p>
             <h6 className="text-sm font-semibold text-foreground">{story.key}</h6>
             <span
               className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
@@ -226,32 +239,32 @@ function DeliveryStoryChildRow({ story, emphasis = "linked" }: { story: TreeStor
                   : "border-amber-200 bg-white text-amber-900"
               }`}
             >
-              {emphasis === "linked" ? "Derived from this idea" : "Additional in this Epic"}
+              {emphasis === "linked" ? t(language, "Derived from this idea", "Härledd från den här idén") : t(language, "Additional in this Epic", "Ytterligare i detta epic")}
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Value intent:</span>{" "}
-            {story.valueIntent?.trim() || "This Delivery Story still needs a clearer value intent."}
+            <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
+            {story.valueIntent?.trim() || t(language, "This Delivery Story still needs a clearer value intent.", "Den här delivery storyn behöver fortfarande ett tydligare value intent.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Delivery description:</span> {deliveryDescription}
+            <span className="font-medium">{t(language, "Delivery description:", "Leveransbeskrivning:")}</span> {deliveryDescription}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Delivery status:</span> {storyUx.statusLabel}
+            <span className="font-medium">{t(language, "Delivery status:", "Leveransstatus:")}</span> {storyUx.statusLabel}
           </p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{storyUx.readinessDetail}</p>
           <p className="mt-2 text-xs text-muted-foreground">{structureMeta}</p>
           {missingInputs.length > 0 ? (
             <p className="mt-2 text-xs text-amber-900">
-              <span className="font-medium">Needs attention:</span> {missingInputs.join(", ")}
+              <span className="font-medium">{t(language, "Needs attention:", "Behöver uppmärksamhet:")}</span> {missingInputs.join(", ")}
             </p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              Open Delivery Story
+              {t(language, "Open Delivery Story", "Öppna Delivery Story")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -261,7 +274,7 @@ function DeliveryStoryChildRow({ story, emphasis = "linked" }: { story: TreeStor
   );
 }
 
-function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" | "framing" }) {
+function OutcomeRow({ outcome, mode, language }: { outcome: TreeOutcome; mode: "delivery" | "framing"; language: "en" | "sv" }) {
   return (
     <div className={`rounded-2xl border px-5 py-4 ${outcome.isCurrent ? "border-sky-200 bg-sky-50/55" : "border-border/70 bg-background"}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -271,7 +284,7 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
               <Target className="h-4 w-4" />
             </span>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {mode === "framing" ? "Framing brief" : "Framing"}
+              {mode === "framing" ? t(language, "Framing brief", "Framingbrief") : t(language, "Framing", "Framing")}
             </p>
             <h3 className="text-sm font-semibold text-foreground">{outcome.key}</h3>
           </div>
@@ -290,13 +303,13 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
             <Button asChild size="sm" variant="secondary">
               <Link href={outcome.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                Open lineage
+                {t(language, "Open lineage", "Öppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={outcome.href}>
-              Open Framing
+              {t(language, "Open Framing", "Öppna Framing")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -309,11 +322,13 @@ function OutcomeRow({ outcome, mode }: { outcome: TreeOutcome; mode: "delivery" 
 function DirectionSeedRow({
   seed,
   feedback,
-  derivedStories
+  derivedStories,
+  language
 }: {
   seed: TreeDirectionSeed;
   feedback: StoryIdeaFeedback;
   derivedStories: TreeStory[];
+  language: "en" | "sv";
 }) {
   const intentText = getStoryIdeaIntentText({
     shortDescription: seed.shortDescription,
@@ -339,10 +354,10 @@ function DirectionSeedRow({
     hasEpicLink: true
   });
   const nextImprovement = !intentText
-    ? "Add Value Intent so the story idea explains why it matters."
+    ? t(language, "Add Value Intent so the story idea explains why it matters.", "Lägg till Value Intent så att story idean förklarar varför den spelar roll.")
     : !seed.expectedBehavior?.trim()
-      ? "Add Expected Behavior so the story idea better guides design and AI refinement."
-      : "No immediate framing changes are required.";
+      ? t(language, "Add Expected Behavior so the story idea better guides design and AI refinement.", "Lägg till Expected Behavior så att story idean bättre vägleder design och AI-förfining.")
+      : t(language, "No immediate framing changes are required.", "Inga omedelbara framingändringar krävs.");
 
   return (
     <div
@@ -357,47 +372,47 @@ function DirectionSeedRow({
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-sky-200 bg-white text-sky-700">
               <Lightbulb className="h-3.5 w-3.5" />
             </span>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story idea</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Story idea", "Story idea")}</p>
             <h5 className="text-sm font-semibold text-foreground">{seed.key}</h5>
             {isReady ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Ready for review
+                {t(language, "Ready for review", "Redo för granskning")}
               </span>
             ) : isStarted ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
                 <CircleAlert className="h-3.5 w-3.5" />
-                Needs action
+                {t(language, "Needs action", "Behöver åtgärd")}
               </span>
             ) : null}
             {seed.uxSketchDataUrl?.trim() ? (
               <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-medium text-sky-900">
-                UX Sketch Attached
+                {t(language, "UX Sketch Attached", "UX-skiss bifogad")}
               </span>
             ) : null}
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{seed.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {intentText || "Add Value Intent so this story idea explains what user or business value it should create."}
+            {intentText || t(language, "Add Value Intent so this story idea explains what user or business value it should create.", "Lägg till Value Intent så att story idean förklarar vilket användar- eller affärsvärde den ska skapa.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Framing status:</span> {framingStatus}
+            <span className="font-medium">{t(language, "Framing status:", "Framingstatus:")}</span> {framingStatus}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Expected behavior:</span> {seed.expectedBehavior?.trim() || "Optional and not captured yet."}
+            <span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span> {seed.expectedBehavior?.trim() || t(language, "Optional and not captured yet.", "Valfritt och ännu inte fångat.")}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className={`inline-flex rounded-full border px-2.5 py-1 font-medium ${getFeedbackToneClasses(feedback.status)}`}>
-              Delivery feedback: {getStoryIdeaDeliveryFeedbackLabel(feedback.status)}
+              {t(language, "Delivery feedback:", "Leveransfeedback:")} {getStoryIdeaDeliveryFeedbackLabel(feedback.status)}
             </span>
             <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
-              Derived Delivery Stories: {feedback.deliveryStoryCount}
+              {t(language, "Derived Delivery Stories:", "Härledda Delivery Stories:")} {feedback.deliveryStoryCount}
             </span>
             <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
-              Completed: {feedback.completedDeliveryStoryCount}
+              {t(language, "Completed:", "Klara:")} {feedback.completedDeliveryStoryCount}
             </span>
             <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
-              Additional: {feedback.additionalStoryCount}
+              {t(language, "Additional:", "Ytterligare:")} {feedback.additionalStoryCount}
             </span>
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -408,18 +423,18 @@ function DirectionSeedRow({
             })}
           </p>
           <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
-            <span className="font-medium">Next best action:</span> {nextImprovement}
+            <span className="font-medium">{t(language, "Next best action:", "Bästa nästa steg:")}</span> {nextImprovement}
           </p>
           {ideaBlockers.length > 0 ? (
             <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">Blockers:</span> {ideaBlockers.join(" ")}
+              <span className="font-medium">{t(language, "Blockers:", "Blockerare:")}</span> {ideaBlockers.join(" ")}
             </p>
           ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
             {joinMeta([
               getOriginLabel(seed.originType),
               formatLabel(seed.lifecycleState),
-              seed.sourceStoryId ? `Legacy source ${seed.sourceStoryId}` : null,
+              seed.sourceStoryId ? t(language, `Legacy source ${seed.sourceStoryId}`, `Legacy-källa ${seed.sourceStoryId}`) : null,
               formatLabel(seed.importedReadinessState)
             ])}
           </p>
@@ -429,13 +444,13 @@ function DirectionSeedRow({
             <Button asChild size="sm" variant="secondary">
               <Link href={seed.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                Open lineage
+                {t(language, "Open lineage", "Öppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={seed.href}>
-              Open Story idea
+              {t(language, "Open Story idea", "Öppna Story idea")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -445,31 +460,31 @@ function DirectionSeedRow({
         <div className="mt-4 space-y-3 rounded-2xl border border-emerald-200/70 bg-white/80 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Delivery Stories
+              {t(language, "Delivery Stories", "Delivery Stories")}
             </p>
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
               {derivedStories.length}
             </span>
           </div>
           <p className="text-sm leading-6 text-muted-foreground">
-            These Delivery Stories realize this Story Idea in design and build.
+            {t(language, "These Delivery Stories realize this Story Idea in design and build.", "De här Delivery Stories realiserar den här Story Idean i design och build.")}
           </p>
           <div className="space-y-3">
             {derivedStories.map((story) => (
-              <DeliveryStoryChildRow key={story.id} story={story} />
+              <DeliveryStoryChildRow key={story.id} language={language} story={story} />
             ))}
           </div>
         </div>
       ) : (
         <div className="mt-4 rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
-          No Delivery Stories have been created from this Story Idea yet.
+          {t(language, "No Delivery Stories have been created from this Story Idea yet.", "Inga Delivery Stories har skapats från den här Story Idean ännu.")}
         </div>
       )}
     </div>
   );
 }
 
-function StoryIdeaRow({ story }: { story: TreeStory }) {
+function StoryIdeaRow({ story, language }: { story: TreeStory; language: "en" | "sv" }) {
   const isReady = isStoryIdeaReadyForFraming({
     valueIntent: story.valueIntent,
     expectedBehavior: story.expectedBehavior
@@ -490,10 +505,10 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
     hasEpicLink: true
   });
   const nextImprovement = !story.valueIntent?.trim()
-    ? "Add Value Intent so the story idea explains why it matters."
+    ? t(language, "Add Value Intent so the story idea explains why it matters.", "Lägg till Value Intent så att story idean förklarar varför den spelar roll.")
     : !story.expectedBehavior?.trim()
-      ? "Add Expected Behavior so the story idea better guides design and AI refinement."
-      : "No immediate framing changes are required.";
+      ? t(language, "Add Expected Behavior so the story idea better guides design and AI refinement.", "Lägg till Expected Behavior så att story idean bättre vägleder design och AI-förfining.")
+      : t(language, "No immediate framing changes are required.", "Inga omedelbara framingändringar krävs.");
 
   return (
     <div
@@ -505,43 +520,43 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story idea</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Story idea", "Story idea")}</p>
             <h5 className="text-sm font-semibold text-foreground">{story.key}</h5>
             {isReady ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Ready for review
+                {t(language, "Ready for review", "Redo för granskning")}
               </span>
             ) : isStarted ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
                 <CircleAlert className="h-3.5 w-3.5" />
-                Needs action
+                {t(language, "Needs action", "Behöver åtgärd")}
               </span>
             ) : null}
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {story.valueIntent?.trim() || "Add Value Intent so this story idea explains what user or business value it should create."}
+            {story.valueIntent?.trim() || t(language, "Add Value Intent so this story idea explains what user or business value it should create.", "Lägg till Value Intent så att story idean förklarar vilket användar- eller affärsvärde den ska skapa.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Framing status:</span> {framingStatus}
+            <span className="font-medium">{t(language, "Framing status:", "Framingstatus:")}</span> {framingStatus}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Expected behavior:</span> {story.expectedBehavior?.trim() || "Not described yet."}
+            <span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span> {story.expectedBehavior?.trim() || t(language, "Not described yet.", "Inte beskrivet ännu.")}
           </p>
           <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
-            <span className="font-medium">Next best action:</span> {nextImprovement}
+            <span className="font-medium">{t(language, "Next best action:", "Bästa nästa steg:")}</span> {nextImprovement}
           </p>
           {ideaBlockers.length > 0 ? (
             <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">Blockers:</span> {ideaBlockers.join(" ")}
+              <span className="font-medium">{t(language, "Blockers:", "Blockerare:")}</span> {ideaBlockers.join(" ")}
             </p>
           ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
             {joinMeta([
               getOriginLabel(story.originType),
               formatLabel(story.lifecycleState),
-              "Legacy story source",
+              t(language, "Legacy story source", "Legacy story-källa"),
               formatLabel(story.importedReadinessState)
             ])}
           </p>
@@ -551,13 +566,13 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
             <Button asChild size="sm" variant="secondary">
               <Link href={story.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                Open lineage
+                {t(language, "Open lineage", "Öppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              Open Story idea
+              {t(language, "Open Story idea", "Öppna Story idea")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -567,7 +582,7 @@ function StoryIdeaRow({ story }: { story: TreeStory }) {
   );
 }
 
-function StoryRow({ story }: { story: TreeStory }) {
+function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv" }) {
   const storyUx = getStoryUxModel({
     id: story.id,
     key: story.key,
@@ -579,12 +594,12 @@ function StoryRow({ story }: { story: TreeStory }) {
     tollgateStatus: story.tollgateStatus ?? null,
     pendingActionCount: story.pendingActionCount ?? 0,
     blockedActionCount: story.blockedActionCount ?? 0
-  });
+  }, language);
   const missingInputs = getMissingStoryInputs(story);
   const nextStep = storyUx.nextActions[0]?.label ?? storyUx.readinessLabel;
   const nextStepDetail = storyUx.nextActions[0]?.description ?? storyUx.readinessDetail;
   const needsAttention = storyUx.tone === "warning" || missingInputs.length > 0 || storyUx.blockers.length > 0;
-  const isReviewing = storyUx.statusLabel === "Ready for review";
+  const isReviewing = storyUx.readinessLabel === t(language, "Design ready", "Designredo");
   const storySummary = story.valueIntent?.trim() || storyUx.statusDetail;
   const storyMeta = joinMeta([
     getOriginLabel(story.originType),
@@ -592,9 +607,9 @@ function StoryRow({ story }: { story: TreeStory }) {
     formatLabel(story.importedReadinessState)
   ]);
   const structureMeta = joinMeta([
-    `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`,
+    t(language, `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`, `Acceptanskriterier: ${story.acceptanceCriteria?.length ?? 0}`),
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
-    story.testDefinition ? "Test path defined" : "Test path missing"
+    story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")
   ]);
 
   const showReviewingTone = isReviewing;
@@ -615,21 +630,21 @@ function StoryRow({ story }: { story: TreeStory }) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Story", "Story")}</p>
             <h5 className="text-sm font-semibold text-foreground">{story.key}</h5>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{storySummary}</p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">Current status:</span> {storyUx.statusLabel}
+            <span className="font-medium">{t(language, "Current status:", "Aktuell status:")}</span> {storyUx.statusLabel}
           </p>
           {needsAttention ? (
             <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">Blockers:</span> {missingInputs.join(", ") || storyUx.blockers[0]}
+              <span className="font-medium">{t(language, "Blockers:", "Blockerare:")}</span> {missingInputs.join(", ") || storyUx.blockers[0]}
             </p>
           ) : null}
           <p className="mt-1 text-sm text-foreground">
-            <span className="font-medium">Next best action:</span> {nextStep}
+            <span className="font-medium">{t(language, "Next best action:", "Bästa nästa steg:")}</span> {nextStep}
           </p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
           {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}
@@ -640,13 +655,13 @@ function StoryRow({ story }: { story: TreeStory }) {
             <Button asChild size="sm" variant="secondary">
               <Link href={story.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                Open lineage
+                {t(language, "Open lineage", "Öppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              Open Story
+              {t(language, "Open Story", "Öppna Story")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -656,7 +671,7 @@ function StoryRow({ story }: { story: TreeStory }) {
         <span className={`inline-flex items-center gap-2 ${story.testDefinition ? "text-emerald-800" : "text-amber-800"}`}>
           <CheckCircle2 className="h-3.5 w-3.5" />
           <TestTube2 className="h-3.5 w-3.5" />
-          {story.testDefinition ? "Test path defined" : "Test path missing"}
+          {story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")}
         </span>
         {missingInputs.length > 0 ? (
           <span className="inline-flex items-center gap-2 text-amber-800">
@@ -672,11 +687,13 @@ function StoryRow({ story }: { story: TreeStory }) {
 function EpicRow({
   epic,
   emptyStoryMessage,
-  mode
+  mode,
+  language
 }: {
   epic: TreeEpic;
   emptyStoryMessage: string;
   mode: "delivery" | "framing";
+  language: "en" | "sv";
 }) {
   const directionSeeds = epic.directionSeeds ?? [];
   const stories = epic.stories ?? [];
@@ -721,24 +738,24 @@ function EpicRow({
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600">
                 <GitBranch className="h-4 w-4" />
               </span>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Epic", "Epic")}</p>
               <h4 className="text-sm font-semibold text-foreground">{epic.key}</h4>
             </div>
             <p className="mt-2 text-sm font-semibold text-foreground">{epic.title}</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{epic.scopeBoundary ?? epic.purpose ?? "Scope boundary is still missing."}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{epic.scopeBoundary ?? epic.purpose ?? t(language, "Scope boundary is still missing.", "Scope-gräns saknas fortfarande.")}</p>
             <p className="mt-2 text-xs text-muted-foreground">
               {joinMeta([
                 getOriginLabel(epic.originType),
                 formatLabel(epic.lifecycleState),
                 mode === "framing"
-                  ? `${itemCount} story idea${itemCount === 1 ? "" : "s"}`
-                  : `${itemCount} stor${itemCount === 1 ? "y" : "ies"} in branch`,
+                  ? t(language, `${itemCount} story idea${itemCount === 1 ? "" : "s"}`, `${itemCount} story idea`)
+                  : t(language, `${itemCount} stor${itemCount === 1 ? "y" : "ies"} in branch`, `${itemCount} stories i grenen`),
                 mode === "framing"
                   ? framingNeedsAttention + framingStoryNeedsAttention > 0
-                    ? `${framingNeedsAttention + framingStoryNeedsAttention} need clearer descriptions`
+                    ? t(language, `${framingNeedsAttention + framingStoryNeedsAttention} need clearer descriptions`, `${framingNeedsAttention + framingStoryNeedsAttention} behöver tydligare beskrivningar`)
                     : null
                   : deliveryNeedsAttention > 0
-                    ? `${deliveryNeedsAttention} need attention`
+                    ? t(language, `${deliveryNeedsAttention} need attention`, `${deliveryNeedsAttention} behöver uppmärksamhet`)
                     : null,
                 formatLabel(epic.importedReadinessState)
               ])}
@@ -749,13 +766,13 @@ function EpicRow({
               <Button asChild size="sm" variant="secondary">
                 <Link href={epic.lineageHref}>
                   <FileSearch className="mr-2 h-3.5 w-3.5" />
-                  Open lineage
+                  {t(language, "Open lineage", "Öppna lineage")}
                 </Link>
               </Button>
             ) : null}
             <Button asChild size="sm" variant="secondary">
               <Link href={epic.href}>
-                Open Epic
+                {t(language, "Open Epic", "Öppna Epic")}
                 <ArrowRight className="ml-2 h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -775,17 +792,17 @@ function EpicRow({
                 <div className="rounded-2xl border border-border/70 bg-background/90">
                   <div className="border-b border-border/70 px-5 py-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story Ideas</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Story Ideas", "Story Ideas")}</p>
                       <span className="rounded-full border border-border/70 bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
                         {storyIdeaCount}
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.
+                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.", "Story Ideas definierar intent, värde och expected behavior. De vägleder design men är inte leveransspecifikationer.")}
                     </p>
                   </div>
                   {storyIdeaCount === 0 ? (
-                    <div className="px-5 py-4 text-sm text-muted-foreground">No Story Ideas are currently visible in this Epic.</div>
+                    <div className="px-5 py-4 text-sm text-muted-foreground">{t(language, "No Story Ideas are currently visible in this Epic.", "Inga Story Ideas syns just nu i det här epicet.")}</div>
                   ) : (
                     <div className="divide-y divide-border/70">
                       {directionSeeds.map((seed) => (
@@ -798,10 +815,11 @@ function EpicRow({
                           })}
                           key={`seed-${seed.id}`}
                           seed={seed}
+                          language={language}
                         />
                       ))}
                       {framingStories.map((story) => (
-                        <StoryIdeaRow key={`legacy-story-${story.id}`} story={story} />
+                        <StoryIdeaRow key={`legacy-story-${story.id}`} language={language} story={story} />
                       ))}
                     </div>
                   )}
@@ -811,18 +829,18 @@ function EpicRow({
                   <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Additional Delivery Stories
+                        {t(language, "Additional Delivery Stories", "Ytterligare Delivery Stories")}
                       </p>
                       <span className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-medium text-amber-900">
                         {additionalDeliveryStories.length}
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.
+                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.", "De här Delivery Stories hör till samma epic, men lades till under design eller leverans i stället för att skapas direkt från en Story Idea.")}
                     </p>
                     <div className="mt-4 space-y-3">
                       {additionalDeliveryStories.map((story) => (
-                        <DeliveryStoryChildRow emphasis="additional" key={`additional-${story.id}`} story={story} />
+                        <DeliveryStoryChildRow emphasis="additional" key={`additional-${story.id}`} language={language} story={story} />
                       ))}
                     </div>
                   </div>
@@ -831,7 +849,7 @@ function EpicRow({
             ) : (
               <div className="divide-y divide-border/70 rounded-2xl border border-border/70 bg-background/90">
                 {stories.map((story) => (
-                  <StoryRow key={story.id} story={story} />
+                  <StoryRow key={story.id} language={language} story={story} />
                 ))}
               </div>
             )}
@@ -850,7 +868,8 @@ export function FramingValueSpineTree({
   mode = "delivery",
   title = "Framing-scoped Value Spine",
   description,
-  embedded = false
+  embedded = false,
+  language = "en"
 }: FramingValueSpineTreeProps) {
   const treeContent = (
     <>
@@ -862,17 +881,17 @@ export function FramingValueSpineTree({
       ) : null}
       <CardContent className={embedded ? "space-y-4 p-0" : "space-y-4"}>
         {embedded && description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-        <OutcomeRow mode={mode} outcome={outcome} />
+        <OutcomeRow language={language} mode={mode} outcome={outcome} />
 
         {epics.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">No Epics are attached to this Framing yet.</p>
+            <p className="font-medium text-foreground">{t(language, "No Epics are attached to this Framing yet.", "Inga Epics är kopplade till den här Framingen ännu.")}</p>
             <p className="mt-2">{emptyEpicMessage}</p>
           </div>
         ) : (
           <div className="space-y-3">
             {epics.map((epic) => (
-              <EpicRow emptyStoryMessage={emptyStoryMessage} epic={epic} key={epic.id} mode={mode} />
+              <EpicRow emptyStoryMessage={emptyStoryMessage} epic={epic} key={epic.id} language={language} mode={mode} />
             ))}
           </div>
         )}
