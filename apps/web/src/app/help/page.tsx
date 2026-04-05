@@ -105,6 +105,129 @@ const platformNotes = [
   "The current product defaults are Next.js App Router, React, TypeScript, Tailwind, shadcn/ui, Supabase, Prisma, PostHog and OpenTelemetry."
 ] as const;
 
+const deliveryTypeMatrix = [
+  {
+    dimension: "Primär fråga i Framing",
+    ad: "Vad ska vi bygga för att skapa nytt värde?",
+    at: "Vad i nuvarande system hindrar värde?",
+    am: "Hur optimerar vi befintlig leverans?"
+  },
+  {
+    dimension: "Typ av förändring",
+    ad: "Ny funktionalitet / ny kapacitet",
+    at: "Strukturell förändring av befintligt",
+    am: "Kontinuerlig förbättring"
+  },
+  {
+    dimension: "Utgångsläge (baseline)",
+    ad: "Ofta svag eller saknas",
+    at: "Obligatorisk och datadriven",
+    am: "Objektspecifik och operativ"
+  },
+  {
+    dimension: "Baseline-exempel",
+    ad: "Nuvarande manuellt arbetssätt",
+    at: "Lead time, tech debt, kostnad, incidenter",
+    am: "SLA, incidentdata, kostnad per ärende"
+  },
+  {
+    dimension: "Outcome-typ",
+    ad: "Affärsvärde / användarvärde",
+    at: "Strukturell effekt (hastighet, kostnad, risk)",
+    am: "Stabilitet, effektivitet, kostnad"
+  },
+  {
+    dimension: "Outcome-exempel",
+    ad: "\"Öka konvertering med 15%\"",
+    at: "\"Halvera lead time\"",
+    am: "\"Minska MTTR från 6h → 2h\""
+  },
+  {
+    dimension: "Beviskrav i Framing",
+    ad: "Hypotes + rimlighet",
+    at: "Mätbar problemverifiering krävs",
+    am: "Dataanalys av driftmönster"
+  },
+  {
+    dimension: "Problemdefinition",
+    ad: "Hypotesbaserad",
+    at: "Faktabaserad och kvantifierad",
+    am: "Datadriven och repetitiv"
+  },
+  {
+    dimension: "Epics karaktär",
+    ad: "Funktionella capabilities",
+    at: "Strukturella förändringar",
+    am: "Förbättrings- och automationsområden"
+  },
+  {
+    dimension: "Exempel Epics",
+    ad: "UI, API, onboarding",
+    at: "Modularisering, CI/CD, dependency cleanup",
+    am: "Incident automation, triage, monitoring"
+  },
+  {
+    dimension: "Risktyp",
+    ad: "Fel funktion (lågt nyttjande)",
+    at: "Drift, regression, systempåverkan",
+    am: "Felaktig optimering/automation"
+  },
+  {
+    dimension: "Risknivå (typiskt)",
+    ad: "Medel",
+    at: "Högst",
+    am: "Låg–medel"
+  },
+  {
+    dimension: "Scope-stabilitet",
+    ad: "Kan vara explorativ",
+    at: "Måste stabiliseras tidigt",
+    am: "Kontinuerlig och iterativ"
+  },
+  {
+    dimension: "AI Acceleration Level (typiskt)",
+    ad: "Level 1–2 (3 möjligt)",
+    at: "Level 1–2 (3 strikt kontrollerat)",
+    am: "Level 1–3 (hög potential)"
+  },
+  {
+    dimension: "AI-roll i Framing",
+    ad: "Stöd för idéer och struktur",
+    at: "Analys av kod, beroenden, tech debt",
+    am: "Mönsteridentifiering, incidentanalys"
+  },
+  {
+    dimension: "Governance-krav i Framing",
+    ad: "Outcome + Value Owner",
+    at: "Outcome + baseline + risk + AI-nivå strikt",
+    am: "Outcome + operativ baseline"
+  },
+  {
+    dimension: "Vanligt fel",
+    ad: "Bygga features utan Outcome",
+    at: "Modernisera utan effektmål",
+    am: "Köra drift utan förbättringsmål"
+  },
+  {
+    dimension: "Vad AAS skyddar mot",
+    ad: "Output utan värde",
+    at: "Teknikdriven transformation utan effekt",
+    am: "Reaktiv support utan utveckling"
+  },
+  {
+    dimension: "Framing-tyngd",
+    ad: "Medel",
+    at: "Högst (kritisk fas)",
+    am: "Medel"
+  },
+  {
+    dimension: "Konsekvens av dålig framing",
+    ad: "Fel produkt",
+    at: "Misslyckad transformation (dyr)",
+    am: "Ineffektiv drift"
+  }
+] as const;
+
 export default async function HelpPage({ searchParams }: HelpPageProps) {
   const query = searchParams ? await searchParams : {};
   const returnTo = normalizeReturnTo(getParamValue(query.returnTo));
@@ -308,6 +431,61 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            accentClassName="border-border/70 bg-background/95"
+            description="Use this matrix when you choose Delivery type in Framing. It explains what should become heavier, stricter or more data-driven depending on project posture."
+            title="Choosing AD, AT or AM in Framing"
+          >
+            <div className="space-y-5">
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">AD</p>
+                  <p className="mt-2 font-semibold text-sky-950">Application Development</p>
+                  <p className="mt-2 text-sm leading-6 text-sky-950">
+                    Best when the main challenge is to create new value or a new capability, and the baseline is still lighter or partly hypothesis-led.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">AT</p>
+                  <p className="mt-2 font-semibold text-amber-950">Application Transformation</p>
+                  <p className="mt-2 text-sm leading-6 text-amber-950">
+                    Best when the main challenge is structural change in an existing landscape and Framing must prove the current problem with stronger evidence.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">AM</p>
+                  <p className="mt-2 font-semibold text-emerald-950">Application Management</p>
+                  <p className="mt-2 text-sm leading-6 text-emerald-950">
+                    Best when the main challenge is to improve an active service with operational data, recurring patterns and continuous delivery reality.
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-3xl border border-border/70 bg-background">
+                <table className="min-w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border/70 bg-muted/20 text-left">
+                      <th className="px-4 py-3 font-semibold text-foreground">Dimension</th>
+                      <th className="px-4 py-3 font-semibold text-sky-900">AD – Application Development</th>
+                      <th className="px-4 py-3 font-semibold text-amber-900">AT – Application Transformation</th>
+                      <th className="px-4 py-3 font-semibold text-emerald-900">AM – Application Management</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deliveryTypeMatrix.map((row) => (
+                      <tr className="border-b border-border/50 align-top" key={row.dimension}>
+                        <th className="bg-muted/10 px-4 py-3 text-left font-semibold text-foreground">{row.dimension}</th>
+                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.ad}</td>
+                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.at}</td>
+                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.am}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </CollapsibleSection>

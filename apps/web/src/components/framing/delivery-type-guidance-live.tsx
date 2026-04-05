@@ -126,40 +126,40 @@ const deliveryTypeProfiles: Record<DeliveryTypeValue, DeliveryTypeProfile> = {
 
 const defaultGuidance: DeliveryTypeGuidance = {
   businessCaseDescription:
-    "Describe the case so the value question, current reality, and intended change are clear before design starts.",
+    "Frame the case at decision level: why it matters, what should improve, and what kind of change this is.",
   timeframeDescription:
-    "Describe the business window for this case, for example a pilot season, quarter, budget window, or launch horizon. This is business timing, not sprint planning.",
+    "Use this field to explain why the timing matters now. Keep it at business window level, not sprint planning.",
   valueOwnerDescription:
-    "Choose the named person on the customer side who owns the business value, baseline, and Tollgate 1 decision.",
+    "The value owner should be able to say yes, this outcome matters, this baseline is credible, and this case is worth approving.",
   problemDescription:
-    "State the problem clearly enough that the team understands why this case exists before discussing solutions.",
+    "Describe the current pain, not the target state. If the problem disappeared tomorrow, what would be better?",
   outcomeDescription:
-    "Write the effect that should become true if this Framing succeeds. Keep it outcome-oriented, not solution-oriented.",
+    "Write one effect worth achieving. A strong outcome tells you what should be measurably different after the work lands.",
   solutionContextDescription:
-    "Capture only the context and constraints Design should inherit. Carry forward business realities and boundaries without slipping into detailed solution design.",
+    "Pass forward only the context Design needs in order to make good choices later.",
   solutionContextFieldDescription:
-    "Include the surrounding business and landscape context that should shape Design, such as who is affected, what already exists, and major dependencies.",
+    "Start from usage, landscape and dependencies. Do not start designing the solution here.",
   constraintsDescription:
-    "Capture what Design must respect, not how to implement it. Good constraints are operational, compliance, rollout, or continuity boundaries.",
+    "Write only the non-negotiables. If Design ignored this, what would break, violate policy, or create delivery risk?",
   uxDescription:
-    "Put design-driving UX constraints here, not wireframes or page-by-page solutions. This should guide Design without freezing the answer too early.",
+    "Use UX guidance to preserve intent and continuity, not to lock screens or flows too early.",
   nfrDescription:
-    "Use this for cross-cutting quality requirements such as performance, security, availability, compliance, accessibility, or privacy.",
+    "Capture quality demands that should shape design and risk posture across the whole case.",
   additionalRequirementsDescription:
-    "Use this for important imported material that should survive into Design, but does not belong as Outcome, Epic, or Story Idea content.",
+    "Use this for important carry-forward material that matters, but should not pretend to be an Outcome, Epic or Story Idea.",
   dataSensitivityDescription:
-    "List the data types involved and why they matter for risk, compliance, supervision, and delivery control.",
+    "Call out the data that changes governance expectations. If sensitivity goes up, control usually must go up too.",
   baselineCardDescription: "These fields help ground the Framing before approval is recorded.",
   baselineSourceDescription:
-    "Record where the baseline comes from so the team can trace the claim back to evidence.",
+    "Make the starting point defendable. The stronger the case, the easier later approvals and follow-up become.",
   aiRiskDescription:
-    "Define AI usage intent, classify risk, and record the framing-level AI decision before Tollgate 1.",
+    "Use this area to make the AI posture explicit instead of leaving it implicit in delivery later.",
   structureDescription:
-    "Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational.",
+    "Use Epics and Story Ideas to shape direction and scope, not to create a delivery backlog too early.",
   quickEpicDescription:
-    "Create the next scope boundary directly from Framing before you break it down into Story Ideas.",
+    "An Epic should name a meaningful scope boundary, not a to-do bucket.",
   quickStoryIdeaDescription:
-    "Create a new Story Idea directly from Framing and assign its Epic now, without opening the Epic first."
+    "A Story Idea should express intent and expected effect. Save delivery detail for later."
 };
 
 function getDeliveryTypeProfile(value: DeliveryTypeValue | null | undefined) {
@@ -173,7 +173,7 @@ function getDeliveryTypeHelper(value: DeliveryTypeValue | null | undefined) {
     return "Choose the delivery posture that best describes this case so Framing can guide the business case, baseline, risks, and hierarchy the right way from the start.";
   }
 
-  return `${profile.label}: ${profile.primaryQuestion} ${profile.governanceNeeds}`;
+  return `${profile.label}: ${profile.primaryQuestion} Expect Framing to emphasize ${profile.governanceNeeds.toLowerCase()}`;
 }
 
 function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | undefined): DeliveryTypeGuidance {
@@ -187,28 +187,28 @@ function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | und
     businessCaseDescription: `${profile.primaryQuestion} ${profile.changeType} ${profile.outcomeType}`,
     timeframeDescription:
       value === "AM"
-        ? "Describe the operating cadence or improvement window this work belongs to, such as service month, stabilization period, or contract horizon."
+        ? "Explain the service or improvement window this belongs to, for example an operational period, support cycle, or cost-reduction horizon."
         : value === "AT"
-          ? "Describe the transformation or migration window this case must fit into, such as modernization phase, dependency cutover, or stabilization horizon."
-          : "Describe the business window for the new value, such as pilot, launch horizon, funding window, or adoption milestone.",
-    valueOwnerDescription: `${profile.governanceNeeds} This person should be able to stand behind the effect, the baseline, and the Tollgate 1 decision.`,
+          ? "Explain the transformation window this must fit into, such as migration phase, dependency cutover, or stabilization horizon."
+          : "Explain the value window for the new capability, such as pilot, launch horizon, funding window, or adoption milestone.",
+    valueOwnerDescription: `${profile.governanceNeeds} This person should be able to defend the case if challenged by both business and delivery.`,
     problemDescription: `${profile.problemDefinition} ${profile.commonFailure}`,
-    outcomeDescription: `${profile.outcomeType} Example: ${profile.outcomeExample}`,
-    solutionContextDescription: `Let the context and constraints reflect ${profile.label.toLowerCase()} work. ${profile.aasProtection}`,
-    solutionContextFieldDescription: `${profile.changeType} Typical examples: ${profile.epicExamples}`,
-    constraintsDescription: `${profile.riskType} ${profile.aasProtection}`,
+    outcomeDescription: `${profile.outcomeType} A good statement makes the effect visible without naming the build. Example: ${profile.outcomeExample}`,
+    solutionContextDescription: `Let the surrounding context reflect ${profile.label.toLowerCase()} work. ${profile.aasProtection}`,
+    solutionContextFieldDescription: `${profile.changeType} Useful context examples: ${profile.epicExamples}`,
+    constraintsDescription: `${profile.riskType} If a boundary changes governance, continuity, or approval confidence, capture it here.`,
     uxDescription:
       value === "AD"
-        ? "Use UX principles to steer the new experience without locking the solution too early."
+        ? "Use UX principles to steer the new experience toward adoption and clarity without prescribing screens."
         : value === "AT"
-          ? "Use UX principles to protect continuity where users move between old and transformed experiences."
-          : "Use UX principles to protect continuity, clarity, and low-friction operational support flows.",
-    nfrDescription: `${profile.riskLevel} ${profile.evidenceNeed}`,
+          ? "Use UX principles to protect continuity when users move between current and transformed experiences."
+          : "Use UX principles to protect continuity, clarity, and low-friction service behavior in daily operations.",
+    nfrDescription: `${profile.riskLevel} These requirements should raise design rigor, not become an afterthought. ${profile.evidenceNeed}`,
     additionalRequirementsDescription:
       value === "AT"
-        ? "Use this for migration dependencies, platform assumptions, or transformation conditions that Design must inherit."
+        ? "Use this for migration dependencies, platform assumptions, or transformation conditions Design must inherit."
         : value === "AM"
-          ? "Use this for operational assumptions, support boundaries, or service rules that must not be lost."
+          ? "Use this for operational assumptions, support boundaries, or service rules that must not disappear between Framing and Design."
           : "Use this for business rules, assumptions, or external dependencies that still matter in Design.",
     dataSensitivityDescription:
       value === "AT"
@@ -216,17 +216,17 @@ function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | und
         : value === "AM"
           ? "Call out operational data, support data, and incident-related data that shape the service model."
           : "Call out the data involved in the new value flow and the sensitivity implications early.",
-    baselineCardDescription: `${profile.baselinePosition} ${profile.baselineExamples}`,
-    baselineSourceDescription: `${profile.evidenceNeed} Typical examples: ${profile.baselineExamples}`,
-    aiRiskDescription: `${profile.aiRole} ${profile.riskType}`,
-    structureDescription: `${profile.epicCharacter} Examples: ${profile.epicExamples}`,
+    baselineCardDescription: `${profile.baselinePosition} In this project type, baseline quality strongly affects how convincing the Framing is.`,
+    baselineSourceDescription: `${profile.evidenceNeed} Typical evidence: ${profile.baselineExamples}`,
+    aiRiskDescription: `${profile.aiRole} ${profile.riskType} Use this section to make that explicit before Tollgate 1.`,
+    structureDescription: `${profile.epicCharacter} Use structure to express direction. Examples: ${profile.epicExamples}`,
     quickEpicDescription: `${profile.epicCharacter} Start by naming one scope boundary that moves the case toward the intended outcome.`,
     quickStoryIdeaDescription:
       value === "AT"
         ? "Create a directional Story Idea that clarifies one transformation effect or one risk-reducing move under the chosen Epic."
         : value === "AM"
           ? "Create a directional Story Idea that improves service behavior, support flow, or operational automation under the chosen Epic."
-          : "Create a directional Story Idea that expresses one user-value move under the chosen Epic."
+          : "Create a directional Story Idea that expresses one concrete user-value move under the chosen Epic."
   };
 }
 

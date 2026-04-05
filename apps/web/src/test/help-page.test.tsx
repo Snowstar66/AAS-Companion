@@ -52,6 +52,10 @@ describe("Help page", () => {
     expect(screen.getByText("Outcome before output")).toBeDefined();
     expect(screen.getByText("It does not generate code.")).toBeDefined();
     expect(screen.getByText("AAS method deep dive")).toBeDefined();
+    expect(screen.getByText("Choosing AD, AT or AM in Framing")).toBeDefined();
+    expect(screen.getByText("Primär fråga i Framing")).toBeDefined();
+    expect(screen.getByText("Vad ska vi bygga för att skapa nytt värde?")).toBeDefined();
+    expect(screen.getByText("Misslyckad transformation (dyr)")).toBeDefined();
     expect(screen.getByText("AI levels and human mandate")).toBeDefined();
     expect(screen.getByText("How this app is built")).toBeDefined();
     expect(screen.getByRole("link", { name: /Back to work/i }).getAttribute("href")).toBe("/review");

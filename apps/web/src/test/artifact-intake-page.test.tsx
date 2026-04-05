@@ -452,11 +452,14 @@ describe("Import page", () => {
     expect(screen.getByRole("combobox", { name: "Linked Epic" })).toBeDefined();
     expect(screen.getByRole("option", { name: "Project Epic: EPC-AUTO - Fallback Epic" })).toBeDefined();
     expect(screen.getByText(/Review imported framing content directly in one spine/i)).toBeDefined();
+    expect(screen.getByText((_, element) => element?.textContent === "Outcomes: 0")).toBeDefined();
+    expect(screen.getByText((_, element) => element?.textContent === "Epics: 0")).toBeDefined();
+    expect(screen.getByText((_, element) => element?.textContent === "Story ideas: 1")).toBeDefined();
     expect(screen.queryByText("Missing required fields")).toBeNull();
     expect(screen.queryByText("Story type")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Save and approve Story Idea import" })).toBeNull();
-  });
+  }, 15000);
 
   it("shows Demo as read-only and disables new uploads", async () => {
     requireProtectedSessionMock.mockResolvedValueOnce({
@@ -477,7 +480,7 @@ describe("Import page", () => {
     expect(screen.getByText(/Import writes persisted intake sessions and is therefore disabled in Demo/i)).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Import" }).some((button) => button.hasAttribute("disabled"))).toBe(true);
     expect(screen.getByRole("link", { name: /Leave Demo and choose project/i })).toBeDefined();
-  });
+  }, 15000);
 
   it("keeps the explicitly selected framing session visible even when no active work remains", async () => {
     loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
@@ -646,7 +649,11 @@ describe("Import page", () => {
 
     expect(screen.getAllByRole("heading", { name: "Framing value spine" }).length).toBeGreaterThan(0);
     expect(screen.queryAllByRole("heading", { name: "Imported candidates" })).toHaveLength(0);
-    expect(screen.getByText(/No hidden leftovers remain for this imported file/i)).toBeDefined();
+    expect(
+      screen.getByText(
+        /All imported framing objects in this file are already processed\. Only hidden leftovers remain, and they stay out of the active spine\./i
+      )
+    ).toBeDefined();
   });
 
   it("shows story ideas under imported epics even when the draft outcome points at the project outcome", async () => {

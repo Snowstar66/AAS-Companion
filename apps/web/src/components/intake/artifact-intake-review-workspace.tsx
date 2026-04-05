@@ -411,6 +411,14 @@ function groupLeftoversByKind(sections: ParsedSection[]) {
   return [...grouped.values()];
 }
 
+function isActionableFramingCandidate(candidate: IntakeArtifactCandidate) {
+  return candidate.reviewStatus !== "rejected" && candidate.reviewStatus !== "promoted";
+}
+
+function isActionableFramingCarryForwardAction(action: string | null | undefined) {
+  return action !== "confirmed" && action !== "corrected" && action !== "not_relevant";
+}
+
 function carryForwardCategoryLabel(category: ArtifactCarryForwardItem["category"]) {
   if (category === "ux_principle") {
     return "UX principle";
@@ -696,6 +704,11 @@ function FramingImportSpine(props: {
   defaultBulkEpicCandidateId: string;
   submitFramingBulkApproveAction?: ((formData: FormData) => Promise<void>) | undefined;
 }) {
+  const hasActionableItems =
+    props.importedOutcomeCandidates.length > 0 ||
+    props.importedEpicCandidates.length > 0 ||
+    props.importedStoryCandidates.length > 0 ||
+    props.carryForwardItems.length > 0;
   const projectEpicOptions = [
     {
       id: FALLBACK_EPIC_OPTION_VALUE,
@@ -769,7 +782,12 @@ function FramingImportSpine(props: {
           {compactMetric("Constraints", props.carryForwardItems.length)}
           {compactMetric("Hidden leftovers", props.fileLeftovers.length)}
         </div>
-        {props.submitFramingBulkApproveAction ? (
+        {!hasActionableItems ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
+            All imported framing objects in this file are already processed. Only hidden leftovers remain, and they stay out of the active spine.
+          </div>
+        ) : null}
+        {props.submitFramingBulkApproveAction && hasActionableItems ? (
           <form action={props.submitFramingBulkApproveAction} className="space-y-4">
             <input name="sessionId" type="hidden" value={props.session.id} />
             <input name="fileId" type="hidden" value={props.selectedFile.id} />
@@ -1473,9 +1491,13 @@ export function ArtifactIntakeReviewWorkspace({
   });
   const unresolvedCarryForwardCount = carryForwardItemStates.filter((entry) => entry.status === "unresolved").length;
   const collapsedFramingCandidates = collapseFramingCandidatesForDisplay(fileCandidates);
-  const importedOutcomeCandidates = collapsedFramingCandidates.candidates.filter((candidate) => candidate.type === "outcome");
-  const importedEpicCandidates = collapsedFramingCandidates.candidates.filter((candidate) => candidate.type === "epic");
-  const importedStoryCandidates = collapsedFramingCandidates.candidates.filter((candidate) => candidate.type === "story");
+  const actionableCollapsedFramingCandidates = collapsedFramingCandidates.candidates.filter(isActionableFramingCandidate);
+  const actionableCarryForwardItems = carryForwardItems.filter((item) =>
+    isActionableFramingCarryForwardAction(selectedFile.sectionDispositions[item.sourceSection.id]?.action ?? null)
+  );
+  const importedOutcomeCandidates = actionableCollapsedFramingCandidates.filter((candidate) => candidate.type === "outcome");
+  const importedEpicCandidates = actionableCollapsedFramingCandidates.filter((candidate) => candidate.type === "epic");
+  const importedStoryCandidates = actionableCollapsedFramingCandidates.filter((candidate) => candidate.type === "story");
   const defaultTargetOutcomeId = outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0]?.id ?? "" : "";
   const projectEpicOptionsForTarget = defaultTargetOutcomeId
     ? (projectEpics ?? []).filter((epic) => epic.outcomeId === defaultTargetOutcomeId)
@@ -1504,7 +1526,7 @@ export function ArtifactIntakeReviewWorkspace({
     <div className="space-y-6">
       {session.importIntent === "framing" ? (
         <FramingImportSpine
-          carryForwardItems={carryForwardItems}
+          carryForwardItems={actionableCarryForwardItems}
           defaultBulkEpicCandidateId={defaultBulkEpicCandidateId}
           defaultTargetOutcomeId={defaultTargetOutcomeId}
           fileLeftovers={fileLeftovers}

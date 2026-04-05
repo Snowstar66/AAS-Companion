@@ -32,7 +32,7 @@ describe("Delivery type guidance", () => {
 
     expect(
       screen.getByText(
-        "Application Transformation: What in the current system is blocking value? Outcome, baseline, risk posture, and AI level need tighter discipline."
+        "Application Transformation: What in the current system is blocking value? Expect Framing to emphasize outcome, baseline, risk posture, and ai level need tighter discipline."
       )
     ).toBeDefined();
     expect(

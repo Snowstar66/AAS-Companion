@@ -48,74 +48,74 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
   },
   "framing.problem": {
     title: "Problem statement",
-    summary: "Describe the business pain or missed opportunity that exists today, in plain language.",
+    summary: "Name the real current-state problem before you talk about the answer.",
     purpose: "Anchor the case in the customer's current reality.",
-    belongs: "Current pain, friction, delay, cost, risk or missed value.",
-    avoid: "Detailed solution ideas or feature lists."
+    belongs: "Current pain, friction, delay, cost, risk, missed value, or evidence that the present situation is not good enough.",
+    avoid: "Desired future state, feature lists, architecture, or wording that already assumes the solution."
   },
   "framing.outcome": {
     title: "Desired outcome",
-    summary: "Describe the change the customer wants to achieve, not the detailed solution.",
+    summary: "Describe the effect you want to become true if this case succeeds.",
     purpose: "Make the intended business effect explicit.",
-    belongs: "Target effect, improved state, measurable change or operational shift.",
-    avoid: "Implementation detail, delivery tasks or technical architecture."
+    belongs: "Target effect, improved state, measurable change, operational shift, or business result worth paying for.",
+    avoid: "Features, component names, implementation tasks, or architecture choices."
   },
   "framing.baseline_definition": {
     title: "Baseline definition",
-    summary: "Capture how the current situation is understood so later progress can be compared against it.",
+    summary: "State the starting point that later improvement should be compared against.",
     purpose: "Create the reference point for improvement.",
-    belongs: "Current throughput, quality, cost, lead time, error rate or other starting-state description.",
-    avoid: "Future-state ambition without the current-state anchor."
+    belongs: "Current throughput, quality, cost, lead time, error rate, incident load, MTTR, or other starting-state measure.",
+    avoid: "The target state, vague optimism, or a baseline with no operational meaning."
   },
   "framing.baseline_source": {
     title: "Baseline source",
-    summary: "State where the baseline comes from so the starting point stays credible.",
+    summary: "Show where the baseline evidence comes from so people can trust it.",
     purpose: "Keep the baseline trustworthy and reviewable.",
-    belongs: "Named report, dashboard, stakeholder source or observed operational evidence.",
-    avoid: "Unsupported guesses with no source trail."
+    belongs: "Named dashboard, report, stakeholder source, service data, workshop note, or observed operational evidence.",
+    avoid: "Unsupported guesses, hidden assumptions, or 'everyone knows this' statements."
   },
   "framing.solution_context": {
     title: "Solution context",
-    summary: "Capture the surrounding business, usage and system context that Design should inherit and that may affect scope, risk or AI posture.",
+    summary: "Capture the surrounding context that Design must inherit before solution detail begins.",
     purpose: "Make the framing conditions explicit without locking the solution design too early.",
     belongs:
-      "Business context, usage context, existing landscape context, high-level integration expectations, operational expectations and compliance context.",
-    avoid: "Architecture structure, technology choices, API contracts or implementation detail."
+      "Business context, usage context, existing landscape, high-level integration expectations, operational realities, rollout dependencies and compliance context.",
+    avoid: "Architecture structure, technology selection, API contracts, data models, or implementation detail."
   },
   "framing.solution_constraints": {
     title: "Constraints",
-    summary: "List the conditions Design must satisfy, not how the team should technically build the solution.",
+    summary: "List the non-negotiables Design must respect.",
     purpose: "Hold onto the important boundaries while keeping design options open.",
-    belongs: "Operational constraints, business conditions, compliance limits, must-keep integrations and delivery-level constraints.",
-    avoid: "Prescriptive implementation steps, frameworks, components or detailed technical patterns."
+    belongs: "Operational constraints, business conditions, compliance limits, must-keep integrations, sequencing limits, continuity demands and review obligations.",
+    avoid: "Prescriptive build steps, framework choices, implementation patterns, or pseudo-architecture."
   },
   "framing.data_sensitivity": {
     title: "Data sensitivity",
-    summary: "Capture only the relevant data categories and their sensitivity level at a business-facing level.",
+    summary: "State what kind of data is involved and why it changes risk or control needs.",
     purpose: "Surface risk and governance needs early in framing.",
-    belongs: "Personal data, commercial data, regulated data, internal data and their sensitivity.",
-    avoid: "Schema design, storage details, field-by-field implementation or security architecture."
+    belongs: "Personal data, commercial data, regulated data, internal data, support data, and why that matters.",
+    avoid: "Schema design, storage mechanics, field-by-field implementation, or security architecture detail."
   },
   "framing.delivery_type": {
     title: "Delivery type",
-    summary: "Choose the delivery posture that best fits the case so Design starts from the right context.",
+    summary: "Choose the project posture that should shape Framing expectations from the start.",
     purpose: "Make the expected delivery mode explicit without slipping into solution design.",
-    belongs: "Whether this is primarily Application Development, Application Transformation or Application Maintenance.",
-    avoid: "Detailed delivery planning or execution workflow."
+    belongs: "Whether this is primarily Application Development, Application Transformation or Application Management, and therefore what kind of baseline and evidence matter most.",
+    avoid: "Sprint planning, staffing detail, execution choreography, or a tool decision."
   },
   "framing.value_owner": {
     title: "Value owner",
-    summary: "Choose the named person who owns the business value, baseline and Tollgate 1 decision for this case.",
+    summary: "Pick the real human who can stand behind value, baseline and approval.",
     purpose: "Place business accountability on a real person.",
-    belongs: "Customer-side person who can validate value, baseline, priority and whether the case is worth doing.",
-    avoid: "Generic team names with no accountable human."
+    belongs: "Customer-side person who can validate value, baseline, priority and whether the case is worth doing now.",
+    avoid: "Steering groups, team names, aliases, or placeholders with no accountable human."
   },
   "framing.timeframe": {
     title: "Timeframe",
-    summary: "Capture the business horizon for the outcome so the case stays decision-oriented.",
+    summary: "Capture why the timing matters at business level.",
     purpose: "Set a realistic business window for the change.",
-    belongs: "Pilot window, season, quarter, decision point or business timing expectation.",
-    avoid: "Low-level sprint planning or delivery task sequencing."
+    belongs: "Pilot window, season, quarter, contract horizon, launch window, compliance deadline or decision point.",
+    avoid: "Sprint-by-sprint sequencing, backlog planning, or task-level dates."
   },
   "framing.ai_level": {
     title: "AI acceleration level",
@@ -169,7 +169,7 @@ export function getHelpPattern(key: WorkspaceHelpKey, aiLevel?: string | null) {
 
 export function getInlineGuidance(key: Extract<WorkspaceHelpKey, `framing.${string}`>) {
   const pattern = helpPatterns[key];
-  return `${pattern.summary} Avoid: ${pattern.avoid}`;
+  return `Put here: ${pattern.belongs} Avoid: ${pattern.avoid}`;
 }
 
 export function formatAiLevelLabel(value: string | null | undefined) {
