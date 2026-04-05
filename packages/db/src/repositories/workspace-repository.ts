@@ -475,27 +475,14 @@ export async function getWorkspaceSnapshot(organizationId: string) {
 }
 
 export async function getHomeDashboardSnapshot(organizationId: string): Promise<HomeDashboardSnapshot | null> {
-  const [organization, outcomeStatuses, directionSeeds, stories, storyTollgates] = await prisma.$transaction([
+  const [organization, outcomeStatuses, directionSeeds, stories, visibleTollgates, storyTollgates] = await prisma.$transaction([
     prisma.organization.findUnique({
       where: {
         id: organizationId
       },
       select: {
         id: true,
-        name: true,
-        tollgates: {
-          orderBy: {
-            updatedAt: "desc"
-          },
-          select: {
-            id: true,
-            entityType: true,
-            entityId: true,
-            tollgateType: true,
-            status: true,
-            blockers: true
-          }
-        }
+        name: true
       }
     }),
     prisma.outcome.findMany({
@@ -548,6 +535,33 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
     prisma.tollgate.findMany({
       where: {
         organizationId,
+        OR: [
+          {
+            entityType: "outcome"
+          },
+          {
+            entityType: "story",
+            status: {
+              not: "approved"
+            }
+          }
+        ]
+      },
+      orderBy: {
+        updatedAt: "desc"
+      },
+      select: {
+        id: true,
+        entityType: true,
+        entityId: true,
+        tollgateType: true,
+        status: true,
+        blockers: true
+      }
+    }),
+    prisma.tollgate.findMany({
+      where: {
+        organizationId,
         entityType: "story",
         tollgateType: "story_readiness"
       },
@@ -574,6 +588,6 @@ export async function getHomeDashboardSnapshot(organizationId: string): Promise<
     })),
     directionSeeds,
     stories: attachStoryReadinessTollgateStatus(stories, storyTollgateStatuses),
-    tollgates: organization.tollgates
+    tollgates: visibleTollgates
   };
 }

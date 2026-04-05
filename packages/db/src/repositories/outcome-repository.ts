@@ -114,6 +114,28 @@ export async function listOutcomes(organizationId: string, options?: { includeAr
   });
 }
 
+export async function listOutcomeReferences(organizationId: string, options?: { includeArchived?: boolean }) {
+  const where: Prisma.OutcomeWhereInput = {
+    organizationId
+  };
+
+  if (!options?.includeArchived) {
+    where.lifecycleState = "active";
+  }
+
+  return prisma.outcome.findMany({
+    where,
+    orderBy: {
+      createdAt: "desc"
+    },
+    select: {
+      id: true,
+      key: true,
+      title: true
+    }
+  });
+}
+
 export async function getPreferredFramingOutcomeId(organizationId: string) {
   return withDevTiming("db.getPreferredFramingOutcomeId", async () => {
     const outcomes = await prisma.outcome.findMany({

@@ -92,6 +92,29 @@ export async function listEpics(organizationId: string, options?: { includeArchi
   return epics.map((epic) => withEpicShape(epic));
 }
 
+export async function listEpicReferences(organizationId: string, options?: { includeArchived?: boolean }) {
+  const where: Prisma.EpicWhereInput = {
+    organizationId
+  };
+
+  if (!options?.includeArchived) {
+    where.lifecycleState = "active";
+  }
+
+  return prisma.epic.findMany({
+    where,
+    orderBy: {
+      createdAt: "desc"
+    },
+    select: {
+      id: true,
+      key: true,
+      title: true,
+      outcomeId: true
+    }
+  });
+}
+
 export async function getEpicById(organizationId: string, id: string) {
   const epic = await prisma.epic.findFirst({
     where: {

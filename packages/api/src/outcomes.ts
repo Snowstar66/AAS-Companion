@@ -1,9 +1,11 @@
-import { createOutcome, getOutcomeById, listOutcomes, updateOutcome } from "@aas-companion/db";
+import { createOutcome, getOutcomeById, listOutcomeReferences, updateOutcome } from "@aas-companion/db";
 import { outcomeCreateInputSchema, outcomeUpdateInputSchema } from "@aas-companion/domain";
 import { failure, success, type ApiResult } from "./shared";
 
-export async function listOutcomesService(organizationId: string): Promise<ApiResult<Awaited<ReturnType<typeof listOutcomes>>>> {
-  return success(await listOutcomes(organizationId));
+export async function listOutcomesService(
+  organizationId: string
+): Promise<ApiResult<Awaited<ReturnType<typeof listOutcomeReferences>>>> {
+  return success(await listOutcomeReferences(organizationId));
 }
 
 export async function getOutcomeService(

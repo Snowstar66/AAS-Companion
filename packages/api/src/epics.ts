@@ -8,6 +8,7 @@ import {
   getEpicWorkspaceSnapshot,
   getOutcomeById,
   listDirectionSeeds,
+  listEpicReferences,
   listEpics,
   listStoriesByDirectionSeedId,
   listStories,
@@ -98,8 +99,10 @@ function buildNextKey(existingKeys: string[], prefix: string) {
   return `${prefix}-${String(nextNumber).padStart(3, "0")}`;
 }
 
-export async function listEpicsService(organizationId: string): Promise<ApiResult<Awaited<ReturnType<typeof listEpics>>>> {
-  return success(await listEpics(organizationId));
+export async function listEpicsService(
+  organizationId: string
+): Promise<ApiResult<Awaited<ReturnType<typeof listEpicReferences>>>> {
+  return success(await listEpicReferences(organizationId));
 }
 
 export async function getEpicWorkspaceService(

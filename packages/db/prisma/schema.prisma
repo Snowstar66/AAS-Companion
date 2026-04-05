@@ -583,6 +583,7 @@ model Tollgate {
   @@unique([organizationId, entityType, entityId, tollgateType])
   @@index([organizationId, entityType, entityId])
   @@index([organizationId, entityType, updatedAt])
+  @@index([organizationId, entityType, tollgateType, updatedAt])
 }
 
 model SignoffRecord {
@@ -630,6 +631,7 @@ model ActivityEvent {
   @@index([organizationId, entityType, entityId])
   @@index([organizationId, createdAt])
   @@index([organizationId, entityType, entityId, createdAt])
+  @@index([organizationId, eventType, createdAt])
 }
 
 model ArtifactIntakeSession {
@@ -650,6 +652,7 @@ model ArtifactIntakeSession {
 
   @@index([organizationId, createdAt])
   @@index([organizationId, status])
+  @@index([organizationId, updatedAt, createdAt])
 }
 
 model ArtifactIntakeFile {
@@ -678,6 +681,7 @@ model ArtifactIntakeFile {
   @@index([organizationId, uploadedAt])
   @@index([organizationId, sourceTypeStatus])
   @@index([intakeSessionId])
+  @@index([organizationId, intakeSessionId, uploadedAt])
 }
 
 model ArtifactAasCandidate {
@@ -720,4 +724,7 @@ model ArtifactAasCandidate {
   @@index([organizationId, intakeSessionId])
   @@index([organizationId, fileId])
   @@index([organizationId, reviewStatus])
+  @@index([organizationId, intakeSessionId, reviewStatus])
+  @@index([organizationId, fileId, reviewStatus])
+  @@index([organizationId, updatedAt, createdAt])
 }

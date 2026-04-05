@@ -170,6 +170,23 @@ async function resolveExistingActorId(
   return existingActor?.id ?? null;
 }
 
+async function runIndependentDbOperations<T>(
+  db: Prisma.TransactionClient | typeof prisma,
+  operations: Array<() => Promise<T>>
+) {
+  if (db === prisma) {
+    return Promise.all(operations.map((operation) => operation()));
+  }
+
+  const results: T[] = [];
+
+  for (const operation of operations) {
+    results.push(await operation());
+  }
+
+  return results;
+}
+
 export async function listArtifactIntakeSessions(organizationId: string) {
   return prisma.artifactIntakeSession.findMany({
     where: { organizationId },
@@ -431,18 +448,22 @@ async function processArtifactIntakeSession(
     fileId: file.id,
     classification: classifyArtifactSource(file.fileName, file.content)
   }));
+  const classificationByFileId = new Map(classifications.map((entry) => [entry.fileId, entry.classification] as const));
 
-  for (const entry of classifications) {
-    await db.artifactIntakeFile.update({
-      where: { id: entry.fileId },
-      data: {
-        sourceTypeStatus: "classified",
-        sourceType: entry.classification.sourceType,
-        sourceTypeConfidence: entry.classification.confidence,
-        classifiedAt
-      }
-    });
-  }
+  await runIndependentDbOperations(
+    db,
+    classifications.map((entry) => () =>
+      db.artifactIntakeFile.update({
+        where: { id: entry.fileId },
+        data: {
+          sourceTypeStatus: "classified",
+          sourceType: entry.classification.sourceType,
+          sourceTypeConfidence: entry.classification.confidence,
+          classifiedAt
+        }
+      })
+    )
+  );
 
   await db.artifactIntakeSession.update({
     where: { id: session.id },
@@ -462,7 +483,7 @@ async function processArtifactIntakeSession(
   const initialParsedArtifacts = session.files.map((file) => ({
     fileId: file.id,
     fileName: file.fileName,
-    sourceType: classifications.find((entry) => entry.fileId === file.id)?.classification.sourceType ?? null,
+    sourceType: classificationByFileId.get(file.id)?.sourceType ?? null,
     parseResult: parseMarkdownArtifact(file.id, file.fileName, file.content)
   }));
 
@@ -531,17 +552,20 @@ async function processArtifactIntakeSession(
     }
   }
 
-  for (const entry of parsedArtifacts) {
-    await db.artifactIntakeFile.update({
-      where: { id: entry.fileId },
-      data: {
-        sourceType: entry.parseResult.classification.sourceType,
-        sourceTypeConfidence: entry.parseResult.classification.confidence,
-        parsedAt,
-        parsedArtifacts: entry.parseResult as Prisma.InputJsonValue
-      }
-    });
-  }
+  await runIndependentDbOperations(
+    db,
+    parsedArtifacts.map((entry) => () =>
+      db.artifactIntakeFile.update({
+        where: { id: entry.fileId },
+        data: {
+          sourceType: entry.parseResult.classification.sourceType,
+          sourceTypeConfidence: entry.parseResult.classification.confidence,
+          parsedAt,
+          parsedArtifacts: entry.parseResult as Prisma.InputJsonValue
+        }
+      })
+    )
+  );
 
   await db.artifactIntakeSession.update({
     where: { id: session.id },
@@ -640,27 +664,30 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
       tx
     );
 
-    const files = [];
+    const uploadedAt = new Date();
+    const files = parsed.files.map((file) => ({
+      id: randomUUID(),
+      intakeSessionId: session.id,
+      organizationId: parsed.organizationId,
+      fileName: file.fileName,
+      mimeType: file.mimeType ?? null,
+      extension: getArtifactFileExtension(file.fileName),
+      sizeBytes: file.sizeBytes,
+      content: file.content,
+      sourceTypeStatus: "pending" as const,
+      sectionDispositions: {} as Prisma.InputJsonValue,
+      uploadedBy: actorId,
+      uploadedAt
+    }));
 
-    for (const file of parsed.files) {
-      const artifactFile = await tx.artifactIntakeFile.create({
-        data: {
-          id: randomUUID(),
-          intakeSessionId: session.id,
-          organizationId: parsed.organizationId,
-          fileName: file.fileName,
-          mimeType: file.mimeType ?? null,
-          extension: getArtifactFileExtension(file.fileName),
-          sizeBytes: file.sizeBytes,
-          content: file.content,
-          sourceTypeStatus: "pending",
-          sectionDispositions: {} as Prisma.InputJsonValue,
-          uploadedBy: actorId
-        }
+    if (files.length > 0) {
+      await tx.artifactIntakeFile.createMany({
+        data: files
       });
 
-      await appendActivityEvent(
-        {
+      await tx.activityEvent.createMany({
+        data: files.map((artifactFile) => ({
+          id: randomUUID(),
           organizationId: parsed.organizationId,
           entityType: "artifact_intake_file",
           entityId: artifactFile.id,
@@ -671,12 +698,9 @@ export async function createArtifactIntakeSession(input: unknown, rejectedFiles:
             fileName: artifactFile.fileName,
             sizeBytes: artifactFile.sizeBytes,
             sourceTypeStatus: artifactFile.sourceTypeStatus
-          }
-        },
-        tx
-      );
-
-      files.push(artifactFile);
+          } as Prisma.InputJsonValue
+        }))
+      });
     }
 
     if (rejectedFiles.length > 0) {

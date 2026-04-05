@@ -60,6 +60,7 @@ export {
   getPreferredFramingOutcomeId,
   getOutcomeById,
   getOutcomeWorkspaceSnapshot,
+  listOutcomeReferences,
   listOutcomeCockpitEntries,
   listOutcomes,
   updateOutcome
@@ -82,6 +83,7 @@ export {
   createEpic,
   getEpicById,
   getEpicWorkspaceSnapshot,
+  listEpicReferences,
   listEpics,
   updateEpic
 } from "./repositories/epic-repository";
