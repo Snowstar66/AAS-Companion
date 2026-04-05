@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, CircleHelp, Clock3, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import {
   deriveOutcomeRiskProfile,
@@ -104,20 +104,249 @@ function formatDateTime(value: Date | string | null | undefined) {
   return new Date(value).toLocaleString("sv-SE");
 }
 
+type DeliveryTypeValue = "AD" | "AT" | "AM";
+
+const deliveryTypeProfiles: Record<
+  DeliveryTypeValue,
+  {
+    label: string;
+    primaryQuestion: string;
+    changeType: string;
+    baselinePosition: string;
+    baselineExamples: string;
+    outcomeType: string;
+    outcomeExample: string;
+    evidenceNeed: string;
+    problemDefinition: string;
+    epicCharacter: string;
+    epicExamples: string;
+    riskType: string;
+    riskLevel: string;
+    scopeStability: string;
+    aiLevel: string;
+    aiRole: string;
+    governanceNeeds: string;
+    commonFailure: string;
+    aasProtection: string;
+    framingWeight: string;
+    poorFramingImpact: string;
+  }
+> = {
+  AD: {
+    label: "Application Development",
+    primaryQuestion: "Vad ska vi bygga för att skapa nytt värde?",
+    changeType: "Ny funktionalitet eller ny kapacitet.",
+    baselinePosition: "Ofta svag eller saknas.",
+    baselineExamples: "Nuvarande manuellt arbetssätt eller dagens enkla workaround.",
+    outcomeType: "Affärsvärde eller användarvärde.",
+    outcomeExample: "\"Öka konvertering med 15%.\"",
+    evidenceNeed: "Hypotes plus rimlighet räcker ofta i framing.",
+    problemDefinition: "Hypotesbaserad men tydligt värdedriven.",
+    epicCharacter: "Funktionella capabilities.",
+    epicExamples: "UI, API, onboarding, self-service, reporting.",
+    riskType: "Fel funktion eller lågt nyttjande.",
+    riskLevel: "Medel.",
+    scopeStability: "Kan vara mer explorativ i början.",
+    aiLevel: "Typiskt Level 1-2, ibland 3.",
+    aiRole: "Stöd för idéer, struktur och formulering.",
+    governanceNeeds: "Outcome och Value Owner måste vara tydliga.",
+    commonFailure: "Att bygga features utan ett verkligt outcome.",
+    aasProtection: "Skyddar mot output utan värde.",
+    framingWeight: "Medel.",
+    poorFramingImpact: "Risk för fel produkt."
+  },
+  AT: {
+    label: "Application Transformation",
+    primaryQuestion: "Vad i nuvarande system hindrar värde?",
+    changeType: "Strukturell förändring av befintligt.",
+    baselinePosition: "Obligatorisk och datadriven.",
+    baselineExamples: "Lead time, tech debt, kostnad, incidenter, förändringsfriktion.",
+    outcomeType: "Strukturell effekt i hastighet, kostnad eller risk.",
+    outcomeExample: "\"Halvera lead time.\"",
+    evidenceNeed: "Mätbar problemverifiering krävs.",
+    problemDefinition: "Faktabaserad och kvantifierad.",
+    epicCharacter: "Strukturella förändringar.",
+    epicExamples: "Modularisering, CI/CD, dependency cleanup, plattformsbyte.",
+    riskType: "Drift, regression och systempåverkan.",
+    riskLevel: "Högst.",
+    scopeStability: "Måste stabiliseras tidigt.",
+    aiLevel: "Typiskt Level 1-2, Level 3 bara strikt kontrollerat.",
+    aiRole: "Analys av kod, beroenden och tech debt.",
+    governanceNeeds: "Outcome, baseline, risk och AI-nivå måste vara strikta.",
+    commonFailure: "Att modernisera utan effektmål.",
+    aasProtection: "Skyddar mot teknikdriven transformation utan effekt.",
+    framingWeight: "Högst.",
+    poorFramingImpact: "Risk för dyr misslyckad transformation."
+  },
+  AM: {
+    label: "Application Management",
+    primaryQuestion: "Hur optimerar vi befintlig leverans?",
+    changeType: "Kontinuerlig förbättring.",
+    baselinePosition: "Objektspecifik och operativ.",
+    baselineExamples: "SLA, incidentdata, kostnad per ärende, MTTR, återkommande driftmönster.",
+    outcomeType: "Stabilitet, effektivitet eller kostnad.",
+    outcomeExample: "\"Minska MTTR från 6h till 2h.\"",
+    evidenceNeed: "Dataanalys av driftmönster behövs.",
+    problemDefinition: "Datadriven och repetitiv.",
+    epicCharacter: "Förbättrings- och automationsområden.",
+    epicExamples: "Incident automation, triage, monitoring, knowledge capture.",
+    riskType: "Felaktig optimering eller automation.",
+    riskLevel: "Låg till medel.",
+    scopeStability: "Kontinuerlig och iterativ.",
+    aiLevel: "Typiskt Level 1-3 med hög potential.",
+    aiRole: "Mönsteridentifiering och incidentanalys.",
+    governanceNeeds: "Outcome och operativ baseline behöver finnas.",
+    commonFailure: "Att köra drift utan förbättringsmål.",
+    aasProtection: "Skyddar mot reaktiv support utan utveckling.",
+    framingWeight: "Medel.",
+    poorFramingImpact: "Risk för ineffektiv drift."
+  }
+};
+
+function getDeliveryTypeProfile(value: "AD" | "AT" | "AM" | null | undefined) {
+  return value ? deliveryTypeProfiles[value] : null;
+}
+
 function getDeliveryTypeHelper(value: "AD" | "AT" | "AM" | null | undefined) {
-  if (value === "AD") {
-    return "Use this when Framing a new application, service, or a clear functional expansion. Keep the brief centered on the new value to create and the scope boundaries to hold.";
+  const profile = getDeliveryTypeProfile(value);
+
+  if (!profile) {
+    return "Choose the delivery posture that best describes this case so Framing can guide the business case, baseline, risks and hierarchy the right way from the start.";
   }
 
-  if (value === "AT") {
-    return "Use this when Framing a larger change in an existing landscape or operating model. Focus on what must change, what must stay stable, and where design needs to respect transition risk.";
+  return `${profile.label}: ${profile.primaryQuestion} ${profile.governanceNeeds}`;
+}
+
+function getDeliveryTypeContextualGuidance(value: "AD" | "AT" | "AM" | null | undefined) {
+  const profile = getDeliveryTypeProfile(value);
+
+  if (!profile) {
+    return {
+      businessCaseDescription: "Describe the case in a way that makes the value question, current reality and intended change visible before design starts.",
+      timeframeDescription: "Describe the business window for this case, for example a pilot season, quarter, budget window or launch horizon. This is for business timing, not sprint planning.",
+      valueOwnerDescription:
+        "Choose the named person on the customer side who owns the business value, baseline and Tollgate 1 decision. The list shows people available in this project context.",
+      problemDescription: "State the business problem clearly enough that the team can understand why this case exists before they talk about solutions.",
+      outcomeDescription: "Write the effect that should become true if this Framing succeeds. Keep it outcome-oriented, not solution-oriented.",
+      solutionContextDescription:
+        "Capture only the context and constraints that Design needs to inherit. Use this to carry forward business context, existing landscape realities, integration expectations and non-negotiable boundaries without slipping into technical solution detail.",
+      solutionContextFieldDescription:
+        "Pass forward only the surrounding context that should shape Design. Include greenfield vs existing landscape, who will use it, and major external dependencies. If the context increases sensitivity or delivery complexity, it should inform both risk classification and AI acceleration decisions.",
+      constraintsDescription:
+        "Capture what Design must respect, not how to implement it. Good examples are operational limits, compliance obligations, must-keep integrations, rollout constraints and continuity requirements. If a constraint raises risk or demands more control, it should influence the AI/risk assessment.",
+      uxDescription:
+        "Put design-driving UX constraints here, not wireframes or page-by-page solutions. Use this when imported material contains UX expectations that must guide the design phase without freezing the solution too early.",
+      nfrDescription:
+        "Use this for cross-cutting quality requirements. If an NFR increases delivery sensitivity, supervision needs, or operational risk, it should also be reflected in AI and risk.",
+      additionalRequirementsDescription:
+        "Use this for imported additional requirements that are real and relevant, but that do not belong as Outcome, Epic or Story Idea content. These become part of the design input package for the next step.",
+      dataSensitivityDescription: "List the relevant data types and why they matter for risk, compliance and delivery control.",
+      baselineCardDescription: "These fields help ground the Framing before approval is recorded.",
+      baselineSourceDescription: "Record where the baseline comes from so the team can trace the claim back to evidence.",
+      aiRiskDescription: "Define AI usage intent, classify risk and record the framing-level AI decision before Tollgate 1.",
+      structureDescription: "Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational.",
+      quickEpicDescription: "Create the next scope boundary directly from Framing before you break it down into Story Ideas.",
+      quickStoryIdeaDescription: "Create a new Story Idea directly from Framing and assign its Epic now, without opening the Epic first."
+    };
   }
 
-  if (value === "AM") {
-    return "Use this when Framing change in an existing application where continuity matters. Focus on current context, operational constraints, and what design must preserve while improving or extending the app.";
-  }
+  return {
+    businessCaseDescription: `${profile.primaryQuestion} ${profile.changeType} ${profile.outcomeType}`,
+    timeframeDescription:
+      profile.scopeStability === "Kontinuerlig och iterativ."
+        ? "Describe the operating cadence or improvement window this work belongs to, for example monthly service improvement, incident reduction period or contract window."
+        : profile.scopeStability === "Måste stabiliseras tidigt."
+          ? "Describe the transition or transformation window this case must fit into, for example migration phase, modernization budget window or stabilization horizon."
+          : "Describe the business window for the new value, for example pilot, launch horizon, funding window or adoption milestone.",
+    valueOwnerDescription: `${profile.governanceNeeds} This person must be able to stand behind the effect, baseline and Tollgate 1 decision.`,
+    problemDescription: `${profile.problemDefinition} ${profile.commonFailure}`,
+    outcomeDescription: `${profile.outcomeType} Example: ${profile.outcomeExample}`,
+    solutionContextDescription: `Context and constraints should reflect this as ${profile.label.toLowerCase()}. ${profile.aasProtection}`,
+    solutionContextFieldDescription: `${profile.changeType} ${profile.epicExamples}`,
+    constraintsDescription: `${profile.riskType} ${profile.aasProtection}`,
+    uxDescription:
+      value === "AD"
+        ? "Use UX principles to steer the new experience without locking the solution too early."
+        : value === "AT"
+          ? "Use UX principles to protect continuity where users move between old and transformed experiences."
+          : "Use UX principles to protect continuity, clarity and low-friction support flows in day-to-day operations.",
+    nfrDescription: `${profile.riskLevel} ${profile.evidenceNeed}`,
+    additionalRequirementsDescription:
+      value === "AT"
+        ? "Use this for migration dependencies, platform assumptions or transformation conditions that Design must inherit."
+        : value === "AM"
+          ? "Use this for operational assumptions, support boundaries or service rules that must not be lost."
+          : "Use this for business rules, assumptions or external dependencies that still matter in Design.",
+    dataSensitivityDescription:
+      value === "AT"
+        ? "Call out data that increases migration, regression or compliance risk across the current landscape."
+        : value === "AM"
+          ? "Call out operational data, support data and incident-related data that shape the service model."
+          : "Call out the data involved in the new value flow and the sensitivity implications early.",
+    baselineCardDescription: `${profile.baselinePosition} ${profile.baselineExamples}`,
+    baselineSourceDescription: `${profile.evidenceNeed} Typical examples: ${profile.baselineExamples}`,
+    aiRiskDescription: `${profile.aiRole} ${profile.riskType}`,
+    structureDescription: `${profile.epicCharacter} Examples: ${profile.epicExamples}`,
+    quickEpicDescription: `${profile.epicCharacter} Start by naming one scope boundary that moves the case toward the intended outcome.`,
+    quickStoryIdeaDescription:
+      value === "AT"
+        ? "Create a directional Story Idea that clarifies one transformation effect or risk-reducing move under the chosen Epic."
+        : value === "AM"
+          ? "Create a directional Story Idea that improves service behavior, support flow or operational automation under the chosen Epic."
+          : "Create a directional Story Idea that expresses one user-value move under the chosen Epic."
+  };
+}
 
-  return "Choose the delivery posture that best describes this case so design starts from the right context: new value creation, transformation of an existing landscape, or maintenance and extension of an existing app.";
+function DeliveryTypeHelpCard(props: { value: "AD" | "AT" | "AM" | null | undefined }) {
+  const selectedProfile = getDeliveryTypeProfile(props.value);
+
+  return (
+    <details className="group rounded-2xl border border-border/70 bg-background/85 shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-2xl border border-border/70 bg-muted/20 px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted/30">
+        <span className="inline-flex rounded-full border border-border/70 bg-background/90 p-1 text-muted-foreground">
+          <CircleHelp className="h-3.5 w-3.5" />
+        </span>
+        <span>What project type means in Framing</span>
+        <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
+      </summary>
+      <div className="space-y-4 border-t border-border/70 px-4 py-4">
+        <p className="text-sm leading-6 text-muted-foreground">
+          The selected project type should change how you frame baseline, outcomes, evidence, risks and the shape of Epics.
+          {selectedProfile ? ` Current selection: ${selectedProfile.label}.` : ""}
+        </p>
+        <div className="grid gap-4 xl:grid-cols-3">
+          {(Object.entries(deliveryTypeProfiles) as Array<[DeliveryTypeValue, (typeof deliveryTypeProfiles)[DeliveryTypeValue]]>).map(
+            ([key, profile]) => (
+              <div
+                className={`rounded-2xl border p-4 ${
+                  props.value === key
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border/70 bg-muted/20"
+                }`}
+                key={key}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-foreground">{profile.label}</p>
+                  <span className="rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {key}
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                  <p><strong className="text-foreground">Primary question:</strong> {profile.primaryQuestion}</p>
+                  <p><strong className="text-foreground">Baseline:</strong> {profile.baselinePosition}</p>
+                  <p><strong className="text-foreground">Outcome:</strong> {profile.outcomeType}</p>
+                  <p><strong className="text-foreground">Evidence:</strong> {profile.evidenceNeed}</p>
+                  <p><strong className="text-foreground">Epics:</strong> {profile.epicCharacter}</p>
+                  <p><strong className="text-foreground">Risk:</strong> {profile.riskType}</p>
+                  <p><strong className="text-foreground">Governance:</strong> {profile.governanceNeeds}</p>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </details>
+  );
 }
 
 function CollapsibleFramingPanel(props: {
@@ -298,6 +527,7 @@ export function FramingOutcomeSection({
   const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
   const deliveryTypeValue =
     outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null;
+  const deliveryTypeGuidance = getDeliveryTypeContextualGuidance(deliveryTypeValue);
   const structuredConstraints = parseFramingConstraintBundle(outcome.solutionConstraints ?? null);
   const framingCompleteItems = [
     outcome.outcomeStatement?.trim() ? "Outcome statement is captured" : null,
@@ -495,7 +725,7 @@ export function FramingOutcomeSection({
               <CardHeader>
                 <CardTitle>Business case</CardTitle>
                 <CardDescription>
-                  Capture the case at framing level: business problem, intended outcome, owner and solution context. Keep baseline and AI/risk as separate decisions below.
+                  {deliveryTypeGuidance.businessCaseDescription}
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
@@ -520,7 +750,7 @@ export function FramingOutcomeSection({
                     type="text"
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Describe the business window for this case, for example a pilot season, quarter, budget window or launch horizon. This is for business timing, not sprint planning.
+                    {deliveryTypeGuidance.timeframeDescription}
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe")} />
                 </label>
@@ -543,7 +773,7 @@ export function FramingOutcomeSection({
                     />
                   </Suspense>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Choose the named person on the customer side who owns the business value, baseline and Tollgate 1 decision. The list shows people available in this project context.
+                    {deliveryTypeGuidance.valueOwnerDescription}
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} />
                 </label>
@@ -555,13 +785,19 @@ export function FramingOutcomeSection({
                     disabled={isArchived}
                     name="problemStatement"
                   />
+                  <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.problemDescription}</p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.problem")} />
                 </label>
                 <div className="xl:col-span-2">
                   <OutcomeAiValidatedTextarea
                     disabled={isArchived}
                     field="outcome_statement"
-                    guidance={<InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />}
+                    guidance={
+                      <>
+                        <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.outcomeDescription}</p>
+                        <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
+                      </>
+                    }
                     initialError={search.aiField === "outcome_statement" ? search.aiError ?? null : null}
                     initialFeedback={search.aiField === "outcome_statement" ? aiFeedback : null}
                     initialValue={draftOutcomeStatement}
@@ -575,7 +811,7 @@ export function FramingOutcomeSection({
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground">Solution Context &amp; Constraints</p>
                     <p className="text-sm text-muted-foreground">
-                      Capture only the context and constraints that Design needs to inherit. Use this to carry forward business context, existing landscape realities, integration expectations and non-negotiable boundaries without slipping into technical solution detail.
+                      {deliveryTypeGuidance.solutionContextDescription}
                     </p>
                   </div>
                 </div>
@@ -589,7 +825,7 @@ export function FramingOutcomeSection({
                     placeholder="Describe the business setting, usage context, existing system landscape and high-level integration expectations that design must take into account."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Pass forward only the surrounding context that should shape Design. Include greenfield vs existing landscape, who will use it, and major external dependencies. If the context increases sensitivity or delivery complexity, it should inform both risk classification and AI acceleration decisions.
+                    {deliveryTypeGuidance.solutionContextFieldDescription}
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context")} />
                 </label>
@@ -603,7 +839,7 @@ export function FramingOutcomeSection({
                     placeholder="List the business, operational, compliance or integration conditions that Design must satisfy."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Capture what Design must respect, not how to implement it. Good examples are operational limits, compliance obligations, must-keep integrations, rollout constraints and continuity requirements. If a constraint raises risk or demands more control, it should influence the AI/risk assessment.
+                    {deliveryTypeGuidance.constraintsDescription}
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints")} />
                 </label>
@@ -617,7 +853,7 @@ export function FramingOutcomeSection({
                     placeholder="Capture UI and UX principles such as mobile-first, accessibility, clarity, continuity, or interaction constraints that design must respect."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Put design-driving UX constraints here, not wireframes or page-by-page solutions. Use this when imported material contains UX expectations that must guide the design phase without freezing the solution too early.
+                    {deliveryTypeGuidance.uxDescription}
                   </p>
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -630,7 +866,7 @@ export function FramingOutcomeSection({
                     placeholder="Capture performance, security, availability, compliance, privacy, accessibility or reliability requirements that design and delivery must satisfy."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Use this for cross-cutting quality requirements. If an NFR increases delivery sensitivity, supervision needs, or operational risk, it should also be reflected in AI and risk.
+                    {deliveryTypeGuidance.nfrDescription}
                   </p>
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -643,7 +879,7 @@ export function FramingOutcomeSection({
                     placeholder="Capture extra business rules, dependencies, assumptions or design-stage requirements that should not be lost when the work moves into design."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    Use this for imported additional requirements that are real and relevant, but that do not belong as Outcome, Epic or Story Idea content. These become part of the design input package for the next step.
+                    {deliveryTypeGuidance.additionalRequirementsDescription}
                   </p>
                 </label>
                 <label className="space-y-2">
@@ -655,10 +891,14 @@ export function FramingOutcomeSection({
                     name="dataSensitivity"
                     placeholder="List the data types involved and their sensitivity level."
                   />
+                  <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.dataSensitivityDescription}</p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.data_sensitivity")} />
                 </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Delivery type</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">Delivery type</span>
+                    <DeliveryTypeHelpCard value={deliveryTypeValue} />
+                  </div>
                   <select
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.deliveryType ?? ""}
@@ -668,26 +908,31 @@ export function FramingOutcomeSection({
                     <option value="">Select delivery type</option>
                     <option value="AD">Application Development (AD)</option>
                     <option value="AT">Application Transformation (AT)</option>
-                    <option value="AM">Application Maintenance (AM)</option>
+                    <option value="AM">Application Management (AM)</option>
                   </select>
                   <p className="text-sm leading-6 text-muted-foreground">
                     {getDeliveryTypeHelper(deliveryTypeValue)}
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type")} />
-                </label>
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle>Baseline</CardTitle>
-                <CardDescription>These fields help ground the Framing before approval is recorded.</CardDescription>
+                <CardDescription>{deliveryTypeGuidance.baselineCardDescription}</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
                 <OutcomeAiValidatedTextarea
                   disabled={isArchived}
                   field="baseline_definition"
-                  guidance={<InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />}
+                  guidance={
+                    <>
+                      <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.baselineCardDescription}</p>
+                      <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
+                    </>
+                  }
                   initialError={search.aiField === "baseline_definition" ? search.aiError ?? null : null}
                   initialFeedback={search.aiField === "baseline_definition" ? aiFeedback : null}
                   initialValue={draftBaselineDefinition}
@@ -704,13 +949,14 @@ export function FramingOutcomeSection({
                     disabled={isArchived}
                     name="baselineSource"
                   />
+                  <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.baselineSourceDescription}</p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source")} />
                 </label>
               </CardContent>
             </Card>
 
             <CollapsibleFramingPanel
-              description="Define AI usage intent, classify risk and record the framing-level AI decision before Tollgate 1."
+              description={deliveryTypeGuidance.aiRiskDescription}
               badge={
                 <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${aiRiskBadgeClasses}`}>
                   {aiRiskStatusLabel}
@@ -745,7 +991,7 @@ export function FramingOutcomeSection({
             </CollapsibleFramingPanel>
 
             <CollapsibleFramingPanel
-              description="Capture scope boundaries through Epics and lightweight Story Ideas. Keep them directional, not operational."
+              description={deliveryTypeGuidance.structureDescription}
               teaser={<p className="leading-6 text-muted-foreground">{structureTeaser.join(" · ")}</p>}
               title="Epics, Story Ideas and framing hierarchy"
             >
@@ -755,7 +1001,7 @@ export function FramingOutcomeSection({
                     <div className="space-y-1">
                       <p className="font-medium text-foreground">Quick create Epic</p>
                       <p className="text-sm leading-6 text-muted-foreground">
-                        Create the next scope boundary directly from Framing before you break it down into Story Ideas.
+                        {deliveryTypeGuidance.quickEpicDescription}
                       </p>
                     </div>
                     <div className="mt-3 space-y-3">
@@ -797,7 +1043,7 @@ export function FramingOutcomeSection({
                       <div className="space-y-1">
                         <p className="font-medium text-foreground">Quick create Story Idea</p>
                         <p className="text-sm leading-6 text-muted-foreground">
-                          Create a new Story Idea directly from Framing and assign its Epic now, without opening the Epic first.
+                          {deliveryTypeGuidance.quickStoryIdeaDescription}
                         </p>
                       </div>
                       <div className="space-y-3">
