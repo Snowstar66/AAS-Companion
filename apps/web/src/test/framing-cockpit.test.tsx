@@ -307,12 +307,24 @@ describe("Framing page", () => {
     cleanup();
   });
 
-  it("shows the cockpit first and lets the user open the active framing intentionally", async () => {
+  it("opens the active framing directly again by default", async () => {
     render(await FramingPage({}));
+
+    expect(await screen.findByText("Loading current framing")).toBeDefined();
+    expect(screen.queryByRole("heading", { name: "Framing Cockpit" })).toBeNull();
+  });
+
+  it("can still show the cockpit explicitly when requested", async () => {
+    render(
+      await FramingPage({
+        searchParams: Promise.resolve({
+          view: "cockpit"
+        })
+      })
+    );
 
     expect(await screen.findByRole("heading", { name: "Framing Cockpit" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open active framing" })).toBeDefined();
-    expect(screen.queryByText("Loading current framing")).toBeNull();
   });
 
   it("shows a compact switcher instead of a full duplicate cockpit when demo content exists", async () => {

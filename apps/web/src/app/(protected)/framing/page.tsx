@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { FramingOutcomeSection } from "@/components/framing/framing-outcome-section";
@@ -33,10 +34,21 @@ function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+async function getServerLanguage() {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
     const query = searchParams ? await searchParams : {};
+    const serverLanguage = await getServerLanguage();
     const requestedOutcomeId = getParamValue(query.outcomeId) ?? null;
+    const requestedView = getParamValue(query.view) ?? null;
     const { cockpit, session, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);
     const originFilter = getParamValue(query.origin) ?? "native";
     const readinessFilter = getParamValue(query.readiness) ?? "all";
@@ -44,7 +56,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
       resolvedOutcomeId ??
       cockpit.items.find((item) => item.originType === "native")?.id ??
       cockpit.items[0]?.id;
-    const outcomeId = requestedOutcomeId;
+    const outcomeId = requestedView === "cockpit" ? null : requestedOutcomeId ?? defaultOutcomeId;
     const operationalItems = cockpit.items.filter((item) => item.originType !== "seeded");
     const hasDemoItems = cockpit.items.some((item) => item.originType === "seeded");
     const showCompactSwitcher = cockpit.state === "live" && Boolean(outcomeId) && (operationalItems.length > 1 || hasDemoItems);
@@ -110,6 +122,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
             {outcomeId ? (
               <Suspense fallback={<FramingWorkspaceFallback />}>
                 <SelectedFramingOutcomeSection
+                  language={serverLanguage}
                   organizationId={session.organization.organizationId}
                   outcomeId={outcomeId}
                   search={parsedSearch}
@@ -212,6 +225,7 @@ function FramingWorkspaceFallback() {
 }
 
 async function SelectedFramingOutcomeSection(props: {
+  language: "en" | "sv";
   organizationId: string;
   outcomeId: string;
   search: {
@@ -259,7 +273,8 @@ async function SelectedFramingOutcomeSection(props: {
       embeddedInFraming
       hardDeleteAction={hardDeleteOutcomeAction}
       initialReviewFramingState={{ status: "idle", message: null, report: null }}
-  recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
+      language={props.language}
+      recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
       restoreAction={restoreOutcomeAction}
       reviewFramingAction={reviewOutcomeFramingWithAiAction}
       saveAction={saveOutcomeWorkspaceAction}

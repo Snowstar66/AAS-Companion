@@ -5,6 +5,7 @@ import { appChromeContent, type AppLanguage } from "@/components/layout/app-lang
 
 const APP_LANGUAGE_STORAGE_KEY = "aas-app-language";
 const LEGACY_HELP_LANGUAGE_STORAGE_KEY = "aas-help-language";
+const APP_LANGUAGE_COOKIE_KEY = "aas-app-language";
 
 type AppLanguageContextValue = {
   language: AppLanguage;
@@ -40,6 +41,7 @@ export function AppLanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     window.localStorage.setItem(APP_LANGUAGE_STORAGE_KEY, language);
     window.localStorage.setItem(LEGACY_HELP_LANGUAGE_STORAGE_KEY, language);
+    document.cookie = `${APP_LANGUAGE_COOKIE_KEY}=${language}; path=/; max-age=31536000; samesite=lax`;
     document.documentElement.lang = language;
   }, [language]);
 

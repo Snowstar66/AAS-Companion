@@ -45,6 +45,7 @@ type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspac
 
 type FramingOutcomeSectionProps = {
   data: OutcomeWorkspaceData;
+  language?: "en" | "sv";
   search: {
     created?: boolean;
     saveState?: string | null;
@@ -126,10 +127,6 @@ function formatDateTime(value: Date | string | null | undefined) {
   }
 
   return new Date(value).toLocaleString("sv-SE");
-}
-
-function getServerLanguage(): "en" | "sv" {
-  return "en";
 }
 
 type DeliveryTypeValue = "AD" | "AT" | "AM";
@@ -408,6 +405,7 @@ function CollapsibleFramingPanel(props: {
 
 export function FramingOutcomeSection({
   data,
+  language = "en",
   search,
   embeddedInFraming = false,
   saveAction,
@@ -423,7 +421,6 @@ export function FramingOutcomeSection({
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
-  const language = getServerLanguage();
   const { outcome, tollgate, removal } = data;
   const computedBlockers = getOutcomeFramingBlockers({
     title: outcome.title,
