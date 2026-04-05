@@ -23,9 +23,11 @@ import {
   DeliveryTypeHelperText,
   DeliveryTypeSelect
 } from "@/components/framing/delivery-type-guidance-live";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { OutcomeTollgateApprovalSection } from "@/components/review/outcome-tollgate-approval-section";
 import { FramingGuidanceShell } from "@/components/framing/framing-guidance-shell";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
+import { LocalizedText } from "@/components/shared/localized-text";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
 import { OutcomeAiValidatedTextarea } from "@/components/workspace/outcome-ai-validated-textarea";
@@ -75,20 +77,36 @@ type FramingOutcomeSectionProps = {
   initialReviewFramingState: ReviewOutcomeFramingAiActionState;
 };
 
-function getOriginLabel(originType: string) {
+function getOriginLabel(originType: string, language: "en" | "sv") {
   if (originType === "seeded") return "Demo";
-  if (originType === "native") return "Native";
-  return "Imported";
+  if (originType === "native") return language === "sv" ? "Nativ" : "Native";
+  return language === "sv" ? "Importerad" : "Imported";
 }
 
-function getOriginSummary(originType: string) {
-  if (originType === "seeded") return "This case comes from the Demo project for guided exploration.";
-  if (originType === "native") return "This case was authored natively and represents clean customer work.";
-  return "This case was promoted from imported source material.";
+function getOriginSummary(originType: string, language: "en" | "sv") {
+  if (originType === "seeded") {
+    return language === "sv"
+      ? "Det här caset kommer från Demo-projektet för guidad utforskning."
+      : "This case comes from the Demo project for guided exploration.";
+  }
+  if (originType === "native") {
+    return language === "sv"
+      ? "Det här caset har skapats nativt och representerar rent kundarbete."
+      : "This case was authored natively and represents clean customer work.";
+  }
+  return language === "sv"
+    ? "Det här caset har promoterats från importerat källmaterial."
+    : "This case was promoted from imported source material.";
 }
 
-function getWorkspaceLabel(outcome: { originType: string; createdMode: string }) {
-  return outcome.originType === "native" && outcome.createdMode === "clean" ? "Clean" : "Shared";
+function getWorkspaceLabel(outcome: { originType: string; createdMode: string }, language: "en" | "sv") {
+  return outcome.originType === "native" && outcome.createdMode === "clean"
+    ? language === "sv"
+      ? "Ren"
+      : "Clean"
+    : language === "sv"
+      ? "Delad"
+      : "Shared";
 }
 
 function formatRoleLabel(value: string) {
@@ -402,6 +420,7 @@ export function FramingOutcomeSection({
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
+  const { language } = useAppChromeLanguage();
   const { outcome, tollgate, removal } = data;
   const computedBlockers = getOutcomeFramingBlockers({
     title: outcome.title,
@@ -443,10 +462,21 @@ export function FramingOutcomeSection({
     search.blockersFromQuery && search.blockersFromQuery.length > 0
       ? search.blockersFromQuery
       : tollgate?.blockers ?? computedBlockers;
-  const statusLabel = tollgate?.status === "approved" ? "Approved" : blockers.length > 0 ? "Needs action" : "Ready for review";
+  const statusLabel =
+    tollgate?.status === "approved"
+      ? language === "sv"
+        ? "Godkänd"
+        : "Approved"
+      : blockers.length > 0
+        ? language === "sv"
+          ? "Behöver åtgärd"
+          : "Needs action"
+        : language === "sv"
+          ? "Redo för review"
+          : "Ready for review";
   const statusTone = tollgate?.status === "approved" ? "approved" : blockers.length > 0 ? "needs_action" : "ready_for_review";
-  const originLabel = getOriginLabel(outcome.originType);
-  const workspaceLabel = getWorkspaceLabel(outcome);
+  const originLabel = getOriginLabel(outcome.originType, language);
+  const workspaceLabel = getWorkspaceLabel(outcome, language);
   const isArchived = outcome.lifecycleState === "archived";
   const framingHref = `/framing?outcomeId=${outcome.id}`;
   const framingBriefExport = buildFramingBriefExport({
@@ -647,30 +677,32 @@ export function FramingOutcomeSection({
                 {outcome.key}
               </span>
               <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
-                Origin: {originLabel}
+                {language === "sv" ? "Ursprung" : "Origin"}: {originLabel}
               </span>
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                Project mode: {workspaceLabel}
+                {language === "sv" ? "Projektläge" : "Project mode"}: {workspaceLabel}
               </span>
               <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusTone === "approved" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : statusTone === "ready_for_review" ? "border-sky-200 bg-sky-50 text-sky-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
-                Status: {statusLabel}
+                {language === "sv" ? "Status" : "Status"}: {statusLabel}
               </span>
             </div>
             <div className="space-y-2">
               <CardTitle className="text-2xl sm:text-3xl">{outcome.title}</CardTitle>
               <CardDescription className="max-w-4xl text-sm leading-7 sm:text-base">
-                {getOriginSummary(outcome.originType)}
+                {getOriginSummary(outcome.originType, language)}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <WorkspaceStatusSummary
-            blockerEmptyText="No warnings or recommendations are visible right now."
-            blockerTitle="Warnings"
+            blockerEmptyText={
+              language === "sv" ? "Inga varningar eller rekommendationer syns just nu." : "No warnings or recommendations are visible right now."
+            }
+            blockerTitle={language === "sv" ? "Varningar" : "Warnings"}
             blockers={framingWarnings}
             completeItems={framingCompleteItems}
-            completeTitle="Already captured"
+            completeTitle={language === "sv" ? "Redan fångat" : "Already captured"}
             nextActionDetail={framingNextActionDetail}
             nextActionLabel={framingNextActionLabel}
             statusDetail={statusDetail}
@@ -684,34 +716,40 @@ export function FramingOutcomeSection({
         <>
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Case provenance</CardTitle>
+              <CardTitle>{language === "sv" ? "Casets ursprung" : "Case provenance"}</CardTitle>
               <CardDescription>
-                Use this lightweight summary to distinguish Demo reference work from native customer work.
+                {language === "sv"
+                  ? "Använd den här lätta sammanfattningen för att skilja Demo-referensarbete från nativt kundarbete."
+                  : "Use this lightweight summary to distinguish Demo reference work from native customer work."}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
-                  Origin: {originLabel}
+                  {language === "sv" ? "Ursprung" : "Origin"}: {originLabel}
                 </span>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                  Project mode: {workspaceLabel}
+                  {language === "sv" ? "Projektläge" : "Project mode"}: {workspaceLabel}
                 </span>
                 <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                  Status: {statusLabel}
+                  {language === "sv" ? "Status" : "Status"}: {statusLabel}
                 </span>
                 <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                  Lifecycle: {outcome.lifecycleState.replaceAll("_", " ")}
+                  {language === "sv" ? "Livscykel" : "Lifecycle"}: {outcome.lifecycleState.replaceAll("_", " ")}
                 </span>
               </div>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{getOriginSummary(outcome.originType)}</p>
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{getOriginSummary(outcome.originType, language)}</p>
             </CardContent>
           </Card>
 
         <FramingContextCard
             epic={null}
             outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref }}
-          summary="Opening this Framing establishes the active business context. Only Epics and Story Ideas attached to this case are shown by default."
+          summary={
+            language === "sv"
+              ? "När du öppnar den här Framing-vyn etableras den aktiva affärskontexten. Bara Epics och Story Ideas som hör till det här caset visas som standard."
+              : "Opening this Framing establishes the active business context. Only Epics and Story Ideas attached to this case are shown by default."
+          }
         />
         </>
       ) : null}
@@ -732,14 +770,14 @@ export function FramingOutcomeSection({
             <input name="returnPath" type="hidden" value={returnPath} />
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>Business case</CardTitle>
+                <CardTitle>{language === "sv" ? "Affärscase" : "Business case"}</CardTitle>
                 <CardDescription>
                   <DeliveryTypeGuidanceText slot="businessCaseDescription" />
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Title</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Titel" : "Title"}</span>
                   <input
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.title}
@@ -747,10 +785,16 @@ export function FramingOutcomeSection({
                     name="title"
                     type="text"
                   />
-                  <InlineFieldGuidance guidance="Use a short business-facing case name that the customer and delivery team can both recognize." />
+                  <InlineFieldGuidance
+                    guidance={
+                      language === "sv"
+                        ? "Använd ett kort affärsnära namn på caset som både kunden och leveransteamet känner igen."
+                        : "Use a short business-facing case name that the customer and delivery team can both recognize."
+                    }
+                  />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Timeframe</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Tidsram" : "Timeframe"}</span>
                   <input
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.timeframe ?? ""}
@@ -787,7 +831,7 @@ export function FramingOutcomeSection({
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Problem statement</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Problemformulering" : "Problem statement"}</span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.problemStatement ?? ""}
@@ -814,7 +858,7 @@ export function FramingOutcomeSection({
                     initialError={search.aiField === "outcome_statement" ? search.aiError ?? null : null}
                     initialFeedback={search.aiField === "outcome_statement" ? aiFeedback : null}
                     initialValue={draftOutcomeStatement}
-                    label="Outcome statement"
+                    label={language === "sv" ? "Outcome-beskrivning" : "Outcome statement"}
                     name="outcomeStatement"
                     saveAction={saveInlineAction}
                     validateAction={validateOutcomeStatementAiAction}
@@ -822,20 +866,26 @@ export function FramingOutcomeSection({
                 </div>
                 <div className="xl:col-span-2 rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">Solution Context &amp; Constraints</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {language === "sv" ? "Lösningskontext och constraints" : "Solution Context & Constraints"}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       <DeliveryTypeGuidanceText slot="solutionContextDescription" />
                     </p>
                   </div>
                 </div>
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Solution context</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Lösningskontext" : "Solution context"}</span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.solutionContext ?? ""}
                     disabled={isArchived}
                     name="solutionContext"
-                    placeholder="Describe the business setting, usage context, existing system landscape and high-level integration expectations that design must take into account."
+                    placeholder={
+                      language === "sv"
+                        ? "Beskriv affärssammanhanget, användningskontexten, det befintliga systemlandskapet och övergripande integrationsförväntningar som design behöver ta hänsyn till."
+                        : "Describe the business setting, usage context, existing system landscape and high-level integration expectations that design must take into account."
+                    }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="solutionContextFieldDescription" />
@@ -843,13 +893,17 @@ export function FramingOutcomeSection({
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Constraints</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Constraints" : "Constraints"}</span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.generalConstraints}
                     disabled={isArchived}
                     name="generalSolutionConstraints"
-                    placeholder="List the business, operational, compliance or integration conditions that Design must satisfy."
+                    placeholder={
+                      language === "sv"
+                        ? "Lista affärsmässiga, operativa, regulatoriska eller integrationsrelaterade villkor som Design måste uppfylla."
+                        : "List the business, operational, compliance or integration conditions that Design must satisfy."
+                    }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="constraintsDescription" />
@@ -857,26 +911,40 @@ export function FramingOutcomeSection({
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">UX principles to carry into design</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {language === "sv" ? "UX-principer att ta vidare till design" : "UX principles to carry into design"}
+                  </span>
                   <textarea
                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.uxPrinciples}
                     disabled={isArchived}
                     name="uxPrinciples"
-                    placeholder="Capture UI and UX principles such as mobile-first, accessibility, clarity, continuity, or interaction constraints that design must respect."
+                    placeholder={
+                      language === "sv"
+                        ? "Fånga UI- och UX-principer som mobile-first, tillgänglighet, tydlighet, kontinuitet eller interaktionsbegränsningar som design måste respektera."
+                        : "Capture UI and UX principles such as mobile-first, accessibility, clarity, continuity, or interaction constraints that design must respect."
+                    }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="uxDescription" />
                   </p>
                 </label>
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Non-functional requirements to carry into design</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {language === "sv"
+                      ? "Non-functional requirements att ta vidare till design"
+                      : "Non-functional requirements to carry into design"}
+                  </span>
                   <textarea
                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.nonFunctionalRequirements}
                     disabled={isArchived}
                     name="nonFunctionalRequirements"
-                    placeholder="Capture performance, security, availability, compliance, privacy, accessibility or reliability requirements that design and delivery must satisfy."
+                    placeholder={
+                      language === "sv"
+                        ? "Fånga krav på prestanda, säkerhet, tillgänglighet, compliance, privacy, tillgänglighet eller driftsäkerhet som design och leverans måste uppfylla."
+                        : "Capture performance, security, availability, compliance, privacy, accessibility or reliability requirements that design and delivery must satisfy."
+                    }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="nfrDescription" />
@@ -884,26 +952,36 @@ export function FramingOutcomeSection({
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.non_functional_requirements")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Additional requirements to carry forward</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {language === "sv" ? "Ytterligare krav att bära vidare" : "Additional requirements to carry forward"}
+                  </span>
                   <textarea
                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.additionalRequirements}
                     disabled={isArchived}
                     name="additionalRequirements"
-                    placeholder="Capture extra business rules, dependencies, assumptions or design-stage requirements that should not be lost when the work moves into design."
+                    placeholder={
+                      language === "sv"
+                        ? "Fånga extra affärsregler, beroenden, antaganden eller designkrav som inte får tappas bort när arbetet går vidare till design."
+                        : "Capture extra business rules, dependencies, assumptions or design-stage requirements that should not be lost when the work moves into design."
+                    }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="additionalRequirementsDescription" />
                   </p>
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Data sensitivity</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Datakänslighet" : "Data sensitivity"}</span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.dataSensitivity ?? ""}
                     disabled={isArchived}
                     name="dataSensitivity"
-                    placeholder="List the data types involved and their sensitivity level."
+                    placeholder={
+                      language === "sv"
+                        ? "Lista vilka datatyper som berörs och deras känslighetsnivå."
+                        : "List the data types involved and their sensitivity level."
+                    }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="dataSensitivityDescription" />
@@ -913,7 +991,7 @@ export function FramingOutcomeSection({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium text-foreground" htmlFor="outcome-delivery-type">
-                      Delivery type
+                      {language === "sv" ? "Leveranstyp" : "Delivery type"}
                     </label>
                     <LiveDeliveryTypeHelpCard />
                   </div>
@@ -933,7 +1011,7 @@ export function FramingOutcomeSection({
 
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>Baseline</CardTitle>
+                <CardTitle>{language === "sv" ? "Baseline" : "Baseline"}</CardTitle>
                 <CardDescription>
                   <DeliveryTypeGuidanceText slot="baselineCardDescription" />
                 </CardDescription>
@@ -953,13 +1031,13 @@ export function FramingOutcomeSection({
                   initialError={search.aiField === "baseline_definition" ? search.aiError ?? null : null}
                   initialFeedback={search.aiField === "baseline_definition" ? aiFeedback : null}
                   initialValue={draftBaselineDefinition}
-                  label="Baseline definition"
+                  label={language === "sv" ? "Baseline-definition" : "Baseline definition"}
                   name="baselineDefinition"
                   saveAction={saveInlineAction}
                   validateAction={validateBaselineDefinitionAiAction}
                 />
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Baseline source</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Baseline-källa" : "Baseline source"}</span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.baselineSource ?? ""}
@@ -982,7 +1060,7 @@ export function FramingOutcomeSection({
                 </span>
               }
               teaser={<p className="leading-6 text-muted-foreground">{aiAndRiskTeaser.join(" · ")}</p>}
-              title="AI and risk"
+              title={language === "sv" ? "AI och risk" : "AI and risk"}
             >
               <OutcomeAiRiskPostureCard
                 defaultAiLevelJustification={outcome.aiLevelJustification ?? null}
@@ -1012,23 +1090,23 @@ export function FramingOutcomeSection({
             <CollapsibleFramingPanel
               description={<DeliveryTypeGuidanceText slot="structureDescription" />}
               teaser={<p className="leading-6 text-muted-foreground">{structureTeaser.join(" · ")}</p>}
-              title="Epics, Story Ideas and framing hierarchy"
+              title={language === "sv" ? "Epics, Story Ideas och framinghierarki" : "Epics, Story Ideas and framing hierarchy"}
             >
               <div className="space-y-5">
                 <div className="grid gap-4 xl:grid-cols-2">
                   <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
                     <div className="space-y-1">
-                      <p className="font-medium text-foreground">Quick create Epic</p>
+                      <p className="font-medium text-foreground">{language === "sv" ? "Skapa Epic snabbt" : "Quick create Epic"}</p>
                       <p className="text-sm leading-6 text-muted-foreground">
                         <DeliveryTypeGuidanceText slot="quickEpicDescription" />
                       </p>
                     </div>
                     <div className="mt-3 space-y-3">
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Epic title</span>
+                        <span className="text-sm font-medium text-foreground">{language === "sv" ? "Epic-titel" : "Epic title"}</span>
                         <input
                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                          defaultValue="New epic"
+                          defaultValue={language === "sv" ? "Ny epic" : "New epic"}
                           disabled={isArchived}
                           name="quickEpicTitle"
                           type="text"
@@ -1039,28 +1117,40 @@ export function FramingOutcomeSection({
                           className="gap-2 self-start px-5"
                           formAction={createEpicAction}
                           icon={<ArrowRight className="h-4 w-4" />}
-                          label="Create Epic"
-                          pendingLabel="Creating Epic..."
+                          label={language === "sv" ? "Skapa Epic" : "Create Epic"}
+                          pendingLabel={language === "sv" ? "Skapar Epic..." : "Creating Epic..."}
                         />
                       ) : (
-                        <p className="text-sm text-muted-foreground">Restore the Framing brief before creating new Epics.</p>
+                        <p className="text-sm text-muted-foreground">
+                          {language === "sv"
+                            ? "Återställ framingbriefen innan du skapar nya Epics."
+                            : "Restore the Framing brief before creating new Epics."}
+                        </p>
                       )}
                     </div>
                   </div>
                   {outcome.epics.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 xl:col-span-2">
-                      <p className="font-medium text-foreground">No Epics exist for this case yet.</p>
+                      <p className="font-medium text-foreground">
+                        {language === "sv" ? "Inga Epics finns för det här caset ännu." : "No Epics exist for this case yet."}
+                      </p>
                       <p className="mt-2 leading-6">
                         {isArchived
-                          ? "Restore the Outcome if you want to continue breaking it down."
-                          : "Create the first native Epic here. No Demo Epics will be attached as fallback."}
+                          ? language === "sv"
+                            ? "Återställ Outcome om du vill fortsätta bryta ned det."
+                            : "Restore the Outcome if you want to continue breaking it down."
+                          : language === "sv"
+                            ? "Skapa den första natíva Epicen här. Inga Demo-Epics kopplas in som fallback."
+                            : "Create the first native Epic here. No Demo Epics will be attached as fallback."}
                       </p>
                     </div>
                   ) : null}
                   <div className="rounded-2xl border border-sky-200 bg-sky-50/45 p-4">
                     <div className="space-y-3">
                       <div className="space-y-1">
-                        <p className="font-medium text-foreground">Quick create Story Idea</p>
+                        <p className="font-medium text-foreground">
+                          {language === "sv" ? "Skapa Story Idea snabbt" : "Quick create Story Idea"}
+                        </p>
                         <p className="text-sm leading-6 text-muted-foreground">
                           <DeliveryTypeGuidanceText slot="quickStoryIdeaDescription" />
                         </p>
@@ -1068,10 +1158,12 @@ export function FramingOutcomeSection({
                       <div className="space-y-3">
                         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] lg:items-end">
                           <label className="space-y-2">
-                            <span className="text-sm font-medium text-foreground">Story idea title</span>
+                            <span className="text-sm font-medium text-foreground">
+                              {language === "sv" ? "Story Idea-titel" : "Story idea title"}
+                            </span>
                             <input
                               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                              defaultValue="New story idea"
+                              defaultValue={language === "sv" ? "Ny story idea" : "New story idea"}
                               disabled={!canCreateStoryIdea}
                               name="quickStoryIdeaTitle"
                               type="text"
@@ -1098,32 +1190,48 @@ export function FramingOutcomeSection({
                           disabled={!canCreateStoryIdea}
                           formAction={createStoryIdeaAction}
                           icon={<ArrowRight className="h-4 w-4" />}
-                          label="Create Story Idea"
-                          pendingLabel="Creating Story Idea..."
+                          label={language === "sv" ? "Skapa Story Idea" : "Create Story Idea"}
+                          pendingLabel={language === "sv" ? "Skapar Story Idea..." : "Creating Story Idea..."}
                         />
                       </div>
                     </div>
                     {!canCreateStoryIdea ? (
                       <p className="mt-3 text-sm text-muted-foreground">
                         {isArchived
-                          ? "Restore the framing brief before creating new Story Ideas."
-                          : "Create at least one Epic first, then you can assign a new Story Idea directly from Framing."}
+                          ? language === "sv"
+                            ? "Återställ framingbriefen innan du skapar nya Story Ideas."
+                            : "Restore the framing brief before creating new Story Ideas."
+                          : language === "sv"
+                            ? "Skapa minst en Epic först, sedan kan du koppla en ny Story Idea direkt från Framing."
+                            : "Create at least one Epic first, then you can assign a new Story Idea directly from Framing."}
                       </p>
                     ) : null}
                   </div>
                 </div>
                 <FramingValueSpineTree
-                  description="Read the active branch as one framing brief with Epics and Story Ideas in the hierarchy Design will inherit."
+                  description={
+                    language === "sv"
+                      ? "Läs den aktiva grenen som en sammanhållen framingbrief med Epics och Story Ideas i den hierarki som Design kommer att ärva."
+                      : "Read the active branch as one framing brief with Epics and Story Ideas in the hierarchy Design will inherit."
+                  }
                   embedded
                   emptyEpicMessage={
                     isArchived
-                      ? "Archived Outcomes no longer surface active Epic work in this branch."
-                      : "Create the first native Epic here. Empty branches stay empty until you add child work."
+                      ? language === "sv"
+                        ? "Arkiverade Outcomes visar inte längre aktivt Epic-arbete i den här grenen."
+                        : "Archived Outcomes no longer surface active Epic work in this branch."
+                      : language === "sv"
+                        ? "Skapa den första natíva Epicen här. Tomma grenar förblir tomma tills du lägger till barnarbete."
+                        : "Create the first native Epic here. Empty branches stay empty until you add child work."
                   }
                   emptyStoryMessage={
                     isArchived
-                      ? "Archived Outcomes no longer surface active Story Ideas."
-                      : "Create Story Ideas from the relevant Epic so the hierarchy stays scoped to this Framing."
+                      ? language === "sv"
+                        ? "Arkiverade Outcomes visar inte längre aktiva Story Ideas."
+                        : "Archived Outcomes no longer surface active Story Ideas."
+                      : language === "sv"
+                        ? "Skapa Story Ideas från rätt Epic så att hierarkin förblir avgränsad till den här Framing-vyn."
+                        : "Create Story Ideas from the relevant Epic so the hierarchy stays scoped to this Framing."
                   }
                   mode="framing"
                   epics={outcome.epics.map((epic) => ({
@@ -1210,18 +1318,18 @@ export function FramingOutcomeSection({
                 <PendingFormButton
                   className="gap-2"
                   icon={<ArrowRight className="h-4 w-4" />}
-                  label="Save framing changes"
-                  pendingLabel="Saving framing..."
+                  label={language === "sv" ? "Spara framingändringar" : "Save framing changes"}
+                  pendingLabel={language === "sv" ? "Sparar framing..." : "Saving framing..."}
                 />
                 {!embeddedInFraming ? (
                   <Button asChild className="gap-2" variant="secondary">
-                    <Link href="/framing">Back to Framing Cockpit</Link>
+                    <Link href="/framing">{language === "sv" ? "Tillbaka till Framing Cockpit" : "Back to Framing Cockpit"}</Link>
                   </Button>
                 ) : null}
               </div>
             ) : !embeddedInFraming ? (
               <Button asChild className="gap-2" variant="secondary">
-                <Link href="/framing">Back to Framing Cockpit</Link>
+                <Link href="/framing">{language === "sv" ? "Tillbaka till Framing Cockpit" : "Back to Framing Cockpit"}</Link>
               </Button>
             ) : null}
         </form>
@@ -1239,8 +1347,12 @@ export function FramingOutcomeSection({
         {removal?.decision ? (
           <CollapsibleFramingPanel
             defaultOpen={false}
-            description="Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context."
-            title="Remove or archive in this project"
+            description={
+              language === "sv"
+                ? "Hard delete hålls enkelt för utkast som är berättigade, medan styrt arbete arkiveras och återställs inom den aktuella projektkontexten."
+                : "Hard delete stays easy for eligible drafts, while governed work is archived and restored inside the current project context."
+            }
+            title={language === "sv" ? "Ta bort eller arkivera i detta projekt" : "Remove or archive in this project"}
           >
             <GovernedLifecycleCard
               archiveAction={archiveAction}
@@ -1256,13 +1368,19 @@ export function FramingOutcomeSection({
 
         <CollapsibleFramingPanel
           defaultOpen={false}
-          description="Expand when you want to export the customer handshake into another AI tool or workflow."
+          description={
+            language === "sv"
+              ? "Expandera när du vill exportera kundens handshake till ett annat AI-verktyg eller arbetsflöde."
+              : "Expand when you want to export the customer handshake into another AI tool or workflow."
+          }
           teaser={
             <p className="leading-6 text-muted-foreground">
-              Includes one human-readable Framing Brief and one structured AI Delivery Handoff with approval context and UX references.
+              {language === "sv"
+                ? "Innehåller en mänskligt läsbar Framing Brief och en strukturerad AI Delivery Handoff med godkännandekontext och UX-referenser."
+                : "Includes one human-readable Framing Brief and one structured AI Delivery Handoff with approval context and UX references."}
             </p>
           }
-          title="Export framing packages"
+          title={language === "sv" ? "Exportera framingpaket" : "Export framing packages"}
         >
           <FramingBriefExportPanel
             aiMarkdown={framingBriefExport.markdown}
@@ -1295,9 +1413,13 @@ export async function DeferredOutcomeTollgateSection(props: {
     return (
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Tollgate follow-up is unavailable</CardTitle>
+          <CardTitle>
+            <LocalizedText en="Tollgate follow-up is unavailable" sv="Tollgate-uppföljning är inte tillgänglig" />
+          </CardTitle>
           <CardDescription>
-            {tollgateResult.errors[0]?.message ?? "The Tollgate workspace could not be loaded right now."}
+            {tollgateResult.errors[0]?.message ?? (
+              <LocalizedText en="The Tollgate workspace could not be loaded right now." sv="Tollgate-arbetsytan kunde inte laddas just nu." />
+            )}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -1382,10 +1504,14 @@ export async function DeferredOutcomeTollgateSection(props: {
     <>
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Tollgate 1 approval</CardTitle>
+          <CardTitle>
+            <LocalizedText en="Tollgate 1 approval" sv="Tollgate 1-godkännande" />
+          </CardTitle>
           <CardDescription>
-            Tollgate 1 applies to the Framing brief as a whole. Review lanes are not used here. Record approvals directly
-            from the required roles for the current AI level.
+            <LocalizedText
+              en="Tollgate 1 applies to the Framing brief as a whole. Review lanes are not used here. Record approvals directly from the required roles for the current AI level."
+              sv="Tollgate 1 gäller hela framingbriefen. Review-spår används inte här. Registrera godkännanden direkt från de roller som krävs för aktuell AI-nivå."
+            />
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1606,8 +1732,15 @@ function OutcomeTollgateSectionFallback() {
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
-        <CardTitle>Loading tollgate follow-up</CardTitle>
-        <CardDescription>Approval roles and current Framing sign-offs are loading separately.</CardDescription>
+        <CardTitle>
+          <LocalizedText en="Loading tollgate follow-up" sv="Laddar Tollgate-uppföljning" />
+        </CardTitle>
+        <CardDescription>
+          <LocalizedText
+            en="Approval roles and current Framing sign-offs are loading separately."
+            sv="Godkännanderoller och aktuella sign-offs för Framing laddas separat."
+          />
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-2">
         <div className="h-28 rounded-2xl border border-border/70 bg-muted/20" />
@@ -1664,7 +1797,16 @@ function ValueOwnerFieldFallback(props: {
       disabled
       name="valueOwnerId"
     >
-      <option value="">{props.currentOwnerLabel ? `Loading owners... Current: ${props.currentOwnerLabel}` : "Loading owners..."}</option>
+      <option value="">
+        {props.currentOwnerLabel ? (
+          <LocalizedText
+            en={`Loading owners... Current: ${props.currentOwnerLabel}`}
+            sv={`Laddar ägare... Nuvarande: ${props.currentOwnerLabel}`}
+          />
+        ) : (
+          <LocalizedText en="Loading owners..." sv="Laddar ägare..." />
+        )}
+      </option>
     </select>
   );
 }

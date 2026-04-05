@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronDown, CircleHelp } from "lucide-react";
 import { Card, CardContent } from "@aas-companion/ui";
 import type { HelpPattern } from "@/lib/help/aas-help";
@@ -5,7 +6,7 @@ import type { HelpPattern } from "@/lib/help/aas-help";
 type ContextHelpProps = {
   pattern: HelpPattern & { aiLevelNote?: string | null };
   className?: string | undefined;
-  summaryLabel?: string | undefined;
+  summaryLabel?: ReactNode;
   defaultOpen?: boolean | undefined;
 };
 

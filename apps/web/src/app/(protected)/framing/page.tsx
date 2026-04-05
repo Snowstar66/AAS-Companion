@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import { FramingCockpit } from "@/components/framing/framing-cockpit";
 import { FramingRightRail } from "@/components/framing/framing-right-rail";
+import { LocalizedText } from "@/components/shared/localized-text";
 import { loadFramingCockpit } from "@/lib/framing/cockpit";
 import { withDevTiming } from "@/lib/dev-timing";
 import { createDraftOutcomeAction } from "./actions";
@@ -84,13 +85,22 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
         {cockpit.state === "unavailable" ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Framing data is unavailable</CardTitle>
-              <CardDescription>The route is online, but the cockpit could not load its organization data.</CardDescription>
+              <CardTitle>
+                <LocalizedText en="Framing data is unavailable" sv="Framingdata är inte tillgänglig" />
+              </CardTitle>
+              <CardDescription>
+                <LocalizedText
+                  en="The route is online, but the cockpit could not load its organization data."
+                  sv="Sidan är tillgänglig, men cockpit-vyn kunde inte ladda organisationens data."
+                />
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <p>{cockpit.message}</p>
               <Button asChild className="gap-2" variant="secondary">
-                <Link href="/">Back to Home</Link>
+                <Link href="/">
+                  <LocalizedText en="Back to Home" sv="Tillbaka till Home" />
+                </Link>
               </Button>
             </CardContent>
           </Card>
@@ -117,16 +127,21 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
             {showCompactSwitcher ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Switch Framing</CardTitle>
+                  <CardTitle>
+                    <LocalizedText en="Switch Framing" sv="Byt Framing" />
+                  </CardTitle>
                   <CardDescription>
-                    The active framing is already open. Use this only when you intentionally want to switch branch or open Demo.
+                    <LocalizedText
+                      en="The active framing is already open. Use this only when you intentionally want to switch branch or open Demo."
+                      sv="Den aktiva framingen är redan öppen. Använd detta bara när du medvetet vill byta gren eller öppna Demo."
+                    />
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {operationalItems.length > 1 ? (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Available project framings
+                        <LocalizedText en="Available project framings" sv="Tillgängliga project framings" />
                       </p>
                       <div className="-mx-1 overflow-x-auto pb-1">
                         <div className="flex min-w-max gap-2 px-1">
@@ -142,13 +157,20 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                   {demoItem ? (
                     <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="font-medium text-foreground">Demo stays available separately</p>
+                        <p className="font-medium text-foreground">
+                          <LocalizedText en="Demo stays available separately" sv="Demo finns kvar separat" />
+                        </p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Open Demo only when you intentionally want to compare against reference content.
+                          <LocalizedText
+                            en="Open Demo only when you intentionally want to compare against reference content."
+                            sv="Öppna Demo bara när du medvetet vill jämföra mot referensinnehåll."
+                          />
                         </p>
                       </div>
                       <Button asChild className="gap-2" variant="secondary">
-                        <Link href={demoItem.detailHref}>Open Demo Framing</Link>
+                        <Link href={demoItem.detailHref}>
+                          <LocalizedText en="Open Demo Framing" sv="Öppna Demo Framing" />
+                        </Link>
                       </Button>
                     </div>
                   ) : null}
@@ -166,8 +188,15 @@ function FramingWorkspaceFallback() {
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
-        <CardTitle>Loading current framing</CardTitle>
-        <CardDescription>The active framing brief is loading while the cockpit stays available.</CardDescription>
+        <CardTitle>
+          <LocalizedText en="Loading current framing" sv="Laddar aktuell framing" />
+        </CardTitle>
+        <CardDescription>
+          <LocalizedText
+            en="The active framing brief is loading while the cockpit stays available."
+            sv="Den aktiva framingbriefen laddas medan cockpit-vyn fortfarande är tillgänglig."
+          />
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-3">
@@ -206,8 +235,14 @@ async function SelectedFramingOutcomeSection(props: {
     return (
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Selected Framing could not be loaded</CardTitle>
-          <CardDescription>{selectedOutcome.errors[0]?.message ?? "The selected framing is unavailable right now."}</CardDescription>
+          <CardTitle>
+            <LocalizedText en="Selected Framing could not be loaded" sv="Vald Framing kunde inte laddas" />
+          </CardTitle>
+          <CardDescription>
+            {selectedOutcome.errors[0]?.message ?? (
+              <LocalizedText en="The selected framing is unavailable right now." sv="Den valda framingen är inte tillgänglig just nu." />
+            )}
+          </CardDescription>
         </CardHeader>
       </Card>
     );

@@ -6,6 +6,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { AppShell } from "@/components/layout/app-shell";
 import { ArtifactIntakeUploadSubmitButton } from "@/components/intake/artifact-intake-pending-actions";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
+import { LocalizedText } from "@/components/shared/localized-text";
 import { requireProtectedSession } from "@/lib/auth/guards";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import {
@@ -243,26 +244,50 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
         <div className="rounded-2xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.12),_transparent_40%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <Inbox className="h-3.5 w-3.5 text-primary" />
-            Import before promotion
+            <LocalizedText en="Import before promotion" sv="Import före promotion" />
           </div>
           <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">Project Import</h1>
+              <h1 className="text-3xl font-semibold tracking-tight">
+                <LocalizedText en="Project Import" sv="Projektimport" />
+              </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                Upload text or markdown delivery artifacts, inspect the full imported source, review structured candidates,
-                and correct them before promotion. Import always starts with AI-assisted interpretation and falls back to
-                the built-in parser automatically when the AI response is incomplete.
+                <LocalizedText
+                  en="Upload text or markdown delivery artifacts, inspect the full imported source, review structured candidates, and correct them before promotion. Import always starts with AI-assisted interpretation and falls back to the built-in parser automatically when the AI response is incomplete."
+                  sv="Ladda upp text- eller markdownunderlag, granska hela den importerade källan, gå igenom strukturerade kandidater och rätta dem innan promotion. Import startar alltid med AI-stödd tolkning och faller automatiskt tillbaka till den inbyggda parsern när AI-svaret är ofullständigt."
+                />
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                {workspace.state === "ready" ? `${workspace.summary.files} uploaded file(s)` : "Intake overview"}
+                {workspace.state === "ready" ? (
+                  <LocalizedText
+                    en={`${workspace.summary.files} uploaded file(s)`}
+                    sv={`${workspace.summary.files} uppladdade filer`}
+                  />
+                ) : (
+                  <LocalizedText en="Intake overview" sv="Importöversikt" />
+                )}
               </span>
               <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                {workspace.state === "ready" ? `${workspace.summary.candidateObjects} candidate object(s)` : workspace.organizationName}
+                {workspace.state === "ready" ? (
+                  <LocalizedText
+                    en={`${workspace.summary.candidateObjects} candidate object(s)`}
+                    sv={`${workspace.summary.candidateObjects} kandidatobjekt`}
+                  />
+                ) : (
+                  workspace.organizationName
+                )}
               </span>
               <span className="inline-flex rounded-full border border-border/70 bg-background px-3 py-1">
-                {workspace.state === "ready" ? `${workspace.summary.humanReviewRequired} human review queue(s)` : "Project scope"}
+                {workspace.state === "ready" ? (
+                  <LocalizedText
+                    en={`${workspace.summary.humanReviewRequired} human review queue(s)`}
+                    sv={`${workspace.summary.humanReviewRequired} human review-köer`}
+                  />
+                ) : (
+                  <LocalizedText en="Project scope" sv="Projektomfång" />
+                )}
               </span>
             </div>
           </div>
@@ -277,38 +302,75 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
 
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>Upload import artifacts</CardTitle>
+            <CardTitle>
+              <LocalizedText en="Upload import artifacts" sv="Ladda upp importunderlag" />
+            </CardTitle>
             <CardDescription>
-              Supported extensions: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong>, and{" "}
-              <strong>.txt</strong>. Uploads are grouped into a persisted import session for {workspace.organizationName}.
+              <LocalizedText
+                en={
+                  <>
+                    Supported extensions: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong>, and{" "}
+                    <strong>.txt</strong>. Uploads are grouped into a persisted import session for {workspace.organizationName}.
+                  </>
+                }
+                sv={
+                  <>
+                    Stödda filändelser: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong> och{" "}
+                    <strong>.txt</strong>. Uppladdningar grupperas i en sparad importsession för {workspace.organizationName}.
+                  </>
+                }
+              />
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isDemoSession ? (
               <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-                Import writes persisted intake sessions and is therefore disabled in Demo. Leave Demo, then open or create a
-                normal project before uploading import artifacts.
+                <LocalizedText
+                  en="Import writes persisted intake sessions and is therefore disabled in Demo. Leave Demo, then open or create a normal project before uploading import artifacts."
+                  sv="Import skriver sparade importsessioner och är därför avstängd i Demo. Lämna Demo och öppna eller skapa ett vanligt projekt innan du laddar upp importunderlag."
+                />
               </div>
             ) : null}
             <form action={uploadArtifactIntakeFilesAction} className="space-y-4">
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">Import target</span>
+                <span className="text-sm font-medium text-foreground">
+                  <LocalizedText en="Import target" sv="Importmål" />
+                </span>
                 <select
                   className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                   defaultValue="framing"
                   name="importIntent"
                 >
-                  <option value="framing">Import to Framing</option>
-                  <option value="design">Import to Design</option>
+                  <option value="framing">
+                    <LocalizedText en="Import to Framing" sv="Importera till Framing" />
+                  </option>
+                  <option value="design">
+                    <LocalizedText en="Import to Design" sv="Importera till Design" />
+                  </option>
                 </select>
                 <p className="text-sm text-muted-foreground">
-                  Choose <strong>Framing</strong> when the document should become Outcome, Epics, Story Ideas and
-                  constraints. Choose <strong>Design</strong> when the document already contains concrete stories that
-                  should become Delivery Stories.
+                  <LocalizedText
+                    en={
+                      <>
+                        Choose <strong>Framing</strong> when the document should become Outcome, Epics, Story Ideas and
+                        constraints. Choose <strong>Design</strong> when the document already contains concrete stories that
+                        should become Delivery Stories.
+                      </>
+                    }
+                    sv={
+                      <>
+                        Välj <strong>Framing</strong> när dokumentet ska bli Outcome, Epics, Story Ideas och constraints.
+                        Välj <strong>Design</strong> när dokumentet redan innehåller konkreta stories som ska bli Delivery
+                        Stories.
+                      </>
+                    }
+                  />
                 </p>
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">Artifact files</span>
+                <span className="text-sm font-medium text-foreground">
+                  <LocalizedText en="Artifact files" sv="Importfiler" />
+                </span>
                 <input
                   accept=".md,.mdx,.markdown,.txt,text/markdown,text/plain"
                   className="block w-full rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-6 text-sm text-muted-foreground file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:opacity-90"
@@ -321,7 +383,9 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 <ArtifactIntakeUploadSubmitButton disabled={isDemoSession} />
                 {isDemoSession ? (
                   <Button asChild className="gap-2" variant="secondary">
-                    <Link href="/">Leave Demo and choose project</Link>
+                    <Link href="/">
+                      <LocalizedText en="Leave Demo and choose project" sv="Lämna Demo och välj projekt" />
+                    </Link>
                   </Button>
                 ) : null}
               </div>
@@ -332,25 +396,38 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
         {workspace.state === "unavailable" ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Import is unavailable</CardTitle>
-              <CardDescription>The route is online, but the persisted import data could not be loaded.</CardDescription>
+              <CardTitle>
+                <LocalizedText en="Import is unavailable" sv="Import är inte tillgänglig" />
+              </CardTitle>
+              <CardDescription>
+                <LocalizedText
+                  en="The route is online, but the persisted import data could not be loaded."
+                  sv="Sidan är tillgänglig, men den sparade importdatan kunde inte laddas."
+                />
+              </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">{workspace.message}</CardContent>
           </Card>
         ) : workspace.sessions.length === 0 ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>No import sessions yet</CardTitle>
+              <CardTitle>
+                <LocalizedText en="No import sessions yet" sv="Inga importsessioner ännu" />
+              </CardTitle>
               <CardDescription>{workspace.message}</CardDescription>
             </CardHeader>
           </Card>
         ) : shouldShowNoActiveWorkState ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>No active import work remains</CardTitle>
+              <CardTitle>
+                <LocalizedText en="No active import work remains" sv="Inget aktivt importarbete återstår" />
+              </CardTitle>
               <CardDescription>
-                Everything in intake has either been promoted into the project Value Spine, rejected from import, or
-                otherwise cleared from the active queue.
+                <LocalizedText
+                  en="Everything in intake has either been promoted into the project Value Spine, rejected from import, or otherwise cleared from the active queue."
+                  sv="Allt i importen har antingen promoterats in i projektets Value Spine, avvisats från importen eller på annat sätt rensats från den aktiva kön."
+                />
               </CardDescription>
             </CardHeader>
           </Card>
@@ -359,16 +436,23 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
             {showBacklogCard ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Imported candidates</CardTitle>
+                  <CardTitle>
+                    <LocalizedText en="Imported candidates" sv="Importerade kandidater" />
+                  </CardTitle>
                   <CardDescription>
-                    Work through the imported material as a backlog. If the import target was Framing, imported stories are reviewed and approved as Story Ideas.
+                    <LocalizedText
+                      en="Work through the imported material as a backlog. If the import target was Framing, imported stories are reviewed and approved as Story Ideas."
+                      sv="Arbeta igenom det importerade materialet som en backlog. Om importmålet var Framing granskas och godkänns importerade stories som Story Ideas."
+                    />
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="rounded-2xl border border-sky-200 bg-sky-50/40 px-4 py-4 text-sm text-sky-950">
                     <p>
-                      Use Intake to inspect one file at a time. When you want to approve or reject many imported rows together,
-                      continue to{" "}
+                      <LocalizedText
+                        en="Use Intake to inspect one file at a time. When you want to approve or reject many imported rows together, continue to"
+                        sv="Använd Import för att granska en fil i taget. När du vill godkänna eller avvisa många importerade rader samtidigt går du vidare till"
+                      />{" "}
                       <Link
                         className="font-semibold underline underline-offset-4"
                         href={`/review?importIntent=${selectedSession?.importIntent ?? "framing"}&reviewStatusFilter=pending`}
@@ -378,7 +462,10 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                       .
                     </p>
                     <p className="mt-2 text-sky-900/80">
-                      There you can tick checkboxes and approve selected {selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} in bulk.
+                      <LocalizedText
+                        en={`There you can tick checkboxes and approve selected ${selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} in bulk.`}
+                        sv={`Där kan du markera kryssrutor och godkänna valda ${selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} i bulk.`}
+                      />
                     </p>
                   </div>
                   {backlogRows.length > 0 ? (
@@ -436,7 +523,8 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                                   <span>{row.statusLabel}</span>
                                 </div>
                                 <p className={`mt-2 text-xs ${row.isSelected ? "text-white/80" : "text-muted-foreground"}`}>
-                                  {needsAttention ? "Needs review:" : "Status:"} {row.attentionPreview.join(" - ")}
+                                  <LocalizedText en={needsAttention ? "Needs review:" : "Status:"} sv={needsAttention ? "Behöver granskning:" : "Status:"} />{" "}
+                                  {row.attentionPreview.join(" - ")}
                                 </p>
                               </div>
 
@@ -448,16 +536,17 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                                       : "border-border/70 bg-background text-muted-foreground"
                                   }`}
                                 >
-                                  Open: <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
+                                  <LocalizedText en="Open:" sv="Öppna:" />{" "}
+                                  <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
                                 </span>
                                 {row.blockedCount > 0 ? (
                                   <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">
-                                    Blocked: {row.blockedCount}
+                                    <LocalizedText en={`Blocked: ${row.blockedCount}`} sv={`Blockerad: ${row.blockedCount}`} />
                                   </span>
                                 ) : null}
                                 {row.leftoverCount > 0 ? (
                                   <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700">
-                                    Leftovers: {row.leftoverCount}
+                                    <LocalizedText en={`Leftovers: ${row.leftoverCount}`} sv={`Restposter: ${row.leftoverCount}`} />
                                   </span>
                                 ) : null}
                               </div>
@@ -469,7 +558,10 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   ) : null}
                   {backlogRows.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-                      No import sessions match the current action filter.
+                      <LocalizedText
+                        en="No import sessions match the current action filter."
+                        sv="Inga importsessioner matchar det aktuella åtgärdsfiltret."
+                      />
                     </div>
                   ) : null}
                 </CardContent>

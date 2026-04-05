@@ -20,6 +20,7 @@ import {
   submitArtifactSectionDispositionInlineAction,
   submitFramingBulkApproveFromIntakeAction
 } from "../intake/actions";
+import { LocalizedText } from "@/components/shared/localized-text";
 import {
   deleteArtifactIntakeSessionAction,
   submitArtifactBulkReviewAction,
@@ -872,8 +873,8 @@ function ReviewQueueCandidateCard(props: {
 }
 
 function CollapsibleSection(props: {
-  title: string;
-  description: string;
+  title: ReactNode;
+  description: ReactNode;
   badge?: string;
   defaultOpen?: boolean;
   children: ReactNode;
@@ -952,12 +953,12 @@ function getOperationalSectionLabel(workflow: OperationalReviewItem["workflow"])
 }
 
 function ReviewSummaryCard(props: {
-  label: string;
+  label: ReactNode;
   count: number | string;
-  description: string;
+  description: ReactNode;
   className: string;
   actionHref?: string | undefined;
-  actionLabel?: string | undefined;
+  actionLabel?: ReactNode;
 }) {
   return (
     <div className={`rounded-2xl border p-4 shadow-sm ${props.className}`}>
@@ -1223,36 +1224,54 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <FileSearch className="h-3.5 w-3.5 text-primary" />
-            Human review command center
+            <LocalizedText en="Human review command center" sv="Kommandocenter för human review" />
           </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Human Review dashboard</h1>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+            <LocalizedText en="Human Review dashboard" sv="Översikt för human review" />
+          </h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
-            Use this page whenever you want one answer to the question: what still needs a human decision right now?
-            Framing and Value Spine hold the working context, while Human Review separates framing decisions from
-            delivery checkpoints so you do not have to guess what kind of review you are looking at.
+            <LocalizedText
+              en="Use this page whenever you want one answer to the question: what still needs a human decision right now? Framing and Value Spine hold the working context, while Human Review separates framing decisions from delivery checkpoints so you do not have to guess what kind of review you are looking at."
+              sv="Använd den här sidan när du vill ha ett tydligt svar på frågan: vad kräver fortfarande ett mänskligt beslut just nu? Framing och Value Spine håller arbetskontexten, medan Human Review skiljer framingbeslut från leveranskontroller så att du slipper gissa vilken typ av granskning du tittar på."
+            />
           </p>
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <p className="text-sm font-semibold text-foreground">Human Review</p>
+              <p className="text-sm font-semibold text-foreground">
+                <LocalizedText en="Human Review" sv="Human Review" />
+              </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Start here when you want to know what a human must review, clarify or hand off next.
+                <LocalizedText
+                  en="Start here when you want to know what a human must review, clarify or hand off next."
+                  sv="Börja här när du vill se vad en människa måste granska, förtydliga eller lämna vidare härnäst."
+                />
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <p className="text-sm font-semibold text-foreground">Framing review</p>
+              <p className="text-sm font-semibold text-foreground">
+                <LocalizedText en="Framing review" sv="Framing-granskning" />
+              </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Story Ideas stay in Framing, while Tollgate 1 approvals for the Framing brief are coordinated here. This is about intent and direction, not delivery execution.
+                <LocalizedText
+                  en="Story Ideas stay in Framing, while Tollgate 1 approvals for the Framing brief are coordinated here. This is about intent and direction, not delivery execution."
+                  sv="Story Ideas ligger kvar i Framing, medan Tollgate 1-godkännanden för framingbriefen samordnas här. Det här handlar om riktning och intention, inte om leveransexekvering."
+                />
               </p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <p className="text-sm font-semibold text-foreground">Delivery review</p>
+              <p className="text-sm font-semibold text-foreground">
+                <LocalizedText en="Delivery review" sv="Leveransgranskning" />
+              </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Individual Delivery Stories do not use approval lanes here anymore. Use the Story pages for design completeness and Value Spine checks instead.
+                <LocalizedText
+                  en="Individual Delivery Stories do not use approval lanes here anymore. Use the Story pages for design completeness and Value Spine checks instead."
+                  sv="Enskilda Delivery Stories använder inte längre godkännandespår här. Använd Story-sidorna i stället för designkomplettering och Value Spine-kontroller."
+                />
               </p>
             </div>
           </div>
           <div className="mt-5 max-w-4xl">
-            <ContextHelp pattern={reviewHelp} summaryLabel="Open human review help" />
+            <ContextHelp pattern={reviewHelp} summaryLabel={<LocalizedText en="Open human review help" sv="Öppna hjälp för human review" />} />
           </div>
         </div>
 
@@ -1273,41 +1292,61 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             actionHref={firstBlockedOperational?.href ?? firstInProgressOperational?.href ?? firstReadyToStart?.href}
             actionLabel={
               firstBlockedOperational
-                ? "Open first blocked review"
+                ? <LocalizedText en="Open first blocked review" sv="Öppna första blockerade granskningen" />
                 : firstInProgressOperational
-                  ? "Open next review"
+                  ? <LocalizedText en="Open next review" sv="Öppna nästa granskning" />
                   : firstReadyToStart
-                    ? "Open ready Delivery Story"
+                    ? <LocalizedText en="Open ready Delivery Story" sv="Öppna färdig Delivery Story" />
                     : undefined
             }
             className="border-border/70 bg-background text-foreground"
             count={operationalReview.summary.total}
-            description="All framing reviews and Delivery Story reviews that still need human attention."
-            label="Needs human action now"
+            description={
+              <LocalizedText
+                en="All framing reviews and Delivery Story reviews that still need human attention."
+                sv="Alla framinggranskningar och Delivery Story-granskningar som fortfarande behöver mänsklig uppmärksamhet."
+              />
+            }
+            label={<LocalizedText en="Needs human action now" sv="Behöver mänsklig åtgärd nu" />}
           />
           <ReviewSummaryCard
             actionHref={framingReviewItems[0]?.href}
-            actionLabel={framingReviewItems[0] ? "Open framing review" : undefined}
+            actionLabel={framingReviewItems[0] ? <LocalizedText en="Open framing review" sv="Öppna framinggranskning" /> : undefined}
             className="border-sky-200 bg-sky-50 text-sky-950"
             count={framingReviewItems.length}
-            description="Outcome tollgates and framing decisions that still need a human reviewer."
-            label="Framing approvals"
+            description={
+              <LocalizedText
+                en="Outcome tollgates and framing decisions that still need a human reviewer."
+                sv="Outcome-tollgates och framingbeslut som fortfarande behöver en mänsklig granskare."
+              />
+            }
+            label={<LocalizedText en="Framing approvals" sv="Framing-godkännanden" />}
           />
           <ReviewSummaryCard
             actionHref={deliveryReviewItems[0]?.href}
-            actionLabel={deliveryReviewItems[0] ? "Open delivery review" : undefined}
+            actionLabel={deliveryReviewItems[0] ? <LocalizedText en="Open delivery review" sv="Öppna leveransgranskning" /> : undefined}
             className="border-indigo-200 bg-indigo-50 text-indigo-950"
             count={deliveryReviewItems.length}
-            description="Reserved for a future design-wide checkpoint. Individual Delivery Stories are no longer approved here."
-            label="Delivery review"
+            description={
+              <LocalizedText
+                en="Reserved for a future design-wide checkpoint. Individual Delivery Stories are no longer approved here."
+                sv="Reserverad för en framtida designövergripande kontrollpunkt. Enskilda Delivery Stories godkänns inte längre här."
+              />
+            }
+            label={<LocalizedText en="Delivery review" sv="Leveransgranskning" />}
           />
           <ReviewSummaryCard
             actionHref={firstBlockedOperational?.href}
-            actionLabel={firstBlockedOperational ? "Go to blocker" : undefined}
+            actionLabel={firstBlockedOperational ? <LocalizedText en="Go to blocker" sv="Gå till blockerare" /> : undefined}
             className="border-rose-200 bg-rose-50 text-rose-950"
             count={operationalReview.summary.blocked}
-            description="Human work cannot continue until these blockers are cleared in the linked workspace."
-            label="Blocked reviews"
+            description={
+              <LocalizedText
+                en="Human work cannot continue until these blockers are cleared in the linked workspace."
+                sv="Mänskligt arbete kan inte fortsätta förrän dessa blockerare har lösts i den länkade arbetsytan."
+              />
+            }
+            label={<LocalizedText en="Blocked reviews" sv="Blockerade granskningar" />}
           />
         </div>
 
@@ -1321,17 +1360,27 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   })
                 : undefined
             }
-            actionLabel={firstImportedCandidate ? "Open import approval" : undefined}
+            actionLabel={firstImportedCandidate ? <LocalizedText en="Open import approval" sv="Öppna importgodkännande" /> : undefined}
             className="border-border/70 bg-background text-foreground"
             count={queue.summary.total}
-            description="Imported objects waiting to be approved into Framing or Design."
-            label="Import objects to review"
+            description={
+              <LocalizedText
+                en="Imported objects waiting to be approved into Framing or Design."
+                sv="Importerade objekt som väntar på att godkännas in i Framing eller Design."
+              />
+            }
+            label={<LocalizedText en="Import objects to review" sv="Importobjekt att granska" />}
           />
           <ReviewSummaryCard
             className="border-emerald-200 bg-emerald-50 text-emerald-950"
             count={completedCount}
-            description="Imported candidates that already have a final human decision: approved into project records or discarded."
-            label="Imported decisions done"
+            description={
+              <LocalizedText
+                en="Imported candidates that already have a final human decision: approved into project records or discarded."
+                sv="Importerade kandidater som redan har ett slutligt mänskligt beslut: godkända in i projektposter eller avvisade."
+              />
+            }
+            label={<LocalizedText en="Imported decisions done" sv="Importerade beslut klara" />}
           />
           <ReviewSummaryCard
             actionHref={
@@ -1342,25 +1391,40 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   })
                 : undefined
             }
-            actionLabel={firstImportedCandidate ? "Resolve next import approval" : undefined}
+            actionLabel={firstImportedCandidate ? <LocalizedText en="Resolve next import approval" sv="Hantera nästa importgodkännande" /> : undefined}
             className="border-sky-200 bg-sky-50 text-sky-950"
             count={remainingCount}
-            description="Imported objects that still need a human to fix, approve or reject."
-            label="Imported decisions left"
+            description={
+              <LocalizedText
+                en="Imported objects that still need a human to fix, approve or reject."
+                sv="Importerade objekt som fortfarande behöver en människa för att rätta, godkänna eller avvisa."
+              />
+            }
+            label={<LocalizedText en="Imported decisions left" sv="Importerade beslut kvar" />}
           />
           <ReviewSummaryCard
             className="border-border/70 bg-background text-foreground"
             count={`${completionPercent}%`}
-            description="How much of the imported review queue already has a final human disposition."
-            label="Imported queue completed"
+            description={
+              <LocalizedText
+                en="How much of the imported review queue already has a final human disposition."
+                sv="Hur stor del av den importerade granskningskön som redan har ett slutligt mänskligt beslut."
+              />
+            }
+            label={<LocalizedText en="Imported queue completed" sv="Importerad kö klar" />}
           />
         </div>
 
         <Card className="border-border/70 shadow-sm" id="operational-review">
           <CardHeader>
-            <CardTitle>Human review lanes</CardTitle>
+            <CardTitle>
+              <LocalizedText en="Human review lanes" sv="Spår för human review" />
+            </CardTitle>
             <CardDescription>
-              This page is split into Framing approvals and Delivery review. Story Ideas stay in Framing or Import. Individual Delivery Stories no longer require human approval lanes here.
+              <LocalizedText
+                en="This page is split into Framing approvals and Delivery review. Story Ideas stay in Framing or Import. Individual Delivery Stories no longer require human approval lanes here."
+                sv="Den här sidan är uppdelad i Framing-godkännanden och leveransgranskning. Story Ideas ligger kvar i Framing eller Import. Enskilda Delivery Stories kräver inte längre egna human review-spår här."
+              />
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1370,7 +1434,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </div>
             ) : operationalReview.items.length === 0 ? (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                No Framing approvals are currently waiting for human action.
+                <LocalizedText
+                  en="No Framing approvals are currently waiting for human action."
+                  sv="Inga Framing-godkännanden väntar just nu på mänsklig åtgärd."
+                />
               </div>
             ) : (
               operationalGroups.map((group) => (
@@ -1434,13 +1501,16 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Human review approval workspace
+                    <LocalizedText en="Human review approval workspace" sv="Arbetsyta för human review-godkännande" />
                   </p>
                   <h2 className="mt-2 text-xl font-semibold text-foreground">
                     {selectedOperationalReviewItem.key} {selectedOperationalReviewItem.title}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    This is the same live Tollgate 1 approval workspace that Framing uses, surfaced directly in Human Review so you can complete approvals here.
+                    <LocalizedText
+                      en="This is the same live Tollgate 1 approval workspace that Framing uses, surfaced directly in Human Review so you can complete approvals here."
+                      sv="Det här är samma live-arbetsyta för Tollgate 1-godkännande som Framing använder, nu visad direkt i Human Review så att du kan slutföra godkännanden här."
+                    />
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1449,7 +1519,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                   </span>
                   <Button asChild size="sm" variant="secondary">
                     <Link href={`/framing?outcomeId=${selectedOperationalReviewItem.entityId}#tollgate-review`}>
-                      Open full Framing
+                      <LocalizedText en="Open full Framing" sv="Öppna hela Framing" />
                     </Link>
                   </Button>
                 </div>
@@ -1471,7 +1541,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         {queue.state === "unavailable" ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Imported review backlog is unavailable</CardTitle>
+              <CardTitle>
+                <LocalizedText en="Imported review backlog is unavailable" sv="Importerad granskningsbacklog är inte tillgänglig" />
+              </CardTitle>
               <CardDescription>{queue.message}</CardDescription>
             </CardHeader>
           </Card>
@@ -1481,15 +1553,20 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardHeader>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <CardTitle>Import object review</CardTitle>
+                    <CardTitle>
+                      <LocalizedText en="Import object review" sv="Granskning av importobjekt" />
+                    </CardTitle>
                     <CardDescription>
-                      This section only covers imported objects from Import. Tollgate 1, framing PDFs, and version approvals remain in Human review lanes above.
+                      <LocalizedText
+                        en="This section only covers imported objects from Import. Tollgate 1, framing PDFs, and version approvals remain in Human review lanes above."
+                        sv="Den här sektionen täcker bara importerade objekt från Import. Tollgate 1, framing-PDF:er och versionsgodkännanden ligger kvar i spåren för human review ovanför."
+                      />
                     </CardDescription>
                   </div>
                   {reviewStatusFilter !== "all" || importIntentFilter !== "all" ? (
                     <Button asChild className="gap-2" variant="secondary">
                       <Link href={buildReviewHref({ candidateId })}>
-                        Clear filter
+                        <LocalizedText en="Clear filter" sv="Rensa filter" />
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -1499,7 +1576,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardContent className="space-y-4">
                 {importIntentGroups.length === 0 ? (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                    No imported candidates are currently waiting for human action. Sessions where every imported object was already approved or rejected are hidden from this review list.
+                    <LocalizedText
+                      en="No imported candidates are currently waiting for human action. Sessions where every imported object was already approved or rejected are hidden from this review list."
+                      sv="Inga importerade kandidater väntar just nu på mänsklig åtgärd. Sessioner där varje importerat objekt redan har godkänts eller avvisats döljs från den här granskningslistan."
+                    />
                   </div>
                 ) : (
                   importIntentGroups.map((intentGroup) => (
@@ -1508,13 +1588,21 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                         <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
                           <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-medium text-foreground">Imported framing objects</p>
+                              <p className="font-medium text-foreground">
+                                <LocalizedText en="Imported framing objects" sv="Importerade framingobjekt" />
+                              </p>
                               <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                {intentGroup.sessions.length} session{intentGroup.sessions.length === 1 ? "" : "s"}
+                                <LocalizedText
+                                  en={`${intentGroup.sessions.length} session${intentGroup.sessions.length === 1 ? "" : "s"}`}
+                                  sv={`${intentGroup.sessions.length} session${intentGroup.sessions.length === 1 ? "" : "er"}`}
+                                />
                               </span>
                             </div>
                             <p className="text-sm leading-6 text-muted-foreground">
-                              Open one import session below to review imported objects in the same indented value spine workspace as Import.
+                              <LocalizedText
+                                en="Open one import session below to review imported objects in the same indented value spine workspace as Import."
+                                sv="Öppna en importsession nedan för att granska importerade objekt i samma indenterade value spine-arbetsyta som i Import."
+                              />
                             </p>
                           </div>
 
@@ -1529,13 +1617,16 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                               <div className="space-y-4">
                                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
                                   <p className="text-sm text-muted-foreground">
-                                    This import session only affects imported review objects. Deleting it removes the intake session, files, and import candidates from review, but keeps any project records that were already approved into Framing or Design.
+                                    <LocalizedText
+                                      en="This import session only affects imported review objects. Deleting it removes the intake session, files, and import candidates from review, but keeps any project records that were already approved into Framing or Design."
+                                      sv="Den här importsessionen påverkar bara importerade granskningsobjekt. Om du tar bort den försvinner importsessionen, filerna och importkandidaterna från review, men projektposter som redan har godkänts in i Framing eller Design behålls."
+                                    />
                                   </p>
                                   <form action={deleteArtifactIntakeSessionAction}>
                                     <input name="sessionId" type="hidden" value={group.id} />
                                     <Button className="gap-2" type="submit" variant="secondary">
                                       <CircleAlert className="h-4 w-4" />
-                                      Delete import session
+                                      <LocalizedText en="Delete import session" sv="Ta bort importsession" />
                                     </Button>
                                   </form>
                                 </div>
