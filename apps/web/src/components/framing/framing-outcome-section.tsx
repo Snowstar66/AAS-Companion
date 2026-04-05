@@ -329,8 +329,9 @@ function getDeliveryTypeContextualGuidance(value: "AD" | "AT" | "AM" | null | un
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function DeliveryTypeHelpCard(props: { value: "AD" | "AT" | "AM" | null | undefined }) {
+function DeliveryTypeHelpCard(props: { value: "AD" | "AT" | "AM" | null | undefined; language?: "en" | "sv" }) {
   const selectedProfile = getDeliveryTypeProfile(props.value);
+  const language = props.language ?? "en";
 
   return (
     <details className="group rounded-2xl border border-border/70 bg-background/85 shadow-sm">
@@ -344,7 +345,7 @@ function DeliveryTypeHelpCard(props: { value: "AD" | "AT" | "AM" | null | undefi
       <div className="space-y-4 border-t border-border/70 px-4 py-4">
         <p className="text-sm leading-6 text-muted-foreground">
           The selected project type should change how you frame baseline, outcomes, evidence, risks and the shape of Epics.
-          {selectedProfile ? ` Current selection: ${selectedProfile.label}.` : ""}
+          {selectedProfile ? ` ${translate(language, "Current selection", "Nuvarande val")}: ${selectedProfile.label}.` : ""}
         </p>
         <div className="grid gap-4 xl:grid-cols-3">
           {(Object.entries(deliveryTypeProfiles) as Array<[DeliveryTypeValue, (typeof deliveryTypeProfiles)[DeliveryTypeValue]]>).map(
@@ -364,13 +365,13 @@ function DeliveryTypeHelpCard(props: { value: "AD" | "AT" | "AM" | null | undefi
                   </span>
                 </div>
                 <div className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-                  <p><strong className="text-foreground">Primary question:</strong> {profile.primaryQuestion}</p>
+                  <p><strong className="text-foreground">{translate(language, "Primary question:", "Primär fråga:")}</strong> {profile.primaryQuestion}</p>
                   <p><strong className="text-foreground">Baseline:</strong> {profile.baselinePosition}</p>
                   <p><strong className="text-foreground">Outcome:</strong> {profile.outcomeType}</p>
-                  <p><strong className="text-foreground">Evidence:</strong> {profile.evidenceNeed}</p>
+                  <p><strong className="text-foreground">{translate(language, "Evidence:", "Bevis:")}</strong> {profile.evidenceNeed}</p>
                   <p><strong className="text-foreground">Epics:</strong> {profile.epicCharacter}</p>
                   <p><strong className="text-foreground">Risk:</strong> {profile.riskType}</p>
-                  <p><strong className="text-foreground">Governance:</strong> {profile.governanceNeeds}</p>
+                  <p><strong className="text-foreground">{translate(language, "Governance:", "Governance:")}</strong> {profile.governanceNeeds}</p>
                 </div>
               </div>
             )
@@ -1406,10 +1407,12 @@ export async function DeferredOutcomeTollgateSection(props: {
   outcomeId: string;
   isArchived: boolean;
   defaultBlockers: string[];
+  language?: "en" | "sv";
   submitTollgateAction: (formData: FormData) => void | Promise<void>;
   recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
 }) {
   void props.submitTollgateAction;
+  const language = props.language ?? "en";
   const session = await requireActiveProjectSession();
   const tollgateResult = await getCachedOutcomeTollgateReviewData(
     session.organization.organizationId,
@@ -1466,20 +1469,36 @@ export async function DeferredOutcomeTollgateSection(props: {
       ? "Framing approvals are in progress for the current version."
       : "Tollgate 1 approvals can be recorded now.";
   const primaryStatusDetail = currentVersionApproved
-    ? `The required approval roles for the current AI level signed off on Framing version ${currentFramingVersion}${latestApprovalRecord ? ` on ${formatDateTime(latestApprovalRecord.createdAt)}` : ""}.`
+    ? translate(
+        language,
+        `The required approval roles for the current AI level signed off on Framing version ${currentFramingVersion}${latestApprovalRecord ? ` on ${formatDateTime(latestApprovalRecord.createdAt)}` : ""}.`,
+        `De godkännanderoller som krävs för aktuell AI-nivå har signerat Framing-version ${currentFramingVersion}${latestApprovalRecord ? ` den ${formatDateTime(latestApprovalRecord.createdAt)}` : ""}.`
+      )
     : versionRecommendationVisible
-      ? `Framing changed after version ${approvedVersion}. A fresh approval is recommended for version ${currentFramingVersion}.`
+      ? translate(
+          language,
+          `Framing changed after version ${approvedVersion}. A fresh approval is recommended for version ${currentFramingVersion}.`,
+          `Framing ändrades efter version ${approvedVersion}. Ett nytt godkännande rekommenderas för version ${currentFramingVersion}.`
+        )
       : visibleBlockers.length > 0
-      ? "Approvals are still allowed, but the open warnings below should be reviewed before you rely on this Framing as a stable baseline."
-        : "The Framing looks complete enough. Record the required approvals for the current AI level below.";
+      ? translate(
+          language,
+          "Approvals are still allowed, but the open warnings below should be reviewed before you rely on this Framing as a stable baseline.",
+          "Godkännanden är fortfarande tillåtna, men de öppna varningarna nedan bör granskas innan du förlitar dig på denna Framing som stabil baseline."
+        )
+        : translate(
+            language,
+            "The Framing looks complete enough. Record the required approvals for the current AI level below.",
+            "Framingen ser tillräckligt komplett ut. Registrera de godkännanden som krävs för aktuell AI-nivå nedan."
+          );
   const riskSummaryRows = [
     {
       label: "AI Level",
       value: outcome.aiAccelerationLevel.replaceAll("_", " ")
     },
     {
-      label: "Risk profile",
-      value: outcome.riskProfile ? outcome.riskProfile.charAt(0).toUpperCase() + outcome.riskProfile.slice(1) : "Not determined"
+      label: translate(language, "Risk profile", "Riskprofil"),
+      value: outcome.riskProfile ? outcome.riskProfile.charAt(0).toUpperCase() + outcome.riskProfile.slice(1) : translate(language, "Not determined", "Inte fastställd")
     },
     {
       label: "Business impact",
@@ -1534,14 +1553,18 @@ export async function DeferredOutcomeTollgateSection(props: {
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Approval overview</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{translate(language, "Approval overview", "Godkännandeöversikt")}</p>
                   <p className="mt-2 leading-6 text-foreground">
-                    Version {currentFramingVersion} and {completedApprovals.length} of {tollgateReview.approvalActions.length} approvals recorded
+                    {translate(
+                      language,
+                      `Version ${currentFramingVersion} and ${completedApprovals.length} of ${tollgateReview.approvalActions.length} approvals recorded`,
+                      `Version ${currentFramingVersion} och ${completedApprovals.length} av ${tollgateReview.approvalActions.length} godkännanden registrerade`
+                    )}
                   </p>
                 </div>
                 {versionRecommendationVisible ? (
                   <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
-                    New approval recommended
+                    {translate(language, "New approval recommended", "Nytt godkännande rekommenderas")}
                   </span>
                 ) : null}
               </div>
@@ -1598,11 +1621,13 @@ export async function DeferredOutcomeTollgateSection(props: {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button asChild className="gap-2" variant="secondary">
                 <Link href={`/outcomes/${props.outcomeId}/approval-document`}>
-                  {approvedVersion === currentFramingVersion ? "Open approved framing document" : "Open last approved framing document"}
+                  {approvedVersion === currentFramingVersion
+                    ? translate(language, "Open approved framing document", "Öppna godkänt framingdokument")
+                    : translate(language, "Open last approved framing document", "Öppna senast godkända framingdokumentet")}
                 </Link>
               </Button>
               <p className="text-sm text-muted-foreground">
-                Open the saved approval record and print it as a PDF with the full Framing, approvals and dates.
+                {translate(language, "Open the saved approval record and print it as a PDF with the full Framing, approvals and dates.", "Öppna det sparade godkännandet och skriv ut det som PDF med full Framing, godkännanden och datum.")}
               </p>
             </div>
           ) : null}
@@ -1643,17 +1668,17 @@ export async function DeferredOutcomeTollgateSection(props: {
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-950">
                       <div className="flex items-center gap-2 font-medium">
                         <CircleCheckBig className="h-4 w-4" />
-                        Approved by {completedRecord.actualPersonName}
+                        {translate(language, "Approved by", "Godkänd av")} {completedRecord.actualPersonName}
                       </div>
                       <p className="mt-2 leading-6">{formatDateTime(completedRecord.createdAt)}</p>
-                      {completedRecord.note ? <p className="mt-2 leading-6">Motivation: {completedRecord.note}</p> : null}
+                      {completedRecord.note ? <p className="mt-2 leading-6">{translate(language, "Motivation", "Motivering")}: {completedRecord.note}</p> : null}
                     </div>
                   ) : props.isArchived ? (
                     <div className="rounded-2xl border border-border/70 bg-muted/15 px-4 py-3 text-muted-foreground">
-                      Restore the Framing brief to continue approvals.
+                      {translate(language, "Restore the Framing brief to continue approvals.", "Återställ framingbriefen för att fortsätta godkännanden.")}
                     </div>
                   ) : (
-                    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">Pending approval</p>
+                    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">{translate(language, "Pending approval", "Väntar på godkännande")}</p>
                   )}
                 </div>
 
@@ -1664,7 +1689,7 @@ export async function DeferredOutcomeTollgateSection(props: {
                       : "border-amber-200 bg-amber-50 text-amber-800"
                   }`}
                 >
-                  {completedRecord ? "Approved" : "Pending"}
+                  {completedRecord ? translate(language, "Approved", "Godkänd") : translate(language, "Pending", "Väntar")}
                 </span>
               </div>
 
@@ -1682,7 +1707,7 @@ export async function DeferredOutcomeTollgateSection(props: {
                     <input name="decisionStatus" type="hidden" value="approved" />
                     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Approver</span>
+                        <span className="text-sm font-medium text-foreground">{translate(language, "Approver", "Godkännare")}</span>
                         <select
                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                           defaultValue={action.assignedPeople[0]?.partyRoleEntryId ?? ""}
@@ -1696,7 +1721,7 @@ export async function DeferredOutcomeTollgateSection(props: {
                         </select>
                       </label>
                       <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">Motivation</span>
+                        <span className="text-sm font-medium text-foreground">{translate(language, "Motivation", "Motivering")}</span>
                         <input
                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                           name="note"
@@ -1709,21 +1734,20 @@ export async function DeferredOutcomeTollgateSection(props: {
                       <label className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/15 px-4 py-3 text-sm">
                         <input className="mt-1 h-4 w-4" name="confirmApproval" required type="checkbox" value="yes" />
                         <span className="leading-6 text-foreground">
-                          I confirm that this Framing version can be approved from the perspective of this role.
+                          {translate(language, "I confirm that this Framing version can be approved from the perspective of this role.", "Jag bekräftar att denna Framing-version kan godkännas från den här rollens perspektiv.")}
                         </span>
                       </label>
                       <PendingFormButton
                         className="gap-2 whitespace-nowrap"
                         icon={<ShieldCheck className="h-4 w-4" />}
-                        label={`Approve as ${action.label}`}
-                        pendingLabel="Recording approval..."
+                        label={translate(language, `Approve as ${action.label}`, `Godkänn som ${action.label}`)}
+                        pendingLabel={translate(language, "Recording approval...", "Registrerar godkännande...")}
                       />
                     </div>
                   </form>
                 ) : (
                   <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-                    Assign an active {formatRoleLabel(action.roleType)} on the {action.organizationSide} side before this
-                    approval can be recorded.
+                    {translate(language, "Assign an active", "Tilldela en aktiv")} {formatRoleLabel(action.roleType)} {translate(language, "on the", "på")} {action.organizationSide} {translate(language, "side before this approval can be recorded.", "sidan innan detta godkännande kan registreras.")}
                   </div>
                 )
               ) : null}

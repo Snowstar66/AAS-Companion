@@ -37,6 +37,7 @@ type SupervisorView = {
 type GovernanceAgentRegistryViewProps = {
   agents: AgentView[];
   activeSupervisors: SupervisorView[];
+  language: "en" | "sv";
   returnParams: ReturnParams;
   createAction: (formData: FormData) => void | Promise<void>;
   updateAction: (formData: FormData) => void | Promise<void>;
@@ -44,6 +45,10 @@ type GovernanceAgentRegistryViewProps = {
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
 }
 
 function ReturnInputs({ params }: { params: ReturnParams }) {
@@ -61,6 +66,7 @@ function ReturnInputs({ params }: { params: ReturnParams }) {
 export function GovernanceAgentRegistryView({
   agents,
   activeSupervisors,
+  language,
   returnParams,
   createAction,
   updateAction
@@ -72,9 +78,9 @@ export function GovernanceAgentRegistryView({
           <div className="flex items-start gap-3">
             <Bot className="mt-0.5 h-5 w-5 text-primary" />
             <div>
-              <CardTitle>Agent registry</CardTitle>
+              <CardTitle>{t(language, "Agent registry", "Agentregister")}</CardTitle>
               <CardDescription>
-                Agents stay compact by default and expand only when you want to edit one.
+                {t(language, "Agents stay compact by default and expand only when you want to edit one.", "Agenter hålls kompakta som standard och expanderas bara när du vill redigera en.")}
               </CardDescription>
             </div>
           </div>
@@ -83,8 +89,8 @@ export function GovernanceAgentRegistryView({
           <details className="group rounded-2xl border border-border/70 bg-muted/10">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
               <div>
-                <p className="font-medium text-foreground">Add agent</p>
-                <p className="mt-1 text-sm text-muted-foreground">Register a new governed AI or automation agent.</p>
+                <p className="font-medium text-foreground">{t(language, "Add agent", "Lägg till agent")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t(language, "Register a new governed AI or automation agent.", "Registrera en ny styrd AI- eller automationsagent.")}</p>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Plus className="h-4 w-4" />
@@ -95,11 +101,11 @@ export function GovernanceAgentRegistryView({
               <form action={createAction} className="grid gap-4 lg:grid-cols-2">
                 <ReturnInputs params={returnParams} />
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Agent name</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Agent name", "Agentnamn")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="agentName" type="text" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Agent type</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Agent type", "Agenttyp")}</span>
                   <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue="bmad_agent" name="agentType">
                     {agentTypes.map((agentType) => (
                       <option key={agentType} value={agentType}>
@@ -109,23 +115,23 @@ export function GovernanceAgentRegistryView({
                   </select>
                 </label>
                 <label className="space-y-2 lg:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Purpose</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Purpose", "Syfte")}</span>
                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="purpose" />
                 </label>
                 <label className="space-y-2 lg:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Scope of work</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Scope of work", "Arbetsomfång")}</span>
                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="scopeOfWork" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Allowed artifact types</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Allowed artifact types", "Tillåtna artefakttyper")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="allowedArtifactTypes" type="text" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Allowed actions</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Allowed actions", "Tillåtna åtgärder")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="allowedActions" type="text" />
                 </label>
                 <label className="space-y-2 lg:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Supervising party role</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Supervising party role", "Superviserande partsroll")}</span>
                   <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="supervisingPartyRoleId">
                     {activeSupervisors.map((person) => (
                       <option key={person.id} value={person.id}>
@@ -137,7 +143,7 @@ export function GovernanceAgentRegistryView({
                 <div className="lg:col-span-2">
                   <Button className="gap-2" type="submit">
                     <Bot className="h-4 w-4" />
-                    Add agent
+                    {t(language, "Add agent", "Lägg till agent")}
                   </Button>
                 </div>
               </form>
@@ -165,12 +171,12 @@ export function GovernanceAgentRegistryView({
                           : "border border-border/70 bg-muted/20 text-muted-foreground"
                       }`}
                     >
-                      {agent.isActive ? "Active" : "Inactive"}
+                      {agent.isActive ? t(language, "Active", "Aktiv") : t(language, "Inactive", "Inaktiv")}
                     </span>
                   </div>
                   <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{agent.purpose}</p>
                   <p className="text-sm text-muted-foreground">
-                    Supervisor: {agent.supervisingPartyRole.fullName}
+                    {t(language, "Supervisor", "Supervisor")}: {agent.supervisingPartyRole.fullName}
                   </p>
                 </div>
               </div>
@@ -183,11 +189,11 @@ export function GovernanceAgentRegistryView({
                 <input name="id" type="hidden" value={agent.id} />
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Agent name</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Agent name", "Agentnamn")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.agentName} name="agentName" type="text" />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Agent type</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Agent type", "Agenttyp")}</span>
                     <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.agentType} name="agentType">
                       {agentTypes.map((agentType) => (
                         <option key={agentType} value={agentType}>
@@ -198,26 +204,26 @@ export function GovernanceAgentRegistryView({
                   </label>
                 </div>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Purpose</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Purpose", "Syfte")}</span>
                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={agent.purpose} name="purpose" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Scope of work</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Scope of work", "Arbetsomfång")}</span>
                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={agent.scopeOfWork} name="scopeOfWork" />
                 </label>
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Allowed artifact types</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Allowed artifact types", "Tillåtna artefakttyper")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.allowedArtifactTypes.join(", ")} name="allowedArtifactTypes" type="text" />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Allowed actions</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Allowed actions", "Tillåtna åtgärder")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.allowedActions.join(", ")} name="allowedActions" type="text" />
                   </label>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Supervising party role</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Supervising party role", "Superviserande partsroll")}</span>
                     <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={agent.supervisingPartyRoleId} name="supervisingPartyRoleId">
                       {activeSupervisors.map((person) => (
                         <option key={person.id} value={person.id}>
@@ -227,15 +233,15 @@ export function GovernanceAgentRegistryView({
                     </select>
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Status</span>
+                    <span className="text-sm font-medium text-foreground">{t(language, "Status", "Status")}</span>
                     <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={String(agent.isActive)} name="isActive">
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
+                      <option value="true">{t(language, "Active", "Aktiv")}</option>
+                      <option value="false">{t(language, "Inactive", "Inaktiv")}</option>
                     </select>
                   </label>
                 </div>
                 <div>
-                  <Button size="sm" type="submit">Save agent</Button>
+                  <Button size="sm" type="submit">{t(language, "Save agent", "Spara agent")}</Button>
                 </div>
               </form>
             </div>

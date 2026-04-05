@@ -27,6 +27,7 @@ type PartyRoleEntryView = {
 type GovernanceDirectoryViewProps = {
   customerPeople: PartyRoleEntryView[];
   supplierPeople: PartyRoleEntryView[];
+  language: "en" | "sv";
   returnParams: ReturnParams;
   createAction: (formData: FormData) => void | Promise<void>;
   updateAction: (formData: FormData) => void | Promise<void>;
@@ -34,6 +35,10 @@ type GovernanceDirectoryViewProps = {
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
 }
 
 function ReturnInputs({ params }: { params: ReturnParams }) {
@@ -50,6 +55,7 @@ function ReturnInputs({ params }: { params: ReturnParams }) {
 
 function PeopleGroup(props: {
   label: string;
+  language: "en" | "sv";
   tone: "customer" | "supplier";
   people: PartyRoleEntryView[];
   returnParams: ReturnParams;
@@ -59,12 +65,12 @@ function PeopleGroup(props: {
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
         <CardTitle>{props.label}</CardTitle>
-        <CardDescription>Compact role list. Expand only the role you want to inspect or edit.</CardDescription>
+        <CardDescription>{t(props.language, "Compact role list. Expand only the role you want to inspect or edit.", "Kompakt rollista. Expandera bara den roll du vill granska eller ändra.")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {props.people.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
-            No roles have been added for this side yet.
+            {t(props.language, "No roles have been added for this side yet.", "Inga roller har lagts till för den här sidan ännu.")}
           </div>
         ) : (
           props.people.map((person) => (
@@ -90,12 +96,12 @@ function PeopleGroup(props: {
                             : "border border-border/70 bg-muted/20 text-muted-foreground"
                         }`}
                       >
-                        {person.isActive ? "Active" : "Inactive"}
+                        {person.isActive ? t(props.language, "Active", "Aktiv") : t(props.language, "Inactive", "Inaktiv")}
                       </span>
                     </div>
                     <p className="text-sm text-foreground">{person.roleTitle}</p>
                     <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
-                      {person.mandateNotes || "No mandate notes recorded yet."}
+                      {person.mandateNotes || t(props.language, "No mandate notes recorded yet.", "Inga mandatnoteringar registrerade ännu.")}
                     </p>
                   </div>
                 </div>
@@ -107,19 +113,19 @@ function PeopleGroup(props: {
                   <ReturnInputs params={props.returnParams} />
                   <input name="id" type="hidden" value={person.id} />
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Full name</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Full name", "Fullständigt namn")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.fullName} name="fullName" type="text" />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Email</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Email", "E-post")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.email} name="email" type="email" />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Role title</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Role title", "Rolltitel")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.roleTitle} name="roleTitle" type="text" />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Role type</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Role type", "Rolltyp")}</span>
                     <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.roleType} name="roleType">
                       {partyRoleTypes.map((roleType) => (
                         <option key={roleType} value={roleType}>
@@ -129,7 +135,7 @@ function PeopleGroup(props: {
                     </select>
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Organization side</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Organization side", "Organisationssida")}</span>
                     <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.organizationSide} name="organizationSide">
                       {organizationSides.map((side) => (
                         <option key={side} value={side}>
@@ -139,26 +145,26 @@ function PeopleGroup(props: {
                     </select>
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Phone number</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Phone number", "Telefonnummer")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.phoneNumber ?? ""} name="phoneNumber" type="text" />
                   </label>
                   <label className="space-y-2 lg:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Avatar URL</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Avatar URL", "Avatar-URL")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.avatarUrl ?? ""} name="avatarUrl" type="text" />
                   </label>
                   <label className="space-y-2 lg:col-span-2">
-                    <span className="text-sm font-medium text-foreground">Mandate notes</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Mandate notes", "Mandatnoteringar")}</span>
                     <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={person.mandateNotes ?? ""} name="mandateNotes" />
                   </label>
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Status</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Status", "Status")}</span>
                     <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={String(person.isActive)} name="isActive">
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
+                      <option value="true">{t(props.language, "Active", "Aktiv")}</option>
+                      <option value="false">{t(props.language, "Inactive", "Inaktiv")}</option>
                     </select>
                   </label>
                   <div className="lg:col-span-2">
-                    <Button size="sm" type="submit">Save role</Button>
+                    <Button size="sm" type="submit">{t(props.language, "Save role", "Spara roll")}</Button>
                   </div>
                 </form>
               </div>
@@ -173,6 +179,7 @@ function PeopleGroup(props: {
 export function GovernanceDirectoryView({
   customerPeople,
   supplierPeople,
+  language,
   returnParams,
   createAction,
   updateAction
@@ -184,9 +191,9 @@ export function GovernanceDirectoryView({
           <div className="flex items-start gap-3">
             <UsersRound className="mt-0.5 h-5 w-5 text-primary" />
             <div>
-              <CardTitle>Party and role directory</CardTitle>
+              <CardTitle>{t(language, "Party and role directory", "Part- och rollkatalog")}</CardTitle>
               <CardDescription>
-                Customer and supplier roles stay grouped, compact and easy to scan.
+                {t(language, "Customer and supplier roles stay grouped, compact and easy to scan.", "Kund- och leverantörsroller hålls grupperade, kompakta och lättöverskådliga.")}
               </CardDescription>
             </div>
           </div>
@@ -195,8 +202,8 @@ export function GovernanceDirectoryView({
           <details className="group rounded-2xl border border-border/70 bg-muted/10">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
               <div>
-                <p className="font-medium text-foreground">Add role</p>
-                <p className="mt-1 text-sm text-muted-foreground">Create a named customer or supplier role only when needed.</p>
+                <p className="font-medium text-foreground">{t(language, "Add role", "Lägg till roll")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t(language, "Create a named customer or supplier role only when needed.", "Skapa en namngiven kund- eller leverantörsroll bara när det behövs.")}</p>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Plus className="h-4 w-4" />
@@ -207,15 +214,15 @@ export function GovernanceDirectoryView({
               <form action={createAction} className="grid gap-4 lg:grid-cols-2">
                 <ReturnInputs params={returnParams} />
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Full name</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Full name", "Fullständigt namn")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="fullName" type="text" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Email</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Email", "E-post")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="email" type="email" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Organization side</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Organization side", "Organisationssida")}</span>
                   <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue="customer" name="organizationSide">
                     {organizationSides.map((side) => (
                       <option key={side} value={side}>
@@ -225,7 +232,7 @@ export function GovernanceDirectoryView({
                   </select>
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Role type</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Role type", "Rolltyp")}</span>
                   <select className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue="value_owner" name="roleType">
                     {partyRoleTypes.map((roleType) => (
                       <option key={roleType} value={roleType}>
@@ -235,25 +242,25 @@ export function GovernanceDirectoryView({
                   </select>
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Role title</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Role title", "Rolltitel")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="roleTitle" type="text" />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Phone number</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Phone number", "Telefonnummer")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="phoneNumber" type="text" />
                 </label>
                 <label className="space-y-2 lg:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Avatar URL</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Avatar URL", "Avatar-URL")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="avatarUrl" type="text" />
                 </label>
                 <label className="space-y-2 lg:col-span-2">
-                  <span className="text-sm font-medium text-foreground">Mandate notes</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Mandate notes", "Mandatnoteringar")}</span>
                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" name="mandateNotes" />
                 </label>
                 <div className="lg:col-span-2">
                   <Button className="gap-2" type="submit">
                     <UsersRound className="h-4 w-4" />
-                    Add role
+                    {t(language, "Add role", "Lägg till roll")}
                   </Button>
                 </div>
               </form>
@@ -263,8 +270,8 @@ export function GovernanceDirectoryView({
       </Card>
 
       <div className="grid gap-6 2xl:grid-cols-2">
-        <PeopleGroup label="Customer" people={customerPeople} returnParams={returnParams} tone="customer" updateAction={updateAction} />
-        <PeopleGroup label="Supplier" people={supplierPeople} returnParams={returnParams} tone="supplier" updateAction={updateAction} />
+        <PeopleGroup label={t(language, "Customer", "Kund")} language={language} people={customerPeople} returnParams={returnParams} tone="customer" updateAction={updateAction} />
+        <PeopleGroup label={t(language, "Supplier", "Leverantör")} language={language} people={supplierPeople} returnParams={returnParams} tone="supplier" updateAction={updateAction} />
       </div>
     </div>
   );
