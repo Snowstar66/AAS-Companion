@@ -2,6 +2,7 @@ export { prisma } from "./client";
 export {
   appendArtifactFileRejections,
   createArtifactIntakeSession,
+  deleteArtifactIntakeSession,
   getArtifactIntakeFileById,
   listArtifactIntakeSessions,
   reviewArtifactFileSectionDisposition,

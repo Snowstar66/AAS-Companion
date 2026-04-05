@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getArtifactCandidateService, promoteArtifactCandidateService, reviewArtifactCandidateService } from "@aas-companion/api";
+import {
+  deleteArtifactIntakeSessionService,
+  getArtifactCandidateService,
+  promoteArtifactCandidateService,
+  reviewArtifactCandidateService
+} from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildRedirect(params: Record<string, string | undefined>) {
@@ -351,6 +356,46 @@ export async function submitArtifactBulkReviewAction(formData: FormData) {
         failures.length > 0
           ? `Approved ${promotedCount} selected ${importIntent} import candidate(s). ${failures.length} item(s) still need attention: ${failures.slice(0, 2).join(" | ")}`
           : `Approved ${promotedCount} selected ${importIntent} import candidate(s).`
+    })
+  );
+}
+
+export async function deleteArtifactIntakeSessionAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const sessionId = String(formData.get("sessionId") ?? "");
+
+  if (!sessionId) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: "Choose an import session before trying to delete it."
+      })
+    );
+  }
+
+  const result = await deleteArtifactIntakeSessionService({
+    organizationId: session.organization.organizationId,
+    sessionId
+  });
+
+  revalidatePath("/review");
+  revalidatePath("/intake");
+  revalidatePath("/workspace");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: result.errors[0]?.message ?? "Import session could not be deleted."
+      })
+    );
+  }
+
+  redirect(
+    buildRedirect({
+      status: "deleted",
+      message: `${result.data.label} was removed from import review.`
     })
   );
 }

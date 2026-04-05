@@ -16,7 +16,11 @@ import {
   submitArtifactSectionDispositionInlineAction,
   submitFramingBulkApproveFromIntakeAction
 } from "../intake/actions";
-import { submitArtifactBulkReviewAction, submitArtifactCandidateReviewAction } from "./actions";
+import {
+  deleteArtifactIntakeSessionAction,
+  submitArtifactBulkReviewAction,
+  submitArtifactCandidateReviewAction
+} from "./actions";
 
 type ReviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -978,23 +982,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const importIntentFilter = getParamValue(query.importIntent) ?? "all";
   const reviewHelp = getHelpPattern("review.workspace", null);
 
-  const backlogSummary = queue.items.reduce(
-    (summary, candidate) => {
-      const state = getBacklogState(candidate);
-      summary[state] += 1;
-      return summary;
-    },
-    {
-      needs_action: 0,
-      needs_confirmation: 0,
-      pending: 0,
-      approved: 0,
-      discarded: 0
-    }
-  );
-
-  const completedCount = backlogSummary.approved + backlogSummary.discarded;
-  const remainingCount = Math.max(queue.summary.total - completedCount, 0);
+  const completedCount = queue.summary.promoted + queue.summary.rejected;
+  const remainingCount = queue.items.length;
   const completionPercent = queue.summary.total > 0 ? Math.round((completedCount / queue.summary.total) * 100) : 0;
   const sortedQueueItems = sortReviewCandidates(queue.items, queue.items);
   const visibleItems = sortedQueueItems.filter((candidate) => {
@@ -1456,7 +1445,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardContent className="space-y-4">
                 {importIntentGroups.length === 0 ? (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                    No imported candidates match the current review filter.
+                    No imported candidates are currently waiting for human action. Sessions where every imported object was already approved or rejected are hidden from this review list.
                   </div>
                 ) : (
                   importIntentGroups.map((intentGroup) => (
@@ -1483,7 +1472,20 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                               key={`${intentGroup.importIntent}-${group.id}`}
                               title={group.label}
                             >
-                              <div className="grid gap-3">
+                              <div className="space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
+                                  <p className="text-sm text-muted-foreground">
+                                    This import session only affects imported review objects. Deleting it removes the intake session, files, and import candidates from review, but keeps any project records that were already approved into Framing or Design.
+                                  </p>
+                                  <form action={deleteArtifactIntakeSessionAction}>
+                                    <input name="sessionId" type="hidden" value={group.id} />
+                                    <Button className="gap-2" type="submit" variant="secondary">
+                                      <CircleAlert className="h-4 w-4" />
+                                      Delete import session
+                                    </Button>
+                                  </form>
+                                </div>
+                                <div className="grid gap-3">
                                 {group.files.map((file) => {
                                   const isActive = activeFramingFile?.id === file.id;
 
@@ -1511,6 +1513,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                     </Link>
                                   );
                                 })}
+                                </div>
                               </div>
                             </CollapsibleSection>
                           ))}

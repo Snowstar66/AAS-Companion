@@ -330,6 +330,95 @@ export async function reviewArtifactFileSectionDisposition(input: unknown) {
   });
 }
 
+export async function deleteArtifactIntakeSession(input: {
+  organizationId: string;
+  sessionId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const session = await tx.artifactIntakeSession.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        id: input.sessionId
+      },
+      select: {
+        id: true,
+        label: true,
+        files: {
+          select: {
+            id: true
+          }
+        },
+        candidates: {
+          select: {
+            id: true
+          }
+        }
+      }
+    });
+
+    if (!session) {
+      throw new Error("Artifact intake session was not found in organization scope.");
+    }
+
+    const fileIds = session.files.map((file) => file.id);
+    const candidateIds = session.candidates.map((candidate) => candidate.id);
+
+    if (candidateIds.length > 0) {
+      await tx.activityEvent.deleteMany({
+        where: {
+          organizationId: input.organizationId,
+          entityType: "artifact_aas_candidate",
+          entityId: {
+            in: candidateIds
+          }
+        }
+      });
+
+      await tx.artifactAasCandidate.deleteMany({
+        where: {
+          organizationId: input.organizationId,
+          intakeSessionId: session.id
+        }
+      });
+    }
+
+    if (fileIds.length > 0) {
+      await tx.activityEvent.deleteMany({
+        where: {
+          organizationId: input.organizationId,
+          entityType: "artifact_intake_file",
+          entityId: {
+            in: fileIds
+          }
+        }
+      });
+
+      await tx.artifactIntakeFile.deleteMany({
+        where: {
+          organizationId: input.organizationId,
+          intakeSessionId: session.id
+        }
+      });
+    }
+
+    await tx.activityEvent.deleteMany({
+      where: {
+        organizationId: input.organizationId,
+        entityType: "artifact_intake_session",
+        entityId: session.id
+      }
+    });
+
+    await tx.artifactIntakeSession.delete({
+      where: {
+        id: session.id
+      }
+    });
+
+    return session;
+  });
+}
+
 export async function reviewArtifactFileSectionDispositionsBulk(inputs: unknown[]) {
   const parsedInputs = inputs.map((input) => artifactFileSectionDispositionActionInputSchema.parse(input));
   const chunkSize = 8;

@@ -77,6 +77,39 @@ function getTone(status: "blocked" | "ready" | "approved") {
   return "progress" as const;
 }
 
+function getRelevantOutcomeSignoffs<
+  T extends {
+    entityVersion?: number | null;
+    id: string;
+    organizationId: string;
+    entityType: "outcome" | "story";
+    entityId: string;
+    createdAt: Date;
+    organizationSide: "customer" | "supplier";
+    decisionKind: "review" | "approval" | "escalation";
+    requiredRoleType: string;
+    actualPartyRoleEntryId: string;
+    actualPersonName: string;
+    actualPersonEmail: string;
+    actualRoleTitle: string;
+    decisionStatus: string;
+    tollgateType?: string | null;
+    tollgateId?: string | null;
+    note?: string | null;
+    evidenceReference?: string | null;
+    createdBy?: string | null;
+  }
+>(
+  signoffRecords: T[],
+  submissionVersion?: number | null
+) {
+  if (!submissionVersion) {
+    return [];
+  }
+
+  return signoffRecords.filter((record) => record.entityVersion === submissionVersion);
+}
+
 function getSortWeight(item: HumanReviewDashboardItem) {
   if (item.status === "blocked") {
     return 0;
@@ -157,7 +190,11 @@ export async function getHumanReviewDashboardService(organizationId: string) {
         tollgateType: "tg1_baseline",
         aiAccelerationLevel: outcome.aiAccelerationLevel
       });
-      const signoffs = (tollgate?.id ? signoffsByTollgateId.get(tollgate.id) ?? [] : signoffsByEntityId.get(outcome.id) ?? []).map((record) => ({
+      const relevantSignoffs = getRelevantOutcomeSignoffs(
+        tollgate?.id ? signoffsByTollgateId.get(tollgate.id) ?? [] : signoffsByEntityId.get(outcome.id) ?? [],
+        tollgate?.submissionVersion ?? outcome.framingVersion
+      );
+      const signoffs = relevantSignoffs.map((record) => ({
         ...record,
         tollgateType: record.tollgateType ?? undefined,
         tollgateId: record.tollgateId ?? undefined,

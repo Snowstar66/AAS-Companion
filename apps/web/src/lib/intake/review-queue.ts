@@ -118,7 +118,8 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
       };
     }
 
-    const items = result.data.map((candidate) => parseReviewCandidate(candidate));
+    const allItems = result.data.map((candidate) => parseReviewCandidate(candidate));
+    const items = allItems.filter((candidate) => candidate.reviewStatus !== "promoted" && candidate.reviewStatus !== "rejected");
     const selectedCandidate =
       selectedCandidateResult && selectedCandidateResult.ok && selectedCandidateResult.data
         ? parseReviewCandidate(selectedCandidateResult.data)
@@ -145,11 +146,11 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
           }))
         : [],
       summary: {
-        total: items.length,
-        pending: items.filter((item) => item.reviewStatus === "pending").length,
-        followUpNeeded: items.filter((item) => item.reviewStatus === "follow_up_needed").length,
-        rejected: items.filter((item) => item.reviewStatus === "rejected").length,
-        promoted: items.filter((item) => item.reviewStatus === "promoted").length
+        total: allItems.length,
+        pending: allItems.filter((item) => item.reviewStatus === "pending").length,
+        followUpNeeded: allItems.filter((item) => item.reviewStatus === "follow_up_needed").length,
+        rejected: allItems.filter((item) => item.reviewStatus === "rejected").length,
+        promoted: allItems.filter((item) => item.reviewStatus === "promoted").length
       },
       message:
         items.length > 0

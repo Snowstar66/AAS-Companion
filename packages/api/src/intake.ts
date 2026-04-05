@@ -2,6 +2,7 @@ import {
   applyApprovedArtifactFileCarryForwardToOutcome,
   appendArtifactFileRejections,
   createArtifactIntakeSession,
+  deleteArtifactIntakeSession,
   getArtifactIntakeFileById,
   getArtifactCandidateById,
   listArtifactCandidatesForOrganization,
@@ -75,6 +76,25 @@ export async function getArtifactIntakeFileService(organizationId: string, fileI
 
 export async function listArtifactCandidateQueueService(organizationId: string) {
   return success(await listArtifactCandidatesForOrganization(organizationId));
+}
+
+export async function deleteArtifactIntakeSessionService(input: {
+  organizationId: string;
+  sessionId: string;
+}) {
+  try {
+    return success(
+      await deleteArtifactIntakeSession({
+        organizationId: input.organizationId,
+        sessionId: input.sessionId
+      })
+    );
+  } catch (error) {
+    return failure({
+      code: "artifact_intake_session_delete_failed",
+      message: error instanceof Error ? error.message : "Import session could not be deleted."
+    });
+  }
 }
 
 export async function getArtifactCandidateService(organizationId: string, candidateId: string) {

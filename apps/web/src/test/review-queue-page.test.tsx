@@ -263,6 +263,7 @@ vi.mock("@/lib/review/operational-review", () => ({
 }));
 
 vi.mock("@/app/(protected)/review/actions", () => ({
+  deleteArtifactIntakeSessionAction: vi.fn(),
   submitArtifactCandidateReviewAction: vi.fn(),
   submitArtifactBulkReviewAction: vi.fn()
 }));
@@ -285,6 +286,7 @@ describe("Review queue page", () => {
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Import objects to review")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Delete import session" })).toBeDefined();
     expect(screen.getAllByRole("link", { name: /Open/i }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
     expect(screen.getByText(/this section only covers imported objects from Import/i)).toBeDefined();
