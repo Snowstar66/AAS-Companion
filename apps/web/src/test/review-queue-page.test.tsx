@@ -279,14 +279,15 @@ describe("Review queue page", () => {
     expect(screen.getByRole("heading", { name: "Human review lanes" })).toBeDefined();
     expect(screen.getAllByText("Framing approvals").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Delivery review").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Imported review sessions" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Import object review" })).toBeDefined();
     expect(screen.getByText(/Use this page whenever you want one answer to the question/i)).toBeDefined();
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
+    expect(screen.getByText("Import objects to review")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
     expect(screen.getAllByRole("link", { name: /Open/i }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
-    expect(screen.getByText(/same indented value spine workspace as Import/i)).toBeDefined();
+    expect(screen.getByText(/this section only covers imported objects from Import/i)).toBeDefined();
     expect(screen.getByRole("heading", { name: "Framing import workspace" })).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });

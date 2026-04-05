@@ -1168,7 +1168,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             files: [...sessionGroup.files].sort((left, right) => compareText(left.fileName, right.fileName)),
             items: sortReviewCandidates(sessionGroup.items, queue.items)
           }))
-          .sort((left, right) => compareText(left.label, right.label))
+          .sort((left, right) => compareText(right.label, left.label))
       };
     })
     .filter((group) => group.items.length > 0);
@@ -1322,7 +1322,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             className="border-border/70 bg-background text-foreground"
             count={queue.summary.total}
             description="Imported objects waiting to be approved into Framing or Design."
-            label="Imported items to review"
+            label="Import objects to review"
           />
           <ReviewSummaryCard
             className="border-emerald-200 bg-emerald-50 text-emerald-950"
@@ -1438,9 +1438,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <CardHeader>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <CardTitle>Imported review sessions</CardTitle>
+                    <CardTitle>Import object review</CardTitle>
                     <CardDescription>
-                      Framing opens in the same value spine workspace as Import. Design keeps the bulk review backlog below.
+                      This section only covers imported objects from Import. Tollgate 1, framing PDFs, and version approvals remain in Human review lanes above.
                     </CardDescription>
                   </div>
                   {reviewStatusFilter !== "all" || importIntentFilter !== "all" ? (
@@ -1465,13 +1465,13 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                         <div className="space-y-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
                           <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-medium text-foreground">{intentGroup.label}</p>
+                              <p className="font-medium text-foreground">Imported framing objects</p>
                               <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
                                 {intentGroup.sessions.length} session{intentGroup.sessions.length === 1 ? "" : "s"}
                               </span>
                             </div>
                             <p className="text-sm leading-6 text-muted-foreground">
-                              Open a framing import below to review it in the same indented value spine workspace as Import.
+                              Open one import session below to review imported objects in the same indented value spine workspace as Import.
                             </p>
                           </div>
 
@@ -1525,7 +1525,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                               <div className="space-y-2">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <p className="font-medium text-foreground">{intentGroup.label}</p>
+                                  <p className="font-medium text-foreground">Imported design objects</p>
                                   <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
                                     {intentGroup.items.length} Delivery candidate(s)
                                   </span>

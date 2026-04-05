@@ -9,6 +9,8 @@ import {
   createNativeEpicFromOutcomeService,
   getArtifactCandidateService,
   promoteArtifactCandidateService,
+  reviewArtifactCandidatesBulkService,
+  reviewArtifactFileSectionDispositionsBulkService,
   reviewArtifactFileSectionDispositionService,
   reviewArtifactCandidateService,
   updateArtifactFileCarryForwardItemsService
@@ -123,19 +125,6 @@ async function recordOperationalLog(input: {
   } catch {
     // Logging must never block the primary workflow.
   }
-}
-
-async function runSequentially<TItem, TResult>(
-  items: TItem[],
-  work: (item: TItem) => Promise<TResult>
-) {
-  const results: TResult[] = [];
-
-  for (const item of items) {
-    results.push(await work(item));
-  }
-
-  return results;
 }
 
 export async function uploadArtifactIntakeFilesAction(formData: FormData) {
@@ -571,17 +560,20 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
 
   if (decision === "reject") {
-    const carryForwardRejectResults = await runSequentially(selectedCarryForwardSectionIds, (sectionId) =>
-      reviewArtifactFileSectionDispositionService({
-        organizationId: session.organization.organizationId,
-        actorId: session.userId,
-        fileId,
-        sectionId,
-        action: "not_relevant",
-        note: "Rejected from the framing import spine."
-      })
-    );
-    const failedCarryForwardReject = carryForwardRejectResults.find((result) => !result.ok);
+    const carryForwardRejectResult =
+      selectedCarryForwardSectionIds.length > 0
+        ? await reviewArtifactFileSectionDispositionsBulkService(
+            selectedCarryForwardSectionIds.map((sectionId) => ({
+              organizationId: session.organization.organizationId,
+              actorId: session.userId,
+              fileId,
+              sectionId,
+              action: "not_relevant",
+              note: "Rejected from the framing import spine."
+            }))
+          )
+        : { ok: true as const, data: [] };
+    const failedCarryForwardReject = !carryForwardRejectResult.ok ? carryForwardRejectResult : null;
 
     if (failedCarryForwardReject && !failedCarryForwardReject.ok) {
       await redirectWithApprovalError(
@@ -589,16 +581,19 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       );
     }
 
-    const candidateRejectResults = await runSequentially(candidates, (candidate) =>
-      reviewArtifactCandidateService({
-        organizationId: session.organization.organizationId,
-        actorId: session.userId,
-        candidateId: candidate.id,
-        reviewStatus: "rejected",
-        reviewComment: "Rejected from the framing import spine."
-      })
-    );
-    const failedCandidateReject = candidateRejectResults.find((result) => !result.ok);
+    const candidateRejectResult =
+      candidates.length > 0
+        ? await reviewArtifactCandidatesBulkService(
+            candidates.map((candidate) => ({
+              organizationId: session.organization.organizationId,
+              actorId: session.userId,
+              candidateId: candidate.id,
+              reviewStatus: "rejected",
+              reviewComment: "Rejected from the framing import spine."
+            }))
+          )
+        : { ok: true as const, data: [] };
+    const failedCandidateReject = !candidateRejectResult.ok ? candidateRejectResult : null;
 
     if (failedCandidateReject && !failedCandidateReject.ok) {
       await redirectWithApprovalError(
@@ -606,16 +601,19 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       );
     }
 
-    const suppressedRejectResults = await runSequentially(suppressedCandidateIds, (candidateId) =>
-      reviewArtifactCandidateService({
-        organizationId: session.organization.organizationId,
-        actorId: session.userId,
-        candidateId,
-        reviewStatus: "rejected",
-        reviewComment: "Merged into the primary imported Outcome in the framing spine."
-      })
-    );
-    const failedSuppressedReject = suppressedRejectResults.find((result) => !result.ok);
+    const suppressedRejectResult =
+      suppressedCandidateIds.length > 0
+        ? await reviewArtifactCandidatesBulkService(
+            suppressedCandidateIds.map((candidateId) => ({
+              organizationId: session.organization.organizationId,
+              actorId: session.userId,
+              candidateId,
+              reviewStatus: "rejected",
+              reviewComment: "Merged into the primary imported Outcome in the framing spine."
+            }))
+          )
+        : { ok: true as const, data: [] };
+    const failedSuppressedReject = !suppressedRejectResult.ok ? suppressedRejectResult : null;
 
     if (failedSuppressedReject && !failedSuppressedReject.ok) {
       await redirectWithApprovalError(
@@ -670,17 +668,20 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     }
   }
 
-  const carryForwardConfirmResults = await runSequentially(selectedCarryForwardSectionIds, (sectionId) =>
-    reviewArtifactFileSectionDispositionService({
-      organizationId: session.organization.organizationId,
-      actorId: session.userId,
-      fileId,
-      sectionId,
-      action: "confirmed",
-      note: "Approved from the framing import spine."
-    })
-  );
-  const failedCarryForwardConfirm = carryForwardConfirmResults.find((result) => !result.ok);
+  const carryForwardConfirmResult =
+    selectedCarryForwardSectionIds.length > 0
+      ? await reviewArtifactFileSectionDispositionsBulkService(
+          selectedCarryForwardSectionIds.map((sectionId) => ({
+            organizationId: session.organization.organizationId,
+            actorId: session.userId,
+            fileId,
+            sectionId,
+            action: "confirmed",
+            note: "Approved from the framing import spine."
+          }))
+        )
+      : { ok: true as const, data: [] };
+  const failedCarryForwardConfirm = !carryForwardConfirmResult.ok ? carryForwardConfirmResult : null;
 
   if (failedCarryForwardConfirm && !failedCarryForwardConfirm.ok) {
     await redirectWithApprovalError(
@@ -688,17 +689,20 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     );
   }
 
-  const leftoverDispositionResults = await runSequentially(leftoverSectionIds, (sectionId) =>
-    reviewArtifactFileSectionDispositionService({
-      organizationId: session.organization.organizationId,
-      actorId: session.userId,
-      fileId,
-      sectionId,
-      action: "not_relevant",
-      note: "Ignored during framing spine approval."
-    })
-  );
-  const failedLeftoverDisposition = leftoverDispositionResults.find((result) => !result.ok);
+  const leftoverDispositionResult =
+    leftoverSectionIds.length > 0
+      ? await reviewArtifactFileSectionDispositionsBulkService(
+          leftoverSectionIds.map((sectionId) => ({
+            organizationId: session.organization.organizationId,
+            actorId: session.userId,
+            fileId,
+            sectionId,
+            action: "not_relevant",
+            note: "Ignored during framing spine approval."
+          }))
+        )
+      : { ok: true as const, data: [] };
+  const failedLeftoverDisposition = !leftoverDispositionResult.ok ? leftoverDispositionResult : null;
 
   if (failedLeftoverDisposition && !failedLeftoverDisposition.ok) {
     await redirectWithApprovalError(
@@ -706,7 +710,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     );
   }
 
-  const candidatePreparationResults = await runSequentially(candidates, (candidate) => {
+  const candidatePreparationPayloads = candidates.map((candidate) => {
       const currentOutcomeLink =
         candidate.type === "story"
           ? readResolvedStoryOutcomeSelection(candidate)
@@ -760,32 +764,39 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
                 epicCandidateId: usesFallbackEpic ? null : currentEpicLink || null
               };
 
-      return reviewArtifactCandidateService({
+      return {
         organizationId: session.organization.organizationId,
         actorId: session.userId,
         candidateId: candidate.id,
         reviewStatus: "confirmed",
         reviewComment: "Approved from the framing import spine.",
         draftRecord
-      });
+      };
     });
-  const failedCandidatePreparation = candidatePreparationResults.find((result) => !result.ok);
+  const candidatePreparationResult =
+    candidatePreparationPayloads.length > 0
+      ? await reviewArtifactCandidatesBulkService(candidatePreparationPayloads)
+      : { ok: true as const, data: [] };
+  const failedCandidatePreparation = !candidatePreparationResult.ok ? candidatePreparationResult : null;
 
   if (failedCandidatePreparation && !failedCandidatePreparation.ok) {
     await redirectWithApprovalError(
       failedCandidatePreparation.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
     );
   }
-  const suppressedCleanupResults = await runSequentially(suppressedCandidateIds, (candidateId) =>
-    reviewArtifactCandidateService({
-      organizationId: session.organization.organizationId,
-      actorId: session.userId,
-      candidateId,
-      reviewStatus: "rejected",
-      reviewComment: "Merged into the primary imported Outcome in the framing spine."
-    })
-  );
-  const failedSuppressedCleanup = suppressedCleanupResults.find((result) => !result.ok);
+  const suppressedCleanupResult =
+    suppressedCandidateIds.length > 0
+      ? await reviewArtifactCandidatesBulkService(
+          suppressedCandidateIds.map((candidateId) => ({
+            organizationId: session.organization.organizationId,
+            actorId: session.userId,
+            candidateId,
+            reviewStatus: "rejected",
+            reviewComment: "Merged into the primary imported Outcome in the framing spine."
+          }))
+        )
+      : { ok: true as const, data: [] };
+  const failedSuppressedCleanup = !suppressedCleanupResult.ok ? suppressedCleanupResult : null;
 
   if (failedSuppressedCleanup && !failedSuppressedCleanup.ok) {
     await redirectWithApprovalError(
