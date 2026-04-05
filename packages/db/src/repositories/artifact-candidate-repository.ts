@@ -787,6 +787,13 @@ export async function listArtifactCandidatesForOrganization(organizationId: stri
       promotedAt: true,
       createdAt: true,
       updatedAt: true,
+      intakeSession: {
+        select: {
+          id: true,
+          label: true,
+          importIntent: true
+        }
+      },
       file: {
         select: {
           id: true,
