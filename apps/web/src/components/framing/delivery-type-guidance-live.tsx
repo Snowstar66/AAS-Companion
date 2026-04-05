@@ -173,7 +173,7 @@ function getDeliveryTypeHelper(value: DeliveryTypeValue | null | undefined) {
     return "Choose the delivery posture that best describes this case so Framing can guide the business case, baseline, risks, and hierarchy the right way from the start.";
   }
 
-  return `${profile.label}: ${profile.primaryQuestion} Expect Framing to emphasize ${profile.governanceNeeds.toLowerCase()}`;
+  return `${profile.label}: ${profile.primaryQuestion} In this mode, Framing should emphasize ${profile.governanceNeeds.toLowerCase()}`;
 }
 
 function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | undefined): DeliveryTypeGuidance {
@@ -203,7 +203,12 @@ function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | und
         : value === "AT"
           ? "Use UX principles to protect continuity when users move between current and transformed experiences."
           : "Use UX principles to protect continuity, clarity, and low-friction service behavior in daily operations.",
-    nfrDescription: `${profile.riskLevel} These requirements should raise design rigor, not become an afterthought. ${profile.evidenceNeed}`,
+    nfrDescription:
+      value === "AT"
+        ? "Use this field for cross-cutting quality requirements that protect the transformation: performance, resilience, security, compliance, observability, migration safety and continuity expectations. Strong evidence is expected."
+        : value === "AM"
+          ? "Use this field for service quality expectations that must stay true in operations: availability, supportability, monitoring, recoverability, security, privacy and cost-efficiency guardrails."
+          : "Use this field for the quality requirements the new capability must meet from the start, such as performance, accessibility, security, privacy, reliability and compliance expectations.",
     additionalRequirementsDescription:
       value === "AT"
         ? "Use this for migration dependencies, platform assumptions, or transformation conditions Design must inherit."

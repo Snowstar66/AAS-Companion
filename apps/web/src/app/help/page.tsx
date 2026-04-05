@@ -228,6 +228,133 @@ const deliveryTypeMatrix = [
   }
 ] as const;
 
+const deliveryTypeMatrixEnglish = deliveryTypeMatrix.map((_, index) => {
+  const rows = [
+    {
+      dimension: "Primary question in Framing",
+      ad: "What should we build to create new value?",
+      at: "What in the current system is blocking value?",
+      am: "How do we optimize existing delivery?"
+    },
+    {
+      dimension: "Change type",
+      ad: "New functionality or new capability",
+      at: "Structural change in an existing system",
+      am: "Continuous improvement"
+    },
+    {
+      dimension: "Baseline starting point",
+      ad: "Often light or missing",
+      at: "Mandatory and data-driven",
+      am: "Object-specific and operational"
+    },
+    {
+      dimension: "Baseline examples",
+      ad: "Current manual work or workaround process",
+      at: "Lead time, tech debt, cost, incidents",
+      am: "SLA, incident data, cost per case"
+    },
+    {
+      dimension: "Outcome type",
+      ad: "Business value or user value",
+      at: "Structural effect on speed, cost, or risk",
+      am: "Stability, efficiency, or cost effect"
+    },
+    {
+      dimension: "Outcome examples",
+      ad: "\"Increase conversion by 15%.\"",
+      at: "\"Cut lead time in half.\"",
+      am: "\"Reduce MTTR from 6h to 2h.\""
+    },
+    {
+      dimension: "Evidence expected in Framing",
+      ad: "Hypothesis plus reasonable value logic",
+      at: "Measured problem verification is expected",
+      am: "Operational data analysis and recurring patterns"
+    },
+    {
+      dimension: "Problem definition style",
+      ad: "Hypothesis-led",
+      at: "Fact-based and quantified",
+      am: "Data-driven and repetitive"
+    },
+    {
+      dimension: "Epic character",
+      ad: "Functional capabilities",
+      at: "Structural transformation moves",
+      am: "Improvement and automation themes"
+    },
+    {
+      dimension: "Epic examples",
+      ad: "UI, API, onboarding",
+      at: "Modularization, CI/CD, dependency cleanup",
+      am: "Incident automation, triage, monitoring"
+    },
+    {
+      dimension: "Dominant risk type",
+      ad: "Wrong functionality or low adoption",
+      at: "Operational regression or system impact",
+      am: "Optimizing or automating the wrong thing"
+    },
+    {
+      dimension: "Typical risk level",
+      ad: "Medium",
+      at: "Highest",
+      am: "Low to medium"
+    },
+    {
+      dimension: "Scope stability",
+      ad: "Can stay exploratory early on",
+      at: "Needs early stabilization",
+      am: "Continuous and iterative"
+    },
+    {
+      dimension: "Typical AI Acceleration Level",
+      ad: "Level 1-2 (3 can be possible)",
+      at: "Level 1-2 (3 only with strict control)",
+      am: "Level 1-3 (high potential)"
+    },
+    {
+      dimension: "AI role in Framing",
+      ad: "Support ideation and structure",
+      at: "Analyze code, dependencies, and tech debt",
+      am: "Identify patterns and analyze incidents"
+    },
+    {
+      dimension: "Governance emphasis in Framing",
+      ad: "Outcome + Value Owner",
+      at: "Outcome + baseline + risk + AI level with tighter discipline",
+      am: "Outcome + operational baseline"
+    },
+    {
+      dimension: "Common failure mode",
+      ad: "Building features without a real Outcome",
+      at: "Modernizing without a measurable effect target",
+      am: "Running service work without an improvement target"
+    },
+    {
+      dimension: "What AAS protects against",
+      ad: "Output without value",
+      at: "Technology-driven transformation without effect logic",
+      am: "Reactive support work without development intent"
+    },
+    {
+      dimension: "Framing weight",
+      ad: "Medium",
+      at: "Highest (critical phase)",
+      am: "Medium"
+    },
+    {
+      dimension: "Consequence of poor Framing",
+      ad: "Wrong product",
+      at: "Failed transformation (expensive)",
+      am: "Inefficient service"
+    }
+  ] satisfies ReadonlyArray<{ dimension: string; ad: string; at: string; am: string }>;
+
+  return rows[index] ?? rows[0];
+});
+
 export default async function HelpPage({ searchParams }: HelpPageProps) {
   const query = searchParams ? await searchParams : {};
   const returnTo = normalizeReturnTo(getParamValue(query.returnTo));
@@ -476,14 +603,16 @@ export default async function HelpPage({ searchParams }: HelpPageProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {deliveryTypeMatrix.map((row) => (
-                      <tr className="border-b border-border/50 align-top" key={row.dimension}>
-                        <th className="bg-muted/10 px-4 py-3 text-left font-semibold text-foreground">{row.dimension}</th>
-                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.ad}</td>
-                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.at}</td>
-                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.am}</td>
-                      </tr>
-                    ))}
+                    {deliveryTypeMatrixEnglish.map((row) =>
+                      row ? (
+                        <tr className="border-b border-border/50 align-top" key={row.dimension}>
+                          <th className="bg-muted/10 px-4 py-3 text-left font-semibold text-foreground">{row.dimension}</th>
+                          <td className="px-4 py-3 leading-6 text-muted-foreground">{row.ad}</td>
+                          <td className="px-4 py-3 leading-6 text-muted-foreground">{row.at}</td>
+                          <td className="px-4 py-3 leading-6 text-muted-foreground">{row.am}</td>
+                        </tr>
+                      ) : null
+                    )}
                   </tbody>
                 </table>
               </div>

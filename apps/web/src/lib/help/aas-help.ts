@@ -6,6 +6,7 @@ export type WorkspaceHelpKey =
   | "framing.baseline_source"
   | "framing.solution_context"
   | "framing.solution_constraints"
+  | "framing.non_functional_requirements"
   | "framing.data_sensitivity"
   | "framing.delivery_type"
   | "framing.value_owner"
@@ -89,6 +90,14 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
     belongs: "Operational constraints, business conditions, compliance limits, must-keep integrations, sequencing limits, continuity demands and review obligations.",
     avoid: "Prescriptive build steps, framework choices, implementation patterns, or pseudo-architecture."
   },
+  "framing.non_functional_requirements": {
+    title: "Non-functional requirements",
+    summary: "Capture the quality attributes that must stay true when the solution is designed and delivered.",
+    purpose: "Make cross-cutting quality demands explicit before Design and delivery detail take over.",
+    belongs:
+      "Performance targets, availability expectations, security requirements, privacy expectations, compliance obligations, accessibility expectations, resilience needs and observability needs.",
+    avoid: "Feature ideas, UI wishes, implementation recipes, or requirements that only restate the desired business outcome."
+  },
   "framing.data_sensitivity": {
     title: "Data sensitivity",
     summary: "State what kind of data is involved and why it changes risk or control needs.",
@@ -169,7 +178,7 @@ export function getHelpPattern(key: WorkspaceHelpKey, aiLevel?: string | null) {
 
 export function getInlineGuidance(key: Extract<WorkspaceHelpKey, `framing.${string}`>) {
   const pattern = helpPatterns[key];
-  return `Put here: ${pattern.belongs} Avoid: ${pattern.avoid}`;
+  return `Use this field for: ${pattern.belongs} Avoid: ${pattern.avoid}`;
 }
 
 export function formatAiLevelLabel(value: string | null | undefined) {

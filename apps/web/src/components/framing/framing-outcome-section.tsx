@@ -882,6 +882,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="nfrDescription" />
                   </p>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.non_functional_requirements")} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">Additional requirements to carry forward</span>
