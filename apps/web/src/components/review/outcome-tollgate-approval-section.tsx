@@ -29,6 +29,20 @@ async function getServerLanguage(): Promise<AppLanguage> {
   }
 }
 
+function localizeTollgateBlocker(blocker: string, language: AppLanguage) {
+  const reframingMatch = blocker.match(
+    /^Framing changed after version (\d+)\. Submit version (\d+) to Tollgate 1 for a new approval\.$/
+  );
+
+  if (!reframingMatch) {
+    return blocker;
+  }
+
+  return language === "sv"
+    ? `Framing ändrades efter version ${reframingMatch[1]}. Skicka in version ${reframingMatch[2]} till Tollgate 1 för ett nytt godkännande.`
+    : blocker;
+}
+
 export async function OutcomeTollgateApprovalSection(props: {
   outcomeId: string;
   isArchived: boolean;
@@ -237,7 +251,7 @@ export async function OutcomeTollgateApprovalSection(props: {
               </p>
               <ul className="mt-3 space-y-2">
                 {visibleBlockers.map((blocker) => (
-                  <li key={blocker}>• {blocker}</li>
+                  <li key={blocker}>• {localizeTollgateBlocker(blocker, language)}</li>
                 ))}
               </ul>
             </div>

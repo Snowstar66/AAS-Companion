@@ -74,6 +74,50 @@ export type HomeDashboardData =
       pendingActions: HomePendingAction[];
     };
 
+type AppLanguage = "en" | "sv";
+
+function t(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+function formatTollgateLabel(value: string, language: AppLanguage) {
+  switch (value) {
+    case "tg1_baseline":
+      return t(language, "tg1 baseline", "TG1-baseline");
+    case "story_readiness":
+      return t(language, "story readiness", "story readiness");
+    default:
+      return value.replaceAll("_", " ");
+  }
+}
+
+function formatEntityLabel(value: string, language: AppLanguage) {
+  switch (value) {
+    case "outcome":
+      return t(language, "outcome", "outcome");
+    case "story":
+      return t(language, "story", "story");
+    default:
+      return value;
+  }
+}
+
+function translateTollgateBlocker(blocker: string, language: AppLanguage) {
+  const reframingMatch = blocker.match(
+    /^Framing changed after version (\d+)\. Submit version (\d+) to Tollgate 1 for a new approval\.$/
+  );
+
+  if (reframingMatch) {
+    return t(
+      language,
+      blocker,
+      `Framing ändrades efter version ${reframingMatch[1]}. Skicka in version ${reframingMatch[2]} till Tollgate 1 för ett nytt godkännande.`
+    );
+  }
+
+  return blocker;
+}
+
 function isStoryIdeaStarted(input: { valueIntent?: string | null; shortDescription?: string | null; expectedBehavior?: string | null }) {
   return Boolean(input.valueIntent?.trim() || input.shortDescription?.trim() || input.expectedBehavior?.trim());
 }
@@ -92,6 +136,7 @@ function getDashboardStoryModel(input: {
   acceptanceCriteria: string[];
   definitionOfDone: string[];
   tollgateStatus?: "blocked" | "ready" | "approved" | null;
+  language: AppLanguage;
 }) {
   const readiness = getStoryHandoffReadiness({
     key: input.key,
@@ -120,7 +165,7 @@ function getDashboardStoryModel(input: {
     return {
       blockers,
       isReadyForHandoff: false,
-      nextStep: "Record remaining sign-offs",
+      nextStep: t(input.language, "Record remaining sign-offs", "Registrera återstående godkännanden"),
       needsAttention: true
     };
   }
@@ -129,7 +174,7 @@ function getDashboardStoryModel(input: {
     return {
       blockers: [],
       isReadyForHandoff: true,
-      nextStep: "Open ready story",
+      nextStep: t(input.language, "Open ready story", "Öppna redo story"),
       needsAttention: false
     };
   }
@@ -139,14 +184,14 @@ function getDashboardStoryModel(input: {
     isReadyForHandoff: false,
     nextStep:
       !input.testDefinition?.trim()
-        ? "Add test definition"
+        ? t(input.language, "Add test definition", "Lägg till testdefinition")
         : input.acceptanceCriteria.length === 0
-          ? "Add acceptance criteria"
+          ? t(input.language, "Add acceptance criteria", "Lägg till acceptanskriterier")
           : input.definitionOfDone.length === 0
-            ? "Add definition of done"
+            ? t(input.language, "Add definition of done", "Lägg till definition of done")
             : isReviewReady
-              ? "Submit for sign-off"
-              : blockers[0] ?? "Complete story readiness",
+              ? t(input.language, "Submit for sign-off", "Skicka för godkännande")
+              : blockers[0] ?? t(input.language, "Complete story readiness", "Slutför story readiness"),
     needsAttention: blockers.length > 0 || valueSpineBlockers.length > 0 || isReviewReady
   };
 }
@@ -154,7 +199,8 @@ function getDashboardStoryModel(input: {
 function createFallbackDashboard(
   state: "empty" | "unavailable",
   organizationName: string,
-  message: string
+  message: string,
+  language: AppLanguage
 ): HomeDashboardData {
   return {
     state,
@@ -162,8 +208,12 @@ function createFallbackDashboard(
     message,
     projectPhase: {
       key: "framing",
-      label: "Framing phase",
-      detail: "The project stays in framing until Tollgate 1 for the framing brief is approved."
+      label: t(language, "Framing phase", "Framingfas"),
+      detail: t(
+        language,
+        "The project stays in framing until Tollgate 1 for the framing brief is approved.",
+        "Projektet stannar i framing tills Tollgate 1 för framing-briefen är godkänd."
+      )
     },
     storyIdeaStats: {
       total: 0,
@@ -180,7 +230,8 @@ function createFallbackDashboard(
 }
 
 export async function getHomeDashboardData(
-  organizationId: string
+  organizationId: string,
+  language: AppLanguage = "en"
 ): Promise<HomeDashboardData> {
   try {
     const snapshot = await getHomeDashboardSnapshot(organizationId);
@@ -188,8 +239,9 @@ export async function getHomeDashboardData(
     if (!snapshot) {
       return createFallbackDashboard(
         "empty",
-        "Unknown project",
-        "No project data was found for this organization yet."
+        t(language, "Unknown project", "Okänt projekt"),
+        t(language, "No project data was found for this organization yet.", "Ingen projektdata hittades för den här organisationen ännu."),
+        language
       );
     }
 
@@ -207,7 +259,8 @@ export async function getHomeDashboardData(
         testDefinition: story.testDefinition,
         acceptanceCriteria: story.acceptanceCriteria,
         definitionOfDone: story.definitionOfDone,
-        tollgateStatus: story.tollgateStatus ?? null
+        tollgateStatus: story.tollgateStatus ?? null,
+        language
       })
     }));
     const explicitSourceStoryIds = new Set(snapshot.directionSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
@@ -256,20 +309,28 @@ export async function getHomeDashboardData(
     const projectPhase: HomeProjectPhase = hasApprovedFramingTollgate
       ? {
           key: "design",
-          label: "Design phase",
-          detail: "At least one framing brief has passed Tollgate 1, so the project can now move into design work."
+          label: t(language, "Design phase", "Designfas"),
+          detail: t(
+            language,
+            "At least one framing brief has passed Tollgate 1, so the project can now move into design work.",
+            "Minst en framing-brief har passerat Tollgate 1, så projektet kan nu gå vidare in i designarbete."
+          )
         }
       : {
           key: "framing",
-          label: "Framing phase",
-          detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+          label: t(language, "Framing phase", "Framingfas"),
+          detail: t(
+            language,
+            "The project remains in framing until a framing brief is approved at Tollgate 1.",
+            "Projektet ligger kvar i framing tills en framing-brief har godkänts i Tollgate 1."
+          )
         };
 
     const topBlockers: HomeBlocker[] = blockedTollgates.flatMap((tollgate) =>
       tollgate.blockers.map((blocker, index) => ({
         id: `${tollgate.id}-${index}`,
-        title: blocker,
-        detail: `${tollgate.tollgateType.replaceAll("_", " ")} on ${tollgate.entityType} ${tollgate.entityId}`,
+        title: translateTollgateBlocker(blocker, language),
+        detail: `${formatTollgateLabel(tollgate.tollgateType, language)} ${t(language, "on", "på")} ${formatEntityLabel(tollgate.entityType, language)} ${tollgate.entityId}`,
         severity: "high",
         href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       }))
@@ -282,7 +343,7 @@ export async function getHomeDashboardData(
 
       return model.blockers.map((blocker) => ({
         id: `${story.id}-${blocker}`,
-        title: `${story.key} needs attention`,
+        title: `${story.key} ${t(language, "needs attention", "behöver uppmärksamhet")}`,
         detail: blocker,
         severity: "medium",
         href: "/stories"
@@ -292,16 +353,19 @@ export async function getHomeDashboardData(
     const pendingActions: HomePendingAction[] = [
       ...pendingTollgates.map((tollgate) => ({
         id: tollgate.id,
-        title: `${tollgate.tollgateType.replaceAll("_", " ")} requires attention`,
-        detail: `${tollgate.blockers.length || 1} blocker${tollgate.blockers.length === 1 ? "" : "s"} to clear`,
+        title: `${formatTollgateLabel(tollgate.tollgateType, language)} ${t(language, "requires attention", "kräver uppmärksamhet")}`,
+        detail:
+          language === "sv"
+            ? `${tollgate.blockers.length || 1} blockerare att rensa`
+            : `${tollgate.blockers.length || 1} blocker${tollgate.blockers.length === 1 ? "" : "s"} to clear`,
         href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       })),
       ...storyModels
         .filter(({ story, model }) => !story.tollgateStatus && !model.isReadyForHandoff)
         .map(({ story, model }) => ({
           id: `${story.id}-action`,
-          title: `Complete ${story.key}`,
-          detail: `Next step: ${model.nextStep}`,
+          title: language === "sv" ? `Slutför ${story.key}` : `Complete ${story.key}`,
+          detail: language === "sv" ? `Nästa steg: ${model.nextStep}` : `Next step: ${model.nextStep}`,
           href: "/stories"
         }))
     ];
@@ -316,7 +380,8 @@ export async function getHomeDashboardData(
         ...createFallbackDashboard(
           "empty",
           organization.name,
-          "The dashboard is connected, but no M1 records were returned yet."
+          t(language, "The dashboard is connected, but no M1 records were returned yet.", "Dashboarden är ansluten, men inga M1-poster har returnerats ännu."),
+          language
         ),
         storyIdeaStats,
         deliveryStoryStats
@@ -335,10 +400,11 @@ export async function getHomeDashboardData(
   } catch (error) {
     return createFallbackDashboard(
       "unavailable",
-      "Unknown project",
+      t(language, "Unknown project", "Okänt projekt"),
       error instanceof Error
-        ? `Dashboard data is unavailable right now: ${error.message}`
-        : "Dashboard data is unavailable right now."
+        ? t(language, `Dashboard data is unavailable right now: ${error.message}`, `Dashboarddata är inte tillgänglig just nu: ${error.message}`)
+        : t(language, "Dashboard data is unavailable right now.", "Dashboarddata är inte tillgänglig just nu."),
+      language
     );
   }
 }

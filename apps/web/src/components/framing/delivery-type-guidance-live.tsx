@@ -153,12 +153,93 @@ function getDefaultGuidance(language: AppLanguage): DeliveryTypeGuidance {
   };
 }
 
-function getDeliveryTypeProfile(value: DeliveryTypeValue | null | undefined) {
-  return value ? deliveryTypeProfiles[value] : null;
+function getDeliveryTypeProfile(value: DeliveryTypeValue | null | undefined, language: AppLanguage = "en") {
+  if (!value) {
+    return null;
+  }
+
+  if (language === "en") {
+    return deliveryTypeProfiles[value];
+  }
+
+  switch (value) {
+    case "AD":
+      return {
+        label: "Applikationsutveckling",
+        primaryQuestion: "Vad ska vi bygga för att skapa nytt värde?",
+        changeType: "Ny kapacitet eller ny funktionalitet.",
+        baselinePosition: "Baseline kan vara lättare och får börja från en svagare nulägesbild.",
+        baselineExamples: "Nuvarande manuellt arbete, kalkylblad, workaround eller avsaknad av användbart digitalt flöde.",
+        outcomeType: "Affärsvärde eller användarvärde.",
+        outcomeExample: '"Öka konverteringen med 15%."',
+        evidenceNeed: "En stark hypotes och rimlig värdelogik kan räcka i Framing.",
+        problemDefinition: "Problemformuleringen kan börja hypotesdrivet, men måste fortfarande vara tydlig om värdet.",
+        epicCharacter: "Funktionella capabilities.",
+        epicExamples: "Onboarding, self-service, rapportering, mobilt flöde, API-stöd.",
+        riskType: "Att bygga fel sak eller få låg adoption.",
+        riskLevel: "Vanligen medel.",
+        scopeStability: "Kan vara mer explorativ tidigt.",
+        aiLevel: "Vanligen AI Level 1-2, ibland 3.",
+        aiRole: "Stöd för idéarbete, strukturering och förfining.",
+        governanceNeeds: "Outcome och Value Owner måste vara tydliga innan caset lämnar Framing.",
+        commonFailure: "Att bygga features utan ett verkligt outcome.",
+        aasProtection: "AAS skyddar mot output utan värde.",
+        framingWeight: "Medel.",
+        poorFramingImpact: "Du riskerar att leverera fel produkt."
+      };
+    case "AT":
+      return {
+        label: "Applikationstransformation",
+        primaryQuestion: "Vad i nuvarande system blockerar värde?",
+        changeType: "Strukturell förändring i ett befintligt landskap.",
+        baselinePosition: "Baseline bör vara obligatorisk och datadriven.",
+        baselineExamples: "Lead time, tech debt, incidentlast, change failure rate, kostnad och beroendefriktion.",
+        outcomeType: "Strukturell effekt på hastighet, kostnad, risk eller resiliens.",
+        outcomeExample: '"Halvera lead time."',
+        evidenceNeed: "Mätbar problemverifiering förväntas.",
+        problemDefinition: "Problemformuleringen bör vara faktabaserad och kvantifierad.",
+        epicCharacter: "Strukturella transformationsgrepp.",
+        epicExamples: "Modularisering, CI/CD-lyft, dependency cleanup, plattformsmigrering.",
+        riskType: "Driftregression, migreringsrisk och systempåverkan.",
+        riskLevel: "Vanligen högst.",
+        scopeStability: "Behöver stabiliseras tidigt.",
+        aiLevel: "Vanligen AI Level 1-2. Level 3 bara med stark kontroll.",
+        aiRole: "Analysera kod, beroenden, arkitekturskuld och migrationsmönster.",
+        governanceNeeds: "Outcome, baseline, riskhållning och AI-nivå kräver stramare disciplin.",
+        commonFailure: "Att modernisera utan ett mätbart effektmål.",
+        aasProtection: "AAS skyddar mot teknikdriven transformation utan outcome-logik.",
+        framingWeight: "Högst.",
+        poorFramingImpact: "Du riskerar en dyr misslyckad transformation."
+      };
+    case "AM":
+      return {
+        label: "Applikationsförvaltning",
+        primaryQuestion: "Hur förbättrar vi den befintliga tjänsteleveransen?",
+        changeType: "Kontinuerlig förbättring i en aktiv tjänst.",
+        baselinePosition: "Baseline bör vara operativ och objektspecifik.",
+        baselineExamples: "SLA, incidentdata, MTTR, ärendekostnad, supportbelastning och återkommande felmönster.",
+        outcomeType: "Stabilitet, effektivitet, tjänstekvalitet eller kostnadseffekt.",
+        outcomeExample: '"Minska MTTR från 6h till 2h."',
+        evidenceNeed: "Operativ data och återkommande mönster bör stödja caset.",
+        problemDefinition: "Problemformuleringen bör vara datadriven och återkommande.",
+        epicCharacter: "Förbättrings- och automationsteman.",
+        epicExamples: "Monitoring, triage-automation, supportflöde, incidentprevention, kunskapsfångst.",
+        riskType: "Att optimera fel sak eller automatisera svag operativ logik.",
+        riskLevel: "Vanligen låg till medel.",
+        scopeStability: "Kontinuerlig och iterativ.",
+        aiLevel: "Vanligen AI Level 1-3 med hög förbättringspotential.",
+        aiRole: "Hitta mönster, sammanfatta incidenter och stödja serviceförbättring.",
+        governanceNeeds: "Outcome och operativ baseline bör hållas synliga även för mindre förbättringar.",
+        commonFailure: "Att driva support utan förbättringsmål.",
+        aasProtection: "AAS skyddar mot reaktiv service utan utvecklingsintention.",
+        framingWeight: "Medel.",
+        poorFramingImpact: "Du riskerar en ineffektiv tjänstemodell."
+      };
+  }
 }
 
 function getDeliveryTypeHelper(value: DeliveryTypeValue | null | undefined, language: AppLanguage) {
-  const profile = getDeliveryTypeProfile(value);
+  const profile = getDeliveryTypeProfile(value, language);
 
   if (!profile) {
     return tr(
@@ -176,7 +257,7 @@ function getDeliveryTypeHelper(value: DeliveryTypeValue | null | undefined, lang
 }
 
 function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | undefined, language: AppLanguage): DeliveryTypeGuidance {
-  const profile = getDeliveryTypeProfile(value);
+  const profile = getDeliveryTypeProfile(value, language);
 
   if (!profile) {
     return getDefaultGuidance(language);
@@ -186,51 +267,91 @@ function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | und
     businessCaseDescription: `${profile.primaryQuestion} ${profile.changeType} ${profile.outcomeType}`,
     timeframeDescription:
       value === "AM"
-        ? "Explain the service or improvement window this belongs to, for example an operational period, support cycle, or cost-reduction horizon."
+        ? tr(language, "Explain the service or improvement window this belongs to, for example an operational period, support cycle, or cost-reduction horizon.", "Förklara vilket tjänste- eller förbättringsfönster detta hör till, till exempel en operativ period, supportcykel eller kostnadssänkningshorisont.")
         : value === "AT"
-          ? "Explain the transformation window this must fit into, such as migration phase, dependency cutover, or stabilization horizon."
-          : "Explain the value window for the new capability, such as pilot, launch horizon, funding window, or adoption milestone.",
-    valueOwnerDescription: `${profile.governanceNeeds} This person should be able to defend the case if challenged by both business and delivery.`,
+          ? tr(language, "Explain the transformation window this must fit into, such as migration phase, dependency cutover, or stabilization horizon.", "Förklara vilket transformationsfönster detta måste passa in i, till exempel migreringsfas, beroendeskifte eller stabiliseringshorisont.")
+          : tr(language, "Explain the value window for the new capability, such as pilot, launch horizon, funding window, or adoption milestone.", "Förklara värdefönstret för den nya förmågan, till exempel pilot, lanseringshorisont, finansieringsfönster eller adoptionsmilstolpe."),
+    valueOwnerDescription: tr(
+      language,
+      `${profile.governanceNeeds} This person should be able to defend the case if challenged by both business and delivery.`,
+      `${profile.governanceNeeds} Den personen ska kunna försvara caset om både verksamhet och leverans utmanar det.`
+    ),
     problemDescription: `${profile.problemDefinition} ${profile.commonFailure}`,
-    outcomeDescription: `${profile.outcomeType} A good statement makes the effect visible without naming the build. Example: ${profile.outcomeExample}`,
-    solutionContextDescription: `Let the surrounding context reflect ${profile.label.toLowerCase()} work. ${profile.aasProtection}`,
-    solutionContextFieldDescription: `${profile.changeType} Useful context examples: ${profile.epicExamples}`,
-    constraintsDescription: `${profile.riskType} If a boundary changes governance, continuity, or approval confidence, capture it here.`,
+    outcomeDescription: tr(
+      language,
+      `${profile.outcomeType} A good statement makes the effect visible without naming the build. Example: ${profile.outcomeExample}`,
+      `${profile.outcomeType} En bra formulering gör effekten synlig utan att namnge bygget. Exempel: ${profile.outcomeExample}`
+    ),
+    solutionContextDescription: tr(
+      language,
+      `Let the surrounding context reflect ${profile.label.toLowerCase()} work. ${profile.aasProtection}`,
+      `Låt omgivande kontext spegla ${profile.label.toLowerCase()}-arbete. ${profile.aasProtection}`
+    ),
+    solutionContextFieldDescription: tr(
+      language,
+      `${profile.changeType} Useful context examples: ${profile.epicExamples}`,
+      `${profile.changeType} Nyttiga kontextexempel: ${profile.epicExamples}`
+    ),
+    constraintsDescription: tr(
+      language,
+      `${profile.riskType} If a boundary changes governance, continuity, or approval confidence, capture it here.`,
+      `${profile.riskType} Om en gräns påverkar governance, kontinuitet eller godkännandetrygghet ska den fångas här.`
+    ),
     uxDescription:
       value === "AD"
-        ? "Use UX principles to steer the new experience toward adoption and clarity without prescribing screens."
+        ? tr(language, "Use UX principles to steer the new experience toward adoption and clarity without prescribing screens.", "Använd UX-principer för att styra den nya upplevelsen mot adoption och tydlighet utan att låsa skärmar.")
         : value === "AT"
-          ? "Use UX principles to protect continuity when users move between current and transformed experiences."
-          : "Use UX principles to protect continuity, clarity, and low-friction service behavior in daily operations.",
+          ? tr(language, "Use UX principles to protect continuity when users move between current and transformed experiences.", "Använd UX-principer för att skydda kontinuitet när användare rör sig mellan nuvarande och transformerade upplevelser.")
+          : tr(language, "Use UX principles to protect continuity, clarity, and low-friction service behavior in daily operations.", "Använd UX-principer för att skydda kontinuitet, tydlighet och lågfriktionsbeteende i den dagliga driften."),
     nfrDescription:
       value === "AT"
-        ? "Use this field for cross-cutting quality requirements that protect the transformation: performance, resilience, security, compliance, observability, migration safety and continuity expectations. Strong evidence is expected."
+        ? tr(language, "Use this field for cross-cutting quality requirements that protect the transformation: performance, resilience, security, compliance, observability, migration safety and continuity expectations. Strong evidence is expected.", "Använd fältet för tvärgående kvalitetskrav som skyddar transformationen: prestanda, resiliens, säkerhet, compliance, observerbarhet, migreringssäkerhet och kontinuitetskrav. Stark evidens förväntas.")
         : value === "AM"
-          ? "Use this field for service quality expectations that must stay true in operations: availability, supportability, monitoring, recoverability, security, privacy and cost-efficiency guardrails."
-          : "Use this field for the quality requirements the new capability must meet from the start, such as performance, accessibility, security, privacy, reliability and compliance expectations.",
+          ? tr(language, "Use this field for service quality expectations that must stay true in operations: availability, supportability, monitoring, recoverability, security, privacy and cost-efficiency guardrails.", "Använd fältet för tjänstekvalitetskrav som måste hålla i drift: tillgänglighet, supportbarhet, övervakning, återställbarhet, säkerhet, integritet och kostnadseffektiva guardrails.")
+          : tr(language, "Use this field for the quality requirements the new capability must meet from the start, such as performance, accessibility, security, privacy, reliability and compliance expectations.", "Använd fältet för de kvalitetskrav den nya förmågan måste uppfylla från start, till exempel prestanda, tillgänglighet, säkerhet, integritet, tillförlitlighet och compliance."),
     additionalRequirementsDescription:
       value === "AT"
-        ? "Use this for migration dependencies, platform assumptions, or transformation conditions Design must inherit."
+        ? tr(language, "Use this for migration dependencies, platform assumptions, or transformation conditions Design must inherit.", "Använd detta för migreringsberoenden, plattformsantaganden eller transformationsvillkor som Design måste bära vidare.")
         : value === "AM"
-          ? "Use this for operational assumptions, support boundaries, or service rules that must not disappear between Framing and Design."
-          : "Use this for business rules, assumptions, or external dependencies that still matter in Design.",
+          ? tr(language, "Use this for operational assumptions, support boundaries, or service rules that must not disappear between Framing and Design.", "Använd detta för operativa antaganden, supportgränser eller serviceregler som inte får försvinna mellan Framing och Design.")
+          : tr(language, "Use this for business rules, assumptions, or external dependencies that still matter in Design.", "Använd detta för affärsregler, antaganden eller externa beroenden som fortfarande spelar roll i Design."),
     dataSensitivityDescription:
       value === "AT"
-        ? "Call out data that increases migration, regression, or compliance risk across the current landscape."
+        ? tr(language, "Call out data that increases migration, regression, or compliance risk across the current landscape.", "Peka ut data som ökar migreringsrisk, regressionsrisk eller compliancerisk i det nuvarande landskapet.")
         : value === "AM"
-          ? "Call out operational data, support data, and incident-related data that shape the service model."
-          : "Call out the data involved in the new value flow and the sensitivity implications early.",
-    baselineCardDescription: `${profile.baselinePosition} In this project type, baseline quality strongly affects how convincing the Framing is.`,
-    baselineSourceDescription: `${profile.evidenceNeed} Typical evidence: ${profile.baselineExamples}`,
-    aiRiskDescription: `${profile.aiRole} ${profile.riskType} Use this section to make that explicit before Tollgate 1.`,
-    structureDescription: `${profile.epicCharacter} Use structure to express direction. Examples: ${profile.epicExamples}`,
-    quickEpicDescription: `${profile.epicCharacter} Start by naming one scope boundary that moves the case toward the intended outcome.`,
+          ? tr(language, "Call out operational data, support data, and incident-related data that shape the service model.", "Peka ut operativ data, supportdata och incidentrelaterad data som formar tjänstemodellen.")
+          : tr(language, "Call out the data involved in the new value flow and the sensitivity implications early.", "Peka ut den data som ingår i det nya värdeflödet och dess känslighetskonsekvenser tidigt."),
+    baselineCardDescription: tr(
+      language,
+      `${profile.baselinePosition} In this project type, baseline quality strongly affects how convincing the Framing is.`,
+      `${profile.baselinePosition} I den här projekttypen påverkar baselinekvaliteten starkt hur övertygande Framingen blir.`
+    ),
+    baselineSourceDescription: tr(
+      language,
+      `${profile.evidenceNeed} Typical evidence: ${profile.baselineExamples}`,
+      `${profile.evidenceNeed} Typisk evidens: ${profile.baselineExamples}`
+    ),
+    aiRiskDescription: tr(
+      language,
+      `${profile.aiRole} ${profile.riskType} Use this section to make that explicit before Tollgate 1.`,
+      `${profile.aiRole} ${profile.riskType} Använd sektionen för att göra det explicit före Tollgate 1.`
+    ),
+    structureDescription: tr(
+      language,
+      `${profile.epicCharacter} Use structure to express direction. Examples: ${profile.epicExamples}`,
+      `${profile.epicCharacter} Använd strukturen för att uttrycka riktning. Exempel: ${profile.epicExamples}`
+    ),
+    quickEpicDescription: tr(
+      language,
+      `${profile.epicCharacter} Start by naming one scope boundary that moves the case toward the intended outcome.`,
+      `${profile.epicCharacter} Börja med att namnge en scopegräns som flyttar caset mot det avsedda outcomet.`
+    ),
     quickStoryIdeaDescription:
       value === "AT"
-        ? "Create a directional Story Idea that clarifies one transformation effect or one risk-reducing move under the chosen Epic."
+        ? tr(language, "Create a directional Story Idea that clarifies one transformation effect or one risk-reducing move under the chosen Epic.", "Skapa en riktad Story Idea som tydliggör en transformationseffekt eller ett riskreducerande drag under vald Epic.")
         : value === "AM"
-          ? "Create a directional Story Idea that improves service behavior, support flow, or operational automation under the chosen Epic."
-          : "Create a directional Story Idea that expresses one concrete user-value move under the chosen Epic."
+          ? tr(language, "Create a directional Story Idea that improves service behavior, support flow, or operational automation under the chosen Epic.", "Skapa en riktad Story Idea som förbättrar tjänstebeteende, supportflöde eller operativ automation under vald Epic.")
+          : tr(language, "Create a directional Story Idea that expresses one concrete user-value move under the chosen Epic.", "Skapa en riktad Story Idea som uttrycker ett konkret användarvärdessteg under vald Epic.")
   };
 }
 
@@ -305,9 +426,9 @@ export function DeliveryTypeSelect(props: {
       }}
     >
       <option value="">{t("Select delivery type", "Valj leveranstyp")}</option>
-      <option value="AD">Application Development (AD)</option>
-      <option value="AT">Application Transformation (AT)</option>
-      <option value="AM">Application Management (AM)</option>
+      <option value="AD">{t("Application Development (AD)", "Applikationsutveckling (AD)")}</option>
+      <option value="AT">{t("Application Transformation (AT)", "Applikationstransformation (AT)")}</option>
+      <option value="AM">{t("Application Management (AM)", "Applikationsförvaltning (AM)")}</option>
     </select>
   );
 }
@@ -316,7 +437,7 @@ export function DeliveryTypeHelpCard() {
   const { language } = useAppChromeLanguage();
   const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const { value } = useDeliveryTypeGuidance();
-  const selectedProfile = getDeliveryTypeProfile(value);
+  const selectedProfile = getDeliveryTypeProfile(value, language);
 
   return (
     <details className="group rounded-2xl border border-border/70 bg-background/85 shadow-sm">
@@ -336,7 +457,9 @@ export function DeliveryTypeHelpCard() {
           {selectedProfile ? ` ${t("Current selection", "Nuvarande val")}: ${selectedProfile.label}.` : ""}
         </p>
         <div className="grid gap-4 xl:grid-cols-3">
-          {(Object.entries(deliveryTypeProfiles) as Array<[DeliveryTypeValue, DeliveryTypeProfile]>).map(([key, profile]) => (
+          {(Object.entries(deliveryTypeProfiles) as Array<[DeliveryTypeValue, DeliveryTypeProfile]>).map(([key, profile]) => {
+            const localizedProfile = getDeliveryTypeProfile(key, language) ?? profile;
+            return (
             <div
               className={`rounded-2xl border p-4 ${
                 key === value ? "border-sky-300 bg-sky-50/80 text-sky-950 shadow-sm" : "border-border/70 bg-muted/15 text-foreground"
@@ -346,32 +469,32 @@ export function DeliveryTypeHelpCard() {
               <div className="space-y-3">
                 <div className="space-y-1">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{key}</p>
-                  <h4 className="font-semibold">{profile.label}</h4>
-                  <p className="text-sm leading-6">{profile.primaryQuestion}</p>
+                  <h4 className="font-semibold">{localizedProfile.label}</h4>
+                  <p className="text-sm leading-6">{localizedProfile.primaryQuestion}</p>
                 </div>
                 <div className="space-y-2 text-sm leading-6 text-muted-foreground">
                   <p>
-                    <strong className="text-foreground">{t("Baseline:", "Baseline:")}</strong> {profile.baselinePosition}
+                    <strong className="text-foreground">{t("Baseline:", "Baseline:")}</strong> {localizedProfile.baselinePosition}
                   </p>
                   <p>
-                    <strong className="text-foreground">{t("Outcome:", "Outcome:")}</strong> {profile.outcomeType}
+                    <strong className="text-foreground">{t("Outcome:", "Outcome:")}</strong> {localizedProfile.outcomeType}
                   </p>
                   <p>
-                    <strong className="text-foreground">{t("Evidence:", "Bevis:")}</strong> {profile.evidenceNeed}
+                    <strong className="text-foreground">{t("Evidence:", "Bevis:")}</strong> {localizedProfile.evidenceNeed}
                   </p>
                   <p>
-                    <strong className="text-foreground">{t("Epics:", "Epics:")}</strong> {profile.epicExamples}
+                    <strong className="text-foreground">{t("Epics:", "Epics:")}</strong> {localizedProfile.epicExamples}
                   </p>
                   <p>
-                    <strong className="text-foreground">{t("Risk:", "Risk:")}</strong> {profile.riskType}
+                    <strong className="text-foreground">{t("Risk:", "Risk:")}</strong> {localizedProfile.riskType}
                   </p>
                   <p>
-                    <strong className="text-foreground">{t("Governance:", "Governance:")}</strong> {profile.governanceNeeds}
+                    <strong className="text-foreground">{t("Governance:", "Governance:")}</strong> {localizedProfile.governanceNeeds}
                   </p>
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
     </details>

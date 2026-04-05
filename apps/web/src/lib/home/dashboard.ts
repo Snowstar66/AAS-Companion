@@ -1,8 +1,20 @@
+import { cookies } from "next/headers";
 import { DEMO_ORGANIZATION, DEMO_SESSION } from "@aas-companion/domain/demo";
 import type { OrganizationContext } from "@aas-companion/domain/organization";
 import { getHomeDashboardData, type HomeDashboardData } from "@aas-companion/api/dashboard";
 import { listOrganizationProjectSummariesForUser } from "@aas-companion/db/organization-repository";
 import { getAppSession, getSignedInAccountIdentity } from "@/lib/auth/session";
+
+type AppLanguage = "en" | "sv";
+
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
 
 export type HomeProjectSummary = {
   organizationId: string;
@@ -29,6 +41,8 @@ export type HomeDashboardLoadResult = {
 };
 
 export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
+  const language = await getServerLanguage();
+
   try {
     const [session, account] = await Promise.all([getAppSession(), getSignedInAccountIdentity()]);
 
@@ -37,12 +51,18 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
         session,
         dashboard: {
           state: "empty",
-          organizationName: "No project selected",
-          message: "Choose a project or Demo explicitly before operational data is shown.",
+          organizationName: language === "sv" ? "Inget projekt valt" : "No project selected",
+          message:
+            language === "sv"
+              ? "Välj ett projekt eller Demo uttryckligen innan operativ data visas."
+              : "Choose a project or Demo explicitly before operational data is shown.",
           projectPhase: {
             key: "framing",
-            label: "Framing phase",
-            detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+            label: language === "sv" ? "Framingfas" : "Framing phase",
+            detail:
+              language === "sv"
+                ? "Projektet ligger kvar i framing tills en framing-brief har godkänts i Tollgate 1."
+                : "The project remains in framing until a framing brief is approved at Tollgate 1."
           },
           storyIdeaStats: {
             total: 0,
@@ -68,15 +88,21 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
       account || (session.mode === "demo" && session.userId !== DEMO_SESSION.userId)
     );
     const dashboardPromise = session.organization?.organizationId
-      ? getHomeDashboardData(session.organization.organizationId)
+      ? getHomeDashboardData(session.organization.organizationId, language)
       : Promise.resolve({
           state: "empty",
-          organizationName: "No project selected",
-          message: "Choose an existing project, create a new one, or open Demo explicitly before entering operational work.",
+          organizationName: language === "sv" ? "Inget projekt valt" : "No project selected",
+          message:
+            language === "sv"
+              ? "Välj ett befintligt projekt, skapa ett nytt eller öppna Demo uttryckligen innan du går in i operativt arbete."
+              : "Choose an existing project, create a new one, or open Demo explicitly before entering operational work.",
           projectPhase: {
             key: "framing",
-            label: "Framing phase",
-            detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+            label: language === "sv" ? "Framingfas" : "Framing phase",
+            detail:
+              language === "sv"
+                ? "Projektet ligger kvar i framing tills en framing-brief har godkänts i Tollgate 1."
+                : "The project remains in framing until a framing brief is approved at Tollgate 1."
           },
           storyIdeaStats: {
             total: 0,
@@ -119,15 +145,22 @@ export async function loadHomeDashboard(): Promise<HomeDashboardLoadResult> {
       session: null,
       dashboard: {
         state: "unavailable",
-        organizationName: "Unknown project",
+        organizationName: language === "sv" ? "Okänt projekt" : "Unknown project",
         message:
           error instanceof Error
-            ? `Dashboard data is unavailable right now: ${error.message}`
-            : "Dashboard data is unavailable right now.",
+            ? language === "sv"
+              ? `Dashboarddata är inte tillgänglig just nu: ${error.message}`
+              : `Dashboard data is unavailable right now: ${error.message}`
+            : language === "sv"
+              ? "Dashboarddata är inte tillgänglig just nu."
+              : "Dashboard data is unavailable right now.",
         projectPhase: {
           key: "framing",
-          label: "Framing phase",
-          detail: "The project remains in framing until a framing brief is approved at Tollgate 1."
+          label: language === "sv" ? "Framingfas" : "Framing phase",
+          detail:
+            language === "sv"
+              ? "Projektet ligger kvar i framing tills en framing-brief har godkänts i Tollgate 1."
+              : "The project remains in framing until a framing brief is approved at Tollgate 1."
         },
         storyIdeaStats: {
           total: 0,

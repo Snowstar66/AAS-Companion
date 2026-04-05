@@ -81,6 +81,22 @@ function translate(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
 }
 
+function localizeTollgateBlocker(blocker: string, language: "en" | "sv") {
+  const reframingMatch = blocker.match(
+    /^Framing changed after version (\d+)\. Submit version (\d+) to Tollgate 1 for a new approval\.$/
+  );
+
+  if (!reframingMatch) {
+    return blocker;
+  }
+
+  return translate(
+    language,
+    blocker,
+    `Framing ändrades efter version ${reframingMatch[1]}. Skicka in version ${reframingMatch[2]} till Tollgate 1 för ett nytt godkännande.`
+  );
+}
+
 function getOriginLabel(originType: string, language: "en" | "sv") {
   if (originType === "seeded") return "Demo";
   if (originType === "native") return language === "sv" ? "Nativ" : "Native";
@@ -1465,10 +1481,10 @@ export async function DeferredOutcomeTollgateSection(props: {
     <Clock3 className="h-4 w-4" />
   );
   const primaryStatusTitle = currentVersionApproved
-    ? "Tollgate 1 is approved for the current Framing version."
+    ? translate(language, "Tollgate 1 is approved for the current Framing version.", "Tollgate 1 är godkänd för aktuell Framing-version.")
     : hasPartialApprovals
-      ? "Framing approvals are in progress for the current version."
-      : "Tollgate 1 approvals can be recorded now.";
+      ? translate(language, "Framing approvals are in progress for the current version.", "Framing-godkännanden pågår för aktuell version.")
+      : translate(language, "Tollgate 1 approvals can be recorded now.", "Tollgate 1-godkännanden kan registreras nu.");
   const primaryStatusDetail = currentVersionApproved
     ? translate(
         language,
@@ -1609,10 +1625,10 @@ export async function DeferredOutcomeTollgateSection(props: {
 
           {visibleBlockers.length > 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-              <p className="font-medium">Warnings before relying on this approval</p>
+              <p className="font-medium">{translate(language, "Warnings before relying on this approval", "Varningar innan du förlitar dig på detta godkännande")}</p>
               <ul className="mt-3 space-y-2">
                 {visibleBlockers.map((blocker) => (
-                  <li key={blocker}>• {blocker}</li>
+                  <li key={blocker}>• {localizeTollgateBlocker(blocker, language)}</li>
                 ))}
               </ul>
             </div>

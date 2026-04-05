@@ -63,6 +63,20 @@ function getOriginClasses(originType: string) {
   return "border-slate-200 bg-slate-50 text-slate-800";
 }
 
+function localizeFramingBlocker(blocker: string, language: "en" | "sv") {
+  const reframingMatch = blocker.match(
+    /^Framing changed after version (\d+)\. Submit version (\d+) to Tollgate 1 for a new approval\.$/
+  );
+
+  if (!reframingMatch) {
+    return blocker;
+  }
+
+  return language === "sv"
+    ? `Framing ändrades efter version ${reframingMatch[1]}. Skicka in version ${reframingMatch[2]} till Tollgate 1 för ett nytt godkännande.`
+    : blocker;
+}
+
 function matchesOriginFilter(item: FramingOutcomeItem, filter: OriginFilterKey) {
   if (filter === "all") {
     return true;
@@ -680,7 +694,7 @@ export function FramingCockpit({
                             {item.blockers.map((blocker) => (
                               <li className="flex items-start gap-2" key={`${item.id}-${blocker}`}>
                                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                                <span>{blocker}</span>
+                                <span>{localizeFramingBlocker(blocker, language)}</span>
                               </li>
                             ))}
                           </ul>
