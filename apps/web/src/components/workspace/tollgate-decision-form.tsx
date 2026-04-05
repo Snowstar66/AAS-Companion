@@ -115,7 +115,7 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
           organizationSide: person.organizationSide
         }));
   const [selectedSignerId, setSelectedSignerId] = useState(signerOptions[0]?.id ?? "");
-  const selectedLaneLabel = selectedLane?.label.toLowerCase() ?? "selected";
+  const selectedLaneLabel = selectedLane?.label.toLowerCase() ?? t("selected", "valt");
 
   useEffect(() => {
     if (!signerOptions.some((person) => person.id === selectedSignerId)) {
@@ -194,7 +194,7 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
           {signerOptions.length > 0
             ? t(
                 `Signer is preselected from the required ${selectedLaneLabel} lane.`,
-                `Signerare ar forvald fran det obligatoriska sparet for ${selectedLaneLabel}.`
+                `Signeraren ar forvald fran det obligatoriska sparet for ${selectedLaneLabel}.`
               )
             : t(
                 `This ${selectedLaneLabel} lane has no active assigned signer yet.`,

@@ -69,6 +69,15 @@ function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
+function formatOrganizationSide(value: string, language: "en" | "sv") {
+  if (language === "sv") {
+    if (value === "customer") return "kund";
+    if (value === "supplier") return "leverantor";
+  }
+
+  return value;
+}
+
 function getPendingToneClasses(hasItems: boolean) {
   return hasItems
     ? "border-amber-200/70 bg-[linear-gradient(135deg,rgba(245,158,11,0.08),rgba(255,255,255,0.92))] text-amber-950"
@@ -356,8 +365,8 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                   props.pendingActions.map((action) => (
                     <div className={`rounded-2xl border px-3 py-3 ${getPendingToneClasses(true)}`} key={`${action.label}:${action.roleType}`}>
                       {language === "sv"
-                        ? `${action.label} behover fortfarande ${formatLabel(action.roleType)} pa ${action.organizationSide}-sidan.`
-                        : `${action.label} still needs ${formatLabel(action.roleType)} on the ${action.organizationSide} side.`}
+                        ? `${action.label} behover fortfarande ${formatLabel(action.roleType)} pa ${formatOrganizationSide(action.organizationSide, language)}-sidan.`
+                        : `${action.label} still needs ${formatLabel(action.roleType)} on the ${formatOrganizationSide(action.organizationSide, language)} side.`}
                     </div>
                   ))
                 )}
@@ -431,7 +440,7 @@ export function TollgateDecisionCard(props: TollgateDecisionCardProps) {
                       {formatLabel(record.decisionKind)} {t("by", "av")} {record.actualPersonName}
                     </p>
                     <p className="mt-2">
-                      {formatLabel(record.requiredRoleType)} / {record.organizationSide} / {formatLabel(record.decisionStatus)}
+                      {formatLabel(record.requiredRoleType)} / {formatOrganizationSide(record.organizationSide, language)} / {formatLabel(record.decisionStatus)}
                     </p>
                     {record.note ? <p className="mt-2">{record.note}</p> : null}
                     {record.evidenceReference ? <p className="mt-2">{t("Evidence", "Evidens")}: {record.evidenceReference}</p> : null}

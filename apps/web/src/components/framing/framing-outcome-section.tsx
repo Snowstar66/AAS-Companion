@@ -748,8 +748,9 @@ export function FramingOutcomeSection({
           </Card>
 
         <FramingContextCard
-            epic={null}
-            outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref }}
+          epic={null}
+          language={language}
+          outcome={{ id: outcome.id, key: outcome.key, title: outcome.title, href: framingHref }}
           summary={
             language === "sv"
               ? "När du öppnar den här Framing-vyn etableras den aktiva affärskontexten. Bara Epics och Story Ideas som hör till det här caset visas som standard."

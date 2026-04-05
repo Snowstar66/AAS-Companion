@@ -67,7 +67,7 @@ export function StoryIdeaWorkspace({
     story.epic.scopeBoundary?.trim() ||
     t(
       `This story idea should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`,
-      `Den har storyidean ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
+      `Den har storyiden ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
     );
   const ideaBlockers = getStoryIdeaBlockers({
     valueIntent: story.valueIntent,
@@ -91,7 +91,7 @@ export function StoryIdeaWorkspace({
   ].filter((value): value is string => Boolean(value));
   const nextActionLabel =
     ideaBlockers.length > 0
-      ? t("Complete the Story Idea", "Komplettera Story Idea")
+      ? t("Complete the Story Idea", "Komplettera storyiden")
       : story.outcome.status === "active"
         ? t("Create or refine Delivery Stories", "Skapa eller forfina Delivery Stories")
         : t("Review in Framing", "Granska i Framing");
@@ -136,7 +136,7 @@ export function StoryIdeaWorkspace({
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">
                   <Lightbulb className="h-4 w-4" />
-                  {t("Story Idea", "Story Idea")}
+                  {t("Story Idea", "Storyide")}
                 </span>
                 <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${primaryStatusClasses}`}>
                   {primaryStatusLabel}
@@ -156,7 +156,7 @@ export function StoryIdeaWorkspace({
           </CardHeader>
           <CardContent className="grid gap-4 lg:grid-cols-3">
             <WorkspaceStatusSummary
-              blockerEmptyText={t("No Story Idea blockers are visible right now.", "Inga blockerare for Story Idea syns just nu.")}
+              blockerEmptyText={t("No Story Idea blockers are visible right now.", "Inga blockerare for storyiden syns just nu.")}
               blockers={ideaBlockers}
               completeItems={completeItems}
               nextActionDetail={nextActionDetail}
@@ -175,7 +175,7 @@ export function StoryIdeaWorkspace({
           <input name="epicScopeBoundary" type="hidden" value={story.epic.scopeBoundary ?? ""} />
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>{t("Story idea definition", "Story Idea-definition")}</CardTitle>
+              <CardTitle>{t("Story idea definition", "Storyide-definition")}</CardTitle>
               <CardDescription>{guidance}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -235,7 +235,7 @@ export function StoryIdeaWorkspace({
                   </ul>
                 ) : (
                   <p className="mt-2 leading-6 text-muted-foreground">
-                    {t("No blockers remain. This Story Idea is ready for review.", "Inga blockerare aterstar. Den har Story Idean ar redo for review.")}
+                    {t("No blockers remain. This Story Idea is ready for review.", "Inga blockerare aterstar. Den har storyiden ar redo for review.")}
                   </p>
                 )}
               </div>
@@ -343,7 +343,7 @@ export function StoryIdeaWorkspace({
               />
             ) : null}
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/epics/${story.epicId}`}>{t("Back to current Epic", "Tillbaka till aktuell Epic")}</Link>
+              <Link href={`/epics/${story.epicId}`}>{t("Back to current Epic", "Tillbaka till aktuell epic")}</Link>
             </Button>
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/framing?outcomeId=${story.outcomeId}`}>{t("Open current Framing", "Oppna aktuell Framing")}</Link>
@@ -369,7 +369,7 @@ export function StoryIdeaWorkspace({
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/45 p-4 text-sm" key={deliveryStory.id}>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Delivery Story", "Delivery Story")}</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Delivery Story", "Leveransstory")}</p>
                       <p className="mt-2 font-semibold text-foreground">
                         {deliveryStory.key} {deliveryStory.title}
                       </p>
@@ -383,7 +383,7 @@ export function StoryIdeaWorkspace({
                     </div>
                     <Button asChild className="gap-2" size="sm" variant="secondary">
                       <Link href={`/stories/${deliveryStory.id}`}>
-                        {t("Open Delivery Story", "Oppna Delivery Story")}
+                        {t("Open Delivery Story", "Oppna leveransstory")}
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -416,7 +416,7 @@ export function StoryIdeaWorkspace({
           <Card className="border-border/70 shadow-none">
             <CardContent className="grid gap-4 p-5 md:grid-cols-2">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Current framing", "Aktuell framing")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Current framing", "Aktuell Framing")}</p>
                 <p className="mt-2 font-semibold text-foreground">
                   {story.outcome.key} {story.outcome.title}
                 </p>
@@ -447,7 +447,7 @@ export function StoryIdeaWorkspace({
           title={t("Delivery review later", "Leveransgranskning senare")}
         >
           <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">{t("This is still a Story Idea.", "Det har ar fortfarande en Story Idea.")}</p>
+            <p className="font-medium text-foreground">{t("This is still a Story Idea.", "Det har ar fortfarande en storyide.")}</p>
             <p className="mt-2 leading-6">
               {t(
                 "Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build start controls appear after this idea is transformed into a Delivery Story.",
@@ -464,7 +464,7 @@ export function StoryIdeaWorkspace({
 
         <Card className="border-border/70 shadow-sm" id="story-governance">
           <CardHeader>
-            <CardTitle>{t("Governance readiness", "Governance readiness")}</CardTitle>
+            <CardTitle>{t("Governance readiness", "Governance-beredskap")}</CardTitle>
             <CardDescription>
               {t(
                 "Check whether the project is staffed strongly enough for this Story's AI level.",
@@ -475,7 +475,7 @@ export function StoryIdeaWorkspace({
           <CardContent>
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/governance?view=readiness&sourceEntity=story&sourceId=${story.id}&level=${story.aiAccelerationLevel}`}>
-                {t("Open Governance readiness", "Oppna Governance readiness")}
+                {t("Open Governance readiness", "Oppna Governance-beredskap")}
               </Link>
             </Button>
           </CardContent>
@@ -531,7 +531,7 @@ export function StoryIdeaWorkspace({
             defaultOpen={false}
             description={t(
               "Imported lineage is still accessible when you need to trace the source material.",
-              "Importerad lineage ar fortfarande tillganglig nar du behover spåra kallmaterialet."
+              "Importerad lineage ar fortfarande tillganglig nar du behover spora kallmaterialet."
             )}
             title={t("Imported lineage", "Importerad lineage")}
           >

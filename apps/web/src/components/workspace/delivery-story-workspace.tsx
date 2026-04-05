@@ -58,7 +58,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
     story.epic.scopeBoundary?.trim() ||
     t(
       `This delivery story should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`,
-      `Den har delivery storyn ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
+      `Den har leveransstoryn ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
     );
   const statusTone =
     storyUx.tone === "success"
@@ -87,7 +87,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   </span>
                   <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900">
                     <ShieldCheck className="h-4 w-4" />
-                    {t("Delivery Story", "Delivery Story")}
+                    {t("Delivery Story", "Leveransstory")}
                   </span>
                   <span
                     className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStoryToneClasses(storyUx.tone)}`}
@@ -103,7 +103,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   </span>
                   {story.sourceDirectionSeedId ? (
                     <span className="inline-flex rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-800">
-                      {t("Linked to Story Idea", "Lankad till Story Idea")}
+                      {t("Linked to Story Idea", "Lankad till storyide")}
                     </span>
                   ) : null}
                 </div>
@@ -122,7 +122,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
               {!isArchived ? (
                 <Button asChild className="gap-2" variant={blockers.length === 0 ? "default" : "secondary"}>
                   <Link href={`/handoff/${story.id}`}>
-                    {t("Open build package", "Oppna build package")}
+                    {t("Open build package", "Oppna byggpaket")}
                     <FileJson2 className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -131,7 +131,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           </CardHeader>
           <CardContent className="grid gap-4">
             <WorkspaceStatusSummary
-              blockerEmptyText={t("No Delivery Story blockers are visible right now.", "Inga blockerare for Delivery Story syns just nu.")}
+              blockerEmptyText={t("No Delivery Story blockers are visible right now.", "Inga blockerare for leveransstoryn syns just nu.")}
               blockers={blockers}
               completeItems={completeItems}
               nextActionDetail={primaryNextStepDetail}
@@ -151,7 +151,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           <input name="epicScopeBoundary" type="hidden" value={story.epic.scopeBoundary ?? ""} />
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>{t("Delivery Story definition", "Delivery Story-definition")}</CardTitle>
+              <CardTitle>{t("Delivery Story definition", "Leveransstory-definition")}</CardTitle>
               <CardDescription>
                 {t(
                   "Keep this focused on one testable delivery unit and the inputs needed before build starts.",
@@ -227,7 +227,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   </ul>
                 ) : (
                   <p className="mt-2 leading-6 text-muted-foreground">
-                    {t("No blockers remain. This Delivery Story is ready for review.", "Inga blockerare aterstar. Den har Delivery Storyn ar redo for review.")}
+                    {t("No blockers remain. This Delivery Story is ready for review.", "Inga blockerare aterstar. Den har leveransstoryn ar redo for review.")}
                   </p>
                 )}
                 {valueSpineBlockers.length > 0 ? (
@@ -361,13 +361,13 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             "Keep the connection back to the framing-level Story Idea visible, but secondary to delivery execution.",
             "Behall kopplingen tillbaka till Story Idean pa framingniva synlig, men sekundar i forhallande till leveransexekveringen."
           )}
-          title={t("Origin Story Idea", "Ursprunglig Story Idea")}
+          title={t("Origin Story Idea", "Ursprunglig storyide")}
         >
           {originStoryIdea ? (
             <div className="rounded-2xl border border-sky-200 bg-sky-50/55 p-4 text-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Story Idea", "Story Idea")}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Story Idea", "Storyide")}</p>
                   <p className="mt-2 font-semibold text-foreground">
                     {originStoryIdea.key} {originStoryIdea.title}
                   </p>
@@ -388,7 +388,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                         : `/story-ideas/${originStoryIdea.seedId}`
                     }
                   >
-                    {t("Open Story Idea", "Oppna Story Idea")}
+                    {t("Open Story Idea", "Oppna storyide")}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -524,7 +524,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
 
         <Card className="border-border/70 shadow-sm" id="story-governance">
           <CardHeader>
-            <CardTitle>{t("Governance readiness", "Governance readiness")}</CardTitle>
+            <CardTitle>{t("Governance readiness", "Governance-beredskap")}</CardTitle>
             <CardDescription>
               {t(
                 "Check whether the project is staffed strongly enough for this Story's AI level.",
@@ -535,7 +535,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           <CardContent>
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/governance?view=readiness&sourceEntity=story&sourceId=${story.id}&level=${story.aiAccelerationLevel}`}>
-                {t("Open Governance readiness", "Oppna Governance readiness")}
+                {t("Open Governance readiness", "Oppna Governance-beredskap")}
               </Link>
             </Button>
           </CardContent>
@@ -591,7 +591,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             defaultOpen={false}
             description={t(
               "Imported lineage is still accessible when you need to trace the source material.",
-              "Importerad lineage ar fortfarande tillganglig nar du behover spåra kallmaterialet."
+              "Importerad lineage ar fortfarande tillganglig nar du behover spora kallmaterialet."
             )}
             title={t("Imported lineage", "Importerad lineage")}
           >

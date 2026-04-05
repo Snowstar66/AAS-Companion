@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { ArrowRight, GitBranch } from "lucide-react";
 import { getEpicWorkspaceService } from "@aas-companion/api";
@@ -34,8 +35,19 @@ type EpicWorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type AppLanguage = "en" | "sv";
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
 }
 
 function getOriginLabel(originType: string) {
@@ -56,6 +68,7 @@ function getWorkspaceLabel(epic: { originType: string; createdMode: string }) {
 
 export default async function EpicWorkspacePage({ params, searchParams }: EpicWorkspacePageProps) {
   const organization = await requireOrganizationContext();
+  const language = await getServerLanguage();
   const { epicId } = await params;
   const query = searchParams ? await searchParams : {};
   const created = getParamValue(query.created) === "1";
@@ -160,6 +173,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
             title: epic.title,
             href: `/epics/${epic.id}`
           }}
+          language={language}
           outcome={{
             id: epic.outcome.id,
             key: epic.outcome.key,
