@@ -16,6 +16,13 @@ import type {
   reviewOutcomeFramingWithAiAction
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
+import {
+  DeliveryTypeGuidanceProvider,
+  DeliveryTypeGuidanceText,
+  DeliveryTypeHelpCard as LiveDeliveryTypeHelpCard,
+  DeliveryTypeHelperText,
+  DeliveryTypeSelect
+} from "@/components/framing/delivery-type-guidance-live";
 import { FramingGuidanceShell } from "@/components/framing/framing-guidance-shell";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
@@ -207,6 +214,7 @@ function getDeliveryTypeProfile(value: "AD" | "AT" | "AM" | null | undefined) {
   return value ? deliveryTypeProfiles[value] : null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getDeliveryTypeHelper(value: "AD" | "AT" | "AM" | null | undefined) {
   const profile = getDeliveryTypeProfile(value);
 
@@ -217,6 +225,7 @@ function getDeliveryTypeHelper(value: "AD" | "AT" | "AM" | null | undefined) {
   return `${profile.label}: ${profile.primaryQuestion} ${profile.governanceNeeds}`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getDeliveryTypeContextualGuidance(value: "AD" | "AT" | "AM" | null | undefined) {
   const profile = getDeliveryTypeProfile(value);
 
@@ -297,6 +306,7 @@ function getDeliveryTypeContextualGuidance(value: "AD" | "AT" | "AM" | null | un
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function DeliveryTypeHelpCard(props: { value: "AD" | "AT" | "AM" | null | undefined }) {
   const selectedProfile = getDeliveryTypeProfile(props.value);
 
@@ -351,7 +361,7 @@ function DeliveryTypeHelpCard(props: { value: "AD" | "AT" | "AM" | null | undefi
 
 function CollapsibleFramingPanel(props: {
   title: string;
-  description: string;
+  description: ReactNode;
   defaultOpen?: boolean | undefined;
   badge?: ReactNode;
   teaser?: ReactNode;
@@ -527,7 +537,6 @@ export function FramingOutcomeSection({
   const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
   const deliveryTypeValue =
     outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null;
-  const deliveryTypeGuidance = getDeliveryTypeContextualGuidance(deliveryTypeValue);
   const structuredConstraints = parseFramingConstraintBundle(outcome.solutionConstraints ?? null);
   const framingCompleteItems = [
     outcome.outcomeStatement?.trim() ? "Outcome statement is captured" : null,
@@ -718,6 +727,7 @@ export function FramingOutcomeSection({
           />
         </div>
 
+        <DeliveryTypeGuidanceProvider initialValue={deliveryTypeValue}>
         <form action={saveAction} className="space-y-6">
             <input name="outcomeId" type="hidden" value={outcome.id} />
             <input name="returnPath" type="hidden" value={returnPath} />
@@ -725,7 +735,7 @@ export function FramingOutcomeSection({
               <CardHeader>
                 <CardTitle>Business case</CardTitle>
                 <CardDescription>
-                  {deliveryTypeGuidance.businessCaseDescription}
+                  <DeliveryTypeGuidanceText slot="businessCaseDescription" />
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
@@ -750,7 +760,7 @@ export function FramingOutcomeSection({
                     type="text"
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {deliveryTypeGuidance.timeframeDescription}
+                    <DeliveryTypeGuidanceText slot="timeframeDescription" />
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe")} />
                 </label>
@@ -773,7 +783,7 @@ export function FramingOutcomeSection({
                     />
                   </Suspense>
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {deliveryTypeGuidance.valueOwnerDescription}
+                    <DeliveryTypeGuidanceText slot="valueOwnerDescription" />
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} />
                 </label>
@@ -785,7 +795,9 @@ export function FramingOutcomeSection({
                     disabled={isArchived}
                     name="problemStatement"
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.problemDescription}</p>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    <DeliveryTypeGuidanceText slot="problemDescription" />
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.problem")} />
                 </label>
                 <div className="xl:col-span-2">
@@ -794,7 +806,9 @@ export function FramingOutcomeSection({
                     field="outcome_statement"
                     guidance={
                       <>
-                        <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.outcomeDescription}</p>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          <DeliveryTypeGuidanceText slot="outcomeDescription" />
+                        </p>
                         <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
                       </>
                     }
@@ -811,7 +825,7 @@ export function FramingOutcomeSection({
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground">Solution Context &amp; Constraints</p>
                     <p className="text-sm text-muted-foreground">
-                      {deliveryTypeGuidance.solutionContextDescription}
+                      <DeliveryTypeGuidanceText slot="solutionContextDescription" />
                     </p>
                   </div>
                 </div>
@@ -825,7 +839,7 @@ export function FramingOutcomeSection({
                     placeholder="Describe the business setting, usage context, existing system landscape and high-level integration expectations that design must take into account."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {deliveryTypeGuidance.solutionContextFieldDescription}
+                    <DeliveryTypeGuidanceText slot="solutionContextFieldDescription" />
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context")} />
                 </label>
@@ -839,7 +853,7 @@ export function FramingOutcomeSection({
                     placeholder="List the business, operational, compliance or integration conditions that Design must satisfy."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {deliveryTypeGuidance.constraintsDescription}
+                    <DeliveryTypeGuidanceText slot="constraintsDescription" />
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints")} />
                 </label>
@@ -853,7 +867,7 @@ export function FramingOutcomeSection({
                     placeholder="Capture UI and UX principles such as mobile-first, accessibility, clarity, continuity, or interaction constraints that design must respect."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {deliveryTypeGuidance.uxDescription}
+                    <DeliveryTypeGuidanceText slot="uxDescription" />
                   </p>
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -866,7 +880,7 @@ export function FramingOutcomeSection({
                     placeholder="Capture performance, security, availability, compliance, privacy, accessibility or reliability requirements that design and delivery must satisfy."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {deliveryTypeGuidance.nfrDescription}
+                    <DeliveryTypeGuidanceText slot="nfrDescription" />
                   </p>
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -879,7 +893,7 @@ export function FramingOutcomeSection({
                     placeholder="Capture extra business rules, dependencies, assumptions or design-stage requirements that should not be lost when the work moves into design."
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {deliveryTypeGuidance.additionalRequirementsDescription}
+                    <DeliveryTypeGuidanceText slot="additionalRequirementsDescription" />
                   </p>
                 </label>
                 <label className="space-y-2">
@@ -891,27 +905,26 @@ export function FramingOutcomeSection({
                     name="dataSensitivity"
                     placeholder="List the data types involved and their sensitivity level."
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.dataSensitivityDescription}</p>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    <DeliveryTypeGuidanceText slot="dataSensitivityDescription" />
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.data_sensitivity")} />
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">Delivery type</span>
-                    <DeliveryTypeHelpCard value={deliveryTypeValue} />
+                    <label className="text-sm font-medium text-foreground" htmlFor="outcome-delivery-type">
+                      Delivery type
+                    </label>
+                    <LiveDeliveryTypeHelpCard />
                   </div>
-                  <select
-                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                  <DeliveryTypeSelect
                     defaultValue={outcome.deliveryType ?? ""}
                     disabled={isArchived}
+                    id="outcome-delivery-type"
                     name="deliveryType"
-                  >
-                    <option value="">Select delivery type</option>
-                    <option value="AD">Application Development (AD)</option>
-                    <option value="AT">Application Transformation (AT)</option>
-                    <option value="AM">Application Management (AM)</option>
-                  </select>
+                  />
                   <p className="text-sm leading-6 text-muted-foreground">
-                    {getDeliveryTypeHelper(deliveryTypeValue)}
+                    <DeliveryTypeHelperText />
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type")} />
                 </div>
@@ -921,7 +934,9 @@ export function FramingOutcomeSection({
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle>Baseline</CardTitle>
-                <CardDescription>{deliveryTypeGuidance.baselineCardDescription}</CardDescription>
+                <CardDescription>
+                  <DeliveryTypeGuidanceText slot="baselineCardDescription" />
+                </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-5 xl:grid-cols-2">
                 <OutcomeAiValidatedTextarea
@@ -929,7 +944,9 @@ export function FramingOutcomeSection({
                   field="baseline_definition"
                   guidance={
                     <>
-                      <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.baselineCardDescription}</p>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        <DeliveryTypeGuidanceText slot="baselineCardDescription" />
+                      </p>
                       <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
                     </>
                   }
@@ -949,14 +966,16 @@ export function FramingOutcomeSection({
                     disabled={isArchived}
                     name="baselineSource"
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">{deliveryTypeGuidance.baselineSourceDescription}</p>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    <DeliveryTypeGuidanceText slot="baselineSourceDescription" />
+                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source")} />
                 </label>
               </CardContent>
             </Card>
 
             <CollapsibleFramingPanel
-              description={deliveryTypeGuidance.aiRiskDescription}
+              description={<DeliveryTypeGuidanceText slot="aiRiskDescription" />}
               badge={
                 <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${aiRiskBadgeClasses}`}>
                   {aiRiskStatusLabel}
@@ -991,7 +1010,7 @@ export function FramingOutcomeSection({
             </CollapsibleFramingPanel>
 
             <CollapsibleFramingPanel
-              description={deliveryTypeGuidance.structureDescription}
+              description={<DeliveryTypeGuidanceText slot="structureDescription" />}
               teaser={<p className="leading-6 text-muted-foreground">{structureTeaser.join(" · ")}</p>}
               title="Epics, Story Ideas and framing hierarchy"
             >
@@ -1001,7 +1020,7 @@ export function FramingOutcomeSection({
                     <div className="space-y-1">
                       <p className="font-medium text-foreground">Quick create Epic</p>
                       <p className="text-sm leading-6 text-muted-foreground">
-                        {deliveryTypeGuidance.quickEpicDescription}
+                        <DeliveryTypeGuidanceText slot="quickEpicDescription" />
                       </p>
                     </div>
                     <div className="mt-3 space-y-3">
@@ -1043,7 +1062,7 @@ export function FramingOutcomeSection({
                       <div className="space-y-1">
                         <p className="font-medium text-foreground">Quick create Story Idea</p>
                         <p className="text-sm leading-6 text-muted-foreground">
-                          {deliveryTypeGuidance.quickStoryIdeaDescription}
+                          <DeliveryTypeGuidanceText slot="quickStoryIdeaDescription" />
                         </p>
                       </div>
                       <div className="space-y-3">
@@ -1206,6 +1225,7 @@ export function FramingOutcomeSection({
               </Button>
             ) : null}
         </form>
+        </DeliveryTypeGuidanceProvider>
 
         <Suspense fallback={<OutcomeTollgateSectionFallback />}>
           <DeferredOutcomeTollgateSection

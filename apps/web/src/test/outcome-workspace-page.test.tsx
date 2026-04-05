@@ -211,6 +211,31 @@ vi.mock("@aas-companion/api", async () => {
 });
 
 vi.mock("@/lib/cache/project-data", () => ({
+  getCachedOrganizationUsersData: vi.fn(async () => ({
+    ok: true,
+    data: []
+  })),
+  getCachedOutcomeTollgateReviewData: vi.fn(async () => ({
+    ok: true,
+    data: {
+      outcome: {
+        id: "outcome-native-1",
+        framingVersion: 1
+      },
+      blockers: ["Baseline definition is missing.", "Baseline source is missing."],
+      tollgateReview: {
+        status: "blocked",
+        blockers: ["Baseline definition is missing.", "Baseline source is missing."],
+        approvalSnapshot: null,
+        approvedVersion: null,
+        approvalActions: [],
+        reviewActions: [],
+        blockedActions: [],
+        pendingActions: [],
+        approvalDocument: null
+      }
+    }
+  })),
   getCachedOutcomeWorkspaceData: vi.fn(async () => ({
     ok: true,
     data: {
