@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 
 type TollgateAction = {
@@ -49,11 +50,13 @@ function formatLabel(value: string) {
 }
 
 export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
+  const { language } = useAppChromeLanguage();
+  const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const decisionOptions = useMemo(
     () => [
       ...props.reviewActions.map((action) => ({
         key: `review|${action.roleType}|${action.organizationSide}`,
-        label: `Review: ${action.label}`,
+        label: `${t("Review", "Granskning")}: ${action.label}`,
         decisionKind: "review",
         roleType: action.roleType,
         organizationSide: action.organizationSide,
@@ -68,7 +71,7 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
       })),
       ...props.approvalActions.map((action) => ({
         key: `approval|${action.roleType}|${action.organizationSide}`,
-        label: `Approval: ${action.label}`,
+        label: `${t("Approval", "Godkannande")}: ${action.label}`,
         decisionKind: "approval",
         roleType: action.roleType,
         organizationSide: action.organizationSide,
@@ -83,7 +86,7 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
       })),
       {
         key: "escalation",
-        label: "Escalation record",
+        label: t("Escalation record", "Eskaleringspost"),
         decisionKind: "escalation",
         roleType: props.availablePeople[0]?.roleType ?? "value_owner",
         organizationSide: props.availablePeople[0]?.organizationSide ?? "customer",
@@ -91,7 +94,7 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
         assignedPeople: props.availablePeople
       }
     ],
-    [props.approvalActions, props.availablePeople, props.reviewActions]
+    [language, props.approvalActions, props.availablePeople, props.reviewActions]
   );
 
   const initialDecisionKey =
@@ -131,7 +134,7 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
       <input name="aiAccelerationLevel" type="hidden" value={props.aiAccelerationLevel} />
       <div className="grid gap-4 xl:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-foreground">Decision lane</span>
+          <span className="text-sm font-medium text-foreground">{t("Decision lane", "Beslutsspar")}</span>
           <select
             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
             name="decisionKey"
@@ -146,7 +149,7 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-foreground">Human signer</span>
+          <span className="text-sm font-medium text-foreground">{t("Human signer", "Mansklig signerare")}</span>
           <select
             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
             disabled={signerOptions.length === 0}
@@ -161,24 +164,24 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
                 </option>
               ))
             ) : (
-              <option value="">No active signer assigned for this lane</option>
+              <option value="">{t("No active signer assigned for this lane", "Ingen aktiv signerare tilldelad for detta spar")}</option>
             )}
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-foreground">Decision</span>
+          <span className="text-sm font-medium text-foreground">{t("Decision", "Beslut")}</span>
           <select
             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
             defaultValue="approved"
             name="decisionStatus"
           >
-            <option value="approved">Approve</option>
-            <option value="rejected">Reject</option>
-            <option value="changes_requested">Request changes</option>
+            <option value="approved">{t("Approve", "Godkann")}</option>
+            <option value="rejected">{t("Reject", "Avvisa")}</option>
+            <option value="changes_requested">{t("Request changes", "Begar andringar")}</option>
           </select>
         </label>
         <label className="space-y-2">
-          <span className="text-sm font-medium text-foreground">Evidence reference</span>
+          <span className="text-sm font-medium text-foreground">{t("Evidence reference", "Evidensreferens")}</span>
           <input
             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
             name="evidenceReference"
@@ -189,12 +192,18 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
       {selectedLane?.decisionKind !== "escalation" ? (
         <div className="rounded-2xl border border-sky-200 bg-sky-50/70 px-3 py-3 text-sm text-sky-950">
           {signerOptions.length > 0
-            ? `Signer is preselected from the required ${selectedLaneLabel} lane.`
-            : `This ${selectedLaneLabel} lane has no active assigned signer yet.`}
+            ? t(
+                `Signer is preselected from the required ${selectedLaneLabel} lane.`,
+                `Signerare ar forvald fran det obligatoriska sparet for ${selectedLaneLabel}.`
+              )
+            : t(
+                `This ${selectedLaneLabel} lane has no active assigned signer yet.`,
+                `Detta spar for ${selectedLaneLabel} har annu ingen aktivt tilldelad signerare.`
+              )}
         </div>
       ) : null}
       <label className="space-y-2">
-        <span className="text-sm font-medium text-foreground">Note</span>
+        <span className="text-sm font-medium text-foreground">{t("Note", "Notering")}</span>
         <textarea
           className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
           name="note"
@@ -203,8 +212,8 @@ export function TollgateDecisionForm(props: TollgateDecisionFormProps) {
       <PendingFormButton
         className="gap-2 whitespace-nowrap"
         disabled={signerOptions.length === 0}
-        label="Record approval or review"
-        pendingLabel="Recording decision..."
+        label={t("Record approval or review", "Registrera godkannande eller granskning")}
+        pendingLabel={t("Recording decision...", "Registrerar beslut...")}
       />
     </form>
   );

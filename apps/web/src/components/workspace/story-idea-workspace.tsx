@@ -1,18 +1,22 @@
 import Link from "next/link";
 import { ArrowRight, Lightbulb } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { StoryIdeaInlineSaveButton } from "@/components/workspace/story-idea-inline-save-button";
 import { StoryIdeaUxSketchField } from "@/components/workspace/story-idea-ux-sketch-field";
 import { StoryIdeaAiValidatedTextarea } from "@/components/workspace/story-idea-ai-validated-textarea";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
-import { archiveStoryAction, hardDeleteStoryAction, restoreStoryAction } from "@/app/(protected)/stories/[storyId]/actions";
+import {
+  archiveStoryAction,
+  hardDeleteStoryAction,
+  restoreStoryAction
+} from "@/app/(protected)/stories/[storyId]/actions";
 import { getStoryIdeaBlockers, getStoryIdeaStatusText } from "@/lib/framing/story-idea-status";
 import {
   formatAiLevel,
   getReadinessFieldStatus,
   getSimplifiedStatusClasses,
   SecondaryPanel,
-  STORY_IDEA_GUIDANCE,
   type StoryWorkspaceData,
   WorkspaceStatusSummary
 } from "./story-workspace-shared";
@@ -50,12 +54,21 @@ export function StoryIdeaWorkspace({
   saveInlineAction,
   validateAction
 }: StoryIdeaWorkspaceProps) {
+  const { language } = useAppChromeLanguage();
+  const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const { activities, derivedDeliveryStories = [], originStoryIdea, removal, story } = data;
+  const guidance = t(
+    "Keep this at framing level: clear enough to guide design, UX, and AI refinement without turning it into a detailed delivery specification.",
+    "Hall den har posten pa framingniva: tydlig nog att styra design, UX och AI-foradling, men utan att gora den till en detaljerad leveransspecifikation."
+  );
   const readinessFields = getReadinessFieldStatus(story);
   const epicAlignmentText =
     story.epic.purpose?.trim() ||
     story.epic.scopeBoundary?.trim() ||
-    `This story idea should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`;
+    t(
+      `This story idea should contribute clearly to Epic ${story.epic.key} ${story.epic.title}.`,
+      `Den har storyidean ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
+    );
   const ideaBlockers = getStoryIdeaBlockers({
     valueIntent: story.valueIntent,
     expectedBehavior: story.expectedBehavior,
@@ -71,29 +84,33 @@ export function StoryIdeaWorkspace({
   const statusTone = ideaBlockers.length > 0 ? "needs_action" : story.outcome.status === "active" ? "approved" : "ready_for_review";
   const primaryStatusClasses = getSimplifiedStatusClasses(statusTone);
   const completeItems = [
-    story.valueIntent?.trim() ? "Value intent is captured" : null,
-    story.expectedBehavior?.trim() ? "Expected behavior is captured" : null,
-    story.epicId ? `Linked to Epic ${story.epic.key}` : null,
-    story.outcome.status === "active" ? `Parent Framing ${story.outcome.key} is approved` : null
+    story.valueIntent?.trim() ? t("Value intent is captured", "Value intent ar ifangat") : null,
+    story.expectedBehavior?.trim() ? t("Expected behavior is captured", "Expected behavior ar ifangat") : null,
+    story.epicId ? `${t("Linked to Epic", "Lankad till Epic")} ${story.epic.key}` : null,
+    story.outcome.status === "active" ? `${t("Parent Framing is approved", "Overordnad Framing ar godkand")}: ${story.outcome.key}` : null
   ].filter((value): value is string => Boolean(value));
   const nextActionLabel =
     ideaBlockers.length > 0
-      ? "Complete the Story Idea"
+      ? t("Complete the Story Idea", "Komplettera Story Idea")
       : story.outcome.status === "active"
-        ? "Create or refine Delivery Stories"
-        : "Review in Framing";
+        ? t("Create or refine Delivery Stories", "Skapa eller forfina Delivery Stories")
+        : t("Review in Framing", "Granska i Framing");
   const nextActionDetail =
     ideaBlockers.length > 0
-      ? "Clear the listed blockers so this Story Idea is complete enough for review."
+      ? t(
+          "Clear the listed blockers so this Story Idea is complete enough for review.",
+          "Los blockerarna i listan sa att den har Story Idean blir tillrackligt komplett for review."
+        )
       : story.outcome.status === "active"
-        ? "This Story Idea already sits inside approved Framing and can now guide design and delivery decomposition."
-        : "This Story Idea is complete enough for Framing review and Tollgate conversation.";
-  const uxSketches: Array<{
-    id: string;
-    name: string;
-    contentType: string;
-    dataUrl: string;
-  }> =
+        ? t(
+            "This Story Idea already sits inside approved Framing and can now guide design and delivery decomposition.",
+            "Den har Story Idean ligger redan i godkand Framing och kan nu styra design och vidare leveransnedbrytning."
+          )
+        : t(
+            "This Story Idea is complete enough for Framing review and Tollgate conversation.",
+            "Den har Story Idean ar tillrackligt komplett for Framing-review och Tollgate-samtal."
+          );
+  const uxSketches: Array<{ id: string; name: string; contentType: string; dataUrl: string }> =
     story.uxSketches && story.uxSketches.length > 0
       ? story.uxSketches
       : story.uxSketchDataUrl?.trim()
@@ -106,6 +123,7 @@ export function StoryIdeaWorkspace({
             }
           ]
         : [];
+
   return (
     <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
       <div className="space-y-6">
@@ -118,7 +136,7 @@ export function StoryIdeaWorkspace({
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">
                   <Lightbulb className="h-4 w-4" />
-                  Story Idea
+                  {t("Story Idea", "Story Idea")}
                 </span>
                 <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${primaryStatusClasses}`}>
                   {primaryStatusLabel}
@@ -126,17 +144,19 @@ export function StoryIdeaWorkspace({
               </div>
               <div>
                 <CardTitle>{story.title}</CardTitle>
-                <CardDescription className="mt-2 max-w-4xl">{STORY_IDEA_GUIDANCE}</CardDescription>
+                <CardDescription className="mt-2 max-w-4xl">{guidance}</CardDescription>
                 <p className="mt-3 max-w-4xl text-sm leading-6 text-muted-foreground">
-                  This record is still framing-level intent. Keep it directional, clear and useful for design and AI refinement
-                  without turning it into a delivery specification.
+                  {t(
+                    "This record is still framing-level intent. Keep it directional, clear and useful for design and AI refinement without turning it into a delivery specification.",
+                    "Den har posten ar fortfarande intention pa framingniva. Hall den riktad, tydlig och anvandbar for design och AI-foradling utan att gora den till en leveransspecifikation."
+                  )}
                 </p>
               </div>
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 lg:grid-cols-3">
             <WorkspaceStatusSummary
-              blockerEmptyText="No Story Idea blockers are visible right now."
+              blockerEmptyText={t("No Story Idea blockers are visible right now.", "Inga blockerare for Story Idea syns just nu.")}
               blockers={ideaBlockers}
               completeItems={completeItems}
               nextActionDetail={nextActionDetail}
@@ -146,7 +166,6 @@ export function StoryIdeaWorkspace({
             />
           </CardContent>
         </Card>
-
         <form action={saveAction} className="space-y-6">
           <input name="storyId" type="hidden" value={story.id} />
           <input name="epicId" type="hidden" value={story.epicId} />
@@ -156,19 +175,22 @@ export function StoryIdeaWorkspace({
           <input name="epicScopeBoundary" type="hidden" value={story.epic.scopeBoundary ?? ""} />
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>Story idea definition</CardTitle>
-              <CardDescription>{STORY_IDEA_GUIDANCE}</CardDescription>
+              <CardTitle>{t("Story idea definition", "Story Idea-definition")}</CardTitle>
+              <CardDescription>{guidance}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-ai-level">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("AI level", "AI-niva")}</p>
                 <p className="mt-2 font-semibold text-foreground">{formatAiLevel(story.aiAccelerationLevel)}</p>
                 <p className="mt-2 leading-6 text-muted-foreground">
-                  This comes from the current Framing and affects governance requirements for the Story.
+                  {t(
+                    "This comes from the current Framing and affects governance requirements for the Story.",
+                    "Det har kommer fran aktuell Framing och paverkar governancekraven for storyn."
+                  )}
                 </p>
               </div>
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Title</span>
+                <span className="text-sm font-medium text-foreground">{t("Title", "Titel")}</span>
                 <input
                   className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                   defaultValue={story.title}
@@ -179,7 +201,7 @@ export function StoryIdeaWorkspace({
               </label>
               <input name="storyType" type="hidden" value={story.storyType} />
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Value intent</span>
+                <span className="text-sm font-medium text-foreground">{t("Value intent", "Value intent")}</span>
                 <textarea
                   className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                   defaultValue={story.valueIntent}
@@ -191,20 +213,20 @@ export function StoryIdeaWorkspace({
               <StoryIdeaAiValidatedTextarea
                 disabled={isArchived}
                 initialValue={story.expectedBehavior ?? ""}
-                label="Expected behavior"
+                label={t("Expected behavior", "Forvantat beteende")}
                 name="expectedBehavior"
                 saveAction={saveInlineAction}
                 validateAction={validateAction}
               />
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic alignment</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Epic alignment", "Epic-anpassning")}</p>
                 <p className="mt-2 font-semibold text-foreground">
                   {story.epic.key} {story.epic.title}
                 </p>
                 <p className="mt-2 leading-6 text-muted-foreground">{epicAlignmentText}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm" id="story-blockers">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Blocking items</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Blocking items", "Blockerande punkter")}</p>
                 {ideaBlockers.length > 0 ? (
                   <ul className="mt-2 space-y-2 text-foreground">
                     {ideaBlockers.map((blocker) => (
@@ -212,22 +234,27 @@ export function StoryIdeaWorkspace({
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-2 leading-6 text-muted-foreground">No blockers remain. This Story Idea is ready for review.</p>
+                  <p className="mt-2 leading-6 text-muted-foreground">
+                    {t("No blockers remain. This Story Idea is ready for review.", "Inga blockerare aterstar. Den har Story Idean ar redo for review.")}
+                  </p>
                 )}
               </div>
             </CardContent>
           </Card>
 
-        <SecondaryPanel
-          defaultOpen={false}
-          description="These delivery details can wait until the story idea is turned into a Delivery Story for later build work."
-          id="story-handoff-inputs"
-          title="Delivery details later"
-        >
+          <SecondaryPanel
+            defaultOpen={false}
+            description={t(
+              "These delivery details can wait until the story idea is turned into a Delivery Story for later build work.",
+              "De har leveransdetaljerna kan vanta tills storyidean blir en Delivery Story for senare build-arbete."
+            )}
+            id="story-handoff-inputs"
+            title={t("Delivery details later", "Leveransdetaljer senare")}
+          >
             <div className="grid gap-4">
               <label className="space-y-2" id="story-acceptance-criteria">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-foreground">Acceptance criteria</span>
+                  <span className="text-sm font-medium text-foreground">{t("Acceptance criteria", "Acceptanskriterier")}</span>
                   <span
                     className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
                       readinessFields[0].complete
@@ -235,7 +262,7 @@ export function StoryIdeaWorkspace({
                         : "border-amber-200 bg-amber-50 text-amber-800"
                     }`}
                   >
-                    {readinessFields[0].complete ? "Ready" : "Missing"}
+                    {readinessFields[0].complete ? t("Ready", "Redo") : t("Missing", "Saknas")}
                   </span>
                 </div>
                 <textarea
@@ -249,7 +276,7 @@ export function StoryIdeaWorkspace({
                 {!readinessFields[0].complete ? <p className="text-sm text-amber-800">{readinessFields[0].help}</p> : null}
               </label>
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">AI Usage Scope</span>
+                <span className="text-sm font-medium text-foreground">{t("AI Usage Scope", "AI-anvandningsomfang")}</span>
                 <input
                   className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                   defaultValue={story.aiUsageScope.join(", ")}
@@ -260,7 +287,7 @@ export function StoryIdeaWorkspace({
               </label>
               <label className="space-y-2" id="story-test-definition">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-foreground">Test Definition</span>
+                  <span className="text-sm font-medium text-foreground">{t("Test Definition", "Testdefinition")}</span>
                   <span
                     className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
                       readinessFields[1].complete
@@ -268,7 +295,7 @@ export function StoryIdeaWorkspace({
                         : "border-amber-200 bg-amber-50 text-amber-800"
                     }`}
                   >
-                    {readinessFields[1].complete ? "Ready" : "Missing"}
+                    {readinessFields[1].complete ? t("Ready", "Redo") : t("Missing", "Saknas")}
                   </span>
                 </div>
                 <textarea
@@ -283,7 +310,7 @@ export function StoryIdeaWorkspace({
               </label>
               <label className="space-y-2" id="story-definition-of-done">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-foreground">Definition of Done</span>
+                  <span className="text-sm font-medium text-foreground">{t("Definition of Done", "Definition of Done")}</span>
                   <span
                     className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
                       readinessFields[2].complete
@@ -291,7 +318,7 @@ export function StoryIdeaWorkspace({
                         : "border-amber-200 bg-amber-50 text-amber-800"
                     }`}
                   >
-                    {readinessFields[2].complete ? "Ready" : "Missing"}
+                    {readinessFields[2].complete ? t("Ready", "Redo") : t("Missing", "Saknas")}
                   </span>
                 </div>
                 <textarea
@@ -310,29 +337,31 @@ export function StoryIdeaWorkspace({
           <div className="flex flex-col gap-3 sm:flex-row">
             {!isArchived ? (
               <StoryIdeaInlineSaveButton
-                label="Save Story changes"
-                pendingLabel="Saving Story..."
+                label={t("Save Story changes", "Spara storyandringar")}
+                pendingLabel={t("Saving Story...", "Sparar story...")}
                 saveAction={saveInlineAction}
               />
             ) : null}
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/epics/${story.epicId}`}>Back to current Epic</Link>
+              <Link href={`/epics/${story.epicId}`}>{t("Back to current Epic", "Tillbaka till aktuell Epic")}</Link>
             </Button>
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/framing?outcomeId=${story.outcomeId}`}>Open current Framing</Link>
+              <Link href={`/framing?outcomeId=${story.outcomeId}`}>{t("Open current Framing", "Oppna aktuell Framing")}</Link>
             </Button>
             {deliveryViewHref ? (
               <Button asChild className="gap-2" variant="secondary">
-                <Link href={deliveryViewHref}>Open Delivery Story view</Link>
+                <Link href={deliveryViewHref}>{t("Open Delivery Story view", "Oppna Delivery Story-vy")}</Link>
               </Button>
             ) : null}
           </div>
         </form>
-
         <SecondaryPanel
           defaultOpen={false}
-          description="See how this Story Idea is being realized in delivery without turning the framing view into delivery workflow."
-          title="Delivery realization"
+          description={t(
+            "See how this Story Idea is being realized in delivery without turning the framing view into delivery workflow.",
+            "Se hur den har Story Idean realiseras i leveransen utan att gora framingvyn till ett leveransflode."
+          )}
+          title={t("Delivery realization", "Leveransrealisering")}
         >
           {derivedDeliveryStories.length > 0 ? (
             <div className="space-y-3">
@@ -340,17 +369,21 @@ export function StoryIdeaWorkspace({
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/45 p-4 text-sm" key={deliveryStory.id}>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Delivery Story</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Delivery Story", "Delivery Story")}</p>
                       <p className="mt-2 font-semibold text-foreground">
                         {deliveryStory.key} {deliveryStory.title}
                       </p>
                       <p className="mt-2 leading-6 text-muted-foreground">
-                        {deliveryStory.valueIntent?.trim() || "This Delivery Story still needs a clearer value intent."}
+                        {deliveryStory.valueIntent?.trim() ||
+                          t(
+                            "This Delivery Story still needs a clearer value intent.",
+                            "Den har Delivery Storyn behover fortfarande ett tydligare value intent."
+                          )}
                       </p>
                     </div>
                     <Button asChild className="gap-2" size="sm" variant="secondary">
                       <Link href={`/stories/${deliveryStory.id}`}>
-                        Open Delivery Story
+                        {t("Open Delivery Story", "Oppna Delivery Story")}
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -360,33 +393,40 @@ export function StoryIdeaWorkspace({
             </div>
           ) : originStoryIdea ? (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-              This Story Idea has traceability through a linked seed, but no Delivery Stories have been created from it yet.
+              {t(
+                "This Story Idea has traceability through a linked seed, but no Delivery Stories have been created from it yet.",
+                "Den har Story Idean har sparbarhet via ett lankat seed, men inga Delivery Stories har annu skapats fran den."
+              )}
             </div>
           ) : (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-              No Delivery Stories are linked to this Story Idea yet.
+              {t("No Delivery Stories are linked to this Story Idea yet.", "Inga Delivery Stories ar lankade till den har Story Idean annu.")}
             </div>
           )}
         </SecondaryPanel>
 
         <SecondaryPanel
           defaultOpen={false}
-          description="Open this only when you need to check where the Story Idea sits in the current branch."
-          title="Branch context"
+          description={t(
+            "Open this only when you need to check where the Story Idea sits in the current branch.",
+            "Oppna detta bara nar du behover kontrollera var Story Idean ligger i den aktuella grenen."
+          )}
+          title={t("Branch context", "Grenkontext")}
         >
           <Card className="border-border/70 shadow-none">
             <CardContent className="grid gap-4 p-5 md:grid-cols-2">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current framing</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Current framing", "Aktuell framing")}</p>
                 <p className="mt-2 font-semibold text-foreground">
                   {story.outcome.key} {story.outcome.title}
                 </p>
                 <p className="mt-2 leading-6 text-muted-foreground">
-                  {story.outcome.outcomeStatement?.trim() || "Outcome statement is not yet described in this Framing."}
+                  {story.outcome.outcomeStatement?.trim() ||
+                    t("Outcome statement is not yet described in this Framing.", "Outcome statement ar annu inte beskriven i den har Framing-vyn.")}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current epic</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Current epic", "Aktuell epic")}</p>
                 <p className="mt-2 font-semibold text-foreground">
                   {story.epic.key} {story.epic.title}
                 </p>
@@ -400,18 +440,23 @@ export function StoryIdeaWorkspace({
       <div className="space-y-6">
         <SecondaryPanel
           defaultOpen={false}
-          description="Delivery review only becomes active after the Story Idea is turned into a Delivery Story."
-          title="Delivery review later"
+          description={t(
+            "Delivery review only becomes active after the Story Idea is turned into a Delivery Story.",
+            "Leveransgranskning blir forst aktiv nar Story Idean har blivit en Delivery Story."
+          )}
+          title={t("Delivery review later", "Leveransgranskning senare")}
         >
           <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">This is still a Story Idea.</p>
+            <p className="font-medium text-foreground">{t("This is still a Story Idea.", "Det har ar fortfarande en Story Idea.")}</p>
             <p className="mt-2 leading-6">
-              Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build
-              start controls appear after this idea is transformed into a Delivery Story.
+              {t(
+                "Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build start controls appear after this idea is transformed into a Delivery Story.",
+                "Behall fokus pa Value Intent, Expected Behavior och Epic Alignment. Leveransgranskning, build readiness och build-startkontroller visas forst nar iden har omvandlats till en Delivery Story."
+              )}
             </p>
             {blockers.length > 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">
-                Current future delivery blockers: {blockers.join(" ")}
+                {t("Current future delivery blockers", "Nuvarande framtida leveransblockerare")}: {blockers.join(" ")}
               </p>
             ) : null}
           </div>
@@ -419,13 +464,18 @@ export function StoryIdeaWorkspace({
 
         <Card className="border-border/70 shadow-sm" id="story-governance">
           <CardHeader>
-            <CardTitle>Governance readiness</CardTitle>
-            <CardDescription>Check whether the project is staffed strongly enough for this Story's AI level.</CardDescription>
+            <CardTitle>{t("Governance readiness", "Governance readiness")}</CardTitle>
+            <CardDescription>
+              {t(
+                "Check whether the project is staffed strongly enough for this Story's AI level.",
+                "Kontrollera om projektet ar tillrackligt bemannat for den har storyns AI-niva."
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/governance?view=readiness&sourceEntity=story&sourceId=${story.id}&level=${story.aiAccelerationLevel}`}>
-                Open Governance readiness
+                {t("Open Governance readiness", "Oppna Governance readiness")}
               </Link>
             </Button>
           </CardContent>
@@ -433,17 +483,20 @@ export function StoryIdeaWorkspace({
 
         <SecondaryPanel
           defaultOpen={false}
-          description="Operational history is useful, but not usually the first thing needed to move work forward."
-          title="Latest activity"
+          description={t(
+            "Operational history is useful, but not usually the first thing needed to move work forward.",
+            "Operativ historik ar anvandbar, men oftast inte det forsta som behovs for att fora arbetet framat."
+          )}
+          title={t("Latest activity", "Senaste aktivitet")}
         >
           <div className="space-y-3 text-sm text-muted-foreground">
             {activities.length === 0 ? (
-              <p>No activity has been recorded yet for this Story.</p>
+              <p>{t("No activity has been recorded yet for this Story.", "Ingen aktivitet har registrerats annu for den har storyn.")}</p>
             ) : (
               activities.map((activity) => (
                 <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={activity.id}>
                   <p className="font-medium text-foreground">{activity.eventType.replaceAll("_", " ")}</p>
-                  <p className="mt-1">{new Date(activity.createdAt).toLocaleString("en-US")}</p>
+                  <p className="mt-1">{new Date(activity.createdAt).toLocaleString(language === "sv" ? "sv-SE" : "en-US")}</p>
                 </div>
               ))
             )}
@@ -452,9 +505,12 @@ export function StoryIdeaWorkspace({
 
         <SecondaryPanel
           defaultOpen={false}
-          description="Archive, restore and delete controls stay available without displacing primary Story work."
+          description={t(
+            "Archive, restore and delete controls stay available without displacing primary Story work.",
+            "Arkivera-, aterstall- och delete-kontroller finns kvar utan att tranga undan det primara storyarbetet."
+          )}
           id="story-lifecycle"
-          title="Lifecycle controls"
+          title={t("Lifecycle controls", "Livscykelkontroller")}
         >
           <GovernedLifecycleCard
             archiveAction={archiveStoryAction}
@@ -473,11 +529,14 @@ export function StoryIdeaWorkspace({
         {story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId ? (
           <SecondaryPanel
             defaultOpen={false}
-            description="Imported lineage is still accessible when you need to trace the source material."
-            title="Imported lineage"
+            description={t(
+              "Imported lineage is still accessible when you need to trace the source material.",
+              "Importerad lineage ar fortfarande tillganglig nar du behover spåra kallmaterialet."
+            )}
+            title={t("Imported lineage", "Importerad lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/review?candidateId=${story.lineageSourceId}`}>Open source candidate review</Link>
+              <Link href={`/review?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Oppna kallkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}
