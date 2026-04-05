@@ -340,6 +340,7 @@ export async function saveOutcomeWorkspaceService(input: {
 export async function validateOutcomeFieldWithAiService(input: {
   organizationId: string;
   field: "outcome_statement" | "baseline_definition";
+  deliveryType?: "AD" | "AT" | "AM" | null;
   title?: string | null;
   problemStatement?: string | null;
   outcomeStatement?: string | null;
@@ -351,6 +352,7 @@ export async function validateOutcomeFieldWithAiService(input: {
     try {
       const result = await validateOutcomeFieldWithAi({
         field: input.field,
+        deliveryType: input.deliveryType ?? null,
         title: input.title ?? null,
         problemStatement: input.problemStatement ?? null,
         outcomeStatement: input.outcomeStatement ?? null,
@@ -398,6 +400,7 @@ export async function reviewOutcomeFramingWithAiService(input: {
           deliveryType: snapshot.outcome.deliveryType === "AD" || snapshot.outcome.deliveryType === "AT" || snapshot.outcome.deliveryType === "AM"
             ? snapshot.outcome.deliveryType
             : null,
+          valueOwner: snapshot.outcome.valueOwner?.fullName ?? snapshot.outcome.valueOwner?.email ?? null,
           aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
           aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
           aiUsageIntent: snapshot.outcome.aiUsageIntent ?? null,

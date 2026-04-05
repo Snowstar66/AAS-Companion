@@ -14,6 +14,7 @@ type OutcomeAiReviewDialogProps = {
     message: string | null;
     report:
       | {
+          validationMode: "AD" | "AT" | "AM" | "generic";
           outcomeQuality: {
             status: "ok" | "needs_improvement";
             comment: string;
@@ -47,6 +48,7 @@ type OutcomeAiReviewDialogProps = {
             score: number;
             interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
           };
+          requiredActions: string[];
         }
       | null;
   };
@@ -90,6 +92,14 @@ function formatStatus(value: string) {
 
 function formatRisk(value: "low" | "medium" | "high") {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatValidationMode(value: "AD" | "AT" | "AM" | "generic") {
+  if (value === "generic") {
+    return "Generic framing";
+  }
+
+  return value;
 }
 
 function getReadinessBand(interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready") {
@@ -247,6 +257,9 @@ export function OutcomeAiReviewDialog({
                               {" "}
                               Epic Coverage: {formatStatus(state.report.epicCoverage.status)}. Story Coverage: {formatStatus(state.report.storyCoverage.status)}.
                             </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
+                              Validation mode: {formatValidationMode(state.report.validationMode)}
+                            </p>
                           </div>
                           <div className="rounded-2xl border border-current/15 bg-white/60 px-5 py-4 text-center">
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Framing Readiness</p>
@@ -278,6 +291,24 @@ export function OutcomeAiReviewDialog({
                           <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.problemAlignment.comment}</p>
                         </section>
                       </div>
+
+                      <section className="rounded-2xl border border-border/70 bg-amber-50/60 p-5">
+                        <h4 className="text-sm font-semibold text-foreground">Required Actions</h4>
+                        {state.report.requiredActions.length > 0 ? (
+                          <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                            {state.report.requiredActions.map((item) => (
+                              <li className="flex gap-2" key={item}>
+                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                            No mandatory follow-up actions were identified for the selected validation mode.
+                          </p>
+                        )}
+                      </section>
 
                       <div className="grid gap-6 xl:grid-cols-2">
                         <section className="rounded-2xl border border-border/70 bg-background p-5">

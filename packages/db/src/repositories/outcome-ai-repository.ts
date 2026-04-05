@@ -1,3 +1,9 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+type DeliveryType = "AD" | "AT" | "AM";
+
 export type OutcomeFieldAiValidation = {
   field: "outcome_statement" | "baseline_definition";
   verdict: "good" | "needs_revision" | "unclear";
@@ -15,6 +21,7 @@ export type StoryExpectedBehaviorAiValidation = {
 };
 
 export type OutcomeFramingAiReview = {
+  validationMode: DeliveryType | "generic";
   outcomeQuality: {
     status: "ok" | "needs_improvement";
     comment: string;
@@ -48,6 +55,7 @@ export type OutcomeFramingAiReview = {
     score: number;
     interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
   };
+  requiredActions: string[];
 };
 
 type OutcomeFramingAiReviewInput = {
@@ -61,7 +69,8 @@ type OutcomeFramingAiReviewInput = {
     solutionContext?: string | null;
     solutionConstraints?: string | null;
     dataSensitivity?: string | null;
-    deliveryType?: "AD" | "AT" | "AM" | null;
+    deliveryType?: DeliveryType | null;
+    valueOwner?: string | null;
     aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
     aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
     aiUsageIntent?: string | null;
@@ -95,6 +104,135 @@ type OutcomeFramingAiReviewInput = {
     expectedBehavior?: string | null;
   }>;
 };
+
+const repositoryDirectory = path.dirname(fileURLToPath(import.meta.url));
+const repositoryRoot = path.resolve(repositoryDirectory, "../../../../");
+
+function readValidationReference(fileName: string) {
+  try {
+    return readFileSync(path.join(repositoryRoot, fileName), "utf8").trim();
+  } catch {
+    return "";
+  }
+}
+
+const validationQuestionsReference = readValidationReference("ValidationQuestionsTollgate1.md");
+const validationRulesMetaReference = readValidationReference("ValidationRulesMeta.md");
+
+function normalizeDeliveryType(value: string | null | undefined): DeliveryType | null {
+  return value === "AD" || value === "AT" || value === "AM" ? value : null;
+}
+
+function getDeliveryTypeRuleSummary(deliveryType: DeliveryType | null) {
+  if (deliveryType === "AT") {
+    return [
+      "AT is strict: baseline is mandatory and must be data-driven.",
+      "AT problem framing should be fact-based and quantified, not only aspirational.",
+      "Transformation without a baseline should not be considered ready.",
+      "AI level must stay conservative when governance evidence is weak."
+    ];
+  }
+
+  if (deliveryType === "AM") {
+    return [
+      "AM is operational: baseline is mandatory and should reflect real operating conditions.",
+      "AM should use quantified operational evidence such as incidents, MTTR, SLA, queue volume, cost per ticket, or similar run-state data.",
+      "Operational improvement without supporting data should not be considered ready.",
+      "Story ideas and epics should focus on service optimization, automation, and stability improvements."
+    ];
+  }
+
+  if (deliveryType === "AD") {
+    return [
+      "AD can start from a weaker baseline, but a value hypothesis still needs to be explicit.",
+      "Outcome should describe a business or user effect, not a feature output.",
+      "Lack of baseline is a warning in AD, not automatically a stop condition.",
+      "Epics should describe functional capabilities that support the intended value."
+    ];
+  }
+
+  return [
+    "Apply general framing rigor conservatively.",
+    "Prefer the smallest useful corrective action over a full rewrite."
+  ];
+}
+
+function buildValidationReferenceContext(deliveryType: DeliveryType | null) {
+  const summary = getDeliveryTypeRuleSummary(deliveryType);
+  const docs = [
+    validationQuestionsReference ? `ValidationQuestionsTollgate1.md\n${validationQuestionsReference}` : "",
+    validationRulesMetaReference ? `ValidationRulesMeta.md\n${validationRulesMetaReference}` : ""
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    summary,
+    docs
+  };
+}
+
+function containsQuantifiedEvidence(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return false;
+  }
+
+  return /\b\d+(?:[.,]\d+)?\b|%|lead time|cycle time|cost|incident|mttr|sla|availability|throughput|latency|queue|backlog/i.test(
+    value
+  );
+}
+
+function countOperationalSignals(value: string) {
+  const patterns = [
+    /\bincident/i,
+    /\bmttr\b/i,
+    /\bsla\b/i,
+    /\bavailability\b/i,
+    /\bcost per (ticket|case|issue|request|incident)\b/i,
+    /\bresponse time\b/i,
+    /\bresolution time\b/i,
+    /\bqueue\b/i,
+    /\bbacklog\b/i,
+    /\bvolume\b/i
+  ];
+
+  return patterns.reduce((count, pattern) => count + (pattern.test(value) ? 1 : 0), 0);
+}
+
+function buildConservativeFieldSuggestion(input: {
+  field: "outcome_statement" | "baseline_definition";
+  deliveryType?: DeliveryType | null;
+  title?: string | null;
+  problemStatement?: string | null;
+  outcomeStatement?: string | null;
+}) {
+  const deliveryType = normalizeDeliveryType(input.deliveryType);
+  const title = input.title?.trim() || "the case";
+  const problem = input.problemStatement?.trim() || "the current problem";
+  const outcome = input.outcomeStatement?.trim() || "a clearer measurable effect";
+
+  if (input.field === "outcome_statement") {
+    if (deliveryType === "AT") {
+      return `Reduce the verified structural problem described in ${title} with a measurable improvement in lead time, cost, quality, or risk.`;
+    }
+
+    if (deliveryType === "AM") {
+      return `Improve operational performance for ${title} with a measurable effect on stability, handling time, service quality, or support cost.`;
+    }
+
+    return `Create a measurable business or user effect for ${title} by addressing ${problem}.`;
+  }
+
+  if (deliveryType === "AT") {
+    return `Current baseline for ${title}: quantify today's lead time, maintenance cost, incident load, dependency complexity, or similar structural indicators before change.`;
+  }
+
+  if (deliveryType === "AM") {
+    return `Current operational baseline for ${title}: quantify incident volume, MTTR, SLA performance, queue volume, or cost per ticket before improvement work starts.`;
+  }
+
+  return `Current baseline for ${title}: describe how the work is done today and what measurable starting point exists before moving toward ${outcome}.`;
+}
 
 function parseOutcomeFieldAiValidation(input: unknown): OutcomeFieldAiValidation {
   if (!input || typeof input !== "object") {
@@ -276,6 +414,7 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
   }
 
   return {
+    validationMode: "generic",
     outcomeQuality: {
       status: parsedOutcomeQuality.status,
       comment: parsedOutcomeQuality.comment.trim(),
@@ -308,7 +447,8 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
     framingReadiness: {
       score: Math.round(parsedFramingReadiness.score),
       interpretation: parsedFramingReadiness.interpretation
-    }
+    },
+    requiredActions: []
   };
 }
 
@@ -332,28 +472,76 @@ function deriveDeterministicFramingAdjustments(
   input: OutcomeFramingAiReviewInput,
   report: OutcomeFramingAiReview
 ): OutcomeFramingAiReview {
+  const deliveryType = normalizeDeliveryType(input.outcome.deliveryType);
   const epicKeys = new Set(input.epics.map((epic) => epic.key));
   const epicCoverageFindings: string[] = [];
   const storyCoverageFindings: string[] = [];
   const riskFindings: string[] = [];
+  const requiredActions: string[] = [];
+  const combinedProblemEvidence = [input.outcome.problemStatement, input.outcome.baselineDefinition, input.outcome.baselineSource]
+    .filter(Boolean)
+    .join(" ");
 
   if (!input.outcome.outcomeStatement?.trim()) {
     report.outcomeQuality.status = "needs_improvement";
     report.outcomeQuality.comment = "Outcome statement is missing, so the intended business effect is still unclear.";
     report.outcomeQuality.suggestedImprovement = "Add one measurable outcome statement before Tollgate 1.";
     riskFindings.push(`[${input.outcome.key}] Outcome statement is missing, which increases the risk of solving the wrong problem.`);
+    requiredActions.push("Add a measurable outcome statement before Tollgate 1.");
   }
 
   if (!input.outcome.baselineDefinition?.trim()) {
     report.outcomeQuality.status = "needs_improvement";
-    report.outcomeQuality.comment = "Baseline is not defined clearly enough to judge progress from the current state.";
-    report.outcomeQuality.suggestedImprovement = "Add a concrete baseline definition that describes the current state.";
-    riskFindings.push(`[${input.outcome.key}] Baseline definition is missing, which weakens measurement and decision confidence.`);
+    report.outcomeQuality.comment =
+      deliveryType === "AD"
+        ? "Baseline is thin, so progress from the current state will be harder to judge."
+        : "Baseline is not defined clearly enough to judge progress from the current state.";
+    report.outcomeQuality.suggestedImprovement =
+      deliveryType === "AD"
+        ? "Add a lightweight current-state baseline or starting assumption before Tollgate 1."
+        : "Add a concrete baseline definition that describes the current state with measurable evidence.";
+    riskFindings.push(
+      `[${input.outcome.key}] Baseline definition is missing, which weakens measurement and decision confidence.`
+    );
+    requiredActions.push(
+      deliveryType === "AD"
+        ? "Add a lightweight baseline so the value hypothesis has a visible starting point."
+        : `Add a data-backed baseline because ${deliveryType ?? "this"} framing requires one.`
+    );
+  }
+
+  if (!input.outcome.valueOwner?.trim()) {
+    riskFindings.push(`[${input.outcome.key}] Value Owner is not visible in the framing payload.`);
+    requiredActions.push("Assign a visible Value Owner before approval.");
+  }
+
+  if (deliveryType === "AT" && !containsQuantifiedEvidence(combinedProblemEvidence)) {
+    report.problemAlignment.status = "weak";
+    report.problemAlignment.comment =
+      "AT framing needs a fact-based and quantified problem definition, but the current problem and baseline evidence are still too soft.";
+    riskFindings.push(`[${input.outcome.key}] AT framing lacks quantified transformation evidence.`);
+    requiredActions.push("Quantify the transformation problem with current-state metrics before approval.");
+  }
+
+  if (deliveryType === "AM") {
+    const operationalSignalCount = countOperationalSignals(combinedProblemEvidence);
+
+    if (operationalSignalCount < 2) {
+      report.problemAlignment.status = "weak";
+      report.outcomeQuality.status = "needs_improvement";
+      report.outcomeQuality.comment =
+        "AM framing should be grounded in operational evidence, but the baseline does not yet show enough run-state signals.";
+      report.outcomeQuality.suggestedImprovement =
+        "Add at least two operational datapoints such as incidents, MTTR, SLA, queue volume, or cost per ticket.";
+      riskFindings.push(`[${input.outcome.key}] AM framing lacks enough operational datapoints to validate the improvement case.`);
+      requiredActions.push("Add at least two operational datapoints to justify the AM framing.");
+    }
   }
 
   if (input.epics.length === 0) {
     report.epicCoverage.status = "partial";
     epicCoverageFindings.push(`[${input.outcome.key}] No Epics are defined yet.`);
+    requiredActions.push("Define at least one Epic linked to the Outcome.");
   }
 
   for (const epic of input.epics) {
@@ -373,23 +561,48 @@ function deriveDeterministicFramingAdjustments(
       report.storyCoverage.status = "partial";
       storyCoverageFindings.push(`[${seed.seedId}] Story Idea is missing a valid Epic link.`);
       riskFindings.push(`[${seed.seedId}] Story Idea lacks a reliable Epic link, which increases misalignment risk.`);
+      requiredActions.push(`Link Story Idea ${seed.seedId} to a valid Epic.`);
     }
 
     if (!seed.shortDescription?.trim()) {
       report.storyCoverage.status = "partial";
       storyCoverageFindings.push(`[${seed.seedId}] Value Intent is missing or too thin.`);
+      requiredActions.push(`Strengthen the Value Intent for Story Idea ${seed.seedId}.`);
     }
 
     if (!seed.expectedBehavior?.trim()) {
       report.storyCoverage.status = "partial";
       storyCoverageFindings.push(`[${seed.seedId}] Expected Behavior is missing.`);
       riskFindings.push(`[${seed.seedId}] Missing Expected Behavior increases the risk of scope expansion during design.`);
+      requiredActions.push(`Add Expected Behavior for Story Idea ${seed.seedId}.`);
+    }
+  }
+
+  if (input.outcome.aiAccelerationLevel === "level_3") {
+    if (!input.outcome.riskAcceptedAt || !input.outcome.riskAcceptedBy) {
+      report.aiLevel.assessment = "too_high";
+      report.aiLevel.suggestedLevel = "level_2";
+      report.aiLevel.comment =
+        "Level 3 needs stronger governance evidence. Risk acceptance is not yet visible in the framing payload.";
+      riskFindings.push(`[${input.outcome.key}] Level 3 AI acceleration is proposed without visible risk acceptance.`);
+      requiredActions.push("Record explicit risk acceptance before keeping AI Level 3.");
+    }
+
+    if ((deliveryType === "AT" || deliveryType === "AM") && !input.outcome.baselineDefinition?.trim()) {
+      report.aiLevel.assessment = "too_high";
+      report.aiLevel.suggestedLevel = "level_2";
+      report.aiLevel.comment =
+        "Level 3 is too ambitious while the baseline remains incomplete for this delivery type.";
+      riskFindings.push(`[${input.outcome.key}] Level 3 AI acceleration exceeds the available baseline evidence.`);
+      requiredActions.push(`Reduce AI acceleration level or complete the ${deliveryType} baseline first.`);
     }
   }
 
   report.epicCoverage.missingAreas = prependUnique(epicCoverageFindings, report.epicCoverage.missingAreas);
   report.storyCoverage.gapsOrOverlaps = prependUnique(storyCoverageFindings, report.storyCoverage.gapsOrOverlaps);
   report.riskOverview.topRisks = prependUnique(riskFindings, report.riskOverview.topRisks).slice(0, 5);
+  report.validationMode = deliveryType ?? "generic";
+  report.requiredActions = prependUnique(requiredActions, report.requiredActions).slice(0, 8);
 
   if (storyCoverageFindings.length > 0 && report.storyCoverage.comment.length > 0) {
     const referencedSeeds = storyCoverageFindings
@@ -439,12 +652,38 @@ function deriveDeterministicFramingAdjustments(
     readinessScore -= 10;
   }
 
+  if (deliveryType === "AT" && !input.outcome.baselineDefinition?.trim()) {
+    readinessScore -= 20;
+  }
+
+  if (deliveryType === "AM" && !input.outcome.baselineDefinition?.trim()) {
+    readinessScore -= 20;
+  }
+
+  if ((deliveryType === "AT" || deliveryType === "AM") && report.problemAlignment.status === "weak") {
+    readinessScore -= 10;
+  }
+
+  if (!input.outcome.valueOwner?.trim()) {
+    readinessScore -= 10;
+  }
+
   readinessScore = Math.max(0, Math.min(100, readinessScore));
 
   report.framingReadiness = {
     score: readinessScore,
     interpretation:
-      readinessScore >= 80 ? "ready_for_tollgate" : readinessScore >= 60 ? "needs_refinement" : "not_ready"
+      deliveryType === "AT" && !input.outcome.baselineDefinition?.trim()
+        ? "not_ready"
+        : deliveryType === "AM" && (!input.outcome.baselineDefinition?.trim() || report.problemAlignment.status === "weak")
+          ? "not_ready"
+          : !input.outcome.outcomeStatement?.trim() || input.epics.length === 0
+            ? "not_ready"
+            : readinessScore >= 80
+              ? "ready_for_tollgate"
+              : readinessScore >= 60
+                ? "needs_refinement"
+                : "not_ready"
   };
 
   return report;
@@ -550,6 +789,7 @@ function extractJsonObject(text: string) {
 
 function buildPrompt(input: {
   field: "outcome_statement" | "baseline_definition";
+  deliveryType?: DeliveryType | null;
   title?: string | null;
   problemStatement?: string | null;
   outcomeStatement?: string | null;
@@ -557,9 +797,12 @@ function buildPrompt(input: {
   baselineSource?: string | null;
   timeframe?: string | null;
 }) {
+  const deliveryType = normalizeDeliveryType(input.deliveryType);
+  const validationReference = buildValidationReferenceContext(deliveryType);
   const fieldText = input.field === "outcome_statement" ? input.outcomeStatement : input.baselineDefinition;
   const payload = {
     field: input.field,
+    deliveryType,
     title: input.title ?? null,
     problemStatement: input.problemStatement ?? null,
     outcomeStatement: input.outcomeStatement ?? null,
@@ -578,10 +821,14 @@ General rules:
 - If the text is acceptable, return verdict "good" and leave suggestedRewrite null.
 - If the field text is empty but the surrounding context is sufficient, propose a conservative starting draft in suggestedRewrite.
 - Keep rationale short and concrete.
+- Apply the delivery type rules strictly when the project type is provided.
 
 Field guidance:
 - outcome_statement: should describe a desired effect or result, not implementation work, deliverables, or a project task.
 - baseline_definition: should describe the current starting state, present condition, or measurable baseline before change. It should not read like the desired future outcome or a delivery plan.
+
+Delivery type specific rules:
+${validationReference.summary.map((rule) => `- ${rule}`).join("\n")}
 
 Verdicts:
 - good = acceptable as written
@@ -599,6 +846,9 @@ Required output:
     "suggestedRewrite": "optional replacement text or null"
   }
 
+Reference material from validation guidance:
+${validationReference.docs || "No external validation markdown was available."}
+
 Payload:
 ${JSON.stringify(payload, null, 2)}
   `.trim();
@@ -609,6 +859,9 @@ function buildFramingReviewPrompt(input: {
   epics: OutcomeFramingAiReviewInput["epics"];
   directionSeeds: OutcomeFramingAiReviewInput["directionSeeds"];
 }) {
+  const deliveryType = normalizeDeliveryType(input.outcome.deliveryType);
+  const validationReference = buildValidationReferenceContext(deliveryType);
+
   return `
 You are validating a full AAS Framing Brief.
 
@@ -624,6 +877,7 @@ You will receive:
 - Epics
 - Story Ideas (with Value Intent and Expected Behavior)
 - Selected AI Acceleration Level
+- Delivery Type rules for ${deliveryType ?? "generic framing"}
 
 Evaluate the framing across five dimensions:
 1. Outcome Quality
@@ -643,6 +897,10 @@ Rules:
 - Be deterministic. The same input should lead to the same statuses and the same referenced items.
 - When a gap or risk refers to a specific Epic or Story Idea, include its key in square brackets, for example [EPC-001] or [SEED-002].
 - Do not mention an Epic or Story Idea without its reference key when one is available.
+- Apply the delivery type rules below as hard validation policy, not as optional hints.
+
+Delivery type validation rules:
+${validationReference.summary.map((rule) => `- ${rule}`).join("\n")}
 
 Evaluation details:
 1. Outcome Quality
@@ -686,6 +944,9 @@ Interpretation:
 - 80-100 -> Ready for Tollgate
 - 60-79 -> Needs refinement
 - below 60 -> Not ready
+
+Reference material from validation guidance:
+${validationReference.docs || "No external validation markdown was available."}
 
 Required output:
 - Return JSON only.
@@ -787,8 +1048,67 @@ ${JSON.stringify(
   `.trim();
 }
 
+function applyDeterministicFieldValidationAdjustments(
+  input: {
+    field: "outcome_statement" | "baseline_definition";
+    deliveryType?: DeliveryType | null;
+    title?: string | null;
+    problemStatement?: string | null;
+    outcomeStatement?: string | null;
+    baselineDefinition?: string | null;
+    baselineSource?: string | null;
+  },
+  result: OutcomeFieldAiValidation
+) {
+  const deliveryType = normalizeDeliveryType(input.deliveryType);
+  const fieldText =
+    input.field === "outcome_statement" ? input.outcomeStatement?.trim() ?? "" : input.baselineDefinition?.trim() ?? "";
+
+  if (input.field === "outcome_statement" && !fieldText) {
+    result.verdict = "needs_revision";
+    result.confidence = "high";
+    result.rationale = `Outcome statement is missing. ${deliveryType ?? "This"} framing still needs a measurable effect statement.`;
+    result.suggestedRewrite ??= buildConservativeFieldSuggestion(input);
+    return result;
+  }
+
+  if (input.field === "baseline_definition" && !fieldText) {
+    if (deliveryType === "AT" || deliveryType === "AM") {
+      result.verdict = "needs_revision";
+      result.confidence = "high";
+      result.rationale = `${deliveryType} framing requires a baseline. The current baseline definition is missing.`;
+      result.suggestedRewrite ??= buildConservativeFieldSuggestion(input);
+      return result;
+    }
+
+    if (deliveryType === "AD") {
+      result.verdict = result.verdict === "good" ? "unclear" : result.verdict;
+      result.confidence = result.confidence === "low" ? "low" : "medium";
+      result.rationale = "AD framing can start with a lighter baseline, but adding one will make value validation easier.";
+      result.suggestedRewrite ??= buildConservativeFieldSuggestion(input);
+    }
+  }
+
+  if (input.field === "baseline_definition" && deliveryType === "AT" && !containsQuantifiedEvidence(fieldText)) {
+    result.verdict = "needs_revision";
+    result.confidence = "high";
+    result.rationale = "AT framing needs a quantified baseline. The current baseline text is still too qualitative.";
+    result.suggestedRewrite ??= buildConservativeFieldSuggestion(input);
+  }
+
+  if (input.field === "baseline_definition" && deliveryType === "AM" && countOperationalSignals(fieldText) < 2) {
+    result.verdict = "needs_revision";
+    result.confidence = "high";
+    result.rationale = "AM framing should reference operational data such as incidents, MTTR, SLA, queue volume, or cost per ticket.";
+    result.suggestedRewrite ??= buildConservativeFieldSuggestion(input);
+  }
+
+  return result;
+}
+
 export async function validateOutcomeFieldWithAi(input: {
   field: "outcome_statement" | "baseline_definition";
+  deliveryType?: DeliveryType | null;
   title?: string | null;
   problemStatement?: string | null;
   outcomeStatement?: string | null;
@@ -820,7 +1140,7 @@ export async function validateOutcomeFieldWithAi(input: {
   const jsonText = extractJsonObject(outputText);
   const parsed = JSON.parse(jsonText) as OutcomeFieldAiValidation;
 
-  return parseOutcomeFieldAiValidation(parsed);
+  return applyDeterministicFieldValidationAdjustments(input, parseOutcomeFieldAiValidation(parsed));
 }
 
 export async function reviewOutcomeFramingWithAi(input: {
@@ -834,7 +1154,8 @@ export async function reviewOutcomeFramingWithAi(input: {
     solutionContext?: string | null;
     solutionConstraints?: string | null;
     dataSensitivity?: string | null;
-    deliveryType?: "AD" | "AT" | "AM" | null;
+    deliveryType?: DeliveryType | null;
+    valueOwner?: string | null;
     aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
     aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
     aiUsageIntent?: string | null;

@@ -240,6 +240,7 @@ async function validateOutcomeFieldAiAction(
   const result = await validateOutcomeFieldWithAiService({
     organizationId: session.organization.organizationId,
     field,
+    deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
     title: String(formData.get("title") ?? "") || null,
     problemStatement: String(formData.get("problemStatement") ?? "") || null,
     outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
@@ -309,7 +310,8 @@ export type ReviewOutcomeFramingAiActionState = {
   status: "idle" | "success" | "error";
   message: string | null;
   report:
-    | {
+      | {
+        validationMode: "AD" | "AT" | "AM" | "generic";
         outcomeQuality: {
           status: "ok" | "needs_improvement";
           comment: string;
@@ -343,6 +345,7 @@ export type ReviewOutcomeFramingAiActionState = {
           score: number;
           interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
         };
+        requiredActions: string[];
       }
     | null;
 };
