@@ -41,6 +41,122 @@ function t(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
 }
 
+function localizeRoleTitle(language: "en" | "sv", roleType: string, roleTitle: string) {
+  if (language !== "sv") return roleTitle;
+
+  const normalized = roleTitle.trim().toLowerCase();
+  const byTitle: Record<string, string> = {
+    "project sponsor": "Projektsponsor",
+    "executive sponsor": "Projektsponsor",
+    "domain owner": "Domänägare",
+    "product owner": "Produktägare",
+    "value owner": "Värdeägare",
+    "risk owner": "Riskägare",
+    "solution architect": "Lösningsarkitekt",
+    "customer architect": "Kundarkitekt",
+    "supplier architect": "Leverantörsarkitekt",
+    "ai delivery lead": "AI-leveransledare",
+    "ai delivery architect": "AI-leveransarkitekt",
+    "ai quality assurance lead": "AI-kvalitetsansvarig",
+    "ai quality authority": "AI-kvalitetsansvarig",
+    "delivery lead": "Leveransledare",
+    "full-stack builder": "Fullstackutvecklare",
+    "senior builder": "Senior utvecklare"
+  };
+
+  const byRoleType: Record<string, string> = {
+    customer_sponsor: "Projektsponsor",
+    customer_domain_owner: "Domänägare",
+    value_owner: "Värdeägare",
+    risk_owner: "Riskägare",
+    architect: "Lösningsarkitekt",
+    aida: "AI-leveransledare",
+    aqa: "AI-kvalitetsansvarig",
+    delivery_lead: "Leveransledare",
+    builder: "Fullstackutvecklare"
+  };
+
+  return byTitle[normalized] ?? byRoleType[roleType] ?? roleTitle;
+}
+
+function localizeMandateNotes(
+  language: "en" | "sv",
+  roleType: string,
+  mandateNotes?: string | null | undefined
+) {
+  if (language !== "sv" || !mandateNotes) return mandateNotes;
+
+  const normalized = mandateNotes.trim();
+  const byText: Record<string, string> = {
+    "Owns sponsorship, budget direction, and tollgate progression for the pilot.":
+      "Äger sponsorskap, budgetinriktning och tollgate-framdrift för piloten.",
+    "Owns domain rules for mushroom records, user workflows, and find data semantics.":
+      "Äger domänregler för svampregister, användarflöden och semantiken i sökdata.",
+    "Owns business value, prioritization, and acceptance of the mushroom-finding app pilot.":
+      "Äger affärsvärde, prioritering och acceptans för pilotversionen av svampappen.",
+    "Owns practical AI-assisted delivery setup and governed usage constraints.":
+      "Äger praktisk AI-assisterad leveranssetup och styrda användningsramar.",
+    "Reviews AI-assisted output quality, traceability, and build readiness.":
+      "Granskar kvaliteten på AI-assisterad output, spårbarhet och build readiness.",
+    "Owns application architecture, data design, and architecture review decisions.":
+      "Äger applikationsarkitektur, datadesign och beslut i arkitekturgranskningar.",
+    "Owns delivery planning, sequencing, and escalations on the supplier side.":
+      "Äger leveransplanering, sekvensering och eskaleringar på leverantörssidan.",
+    "Owns business value.": "Äger affärsvärdet.",
+    "Owns delivery coordination.": "Äger leveranskoordineringen.",
+    "Owns architecture review.": "Äger arkitekturgranskningen."
+  };
+
+  if (byText[normalized]) {
+    return byText[normalized];
+  }
+
+  const roleNameByType: Record<string, string> = {
+    customer_sponsor: "Projektsponsor",
+    customer_domain_owner: "Domänägare",
+    value_owner: "Värdeägare",
+    risk_owner: "Riskägare",
+    architect: "Lösningsarkitekt",
+    aida: "AI-leveransledare",
+    aqa: "AI-kvalitetsansvarig",
+    delivery_lead: "Leveransledare",
+    builder: "Fullstackutvecklare"
+  };
+
+  const generatedPrefix = `${roleTitleForSeed(roleType, roleNameByType)} is a seeded AAS runtime role for `;
+  if (normalized.startsWith(generatedPrefix) && normalized.endsWith(".")) {
+    const organizationName = normalized.slice(generatedPrefix.length, -1);
+    return `${roleNameByType[roleType] ?? formatLabel(roleType)} är en seedad AAS-runtime-roll för ${organizationName}.`;
+  }
+
+  return mandateNotes;
+}
+
+function roleTitleForSeed(roleType: string, roleNameByType: Record<string, string>) {
+  switch (roleType) {
+    case "customer_sponsor":
+      return "Project sponsor";
+    case "customer_domain_owner":
+      return "Domain owner";
+    case "value_owner":
+      return "Value owner";
+    case "risk_owner":
+      return "Risk owner";
+    case "architect":
+      return "Solution architect";
+    case "aida":
+      return "AI delivery lead";
+    case "aqa":
+      return "AI quality assurance lead";
+    case "delivery_lead":
+      return "Delivery lead";
+    case "builder":
+      return "Full-stack builder";
+    default:
+      return roleNameByType[roleType] ?? formatLabel(roleType);
+  }
+}
+
 function ReturnInputs({ params }: { params: ReturnParams }) {
   return (
     <>
@@ -65,12 +181,22 @@ function PeopleGroup(props: {
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
         <CardTitle>{props.label}</CardTitle>
-        <CardDescription>{t(props.language, "Compact role list. Expand only the role you want to inspect or edit.", "Kompakt rollista. Expandera bara den roll du vill granska eller ändra.")}</CardDescription>
+        <CardDescription>
+          {t(
+            props.language,
+            "Compact role list. Expand only the role you want to inspect or edit.",
+            "Kompakt rollista. Expandera bara den roll du vill granska eller ändra."
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {props.people.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-5 text-sm text-muted-foreground">
-            {t(props.language, "No roles have been added for this side yet.", "Inga roller har lagts till för den här sidan ännu.")}
+            {t(
+              props.language,
+              "No roles have been added for this side yet.",
+              "Inga roller har lagts till för den här sidan ännu."
+            )}
           </div>
         ) : (
           props.people.map((person) => (
@@ -99,9 +225,12 @@ function PeopleGroup(props: {
                         {person.isActive ? t(props.language, "Active", "Aktiv") : t(props.language, "Inactive", "Inaktiv")}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground">{person.roleTitle}</p>
+                    <p className="text-sm text-foreground">
+                      {localizeRoleTitle(props.language, person.roleType, person.roleTitle)}
+                    </p>
                     <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
-                      {person.mandateNotes || t(props.language, "No mandate notes recorded yet.", "Inga mandatnoteringar registrerade ännu.")}
+                      {localizeMandateNotes(props.language, person.roleType, person.mandateNotes) ||
+                        t(props.language, "No mandate notes recorded yet.", "Inga mandatnoteringar registrerade ännu.")}
                     </p>
                   </div>
                 </div>
@@ -193,7 +322,11 @@ export function GovernanceDirectoryView({
             <div>
               <CardTitle>{t(language, "Party and role directory", "Part- och rollkatalog")}</CardTitle>
               <CardDescription>
-                {t(language, "Customer and supplier roles stay grouped, compact and easy to scan.", "Kund- och leverantörsroller hålls grupperade, kompakta och lättöverskådliga.")}
+                {t(
+                  language,
+                  "Customer and supplier roles stay grouped, compact and easy to scan.",
+                  "Kund- och leverantörsroller hålls grupperade, kompakta och lättöverskådliga."
+                )}
               </CardDescription>
             </div>
           </div>
@@ -203,7 +336,13 @@ export function GovernanceDirectoryView({
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
               <div>
                 <p className="font-medium text-foreground">{t(language, "Add role", "Lägg till roll")}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{t(language, "Create a named customer or supplier role only when needed.", "Skapa en namngiven kund- eller leverantörsroll bara när det behövs.")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t(
+                    language,
+                    "Create a named customer or supplier role only when needed.",
+                    "Skapa en namngiven kund- eller leverantörsroll bara när det behövs."
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Plus className="h-4 w-4" />

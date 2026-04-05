@@ -2,6 +2,16 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import GovernancePage from "@/app/(protected)/governance/page";
 
+const { cookiesMock } = vi.hoisted(() => ({
+  cookiesMock: vi.fn(async () => ({
+    get: vi.fn(() => undefined)
+  }))
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: cookiesMock
+}));
+
 vi.mock("@/lib/auth/guards", () => ({
   requireOrganizationContext: vi.fn(async () => ({
     organizationId: "org_demo_control_plane",
@@ -215,6 +225,29 @@ vi.mock("@/app/(protected)/governance/actions", () => ({
 }));
 
 describe("Governance page", () => {
+  it("localizes role titles and mandate notes when Swedish is selected", async () => {
+    cookiesMock.mockResolvedValueOnce({
+      get: vi.fn((name: string) => (name === "aas-app-language" ? { value: "sv" } : undefined))
+    });
+
+    render(
+      await GovernancePage({
+        searchParams: Promise.resolve({
+          sourceEntity: "story",
+          sourceId: "story-1",
+          level: "level_3"
+        })
+      })
+    );
+
+    expect(screen.getAllByText("Värdeägare").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Leveransledare").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Lösningsarkitekt").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Äger affärsvärdet.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Äger leveranskoordineringen.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Äger arkitekturgranskningen.").length).toBeGreaterThan(0);
+  });
+
   it("shows the simplified governance cockpit with level-aware summary and gaps", async () => {
     render(
       await GovernancePage({
