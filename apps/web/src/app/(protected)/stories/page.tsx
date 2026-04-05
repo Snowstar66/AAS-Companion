@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ArrowRight, CircleAlert, CircleCheckBig, LibraryBig } from "lucide-react";
 import { getStoryReadinessBlockers } from "@aas-companion/domain";
 import { listStoriesService } from "@aas-companion/api";
@@ -10,11 +11,27 @@ type StoriesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type AppLanguage = "en" | "sv";
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function t(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default async function StoriesPage({ searchParams }: StoriesPageProps) {
+  const language = await getServerLanguage();
   const organization = await requireOrganizationContext();
   const query = searchParams ? await searchParams : {};
   const readinessFilter = getParamValue(query.state) ?? "all";
@@ -25,7 +42,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
     <AppShell
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: "Stories",
+        title: t(language, "Stories", "Stories"),
         badge: "Story M1-007"
       }}
     >
@@ -33,19 +50,19 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <LibraryBig className="h-3.5 w-3.5 text-primary" />
-            Story page index
+            {t(language, "Story page index", "Story-sidindex")}
           </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Story readiness overview</h1>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">{t(language, "Story readiness overview", "Oversikt over story-readiness")}</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-            Open a Story to complete required AAS fields, remove blockers, and prepare build start.
+            {t(language, "Open a Story to complete required AAS fields, remove blockers, and prepare build start.", "Oppna en Story for att komplettera kravfalten i AAS, ta bort blockerare och forbereda build-start.")}
           </p>
         </div>
 
         {!storiesResult.ok || storiesResult.data.length === 0 ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>No stories available</CardTitle>
-              <CardDescription>Seed or create stories before using the Story pages.</CardDescription>
+              <CardTitle>{t(language, "No stories available", "Inga stories tillgangliga")}</CardTitle>
+              <CardDescription>{t(language, "Seed or create stories before using the Story pages.", "Seeda eller skapa stories innan du anvander Story-sidorna.")}</CardDescription>
             </CardHeader>
           </Card>
         ) : (
@@ -90,11 +107,11 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
                           }`}
                         >
                           {ready ? <CircleCheckBig className="h-3.5 w-3.5" /> : <CircleAlert className="h-3.5 w-3.5" />}
-                          {ready ? "Ready" : "Blocked"}
+                          {ready ? t(language, "Ready", "Redo") : t(language, "Blocked", "Blockerad")}
                         </span>
                         {imported ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-900">
-                            Imported
+                            {t(language, "Imported", "Importerad")}
                           </span>
                         ) : null}
                         {story.importedReadinessState ? (
@@ -106,20 +123,20 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
                       <div>
                         <h2 className="text-2xl font-semibold tracking-tight">{story.title}</h2>
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                          {ready ? "Execution Contract preview is available." : blockers.join(" ")}
+                          {ready ? t(language, "Execution Contract preview is available.", "Forhandsvisning av Execution Contract ar tillganglig.") : blockers.join(" ")}
                         </p>
                       </div>
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <Button asChild className="gap-2" variant="secondary">
                         <Link href={`/stories/${story.id}`}>
-                          Open Story
+                          {t(language, "Open Story", "Oppna Story")}
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>
                       <Button asChild className="gap-2">
                         <Link href={`/handoff/${story.id}`}>
-                          Open Build Start
+                          {t(language, "Open Build Start", "Oppna Build Start")}
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>

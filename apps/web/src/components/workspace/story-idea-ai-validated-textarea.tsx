@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
 
 type StoryIdeaExpectedBehaviorAiActionState =
@@ -30,6 +31,10 @@ type StoryIdeaAiValidatedTextareaProps = {
   saveAction?: (formData: FormData) => Promise<{ status: "success" | "error"; message: string }>;
 };
 
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
 export function StoryIdeaAiValidatedTextarea({
   label,
   name,
@@ -39,6 +44,7 @@ export function StoryIdeaAiValidatedTextarea({
   validateAction,
   saveAction
 }: StoryIdeaAiValidatedTextareaProps) {
+  const { language } = useAppChromeLanguage();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [value, setValue] = useState(initialValue);
   const [result, setResult] = useState<StoryIdeaExpectedBehaviorAiActionState | null>(null);
@@ -67,7 +73,7 @@ export function StoryIdeaAiValidatedTextarea({
         setResult({
           status: "error",
           field: "story_expected_behavior",
-          error: error instanceof Error ? error.message : "AI validation failed."
+          error: error instanceof Error ? error.message : t(language, "AI validation failed.", "AI-validering misslyckades.")
         });
       }
     });
@@ -117,7 +123,7 @@ export function StoryIdeaAiValidatedTextarea({
         setSaveMessage(saveResult.message);
         setSaveError(null);
       } catch (error) {
-        setSaveError(error instanceof Error ? error.message : "Suggestion could not be saved.");
+        setSaveError(error instanceof Error ? error.message : t(language, "Suggestion could not be saved.", "Forslaget kunde inte sparas."));
         setSaveMessage(null);
       }
     });
@@ -130,7 +136,7 @@ export function StoryIdeaAiValidatedTextarea({
         {!disabled ? (
           <Button className="gap-2" disabled={isPending} onClick={handleValidate} size="sm" type="button" variant="secondary">
             <Sparkles className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
-            {isPending ? "Validating..." : "AI validate"}
+            {isPending ? t(language, "Validating...", "Validerar...") : t(language, "AI validate", "AI-validera")}
           </Button>
         ) : null}
       </span>
@@ -169,10 +175,10 @@ export function StoryIdeaAiValidatedTextarea({
             type="button"
             variant="default"
           >
-            {isSaving ? "Applying and saving..." : "Use suggestion and save"}
+            {isSaving ? t(language, "Applying and saving...", "Tillampar och sparar...") : t(language, "Use suggestion and save", "Anvand forslag och spara")}
           </Button>
           <Button className="gap-2" disabled={isSaving} onClick={applySuggestion} size="sm" type="button" variant="secondary">
-            Use suggestion in editor
+            {t(language, "Use suggestion in editor", "Anvand forslag i editorn")}
           </Button>
         </div>
       ) : null}

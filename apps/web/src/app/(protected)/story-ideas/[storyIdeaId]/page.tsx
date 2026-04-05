@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { getDirectionSeedWorkspaceService, getStoryWorkspaceService } from "@aas-companion/api";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { AppShell } from "@/components/layout/app-shell";
@@ -23,11 +24,27 @@ type StoryIdeaWorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type AppLanguage = "en" | "sv";
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function t(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default async function StoryIdeaWorkspacePage({ params, searchParams }: StoryIdeaWorkspacePageProps) {
+  const language = await getServerLanguage();
   const organization = await requireOrganizationContext();
   const { storyIdeaId } = await params;
   const query = searchParams ? await searchParams : {};
@@ -53,7 +70,7 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
         topbarProps={{
           eyebrow: "AAS Companion",
           projectName: organization.organizationName,
-          sectionLabel: "Story Idea",
+          sectionLabel: t(language, "Story Idea", "Story Idea"),
           badge: directionSeedResult.data.seed.key
         }}
       >
@@ -68,12 +85,12 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
         <section className="space-y-6">
           {created ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              Native Story Idea created inside the current Framing.
+              {t(language, "Native Story Idea created inside the current Framing.", "Native Story Idea skapades i aktuell Framing.")}
             </div>
           ) : null}
           {saveState === "success" ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              Story Idea changes were saved successfully.
+              {t(language, "Story Idea changes were saved successfully.", "Andringar i Story Idea sparades.")} 
             </div>
           ) : null}
           {saveState === "error" && saveMessage ? (
@@ -81,12 +98,12 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
           ) : null}
           {lifecycleState === "archived" ? (
             <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-              Story Idea archived. It is now removed from active working views but remains traceable.
+              {t(language, "Story Idea archived. It is now removed from active working views but remains traceable.", "Story Idea arkiverades. Den ar nu borttagen fran aktiva arbetsvyer men ar fortfarande sparbar.")}
             </div>
           ) : null}
           {lifecycleState === "restored" ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              Story Idea restored to active work.
+              {t(language, "Story Idea restored to active work.", "Story Idea aterstalldes till aktivt arbete.")}
             </div>
           ) : null}
           {lifecycleState === "error" && saveMessage ? (
@@ -94,7 +111,7 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
           ) : null}
           {isArchived ? (
             <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-              This Story Idea is archived and currently read-only. Restore it to continue active framing work.
+              {t(language, "This Story Idea is archived and currently read-only. Restore it to continue active framing work.", "Den har Story Idean ar arkiverad och lasbar. Aterstall den for att fortsatta aktivt framingarbete.")}
             </div>
           ) : null}
 
@@ -131,7 +148,7 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
       topbarProps={{
         eyebrow: "AAS Companion",
         projectName: organization.organizationName,
-        sectionLabel: "Story Idea",
+        sectionLabel: t(language, "Story Idea", "Story Idea"),
         badge: story.key
       }}
     >
@@ -145,12 +162,12 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
       <section className="space-y-6">
         {created ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Native Story Idea created inside the current Framing.
+            {t(language, "Native Story Idea created inside the current Framing.", "Native Story Idea skapades i aktuell Framing.")}
           </div>
         ) : null}
         {saveState === "success" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Story Idea changes were saved successfully.
+            {t(language, "Story Idea changes were saved successfully.", "Andringar i Story Idea sparades.")}
           </div>
         ) : null}
         {saveState === "error" && saveMessage ? (
@@ -158,12 +175,12 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
         ) : null}
         {lifecycleState === "archived" ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-            Story Idea archived. It is now removed from active working views but remains traceable.
+            {t(language, "Story Idea archived. It is now removed from active working views but remains traceable.", "Story Idea arkiverades. Den ar nu borttagen fran aktiva arbetsvyer men ar fortfarande sparbar.")}
           </div>
         ) : null}
         {lifecycleState === "restored" ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Story Idea restored to active work.
+            {t(language, "Story Idea restored to active work.", "Story Idea aterstalldes till aktivt arbete.")}
           </div>
         ) : null}
         {lifecycleState === "error" && saveMessage ? (
@@ -171,12 +188,12 @@ export default async function StoryIdeaWorkspacePage({ params, searchParams }: S
         ) : null}
         {isArchived ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-            This Story Idea is archived and currently read-only. Restore it to continue active framing work.
+            {t(language, "This Story Idea is archived and currently read-only. Restore it to continue active framing work.", "Den har Story Idean ar arkiverad och lasbar. Aterstall den for att fortsatta aktivt framingarbete.")}
           </div>
         ) : null}
         {canAlsoOpenDeliveryView ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-            You opened the Story Idea view. This record also has a Delivery Story view for later design and build work.
+            {t(language, "You opened the Story Idea view. This record also has a Delivery Story view for later design and build work.", "Du oppnade Story Idea-vyn. Den har posten har ocksa en Delivery Story-vy for senare design- och buildarbete.")}
           </div>
         ) : null}
 

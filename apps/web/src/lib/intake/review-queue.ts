@@ -5,11 +5,27 @@ import {
   artifactComplianceResultSchema,
   getArtifactCandidateIssueProgress
 } from "@aas-companion/domain/artifact-intake";
+import { cookies } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
 import { getArtifactCandidateService, listArtifactCandidateQueueService } from "@aas-companion/api/intake";
 import { listEpicsService } from "@aas-companion/api/epics";
 import { listOutcomesService } from "@aas-companion/api/outcomes";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+
+type AppLanguage = "en" | "sv";
+
+function t(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
 
 type ParsedIssueDispositions = ReturnType<typeof artifactIssueDispositionMapSchema.parse>;
 
@@ -91,6 +107,7 @@ function parseReviewCandidate<T extends {
 
 export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
   try {
+    const language = await getServerLanguage();
     const organization = await requireOrganizationContext();
     const [result, selectedCandidateResult, outcomesResult, epicsResult] = await Promise.all([
       listArtifactCandidateQueueService(organization.organizationId),
@@ -114,7 +131,7 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
           rejected: 0,
           promoted: 0
         },
-        message: result.errors[0]?.message ?? "Review queue could not be loaded."
+        message: result.errors[0]?.message ?? t(language, "Review queue could not be loaded.", "Review-kon kunde inte laddas.")
       };
     }
 
@@ -154,15 +171,16 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
       },
       message:
         items.length > 0
-          ? "Imported candidate objects are ready for deterministic compliance review, human confirmation, and promotion."
-          : "No imported candidates are waiting for human review."
+          ? t(language, "Imported candidate objects are ready for deterministic compliance review, human confirmation, and promotion.", "Importerade kandidatobjekt ar redo for deterministisk compliance-granskning, mannsklig bekraftelse och promotion.")
+          : t(language, "No imported candidates are waiting for human review.", "Inga importerade kandidater vantar pa human review.")
     };
   } catch (error) {
     unstable_rethrow(error);
+    const language = await getServerLanguage();
 
     return {
       state: "unavailable" as const,
-      organizationName: "Unknown project",
+      organizationName: t(language, "Unknown project", "Okant projekt"),
       items: [],
       selectedCandidate: null,
       projectOutcomes: [],
@@ -174,7 +192,10 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
         rejected: 0,
         promoted: 0
       },
-      message: error instanceof Error ? `Human Review is unavailable right now: ${error.message}` : "Human Review is unavailable right now."
+      message:
+        error instanceof Error
+          ? t(language, `Human Review is unavailable right now: ${error.message}`, `Human Review ar inte tillganglig just nu: ${error.message}`)
+          : t(language, "Human Review is unavailable right now.", "Human Review ar inte tillganglig just nu.")
     };
   }
 }

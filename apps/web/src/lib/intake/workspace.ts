@@ -9,11 +9,27 @@ import {
   type ArtifactParseResult
 } from "@aas-companion/domain/artifact-intake";
 import { artifactCandidateReviewStatusSchema } from "@aas-companion/domain/enums";
+import { cookies } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
 import { getArtifactIntakeFileService, listArtifactIntakeSessionsService } from "@aas-companion/api/intake";
 import { listEpicsService } from "@aas-companion/api/epics";
 import { listOutcomesService } from "@aas-companion/api/outcomes";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+
+type AppLanguage = "en" | "sv";
+
+function t(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+async function getServerLanguage(): Promise<AppLanguage> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
 
 function parseStoredParseResult(value: unknown): ArtifactParseResult | null {
   const parsed = artifactParseResultSchema.safeParse(value);
@@ -102,6 +118,7 @@ function isActiveImportCandidate(candidate: {
 
 export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorkspaceSelection = {}) {
   try {
+    const language = await getServerLanguage();
     const organization = await requireOrganizationContext();
     const [result, outcomesResult, epicsResult] = await Promise.all([
       listArtifactIntakeSessionsService(organization.organizationId),
@@ -122,7 +139,7 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
           humanReviewRequired: 0
         },
         sessions: [],
-        message: result.errors[0]?.message ?? "Import data could not be loaded."
+        message: result.errors[0]?.message ?? t(language, "Import data could not be loaded.", "Importdata kunde inte laddas.")
       };
     }
 
@@ -294,15 +311,16 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
       sessions,
       message:
         sessions.length > 0
-          ? "Imported text and markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates."
-          : "No import sessions exist yet. Upload import artifacts to start the governed import path."
+          ? t(language, "Imported text and markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates.", "Importerade text- och markdownunderlag ar nu klassificerade, parsade till kandidatsektioner och mappade till granskbara AAS-kandidater.")
+          : t(language, "No import sessions exist yet. Upload import artifacts to start the governed import path.", "Inga importsessioner finns annu. Ladda upp importunderlag for att starta den styrda importvagen.")
       };
   } catch (error) {
     unstable_rethrow(error);
+    const language = await getServerLanguage();
 
     return {
       state: "unavailable" as const,
-      organizationName: "Unknown project",
+      organizationName: t(language, "Unknown project", "Okant projekt"),
       projectOutcomes: [],
       projectEpics: [],
       summary: {
@@ -314,7 +332,10 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
         humanReviewRequired: 0
       },
       sessions: [],
-      message: error instanceof Error ? `Import is unavailable right now: ${error.message}` : "Import data could not be loaded."
+      message:
+        error instanceof Error
+          ? t(language, `Import is unavailable right now: ${error.message}`, `Import ar inte tillganglig just nu: ${error.message}`)
+          : t(language, "Import data could not be loaded.", "Importdata kunde inte laddas.")
     };
   }
 }

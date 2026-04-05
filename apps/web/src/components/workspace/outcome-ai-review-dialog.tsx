@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, CircleAlert, ShieldAlert, Sparkles, X } from "lucide-react";
 import { Button } from "@aas-companion/ui";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import type { reviewOutcomeFramingWithAiAction } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 
 type OutcomeAiReviewDialogProps = {
@@ -53,6 +54,10 @@ type OutcomeAiReviewDialogProps = {
       | null;
   };
 };
+
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
 
 function getReadinessTone(interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready") {
   if (interpretation === "ready_for_tollgate") {
@@ -132,6 +137,7 @@ export function OutcomeAiReviewDialog({
   action,
   initialState
 }: OutcomeAiReviewDialogProps) {
+  const { language } = useAppChromeLanguage();
   const [state, formAction, pending] = useActionState(action, initialState);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -189,7 +195,7 @@ export function OutcomeAiReviewDialog({
         <input name="outcomeId" type="hidden" value={outcomeId} />
         <Button aria-busy={pending} className={`gap-2 ${pending ? "cursor-wait" : ""}`.trim()} disabled={pending} type="submit" variant="secondary">
           <Sparkles className="h-4 w-4" />
-          {pending ? "Reviewing framing..." : "AI review framing"}
+          {pending ? t(language, "Reviewing framing...", "Granskar framing...") : t(language, "AI review framing", "AI-granska framing")}
         </Button>
       </form>
 
@@ -206,11 +212,11 @@ export function OutcomeAiReviewDialog({
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                   <Sparkles className="h-3.5 w-3.5" />
-                  AI framing review
+                  {t(language, "AI framing review", "AI-granskning av framing")}
                 </div>
-                <h3 className="text-xl font-semibold text-foreground">Framing review report</h3>
+                <h3 className="text-xl font-semibold text-foreground">{t(language, "Framing review report", "Granskningsrapport for framing")}</h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  This report stays pinned to the viewport while you review the currently saved framing for AI level{" "}
+                  {t(language, "This report stays pinned to the viewport while you review the currently saved framing for AI level", "Den har rapporten ligger fast i vyn medan du granskar den sparade framingen for AI-niva")}{" "}
                   {currentAiLevel.replaceAll("_", " ")}.
                 </p>
               </div>
@@ -224,13 +230,13 @@ export function OutcomeAiReviewDialog({
                 <div className="space-y-6">
                   {pending ? (
                     <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-                      AI framing review is running. The report will refresh when the response is ready.
+                      {t(language, "AI framing review is running. The report will refresh when the response is ready.", "AI-granskning av framing pagar. Rapporten uppdateras nar svaret ar klart.")}
                     </div>
                   ) : null}
 
                   {state.status === "error" ? (
                     <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800">
-                      AI framing review could not run: {state.message}
+                      {t(language, "AI framing review could not run:", "AI-granskning av framing kunde inte koras:")} {state.message}
                     </div>
                   ) : null}
 
@@ -239,7 +245,7 @@ export function OutcomeAiReviewDialog({
                       <div className={`rounded-2xl border px-5 py-5 ${getReadinessTone(state.report.framingReadiness.interpretation)}`}>
                         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                           <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em]">Framing Validation Summary</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em]">{t(language, "Framing Validation Summary", "Sammanfattning av framingvalidering")}</p>
                             <div className="mt-2 flex items-center gap-2">
                               <StatusIcon
                                 tone={
@@ -258,11 +264,11 @@ export function OutcomeAiReviewDialog({
                               Epic Coverage: {formatStatus(state.report.epicCoverage.status)}. Story Coverage: {formatStatus(state.report.storyCoverage.status)}.
                             </p>
                             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
-                              Validation mode: {formatValidationMode(state.report.validationMode)}
+                              {t(language, "Validation mode:", "Valideringslage:")} {formatValidationMode(state.report.validationMode)}
                             </p>
                           </div>
                           <div className="rounded-2xl border border-current/15 bg-white/60 px-5 py-4 text-center">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Framing Readiness</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">{t(language, "Framing Readiness", "Framing-readiness")}</p>
                             <p className="mt-2 text-3xl font-semibold">{getReadinessBand(state.report.framingReadiness.interpretation)}</p>
                             <p className="mt-2 text-xs font-medium opacity-80">{formatInterpretation(state.report.framingReadiness.interpretation)}</p>
                           </div>
@@ -271,19 +277,19 @@ export function OutcomeAiReviewDialog({
 
                       <div className="grid gap-6 xl:grid-cols-2">
                         <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
-                          <h4 className="text-sm font-semibold text-foreground">Outcome Quality</h4>
+                          <h4 className="text-sm font-semibold text-foreground">{t(language, "Outcome Quality", "Outcome-kvalitet")}</h4>
                           <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
                             <StatusIcon tone={state.report.outcomeQuality.status === "ok" ? "good" : "warning"} />
                             <span>{formatStatus(state.report.outcomeQuality.status)}</span>
                           </div>
                           <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.outcomeQuality.comment}</p>
                           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                            Suggested improvement: {state.report.outcomeQuality.suggestedImprovement}
+                            {t(language, "Suggested improvement:", "Foreslagen forbattring:")} {state.report.outcomeQuality.suggestedImprovement}
                           </p>
                         </section>
 
                         <section className="rounded-2xl border border-border/70 bg-muted/10 p-5">
-                          <h4 className="text-sm font-semibold text-foreground">Problem Alignment</h4>
+                          <h4 className="text-sm font-semibold text-foreground">{t(language, "Problem Alignment", "Problemalignment")}</h4>
                           <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
                             <StatusIcon tone={state.report.problemAlignment.status === "strong" ? "good" : "warning"} />
                             <span>{formatStatus(state.report.problemAlignment.status)}</span>
@@ -293,7 +299,7 @@ export function OutcomeAiReviewDialog({
                       </div>
 
                       <section className="rounded-2xl border border-border/70 bg-amber-50/60 p-5">
-                        <h4 className="text-sm font-semibold text-foreground">Required Actions</h4>
+                        <h4 className="text-sm font-semibold text-foreground">{t(language, "Required Actions", "Obligatoriska atgarder")}</h4>
                         {state.report.requiredActions.length > 0 ? (
                           <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
                             {state.report.requiredActions.map((item) => (
@@ -305,7 +311,7 @@ export function OutcomeAiReviewDialog({
                           </ul>
                         ) : (
                           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                            No mandatory follow-up actions were identified for the selected validation mode.
+                            {t(language, "No mandatory follow-up actions were identified for the selected validation mode.", "Inga obligatoriska uppfoljningsatgarder identifierades for valt valideringslage.")}
                           </p>
                         )}
                       </section>
