@@ -1,7 +1,18 @@
+import { cookies } from "next/headers";
 import { AppShell } from "@/components/layout/app-shell";
 import { getLoadingProjectName } from "@/lib/loading-project";
 
+async function getServerLanguage() {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default async function Loading() {
+  const language = await getServerLanguage();
   const projectName = (await getLoadingProjectName()) ?? undefined;
 
   return (
@@ -11,14 +22,14 @@ export default async function Loading() {
         ...(projectName
           ? {
               projectName,
-              sectionLabel: "Loading workspace",
-              title: "Loading workspace",
-              badge: "Project section"
+              sectionLabel: language === "sv" ? "Laddar arbetsyta" : "Loading workspace",
+              title: language === "sv" ? "Laddar arbetsyta" : "Loading workspace",
+              badge: language === "sv" ? "Projektsektion" : "Project section"
             }
           : {
               eyebrow: "AAS Companion",
-              title: "Home",
-              badge: "Project selector"
+              title: language === "sv" ? "Hem" : "Home",
+              badge: language === "sv" ? "Projektval" : "Project selector"
             })
       }}
     >

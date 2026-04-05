@@ -76,7 +76,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
         description: "Upload and parse external source artifacts."
       },
       "/review": {
-        label: "Human Review",
+        label: "Mänsklig granskning",
         description: "Review, correct, confirm, and approve imports."
       },
       "/governance": {
@@ -98,7 +98,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       Pricing: "Pricing",
       "Value Spine": "Value Spine",
       Import: "Import",
-      "Human Review": "Human Review",
+      "Human Review": "Mänsklig granskning",
       Governance: "Governance",
       Help: "Help",
       Admin: "Admin",
@@ -112,7 +112,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       "Build Start": "Build Start",
       "Loading workspace": "Loading workspace",
       "Application error": "Application error",
-      "Framing Cockpit": "Framing Cockpit",
+      "Framing Cockpit": "Framingcockpit",
       "Control Plane Foundation": "Control Plane Foundation",
       "Project section": "Project section",
       "Project selector": "Project selector",

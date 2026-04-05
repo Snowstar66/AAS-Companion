@@ -60,12 +60,24 @@ function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
 
-function getImportIntentLabel(importIntent: "framing" | "design" | string) {
-  return importIntent === "design" ? "Design import" : "Framing import";
+function getImportIntentLabel(importIntent: "framing" | "design" | string, language: "en" | "sv" = "en") {
+  return importIntent === "design"
+    ? language === "sv"
+      ? "Designimport"
+      : "Design import"
+    : language === "sv"
+      ? "Framingimport"
+      : "Framing import";
 }
 
-function getImportTargetLabel(importIntent: "framing" | "design" | string) {
-  return importIntent === "design" ? "Delivery Stories in Design" : "Story Ideas in Framing";
+function getImportTargetLabel(importIntent: "framing" | "design" | string, language: "en" | "sv" = "en") {
+  return importIntent === "design"
+    ? language === "sv"
+      ? "Delivery Stories i Design"
+      : "Delivery Stories in Design"
+    : language === "sv"
+      ? "Story Ideas i Framing"
+      : "Story Ideas in Framing";
 }
 
 function getCandidateObjectLabel(candidate: {
@@ -73,24 +85,47 @@ function getCandidateObjectLabel(candidate: {
   intakeSession: {
     importIntent?: "framing" | "design" | string | null;
   };
-}) {
+}, language: "en" | "sv" = "en") {
   if (candidate.type !== "story") {
-    return formatLabel(candidate.type);
+    return candidate.type === "outcome"
+      ? language === "sv"
+        ? "Outcome"
+        : "Outcome"
+      : candidate.type === "epic"
+        ? "Epic"
+        : candidate.type === "constraint"
+          ? language === "sv"
+            ? "Constraint"
+            : "Constraint"
+          : formatLabel(candidate.type);
   }
 
-  return candidate.intakeSession?.importIntent === "design" ? "Delivery Story" : "Story Idea";
+  return candidate.intakeSession?.importIntent === "design"
+    ? language === "sv"
+      ? "Delivery Story"
+      : "Delivery Story"
+    : language === "sv"
+      ? "Story Idea"
+      : "Story Idea";
 }
 
 function getPromotedEntityLabel(
   candidateType: string,
   promotedEntityType: string | null | undefined,
-  importIntent: "framing" | "design" | string
+  importIntent: "framing" | "design" | string,
+  language: "en" | "sv" = "en"
 ) {
   if (candidateType === "story" || promotedEntityType === "story") {
-    return importIntent === "design" ? "Delivery Story" : "Story Idea";
+    return importIntent === "design"
+      ? language === "sv"
+        ? "Delivery Story"
+        : "Delivery Story"
+      : language === "sv"
+        ? "Story Idea"
+        : "Story Idea";
   }
 
-  return promotedEntityType ? formatLabel(promotedEntityType) : "record";
+  return promotedEntityType ? formatLabel(promotedEntityType) : language === "sv" ? "post" : "record";
 }
 
 function getFindingClasses(category: "missing" | "uncertain" | "human_only" | "blocked") {
@@ -942,24 +977,24 @@ function getOperationalBadgeClasses(status: OperationalReviewItem["status"]) {
   return "border-rose-200 bg-rose-50 text-rose-800";
 }
 
-function getOperationalStatusLabel(status: OperationalReviewItem["status"]) {
+function getOperationalStatusLabel(status: OperationalReviewItem["status"], language: "en" | "sv" = "en") {
   if (status === "approved") {
-    return "Ready to start build";
+    return language === "sv" ? "Redo att starta build" : "Ready to start build";
   }
 
   if (status === "ready") {
-    return "Needs human review";
+    return language === "sv" ? "Behöver mänsklig granskning" : "Needs human review";
   }
 
-  return "Blocked";
+  return language === "sv" ? "Blockerad" : "Blocked";
 }
 
-function getOperationalSectionLabel(workflow: OperationalReviewItem["workflow"]) {
+function getOperationalSectionLabel(workflow: OperationalReviewItem["workflow"], language: "en" | "sv" = "en") {
   if (workflow === "outcome_tollgate") {
-    return "Framing brief";
+    return language === "sv" ? "Framingbrief" : "Framing brief";
   }
 
-  return "Delivery Story";
+  return language === "sv" ? "Delivery Story" : "Delivery Story";
 }
 
 function ReviewSummaryCard(props: {
@@ -1167,7 +1202,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
       return {
         importIntent,
-        label: getImportIntentLabel(importIntent),
+        label: getImportIntentLabel(importIntent, language),
         items,
         sessions: [...sessions.values()]
           .map((sessionGroup) => ({
@@ -1227,7 +1262,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
     <AppShell
       topbarProps={{
         projectName,
-        sectionLabel: "Human Review",
+        sectionLabel: language === "sv" ? "Mänsklig granskning" : "Human Review",
         badge: "Project section"
       }}
     >
@@ -1235,10 +1270,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <FileSearch className="h-3.5 w-3.5 text-primary" />
-            <LocalizedText en="Human review command center" sv="Kommandocenter för human review" />
+            <LocalizedText en="Human review command center" sv="Kommandocenter för mänsklig granskning" />
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">
-            <LocalizedText en="Human Review dashboard" sv="Översikt för human review" />
+            <LocalizedText en="Human Review dashboard" sv="Översikt för mänsklig granskning" />
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
             <LocalizedText
@@ -1249,7 +1284,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
               <p className="text-sm font-semibold text-foreground">
-                <LocalizedText en="Human Review" sv="Human Review" />
+                <LocalizedText en="Human Review" sv="Mänsklig granskning" />
               </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 <LocalizedText
@@ -1473,10 +1508,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                   {item.key}
                                 </span>
                                 <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                  {getOperationalSectionLabel(item.workflow)}
+                              {getOperationalSectionLabel(item.workflow, language)}
                                 </span>
                                 <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getOperationalBadgeClasses(item.status)}`}>
-                                  {getOperationalStatusLabel(item.status)}
+                                  {getOperationalStatusLabel(item.status, language)}
                                 </span>
                               </div>
                               <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
@@ -1512,7 +1547,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    <LocalizedText en="Human review approval workspace" sv="Arbetsyta för human review-godkännande" />
+                    <LocalizedText en="Human review approval workspace" sv="Arbetsyta för godkännande i mänsklig granskning" />
                   </p>
                   <h2 className="mt-2 text-xl font-semibold text-foreground">
                     {selectedOperationalReviewItem.key} {selectedOperationalReviewItem.title}
@@ -1526,7 +1561,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getOperationalBadgeClasses(selectedOperationalReviewItem.status)}`}>
-                    {getOperationalStatusLabel(selectedOperationalReviewItem.status)}
+                    {getOperationalStatusLabel(selectedOperationalReviewItem.status, language)}
                   </span>
                   <Button asChild size="sm" variant="secondary">
                     <Link href={`/framing?outcomeId=${selectedOperationalReviewItem.entityId}#tollgate-review`}>
@@ -1788,10 +1823,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           <CardTitle className="flex flex-wrap items-center gap-3">
                             <span>{selectedCandidate.title}</span>
                             <span className="rounded-full border border-border/70 bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                              {getCandidateObjectLabel(selectedCandidate)}
+                              {getCandidateObjectLabel(selectedCandidate, language)}
                             </span>
                             <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                              {getImportIntentLabel(selectedCandidate.intakeSession?.importIntent ?? "framing")}
+                              {getImportIntentLabel(selectedCandidate.intakeSession?.importIntent ?? "framing", language)}
                             </span>
                             <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getBacklogBadgeClasses(selectedCandidateState ?? "needs_action")}`}>
                               {getBacklogLabel(selectedCandidateState ?? "needs_action")}

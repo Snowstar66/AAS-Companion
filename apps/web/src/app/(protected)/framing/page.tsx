@@ -112,7 +112,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
               <p>{cockpit.message}</p>
               <Button asChild className="gap-2" variant="secondary">
                 <Link href="/">
-                  <LocalizedText en="Back to Home" sv="Tillbaka till Home" />
+                  <LocalizedText en="Back to Home" sv="Tillbaka till Hem" />
                 </Link>
               </Button>
             </CardContent>
@@ -156,7 +156,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                   {operationalItems.length > 1 ? (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        <LocalizedText en="Available project framings" sv="Tillgängliga project framings" />
+                        <LocalizedText en="Available project framings" sv="Tillgängliga framings i projektet" />
                       </p>
                       <div className="-mx-1 overflow-x-auto pb-1">
                         <div className="flex min-w-max gap-2 px-1">
@@ -184,7 +184,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                       </div>
                       <Button asChild className="gap-2" variant="secondary">
                         <Link href={demoItem.detailHref}>
-                          <LocalizedText en="Open Demo Framing" sv="Öppna Demo Framing" />
+                          <LocalizedText en="Open Demo Framing" sv="Öppna demo-framing" />
                         </Link>
                       </Button>
                     </div>
