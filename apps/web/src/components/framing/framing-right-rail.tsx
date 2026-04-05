@@ -14,7 +14,7 @@ type FramingRightRailProps = {
 
 export function FramingRightRail({ summary }: FramingRightRailProps) {
   const { language } = useAppChromeLanguage();
-  const framingHelp = getHelpPattern("framing.handshake");
+  const framingHelp = getHelpPattern("framing.handshake", null, language);
   const content =
     language === "sv"
       ? {

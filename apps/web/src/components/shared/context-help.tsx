@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ChevronDown, CircleHelp } from "lucide-react";
 import { Card, CardContent } from "@aas-companion/ui";
+import { LocalizedText } from "@/components/shared/localized-text";
 import type { HelpPattern } from "@/lib/help/aas-help";
 
 type ContextHelpProps = {
@@ -28,32 +29,42 @@ export function ContextHelp({ pattern, className, summaryLabel = "Open help", de
         </div>
         <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
       </summary>
-      <Card className="border-0 bg-transparent shadow-none">
+        <Card className="border-0 bg-transparent shadow-none">
         <CardContent className="space-y-4 px-4 pb-4 pt-0 text-sm text-muted-foreground">
           <p className="leading-6">{pattern.summary}</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground">What this is for</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground">
+                <LocalizedText en="What this is for" sv="Vad detta ar till for" />
+              </p>
               <p className="mt-2 leading-6">{pattern.purpose}</p>
             </div>
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-emerald-950">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]">What belongs here</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]">
+                <LocalizedText en="What belongs here" sv="Det som hor hemma har" />
+              </p>
               <p className="mt-2 leading-6">{pattern.belongs}</p>
             </div>
             <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-amber-950">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]">What to avoid</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]">
+                <LocalizedText en="What to avoid" sv="Det du ska undvika" />
+              </p>
               <p className="mt-2 leading-6">{pattern.avoid}</p>
             </div>
           </div>
           {pattern.aiLevelNote ? (
             <div className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4 text-sky-950">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em]">AI-level note</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em]">
+                <LocalizedText en="AI-level note" sv="Notering om AI-niva" />
+              </p>
               <p className="mt-2 leading-6">{pattern.aiLevelNote}</p>
             </div>
           ) : null}
           {pattern.nextStep ? (
             <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground">Next step</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground">
+                <LocalizedText en="Next step" sv="Nasta steg" />
+              </p>
               <p className="mt-2 leading-6">{pattern.nextStep}</p>
             </div>
           ) : null}

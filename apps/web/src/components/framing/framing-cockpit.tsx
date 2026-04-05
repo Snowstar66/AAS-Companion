@@ -172,8 +172,8 @@ export function FramingCockpit({
 
   const emptyFilterState = items.length > 0 && filteredItems.length === 0;
   const showNativeEmptyState = activeFilter === "native" && nativeItemCount === 0 && emptyFilterState;
-  const handshakeHelp = getHelpPattern("framing.handshake");
-  const directionHelp = getHelpPattern("framing.design_direction");
+  const handshakeHelp = getHelpPattern("framing.handshake", null, language);
+  const directionHelp = getHelpPattern("framing.design_direction", null, language);
   const content =
     language === "sv"
       ? {

@@ -805,16 +805,17 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="timeframeDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe", language)} />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Value owner</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Vardeagare" : "Value owner"}</span>
                   <Suspense
                     fallback={
                       <ValueOwnerFieldFallback
                         currentOwnerLabel={outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null}
                         currentOwnerId={outcome.valueOwnerId ?? null}
                         disabled={isArchived}
+                        language={language}
                       />
                     }
                   >
@@ -822,13 +823,14 @@ export function FramingOutcomeSection({
                       currentOwnerId={outcome.valueOwnerId ?? null}
                       currentOwnerLabel={outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null}
                       disabled={isArchived}
+                      language={language}
                       organizationId={outcome.organizationId}
                     />
                   </Suspense>
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="valueOwnerDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Problemformulering" : "Problem statement"}</span>
@@ -841,7 +843,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="problemDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.problem")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.problem", language)} />
                 </label>
                 <div className="xl:col-span-2">
                   <OutcomeAiValidatedTextarea
@@ -852,7 +854,7 @@ export function FramingOutcomeSection({
                         <p className="text-sm leading-6 text-muted-foreground">
                           <DeliveryTypeGuidanceText slot="outcomeDescription" />
                         </p>
-                        <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome")} />
+                        <InlineFieldGuidance guidance={getInlineGuidance("framing.outcome", language)} />
                       </>
                     }
                     initialError={search.aiField === "outcome_statement" ? search.aiError ?? null : null}
@@ -890,7 +892,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="solutionContextFieldDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Constraints" : "Constraints"}</span>
@@ -908,7 +910,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="constraintsDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">
@@ -949,7 +951,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="nfrDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.non_functional_requirements")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.non_functional_requirements", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">
@@ -986,7 +988,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="dataSensitivityDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.data_sensitivity")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.data_sensitivity", language)} />
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -1004,7 +1006,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeHelperText />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type", language)} />
                 </div>
               </CardContent>
             </Card>
@@ -1025,7 +1027,7 @@ export function FramingOutcomeSection({
                       <p className="text-sm leading-6 text-muted-foreground">
                         <DeliveryTypeGuidanceText slot="baselineCardDescription" />
                       </p>
-                      <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition")} />
+                      <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition", language)} />
                     </>
                   }
                   initialError={search.aiField === "baseline_definition" ? search.aiError ?? null : null}
@@ -1047,7 +1049,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="baselineSourceDescription" />
                   </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source")} />
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source", language)} />
                 </label>
               </CardContent>
             </Card>
@@ -1755,6 +1757,7 @@ async function DeferredValueOwnerField(props: {
   currentOwnerId: string | null;
   currentOwnerLabel: string | null;
   disabled: boolean;
+  language: "en" | "sv";
 }) {
   const ownersResult = await getCachedOrganizationUsersData(props.organizationId);
 
@@ -1764,6 +1767,7 @@ async function DeferredValueOwnerField(props: {
         currentOwnerId={props.currentOwnerId}
         currentOwnerLabel={props.currentOwnerLabel}
         disabled={props.disabled}
+        language={props.language}
       />
     );
   }
@@ -1775,7 +1779,7 @@ async function DeferredValueOwnerField(props: {
       disabled={props.disabled}
       name="valueOwnerId"
     >
-      <option value="">Unassigned</option>
+      <option value="">{props.language === "sv" ? "Ej tilldelad" : "Unassigned"}</option>
       {ownersResult.data.map((owner) => (
         <option key={owner.userId} value={owner.userId}>
           {formatPersonLabel(owner)}
@@ -1789,6 +1793,7 @@ function ValueOwnerFieldFallback(props: {
   currentOwnerId: string | null;
   currentOwnerLabel: string | null;
   disabled: boolean;
+  language: "en" | "sv";
 }) {
   return (
     <select

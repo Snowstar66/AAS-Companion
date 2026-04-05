@@ -35,6 +35,12 @@ const aiLevelNotes: Record<AiLevelKey, string> = {
   level_3: "Level 3 fits orchestrated agentic delivery where multi-step flows are chained and must stay fully traceable."
 };
 
+const aiLevelNotesSv: Record<AiLevelKey, string> = {
+  level_1: "Level 1 passar assisterad leverans dar AI stottar en manniska interaktivt och manniskor fattar alla beslut.",
+  level_2: "Level 2 passar strukturerad acceleration dar AI producerar ett artefaktsteg i taget med mansklig review mellan stegen.",
+  level_3: "Level 3 passar orkestrerad agentisk leverans dar flertrinsfloden kedjas ihop och maste vara helt spårbara."
+};
+
 const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
   "framing.handshake": {
     title: "Customer handshake",
@@ -166,8 +172,112 @@ const helpPatterns: Record<WorkspaceHelpKey, HelpPattern> = {
   }
 };
 
-export function getHelpPattern(key: WorkspaceHelpKey, aiLevel?: string | null) {
-  const pattern = helpPatterns[key];
+const helpPatternsSv: Partial<Record<WorkspaceHelpKey, HelpPattern>> = {
+  "framing.handshake": {
+    title: "Kundhandshake",
+    summary: "Anvand Framing for att enas om affarsproblem, mal-effekt, baseline, agare, designriktning och avsedd AI-niva innan djupare design startar.",
+    purpose: "Skapa en gemensam handshake mellan kund och leverans for aktuellt projekt och aktuellt business case.",
+    belongs: "Problemformulering, onskat outcome, baseline, agare, grov funktionell riktning och avsedd AI-accelerationsniva.",
+    avoid: "Detaljerade user stories, detaljerade tester, implementationsnedbrytning eller approval-mekanik.",
+    nextStep: "Nar handshaken ar stabil, fortsatt till Design / Value Spine for att bryta ned caset vidare.",
+    aiLevelNotes: aiLevelNotesSv
+  },
+  "framing.problem": {
+    title: "Problemformulering",
+    summary: "Namnge det verkliga nulagesproblemet innan du pratar om svaret.",
+    purpose: "Forankra caset i kundens nuvarande verklighet.",
+    belongs: "Nuvarande smarta, friktion, forsening, kostnad, risk, missat varde eller bevis for att dagens lage inte ar tillrackligt bra.",
+    avoid: "Onskat framtida lage, featurelistor, arkitektur eller formuleringar som redan forutsatter losningen."
+  },
+  "framing.outcome": {
+    title: "Onskat outcome",
+    summary: "Beskriv effekten som ska bli sann om caset lyckas.",
+    purpose: "Gor den avsedda affarseffekten explicit.",
+    belongs: "Maleffekt, forbattrat lage, matbar forandring, operativ forskjutning eller affarsresultat vart att betala for.",
+    avoid: "Features, komponentnamn, implementationstasks eller arkitekturval."
+  },
+  "framing.baseline_definition": {
+    title: "Baseline-definition",
+    summary: "Beskriv startlaget som senare forbattring ska jamforas mot.",
+    purpose: "Skapa referenspunkten for forbattring.",
+    belongs: "Nuvarande throughput, kvalitet, kostnad, lead time, felgrad, incidentlast, MTTR eller annat matt pa startlaget.",
+    avoid: "Mallaget, vag optimism eller en baseline utan operativ betydelse."
+  },
+  "framing.baseline_source": {
+    title: "Baseline-kalla",
+    summary: "Visa var baseline-beviset kommer fran sa att andra kan lita pa det.",
+    purpose: "Halla baselinen tillforlitlig och granskningsbar.",
+    belongs: "Namngiven dashboard, rapport, intressentkalla, servicedata, workshopanteckning eller observerat operativt underlag.",
+    avoid: "Obekraftade gissningar, dolda antaganden eller 'alla vet att det ar sa'."
+  },
+  "framing.solution_context": {
+    title: "Losningskontext",
+    summary: "Fa med den omgivande kontext som Design maste arva innan losningsdetaljer borjar.",
+    purpose: "Gor framingens forutsattningar tydliga utan att lasa designen for tidigt.",
+    belongs: "Affarskontext, anvandningskontext, befintligt landskap, overgripande integrationsforvantningar, operativa realiteter, utrullningsberoenden och compliance-kontext.",
+    avoid: "Arkitekturstruktur, teknikval, API-kontrakt, datamodeller eller implementationsdetalj."
+  },
+  "framing.solution_constraints": {
+    title: "Constraints",
+    summary: "Lista det icke-forhandlingsbara som Design maste respektera.",
+    purpose: "Behall viktiga granser samtidigt som designalternativen halls oppna.",
+    belongs: "Operativa constraints, affarsvillkor, compliance-granser, integrationer som maste behallas, sekvenseringsgranser, kontinuitetskrav och review-skyldigheter.",
+    avoid: "Preskriptiva byggsteg, ramverksval, implementationsmonster eller pseudoarkitektur."
+  },
+  "framing.non_functional_requirements": {
+    title: "Non-functional requirements",
+    summary: "Fanga kvalitetsattributen som maste vara sanna nar losningen designas och levereras.",
+    purpose: "Gor tvargaende kvalitetskrav tydliga innan Design och leveransdetaljer tar over.",
+    belongs: "Prestandamal, tillganglighetsforvantningar, sakerhetskrav, privacy-forvantningar, compliance-krav, tillganglighetskrav, resiliensbehov och observability-behov.",
+    avoid: "Feature-ideer, UI-onskemal, implementationsrecept eller krav som bara upprepar det onskade affarsoutcomet."
+  },
+  "framing.data_sensitivity": {
+    title: "Datakanslighet",
+    summary: "Beskriv vilken typ av data som ar inblandad och varfor det andrar risk- eller kontrollbehov.",
+    purpose: "Synliggor risk- och governancebehov tidigt i Framing.",
+    belongs: "Persondata, kommersiell data, reglerad data, intern data, supportdata och varfor det spelar roll.",
+    avoid: "Schemadesign, lagringsmekanik, falt-for-falt-implementation eller detaljerad sakerhetsarkitektur."
+  },
+  "framing.delivery_type": {
+    title: "Leveranstyp",
+    summary: "Valj den projektlogik som ska styra forvantningarna i Framing redan fran start.",
+    purpose: "Gor den forvantade leveransformen tydlig utan att glida in i losningsdesign.",
+    belongs: "Om detta framst ar Application Development, Application Transformation eller Application Management, och darfor vilken baseline och vilket bevis som betyder mest.",
+    avoid: "Sprintplanering, staffingdetaljer, exekveringskoreografi eller verktygsbeslut."
+  },
+  "framing.value_owner": {
+    title: "Value owner",
+    summary: "Valj den verkliga manniska som kan sta bakom varde, baseline och godkannande.",
+    purpose: "Placera affarsansvaret pa en verklig person.",
+    belongs: "Person pa kundsidan som kan validera varde, baseline, prioritet och om caset ar vart att gora nu.",
+    avoid: "Styrgrupper, teamnamn, alias eller platshallare utan ansvarig manniska."
+  },
+  "framing.timeframe": {
+    title: "Tidsram",
+    summary: "Fanga varfor tajmingen spelar roll pa affarsniva.",
+    purpose: "Satt ett realistiskt affarsfonster for forandringen.",
+    belongs: "Pilotfonster, sasong, kvartal, kontraktshorisont, lanseringsfonster, compliance-deadline eller beslutspunkt.",
+    avoid: "Sprint-for-sprint-sekvensering, backlogplanering eller datum pa taskniva."
+  },
+  "framing.ai_level": {
+    title: "AI-accelerationsniva",
+    summary: "Bestam exekveringsmonster forst, lat det mappas till AI-accelerationsniva och beskriv sedan forvantad AI-anvandning i senare faser.",
+    purpose: "Klassificera AI-anvandning enligt AAS-operativ modell innan Tollgate 1.",
+    belongs: "Exekveringsmonster, harledd AI-niva, forvantat BMAD-stod genom livscykeln, explicit risk och kvarhållen mansklig beslutsratt.",
+    avoid: "Verktygsnamnsbaserad klassificering, konkurrerande AI-taxonomier eller att behandla risk som det som direkt bestammer AI-nivan.",
+    aiLevelNotes: aiLevelNotesSv
+  },
+  "framing.design_direction": {
+    title: "Overgripande funktionell riktning",
+    summary: "Fanga den grova funktionella riktningen som Epic-fron innan detaljerad story-authoring borjar.",
+    purpose: "Bygg bro mellan handshaken och Design utan att tvinga fram full nedbrytning for tidigt.",
+    belongs: "Nagra Epic-fron, vardeytor eller scope-granser som beskriver vart losningen sannolikt gar.",
+    avoid: "Full story-nedbrytning, detaljerade acceptanskriterier eller implementationsplaner."
+  }
+};
+
+export function getHelpPattern(key: WorkspaceHelpKey, aiLevel?: string | null, language: "en" | "sv" = "en") {
+  const pattern = language === "sv" ? helpPatternsSv[key] ?? helpPatterns[key] : helpPatterns[key];
   const normalizedLevel = aiLevel === "level_1" || aiLevel === "level_2" || aiLevel === "level_3" ? aiLevel : null;
 
   return {
@@ -176,8 +286,13 @@ export function getHelpPattern(key: WorkspaceHelpKey, aiLevel?: string | null) {
   };
 }
 
-export function getInlineGuidance(key: Extract<WorkspaceHelpKey, `framing.${string}`>) {
-  const pattern = helpPatterns[key];
+export function getInlineGuidance(key: Extract<WorkspaceHelpKey, `framing.${string}`>, language: "en" | "sv" = "en") {
+  const pattern = language === "sv" ? helpPatternsSv[key] ?? helpPatterns[key] : helpPatterns[key];
+
+  if (language === "sv") {
+    return `Anvand faltet for: ${pattern.belongs} Undvik: ${pattern.avoid}`;
+  }
+
   return `Use this field for: ${pattern.belongs} Avoid: ${pattern.avoid}`;
 }
 
