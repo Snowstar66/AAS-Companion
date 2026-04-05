@@ -23,7 +23,6 @@ import {
   DeliveryTypeHelperText,
   DeliveryTypeSelect
 } from "@/components/framing/delivery-type-guidance-live";
-import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { OutcomeTollgateApprovalSection } from "@/components/review/outcome-tollgate-approval-section";
 import { FramingGuidanceShell } from "@/components/framing/framing-guidance-shell";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
@@ -127,6 +126,10 @@ function formatDateTime(value: Date | string | null | undefined) {
   }
 
   return new Date(value).toLocaleString("sv-SE");
+}
+
+function getServerLanguage(): "en" | "sv" {
+  return "en";
 }
 
 type DeliveryTypeValue = "AD" | "AT" | "AM";
@@ -420,7 +423,7 @@ export function FramingOutcomeSection({
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
-  const { language } = useAppChromeLanguage();
+  const language = getServerLanguage();
   const { outcome, tollgate, removal } = data;
   const computedBlockers = getOutcomeFramingBlockers({
     title: outcome.title,
