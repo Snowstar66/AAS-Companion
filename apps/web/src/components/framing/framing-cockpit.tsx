@@ -189,7 +189,7 @@ export function FramingCockpit({
           comesLaterBody:
             "Leveransplanering hör hemma senare. Använd cockpit för att välja rätt case och gå djupare i framing först när handshaken är stabil.",
           all: "Alla",
-          allReadiness: "All readiness",
+          allReadiness: "Alla readiness-lägen",
           blockedLabel: "Blockerade",
           readyLabel: "Redo",
           noCasesYet: "Inga case ännu",
@@ -212,7 +212,7 @@ export function FramingCockpit({
           createCaseDescription: "Skapa ett nytt native outcome när du medvetet behöver en separat handshake i samma projekt.",
           caseNamePlaceholder: "Nytt casenamn",
           demoOpenAction: "Öppna Demo",
-          availableProjectFramings: "Tillgängliga project framings",
+          availableProjectFramings: "Tillgängliga framings i projektet",
           demoSeparatelyTitle: "Demo finns separat",
           demoSeparatelyBody: "Öppna Demo bara när du uttryckligen vill jämföra mot referensinnehåll.",
           openDemoFraming: "Öppna Demo Framing",
@@ -243,12 +243,12 @@ export function FramingCockpit({
           linkedWorkLabel: "Länkat arbete",
           updatedLabel: "Uppdaterad",
           currentBlockersTitle: "Nuvarande blockeringar",
-          needsReviewTitle: "Behöver review",
+          needsReviewTitle: "Behöver granskning",
           needsReviewBody: "Inspektera outcome-detaljen för att fortsätta framing och rensa blockeringar.",
           readyDesignTitle: "Redo att gå vidare till design",
           readyDesignBody: "Det här outcome:t kan gå från kundhandshake till djupare design utan synliga baseline-blockerare.",
           openHandshakeHelp: "Öppna hjälp om framing-handshake",
-          blockedIssues: "blockerande issues",
+          blockedIssues: "blockerande punkter",
           tg1Ready: "redo för TG1"
         }
       : {

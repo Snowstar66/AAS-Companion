@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, CircleHelp } from "lucide-react";
+import type { AppLanguage } from "@/components/layout/app-language.data";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 
 type DeliveryTypeValue = "AD" | "AT" | "AM";
@@ -125,63 +126,60 @@ const deliveryTypeProfiles: Record<DeliveryTypeValue, DeliveryTypeProfile> = {
   }
 };
 
-const defaultGuidance: DeliveryTypeGuidance = {
-  businessCaseDescription:
-    "Frame the case at decision level: why it matters, what should improve, and what kind of change this is.",
-  timeframeDescription:
-    "Use this field to explain why the timing matters now. Keep it at business window level, not sprint planning.",
-  valueOwnerDescription:
-    "The value owner should be able to say yes, this outcome matters, this baseline is credible, and this case is worth approving.",
-  problemDescription:
-    "Describe the current pain, not the target state. If the problem disappeared tomorrow, what would be better?",
-  outcomeDescription:
-    "Write one effect worth achieving. A strong outcome tells you what should be measurably different after the work lands.",
-  solutionContextDescription:
-    "Pass forward only the context Design needs in order to make good choices later.",
-  solutionContextFieldDescription:
-    "Start from usage, landscape and dependencies. Do not start designing the solution here.",
-  constraintsDescription:
-    "Write only the non-negotiables. If Design ignored this, what would break, violate policy, or create delivery risk?",
-  uxDescription:
-    "Use UX guidance to preserve intent and continuity, not to lock screens or flows too early.",
-  nfrDescription:
-    "Capture quality demands that should shape design and risk posture across the whole case.",
-  additionalRequirementsDescription:
-    "Use this for important carry-forward material that matters, but should not pretend to be an Outcome, Epic or Story Idea.",
-  dataSensitivityDescription:
-    "Call out the data that changes governance expectations. If sensitivity goes up, control usually must go up too.",
-  baselineCardDescription: "These fields help ground the Framing before approval is recorded.",
-  baselineSourceDescription:
-    "Make the starting point defendable. The stronger the case, the easier later approvals and follow-up become.",
-  aiRiskDescription:
-    "Use this area to make the AI posture explicit instead of leaving it implicit in delivery later.",
-  structureDescription:
-    "Use Epics and Story Ideas to shape direction and scope, not to create a delivery backlog too early.",
-  quickEpicDescription:
-    "An Epic should name a meaningful scope boundary, not a to-do bucket.",
-  quickStoryIdeaDescription:
-    "A Story Idea should express intent and expected effect. Save delivery detail for later."
-};
+function tr(language: AppLanguage, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+function getDefaultGuidance(language: AppLanguage): DeliveryTypeGuidance {
+  return {
+    businessCaseDescription: tr(language, "Frame the case at decision level: why it matters, what should improve, and what kind of change this is.", "Rama in caset på beslutsnivå: varför det spelar roll, vad som ska bli bättre och vilken typ av förändring detta är."),
+    timeframeDescription: tr(language, "Use this field to explain why the timing matters now. Keep it at business window level, not sprint planning.", "Använd fältet för att förklara varför tidpunkten spelar roll nu. Håll det på affärsfönsternivå, inte sprintplanering."),
+    valueOwnerDescription: tr(language, "The value owner should be able to say yes, this outcome matters, this baseline is credible, and this case is worth approving.", "Value owner ska kunna säga ja, detta outcome spelar roll, denna baseline är trovärdig och caset är värt att godkänna."),
+    problemDescription: tr(language, "Describe the current pain, not the target state. If the problem disappeared tomorrow, what would be better?", "Beskriv nuvarande problem, inte målbilden. Om problemet försvann i morgon, vad skulle bli bättre?"),
+    outcomeDescription: tr(language, "Write one effect worth achieving. A strong outcome tells you what should be measurably different after the work lands.", "Skriv en effekt som är värd att uppnå. Ett starkt outcome visar vad som ska vara mätbart annorlunda efter att arbetet landat."),
+    solutionContextDescription: tr(language, "Pass forward only the context Design needs in order to make good choices later.", "För vidare bara den kontext som Design behöver för att kunna fatta bra beslut senare."),
+    solutionContextFieldDescription: tr(language, "Start from usage, landscape and dependencies. Do not start designing the solution here.", "Börja med användning, landskap och beroenden. Börja inte designa lösningen här."),
+    constraintsDescription: tr(language, "Write only the non-negotiables. If Design ignored this, what would break, violate policy, or create delivery risk?", "Skriv bara det som inte är förhandlingsbart. Om Design ignorerade detta, vad skulle gå sönder, bryta mot policy eller skapa leveransrisk?"),
+    uxDescription: tr(language, "Use UX guidance to preserve intent and continuity, not to lock screens or flows too early.", "Använd UX-guidance för att bevara intention och kontinuitet, inte för att låsa skärmar eller flöden för tidigt."),
+    nfrDescription: tr(language, "Capture quality demands that should shape design and risk posture across the whole case.", "Fånga kvalitetskrav som ska forma design och risknivå genom hela caset."),
+    additionalRequirementsDescription: tr(language, "Use this for important carry-forward material that matters, but should not pretend to be an Outcome, Epic or Story Idea.", "Använd detta för viktigt material att föra vidare som spelar roll, men som inte ska låta som ett Outcome, Epic eller Story Idea."),
+    dataSensitivityDescription: tr(language, "Call out the data that changes governance expectations. If sensitivity goes up, control usually must go up too.", "Markera den data som ändrar governance-förväntningar. Om känsligheten stiger bör kontrollnivån vanligtvis också göra det."),
+    baselineCardDescription: tr(language, "These fields help ground the Framing before approval is recorded.", "Dessa fält hjälper till att förankra Framing innan godkännande registreras."),
+    baselineSourceDescription: tr(language, "Make the starting point defendable. The stronger the case, the easier later approvals and follow-up become.", "Gör startpunkten försvarbar. Ju starkare case, desto enklare blir senare godkännanden och uppföljning."),
+    aiRiskDescription: tr(language, "Use this area to make the AI posture explicit instead of leaving it implicit in delivery later.", "Använd denna yta för att göra AI-hållningen explicit i stället för att lämna den implicit till leveransen senare."),
+    structureDescription: tr(language, "Use Epics and Story Ideas to shape direction and scope, not to create a delivery backlog too early.", "Använd Epics och Story Ideas för att forma riktning och scope, inte för att skapa en leveransbacklog för tidigt."),
+    quickEpicDescription: tr(language, "An Epic should name a meaningful scope boundary, not a to-do bucket.", "En Epic ska namnge en meningsfull scope-gräns, inte en att-göra-hink."),
+    quickStoryIdeaDescription: tr(language, "A Story Idea should express intent and expected effect. Save delivery detail for later.", "En Story Idea ska uttrycka intent och förväntad effekt. Spara leveransdetaljer till senare.")
+  };
+}
 
 function getDeliveryTypeProfile(value: DeliveryTypeValue | null | undefined) {
   return value ? deliveryTypeProfiles[value] : null;
 }
 
-function getDeliveryTypeHelper(value: DeliveryTypeValue | null | undefined) {
+function getDeliveryTypeHelper(value: DeliveryTypeValue | null | undefined, language: AppLanguage) {
   const profile = getDeliveryTypeProfile(value);
 
   if (!profile) {
-    return "Choose the delivery posture that best describes this case so Framing can guide the business case, baseline, risks, and hierarchy the right way from the start.";
+    return tr(
+      language,
+      "Choose the delivery posture that best describes this case so Framing can guide the business case, baseline, risks, and hierarchy the right way from the start.",
+      "Välj den leveranshållning som bäst beskriver caset så att Framing kan styra business case, baseline, risker och hierarki på rätt sätt redan från start."
+    );
   }
 
-  return `${profile.label}: ${profile.primaryQuestion} In this mode, Framing should emphasize ${profile.governanceNeeds.toLowerCase()}`;
+  return tr(
+    language,
+    `${profile.label}: ${profile.primaryQuestion} In this mode, Framing should emphasize ${profile.governanceNeeds.toLowerCase()}`,
+    `${profile.label}: ${profile.primaryQuestion} I detta läge bör Framing särskilt betona ${profile.governanceNeeds.toLowerCase()}.`
+  );
 }
 
-function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | undefined): DeliveryTypeGuidance {
+function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | undefined, language: AppLanguage): DeliveryTypeGuidance {
   const profile = getDeliveryTypeProfile(value);
 
   if (!profile) {
-    return defaultGuidance;
+    return getDefaultGuidance(language);
   }
 
   return {
@@ -259,15 +257,16 @@ export function DeliveryTypeGuidanceProvider(props: {
   children: ReactNode;
   initialValue: DeliveryTypeValue | null;
 }) {
+  const { language } = useAppChromeLanguage();
   const [value, setValue] = useState<DeliveryTypeValue | null>(props.initialValue);
   const contextValue = useMemo<DeliveryTypeGuidanceContextValue>(
     () => ({
       value,
-      guidance: getDeliveryTypeContextualGuidance(value),
-      helperText: getDeliveryTypeHelper(value),
+      guidance: getDeliveryTypeContextualGuidance(value, language),
+      helperText: getDeliveryTypeHelper(value, language),
       setValue
     }),
-    [value]
+    [language, value]
   );
 
   return <DeliveryTypeGuidanceContext.Provider value={contextValue}>{props.children}</DeliveryTypeGuidanceContext.Provider>;
@@ -305,7 +304,7 @@ export function DeliveryTypeSelect(props: {
         setValue(nextValue === "AD" || nextValue === "AT" || nextValue === "AM" ? nextValue : null);
       }}
     >
-      <option value="">{t("Select delivery type", "Välj leveranstyp")}</option>
+      <option value="">{t("Select delivery type", "Valj leveranstyp")}</option>
       <option value="AD">Application Development (AD)</option>
       <option value="AT">Application Transformation (AT)</option>
       <option value="AM">Application Management (AM)</option>
@@ -332,7 +331,7 @@ export function DeliveryTypeHelpCard() {
         <p className="text-sm leading-6 text-muted-foreground">
           {t(
             "The selected project type changes how Framing should approach baseline, outcomes, evidence, risk, and the shape of Epics.",
-            "Den valda projekttypen ändrar hur Framing bör hantera baseline, outcomes, bevis, risk och formen på Epics."
+            "Den valda projekttypen andrar hur Framing bor hantera baseline, outcomes, bevis, risk och formen pa Epics."
           )}
           {selectedProfile ? ` ${t("Current selection", "Nuvarande val")}: ${selectedProfile.label}.` : ""}
         </p>
