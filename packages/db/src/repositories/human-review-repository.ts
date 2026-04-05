@@ -1,7 +1,7 @@
 import { prisma } from "../client";
 
 export async function getHumanReviewSnapshot(organizationId: string) {
-  const [organization, outcomes, tollgates, signoffRecords, partyRoleEntries] = await prisma.$transaction([
+  const [organization, outcomes, tollgates, signoffRecords, partyRoleEntries] = await Promise.all([
     prisma.organization.findUnique({
       where: {
         id: organizationId

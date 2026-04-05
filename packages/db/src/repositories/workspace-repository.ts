@@ -51,7 +51,7 @@ export type HomeDashboardSnapshot = {
 
 export async function getProjectSpineSnapshot(organizationId: string) {
   return withDevTiming("db.getProjectSpineSnapshot", async () => {
-    const [organization, storyTollgates] = await prisma.$transaction([
+    const [organization, storyTollgates] = await Promise.all([
       prisma.organization.findUnique({
         where: {
           id: organizationId
@@ -475,7 +475,7 @@ export async function getWorkspaceSnapshot(organizationId: string) {
 }
 
 export async function getHomeDashboardSnapshot(organizationId: string): Promise<HomeDashboardSnapshot | null> {
-  const [organization, outcomeStatuses, directionSeeds, stories, visibleTollgates, storyTollgates] = await prisma.$transaction([
+  const [organization, outcomeStatuses, directionSeeds, stories, visibleTollgates, storyTollgates] = await Promise.all([
     prisma.organization.findUnique({
       where: {
         id: organizationId

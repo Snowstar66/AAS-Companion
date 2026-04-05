@@ -422,87 +422,83 @@ export async function deleteArtifactIntakeSession(input: {
 export async function reviewArtifactFileSectionDispositionsBulk(inputs: unknown[]) {
   const parsedInputs = inputs.map((input) => artifactFileSectionDispositionActionInputSchema.parse(input));
   const chunkSize = 8;
-  const results = [];
+  let processedCount = 0;
 
   for (let index = 0; index < parsedInputs.length; index += chunkSize) {
     const chunk = parsedInputs.slice(index, index + chunkSize);
-    const chunkResults = await prisma.$transaction(async (tx) => {
-      const filesById = new Map<
-        string,
-        Awaited<ReturnType<typeof tx.artifactIntakeFile.findFirst>>
-      >();
-
-      for (const parsed of chunk) {
-        if (!filesById.has(parsed.fileId)) {
-          const file = await tx.artifactIntakeFile.findFirst({
-            where: {
-              organizationId: parsed.organizationId,
-              id: parsed.fileId
-            }
-          });
-
-          if (!file) {
-            throw new Error("Artifact file was not found in organization scope.");
-          }
-
-          filesById.set(parsed.fileId, file);
+    await prisma.$transaction(async (tx) => {
+      const organizationId = chunk[0]!.organizationId;
+      const uniqueFileIds = [...new Set(chunk.map((parsed) => parsed.fileId))];
+      const files = await tx.artifactIntakeFile.findMany({
+        where: {
+          id: { in: uniqueFileIds },
+          organizationId
         }
+      });
+      const filesById = new Map(files.map((file) => [file.id, file] as const));
+
+      if (filesById.size !== uniqueFileIds.length) {
+        throw new Error("Artifact file was not found in organization scope.");
       }
 
-      const nestedResults = [];
+      const updatesByFileId = new Map<string, Prisma.InputJsonValue>();
 
-      for (const parsed of chunk) {
-        const existing = filesById.get(parsed.fileId);
+      for (const fileId of uniqueFileIds) {
+        const existing = filesById.get(fileId);
 
         if (!existing) {
           throw new Error("Artifact file was not found in organization scope.");
         }
 
-        const nextSectionDispositions = artifactIssueDispositionMapSchema.parse({
-          ...(artifactIssueDispositionMapSchema.parse(existing.sectionDispositions ?? {})),
-          [parsed.sectionId]: {
-            issueId: parsed.sectionId,
-            action: parsed.action,
-            note: parsed.note ?? null
-          }
-        });
+        let nextSectionDispositions = artifactIssueDispositionMapSchema.parse(existing.sectionDispositions ?? {});
 
-        const updated = await tx.artifactIntakeFile.update({
-          where: { id: existing.id },
-          data: {
-            sectionDispositions: nextSectionDispositions as Prisma.InputJsonValue
-          }
-        });
-
-        filesById.set(parsed.fileId, updated);
-        nestedResults.push(updated);
-      }
-
-      for (const parsed of chunk) {
-        await appendActivityEvent(
-          {
-            organizationId: parsed.organizationId,
-            entityType: "artifact_intake_file",
-            entityId: parsed.fileId,
-            eventType: "artifact_file_section_disposition_recorded",
-            actorId: parsed.actorId ?? null,
-            metadata: {
-              sectionId: parsed.sectionId,
+        for (const parsed of chunk.filter((entry) => entry.fileId === fileId)) {
+          nextSectionDispositions = artifactIssueDispositionMapSchema.parse({
+            ...nextSectionDispositions,
+            [parsed.sectionId]: {
+              issueId: parsed.sectionId,
               action: parsed.action,
               note: parsed.note ?? null
             }
-          },
-          tx
-        );
+          });
+        }
+
+        updatesByFileId.set(fileId, nextSectionDispositions as Prisma.InputJsonValue);
       }
 
-      return nestedResults;
-    });
+      await Promise.all(
+        uniqueFileIds.map((fileId) =>
+          tx.artifactIntakeFile.update({
+            where: { id: fileId },
+            data: {
+              sectionDispositions: updatesByFileId.get(fileId)!
+            }
+          })
+        )
+      );
 
-    results.push(...chunkResults);
+      await tx.activityEvent.createMany({
+        data: chunk.map((parsed) => ({
+          id: randomUUID(),
+          organizationId: parsed.organizationId,
+          entityType: "artifact_intake_file" as const,
+          entityId: parsed.fileId,
+          eventType: "artifact_file_section_disposition_recorded" as const,
+          actorId: parsed.actorId ?? null,
+          metadata: {
+            sectionId: parsed.sectionId,
+            action: parsed.action,
+            note: parsed.note ?? null
+          } as Prisma.InputJsonValue
+        }))
+      });
+      processedCount += chunk.length;
+    });
   }
 
-  return results;
+  return {
+    processedCount
+  };
 }
 
 async function processArtifactIntakeSession(
@@ -692,7 +688,8 @@ async function processArtifactIntakeSession(
     {
       organizationId: input.organizationId,
       intakeSessionId: session.id,
-      candidates: mappingResult.candidates
+      candidates: mappingResult.candidates,
+      importIntent: input.importIntent
     },
     db
   );

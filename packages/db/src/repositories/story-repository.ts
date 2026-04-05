@@ -49,7 +49,7 @@ export async function listStoriesByDirectionSeedId(organizationId: string, direc
 }
 
 export async function getStoryWorkspaceSnapshot(organizationId: string, id: string) {
-  const [story, tollgate, activities] = await prisma.$transaction([
+  const [story, tollgate, activities] = await Promise.all([
     prisma.story.findFirst({
       where: {
         organizationId,

@@ -161,7 +161,7 @@ export async function listOutcomeCockpitEntries(organizationId: string) {
       lifecycleState: "active"
     };
 
-    const [outcomes, tollgates] = await prisma.$transaction([
+    const [outcomes, tollgates] = await Promise.all([
       prisma.outcome.findMany({
         where: outcomeWhere,
         orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
@@ -257,7 +257,7 @@ export async function getOutcomeById(organizationId: string, id: string) {
 
 export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: string) {
   return withDevTiming("db.getOutcomeWorkspaceSnapshot", async () => {
-    const [outcome, tollgate, activityEventCount] = await prisma.$transaction([
+    const [outcome, tollgate, activityEventCount] = await Promise.all([
       prisma.outcome.findFirst({
         where: {
           organizationId,

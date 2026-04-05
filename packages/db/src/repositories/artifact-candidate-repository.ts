@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Prisma } from "../../generated/client";
 import {
   analyzeArtifactCandidateCompliance,
@@ -594,19 +595,11 @@ export async function createPersistedArtifactCandidates(input: {
   organizationId: string;
   intakeSessionId: string;
   candidates: ArtifactAasCandidate[];
+  importIntent?: "framing" | "design";
 }, db: DbClient = prisma) {
-  const persisted = [];
-  const intakeSession = await db.artifactIntakeSession.findFirst({
-    where: {
-      organizationId: input.organizationId,
-      id: input.intakeSessionId
-    },
-    select: {
-      importIntent: true
-    }
-  });
+  const importIntent = input.importIntent ?? "framing";
   const preferredOutcomeId =
-    intakeSession?.importIntent === "framing" ? await resolvePreferredProjectOutcomeId(db, input.organizationId) : null;
+    importIntent === "framing" ? await resolvePreferredProjectOutcomeId(db, input.organizationId) : null;
   const [existingOutcomeKeys, existingEpicKeys, existingStoryIdeaKeys, existingStoryKeys] = await Promise.all([
     db.outcome.findMany({
       where: { organizationId: input.organizationId },
@@ -631,6 +624,8 @@ export async function createPersistedArtifactCandidates(input: {
     SC: new Set(existingStoryIdeaKeys.map((record) => record.key)),
     STR: new Set(existingStoryKeys.map((record) => record.key))
   };
+  const candidateRows: Prisma.ArtifactAasCandidateUncheckedCreateInput[] = [];
+  const activityRows: Prisma.ActivityEventUncheckedCreateInput[] = [];
 
   function assignDraftKey(inputKey: {
     type: "outcome" | "epic" | "story";
@@ -638,7 +633,7 @@ export async function createPersistedArtifactCandidates(input: {
   }) {
     const prefix = getSimpleKeyPrefix({
       type: inputKey.type,
-      importIntent: intakeSession?.importIntent
+      importIntent
     });
     const reservedKeys = reservedKeysByPrefix[prefix];
     const normalizedRequestedKey = inputKey.requestedKey?.trim() ?? "";
@@ -660,7 +655,7 @@ export async function createPersistedArtifactCandidates(input: {
         ...createArtifactCandidateDraftRecord(sanitizedCandidate),
         ...(sanitizedCandidate.draftRecord ?? {}),
         ...(
-          intakeSession?.importIntent === "framing" &&
+          importIntent === "framing" &&
           preferredOutcomeId &&
           sanitizedCandidate.type !== "outcome" &&
           !sanitizedCandidate.inferredOutcomeCandidateId &&
@@ -690,64 +685,69 @@ export async function createPersistedArtifactCandidates(input: {
       humanDecisions,
       reviewStatus: "pending"
     });
+    const importedReadinessState = deriveImportedReadinessState({
+      reviewStatus: "pending",
+      complianceResult,
+      candidateType: candidate.type,
+      issueDispositions
+    });
 
-    const created = await db.artifactAasCandidate.create({
-      data: {
-        id: candidate.id,
-        organizationId: input.organizationId,
+    candidateRows.push({
+      id: candidate.id,
+      organizationId: input.organizationId,
+      intakeSessionId: input.intakeSessionId,
+      fileId: sanitizedCandidate.source.fileId,
+      type: sanitizedCandidate.type,
+      title: sanitizedCandidate.title,
+      summary: sanitizedCandidate.summary,
+      mappingState: sanitizedCandidate.mappingState,
+      sourceType: sanitizedCandidate.source.sourceType,
+      sourceConfidence: sanitizedCandidate.source.confidence,
+      sourceSectionId: sanitizedCandidate.source.sectionId,
+      sourceSectionTitle: sanitizedCandidate.source.sectionTitle,
+      sourceSectionMarker: sanitizedCandidate.source.sectionMarker,
+      inferredOutcomeCandidateId: sanitizedCandidate.inferredOutcomeCandidateId ?? null,
+      inferredEpicCandidateId: sanitizedCandidate.inferredEpicCandidateId ?? null,
+      relationshipState: sanitizedCandidate.relationshipState,
+      relationshipNote: sanitizedCandidate.relationshipNote ?? null,
+      acceptanceCriteria: sanitizedCandidate.acceptanceCriteria,
+      testNotes: sanitizedCandidate.testNotes,
+      draftRecord: draftRecord as Prisma.InputJsonValue,
+      humanDecisions: humanDecisions as Prisma.InputJsonValue,
+      complianceResult: complianceResult as Prisma.InputJsonValue,
+      issueDispositions: issueDispositions as Prisma.InputJsonValue,
+      reviewStatus: "pending",
+      reviewComment: null,
+      followUpNeeded: false,
+      importedReadinessState
+    });
+    activityRows.push({
+      id: randomUUID(),
+      organizationId: input.organizationId,
+      entityType: "artifact_aas_candidate",
+      entityId: candidate.id,
+      eventType: "artifact_candidate_compliance_analyzed",
+      actorId: null,
+      metadata: {
         intakeSessionId: input.intakeSessionId,
         fileId: sanitizedCandidate.source.fileId,
         type: sanitizedCandidate.type,
-        title: sanitizedCandidate.title,
-        summary: sanitizedCandidate.summary,
-        mappingState: sanitizedCandidate.mappingState,
-        sourceType: sanitizedCandidate.source.sourceType,
-        sourceConfidence: sanitizedCandidate.source.confidence,
-        sourceSectionId: sanitizedCandidate.source.sectionId,
-        sourceSectionTitle: sanitizedCandidate.source.sectionTitle,
-        sourceSectionMarker: sanitizedCandidate.source.sectionMarker,
-        inferredOutcomeCandidateId: sanitizedCandidate.inferredOutcomeCandidateId ?? null,
-        inferredEpicCandidateId: sanitizedCandidate.inferredEpicCandidateId ?? null,
-        relationshipState: sanitizedCandidate.relationshipState,
-        relationshipNote: sanitizedCandidate.relationshipNote ?? null,
-        acceptanceCriteria: sanitizedCandidate.acceptanceCriteria,
-        testNotes: sanitizedCandidate.testNotes,
-        draftRecord: draftRecord as Prisma.InputJsonValue,
-        humanDecisions: humanDecisions as Prisma.InputJsonValue,
-        complianceResult: complianceResult as Prisma.InputJsonValue,
-        issueDispositions: issueDispositions as Prisma.InputJsonValue,
-        reviewStatus: "pending",
-        reviewComment: null,
-        followUpNeeded: false,
-        importedReadinessState: deriveImportedReadinessState({
-          reviewStatus: "pending",
-          complianceResult,
-          candidateType: candidate.type,
-          issueDispositions
-        })
-      }
+        summary: complianceResult.summary
+      } as Prisma.InputJsonValue
     });
-
-    await appendActivityEvent(
-      {
-        organizationId: input.organizationId,
-        entityType: "artifact_aas_candidate",
-        entityId: created.id,
-        eventType: "artifact_candidate_compliance_analyzed",
-        metadata: {
-          intakeSessionId: input.intakeSessionId,
-          fileId: sanitizedCandidate.source.fileId,
-          type: sanitizedCandidate.type,
-          summary: complianceResult.summary
-        }
-      },
-      db
-    );
-
-    persisted.push(created);
   }
 
-  return persisted;
+  if (candidateRows.length === 0) {
+    return [];
+  }
+
+  await db.artifactAasCandidate.createMany({
+    data: candidateRows
+  });
+
+  await db.activityEvent.createMany({
+    data: activityRows
+  });
 }
 
 export async function listArtifactCandidatesForOrganization(organizationId: string) {
@@ -817,36 +817,62 @@ export async function getArtifactCandidateById(organizationId: string, candidate
   });
 }
 
+async function loadReviewCandidate(
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  candidateId: string
+) {
+  return tx.artifactAasCandidate.findFirst({
+    where: {
+      organizationId,
+      id: candidateId
+    }
+  });
+}
+
+async function loadReviewFile(
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  fileId: string
+) {
+  return tx.artifactIntakeFile.findFirst({
+    where: {
+      organizationId,
+      id: fileId
+    },
+    select: {
+      id: true,
+      sectionDispositions: true,
+      intakeSession: {
+        select: {
+          mappedArtifacts: true
+        }
+      }
+    }
+  });
+}
+
+type ReviewCandidateRecord = NonNullable<Awaited<ReturnType<typeof loadReviewCandidate>>>;
+type ReviewFileRecord = NonNullable<Awaited<ReturnType<typeof loadReviewFile>>>;
+
 async function reviewArtifactCandidateWithinTransaction(
   parsed: ParsedArtifactCandidateReviewActionInput,
-  tx: Prisma.TransactionClient
+  tx: Prisma.TransactionClient,
+  preloaded?: {
+    existing?: ReviewCandidateRecord | null;
+    file?: ReviewFileRecord | null;
+  }
 ) {
-    const existing = await tx.artifactAasCandidate.findFirst({
-      where: {
-        organizationId: parsed.organizationId,
-        id: parsed.candidateId
-      }
-    });
+    const existing = preloaded?.existing ?? await loadReviewCandidate(tx, parsed.organizationId, parsed.candidateId);
 
     if (!existing) {
       throw new Error("Artifact candidate was not found in organization scope.");
     }
 
-    const file = await tx.artifactIntakeFile.findFirst({
-      where: {
-        organizationId: parsed.organizationId,
-        id: existing.fileId
-      },
-      select: {
-        id: true,
-        sectionDispositions: true,
-        intakeSession: {
-          select: {
-            mappedArtifacts: true
-          }
-        }
-      }
-    });
+    const file =
+      preloaded?.file !== undefined
+        ? preloaded.file
+        : await loadReviewFile(tx, parsed.organizationId, existing.fileId);
 
     const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse({
       ...artifactCandidateDraftRecordSchema.parse(existing.draftRecord),
@@ -1017,23 +1043,65 @@ export async function reviewArtifactCandidate(input: unknown) {
 
 export async function reviewArtifactCandidatesBulk(inputs: unknown[]) {
   const parsedInputs = inputs.map((input) => artifactCandidateReviewActionInputSchema.parse(input));
-  const results = [];
+  let processedCount = 0;
 
   for (const chunk of chunkArray(parsedInputs, BULK_REVIEW_CHUNK_SIZE)) {
-    const chunkResults = await prisma.$transaction(async (tx) => {
-      const nestedResults = [];
+    await prisma.$transaction(async (tx) => {
+      const organizationId = chunk[0]!.organizationId;
+      const candidateIds = [...new Set(chunk.map((parsed) => parsed.candidateId))];
+      const existingCandidates = await tx.artifactAasCandidate.findMany({
+        where: {
+          organizationId,
+          id: {
+            in: candidateIds
+          }
+        }
+      });
+      const existingCandidatesById = new Map(existingCandidates.map((candidate) => [candidate.id, candidate] as const));
 
-      for (const parsed of chunk) {
-        nestedResults.push(await reviewArtifactCandidateWithinTransaction(parsed, tx));
+      if (existingCandidatesById.size !== candidateIds.length) {
+        throw new Error("Artifact candidate was not found in organization scope.");
       }
 
-      return nestedResults;
-    });
+      const fileIds = [...new Set(existingCandidates.map((candidate) => candidate.fileId))];
+      const files = await tx.artifactIntakeFile.findMany({
+        where: {
+          organizationId,
+          id: {
+            in: fileIds
+          }
+        },
+        select: {
+          id: true,
+          sectionDispositions: true,
+          intakeSession: {
+            select: {
+              mappedArtifacts: true
+            }
+          }
+        }
+      });
+      const filesById = new Map<string, ReviewFileRecord>(files.map((file) => [file.id, file]));
 
-    results.push(...chunkResults);
+      for (const parsed of chunk) {
+        const existing = existingCandidatesById.get(parsed.candidateId);
+
+        if (!existing) {
+          throw new Error("Artifact candidate was not found in organization scope.");
+        }
+
+        await reviewArtifactCandidateWithinTransaction(parsed, tx, {
+          existing,
+          file: filesById.get(existing.fileId) ?? null
+        });
+        processedCount += 1;
+      }
+    });
   }
 
-  return results;
+  return {
+    processedCount
+  };
 }
 
 export async function promoteArtifactCandidate(input: {

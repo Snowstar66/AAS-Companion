@@ -127,7 +127,7 @@ export async function getEpicById(organizationId: string, id: string) {
 }
 
 export async function getEpicWorkspaceSnapshot(organizationId: string, id: string) {
-  const [epic, activities] = await prisma.$transaction([
+  const [epic, activities] = await Promise.all([
     prisma.epic.findFirst({
       where: {
         organizationId,
