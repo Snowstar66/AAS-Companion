@@ -124,52 +124,52 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
   const copy =
     language === "sv"
       ? {
-          projectAccessTitle: "Projektåtkomst",
-          projectAccessDescription: "Öppna, skapa, byt, lämna eller ta bort projekt från en kompakt kontrollpanel.",
-          availableProjects: "Tillgängliga projekt",
+          projectAccessTitle: "Projektatkomst",
+          projectAccessDescription: "Oppna, skapa, byt, lamna eller ta bort projekt fran en kompakt kontrollpanel.",
+          availableProjects: "Tillgangliga projekt",
           projects: "Projekt",
           active: "Aktiv",
           none: "Ingen",
-          mode: "Läge",
+          mode: "Lage",
           demo: "Demo",
           normal: "Normal",
-          signInManageProjects: "Logga in med ditt konto för att hantera vanliga projekt, eller lämna Demo för att återgå till en ren Home.",
+          signInManageProjects: "Logga in med ditt konto for att hantera vanliga projekt, eller lamna Demo for att aterga till en ren Home.",
           signInFirst:
-            "Logga in först för att välja ett vanligt projekt eller skapa ett nytt. Inloggningssidan låter dig välja direktinloggning, e-postlogin eller Demo när det finns.",
-          noNormalProjectsTitle: "Det finns inga vanliga projekt ännu.",
-          noNormalProjectsBody: "Skapa det första projektet här, eller öppna Demo uttryckligen om du behöver referensmaterial.",
+            "Logga in forst for att valja ett vanligt projekt eller skapa ett nytt. Inloggningssidan later dig valja direktinloggning, e-postlogin eller Demo nar det finns.",
+          noNormalProjectsTitle: "Det finns inga vanliga projekt annu.",
+          noNormalProjectsBody: "Skapa det forsta projektet har, eller oppna Demo uttryckligen om du behover referensmaterial.",
           currentProjectPill: "Nuvarande projekt",
-          activeProjectCardDescription: "Det här projektet är redan aktivt. Gå direkt tillbaka till dess nuvarande Framing och operativa arbete.",
-          inactiveProjectCardDescription: "Öppna projektet för att avgränsa dashboard, Framing, Value Spine, Import och Review till just den här arbetsgrenen.",
+          activeProjectCardDescription: "Det har projektet ar redan aktivt. Ga direkt tillbaka till dess nuvarande Framing och operativa arbete.",
+          inactiveProjectCardDescription: "Oppna projektet for att avgransa dashboard, Framing, Value Spine, Import och Review till just den har arbetsgrenen.",
           outcomes: "Outcomes",
           epics: "Epics",
           stories: "Stories",
-          events: "Händelser",
-          continueInProject: "Fortsätt i projekt",
-          openProject: "Öppna projekt",
-          openingProject: "Öppnar projekt...",
-          quickActions: "Snabbåtgärder",
+          events: "Handelser",
+          continueInProject: "Fortsatt i projekt",
+          openProject: "Oppna projekt",
+          openingProject: "Oppnar projekt...",
+          quickActions: "Snabbatgarder",
           createProjectTitle: "Skapa projekt",
           newProjectName: "Nytt projektnamn",
-          createAndOpenProject: "Skapa och öppna projekt",
+          createAndOpenProject: "Skapa och oppna projekt",
           creatingProject: "Skapar projekt...",
-          openSignInOptions: "Öppna inloggningsval",
-          demoAccess: "Demoåtkomst",
-          demoAccessDescription: "Demo är separerat från vanliga projekt och öppnas bara när det väljs uttryckligen.",
-          reopenDemoProject: "Öppna demo-projekt igen",
-          openDemoProject: "Öppna demo-projekt",
-          openingDemo: "Öppnar demo...",
-          chooseDemoAccess: "Välj demoåtkomst",
-          currentProjectControls: "Kontroller för nuvarande projekt",
-          leaveDemoDescription: "Lämna Demo för att återgå till en ren Home utan ett aktivt projekt.",
-          leaveProjectDescription: "Lämna eller ta bort det aktuella projektet när du medvetet vill nollställa aktiv kontext.",
-          leaveDemoProject: "Lämna demo-projekt",
-          leaveCurrentProject: "Lämna nuvarande projekt",
-          leavingDemo: "Lämnar demo...",
-          leavingProject: "Lämnar projekt...",
+          openSignInOptions: "Oppna inloggningsval",
+          demoAccess: "Demoatkomst",
+          demoAccessDescription: "Demo ar separerat fran vanliga projekt och oppnas bara nar det valjs uttryckligen.",
+          reopenDemoProject: "Oppna demo-projekt igen",
+          openDemoProject: "Oppna demo-projekt",
+          openingDemo: "Oppnar demo...",
+          chooseDemoAccess: "Valj demoatkomst",
+          currentProjectControls: "Kontroller for nuvarande projekt",
+          leaveDemoDescription: "Lamna Demo for att aterga till en ren Home utan ett aktivt projekt.",
+          leaveProjectDescription: "Lamna eller ta bort det aktuella projektet nar du medvetet vill nollstalla aktiv kontext.",
+          leaveDemoProject: "Lamna demo-projekt",
+          leaveCurrentProject: "Lamna nuvarande projekt",
+          leavingDemo: "Lamnar demo...",
+          leavingProject: "Lamnar projekt...",
           deleteProject: "Ta bort projekt",
           deletingProject: "Tar bort projekt...",
-          noActiveProjectControls: "Inga kontroller för aktivt projekt behövs förrän ett projekt är öppet."
+          noActiveProjectControls: "Inga kontroller for aktivt projekt behovs forran ett projekt ar oppet."
         }
       : {
           projectAccessTitle: "Project access",
@@ -310,7 +310,7 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
                   {props.hasAuthenticatedUser ? (
                     <form action={props.openDemoProjectAction} className="mt-4">
                       <PendingFormButton
-                        className="gap-2 w-full"
+                        className="w-full gap-2"
                         icon={<ArrowRight className="h-4 w-4" />}
                         label={props.isDemoSession ? copy.reopenDemoProject : copy.openDemoProject}
                         pendingLabel={copy.openingDemo}
@@ -319,7 +319,7 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
                       />
                     </form>
                   ) : (
-                    <Button asChild className="mt-4 gap-2 w-full" variant="secondary">
+                    <Button asChild className="mt-4 w-full gap-2" variant="secondary">
                       <Link href="/login">
                         {copy.chooseDemoAccess}
                         <ArrowRight className="h-4 w-4" />

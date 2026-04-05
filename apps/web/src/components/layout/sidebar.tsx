@@ -129,33 +129,6 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
         </nav>
 
         <div className="mt-auto space-y-3 border-t border-white/10 pt-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
-            <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{content.languageLabel}</div>
-            <div className="flex gap-1">
-              <button
-                aria-label="Switch app language to English"
-                aria-pressed={language === "en"}
-                className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
-                  language === "en" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
-                }`}
-                onClick={() => setLanguage("en")}
-                type="button"
-              >
-                EN
-              </button>
-              <button
-                aria-label="Switch app language to Swedish"
-                aria-pressed={language === "sv"}
-                className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
-                  language === "sv" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
-                }`}
-                onClick={() => setLanguage("sv")}
-                type="button"
-              >
-                SV
-              </button>
-            </div>
-          </div>
           {adminItem && localizedAdmin ? (
             <Link
               className={`flex items-start gap-3 rounded-2xl px-3 py-3 transition ${
@@ -182,14 +155,42 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
               </div>
             </Link>
           ) : null}
-          <button
-            className="inline-flex items-center gap-2 rounded-xl px-2 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/8 hover:text-white"
-            onClick={() => setGuidanceVisible((current) => !current)}
-            type="button"
-          >
-            {guidanceVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            {guidanceVisible ? content.hideGuidance : content.showGuidance}
-          </button>
+          <div className="flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
+            <div className="flex items-center gap-1">
+              <button
+                aria-label="Switch app language to English"
+                aria-pressed={language === "en"}
+                className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-medium transition ${
+                  language === "en" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
+                }`}
+                onClick={() => setLanguage("en")}
+                type="button"
+              >
+                <span aria-hidden="true">🇬🇧</span>
+                EN
+              </button>
+              <button
+                aria-label="Switch app language to Swedish"
+                aria-pressed={language === "sv"}
+                className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-medium transition ${
+                  language === "sv" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
+                }`}
+                onClick={() => setLanguage("sv")}
+                type="button"
+              >
+                <span aria-hidden="true">🇸🇪</span>
+                SE
+              </button>
+            </div>
+            <button
+              className="inline-flex items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-medium text-slate-300 transition hover:bg-white/8 hover:text-white"
+              onClick={() => setGuidanceVisible((current) => !current)}
+              type="button"
+            >
+              {guidanceVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {guidanceVisible ? content.hideGuidance : content.showGuidance}
+            </button>
+          </div>
         </div>
       </div>
       <style jsx global>{`
