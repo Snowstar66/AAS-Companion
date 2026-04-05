@@ -227,6 +227,16 @@ vi.mock("@/components/intake/artifact-intake-review-workspace", () => ({
   )
 }));
 
+vi.mock("@/components/review/outcome-tollgate-approval-section", () => ({
+  OutcomeTollgateApprovalSection: ({ outcomeId }: { outcomeId: string }) => (
+    <div>
+      <h2>Human review approval workspace</h2>
+      <p>{outcomeId}</p>
+    </div>
+  ),
+  OutcomeTollgateSectionFallback: () => <div>Loading tollgate follow-up</div>
+}));
+
 vi.mock("@/lib/review/operational-review", () => ({
   loadOperationalReviewDashboard: vi.fn(async () => ({
     state: "ready",
@@ -250,8 +260,8 @@ vi.mock("@/lib/review/operational-review", () => ({
         title: "Outcome tollgate approval",
         status: "blocked",
         tone: "blocked",
-        actionLabel: "Open Framing approval",
-        href: "/outcomes/outcome-1#tollgate-review",
+        actionLabel: "Open approval workspace",
+        href: "/review?reviewOutcomeId=outcome-1#approval-workspace",
         description: "Value owner is not assigned on the customer side.",
         context: "Outcome framing tollgate",
         blocker: "Value owner is not assigned on the customer side.",
@@ -266,6 +276,10 @@ vi.mock("@/app/(protected)/review/actions", () => ({
   deleteArtifactIntakeSessionAction: vi.fn(),
   submitArtifactCandidateReviewAction: vi.fn(),
   submitArtifactBulkReviewAction: vi.fn()
+}));
+
+vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
+  recordOutcomeTollgateDecisionAction: vi.fn()
 }));
 
 describe("Review queue page", () => {
@@ -286,6 +300,7 @@ describe("Review queue page", () => {
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Import objects to review")).toBeDefined();
     expect(screen.getByText("Outcome tollgate approval")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Human review approval workspace" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Delete import session" })).toBeDefined();
     expect(screen.getAllByRole("link", { name: /Open/i }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();

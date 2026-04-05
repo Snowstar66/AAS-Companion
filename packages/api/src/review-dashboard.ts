@@ -226,8 +226,8 @@ export async function getHumanReviewDashboardService(organizationId: string) {
           title: outcome.title,
           status: summary.status,
           tone: getTone(summary.status),
-          actionLabel: "Open Framing approval",
-          href: `/framing?outcomeId=${outcome.id}#tollgate-review`,
+          actionLabel: "Open approval workspace",
+          href: `/review?reviewOutcomeId=${outcome.id}#approval-workspace`,
           description:
             summary.status === "blocked"
               ? blocker ?? "A recorded approval requested changes before Tollgate 1 can be completed."

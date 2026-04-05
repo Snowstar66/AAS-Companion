@@ -1,9 +1,13 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, FileSearch, GitBranch, ShieldCheck } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
 import { AppShell } from "@/components/layout/app-shell";
+import {
+  OutcomeTollgateApprovalSection,
+  OutcomeTollgateSectionFallback
+} from "@/components/review/outcome-tollgate-approval-section";
 import { ReviewSessionValueSpine } from "@/components/review/review-session-value-spine";
 import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
@@ -21,6 +25,7 @@ import {
   submitArtifactBulkReviewAction,
   submitArtifactCandidateReviewAction
 } from "./actions";
+import { recordOutcomeTollgateDecisionAction } from "../outcomes/[outcomeId]/actions";
 
 type ReviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -980,6 +985,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const reviewStatusFilter = getParamValue(query.reviewStatusFilter) ?? "all";
   const findingFilter = getParamValue(query.findingFilter) ?? "all";
   const importIntentFilter = getParamValue(query.importIntent) ?? "all";
+  const requestedReviewOutcomeId = getParamValue(query.reviewOutcomeId) ?? null;
   const reviewHelp = getHelpPattern("review.workspace", null);
 
   const completedCount = queue.summary.promoted + queue.summary.rejected;
@@ -1191,6 +1197,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const firstBlockedOperational = operationalReview.items.find((item) => item.status === "blocked") ?? null;
   const firstInProgressOperational = operationalReview.items.find((item) => item.status === "ready") ?? null;
   const firstReadyToStart = operationalReview.items.find((item) => item.workflow === "delivery_start") ?? null;
+  const firstOperationalOutcomeReviewItem =
+    operationalReview.items.find((item) => item.workflow === "outcome_tollgate") ?? null;
+  const selectedOperationalReviewItem =
+    operationalReview.items.find(
+      (item) =>
+        item.workflow === "outcome_tollgate" &&
+        item.entityId === (requestedReviewOutcomeId ?? (!candidateId ? firstOperationalOutcomeReviewItem?.entityId ?? null : null))
+    ) ?? null;
   const firstImportedCandidate =
     sortedQueueItems.find((candidate) => {
       const state = getBacklogState(candidate);
@@ -1413,6 +1427,46 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             )}
           </CardContent>
         </Card>
+
+        {selectedOperationalReviewItem ? (
+          <section className="space-y-4" id="approval-workspace">
+            <div className="rounded-2xl border border-border/70 bg-muted/20 px-5 py-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Human review approval workspace
+                  </p>
+                  <h2 className="mt-2 text-xl font-semibold text-foreground">
+                    {selectedOperationalReviewItem.key} {selectedOperationalReviewItem.title}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    This is the same live Tollgate 1 approval workspace that Framing uses, surfaced directly in Human Review so you can complete approvals here.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getOperationalBadgeClasses(selectedOperationalReviewItem.status)}`}>
+                    {getOperationalStatusLabel(selectedOperationalReviewItem.status)}
+                  </span>
+                  <Button asChild size="sm" variant="secondary">
+                    <Link href={`/framing?outcomeId=${selectedOperationalReviewItem.entityId}#tollgate-review`}>
+                      Open full Framing
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Suspense fallback={<OutcomeTollgateSectionFallback />}>
+              <OutcomeTollgateApprovalSection
+                defaultBlockers={selectedOperationalReviewItem.blocker ? [selectedOperationalReviewItem.blocker] : []}
+                isArchived={false}
+                outcomeId={selectedOperationalReviewItem.entityId}
+                recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
+                returnPath="/review"
+              />
+            </Suspense>
+          </section>
+        ) : null}
 
         {queue.state === "unavailable" ? (
           <Card className="border-border/70 shadow-sm">

@@ -23,6 +23,7 @@ import {
   DeliveryTypeHelperText,
   DeliveryTypeSelect
 } from "@/components/framing/delivery-type-guidance-live";
+import { OutcomeTollgateApprovalSection } from "@/components/review/outcome-tollgate-approval-section";
 import { FramingGuidanceShell } from "@/components/framing/framing-guidance-shell";
 import { InlineFieldGuidance } from "@/components/shared/context-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
@@ -67,7 +68,6 @@ type FramingOutcomeSectionProps = {
   archiveAction: (formData: FormData) => void | Promise<void>;
   hardDeleteAction: (formData: FormData) => void | Promise<void>;
   restoreAction: (formData: FormData) => void | Promise<void>;
-  submitTollgateAction: (formData: FormData) => void | Promise<void>;
   recordTollgateDecisionAction: (formData: FormData) => void | Promise<void>;
   validateOutcomeStatementAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   validateBaselineDefinitionAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
@@ -396,7 +396,6 @@ export function FramingOutcomeSection({
   archiveAction,
   hardDeleteAction,
   restoreAction,
-  submitTollgateAction,
   recordTollgateDecisionAction,
   validateOutcomeStatementAiAction,
   validateBaselineDefinitionAiAction,
@@ -1229,12 +1228,11 @@ export function FramingOutcomeSection({
         </DeliveryTypeGuidanceProvider>
 
         <Suspense fallback={<OutcomeTollgateSectionFallback />}>
-          <DeferredOutcomeTollgateSection
+          <OutcomeTollgateApprovalSection
             defaultBlockers={blockers}
             isArchived={isArchived}
             outcomeId={outcome.id}
             recordTollgateDecisionAction={recordTollgateDecisionAction}
-            submitTollgateAction={submitTollgateAction}
           />
         </Suspense>
 
@@ -1279,7 +1277,7 @@ export function FramingOutcomeSection({
   );
 }
 
-async function DeferredOutcomeTollgateSection(props: {
+export async function DeferredOutcomeTollgateSection(props: {
   outcomeId: string;
   isArchived: boolean;
   defaultBlockers: string[];

@@ -14,7 +14,6 @@ import {
   restoreOutcomeAction,
   saveOutcomeWorkspaceInlineAction,
   saveOutcomeWorkspaceAction,
-  submitOutcomeTollgateAction,
   validateBaselineDefinitionAiAction,
   validateOutcomeStatementAiAction
 } from "./actions";
@@ -78,7 +77,6 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
           saveState: getParamValue(query.save) ?? null,
           submitState: getParamValue(query.submit) ?? null
         }}
-        submitTollgateAction={submitOutcomeTollgateAction}
         initialReviewFramingState={{ status: "idle", message: null, report: null }}
         reviewFramingAction={reviewOutcomeFramingWithAiAction}
         validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}

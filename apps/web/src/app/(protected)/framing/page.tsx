@@ -20,7 +20,6 @@ import {
   restoreOutcomeAction,
   saveOutcomeWorkspaceInlineAction,
   saveOutcomeWorkspaceAction,
-  submitOutcomeTollgateAction,
   validateBaselineDefinitionAiAction,
   validateOutcomeStatementAiAction
 } from "../outcomes/[outcomeId]/actions";
@@ -223,13 +222,12 @@ async function SelectedFramingOutcomeSection(props: {
       embeddedInFraming
       hardDeleteAction={hardDeleteOutcomeAction}
       initialReviewFramingState={{ status: "idle", message: null, report: null }}
-      recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
+  recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
       restoreAction={restoreOutcomeAction}
       reviewFramingAction={reviewOutcomeFramingWithAiAction}
       saveAction={saveOutcomeWorkspaceAction}
       saveInlineAction={saveOutcomeWorkspaceInlineAction}
       search={props.search}
-      submitTollgateAction={submitOutcomeTollgateAction}
       validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
       validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
     />

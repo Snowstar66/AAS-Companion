@@ -42,6 +42,10 @@ function buildOutcomeReturnRedirect(input: {
     params.set("outcomeId", input.outcomeId);
   }
 
+  if (path === "/review") {
+    params.set("reviewOutcomeId", input.outcomeId);
+  }
+
   const query = params.toString();
   return `${path}${query ? `?${query}` : ""}`;
 }
@@ -381,6 +385,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
   const comments = String(formData.get("comments") ?? "") || null;
+  const returnPath = String(formData.get("returnPath") ?? "") || null;
   const result = await submitOutcomeTollgateService({
     organizationId: session.organization.organizationId,
     outcomeId,
@@ -397,33 +402,40 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
   revalidatePath("/");
 
   if (!result.ok) {
-    redirect(
-      buildFramingRedirect(outcomeId, {
+    redirect(buildOutcomeReturnRedirect({
+      outcomeId,
+      returnPath,
+      search: {
         submit: "error",
         message: result.errors[0]?.message ?? "Tollgate submission failed."
-      })
-    );
+      }
+    }));
   }
 
   if (result.data.blockers.length > 0) {
-    redirect(
-      buildFramingRedirect(outcomeId, {
+    redirect(buildOutcomeReturnRedirect({
+      outcomeId,
+      returnPath,
+      search: {
         submit: "blocked",
         blockers: result.data.blockers.join(" | ")
-      })
-    );
+      }
+    }));
   }
 
-  redirect(
-    buildFramingRedirect(outcomeId, {
+  redirect(buildOutcomeReturnRedirect({
+    outcomeId,
+    returnPath,
+    search: {
       submit: "ready"
-    })
-  );
+    }
+  }));
 }
 
 export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("entityId") ?? formData.get("outcomeId") ?? "");
+  const returnPath = String(formData.get("returnPath") ?? "") || null;
   const parsedDecision = parseDecisionKey(String(formData.get("decisionKey") ?? "approval|value_owner|customer"));
   const actualPartyRoleEntryId = String(formData.get("actualPartyRoleEntryId") ?? "");
   const evidenceReference = String(formData.get("evidenceReference") ?? "") || null;
@@ -456,19 +468,23 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
   revalidatePath("/");
 
   if (!result.ok) {
-    redirect(
-      buildFramingRedirect(outcomeId, {
+    redirect(buildOutcomeReturnRedirect({
+      outcomeId,
+      returnPath,
+      search: {
         submit: "error",
         message: result.errors[0]?.message ?? "Tollgate decision could not be recorded."
-      })
-    );
+      }
+    }));
   }
 
-  redirect(
-    buildFramingRedirect(outcomeId, {
+  redirect(buildOutcomeReturnRedirect({
+    outcomeId,
+    returnPath,
+    search: {
       submit: result.data.status === "approved" ? "approved" : result.data.status === "blocked" ? "blocked" : "ready"
-    })
-  );
+    }
+  }));
 }
 
 export async function createEpicFromOutcomeAction(formData: FormData) {
