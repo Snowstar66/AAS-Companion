@@ -40,13 +40,14 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
     const { cockpit, session, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);
     const originFilter = getParamValue(query.origin) ?? "native";
     const readinessFilter = getParamValue(query.readiness) ?? "all";
-    const outcomeId =
+    const defaultOutcomeId =
       resolvedOutcomeId ??
       cockpit.items.find((item) => item.originType === "native")?.id ??
       cockpit.items[0]?.id;
+    const outcomeId = requestedOutcomeId;
     const operationalItems = cockpit.items.filter((item) => item.originType !== "seeded");
     const hasDemoItems = cockpit.items.some((item) => item.originType === "seeded");
-    const showCompactSwitcher = cockpit.state === "live" && (operationalItems.length > 1 || hasDemoItems);
+    const showCompactSwitcher = cockpit.state === "live" && Boolean(outcomeId) && (operationalItems.length > 1 || hasDemoItems);
     const demoItem = cockpit.items.find((item) => item.originType === "seeded") ?? null;
     const parsedSearch = {
       aiConfidence: (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | null) ?? null,
@@ -122,6 +123,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                 items={cockpit.items}
                 message={cockpit.message}
                 state={cockpit.state}
+                suggestedOutcomeId={defaultOutcomeId ?? null}
               />
             )}
             {showCompactSwitcher ? (

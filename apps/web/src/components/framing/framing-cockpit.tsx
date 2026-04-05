@@ -21,6 +21,7 @@ type FramingCockpitProps = {
   createAction: typeof createDraftOutcomeAction;
   initialOriginFilter?: OriginFilterKey | string;
   initialReadinessFilter?: "all" | "blocked" | "ready" | string;
+  suggestedOutcomeId?: string | null;
 };
 
 type OriginFilterKey = "all" | "native" | "demo";
