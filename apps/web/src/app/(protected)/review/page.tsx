@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, Clock3, FileSearch, GitBranch, ShieldCheck } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
@@ -44,6 +45,15 @@ type OperationalReviewItem = OperationalReviewDashboard["items"][number];
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+async function getServerLanguage() {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("aas-app-language")?.value === "sv" ? "sv" : "en";
+  } catch {
+    return "en";
+  }
 }
 
 function formatLabel(value: string) {
@@ -979,6 +989,7 @@ function ReviewSummaryCard(props: {
 
 export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const query = searchParams ? await searchParams : {};
+  const language = await getServerLanguage();
   const candidateId = getParamValue(query.candidateId);
   const [queue, operationalReview] = await Promise.all([loadArtifactReviewQueue(candidateId), loadOperationalReviewDashboard()]);
   const message = getParamValue(query.message);
@@ -987,7 +998,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const findingFilter = getParamValue(query.findingFilter) ?? "all";
   const importIntentFilter = getParamValue(query.importIntent) ?? "all";
   const requestedReviewOutcomeId = getParamValue(query.reviewOutcomeId) ?? null;
-  const reviewHelp = getHelpPattern("review.workspace", null);
+  const reviewHelp = getHelpPattern("review.workspace", null, language);
 
   const completedCount = queue.summary.promoted + queue.summary.rejected;
   const remainingCount = queue.items.length;

@@ -163,6 +163,131 @@ function getCopy(language: AppLanguage) {
   };
 }
 
+function translatePricingItem(input: { key: string; title: string; description: string }, language: AppLanguage) {
+  if (language !== "sv") {
+    return input;
+  }
+
+  const translations: Record<string, { title: string; description: string }> = {
+    value_spine_missing: {
+      title: "Ingen aktiv Framing-gren",
+      description: "Pricing kan granskas innan designen ar klar, men den behover fortfarande en aktiv Framing-gren sa att den kommersiella diskussionen ar kopplad till en riktig projektkontext."
+    },
+    missing_baseline: {
+      title: "Baseline saknas",
+      description: "AAS pricing-vagledning ar svagare tills nulaget ar fangat pa ett trovärdigt satt. Utan baseline bor starkare kommersiella modeller forbli blockerade."
+    },
+    unclear_outcome: {
+      title: "Outcome ar otydligt",
+      description: "Pricing bor inte hardna medan affarsproblemet och den avsedda effekten fortfarande ar tvetydiga."
+    },
+    unstable_scope: {
+      title: "Scope ar instabilt",
+      description: "De synliga scope-granserna ar fortfarande for losa for en stark kommersiell rekommendation."
+    },
+    governance_gap: {
+      title: "Governance stoder annu inte vald AI-niva",
+      description: "Pricing forblir endast vagledande, och starkare kommersiell trygghet bor forbli blockerad tills governance-tackningen stoder vald accelerationsniva."
+    },
+    governance_attention: {
+      title: "Governance behover fortfarande uppmarksamhet",
+      description: "Namngiven bemanning eller supervision finns delvis, men AI-nivan ar inte tillrackligt ren for att pricing ska betraktas som kommersiellt trygg."
+    },
+    ai_level_mismatch: {
+      title: "AI-nivan ar lag for en efficiency-share-modell",
+      description: "Controlled Efficiency Share ar mer trovärdig nar projektet siktar pa minst level 2-acceleration med explicit governance."
+    },
+    high_ai_low_commercial_certainty: {
+      title: "Hog AI-ambition med konservativ pricing-fallback",
+      description: "Level 3-ambition ar synlig, men pricing-sakerheten ar fortfarande lag. Den mismatchen bor losas genom tydligare framing eller lagre uttalad acceleration."
+    }
+  };
+
+  return translations[input.key] ?? input;
+}
+
+function translateGuardrail(input: { key: string; title: string; description: string }, language: AppLanguage) {
+  if (language !== "sv") {
+    return input;
+  }
+
+  const translations: Record<string, { title: string; description: string }> = {
+    human_review: {
+      title: "Human Review ligger separat",
+      description: "Pricing ersatter inte Human Review-gaten fore promotion, aven om importerad lineage ar synlig i grenen."
+    },
+    governance: {
+      title: "Governance-validering ligger separat",
+      description: "Pricing-vagledning kan inte overridea governance-validering eller oppna concerns."
+    },
+    value_spine: {
+      title: "Value Spine-fullstandighet ligger separat",
+      description: "Pricing skapar ingen genvag runt Framing, Value Spine eller tollgate-progression."
+    }
+  };
+
+  return translations[input.key] ?? input;
+}
+
+function translateModel(input: { key: string; title: string; tagline: string; whenToUse: string; strengths: string[]; risks: string[] }, language: AppLanguage) {
+  if (language !== "sv") {
+    return input;
+  }
+
+  const translations: Record<string, typeof input> = {
+    controlled_efficiency_share: {
+      key: input.key,
+      title: "Controlled Efficiency Share",
+      tagline: "Bast nar en matbar baseline redan finns och effektivitetsvinster kan verifieras.",
+      whenToUse: "Anvand nar projektet forbattrar en befintlig leveranskontext med stabilt scope, tydligt outcome och trovärdig baseline.",
+      strengths: [
+        "Kopplar pris till matbar forbattring i stallet for bara nedlagd tid.",
+        "Fungerar val nar AAS-governance och AI-acceleration redan ar trovärdiga.",
+        "Haller kommersiell uppsida i linje med demonstrerad leveranseffekt."
+      ],
+      risks: [
+        "Faller snabbt om baseline-kvaliteten ar svag eller ifragasatt.",
+        "Kravar tajtare governance och sparbarhet an en los leveransmodell.",
+        "Passar daligt nar scopet fortfarande ror sig mycket."
+      ]
+    },
+    accelerated_build_contract: {
+      key: input.key,
+      title: "Accelerated Build Contract",
+      tagline: "Bast nar projektet ar ett nybygge med tydlig maleffekt och avgransat scope.",
+      whenToUse: "Anvand nar affarseffekten ar tydlig, scopet ar tillrackligt avgransat och teamet vill ha en byggfokuserad kommersiell ram.",
+      strengths: [
+        "Ger en tydlig kommersiell ram for skapande av ny kapabilitet.",
+        "Matchar avgransat design- och byggarbete battre an ren T&M.",
+        "Fungerar bra nar AI-acceleration ar avsedd men fortfarande styrd."
+      ],
+      risks: [
+        "Blir skort om scope-granserna inte respekteras.",
+        "Behöver fortfarande governance-readiness innan hog acceleration ar trovärdig.",
+        "Mindre lamplig nar baseline-kopplad gain share ar huvudlogiken."
+      ]
+    },
+    structured_tm: {
+      key: input.key,
+      title: "Structured T&M",
+      tagline: "Sakrast som fallback nar framing ar ofullstandig, scope ar instabilt eller governance fortfarande behover arbete.",
+      whenToUse: "Anvand nar den kommersiella formen ska vara flexibel medan Framing, governance eller scope-sakerhet fortfarande mognar.",
+      strengths: [
+        "Absorberar osakerhet battre an gain-share eller kontraktstunga modeller.",
+        "Minskar trycket att overlova innan AAS-forutsattningar ar verkliga.",
+        "Ar anvandbar som tillfallig kommersiell fallback medan projektet stabiliseras."
+      ],
+      risks: [
+        "Ger svagare kommersiell havstang runt effektivitetsoutcomes.",
+        "Kan dolja svag framing om den ligger kvar for lange.",
+        "Kravar aktiv governance-disciplin for att undvika drift."
+      ]
+    }
+  };
+
+  return translations[input.key] ?? input;
+}
+
 export default async function PricingPage({ searchParams }: PricingPageProps) {
   const organization = await requireOrganizationContext();
   const language = await getServerLanguage();
@@ -368,15 +493,18 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               <CardDescription>{t.processGuardrailsBody}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {data.evaluation.guardrails.map((guardrail) => (
-                <div
-                  className={`rounded-2xl border px-4 py-4 text-sm ${guardrail.status === "covered" ? "border-emerald-200 bg-emerald-50/80 text-emerald-950" : "border-amber-200 bg-amber-50/80 text-amber-950"}`}
-                  key={guardrail.key}
-                >
-                  <p className="font-medium">{guardrail.title}</p>
-                  <p className="mt-2">{guardrail.description}</p>
-                </div>
-              ))}
+              {data.evaluation.guardrails.map((guardrail) => {
+                const translated = translateGuardrail(guardrail, language);
+                return (
+                  <div
+                    className={`rounded-2xl border px-4 py-4 text-sm ${guardrail.status === "covered" ? "border-emerald-200 bg-emerald-50/80 text-emerald-950" : "border-amber-200 bg-amber-50/80 text-amber-950"}`}
+                    key={guardrail.key}
+                  >
+                    <p className="font-medium">{translated.title}</p>
+                    <p className="mt-2">{translated.description}</p>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </div>
@@ -391,12 +519,15 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               {data.evaluation.blockers.length === 0 ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-950">{t.noBlocking}</div>
               ) : (
-                data.evaluation.blockers.map((item) => (
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-4 text-sm text-rose-950" key={item.key}>
-                    <p className="font-medium">{item.title}</p>
-                    <p className="mt-2">{item.description}</p>
-                  </div>
-                ))
+                data.evaluation.blockers.map((item) => {
+                  const translated = translatePricingItem(item, language);
+                  return (
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-4 text-sm text-rose-950" key={item.key}>
+                      <p className="font-medium">{translated.title}</p>
+                      <p className="mt-2">{translated.description}</p>
+                    </div>
+                  );
+                })
               )}
             </CardContent>
           </Card>
@@ -410,12 +541,15 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
               {data.evaluation.risks.length === 0 ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-950">{t.noVisibleRisks}</div>
               ) : (
-                data.evaluation.risks.map((item) => (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm text-amber-950" key={item.key}>
-                    <p className="font-medium">{item.title}</p>
-                    <p className="mt-2">{item.description}</p>
-                  </div>
-                ))
+                data.evaluation.risks.map((item) => {
+                  const translated = translatePricingItem(item, language);
+                  return (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 text-sm text-amber-950" key={item.key}>
+                      <p className="font-medium">{translated.title}</p>
+                      <p className="mt-2">{translated.description}</p>
+                    </div>
+                  );
+                })
               )}
             </CardContent>
           </Card>
@@ -429,13 +563,14 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
           <CardContent className="grid gap-4 xl:grid-cols-3">
             {data.evaluation.models.map((model) => {
               const recommended = model.key === data.evaluation.recommendation.modelKey;
+              const translated = translateModel(model, language);
 
               return (
                 <div className={`rounded-3xl border p-5 ${recommended ? "border-sky-300 bg-sky-50/80 shadow-sm" : "border-border/70 bg-muted/15"}`} key={model.key}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-lg font-semibold text-foreground">{model.title}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{model.tagline}</p>
+                      <p className="text-lg font-semibold text-foreground">{translated.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{translated.tagline}</p>
                     </div>
                     {recommended ? (
                       <span className="inline-flex rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">
@@ -447,12 +582,12 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                   <div className="mt-5 space-y-4 text-sm">
                     <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
                       <p className="font-medium text-foreground">{t.whenToUse}</p>
-                      <p className="mt-2 leading-6 text-muted-foreground">{model.whenToUse}</p>
+                      <p className="mt-2 leading-6 text-muted-foreground">{translated.whenToUse}</p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
                       <p className="font-medium text-foreground">{t.strengths}</p>
                       <div className="mt-2 space-y-2 text-muted-foreground">
-                        {model.strengths.map((item) => (
+                        {translated.strengths.map((item) => (
                           <p key={item}>{item}</p>
                         ))}
                       </div>
@@ -460,7 +595,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                     <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
                       <p className="font-medium text-foreground">{t.risks}</p>
                       <div className="mt-2 space-y-2 text-muted-foreground">
-                        {model.risks.map((item) => (
+                        {translated.risks.map((item) => (
                           <p key={item}>{item}</p>
                         ))}
                       </div>
