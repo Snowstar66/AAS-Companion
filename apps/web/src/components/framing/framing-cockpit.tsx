@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowRight, CircleCheckBig, Layers3, Search, Sparkles } 
 import type { FramingOutcomeItem } from "@aas-companion/api";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { createDraftOutcomeAction } from "@/app/(protected)/framing/actions";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { ContextHelp } from "@/components/shared/context-help";
 import { getHelpPattern } from "@/lib/help/aas-help";
 import {
@@ -121,9 +122,10 @@ function buildOriginFilters(items: FramingOutcomeItem[]) {
 }
 
 function SubmitButton({ pending }: { pending: boolean }) {
+  const { language } = useAppChromeLanguage();
   return (
     <Button aria-busy={pending} className={`gap-2 ${pending ? "cursor-wait" : ""}`.trim()} data-pending={pending ? "true" : undefined} disabled={pending} type="submit">
-      {pending ? "Creating case..." : "Start new case"}
+      {pending ? (language === "sv" ? "Skapar case..." : "Creating case...") : language === "sv" ? "Starta nytt case" : "Start new case"}
       <ArrowRight className="h-4 w-4" />
     </Button>
   );
@@ -137,6 +139,7 @@ export function FramingCockpit({
   initialOriginFilter = "native",
   initialReadinessFilter = "all"
 }: FramingCockpitProps) {
+  const { language } = useAppChromeLanguage();
   const filters = buildOriginFilters(items);
   const normalizedOriginFilter = filters.some((filter) => filter.key === initialOriginFilter) ? (initialOriginFilter as OriginFilterKey) : "native";
   const normalizedReadinessFilter =
@@ -168,11 +171,168 @@ export function FramingCockpit({
 
   const emptyFilterState = items.length > 0 && filteredItems.length === 0;
   const showNativeEmptyState = activeFilter === "native" && nativeItemCount === 0 && emptyFilterState;
-  const activeFilterLabel = filters.find((filter) => filter.key === activeFilter)?.label ?? "All";
-  const activeReadinessLabel =
-    activeReadinessFilter === "blocked" ? "Blocked" : activeReadinessFilter === "ready" ? "Ready" : "All readiness";
   const handshakeHelp = getHelpPattern("framing.handshake");
   const directionHelp = getHelpPattern("framing.design_direction");
+  const content =
+    language === "sv"
+      ? {
+          heroBadge: "Kundhandshake i projektet",
+          title: "Framing Cockpit",
+          visibleOutcomesSuffix: "synliga outcomes",
+          blocked: "blockerade",
+          readyToMove: "redo att gå vidare",
+          handshakeProjectTitle: "Handshake i projektet",
+          handshakeProjectBody:
+            "Enas här om problem, mål-outcome, baseline, ägare, grov riktning och tänkt AI-nivå innan du går djupare in i Design.",
+          comesLaterTitle: "Det som kommer senare",
+          comesLaterBody:
+            "Leveransplanering hör hemma senare. Använd cockpit för att välja rätt case och gå djupare i framing först när handshaken är stabil.",
+          all: "Alla",
+          allReadiness: "All readiness",
+          blockedLabel: "Blockerade",
+          readyLabel: "Redo",
+          noCasesYet: "Inga case ännu",
+          noCasesYetDescription: "Cockpit är redo. Starta ett rent native case för att börja framing-arbetet.",
+          noNativeCasesYet: "Inga native case ännu",
+          noNativeCasesYetDescription: "Starta ett rent case nu, eller öppna medvetet demo-innehåll om du behöver ett exempel.",
+          noCasesMatch: "Inga case matchar nuvarande filter",
+          noCasesMatchDescription: "Prova ett annat ursprungsfilter eller rensa den aktuella sökfrågan.",
+          openDemoCase: "Öppna demo-case",
+          openDemoCaseDescription: "Demo är separat från native arbete och ska bara öppnas när du avsiktligt vill använda referensmaterial.",
+          searchPlaceholder: "Sök på key, titel, ägare eller readiness",
+          originFilterLabel: "Ursprung",
+          readinessFilterLabel: "Readiness",
+          activeFilterLabelPrefix: "Visar",
+          emptyStateAction: "Rensa filter",
+          activeFramingTitle: "Aktiv framing",
+          activeFramingDescription: "Det här är den primära native-framingen för projektet just nu.",
+          openActiveFraming: "Öppna aktiv framing",
+          createCaseTitle: "Starta ny framing",
+          createCaseDescription: "Skapa ett nytt native outcome när du medvetet behöver en separat handshake i samma projekt.",
+          caseNamePlaceholder: "Nytt casenamn",
+          demoOpenAction: "Öppna Demo",
+          availableProjectFramings: "Tillgängliga project framings",
+          demoSeparatelyTitle: "Demo finns separat",
+          demoSeparatelyBody: "Öppna Demo bara när du uttryckligen vill jämföra mot referensinnehåll.",
+          openDemoFraming: "Öppna Demo Framing",
+          compactHelpSummary: "Öppna AAS-anpassad framinghjälp",
+          directionHelpSummary: "Öppna hjälp om designriktning",
+          openOutcome: "Öppna",
+          openFraming: "Öppna Framing",
+          openImportLineage: "Öppna import-lineage",
+          createProjectForNewCase: "Skapa projekt för nytt case",
+          activeFramingBody:
+            "Varje projekt bör ha en aktiv framing. Fortsätt i nuvarande case eller skapa ett nytt projekt för ett nytt business case.",
+          activeFramingCurrentCasePrefix: "Nuvarande aktiva case:",
+          activeFramingCurrentCaseSuffix: "Använd den befintliga framingvägen om du inte medvetet startar ett separat projekt.",
+          startCleanCase: "Starta ett rent case",
+          startCleanCaseBody: "Skapa ett nytt native draft Outcome och fortsätt direkt i projektet.",
+          realCustomerWork:
+            "Använd detta för riktigt kundarbete. Det öppnar en ny native gren utan att dra in demo-state.",
+          demoSecondary: "Demo finns kvar tillgängligt, men är medvetet sekundärt jämfört med att skapa rena case.",
+          multipleOperationalWarning:
+            "Det här projektet har flera operativa framings från äldre data. Normalflödet är en aktiv framing per projekt, så använd det aktuella aktiva caset och arkivera eller ersätt äldre grenar medvetet.",
+          searchOutcomes: "Sök outcomes",
+          searchAriaLabel: "Sök outcomes",
+          visibleLabel: "synliga",
+          ownerLabel: "Ägare",
+          baselineLabel: "Baseline",
+          baselineComplete: "Komplett",
+          baselineMissing: "Saknar obligatoriska fält",
+          linkedWorkLabel: "Länkat arbete",
+          updatedLabel: "Uppdaterad",
+          currentBlockersTitle: "Nuvarande blockeringar",
+          needsReviewTitle: "Behöver review",
+          needsReviewBody: "Inspektera outcome-detaljen för att fortsätta framing och rensa blockeringar.",
+          readyDesignTitle: "Redo att gå vidare till design",
+          readyDesignBody: "Det här outcome:t kan gå från kundhandshake till djupare design utan synliga baseline-blockerare.",
+          openHandshakeHelp: "Öppna hjälp om framing-handshake",
+          blockedIssues: "blockerande issues",
+          tg1Ready: "redo för TG1"
+        }
+      : {
+          heroBadge: "Customer handshake inside project",
+          title: "Framing Cockpit",
+          visibleOutcomesSuffix: "visible outcomes",
+          blocked: "blocked",
+          readyToMove: "ready to move forward",
+          handshakeProjectTitle: "Handshake in this project",
+          handshakeProjectBody:
+            "Agree the problem, target outcome, baseline, owner, rough direction and intended AI level here before going deeper into Design.",
+          comesLaterTitle: "What comes later",
+          comesLaterBody:
+            "Delivery planning belongs later. Use this cockpit to pick the right case and move into deeper framing only when the handshake is stable.",
+          all: "All",
+          allReadiness: "All readiness",
+          blockedLabel: "Blocked",
+          readyLabel: "Ready",
+          noCasesYet: "No cases yet",
+          noCasesYetDescription: "The cockpit is ready. Start a clean native case to begin framing work.",
+          noNativeCasesYet: "No native cases yet",
+          noNativeCasesYetDescription: "Start a clean case now, or intentionally open demo content when you need an example.",
+          noCasesMatch: "No cases match the current filters",
+          noCasesMatchDescription: "Try another origin filter or clear the current search query.",
+          openDemoCase: "Open demo case",
+          openDemoCaseDescription: "Demo stays separate from native work and should only be opened when you intentionally want reference content.",
+          searchPlaceholder: "Search by key, title, owner, or readiness",
+          originFilterLabel: "Origin",
+          readinessFilterLabel: "Readiness",
+          activeFilterLabelPrefix: "Showing",
+          emptyStateAction: "Clear filters",
+          activeFramingTitle: "Active framing",
+          activeFramingDescription: "This is the primary native framing for the project right now.",
+          openActiveFraming: "Open active framing",
+          createCaseTitle: "Start new framing",
+          createCaseDescription: "Create a new native outcome when you intentionally need a separate handshake in the same project.",
+          caseNamePlaceholder: "New case name",
+          demoOpenAction: "Open Demo",
+          availableProjectFramings: "Available project framings",
+          demoSeparatelyTitle: "Demo stays available separately",
+          demoSeparatelyBody: "Open Demo only when you intentionally want to compare against reference content.",
+          openDemoFraming: "Open Demo Framing",
+          compactHelpSummary: "Open AAS-aligned framing help",
+          directionHelpSummary: "Open help on design direction",
+          openOutcome: "Open",
+          openFraming: "Open Framing",
+          openImportLineage: "Open Import Lineage",
+          createProjectForNewCase: "Create project for new case",
+          activeFramingBody:
+            "Each project should keep one active framing. Continue inside the current case or create a new project for a new business case.",
+          activeFramingCurrentCasePrefix: "Current active case:",
+          activeFramingCurrentCaseSuffix: "Use the existing framing path unless you are intentionally starting a separate project.",
+          startCleanCase: "Start a clean case",
+          startCleanCaseBody: "Create a fresh native draft Outcome and continue directly inside the project.",
+          realCustomerWork: "Use this for real customer work. It opens a new native branch without pulling in demo state.",
+          demoSecondary: "Demo stays available, but it is intentionally secondary to clean case creation.",
+          multipleOperationalWarning:
+            "This project has multiple operational framings from earlier data. Normal workflow is one active framing per project, so use the current active case and archive or replace older branches intentionally.",
+          searchOutcomes: "Search outcomes",
+          searchAriaLabel: "Search outcomes",
+          visibleLabel: "visible",
+          ownerLabel: "Owner",
+          baselineLabel: "Baseline",
+          baselineComplete: "Complete",
+          baselineMissing: "Missing required fields",
+          linkedWorkLabel: "Linked work",
+          updatedLabel: "Updated",
+          currentBlockersTitle: "Current blockers",
+          needsReviewTitle: "Needs review",
+          needsReviewBody: "Inspect the outcome detail to continue framing and clear blockers.",
+          readyDesignTitle: "Ready to move into design",
+          readyDesignBody: "This outcome can move from customer handshake into deeper design without visible baseline blockers.",
+          openHandshakeHelp: "Open framing handshake help",
+          blockedIssues: "blocking issues",
+          tg1Ready: "ready for TG1"
+        };
+  const localizedOriginFilters = filters.map((filter) => ({
+    ...filter,
+    label: filter.key === "all" ? content.all : filter.key === "native" ? getOriginLabel("native") : getOriginLabel("seeded")
+  }));
+  const localizedOriginLabel = (originType: string) =>
+    originType === "seeded" ? "Demo" : originType === "native" ? (language === "sv" ? "Nativ" : "Native") : language === "sv" ? "Importerad" : "Imported";
+  const activeFilterLabel = localizedOriginFilters.find((filter) => filter.key === activeFilter)?.label ?? content.all;
+  const activeReadinessLabel =
+    activeReadinessFilter === "blocked" ? content.blocked : activeReadinessFilter === "ready" ? content.readyLabel : content.allReadiness;
 
   return (
     <section className="space-y-6">
@@ -181,10 +341,10 @@ export function FramingCockpit({
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               <Layers3 className="h-3.5 w-3.5 text-primary" />
-              Customer handshake inside project
+              {content.heroBadge}
             </div>
             <div className="space-y-3">
-              <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">Framing Cockpit</h1>
+              <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">{content.title}</h1>
               <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">{message}</p>
             </div>
 
@@ -193,18 +353,18 @@ export function FramingCockpit({
                 className="rounded-full border border-border/70 bg-background/92 px-4 py-2 text-sm text-muted-foreground shadow-sm transition hover:border-primary/40 hover:text-foreground"
                 href="/framing?origin=all&readiness=all"
               >
-                <span className="font-semibold text-foreground">{items.length}</span> visible outcome{items.length === 1 ? "" : "s"}
+                <span className="font-semibold text-foreground">{items.length}</span> {content.visibleOutcomesSuffix}
               </Link>
               {blockedCount > 0 ? (
                 <Link
                   className="rounded-full border border-amber-200 bg-amber-50/85 px-4 py-2 text-sm text-amber-900 shadow-sm transition hover:border-amber-300"
                   href="/framing?origin=all&readiness=blocked"
                 >
-                  <span className="font-semibold">{blockedCount}</span> blocked
+                  <span className="font-semibold">{blockedCount}</span> {content.blocked}
                 </Link>
               ) : (
                 <div className="rounded-full border border-amber-200 bg-amber-50/85 px-4 py-2 text-sm text-amber-900 shadow-sm">
-                  <span className="font-semibold">{blockedCount}</span> blocked
+                  <span className="font-semibold">{blockedCount}</span> {content.blocked}
                 </div>
               )}
               {readyCount > 0 ? (
@@ -212,29 +372,25 @@ export function FramingCockpit({
                   className="rounded-full border border-emerald-200 bg-emerald-50/85 px-4 py-2 text-sm text-emerald-900 shadow-sm transition hover:border-emerald-300"
                   href="/framing?origin=all&readiness=ready"
                 >
-                  <span className="font-semibold">{readyCount}</span> ready to move forward
+                  <span className="font-semibold">{readyCount}</span> {content.readyToMove}
                 </Link>
               ) : (
                 <div className="rounded-full border border-emerald-200 bg-emerald-50/85 px-4 py-2 text-sm text-emerald-900 shadow-sm">
-                  <span className="font-semibold">{readyCount}</span> ready to move forward
+                  <span className="font-semibold">{readyCount}</span> {content.readyToMove}
                 </div>
               )}
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Handshake in this project</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{content.handshakeProjectTitle}</p>
                 <p className="mt-3 text-sm leading-6 text-foreground">
-                  Agree the problem, target outcome, baseline, owner, rough direction and intended AI level here before
-                  going deeper into Design.
+                  {content.handshakeProjectBody}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/75 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">What comes later</p>
-                <p className="mt-3 text-sm leading-6 text-foreground">
-                  Delivery planning belongs later. Use this cockpit to pick the right case and move into deeper framing
-                  only when the handshake is stable.
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{content.comesLaterTitle}</p>
+                <p className="mt-3 text-sm leading-6 text-foreground">{content.comesLaterBody}</p>
               </div>
             </div>
           </div>
@@ -245,12 +401,10 @@ export function FramingCockpit({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-sky-950">
                     <Sparkles className="h-4 w-4" />
-                    {hasActiveFraming ? "Active framing" : "Start a clean case"}
+                    {hasActiveFraming ? content.activeFramingTitle : content.startCleanCase}
                   </CardTitle>
                   <CardDescription className="text-sky-900/80">
-                    {hasActiveFraming
-                      ? "Each project should keep one active framing. Continue inside the current case or create a new project for a new business case."
-                      : "Create a fresh native draft Outcome and continue directly inside the project."}
+                    {hasActiveFraming ? content.activeFramingBody : content.startCleanCaseBody}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -258,12 +412,12 @@ export function FramingCockpit({
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <Button asChild className="gap-2">
                         <Link href={activeFraming.detailHref}>
-                          Open active framing
+                          {content.openActiveFraming}
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>
                       <Button asChild className="gap-2" variant="secondary">
-                        <Link href="/">Create project for new case</Link>
+                        <Link href="/">{content.createProjectForNewCase}</Link>
                       </Button>
                     </div>
                   ) : (
@@ -273,8 +427,8 @@ export function FramingCockpit({
                   )}
                   <p className="text-sm leading-6 text-sky-900/80">
                     {activeFraming
-                      ? `Current active case: ${activeFraming.key} ${activeFraming.title}. Use the existing framing path unless you are intentionally starting a separate project.`
-                      : "Use this for real customer work. It opens a new native branch without pulling in demo state."}
+                      ? `${content.activeFramingCurrentCasePrefix} ${activeFraming.key} ${activeFraming.title}. ${content.activeFramingCurrentCaseSuffix}`
+                      : content.realCustomerWork}
                   </p>
                 </CardContent>
               </Card>
@@ -282,41 +436,36 @@ export function FramingCockpit({
               {hasDemoItems ? (
                 <Card className="border-border/70 bg-background/92 shadow-sm">
                   <CardHeader>
-                    <CardTitle>Open demo case</CardTitle>
-                    <CardDescription>
-                      Explore Demo reference content intentionally without changing native case behavior.
-                    </CardDescription>
+                    <CardTitle>{content.openDemoCase}</CardTitle>
+                    <CardDescription>{content.openDemoCaseDescription}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {demoEntryHref ? (
                       <Button asChild className="gap-2" variant="secondary">
                         <Link href={demoEntryHref}>
-                          Open demo case
+                          {content.openDemoCase}
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>
                     ) : (
                       <Button className="gap-2" onClick={() => setActiveFilter("demo")} type="button" variant="secondary">
-                        Open demo case
+                        {content.openDemoCase}
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     )}
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      Demo stays available, but it is intentionally secondary to clean case creation.
-                    </p>
+                    <p className="text-sm leading-6 text-muted-foreground">{content.demoSecondary}</p>
                   </CardContent>
                 </Card>
               ) : null}
             </div>
 
-            <ContextHelp className="bg-background/90" pattern={handshakeHelp} summaryLabel="Open framing handshake help" />
+            <ContextHelp className="bg-background/90" pattern={handshakeHelp} summaryLabel={content.openHandshakeHelp} />
           </div>
         </div>
 
         {hasParallelOperationalFramings ? (
           <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-            This project has multiple operational framings from earlier data. Normal workflow is one active framing per
-            project, so use the current active case and archive or replace older branches intentionally.
+            {content.multipleOperationalWarning}
           </div>
         ) : null}
 
@@ -329,14 +478,14 @@ export function FramingCockpit({
         <div className="mt-6 rounded-3xl border border-border/70 bg-background/75 p-4 shadow-sm sm:p-5">
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] 2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Search outcomes</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{content.searchOutcomes}</p>
               <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/30 px-4 py-3">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <input
-                  aria-label="Search outcomes"
+                  aria-label={content.searchAriaLabel}
                   className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search by key, title, owner, or readiness"
+                  placeholder={content.searchPlaceholder}
                   type="search"
                   value={search}
                 />
@@ -345,14 +494,14 @@ export function FramingCockpit({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Origin filters</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{content.originFilterLabel}</p>
                 <div className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {activeFilterLabel} · {activeReadinessLabel} · {filteredItems.length} visible
+                  {activeFilterLabel} · {activeReadinessLabel} · {filteredItems.length} {content.visibleLabel}
                 </div>
               </div>
               <div className="-mx-1 overflow-x-auto pb-1">
                 <div className="flex min-w-max flex-wrap gap-2 px-1">
-                  {filters.map((filter) => (
+                  {localizedOriginFilters.map((filter) => (
                     <button
                       className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
                         activeFilter === filter.key
@@ -371,9 +520,9 @@ export function FramingCockpit({
               <div className="-mx-1 overflow-x-auto pb-1">
                 <div className="flex min-w-max flex-wrap gap-2 px-1">
                   {[
-                    { key: "all", label: "All readiness" },
-                    { key: "blocked", label: "Blocked" },
-                    { key: "ready", label: "Ready" }
+                    { key: "all", label: content.allReadiness },
+                    { key: "blocked", label: content.blockedLabel },
+                    { key: "ready", label: content.readyLabel }
                   ].map((filter) => (
                     <button
                       className={`rounded-full border px-3 py-2 text-sm font-medium transition ${
@@ -398,11 +547,11 @@ export function FramingCockpit({
       {state === "empty" ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>No cases yet</CardTitle>
-            <CardDescription>The cockpit is ready. Start a clean native case to begin framing work.</CardDescription>
+            <CardTitle>{content.noCasesYet}</CardTitle>
+            <CardDescription>{content.noCasesYetDescription}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <p>No native or demo outcomes are currently available for this organization.</p>
+            <p>{language === "sv" ? "Inga native eller demo-outcomes finns just nu för den här organisationen." : "No native or demo outcomes are currently available for this organization."}</p>
             <form action={formAction}>
               <SubmitButton pending={pending} />
             </form>
@@ -413,8 +562,8 @@ export function FramingCockpit({
       {showNativeEmptyState ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>No native cases yet</CardTitle>
-            <CardDescription>Start a clean case now, or intentionally open demo content when you need an example.</CardDescription>
+            <CardTitle>{content.noNativeCasesYet}</CardTitle>
+            <CardDescription>{content.noNativeCasesYetDescription}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 sm:flex-row">
             <form action={formAction}>
@@ -422,7 +571,7 @@ export function FramingCockpit({
             </form>
             {hasDemoItems && demoEntryHref ? (
               <Button asChild className="gap-2" variant="secondary">
-                <Link href={demoEntryHref}>Open demo case</Link>
+                <Link href={demoEntryHref}>{content.openDemoCase}</Link>
               </Button>
             ) : null}
           </CardContent>
@@ -430,8 +579,8 @@ export function FramingCockpit({
       ) : emptyFilterState ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>No cases match the current filters</CardTitle>
-            <CardDescription>Try another origin filter or clear the current search query.</CardDescription>
+            <CardTitle>{content.noCasesMatch}</CardTitle>
+            <CardDescription>{content.noCasesMatchDescription}</CardDescription>
           </CardHeader>
         </Card>
       ) : null}
@@ -462,7 +611,7 @@ export function FramingCockpit({
                           {item.statusLabel}
                         </span>
                         <span className={`rounded-full border px-3 py-1 text-xs font-medium ${getOriginClasses(item.originType)}`}>
-                          {getOriginLabel(item.originType)}
+                          {localizedOriginLabel(item.originType)}
                         </span>
                         {item.importedReadinessState ? (
                           <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
@@ -472,7 +621,7 @@ export function FramingCockpit({
                         {item.isBlocked ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
                             <AlertTriangle className="h-3.5 w-3.5" />
-                            Blocked
+                            {content.blockedLabel}
                           </span>
                         ) : null}
                       </div>
@@ -486,13 +635,13 @@ export function FramingCockpit({
                     <div className="flex flex-wrap gap-3 2xl:w-auto 2xl:shrink-0">
                       <Button asChild className="gap-2">
                         <Link href={item.detailHref}>
-                          Open Framing
+                          {content.openFraming}
                           <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>
                       {item.lineageHref ? (
                         <Button asChild className="gap-2" variant="secondary">
-                          <Link href={item.lineageHref}>Open Import Lineage</Link>
+                          <Link href={item.lineageHref}>{content.openImportLineage}</Link>
                         </Button>
                       ) : null}
                     </div>
@@ -502,29 +651,30 @@ export function FramingCockpit({
                     <div className="space-y-4">
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-2">
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Owner</p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">{content.ownerLabel}</p>
                           <p className="mt-2 text-foreground">{item.ownerLabel}</p>
                         </div>
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Baseline</p>
-                          <p className="mt-2 text-foreground">{item.baselineComplete ? "Complete" : "Missing required fields"}</p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">{content.baselineLabel}</p>
+                          <p className="mt-2 text-foreground">{item.baselineComplete ? content.baselineComplete : content.baselineMissing}</p>
                         </div>
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Linked work</p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">{content.linkedWorkLabel}</p>
                           <p className="mt-2 text-foreground">
-                            {item.epicCount} epic{item.epicCount === 1 ? "" : "s"} / {item.directionSeedCount} direction seed
-                            {item.directionSeedCount === 1 ? "" : "s"}
+                            {language === "sv"
+                              ? `${item.epicCount} epic${item.epicCount === 1 ? "" : "s"} / ${item.directionSeedCount} riktningsfrö${item.directionSeedCount === 1 ? "" : "n"}`
+                              : `${item.epicCount} epic${item.epicCount === 1 ? "" : "s"} / ${item.directionSeedCount} direction seed${item.directionSeedCount === 1 ? "" : "s"}`}
                           </p>
                         </div>
                         <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-3">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">Updated</p>
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em]">{content.updatedLabel}</p>
                           <p className="mt-2 text-foreground">{item.updatedAtLabel}</p>
                         </div>
                       </div>
 
                       {item.blockers.length > 0 ? (
                         <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-900">
-                          <p className="font-medium">Current blockers</p>
+                          <p className="font-medium">{content.currentBlockersTitle}</p>
                           <ul className="mt-2 space-y-2">
                             {item.blockers.map((blocker) => (
                               <li className="flex items-start gap-2" key={`${item.id}-${blocker}`}>
@@ -542,18 +692,14 @@ export function FramingCockpit({
                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-4 text-sm text-emerald-900">
                           <div className="flex items-center gap-2 font-medium">
                             <CircleCheckBig className="h-4 w-4" />
-                            Ready to move into design
+                            {content.readyDesignTitle}
                           </div>
-                          <p className="mt-2 leading-6">
-                            This outcome can move from customer handshake into deeper design without visible baseline blockers.
-                          </p>
+                          <p className="mt-2 leading-6">{content.readyDesignBody}</p>
                         </div>
                       ) : (
                         <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-4 text-sm text-muted-foreground">
-                          <p className="font-medium text-foreground">Needs review</p>
-                          <p className="mt-2 leading-6">
-                            Inspect the outcome detail to continue framing and clear blockers.
-                          </p>
+                          <p className="font-medium text-foreground">{content.needsReviewTitle}</p>
+                          <p className="mt-2 leading-6">{content.needsReviewBody}</p>
                         </div>
                       )}
 
