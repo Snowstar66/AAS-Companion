@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BrainCircuit,
@@ -19,27 +18,14 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { AasBrandMark } from "@/components/shared/aas-brand-mark";
 import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { helpContent, type HelpLanguage } from "@/components/help/help-page-content.data";
-
-const HELP_LANGUAGE_STORAGE_KEY = "aas-help-language";
+import { useAppLanguage } from "@/components/layout/app-language";
 
 const processStepIcons = [Target, Layers3, LibraryBig] as const;
 const processStepIconClasses = ["text-sky-700", "text-amber-700", "text-emerald-700"] as const;
 
 export function HelpPageContent(props: { returnTo: string }) {
-  const [language, setLanguage] = useState<HelpLanguage>("en");
-
-  useEffect(() => {
-    const savedLanguage = window.localStorage.getItem(HELP_LANGUAGE_STORAGE_KEY);
-    if (savedLanguage === "en" || savedLanguage === "sv") {
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(HELP_LANGUAGE_STORAGE_KEY, language);
-  }, [language]);
-
-  const content = helpContent[language];
+  const { language, setLanguage } = useAppLanguage();
+  const content = helpContent[language as HelpLanguage];
 
   return (
     <section className="space-y-6">

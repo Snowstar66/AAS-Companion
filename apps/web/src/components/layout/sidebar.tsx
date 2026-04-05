@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { BriefcaseBusiness, CircleHelp, Compass, Eye, EyeOff, FileSearch, Inbox, LayoutDashboard, LibraryBig, Settings2, Shield, Workflow } from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain/navigation";
+import { getLocalizedNavigationCopy, translateSectionLabel } from "@/components/layout/app-language.data";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 
 const icons = {
   "/": LayoutDashboard,
@@ -31,8 +33,20 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
   const pathname = usePathname() ?? "/";
   const returnTo = pathname === "/help" ? "/" : pathname;
   const [guidanceVisible, setGuidanceVisible] = useState(true);
+  const { language, setLanguage, content } = useAppChromeLanguage();
   const adminItem = primaryNavigation.find((item) => item.href === "/admin") ?? null;
   const mainNavigationItems = primaryNavigation.filter((item) => item.href !== "/admin");
+  const translatedSectionLabel = translateSectionLabel(activeSectionLabel, language);
+  const localizedAdmin = adminItem
+    ? getLocalizedNavigationCopy(
+        adminItem.href,
+        {
+          label: adminItem.label,
+          description: adminItem.description
+        },
+        language
+      )
+    : null;
 
   useEffect(() => {
     const stored = window.localStorage.getItem(GUIDANCE_STORAGE_KEY);
@@ -52,28 +66,26 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
         <div className="space-y-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">AAS Companion</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Project-scoped framing, import, governance and delivery work.
-            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{content.sidebarIntro}</p>
           </div>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/12 to-white/4 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Current location</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">{content.currentLocation}</p>
           <p className="mt-3 text-base font-semibold text-white">
-            {activeProjectName ?? "No project selected"}
+            {activeProjectName ?? content.noProjectSelected}
           </p>
           <div className="mt-3 space-y-2">
             <div className="rounded-2xl border border-white/10 bg-white/6 px-3 py-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Section</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{content.sectionLabel}</p>
               <p className="mt-1 text-sm font-medium text-white">
-                {activeSectionLabel ?? "Choose a project in Home first"}
+                {translatedSectionLabel ?? content.chooseProjectFirst}
               </p>
             </div>
             <p className="text-sm leading-6 text-slate-300">
               {activeSectionLabel
-                ? "The highlighted navigation item below matches the workspace you are in now."
-                : "Choose a project in Home, then continue through its sections here."}
+                ? content.highlightedNavigationHint
+                : content.chooseProjectHint}
             </p>
           </div>
         </div>
@@ -82,6 +94,14 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
           {mainNavigationItems.map((item) => {
             const Icon = icons[item.href as keyof typeof icons] ?? LayoutDashboard;
             const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const localizedCopy = getLocalizedNavigationCopy(
+              item.href,
+              {
+                label: item.label,
+                description: item.description
+              },
+              language
+            );
             const href =
               item.href === "/help"
                 ? {
@@ -100,8 +120,8 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
               >
                 <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${active ? "text-primary" : "text-slate-300"}`} />
                 <div>
-                  <p className="font-medium">{item.label}</p>
-                  <p className={`mt-1 text-sm leading-5 ${active ? "text-slate-600" : "text-slate-300"}`}>{item.description}</p>
+                  <p className="font-medium">{localizedCopy.label}</p>
+                  <p className={`mt-1 text-sm leading-5 ${active ? "text-slate-600" : "text-slate-300"}`}>{localizedCopy.description}</p>
                 </div>
               </Link>
             );
@@ -109,7 +129,34 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
         </nav>
 
         <div className="mt-auto space-y-3 border-t border-white/10 pt-4">
-          {adminItem ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-2">
+            <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{content.languageLabel}</div>
+            <div className="flex gap-1">
+              <button
+                aria-label="Switch app language to English"
+                aria-pressed={language === "en"}
+                className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                  language === "en" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
+                }`}
+                onClick={() => setLanguage("en")}
+                type="button"
+              >
+                EN
+              </button>
+              <button
+                aria-label="Switch app language to Swedish"
+                aria-pressed={language === "sv"}
+                className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                  language === "sv" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
+                }`}
+                onClick={() => setLanguage("sv")}
+                type="button"
+              >
+                SV
+              </button>
+            </div>
+          </div>
+          {adminItem && localizedAdmin ? (
             <Link
               className={`flex items-start gap-3 rounded-2xl px-3 py-3 transition ${
                 pathname === adminItem.href || pathname.startsWith(`${adminItem.href}/`)
@@ -124,13 +171,13 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                 }`}
               />
               <div>
-                <p className="font-medium">{adminItem.label}</p>
+                <p className="font-medium">{localizedAdmin.label}</p>
                 <p
                   className={`mt-1 text-sm leading-5 ${
                     pathname === adminItem.href || pathname.startsWith(`${adminItem.href}/`) ? "text-slate-600" : "text-slate-300"
                   }`}
                 >
-                  {adminItem.description}
+                  {localizedAdmin.description}
                 </p>
               </div>
             </Link>
@@ -141,7 +188,7 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
             type="button"
           >
             {guidanceVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            {guidanceVisible ? "Hide guidance" : "Show guidance"}
+            {guidanceVisible ? content.hideGuidance : content.showGuidance}
           </button>
         </div>
       </div>

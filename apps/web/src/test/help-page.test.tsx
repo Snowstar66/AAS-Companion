@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { describe, expect, it, vi } from "vitest";
 import HelpPage from "@/app/help/page";
 import { HelpPageContent } from "@/components/help/help-page-content";
+import { AppLanguageProvider } from "@/components/layout/app-language";
 import { Sidebar } from "@/components/layout/sidebar";
 
 vi.mock("@aas-companion/domain/navigation", () => ({
@@ -30,10 +31,14 @@ vi.mock("next/navigation", () => ({
 
 describe("Help page", () => {
   it("shows the global help entry in sidebar navigation", () => {
-    render(<Sidebar activeProjectName="AAS Demo Organization" activeSectionLabel="Human Review" />);
+    render(
+      <AppLanguageProvider>
+        <Sidebar activeProjectName="AAS Demo Organization" activeSectionLabel="Human Review" />
+      </AppLanguageProvider>
+    );
 
     expect(screen.getByText("Help")).toBeDefined();
-    expect(screen.getByText("Understand what the tool is for and how Framing, Design and AI Build fit together.")).toBeDefined();
+    expect(screen.getByText("Method guide, process flow, and key concepts.")).toBeDefined();
   });
 
   it("shows the intro help content and a return path to current work", async () => {
@@ -66,7 +71,11 @@ describe("Help page", () => {
     cleanup();
     window.localStorage.clear();
 
-    const { unmount } = render(<HelpPageContent returnTo="/review" />);
+    const { unmount } = render(
+      <AppLanguageProvider>
+        <HelpPageContent returnTo="/review" />
+      </AppLanguageProvider>
+    );
 
     expect(screen.getAllByRole("heading", { name: "What is this tool?" }).length).toBeGreaterThan(0);
 
@@ -80,7 +89,11 @@ describe("Help page", () => {
 
     unmount();
 
-    render(<HelpPageContent returnTo="/review" />);
+    render(
+      <AppLanguageProvider>
+        <HelpPageContent returnTo="/review" />
+      </AppLanguageProvider>
+    );
 
     await waitFor(() => {
       expect(screen.getAllByRole("heading", { name: "Vad är det här verktyget?" }).length).toBeGreaterThan(0);
