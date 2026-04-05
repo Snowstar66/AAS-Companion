@@ -1,15 +1,9 @@
 import Link from "next/link";
 import {
-  AlertTriangle,
   ArrowRight,
-  ClipboardList,
-  Clock3,
-  FolderKanban,
   FolderOpen,
-  GitBranch,
   LogOut,
   PlusCircle,
-  ShieldCheck,
   Sparkles,
   Trash2
 } from "lucide-react";
@@ -22,6 +16,7 @@ import {
   openProjectAction
 } from "@/app/project-actions";
 import { ViewerSessionProvider } from "@/components/auth/viewer-session-provider";
+import { HomeDashboardHero } from "@/components/home/home-dashboard-hero";
 import { AppShell } from "@/components/layout/app-shell";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
@@ -32,100 +27,6 @@ type HomePageProps = {
 
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function deriveProjectStatus(input: {
-  hasActiveProject: boolean;
-  dashboardState: "live" | "empty" | "unavailable";
-  blockedCount: number;
-  pendingCount: number;
-  readyCount: number;
-}) {
-  if (!input.hasActiveProject) {
-    return {
-      label: "No active project",
-      detail: "Choose an existing project, create one, or open Demo explicitly before entering operational work."
-    };
-  }
-
-  if (input.dashboardState === "unavailable") {
-    return {
-      label: "Degraded",
-      detail: "Project data is partially unavailable right now."
-    };
-  }
-
-  if (input.dashboardState === "empty") {
-    return {
-      label: "Ready to begin",
-      detail: "This project is active but still has no Framing case."
-    };
-  }
-
-  if (input.blockedCount > 0) {
-    return {
-      label: "Needs attention",
-      detail: "Blocking framing or story issues still need attention."
-    };
-  }
-
-  if (input.pendingCount > 0) {
-    return {
-      label: "Awaiting review",
-      detail: "Review or follow-up actions are still open in this project."
-    };
-  }
-
-  if (input.readyCount > 0) {
-    return {
-      label: "Ready to move",
-      detail: "At least one branch is ready to continue deeper into delivery."
-    };
-  }
-
-  return {
-    label: "In progress",
-    detail: "Work is active inside the current project."
-  };
-}
-
-function MetricCard(props: {
-  label: string;
-  value: number;
-  description: string;
-  className: string;
-  href?: string | undefined;
-  actionLabel?: string | undefined;
-  icon: typeof FolderKanban;
-}) {
-  const Icon = props.icon;
-
-  return (
-    <div className={`rounded-3xl border p-4 shadow-sm ${props.className}`}>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em]">{props.label}</p>
-        <Icon className="h-4 w-4 opacity-80" />
-      </div>
-      <p className="mt-3 text-3xl font-semibold tracking-tight">{props.value}</p>
-      <p className="mt-2 text-sm leading-6 opacity-90">{props.description}</p>
-      {props.href && props.actionLabel ? (
-        <Button asChild className="mt-4 gap-2" size="sm" variant="secondary">
-          <Link href={props.href}>
-            {props.actionLabel}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-function attentionTone(kind: "blocker" | "pending") {
-  if (kind === "blocker") {
-    return "border-rose-200/80 bg-rose-50/70";
-  }
-
-  return "border-amber-200/80 bg-amber-50/70";
 }
 
 function CompactProjectCount(props: { label: string; value: number | string }) {
@@ -211,34 +112,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const flashError = getParamValue(query.error);
   const flashMessage = getParamValue(query.message);
-  const readyStoriesMetric =
-    dashboard.projectPhase.key === "framing"
-      ? dashboard.storyIdeaStats.framingReady
-      : dashboard.deliveryStoryStats.readyToStartBuild;
-  const blockedCount = dashboard.topBlockers.length;
-  const pendingCount = dashboard.pendingActions.length;
   const hasActiveProject = Boolean(activeProject?.organizationId);
-  const status = deriveProjectStatus({
-    hasActiveProject,
-    dashboardState: dashboard.state,
-    blockedCount,
-    pendingCount,
-    readyCount: readyStoriesMetric
-  });
   const currentProjectName = activeProject?.organizationName ?? "No active project selected";
-  const currentProjectDescription = hasActiveProject
-    ? isDemoSession
-      ? "Demo stays isolated and only appears because it was chosen explicitly."
-      : "Only this project's Framing, Value Spine, Import and Review records are visible here."
-    : hasAuthenticatedUser
-      ? "You are signed in, but no operational project is active until you select or create one."
-      : "Sign in, then choose an existing project, create a new one, or enter Demo explicitly.";
-  const quickLinks = [
-    { href: "/framing", label: "Open Framing", icon: FolderKanban },
-    { href: "/workspace", label: "Open Value Spine", icon: GitBranch },
-    { href: "/review", label: "Open Review", icon: ShieldCheck },
-    { href: "/intake", label: "Open Import", icon: ClipboardList }
-  ];
   const managedProjectCount = projects.length;
 
   return (
@@ -253,65 +128,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         }}
       >
         <section className="space-y-8">
-          <div className="rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(246,248,252,0.94))] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  <FolderKanban className="h-3.5 w-3.5 text-primary" />
-                  {hasActiveProject ? "Project dashboard" : "Project access"}
-                </div>
-                <div>
-                  <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                    {hasActiveProject ? "Project dashboard" : "Choose how to enter work"}
-                  </h1>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    {hasActiveProject
-                      ? "Current phase, ready work, blockers and the fastest route back into the right workspace."
-                      : "Open an existing project, create a new one, or open Demo explicitly before operational views are populated."}
-                  </p>
-                </div>
-                {hasActiveProject ? (
-                  <div className="flex flex-wrap gap-2">
-                    {quickLinks.map((item) => {
-                      const Icon = item.icon;
-
-                      return (
-                        <Button asChild className="gap-2" key={item.href} size="sm" variant="secondary">
-                          <Link href={item.href}>
-                            <Icon className="h-4 w-4" />
-                            {item.label}
-                          </Link>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                <div className="rounded-2xl border border-border/70 bg-background/90 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current project</p>
-                  <p className="mt-2 text-base font-semibold text-foreground">{currentProjectName}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentProjectDescription}</p>
-                </div>
-                <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Current phase</p>
-                  <p className="mt-2 text-base font-semibold text-sky-950">{dashboard.projectPhase.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-sky-900">{dashboard.projectPhase.detail}</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-muted/20 p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current posture</p>
-                  <p className="mt-2 text-base font-semibold text-foreground">{status.label}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{status.detail}</p>
-                </div>
-              </div>
-            </div>
-            {dashboard.state !== "live" && dashboard.message ? (
-              <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm leading-6 text-muted-foreground">
-                {dashboard.message}
-              </div>
-            ) : null}
-          </div>
+          <HomeDashboardHero
+            activeProjectName={activeProject?.organizationName ?? null}
+            dashboard={dashboard}
+            hasAuthenticatedUser={hasAuthenticatedUser}
+            isDemoSession={isDemoSession}
+          />
 
           {flashError ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{flashError}</div>
@@ -321,109 +143,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {flashMessage}
             </div>
           ) : null}
-
-          {hasActiveProject ? (
-            <>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <MetricCard
-                  actionLabel={
-                    readyStoriesMetric > 0
-                      ? dashboard.projectPhase.key === "framing"
-                        ? "Open Framing"
-                        : "Open ready Delivery Stories"
-                      : undefined
-                  }
-                  className="border-emerald-200 bg-emerald-50/75 text-emerald-950"
-                  description={
-                    dashboard.projectPhase.key === "framing"
-                      ? `Story Ideas ready for framing: ${dashboard.storyIdeaStats.framingReady}. Delivery Stories ready to start build: ${dashboard.deliveryStoryStats.readyToStartBuild}.`
-                      : `Delivery Stories ready to start build: ${dashboard.deliveryStoryStats.readyToStartBuild}. Story Ideas ready for framing: ${dashboard.storyIdeaStats.framingReady}.`
-                  }
-                  href={readyStoriesMetric > 0 ? (dashboard.projectPhase.key === "framing" ? "/framing" : "/stories?state=ready") : undefined}
-                  icon={GitBranch}
-                  label={dashboard.projectPhase.key === "framing" ? "Ready Story Ideas" : "Ready Delivery Stories"}
-                  value={readyStoriesMetric}
-                />
-                <MetricCard
-                  actionLabel={blockedCount > 0 ? "Open first blocker" : undefined}
-                  className="border-rose-200 bg-rose-50/75 text-rose-950"
-                  description="Blocked tollgates or Value Spine gaps that stop the next step. Open the first blocker to go directly to the affected work."
-                  href={dashboard.topBlockers[0]?.href}
-                  icon={AlertTriangle}
-                  label="Open blockers"
-                  value={blockedCount}
-                />
-                <MetricCard
-                  actionLabel={pendingCount > 0 ? "Open first pending item" : undefined}
-                  className="border-amber-200 bg-amber-50/75 text-amber-950"
-                  description="Submitted framing or delivery items that still wait on human review or a follow-up decision."
-                  href={dashboard.pendingActions[0]?.href}
-                  icon={Clock3}
-                  label="Pending work"
-                  value={pendingCount}
-                />
-              </div>
-
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Needs attention</CardTitle>
-                  <CardDescription>The clearest blockers and pending items in the active project.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[...dashboard.topBlockers.slice(0, 3), ...dashboard.pendingActions.slice(0, 3)].length > 0 ? (
-                    [
-                      ...dashboard.topBlockers.slice(0, 3).map((item) => ({ ...item, attentionKind: "blocker" as const })),
-                      ...dashboard.pendingActions.slice(0, 3).map((item) => ({ ...item, attentionKind: "pending" as const }))
-                    ].map((item) => (
-                      <div className={`rounded-2xl border p-4 ${attentionTone(item.attentionKind)}`} key={item.id}>
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="font-medium text-foreground">{item.title}</p>
-                            <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-                          </div>
-                          {item.href ? (
-                            <Button asChild className="gap-2" size="sm" variant="secondary">
-                              <Link href={item.href}>
-                                Open
-                                <ArrowRight className="h-3.5 w-3.5" />
-                              </Link>
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">
-                      No active blockers or pending review items are currently surfaced.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>Dashboard will light up when a project is active</CardTitle>
-                <CardDescription>
-                  Until then, blockers, review queues, Value Spine and handoff status stay intentionally empty.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Framing</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">Inactive</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Review</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">Inactive</p>
-                </div>
-                <div className="rounded-2xl border border-border/70 bg-background/90 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Delivery</p>
-                  <p className="mt-2 text-lg font-semibold text-foreground">Inactive</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           <Card className="border-border/70 shadow-sm" id="project-list">
             <CardHeader>
