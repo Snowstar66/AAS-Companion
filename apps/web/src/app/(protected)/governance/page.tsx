@@ -30,6 +30,129 @@ function t(language: AppLanguage, en: string, sv: string) {
   return language === "sv" ? sv : en;
 }
 
+function localizeAdaptiveTitle(title: string, language: AppLanguage) {
+  if (language !== "sv") return title;
+  if (title === "Level 1 - Assisted") return "Nivå 1 - Assisterad";
+  if (title === "Level 2 - Structured") return "Nivå 2 - Strukturerad";
+  if (title === "Level 3 - Agentic") return "Nivå 3 - Agentisk";
+  return title;
+}
+
+function localizeAdaptiveDescription(description: string, language: AppLanguage) {
+  if (language !== "sv") return description;
+  if (description === "Human-led delivery with AI support inside direct supervision.") {
+    return "Människoledd leverans med AI-stöd under direkt tillsyn.";
+  }
+  if (description === "Shared human and AI execution with clearer review coverage.") {
+    return "Delad mänsklig och AI-stödd exekvering med tydligare gransknings­täckning.";
+  }
+  if (description === "High AI automation with explicit supervision and traceability.") {
+    return "Hög AI-automation med explicit tillsyn och spårbarhet.";
+  }
+  return description;
+}
+
+function localizeReadinessLabel(label: string, language: AppLanguage) {
+  if (language !== "sv") return label;
+  if (label === "Ready") return "Redo";
+  if (label === "Partial") return "Delvis redo";
+  if (label === "Not ready") return "Inte redo";
+  return label;
+}
+
+function localizeReadinessDetail(detail: string, language: AppLanguage) {
+  if (language !== "sv") return detail;
+  if (detail === "All required roles and active agent controls are covered for the selected AI level.") {
+    return "Alla obligatoriska roller och kontroller för aktiva agenter är täckta för vald AI-nivå.";
+  }
+  if (detail === "Required roles are covered, but some governance warnings still need attention.") {
+    return "Obligatoriska roller är täckta, men vissa styrningsvarningar behöver fortfarande uppmärksamhet.";
+  }
+  if (detail === "Required roles or agent supervision are still missing for the selected AI level.") {
+    return "Obligatoriska roller eller agenttillsyn saknas fortfarande för vald AI-nivå.";
+  }
+  return detail;
+}
+
+function localizeRoleBucketTitle(title: string, language: AppLanguage) {
+  if (language !== "sv") return title;
+  if (title === "Required") return "Obligatoriska";
+  if (title === "Recommended") return "Rekommenderade";
+  if (title === "Optional") return "Valfria";
+  return title;
+}
+
+function localizeRoleLabel(label: string, language: AppLanguage) {
+  if (language !== "sv") return label;
+  if (label === "Value Owner") return "Value Owner";
+  if (label === "Delivery Lead") return "Delivery Lead";
+  if (label === "Architect") return "Arkitekt";
+  if (label === "Risk Owner") return "Riskägare";
+  if (label === "AI Governance Lead") return "AI Governance Lead";
+  if (label === "Domain Owner") return "Domänägare";
+  return label;
+}
+
+function localizeAgentGuidanceLabel(label: string, language: AppLanguage) {
+  if (language !== "sv") return label;
+  if (label === "Code assistant") return "Kodassistent";
+  if (label === "Text assistant") return "Textassistent";
+  if (label === "Basic test generation") return "Grundläggande testgenerering";
+  if (label === "Structured code generation") return "Strukturerad kodgenerering";
+  if (label === "Test generation") return "Testgenerering";
+  if (label === "Story refinement") return "Storyförfining";
+  if (label === "Design assistance") return "Designstöd";
+  if (label === "Agent workflows") return "Agentflöden";
+  if (label === "Semi-autonomous execution") return "Semi-autonom exekvering";
+  return label;
+}
+
+function localizeAgentGuidanceText(text: string, language: AppLanguage) {
+  if (language !== "sv") return text;
+  const map: Record<string, string> = {
+    "Supports human-led coding work.": "Stödjer människoledd kodutveckling.",
+    "Refines framing text and documentation.": "Förfinar framingtext och dokumentation.",
+    "Suggests straightforward tests under direct supervision.": "Föreslår enkla tester under direkt tillsyn.",
+    "Supports scoped delivery work with human review.": "Stödjer avgränsat leveransarbete med mänsklig granskning.",
+    "Produces draft tests for human review.": "Tar fram testutkast för mänsklig granskning.",
+    "Improves design and story definition clarity.": "Förbättrar tydligheten i design och storydefinition.",
+    "Supports design structure and documentation.": "Stödjer designstruktur och dokumentation.",
+    "Coordinates multi-step governed AI work.": "Koordinerar flerstegsarbete med styrd AI.",
+    "Runs bounded flows under named human supervision.": "Kör avgränsade flöden under namngiven mänsklig tillsyn.",
+    "Direct human supervision": "Direkt mänsklig tillsyn",
+    "No structured AI workflow required": "Inget strukturerat AI-flöde krävs",
+    "AQA should review AI output": "AQA bör granska AI-utdata",
+    "Human supervision must be explicit": "Mänsklig tillsyn måste vara explicit",
+    "Prompt and workflow awareness is expected": "Prompt- och flödesmedvetenhet förväntas",
+    "Every active agent must be registered": "Varje aktiv agent måste vara registrerad",
+    "Each active agent needs a named supervisor": "Varje aktiv agent behöver en namngiven handledare",
+    "Agent workflows must be documented": "Agentflöden måste dokumenteras",
+    "Traceability must stay clear": "Spårbarheten måste vara tydlig"
+  };
+  return map[text] ?? text;
+}
+
+function localizeGapMessage(message: string, language: AppLanguage) {
+  if (language !== "sv") return message;
+  return message
+    .replace(/^Missing (.+) for (level \d)\.$/, "Saknar $1 för $2.")
+    .replace(/^(.+) is recommended for (level \d) but not yet named\.$/, "$1 rekommenderas för $2 men är ännu inte namngiven.")
+    .replace(/^Same person holds conflicting roles: (.+)\.$/, "Samma person har konflikterande roller: $1.")
+    .replace(/^Agent "(.+)" has no active human supervisor\.$/, 'Agenten "$1" har ingen aktiv mänsklig handledare.')
+    .replace(/^Agent "(.+)" needs clearer Level 3 traceability\.$/, 'Agenten "$1" behöver tydligare spårbarhet för nivå 3.');
+}
+
+function localizeGapGuidance(guidance: string, language: AppLanguage) {
+  if (language !== "sv") return guidance;
+  const map: Record<string, string> = {
+    "Assign a named active person to this required role.": "Tilldela en namngiven aktiv person till den här obligatoriska rollen.",
+    "Add this role if you want clearer governance coverage.": "Lägg till den här rollen om du vill ha tydligare styrningstäckning.",
+    "Assign a named active supervisor before trusting this agent in live work.": "Tilldela en namngiven aktiv handledare innan du litar på agenten i skarpt arbete.",
+    "Document scope, allowed artifacts and allowed actions more explicitly.": "Dokumentera omfång, tillåtna artefakter och tillåtna åtgärder tydligare."
+  };
+  return map[guidance] ?? guidance;
+}
+
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
 }
@@ -113,7 +236,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
   const governance = await getGovernanceWorkspaceService(request);
 
   if (!governance.ok) {
-    throw new Error(governance.errors[0]?.message ?? t(language, "Governance workspace could not be loaded.", "Governance-arbetsytan kunde inte laddas."));
+    throw new Error(governance.errors[0]?.message ?? t(language, "Governance workspace could not be loaded.", "Styrningsarbetsytan kunde inte laddas."));
   }
 
   const data = governance.data;
@@ -136,7 +259,9 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
     sourceId
   };
   const keyMissingSummary =
-    cockpit.keyMissingItems.length > 0 ? cockpit.keyMissingItems[0] : t(language, "No visible governance gaps for the selected AI level.", "Inga synliga governance-gap finns för vald AI-nivå.");
+    cockpit.keyMissingItems.length > 0
+      ? localizeGapMessage(cockpit.keyMissingItems[0]!, language)
+      : t(language, "No visible governance gaps for the selected AI level.", "Inga synliga styrningsluckor finns för vald AI-nivå.");
 
   return (
     <AppShell
@@ -144,7 +269,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
       topbarProps={{
         eyebrow: "AAS Companion",
         projectName: organization.organizationName,
-        sectionLabel: t(language, "Governance", "Governance"),
+        sectionLabel: t(language, "Governance", "Styrning"),
         badge: formatLabel(selectedLevel)
       }}
     >
@@ -152,9 +277,9 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(17,94,89,0.18),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <Shield className="h-3.5 w-3.5 text-primary" />
-            {t(language, "Adaptive governance", "Adaptiv governance")}
+            {t(language, "Adaptive governance", "Adaptiv styrning")}
           </div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">{t(language, "Governance cockpit", "Governance-cockpit")}</h1>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">{t(language, "Governance cockpit", "Styrningscockpit")}</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
             {t(
               language,
@@ -197,21 +322,21 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <ActionSummaryCard
             className="border-sky-200 bg-sky-50/80 shadow-sm"
-            description={levelDefinition.description}
+            description={localizeAdaptiveDescription(levelDefinition.description, language)}
             label={t(language, "Selected AI level", "Vald AI-nivå")}
-            value={levelDefinition.title}
+            value={localizeAdaptiveTitle(levelDefinition.title, language)}
           />
           <ActionSummaryCard
             actionHref="#readiness-gaps"
-            actionLabel={t(language, "Open readiness gaps", "Öppna readiness-gap")}
+            actionLabel={t(language, "Open readiness gaps", "Öppna beredskapsluckor")}
             className={`${getReadinessTone(cockpit.readiness)} shadow-sm`}
-            description={cockpit.readinessDetail}
-            label={t(language, "Overall readiness", "Övergripande readiness")}
-            value={cockpit.readinessLabel}
+            description={localizeReadinessDetail(cockpit.readinessDetail, language)}
+            label={t(language, "Overall readiness", "Övergripande beredskap")}
+            value={localizeReadinessLabel(cockpit.readinessLabel, language)}
           />
           <ActionSummaryCard
             actionHref={readinessGaps[0] ? getGapTargetHref(readinessGaps[0].targetSection) : undefined}
-            actionLabel={readinessGaps[0] ? t(language, "Open first gap", "Öppna första gapet") : undefined}
+            actionLabel={readinessGaps[0] ? t(language, "Open first gap", "Öppna första luckan") : undefined}
             className={
               readinessGaps.length === 0
                 ? "border-emerald-200 bg-emerald-50/80 shadow-sm"
@@ -226,7 +351,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>{t(language, "AI level switcher", "AI-nivåväxlare")}</CardTitle>
-            <CardDescription>{t(language, "Change level and the role, agent and readiness expectations update immediately.", "Byt nivå så uppdateras förväntningar på roller, agenter och readiness direkt.")}</CardDescription>
+            <CardDescription>{t(language, "Change level and the role, agent and readiness expectations update immediately.", "Byt nivå så uppdateras förväntningar på roller, agenter och beredskap direkt.")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="-mx-1 overflow-x-auto pb-1">
@@ -274,12 +399,12 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
             <div className="grid gap-4 xl:grid-cols-3">
               {roleBuckets.map((bucket) => (
                 <div className="rounded-2xl border border-border/70 bg-background/90 p-4" key={bucket.category}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{bucket.title}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{localizeRoleBucketTitle(bucket.title, language)}</p>
                   <div className="mt-4 space-y-3">
                     {bucket.items.map((item) => (
                       <div className="rounded-2xl border border-border/70 bg-muted/10 p-3" key={`${bucket.category}-${item.organizationSide}-${item.roleType}`}>
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium text-foreground">{item.label}</p>
+                          <p className="font-medium text-foreground">{localizeRoleLabel(item.label, language)}</p>
                           <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
                             {formatLabel(item.organizationSide)}
                           </span>
@@ -335,7 +460,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
               <Bot className="mt-0.5 h-5 w-5 text-primary" />
               <div>
                 <CardTitle>{t(language, "AI agent setup", "AI-agentuppsättning")}</CardTitle>
-                <CardDescription>{t(language, "Agents stay simple: clear purpose, clear scope, named supervisor and visible status.", "Agenter hålls enkla: tydligt syfte, tydlig scope, namngiven supervisor och synlig status.")}</CardDescription>
+                <CardDescription>{t(language, "Agents stay simple: clear purpose, clear scope, named supervisor and visible status.", "Agenter hålls enkla: tydligt syfte, tydligt omfång, namngiven handledare och synlig status.")}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -346,8 +471,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                 <div className="mt-4 space-y-3">
                   {data.adaptive.agentGuidance.allowedAgents.map((agent) => (
                     <div className="rounded-2xl border border-border/70 bg-muted/10 p-3" key={agent.label}>
-                      <p className="font-medium text-foreground">{agent.label}</p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{agent.purpose}</p>
+                      <p className="font-medium text-foreground">{localizeAgentGuidanceLabel(agent.label, language)}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{localizeAgentGuidanceText(agent.purpose, language)}</p>
                     </div>
                   ))}
                 </div>
@@ -357,7 +482,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                 <div className="mt-4 space-y-3">
                   {data.adaptive.agentGuidance.rules.map((rule) => (
                     <div className="rounded-2xl border border-border/70 bg-muted/10 px-3 py-3 text-sm text-muted-foreground" key={rule}>
-                      {rule}
+                      {localizeAgentGuidanceText(rule, language)}
                     </div>
                   ))}
                 </div>
@@ -393,7 +518,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 text-primary" />
               <div>
-                <CardTitle>{t(language, "Readiness gaps", "Readiness-gap")}</CardTitle>
+                <CardTitle>{t(language, "Readiness gaps", "Beredskapsluckor")}</CardTitle>
                 <CardDescription>{t(language, "Auto-generated, plain-language gaps for the currently selected AI level.", "Autogenererade gap i klarspråk för den AI-nivå som är vald just nu.")}</CardDescription>
               </div>
             </div>
@@ -401,7 +526,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
           <CardContent className="space-y-3">
             {readinessGaps.length === 0 ? (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-                {t(language, "Governance looks ready for", "Governance ser redo ut för")} {formatLabel(selectedLevel)}. {t(language, "Required roles are named and active agents are supervised.", "Obligatoriska roller är namngivna och aktiva agenter är superviserade.")}
+                {t(language, "Governance looks ready for", "Styrningen ser redo ut för")} {formatLabel(selectedLevel)}. {t(language, "Required roles are named and active agents are supervised.", "Obligatoriska roller är namngivna och aktiva agenter har handledare.")}
               </div>
             ) : (
               readinessGaps.map((gap) => (
@@ -415,8 +540,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="font-medium">{gap.message}</p>
-                      <p className="mt-2 text-sm leading-6">{gap.guidance}</p>
+                      <p className="font-medium">{localizeGapMessage(gap.message, language)}</p>
+                      <p className="mt-2 text-sm leading-6">{localizeGapGuidance(gap.guidance, language)}</p>
                     </div>
                     <Button asChild size="sm" variant="secondary">
                       <Link href={getGapTargetHref(gap.targetSection)}>{t(language, "Open relevant section", "Öppna relevant sektion")}</Link>

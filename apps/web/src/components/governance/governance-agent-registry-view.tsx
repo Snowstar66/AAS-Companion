@@ -176,7 +176,7 @@ export function GovernanceAgentRegistryView({
                   </div>
                   <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{agent.purpose}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t(language, "Supervisor", "Supervisor")}: {agent.supervisingPartyRole.fullName}
+                    {t(language, "Supervisor", "Handledare")}: {agent.supervisingPartyRole.fullName}
                   </p>
                 </div>
               </div>

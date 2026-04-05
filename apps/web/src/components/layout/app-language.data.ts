@@ -166,7 +166,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
         description: "Granska, korrigera, bekräfta och godkänn importer."
       },
       "/governance": {
-        label: "Governance",
+        label: "Styrning",
         description: "Roller, AI-nivå, risker och spårbar sign-off."
       },
       "/help": {
@@ -174,7 +174,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
         description: "Metodguide, processflöde och nyckelbegrepp."
       },
       "/admin": {
-        label: "Admin",
+        label: "Administration",
         description: "Rensa testprojekt i bulk och ta bort dem permanent."
       }
     },
@@ -185,9 +185,9 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       "Value Spine": "Value Spine",
       Import: "Import",
       "Human Review": "Mänsklig granskning",
-      Governance: "Governance",
+      Governance: "Styrning",
       Help: "Hjälp",
-      Admin: "Admin",
+      Admin: "Administration",
       Dashboard: "Översikt",
       Unavailable: "Otillgänglig",
       Stories: "Stories",

@@ -65,7 +65,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       hideRightRail
       topbarProps={{
         eyebrow: "AAS Companion",
-        title: t("Admin", "Admin"),
+        title: t("Admin", "Administration"),
         badge: t("Cleanup", "Rensning")
       }}
     >
@@ -75,7 +75,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-white/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-red-900">
                 <DatabaseZap className="h-3.5 w-3.5" />
-                {t("Admin cleanup", "Adminrensning")}
+                {t("Admin cleanup", "Administrativ rensning")}
               </div>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{t("Aggressive project cleanup", "Aggressiv projektrensning")}</h1>
@@ -108,7 +108,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         {!canManageProjects || isDemoSession ? (
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-              <CardTitle>{t("Admin cleanup is unavailable", "Adminrensning är inte tillgänglig")}</CardTitle>
+              <CardTitle>{t("Admin cleanup is unavailable", "Administrativ rensning är inte tillgänglig")}</CardTitle>
               <CardDescription>{t("Open a normal signed-in project account before trying to remove persisted data.", "Öppna ett vanligt inloggat projektkonto innan du försöker ta bort sparad data.")}</CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
@@ -252,17 +252,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           ) : null}
                           {item.itemCount !== null ? (
                             <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
-                              {item.itemCount} items
+                              {item.itemCount} {t("items", "objekt")}
                             </span>
                           ) : null}
                         </div>
                         <p className="mt-3 text-sm font-semibold">{item.summary}</p>
                         <p className="mt-2 text-sm opacity-80">
-                          {item.action.replaceAll("_", " ")} on {item.entityType.replaceAll("_", " ")} {item.entityId}
+                          {item.action.replaceAll("_", " ")} {t("on", "på")} {item.entityType.replaceAll("_", " ")} {item.entityId}
                         </p>
                         {item.detail ? <p className="mt-2 text-sm opacity-80">{item.detail}</p> : null}
                         <p className="mt-3 text-xs opacity-70">
-                          {item.createdAt.toLocaleString("sv-SE")}
+                          {item.createdAt.toLocaleString(language === "sv" ? "sv-SE" : "en-US")}
                           {item.actorName ? ` • ${item.actorName}` : ""}
                         </p>
                       </div>
