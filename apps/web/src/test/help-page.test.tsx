@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import HelpPage from "@/app/help/page";
+import { HelpPageContent } from "@/components/help/help-page-content";
 import { Sidebar } from "@/components/layout/sidebar";
 
 vi.mock("@aas-companion/domain/navigation", () => ({
@@ -59,5 +60,30 @@ describe("Help page", () => {
     expect(screen.getByText("AI levels and human mandate")).toBeDefined();
     expect(screen.getByText("How this app is built")).toBeDefined();
     expect(screen.getByRole("link", { name: /Back to work/i }).getAttribute("href")).toBe("/review");
+  });
+
+  it("switches help language and remembers the selected language", async () => {
+    cleanup();
+    window.localStorage.clear();
+
+    const { unmount } = render(<HelpPageContent returnTo="/review" />);
+
+    expect(screen.getAllByRole("heading", { name: "What is this tool?" }).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /svenska/i }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("heading", { name: "Vad är det här verktyget?" }).length).toBeGreaterThan(0);
+    });
+
+    expect(window.localStorage.getItem("aas-help-language")).toBe("sv");
+
+    unmount();
+
+    render(<HelpPageContent returnTo="/review" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("heading", { name: "Vad är det här verktyget?" }).length).toBeGreaterThan(0);
+    });
   });
 });
