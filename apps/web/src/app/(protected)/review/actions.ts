@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   deleteArtifactIntakeSessionService,
-  getArtifactCandidateService,
+  getArtifactCandidatesService,
   promoteArtifactCandidateService,
   reviewArtifactCandidateService
 } from "@aas-companion/api";
@@ -225,38 +225,26 @@ export async function submitArtifactBulkReviewAction(formData: FormData) {
     );
   }
 
-  const candidateResults = await Promise.all(
-    candidateIds.map(async (candidateId) => ({
-      candidateId,
-      result: await getArtifactCandidateService(session.organization.organizationId, candidateId)
-    }))
-  );
-  const failedLookup = candidateResults.find((entry) => !entry.result.ok || !entry.result.data);
+  const candidatesResult = await getArtifactCandidatesService(session.organization.organizationId, candidateIds);
 
-  if (failedLookup && !failedLookup.result.ok) {
+  if (!candidatesResult.ok) {
     redirect(
       buildRedirect({
         status: "error",
-        message: failedLookup.result.errors[0]?.message ?? "One or more selected imported candidates could not be loaded."
+        message: candidatesResult.errors[0]?.message ?? "One or more selected imported candidates could not be loaded."
       })
     );
   }
 
-  if (failedLookup) {
+  const candidates = candidatesResult.ok ? candidatesResult.data : [];
+
+  if (candidates.length !== candidateIds.length) {
     redirect(
       buildRedirect({
         status: "error",
         message: "One or more selected imported candidates could not be loaded."
       })
     );
-  }
-
-  const candidates = [];
-
-  for (const entry of candidateResults) {
-    if (entry.result.ok && entry.result.data) {
-      candidates.push(entry.result.data);
-    }
   }
   const intents = [...new Set(candidates.map((candidate) => candidate.intakeSession.importIntent ?? "framing"))];
 

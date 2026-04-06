@@ -11,6 +11,7 @@ export {
 export {
   applyApprovedArtifactFileCarryForwardToOutcome,
   getArtifactCandidateById,
+  getArtifactCandidatesByIds,
   listArtifactCandidatesForOrganization,
   promoteArtifactCandidate,
   promoteArtifactCandidatesBulk,

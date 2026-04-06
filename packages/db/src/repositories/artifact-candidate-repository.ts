@@ -817,6 +817,25 @@ export async function getArtifactCandidateById(organizationId: string, candidate
   });
 }
 
+export async function getArtifactCandidatesByIds(organizationId: string, candidateIds: string[]) {
+  if (candidateIds.length === 0) {
+    return [];
+  }
+
+  return prisma.artifactAasCandidate.findMany({
+    where: {
+      organizationId,
+      id: {
+        in: candidateIds
+      }
+    },
+    include: {
+      intakeSession: true,
+      file: true
+    }
+  });
+}
+
 async function loadReviewCandidate(
   tx: Prisma.TransactionClient,
   organizationId: string,

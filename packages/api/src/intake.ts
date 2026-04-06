@@ -5,6 +5,7 @@ import {
   deleteArtifactIntakeSession,
   getArtifactIntakeFileById,
   getArtifactCandidateById,
+  getArtifactCandidatesByIds,
   listArtifactCandidatesForOrganization,
   listArtifactIntakeSessions,
   promoteArtifactCandidate,
@@ -100,6 +101,10 @@ export async function deleteArtifactIntakeSessionService(input: {
 
 export async function getArtifactCandidateService(organizationId: string, candidateId: string) {
   return success(await getArtifactCandidateById(organizationId, candidateId));
+}
+
+export async function getArtifactCandidatesService(organizationId: string, candidateIds: string[]) {
+  return success(await getArtifactCandidatesByIds(organizationId, candidateIds));
 }
 
 export async function createArtifactIntakeSessionService(input: {

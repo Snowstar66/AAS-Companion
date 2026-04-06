@@ -7,7 +7,7 @@ import {
   applyApprovedArtifactFileCarryForwardToOutcomeService,
   createArtifactIntakeSessionService,
   createNativeEpicFromOutcomeService,
-  getArtifactCandidateService,
+  getArtifactCandidatesService,
   promoteArtifactCandidateService,
   promoteArtifactCandidatesBulkService,
   reviewArtifactCandidatesBulkService,
@@ -90,6 +90,57 @@ function readDynamicLines(formData: FormData, scope: "candidate" | "section", id
     .split("\n")
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
+function normalizeComparableValue(value: unknown) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (value === undefined) {
+    return null;
+  }
+
+  return value ?? null;
+}
+
+function sameStringList(left: unknown, right: unknown) {
+  const leftList = Array.isArray(left)
+    ? left.map((value) => String(value).trim()).filter(Boolean)
+    : [];
+  const rightList = Array.isArray(right)
+    ? right.map((value) => String(value).trim()).filter(Boolean)
+    : [];
+
+  if (leftList.length !== rightList.length) {
+    return false;
+  }
+
+  return leftList.every((value, index) => value === rightList[index]);
+}
+
+function draftRecordNeedsUpdate(
+  currentDraftRecord: Record<string, unknown> | null | undefined,
+  nextDraftRecord: Record<string, unknown>
+) {
+  for (const [field, nextValue] of Object.entries(nextDraftRecord)) {
+    const currentValue = currentDraftRecord?.[field];
+
+    if (Array.isArray(nextValue) || Array.isArray(currentValue)) {
+      if (!sameStringList(currentValue, nextValue)) {
+        return true;
+      }
+
+      continue;
+    }
+
+    if (normalizeComparableValue(currentValue) !== normalizeComparableValue(nextValue)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 const FALLBACK_EPIC_OPTION_VALUE = "__fallback_epic__";
@@ -471,23 +522,21 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     );
   }
 
-  const candidateResults = await Promise.all(
-    selectedCandidateIds.map(async (candidateId) => ({
-      candidateId,
-      result: await getArtifactCandidateService(session.organization.organizationId, candidateId)
-    }))
+  const candidatesResult = await getArtifactCandidatesService(
+    session.organization.organizationId,
+    selectedCandidateIds
   );
-  const failedLookup = candidateResults.find((entry) => !entry.result.ok || !entry.result.data);
 
-  if (failedLookup && !failedLookup.result.ok) {
+  if (!candidatesResult.ok) {
     await redirectWithApprovalError(
-      failedLookup.result.errors[0]?.message ?? "One or more imported candidates could not be loaded for bulk approval."
+      candidatesResult.errors[0]?.message ?? "One or more imported candidates could not be loaded for bulk approval."
     );
   }
+  const candidates = candidatesResult.ok ? candidatesResult.data : [];
 
-  const candidates = candidateResults.flatMap((entry) =>
-    entry.result.ok && entry.result.data ? [entry.result.data] : []
-  );
+  if (candidates.length !== selectedCandidateIds.length) {
+    await redirectWithApprovalError("One or more imported candidates could not be loaded for bulk approval.");
+  }
   const selectedOutcomeCandidates = candidates.filter((candidate) => candidate.type === "outcome");
   const selectedOutcomeCandidateIds = new Set(selectedOutcomeCandidates.map((candidate) => candidate.id));
   const selectedOutcomeCandidateId =
@@ -721,7 +770,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     );
   }
 
-  const candidatePreparationPayloads = candidates.map((candidate) => {
+  const candidatePreparationPayloads = candidates.flatMap((candidate) => {
       const currentOutcomeLink =
         candidate.type === "story"
           ? readResolvedStoryOutcomeSelection(candidate)
@@ -775,7 +824,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
                 epicCandidateId: usesFallbackEpic ? null : currentEpicLink || null
               };
 
-      return {
+      const payload = {
         organizationId: session.organization.organizationId,
         actorId: session.userId,
         candidateId: candidate.id,
@@ -783,6 +832,17 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
         reviewComment: "Approved from the framing import spine.",
         draftRecord
       };
+
+      const reviewStatusNeedsUpdate = candidate.reviewStatus !== "confirmed" && candidate.reviewStatus !== "edited";
+      const reviewCommentNeedsUpdate =
+        normalizeComparableValue(candidate.reviewComment) !==
+        normalizeComparableValue(payload.reviewComment);
+      const draftNeedsUpdate = draftRecordNeedsUpdate(
+        (candidate.draftRecord ?? null) as Record<string, unknown> | null,
+        draftRecord
+      );
+
+      return reviewStatusNeedsUpdate || reviewCommentNeedsUpdate || draftNeedsUpdate ? [payload] : [];
     });
   const candidatePreparationResult =
     candidatePreparationPayloads.length > 0
