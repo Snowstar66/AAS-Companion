@@ -3043,7 +3043,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       }
     }
 
-    if (!isComplementingExistingOutcome && !humanDecisions.valueOwnerId) {
+    if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && !isComplementingExistingOutcome && !humanDecisions.valueOwnerId) {
       findings.push({
         code: "value_owner_human_only",
         category: "human_only",
@@ -3052,7 +3052,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!isComplementingExistingOutcome && !humanDecisions.aiAccelerationLevel) {
+    if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && !isComplementingExistingOutcome && !humanDecisions.aiAccelerationLevel) {
       findings.push({
         code: "ai_level_human_only",
         category: "human_only",
@@ -3061,7 +3061,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!isComplementingExistingOutcome && !humanDecisions.riskProfile) {
+    if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && !isComplementingExistingOutcome && !humanDecisions.riskProfile) {
       findings.push({
         code: "risk_profile_human_only",
         category: "human_only",
@@ -3070,7 +3070,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!isComplementingExistingOutcome && !humanDecisions.baselineValidity) {
+    if (shouldSurfaceUncertainty(input.candidate, reviewStatus) && !isComplementingExistingOutcome && !humanDecisions.baselineValidity) {
       findings.push({
         code: "baseline_validity_human_only",
         category: "human_only",

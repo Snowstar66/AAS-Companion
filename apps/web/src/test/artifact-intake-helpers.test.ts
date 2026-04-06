@@ -1543,6 +1543,53 @@ describe("artifact intake helpers", () => {
     ).toBe("discarded");
   });
 
+  it("treats confirmed imported outcomes as human-reviewed even when human-only fields were initially empty", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-outcome-5",
+        type: "outcome",
+        title: "Imported Outcome",
+        summary: "Reduce response time for crisis guidance.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-5",
+          fileName: "framing.md",
+          sectionId: "section-outcome",
+          sectionTitle: "Outcome",
+          sectionMarker: "# Outcome",
+          sourceType: "mixed_markdown_bundle",
+          confidence: "high"
+        },
+        inferredOutcomeCandidateId: null,
+        inferredEpicCandidateId: null,
+        relationshipState: "mapped",
+        relationshipNote: null,
+        acceptanceCriteria: [],
+        testNotes: []
+      },
+      reviewStatus: "confirmed",
+      draftRecord: {
+        key: "OUT-005",
+        title: "Imported Outcome",
+        outcomeStatement: "Reduce response time for crisis guidance for households during critical events.",
+        baselineDefinition: "Current response time from alert to guidance consumption.",
+        baselineSource: "Analytics baseline Q1",
+        timeframe: "Q3 2026"
+      },
+      humanDecisions: {}
+    });
+
+    expect(compliance.summary.humanOnly).toBe(0);
+    expect(compliance.promotionBlocked).toBe(false);
+    expect(
+      inferImportedReadinessState({
+        type: "outcome",
+        complianceResult: compliance,
+        reviewStatus: "confirmed"
+      })
+    ).toBe("imported_framing_ready");
+  });
+
   it("uses ASCII linkage messages in compliance findings", () => {
     const compliance = analyzeArtifactCandidateCompliance({
       candidate: {
