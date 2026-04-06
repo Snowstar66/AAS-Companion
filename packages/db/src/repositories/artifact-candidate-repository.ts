@@ -1397,6 +1397,30 @@ export async function promoteArtifactCandidate(
         }
 
         if (importedReadinessState !== "imported_framing_ready" && importedReadinessState !== "imported_design_ready") {
+          const blockingDetails = complianceResult.findings
+            .filter((finding) => {
+              const disposition = issueDispositions[finding.code];
+              const action = disposition?.action;
+
+              if (!action || action === "pending" || action === "blocked") {
+                return true;
+              }
+
+              if (finding.category === "human_only") {
+                return true;
+              }
+
+              if (finding.category === "missing" || finding.category === "blocked") {
+                return action !== "not_relevant";
+              }
+
+              return action !== "confirmed" && action !== "not_relevant";
+            })
+            .slice(0, 3)
+            .map((finding) => finding.fieldLabel ?? finding.message)
+            .filter(Boolean)
+            .join(", ");
+
           await appendActivityEvent(
             {
               organizationId: candidate.organizationId,
@@ -1412,7 +1436,11 @@ export async function promoteArtifactCandidate(
             tx
           );
 
-          throw new Error("Promotion is blocked until import readiness is green and human confirmation work is complete.");
+          throw new Error(
+            blockingDetails
+              ? `Promotion is blocked until import readiness is green and human confirmation work is complete. Remaining items: ${blockingDetails}.`
+              : "Promotion is blocked until import readiness is green and human confirmation work is complete."
+          );
         }
 
         const promotedReadinessState = deriveImportedReadinessState({

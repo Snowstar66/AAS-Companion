@@ -1461,6 +1461,44 @@ describe("artifact intake helpers", () => {
     ).toBe("imported_framing_ready");
   });
 
+  it("does not require standalone outcome completeness when imported outcome complements an existing project outcome", () => {
+    const compliance = analyzeArtifactCandidateCompliance({
+      candidate: {
+        id: "candidate-outcome-complement-1",
+        type: "outcome",
+        title: "Complement existing outcome",
+        summary: "Supplement the existing governed outcome with imported framing context.",
+        mappingState: "mapped",
+        source: {
+          fileId: "file-outcome-complement-1",
+          fileName: "import.md",
+          sectionId: "section-outcome",
+          sectionTitle: "Outcome",
+          sectionMarker: "## Outcome",
+          sourceType: "mixed_markdown_bundle",
+          confidence: "high"
+        },
+        inferredOutcomeCandidateId: null,
+        inferredEpicCandidateId: null,
+        relationshipState: "mapped",
+        relationshipNote: null,
+        acceptanceCriteria: [],
+        testNotes: []
+      },
+      reviewStatus: "confirmed",
+      draftRecord: {
+        title: "Complement existing outcome",
+        outcomeCandidateId: "project-outcome-42"
+      },
+      humanDecisions: {}
+    });
+
+    expect(compliance.findings.some((finding) => finding.code === "outcome_key_missing")).toBe(false);
+    expect(compliance.findings.some((finding) => finding.code === "outcome_statement_missing")).toBe(false);
+    expect(compliance.findings.some((finding) => finding.code === "baseline_definition_missing")).toBe(false);
+    expect(compliance.findings.some((finding) => finding.code === "baseline_source_missing")).toBe(false);
+  });
+
   it("tracks explicit issue dispositions and progress for import readiness", () => {
     const compliance = analyzeArtifactCandidateCompliance({
       candidate: {

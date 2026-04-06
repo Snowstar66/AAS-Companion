@@ -2987,7 +2987,7 @@ export function analyzeArtifactCandidateCompliance(input: {
   if (input.candidate.type === "outcome") {
     const isComplementingExistingOutcome = Boolean(draftRecord.outcomeCandidateId?.trim());
 
-    if (!draftRecord.key?.trim()) {
+    if (!isComplementingExistingOutcome && !draftRecord.key?.trim()) {
       findings.push({
         code: "outcome_key_missing",
         category: "missing",
@@ -2996,7 +2996,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!draftRecord.outcomeStatement?.trim()) {
+    if (!isComplementingExistingOutcome && !draftRecord.outcomeStatement?.trim()) {
       findings.push({
         code: "outcome_statement_missing",
         category: "missing",
@@ -3005,7 +3005,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!draftRecord.baselineDefinition?.trim()) {
+    if (!isComplementingExistingOutcome && !draftRecord.baselineDefinition?.trim()) {
       findings.push({
         code: "baseline_definition_missing",
         category: "missing",
@@ -3014,7 +3014,7 @@ export function analyzeArtifactCandidateCompliance(input: {
       });
     }
 
-    if (!draftRecord.baselineSource?.trim()) {
+    if (!isComplementingExistingOutcome && !draftRecord.baselineSource?.trim()) {
       findings.push({
         code: "baseline_source_missing",
         category: "missing",
