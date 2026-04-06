@@ -91,17 +91,6 @@ function formatTollgateLabel(value: string, language: AppLanguage) {
   }
 }
 
-function formatEntityLabel(value: string, language: AppLanguage) {
-  switch (value) {
-    case "outcome":
-      return t(language, "outcome", "outcome");
-    case "story":
-      return t(language, "story", "story");
-    default:
-      return value;
-  }
-}
-
 function translateTollgateBlocker(blocker: string, language: AppLanguage) {
   const reframingMatch = blocker.match(
     /^Framing changed after version (\d+)\. Submit version (\d+) to Tollgate 1 for a new approval\.$/
@@ -116,6 +105,36 @@ function translateTollgateBlocker(blocker: string, language: AppLanguage) {
   }
 
   return blocker;
+}
+
+function describeTollgateContext(
+  input: {
+    entityType: string;
+    tollgateType: string;
+  },
+  language: AppLanguage
+) {
+  if (input.entityType === "outcome" && input.tollgateType === "tg1_baseline") {
+    return t(
+      language,
+      "The active Framing needs an updated Tollgate 1 submission.",
+      "Den aktiva framingen behöver en uppdaterad inlämning till Tollgate 1."
+    );
+  }
+
+  if (input.entityType === "story" && input.tollgateType === "story_readiness") {
+    return t(
+      language,
+      "A delivery story still needs readiness work before it can move forward.",
+      "En leveransstory behöver fortfarande readiness-arbete innan den kan gå vidare."
+    );
+  }
+
+  return t(
+    language,
+    `${formatTollgateLabel(input.tollgateType, language)} still needs attention.`,
+    `${formatTollgateLabel(input.tollgateType, language)} kräver fortfarande uppmärksamhet.`
+  );
 }
 
 function isStoryIdeaStarted(input: { valueIntent?: string | null; shortDescription?: string | null; expectedBehavior?: string | null }) {
@@ -330,7 +349,13 @@ export async function getHomeDashboardData(
       tollgate.blockers.map((blocker, index) => ({
         id: `${tollgate.id}-${index}`,
         title: translateTollgateBlocker(blocker, language),
-        detail: `${formatTollgateLabel(tollgate.tollgateType, language)} ${t(language, "on", "på")} ${formatEntityLabel(tollgate.entityType, language)} ${tollgate.entityId}`,
+        detail: describeTollgateContext(
+          {
+            entityType: tollgate.entityType,
+            tollgateType: tollgate.tollgateType
+          },
+          language
+        ),
         severity: "high",
         href: tollgate.entityType === "outcome" ? "/framing" : "/stories"
       }))
