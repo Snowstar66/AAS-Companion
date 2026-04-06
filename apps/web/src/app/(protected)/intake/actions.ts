@@ -71,6 +71,16 @@ function sortCandidateIdsForPromotion(
   return [...candidates].sort((left, right) => weights[left.type] - weights[right.type]);
 }
 
+function chunkItems<T>(items: T[], size: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
 function readDynamicField(formData: FormData, scope: "candidate" | "section", id: string, field: string) {
   return String(formData.get(`${scope}:${id}:${field}`) ?? "").trim();
 }
@@ -819,28 +829,30 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const outcomeAndEpicCandidates = orderedCandidates.filter((candidate) => candidate.type !== "story");
 
   if (outcomeAndEpicCandidates.length > 0) {
-    const bulkPromoteResult = await promoteArtifactCandidatesBulkService({
-      organizationId: session.organization.organizationId,
-      candidateIds: outcomeAndEpicCandidates.map((candidate) => candidate.id),
-      actorId: session.userId,
-      disableAutoPromoteDependencies: true
-    });
+    for (const candidateChunk of chunkItems(outcomeAndEpicCandidates, 8)) {
+      const bulkPromoteResult = await promoteArtifactCandidatesBulkService({
+        organizationId: session.organization.organizationId,
+        candidateIds: candidateChunk.map((candidate) => candidate.id),
+        actorId: session.userId,
+        disableAutoPromoteDependencies: true
+      });
 
-    if (!bulkPromoteResult.ok) {
-      await redirectWithApprovalError(
-        bulkPromoteResult.errors[0]?.message ?? "Selected imported Outcomes or Epics could not be approved."
-      );
-    } else {
-      const promotedOutcomeAndEpicResults = bulkPromoteResult.data;
+      if (!bulkPromoteResult.ok) {
+        await redirectWithApprovalError(
+          bulkPromoteResult.errors[0]?.message ?? "Selected imported Outcomes or Epics could not be approved."
+        );
+      } else {
+        const promotedOutcomeAndEpicResults = bulkPromoteResult.data;
 
-      for (const promoted of promotedOutcomeAndEpicResults) {
-        const promotedCandidate = outcomeAndEpicCandidates.find((candidate) => candidate.id === promoted.candidateId);
+        for (const promoted of promotedOutcomeAndEpicResults) {
+          const promotedCandidate = candidateChunk.find((candidate) => candidate.id === promoted.candidateId);
 
-        if (promotedCandidate?.type === "outcome") {
-          resolvedOutcomeId = promoted.promotedEntityId;
+          if (promotedCandidate?.type === "outcome") {
+            resolvedOutcomeId = promoted.promotedEntityId;
+          }
+
+          promotedCount += 1;
         }
-
-        promotedCount += 1;
       }
     }
   }
@@ -911,21 +923,23 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
 
   if (storyCandidatesInOrder.length > 0) {
-    const bulkStoryPromoteResult = await promoteArtifactCandidatesBulkService({
-      organizationId: session.organization.organizationId,
-      candidateIds: storyCandidatesInOrder.map((candidate) => candidate.id),
-      actorId: session.userId,
-      disableAutoPromoteDependencies: true
-    });
+    for (const candidateChunk of chunkItems(storyCandidatesInOrder, 12)) {
+      const bulkStoryPromoteResult = await promoteArtifactCandidatesBulkService({
+        organizationId: session.organization.organizationId,
+        candidateIds: candidateChunk.map((candidate) => candidate.id),
+        actorId: session.userId,
+        disableAutoPromoteDependencies: true
+      });
 
-    if (!bulkStoryPromoteResult.ok) {
-      await redirectWithApprovalError(
-        bulkStoryPromoteResult.errors[0]?.message ?? "Selected imported Story Ideas could not be approved."
-      );
-    } else {
-      const promotedStoryResults = bulkStoryPromoteResult.data;
+      if (!bulkStoryPromoteResult.ok) {
+        await redirectWithApprovalError(
+          bulkStoryPromoteResult.errors[0]?.message ?? "Selected imported Story Ideas could not be approved."
+        );
+      } else {
+        const promotedStoryResults = bulkStoryPromoteResult.data;
 
-      promotedCount += promotedStoryResults.length;
+        promotedCount += promotedStoryResults.length;
+      }
     }
   }
 
