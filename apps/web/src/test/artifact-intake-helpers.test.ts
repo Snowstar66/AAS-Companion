@@ -694,6 +694,102 @@ describe("artifact intake helpers", () => {
     ).toBe(false);
   });
 
+  it("maps explicit OUTCOME plus EPIC and US headings into a full framing value spine", () => {
+    const content = [
+      "# FULL AAS VALUE SPINE - KRISBEREDSKAPSAPP",
+      "",
+      "## OUTCOME",
+      "",
+      "### Problem Statement",
+      "Many households lack concrete and updated crisis preparedness.",
+      "",
+      "### Baseline",
+      "- Less than 30% have a complete emergency kit",
+      "- 0% have automated follow-up",
+      "",
+      "### Outcome",
+      "> 70% of active users have a complete and updated emergency kit within 60 days",
+      "",
+      "# EPIC 1 - ONBOARDING",
+      "",
+      "## US1.1 Capture household size",
+      "Value Intent: Enable correct resource sizing",
+      "Expected Behavior:",
+      "- Only integers greater than or equal to 1 are accepted",
+      "- The value is stored persistently",
+      "Acceptanskriterier:",
+      "- Input 0 shows validation error",
+      "- Input 3 is saved correctly",
+      "",
+      "## US1.2 Capture children",
+      "Value Intent: Adapt recommendations for children",
+      "Expected Behavior:",
+      "- The user can enter number of children",
+      "Acceptanskriterier:",
+      "- Input 2 adds child-specific items",
+      "",
+      "# EPIC 2 - REMINDERS",
+      "",
+      "## US2.1 Expiry reminder",
+      "Value Intent: Reduce risk from expired items",
+      "Expected Behavior:",
+      "- A reminder is triggered before expiry",
+      "Acceptanskriterier:",
+      "- Reminder is sent three days before expiry"
+    ].join("\n");
+
+    const parsed = parseMarkdownArtifact("file-explicit-us-spine", "krisberedskapsapp.md", content);
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-explicit-us-spine",
+          fileName: "krisberedskapsapp.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const outcomeCandidates = mapping.candidates.filter((candidate) => candidate.type === "outcome");
+    const epicCandidates = mapping.candidates.filter((candidate) => candidate.type === "epic");
+    const storyCandidates = mapping.candidates.filter((candidate) => candidate.type === "story");
+    const firstEpicStories = storyCandidates.filter((candidate) => candidate.draftRecord?.epicCandidateId === epicCandidates[0]?.id);
+    const secondEpicStories = storyCandidates.filter((candidate) => candidate.draftRecord?.epicCandidateId === epicCandidates[1]?.id);
+
+    expect(outcomeCandidates).toHaveLength(1);
+    expect(epicCandidates).toHaveLength(2);
+    expect(storyCandidates).toHaveLength(3);
+    expect(outcomeCandidates[0]?.draftRecord?.problemStatement).toContain("Many households lack concrete");
+    expect(outcomeCandidates[0]?.draftRecord?.baselineDefinition).toContain("Less than 30% have a complete emergency kit");
+    expect(firstEpicStories).toHaveLength(2);
+    expect(secondEpicStories).toHaveLength(1);
+    expect(firstEpicStories[0]?.title).toBe("Capture household size");
+    expect(firstEpicStories[0]?.draftRecord?.valueIntent).toBe("Enable correct resource sizing");
+    expect(firstEpicStories[0]?.draftRecord?.expectedBehavior).toContain("Only integers greater than or equal to 1 are accepted");
+    expect(firstEpicStories[0]?.draftRecord?.acceptanceCriteria).toEqual([]);
+    expect(
+      shouldPreferDeterministicFramingImport({
+        importIntent: "framing",
+        explicitValueSpineCounts: {
+          outcomes: 1,
+          epics: 2,
+          stories: 3
+        },
+        aiCandidateCounts: {
+          outcomes: 1,
+          epics: 1,
+          stories: 1
+        },
+        deterministicCandidateCounts: {
+          outcomes: outcomeCandidates.length,
+          epics: epicCandidates.length,
+          stories: storyCandidates.length
+        }
+      })
+    ).toBe(true);
+  });
+
   it("collapses multiple framing outcomes from the same file into one merged outcome candidate", () => {
     const parsed = parseMarkdownArtifact(
       "file-framing-merged-outcome-1",

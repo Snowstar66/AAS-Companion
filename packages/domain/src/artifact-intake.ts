@@ -979,6 +979,9 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
     const hasExplicitOutcomeKey = Boolean(extractImportedCandidateKey("outcome", section.title));
     const hasExplicitEpicKey = Boolean(extractImportedCandidateKey("epic", section.title));
     const hasExplicitStoryKey = Boolean(extractImportedCandidateKey("story", section.title));
+    const hasExplicitEpicHeading = /^epic\s+\d+\b/i.test(section.title.trim());
+    const hasExplicitStoryHeading = /^us\d+(?:\.\d+)+\b/i.test(section.title.trim());
+    const hasExplicitOutcomeHeading = /^outcome\b/i.test(section.title.trim());
     const candidates: Array<{ kind: ArtifactParsedSection["kind"]; confidence: ArtifactParsedSection["confidence"] }> = [];
 
     if (/problem|goal|objective|vision/.test(title) || /problem statement|objective|goal|product vision|vision/.test(text)) {
@@ -991,21 +994,27 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
       });
     }
 
-    if (hasExplicitOutcomeKey || /outcome/.test(title) || /outcome statement|expected outcome|success metric/.test(text)) {
+    if (
+      hasExplicitOutcomeKey ||
+      hasExplicitOutcomeHeading ||
+      /^baseline$/i.test(section.title.trim()) ||
+      /outcome/.test(title) ||
+      /outcome statement|expected outcome|success metric/.test(text)
+    ) {
       candidates.push({
         kind: "outcome_candidate",
         confidence: confidenceFromSignals(
-          hasExplicitOutcomeKey || /outcome/.test(title) ? 1 : 0,
+          hasExplicitOutcomeKey || hasExplicitOutcomeHeading || /^baseline$/i.test(section.title.trim()) || /outcome/.test(title) ? 1 : 0,
           /outcome statement|expected outcome|success metric/.test(text) ? 1 : 0
         )
       });
     }
 
-    if (hasExplicitEpicKey || /epic/.test(title) || /epic key|epic title/.test(text)) {
+    if (hasExplicitEpicKey || hasExplicitEpicHeading || /epic/.test(title) || /epic key|epic title/.test(text)) {
       candidates.push({
         kind: "epic_candidate",
         confidence: confidenceFromSignals(
-          hasExplicitEpicKey || /epic/.test(title) ? 1 : 0,
+          hasExplicitEpicKey || hasExplicitEpicHeading || /epic/.test(title) ? 1 : 0,
           /epic key|epic title/.test(text) ? 1 : 0
         )
       });
@@ -1013,6 +1022,7 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
 
     if (
       hasExplicitStoryKey ||
+      hasExplicitStoryHeading ||
       /story/.test(title) ||
       /story[-\s]id|as a .* i want .* so that/.test(text) ||
       (structuredStorySpec && /^(title|summary|story type|value intent)$/i.test(section.title))
@@ -1020,7 +1030,7 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
       candidates.push({
         kind: "story_candidate",
         confidence: confidenceFromSignals(
-          hasExplicitStoryKey || /story/.test(title) ? 1 : 0,
+          hasExplicitStoryKey || hasExplicitStoryHeading || /story/.test(title) ? 1 : 0,
           /story[-\s]id|as a .* i want .* so that/.test(text) ? 1 : 0
         )
       });
@@ -1191,6 +1201,141 @@ function dedupeArtifactText(values: string[]) {
 
 function normalizeInlineText(value: string) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+const structuredArtifactFieldLabels = [
+  "Title",
+  "Story Type",
+  "Value Intent",
+  "User Value",
+  "Benefit",
+  "Summary",
+  "Intent",
+  "Expected Behavior",
+  "Behavior",
+  "Förväntat beteende",
+  "Acceptance Criteria",
+  "Acceptanskriterier",
+  "AI Usage Scope",
+  "Test Definition",
+  "Test Notes",
+  "Definition of Done",
+  "Problem Statement",
+  "Product Vision",
+  "Outcome Statement",
+  "Statement",
+  "Baseline Definition",
+  "Baseline",
+  "Measurement Method",
+  "Baseline Source",
+  "Timeframe",
+  "Time Horizon",
+  "Purpose",
+  "Risk Note",
+  "Scope In",
+  "Scope Out",
+  "Story ID",
+  "Epic ID",
+  "Outcome ID",
+  "Outcome Link",
+  "Epic Link"
+] as const;
+
+function parseTaggedFieldLine(line: string) {
+  const normalizedLine = line
+    .trim()
+    .replace(/^[-*]\s+/, "")
+    .replace(/[*_`]/g, "")
+    .trim();
+  const separatorIndex = normalizedLine.indexOf(":");
+
+  if (separatorIndex <= 0) {
+    return null;
+  }
+
+  return {
+    label: normalizeHeading(normalizedLine.slice(0, separatorIndex)),
+    value: normalizedLine.slice(separatorIndex + 1).trim()
+  };
+}
+
+function extractTaggedBlockLines(text: string, labels: string[]) {
+  const normalizedLabels = new Set(labels.map((label) => normalizeHeading(label)));
+  const knownLabels = new Set(structuredArtifactFieldLabels.map((label) => normalizeHeading(label)));
+  const capturedLines: string[] = [];
+  let capturing = false;
+
+  for (const rawLine of text.split("\n")) {
+    const parsedField = parseTaggedFieldLine(rawLine);
+
+    if (!capturing) {
+      if (!parsedField || !normalizedLabels.has(parsedField.label)) {
+        continue;
+      }
+
+      capturing = true;
+
+      if (parsedField.value) {
+        capturedLines.push(parsedField.value);
+      }
+
+      continue;
+    }
+
+    if (parsedField && knownLabels.has(parsedField.label) && !normalizedLabels.has(parsedField.label)) {
+      break;
+    }
+
+    const trimmedLine = rawLine.trim();
+
+    if (!trimmedLine) {
+      if (capturedLines.length > 0) {
+        break;
+      }
+
+      continue;
+    }
+
+    capturedLines.push(trimmedLine.replace(/[*_`]/g, "").trim());
+  }
+
+  return capturedLines;
+}
+
+function extractTaggedBlockList(text: string, labels: string[]) {
+  return [...new Set(
+    extractTaggedBlockLines(text, labels)
+      .map((line) => line.replace(/^[-*]\s+/, "").trim())
+      .filter(Boolean)
+  )];
+}
+
+function extractTaggedBlockText(text: string, labels: string[]) {
+  const lines = extractTaggedBlockList(text, labels);
+
+  if (lines.length === 0) {
+    return "";
+  }
+
+  return lines.join(" ");
+}
+
+function stripStructuredHeadingPrefix(candidateType: ArtifactAasCandidate["type"], value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (candidateType === "epic") {
+    return trimmed.replace(/^EPIC\s+\d+\s*[-–—:|]?\s*/i, "").trim();
+  }
+
+  if (candidateType === "story") {
+    return trimmed.replace(/^US\d+(?:\.\d+)+\s*[-–—:|]?\s*/i, "").trim();
+  }
+
+  return trimmed;
 }
 
 function extractStoryNarrative(text: string) {
@@ -2147,17 +2292,23 @@ function resolveImportedCandidateTitle(input: {
     input.key
   );
 
-  if (strippedCurrentTitle) {
-    return strippedCurrentTitle;
+  const strippedStructuredCurrentTitle = stripStructuredHeadingPrefix(input.candidateType, strippedCurrentTitle);
+
+  if (strippedStructuredCurrentTitle) {
+    return strippedStructuredCurrentTitle;
   }
 
   const strippedSectionTitle = stripImportedCandidateKeyPrefix(input.candidateType, input.section.title, input.key);
+  const strippedStructuredSectionTitle = stripStructuredHeadingPrefix(input.candidateType, strippedSectionTitle);
 
-  if (strippedSectionTitle) {
-    return strippedSectionTitle;
+  if (strippedStructuredSectionTitle) {
+    return strippedStructuredSectionTitle;
   }
 
-  return input.currentTitle?.trim() || input.section.title.trim();
+  return stripStructuredHeadingPrefix(
+    input.candidateType,
+    input.currentTitle?.trim() || input.section.title.trim()
+  );
 }
 
 function shouldSkipStructuralFramingCandidateSection(
@@ -2212,6 +2363,8 @@ function buildDraftRecordFromParsedSection(input: {
   inferredOutcomeCandidateId?: string | undefined;
   inferredEpicCandidateId?: string | undefined;
 }) {
+  const normalizedSectionTitle = normalizeHeading(input.section.title);
+  const sectionBody = getStructuredSectionBody(input.section);
   const resolvedKey = resolveImportedCandidateKey({
     candidateType: input.candidateType,
     section: input.section,
@@ -2231,14 +2384,17 @@ function buildDraftRecordFromParsedSection(input: {
       problemStatement:
         extractTaggedLineValue(input.section.text, "Problem Statement") ||
         extractTaggedLineValue(input.section.text, "Product Vision") ||
+        (/^problem statement$/.test(normalizedSectionTitle) ? sectionBody || input.section.text : "") ||
         null,
       outcomeStatement:
         extractTaggedLineValue(input.section.text, "Outcome Statement") ||
         extractTaggedLineValue(input.section.text, "Statement") ||
+        (/^outcome$/.test(normalizedSectionTitle) ? sectionBody || input.section.text : "") ||
         summarizeText(input.section.text),
       baselineDefinition:
         extractTaggedLineValue(input.section.text, "Baseline Definition") ||
         extractTaggedLineValue(input.section.text, "Baseline") ||
+        (/^baseline$/.test(normalizedSectionTitle) ? sectionBody || input.section.text : "") ||
         null,
       baselineSource:
         extractTaggedLineValue(input.section.text, "Measurement Method") ||
@@ -2296,11 +2452,13 @@ function buildDraftRecordFromParsedSection(input: {
   const valueIntent = extractTaggedLineValue(input.section.text, "Value Intent");
   const expectedBehavior =
     extractTaggedLineValue(input.section.text, "Expected Behavior") ||
+    extractTaggedBlockText(input.section.text, ["Expected Behavior", "Behavior", "Förväntat beteende"]) ||
     extractTaggedLineValue(input.section.text, "Summary") ||
     null;
   const aiUsageScope = extractTaggedLineList(input.section.text, "AI Usage Scope");
   const definitionOfDone = extractTaggedLineList(input.section.text, "Definition of Done");
   const rawStoryType = extractTaggedLineValue(input.section.text, "Story Type");
+  const explicitAcceptanceCriteria = extractTaggedBlockList(input.section.text, ["Acceptance Criteria", "Acceptanskriterier"]);
 
   return {
     key: resolvedKey,
@@ -2319,7 +2477,7 @@ function buildDraftRecordFromParsedSection(input: {
         ? valueIntent
         : summarizeText(input.section.text),
     expectedBehavior,
-    acceptanceCriteria: input.acceptanceCriteria,
+    acceptanceCriteria: explicitAcceptanceCriteria.length > 0 ? explicitAcceptanceCriteria : input.acceptanceCriteria,
     aiUsageScope,
     testDefinition: input.testNotes.length > 0 ? input.testNotes.join("\n") : null,
     definitionOfDone,

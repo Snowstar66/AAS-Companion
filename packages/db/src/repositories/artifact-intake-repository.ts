@@ -117,11 +117,11 @@ function countExplicitValueSpineHeadings(input: {
       for (const section of file.parseResult.sections) {
         const title = section.title.trim().toUpperCase();
 
-        if (/^(OUT|OUTCOME)-\d+\b/.test(title)) {
+        if (/^(OUT|OUTCOME)-\d+\b/.test(title) || /^OUTCOME\b/.test(title)) {
           counts.outcomes += 1;
-        } else if (/^(EPIC|EPC)-\d+\b/.test(title)) {
+        } else if (/^(EPIC|EPC)-\d+\b/.test(title) || /^EPIC\s+\d+\b/.test(title)) {
           counts.epics += 1;
-        } else if (/^(STORY|SC|STR)-\d+\b/.test(title)) {
+        } else if (/^(STORY|SC|STR)-\d+\b/.test(title) || /^US\d+(?:\.\d+)+\b/.test(title)) {
           counts.stories += 1;
         }
       }
