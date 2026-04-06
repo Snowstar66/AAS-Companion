@@ -8,6 +8,7 @@ import {
   listArtifactCandidatesForOrganization,
   listArtifactIntakeSessions,
   promoteArtifactCandidate,
+  promoteArtifactCandidatesBulk,
   reviewArtifactFileSectionDisposition,
   reviewArtifactFileSectionDispositionsBulk,
   reviewArtifactCandidate,
@@ -245,6 +246,29 @@ export async function promoteArtifactCandidateService(input: {
     return failure({
       code: "artifact_candidate_promotion_blocked",
       message: error instanceof Error ? error.message : "Artifact candidate promotion is blocked."
+    });
+  }
+}
+
+export async function promoteArtifactCandidatesBulkService(input: {
+  organizationId: string;
+  candidateIds: string[];
+  actorId?: string | null;
+  disableAutoPromoteDependencies?: boolean;
+}) {
+  try {
+    return success(
+      await promoteArtifactCandidatesBulk({
+        organizationId: input.organizationId,
+        candidateIds: input.candidateIds,
+        actorId: input.actorId ?? null,
+        disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false
+      })
+    );
+  } catch (error) {
+    return failure({
+      code: "artifact_candidate_bulk_promotion_blocked",
+      message: error instanceof Error ? error.message : "Artifact candidate bulk promotion is blocked."
     });
   }
 }

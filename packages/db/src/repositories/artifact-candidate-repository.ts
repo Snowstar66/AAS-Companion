@@ -863,6 +863,31 @@ type PromotionCandidateRecord = Prisma.ArtifactAasCandidateGetPayload<{
     };
   };
 }>;
+type PromoteArtifactCandidateInput = {
+  organizationId: string;
+  candidateId: string;
+  actorId?: string | null;
+  disableAutoPromoteDependencies?: boolean;
+};
+type PromotionState = {
+  seen: Set<string>;
+  candidateCache: Map<string, PromotionCandidateRecord | null>;
+  outcomeCache: Map<string, Awaited<ReturnType<Prisma.TransactionClient["outcome"]["findFirst"]>> | null>;
+  epicCache: Map<string, Awaited<ReturnType<Prisma.TransactionClient["epic"]["findFirst"]>> | null>;
+  fileCache: Map<string, ReviewFileRecord | null>;
+  preferredProjectOutcomeId: string | null | undefined;
+};
+
+function createPromotionState(): PromotionState {
+  return {
+    seen: new Set<string>(),
+    candidateCache: new Map<string, PromotionCandidateRecord | null>(),
+    outcomeCache: new Map<string, Awaited<ReturnType<Prisma.TransactionClient["outcome"]["findFirst"]>> | null>(),
+    epicCache: new Map<string, Awaited<ReturnType<Prisma.TransactionClient["epic"]["findFirst"]>> | null>(),
+    fileCache: new Map<string, ReviewFileRecord | null>(),
+    preferredProjectOutcomeId: undefined
+  };
+}
 
 async function reviewArtifactCandidateWithinTransaction(
   parsed: ParsedArtifactCandidateReviewActionInput,
@@ -1113,20 +1138,18 @@ export async function reviewArtifactCandidatesBulk(inputs: unknown[]) {
   };
 }
 
-export async function promoteArtifactCandidate(input: {
-  organizationId: string;
-  candidateId: string;
-  actorId?: string | null;
-  disableAutoPromoteDependencies?: boolean;
-}) {
-  return prisma.$transaction(
-    async (tx) => {
-      const seen = new Set<string>();
-      const candidateCache = new Map<string, PromotionCandidateRecord | null>();
-      const outcomeCache = new Map<string, Awaited<ReturnType<typeof tx.outcome.findFirst>> | null>();
-      const epicCache = new Map<string, Awaited<ReturnType<typeof tx.epic.findFirst>> | null>();
-      const fileCache = new Map<string, ReviewFileRecord | null>();
-      let preferredProjectOutcomeId: string | null | undefined;
+export async function promoteArtifactCandidate(
+  input: PromoteArtifactCandidateInput,
+  db: Prisma.TransactionClient | typeof prisma = prisma,
+  sharedState?: PromotionState
+) {
+  const run = async (tx: Prisma.TransactionClient) => {
+      const state = sharedState ?? createPromotionState();
+      const seen = state.seen;
+      const candidateCache = state.candidateCache;
+      const outcomeCache = state.outcomeCache;
+      const epicCache = state.epicCache;
+      const fileCache = state.fileCache;
 
       async function loadCandidate(candidateId: string) {
         if (candidateCache.has(candidateId)) {
@@ -1217,12 +1240,12 @@ export async function promoteArtifactCandidate(input: {
       }
 
       async function loadPreferredProjectOutcomeId() {
-        if (preferredProjectOutcomeId !== undefined) {
-          return preferredProjectOutcomeId;
+        if (state.preferredProjectOutcomeId !== undefined) {
+          return state.preferredProjectOutcomeId;
         }
 
-        preferredProjectOutcomeId = await resolvePreferredProjectOutcomeId(tx, input.organizationId);
-        return preferredProjectOutcomeId;
+        state.preferredProjectOutcomeId = await resolvePreferredProjectOutcomeId(tx, input.organizationId);
+        return state.preferredProjectOutcomeId;
       }
 
     async function autoPromoteDependencyCandidate(dependencyCandidateId: string | null | undefined, label: string) {
@@ -1665,10 +1688,53 @@ export async function promoteArtifactCandidate(input: {
     }
 
       return promoteCandidateWithinTransaction(input.candidateId);
+  };
+
+  if (db === prisma) {
+    return prisma.$transaction((tx) => run(tx), {
+      maxWait: 10_000,
+      timeout: 60_000
+    });
+  }
+
+  return run(db);
+}
+
+export async function promoteArtifactCandidatesBulk(input: {
+  organizationId: string;
+  candidateIds: string[];
+  actorId?: string | null;
+  disableAutoPromoteDependencies?: boolean;
+}) {
+  if (input.candidateIds.length === 0) {
+    return [];
+  }
+
+  return prisma.$transaction(
+    async (tx) => {
+      const sharedState = createPromotionState();
+      const results = [];
+
+      for (const candidateId of input.candidateIds) {
+        results.push(
+          await promoteArtifactCandidate(
+            {
+              organizationId: input.organizationId,
+              candidateId,
+              actorId: input.actorId ?? null,
+              disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false
+            },
+            tx,
+            sharedState
+          )
+        );
+      }
+
+      return results;
     },
     {
       maxWait: 10_000,
-      timeout: 60_000
+      timeout: 120_000
     }
   );
 }

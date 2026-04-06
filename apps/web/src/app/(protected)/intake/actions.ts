@@ -9,6 +9,7 @@ import {
   createNativeEpicFromOutcomeService,
   getArtifactCandidateService,
   promoteArtifactCandidateService,
+  promoteArtifactCandidatesBulkService,
   reviewArtifactCandidatesBulkService,
   reviewArtifactFileSectionDispositionsBulkService,
   reviewArtifactFileSectionDispositionService,
@@ -817,25 +818,31 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
 
   const outcomeAndEpicCandidates = orderedCandidates.filter((candidate) => candidate.type !== "story");
 
-  for (const candidate of outcomeAndEpicCandidates) {
-    const promoteResult = await promoteArtifactCandidateService({
+  if (outcomeAndEpicCandidates.length > 0) {
+    const bulkPromoteResult = await promoteArtifactCandidatesBulkService({
       organizationId: session.organization.organizationId,
-      candidateId: candidate.id,
+      candidateIds: outcomeAndEpicCandidates.map((candidate) => candidate.id),
       actorId: session.userId,
       disableAutoPromoteDependencies: true
     });
 
-    if (!promoteResult.ok) {
-      const failedCandidate = candidates.find((entry) => entry.id === candidate.id);
-      failures.push(`${failedCandidate?.title ?? "Candidate"}: ${promoteResult.errors[0]?.message ?? "Promotion blocked."}`);
-      continue;
-    }
+    if (!bulkPromoteResult.ok) {
+      await redirectWithApprovalError(
+        bulkPromoteResult.errors[0]?.message ?? "Selected imported Outcomes or Epics could not be approved."
+      );
+    } else {
+      const promotedOutcomeAndEpicResults = bulkPromoteResult.data;
 
-    if (candidate.type === "outcome") {
-      resolvedOutcomeId = promoteResult.data.promotedEntityId;
-    }
+      for (const promoted of promotedOutcomeAndEpicResults) {
+        const promotedCandidate = outcomeAndEpicCandidates.find((candidate) => candidate.id === promoted.candidateId);
 
-    promotedCount += 1;
+        if (promotedCandidate?.type === "outcome") {
+          resolvedOutcomeId = promoted.promotedEntityId;
+        }
+
+        promotedCount += 1;
+      }
+    }
   }
 
   if (
@@ -866,7 +873,9 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     resolvedFallbackEpicId = fallbackEpicResult.ok ? fallbackEpicResult.data.id : null;
   }
 
-  for (const candidate of orderedCandidates.filter((entry) => entry.type === "story")) {
+  const storyCandidatesInOrder = orderedCandidates.filter((entry) => entry.type === "story");
+
+  for (const candidate of storyCandidatesInOrder) {
     if (resolvedFallbackEpicId) {
       const story = candidates.find((entry) => entry.id === candidate.id);
       const currentEpicLink = story ? readResolvedStoryEpicSelection(story) : "";
@@ -893,21 +902,25 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
         }
       }
     }
+  }
 
-    const promoteResult = await promoteArtifactCandidateService({
+  if (storyCandidatesInOrder.length > 0) {
+    const bulkStoryPromoteResult = await promoteArtifactCandidatesBulkService({
       organizationId: session.organization.organizationId,
-      candidateId: candidate.id,
+      candidateIds: storyCandidatesInOrder.map((candidate) => candidate.id),
       actorId: session.userId,
       disableAutoPromoteDependencies: true
     });
 
-    if (!promoteResult.ok) {
-      const failedCandidate = candidates.find((entry) => entry.id === candidate.id);
-      failures.push(`${failedCandidate?.title ?? "Candidate"}: ${promoteResult.errors[0]?.message ?? "Promotion blocked."}`);
-      continue;
-    }
+    if (!bulkStoryPromoteResult.ok) {
+      await redirectWithApprovalError(
+        bulkStoryPromoteResult.errors[0]?.message ?? "Selected imported Story Ideas could not be approved."
+      );
+    } else {
+      const promotedStoryResults = bulkStoryPromoteResult.data;
 
-    promotedCount += 1;
+      promotedCount += promotedStoryResults.length;
+    }
   }
 
   if (selectedCarryForwardSectionIds.length > 0) {

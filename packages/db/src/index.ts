@@ -13,6 +13,7 @@ export {
   getArtifactCandidateById,
   listArtifactCandidatesForOrganization,
   promoteArtifactCandidate,
+  promoteArtifactCandidatesBulk,
   reviewArtifactCandidate,
   reviewArtifactCandidatesBulk,
   updateArtifactFileCarryForwardItems
