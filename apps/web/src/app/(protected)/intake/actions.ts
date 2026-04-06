@@ -874,32 +874,38 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
 
   const storyCandidatesInOrder = orderedCandidates.filter((entry) => entry.type === "story");
+  if (resolvedFallbackEpicId) {
+    const fallbackOutcomeId = resolvedOutcomeId as string;
+    const fallbackStoryPayloads = storyCandidatesInOrder
+      .map((candidate) => {
+        const story = candidates.find((entry) => entry.id === candidate.id);
+        const currentEpicLink = story ? readResolvedStoryEpicSelection(story) : "";
 
-  for (const candidate of storyCandidatesInOrder) {
-    if (resolvedFallbackEpicId) {
-      const story = candidates.find((entry) => entry.id === candidate.id);
-      const currentEpicLink = story ? readResolvedStoryEpicSelection(story) : "";
+        if (currentEpicLink && currentEpicLink !== FALLBACK_EPIC_OPTION_VALUE) {
+          return null;
+        }
 
-      if (!currentEpicLink || currentEpicLink === FALLBACK_EPIC_OPTION_VALUE) {
-        const fallbackOutcomeId = resolvedOutcomeId as string;
-
-        const fallbackReviewResult = await reviewArtifactCandidateService({
+        return {
           organizationId: session.organization.organizationId,
           actorId: session.userId,
           candidateId: candidate.id,
-          reviewStatus: "confirmed",
+          reviewStatus: "confirmed" as const,
           reviewComment: "Approved from the framing import spine.",
           draftRecord: {
             epicCandidateId: resolvedFallbackEpicId,
             outcomeCandidateId: fallbackOutcomeId
           }
-        });
+        };
+      })
+      .filter((payload): payload is NonNullable<typeof payload> => payload !== null);
 
-        if (!fallbackReviewResult.ok) {
-          await redirectWithApprovalError(
-            fallbackReviewResult.errors[0]?.message ?? "Fallback Epic could not be linked to the selected Story Idea."
-          );
-        }
+    if (fallbackStoryPayloads.length > 0) {
+      const fallbackReviewResult = await reviewArtifactCandidatesBulkService(fallbackStoryPayloads);
+
+      if (!fallbackReviewResult.ok) {
+        await redirectWithApprovalError(
+          fallbackReviewResult.errors[0]?.message ?? "Fallback Epic could not be linked to the selected Story Ideas."
+        );
       }
     }
   }
