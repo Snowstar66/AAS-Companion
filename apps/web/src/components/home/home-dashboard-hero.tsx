@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clock3, FolderKanban, GitBranch, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, FolderKanban } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 
@@ -100,47 +100,6 @@ function deriveProjectStatus(
     : { label: "In progress", detail: "Work is active inside the current project." };
 }
 
-function MetricCard(props: {
-  label: string;
-  value: number;
-  description: string;
-  className: string;
-  icon: typeof FolderKanban;
-}) {
-  const Icon = props.icon;
-
-  return (
-    <div className={`rounded-3xl border p-4 shadow-sm ${props.className}`}>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em]">{props.label}</p>
-        <Icon className="h-4 w-4 opacity-80" />
-      </div>
-      <p className="mt-3 text-3xl font-semibold tracking-tight">{props.value}</p>
-      <p className="mt-2 text-sm leading-6 opacity-90">{props.description}</p>
-    </div>
-  );
-}
-
-function SummaryChip(props: { label: string; value: string; tone?: "neutral" | "sky" | "rose" | "amber" | "emerald" }) {
-  const toneClass =
-    props.tone === "sky"
-      ? "border-sky-200 bg-sky-50 text-sky-900"
-      : props.tone === "rose"
-        ? "border-rose-200 bg-rose-50 text-rose-900"
-        : props.tone === "amber"
-          ? "border-amber-200 bg-amber-50 text-amber-900"
-          : props.tone === "emerald"
-            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-            : "border-border/70 bg-background/90 text-foreground";
-
-  return (
-    <div className={`rounded-2xl border px-4 py-3 ${toneClass}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-80">{props.label}</p>
-      <p className="mt-2 text-sm font-semibold">{props.value}</p>
-    </div>
-  );
-}
-
 export function HomeDashboardHero(props: HomeDashboardHeroProps) {
   const { language } = useAppChromeLanguage();
   const blockedCount = props.dashboard.topBlockers.length;
@@ -171,7 +130,7 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
           badgeInactive: "Projektåtkomst",
           titleActive: "Projektöversikt",
           titleInactive: "Välj hur du går in i arbetet",
-          bodyActive: "Se var projektet står just nu, vad som bromsar flödet och vad som är närmast att ta vidare i det aktiva projektet.",
+          bodyActive: "Se var projektet står just nu, vad som faktiskt blockerar flödet och vilket nästa steg som behöver tas först.",
           bodyInactive: "Aktivera ett projekt för att få en levande överblick över fas, blockers, reviewflöden och leveransstatus.",
           currentProject: "Nuvarande projekt",
           noActiveProject: "Inget aktivt projekt valt",
@@ -183,22 +142,10 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
             : "Logga in och välj sedan ett projekt eller öppna Demo uttryckligen.",
           currentPhase: "Nuvarande fas",
           currentPosture: "Nuvarande läge",
-          summaryPhase: "Fas",
-          summaryBlockers: "Blockerare",
-          summaryPending: "Väntar",
-          summaryReady: "Redo",
           focusTitle: "Viktigast just nu",
           focusFallback: "Inga omedelbara blockerare eller väntande steg syns just nu.",
           focusFallbackDetail: "Det aktiva projektet ser ut att vara i balans för stunden.",
           openCurrent: "Öppna detta",
-          storyIdeasTotal: "Story Ideas",
-          storyIdeasReady: "Framing-redo",
-          deliveryStoriesTotal: "Delivery Stories",
-          readyToBuild: "Redo för build",
-          storyIdeasTotalDescription: `${props.dashboard.storyIdeaStats.started ?? 0} påbörjade · ${props.dashboard.storyIdeaStats.framingReady} redo för review`,
-          storyIdeasReadyDescription: "Story Ideas som redan är tillräckligt tydliga för nästa steg i framing.",
-          deliveryStoriesTotalDescription: `${props.dashboard.deliveryStoryStats.readyToStartBuild} redo att gå vidare`,
-          readyToBuildDescription: "Delivery Stories med tillräcklig struktur för att kunna tas vidare till build.",
           sectionTitle: "Behöver uppmärksamhet",
           sectionDescription: "De tydligaste blockeringarna och väntande posterna i det aktiva projektet.",
           open: "Öppna",
@@ -215,7 +162,7 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
           badgeInactive: "Project access",
           titleActive: "Project dashboard",
           titleInactive: "Choose how to enter work",
-          bodyActive: "See where the project stands right now, what is slowing delivery down, and what is closest to moving forward.",
+          bodyActive: "See where the project stands right now, what is actually blocking the flow, and which next step needs attention first.",
           bodyInactive: "Activate a project to get a live overview of phase, blockers, review flow, and delivery status.",
           currentProject: "Current project",
           noActiveProject: "No active project selected",
@@ -227,22 +174,10 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
             : "Sign in, then choose a project or enter Demo explicitly.",
           currentPhase: "Current phase",
           currentPosture: "Current posture",
-          summaryPhase: "Phase",
-          summaryBlockers: "Blockers",
-          summaryPending: "Pending",
-          summaryReady: "Ready",
           focusTitle: "Most important right now",
           focusFallback: "No immediate blockers or pending steps are visible right now.",
           focusFallbackDetail: "The active project currently looks balanced.",
           openCurrent: "Open this",
-          storyIdeasTotal: "Story Ideas",
-          storyIdeasReady: "Framing-ready",
-          deliveryStoriesTotal: "Delivery Stories",
-          readyToBuild: "Ready for build",
-          storyIdeasTotalDescription: `${props.dashboard.storyIdeaStats.started ?? 0} started · ${props.dashboard.storyIdeaStats.framingReady} review-ready`,
-          storyIdeasReadyDescription: "Story Ideas already clear enough for the next step in framing.",
-          deliveryStoriesTotalDescription: `${props.dashboard.deliveryStoryStats.readyToStartBuild} ready to move forward`,
-          readyToBuildDescription: "Delivery Stories structured enough to move into build.",
           sectionTitle: "Needs attention",
           sectionDescription: "The clearest blockers and pending items in the active project.",
           open: "Open",
@@ -258,7 +193,7 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
   return (
     <>
       <div className="rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(246,248,252,0.94))] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               <FolderKanban className="h-3.5 w-3.5 text-primary" />
@@ -274,36 +209,27 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
             </div>
 
             {hasActiveProject ? (
-              <>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <SummaryChip label={copy.summaryPhase} tone="sky" value={props.dashboard.projectPhase.label} />
-                  <SummaryChip label={copy.summaryBlockers} tone={blockedCount > 0 ? "rose" : "neutral"} value={String(blockedCount)} />
-                  <SummaryChip label={copy.summaryPending} tone={pendingCount > 0 ? "amber" : "neutral"} value={String(pendingCount)} />
-                  <SummaryChip label={copy.summaryReady} tone={readyCount > 0 ? "emerald" : "neutral"} value={String(readyCount)} />
-                </div>
-
-                <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{copy.focusTitle}</p>
-                      <p className="mt-2 text-base font-semibold text-foreground">
-                        {primaryFocus ? primaryFocus.title : copy.focusFallback}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        {primaryFocus ? primaryFocus.detail : copy.focusFallbackDetail}
-                      </p>
-                    </div>
-                    {primaryFocus?.href ? (
-                      <Button asChild className="gap-2" size="sm" variant="secondary">
-                        <Link href={primaryFocus.href}>
-                          {copy.openCurrent}
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                    ) : null}
+              <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{copy.focusTitle}</p>
+                    <p className="mt-2 text-base font-semibold text-foreground">
+                      {primaryFocus ? primaryFocus.title : copy.focusFallback}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {primaryFocus ? primaryFocus.detail : copy.focusFallbackDetail}
+                    </p>
                   </div>
+                  {primaryFocus?.href ? (
+                    <Button asChild className="gap-2" size="sm" variant="secondary">
+                      <Link href={primaryFocus.href}>
+                        {copy.openCurrent}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  ) : null}
                 </div>
-              </>
+              </div>
             ) : null}
           </div>
 
@@ -341,72 +267,39 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
       </div>
 
       {hasActiveProject ? (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard
-              className="border-sky-200 bg-sky-50/75 text-sky-950"
-              description={copy.storyIdeasTotalDescription}
-              icon={GitBranch}
-              label={copy.storyIdeasTotal}
-              value={props.dashboard.storyIdeaStats.total}
-            />
-            <MetricCard
-              className="border-emerald-200 bg-emerald-50/75 text-emerald-950"
-              description={copy.storyIdeasReadyDescription}
-              icon={ShieldCheck}
-              label={copy.storyIdeasReady}
-              value={props.dashboard.storyIdeaStats.framingReady}
-            />
-            <MetricCard
-              className="border-amber-200 bg-amber-50/75 text-amber-950"
-              description={copy.deliveryStoriesTotalDescription}
-              icon={Clock3}
-              label={copy.deliveryStoriesTotal}
-              value={props.dashboard.deliveryStoryStats.total}
-            />
-            <MetricCard
-              className="border-violet-200 bg-violet-50/75 text-violet-950"
-              description={copy.readyToBuildDescription}
-              icon={Sparkles}
-              label={copy.readyToBuild}
-              value={props.dashboard.deliveryStoryStats.readyToStartBuild}
-            />
-          </div>
-
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>{copy.sectionTitle}</CardTitle>
-              <CardDescription>{copy.sectionDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[...props.dashboard.topBlockers.slice(0, 3), ...props.dashboard.pendingActions.slice(0, 3)].length > 0 ? (
-                [
-                  ...props.dashboard.topBlockers.slice(0, 3).map((item) => ({ ...item, attentionKind: "blocker" as const })),
-                  ...props.dashboard.pendingActions.slice(0, 3).map((item) => ({ ...item, attentionKind: "pending" as const }))
-                ].map((item) => (
-                  <div className={`rounded-2xl border p-4 ${attentionTone(item.attentionKind)}`} key={item.id}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-foreground">{item.title}</p>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-                      </div>
-                      {item.href ? (
-                        <Button asChild className="gap-2" size="sm" variant="secondary">
-                          <Link href={item.href}>
-                            {copy.open}
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                      ) : null}
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>{copy.sectionTitle}</CardTitle>
+            <CardDescription>{copy.sectionDescription}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[...props.dashboard.topBlockers.slice(0, 3), ...props.dashboard.pendingActions.slice(0, 3)].length > 0 ? (
+              [
+                ...props.dashboard.topBlockers.slice(0, 3).map((item) => ({ ...item, attentionKind: "blocker" as const })),
+                ...props.dashboard.pendingActions.slice(0, 3).map((item) => ({ ...item, attentionKind: "pending" as const }))
+              ].map((item) => (
+                <div className={`rounded-2xl border p-4 ${attentionTone(item.attentionKind)}`} key={item.id}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-foreground">{item.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
                     </div>
+                    {item.href ? (
+                      <Button asChild className="gap-2" size="sm" variant="secondary">
+                        <Link href={item.href}>
+                          {copy.open}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    ) : null}
                   </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">{copy.noItems}</div>
-              )}
-            </CardContent>
-          </Card>
-        </>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">{copy.noItems}</div>
+            )}
+          </CardContent>
+        </Card>
       ) : (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>

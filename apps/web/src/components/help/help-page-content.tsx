@@ -47,26 +47,26 @@ export function HelpPageContent(props: { returnTo: string }) {
                   <button
                     aria-label="Switch help page to English"
                     aria-pressed={language === "en"}
-                    className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-base transition ${
+                    className={`inline-flex h-10 w-12 items-center justify-center rounded-xl text-base transition ${
                       language === "en" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/40"
                     }`}
                     onClick={() => setLanguage("en")}
                     title="English"
                     type="button"
                   >
-                    <FlagIcon className="h-5 w-5" country="gb" />
+                    <FlagIcon className="h-5 w-7" country="gb" />
                   </button>
                   <button
                     aria-label="Byt hjälpsidan till svenska"
                     aria-pressed={language === "sv"}
-                    className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-base transition ${
+                    className={`inline-flex h-10 w-12 items-center justify-center rounded-xl text-base transition ${
                       language === "sv" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/40"
                     }`}
                     onClick={() => setLanguage("sv")}
                     title="Svenska"
                     type="button"
                   >
-                    <FlagIcon className="h-5 w-5" country="se" />
+                    <FlagIcon className="h-5 w-7" country="se" />
                   </button>
                 </div>
               </div>

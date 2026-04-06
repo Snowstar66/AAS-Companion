@@ -165,24 +165,24 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
               <button
                 aria-label="Switch app language to English"
                 aria-pressed={language === "en"}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-xl text-sm transition ${
+                className={`inline-flex h-8 w-12 items-center justify-center rounded-xl text-sm transition ${
                   language === "en" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
                 }`}
                 onClick={() => setLanguage("en")}
                 type="button"
               >
-                <FlagIcon className="h-4 w-4" country="gb" />
+                <FlagIcon className="h-4 w-6" country="gb" />
               </button>
               <button
                 aria-label="Switch app language to Swedish"
                 aria-pressed={language === "sv"}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-xl text-sm transition ${
+                className={`inline-flex h-8 w-12 items-center justify-center rounded-xl text-sm transition ${
                   language === "sv" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
                 }`}
                 onClick={() => setLanguage("sv")}
                 type="button"
               >
-                <FlagIcon className="h-4 w-4" country="se" />
+                <FlagIcon className="h-4 w-6" country="se" />
               </button>
             </div>
             <button

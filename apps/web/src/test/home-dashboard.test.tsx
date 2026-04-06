@@ -70,10 +70,8 @@ describe("Home dashboard", () => {
     expect(screen.getByRole("heading", { name: "Project dashboard", level: 1 })).toBeDefined();
     expect(screen.getAllByText("Needs attention").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Framing phase").length).toBeGreaterThan(0);
-    expect(screen.getByText("Story Ideas")).toBeDefined();
-    expect(screen.getByText("Framing-ready")).toBeDefined();
-    expect(screen.getByText("Delivery Stories")).toBeDefined();
-    expect(screen.getByText("Ready for build")).toBeDefined();
+    expect(screen.getByText("Most important right now")).toBeDefined();
+    expect(screen.getAllByText("Baseline definition is missing.").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Project access" })).toBeDefined();
     expect(screen.getByText("Create project")).toBeDefined();
     expect(screen.getAllByText("Demo access").length).toBeGreaterThan(0);
