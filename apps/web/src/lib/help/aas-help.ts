@@ -290,10 +290,10 @@ export function getInlineGuidance(key: Extract<WorkspaceHelpKey, `framing.${stri
   const pattern = language === "sv" ? helpPatternsSv[key] ?? helpPatterns[key] : helpPatterns[key];
 
   if (language === "sv") {
-    return `Anvand faltet for: ${pattern.belongs} Undvik: ${pattern.avoid}`;
+    return `Undvik: ${pattern.avoid}`;
   }
 
-  return `Use this field for: ${pattern.belongs} Avoid: ${pattern.avoid}`;
+  return `Avoid: ${pattern.avoid}`;
 }
 
 export function formatAiLevelLabel(value: string | null | undefined) {

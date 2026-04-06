@@ -824,13 +824,10 @@ export function FramingOutcomeSection({
                     name="timeframe"
                     type="text"
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="timeframeDescription" />
-                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe", language)} />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Vardeagare" : "Value owner"}</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Värdeägare" : "Value owner"}</span>
                   <Suspense
                     fallback={
                       <ValueOwnerFieldFallback
@@ -849,9 +846,6 @@ export function FramingOutcomeSection({
                       organizationId={outcome.organizationId}
                     />
                   </Suspense>
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="valueOwnerDescription" />
-                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -891,7 +885,7 @@ export function FramingOutcomeSection({
                 <div className="xl:col-span-2 rounded-2xl border border-border/70 bg-muted/20 p-4">
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground">
-                      {language === "sv" ? "Lösningskontext och constraints" : "Solution Context & Constraints"}
+                      {language === "sv" ? "Lösningskontext och constraints" : "Solution context and constraints"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       <DeliveryTypeGuidanceText slot="solutionContextDescription" />
@@ -907,13 +901,10 @@ export function FramingOutcomeSection({
                     name="solutionContext"
                     placeholder={
                       language === "sv"
-                        ? "Beskriv affärssammanhanget, användningskontexten, det befintliga systemlandskapet och övergripande integrationsförväntningar som design behöver ta hänsyn till."
-                        : "Describe the business setting, usage context, existing system landscape and high-level integration expectations that design must take into account."
+                        ? "Beskriv affärskontext, användning, systemlandskap och viktiga beroenden som Design behöver ärva."
+                        : "Describe the business context, usage, system landscape, and key dependencies that Design must inherit."
                     }
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="solutionContextFieldDescription" />
-                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_context", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
@@ -925,18 +916,15 @@ export function FramingOutcomeSection({
                     name="generalSolutionConstraints"
                     placeholder={
                       language === "sv"
-                        ? "Lista affärsmässiga, operativa, regulatoriska eller integrationsrelaterade villkor som Design måste uppfylla."
-                        : "List the business, operational, compliance or integration conditions that Design must satisfy."
+                        ? "Lista de affärs-, drift-, compliance- eller integrationsvillkor som inte får brytas."
+                        : "List the business, operational, compliance, or integration conditions that cannot be broken."
                     }
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="constraintsDescription" />
-                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">
-                    {language === "sv" ? "UX-principer att ta vidare till design" : "UX principles to carry into design"}
+                    {language === "sv" ? "UX-principer" : "UX principles"}
                   </span>
                   <textarea
                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
@@ -945,8 +933,8 @@ export function FramingOutcomeSection({
                     name="uxPrinciples"
                     placeholder={
                       language === "sv"
-                        ? "Fånga UI- och UX-principer som mobile-first, tillgänglighet, tydlighet, kontinuitet eller interaktionsbegränsningar som design måste respektera."
-                        : "Capture UI and UX principles such as mobile-first, accessibility, clarity, continuity, or interaction constraints that design must respect."
+                        ? "Fånga principer som tillgänglighet, tydlighet, kontinuitet eller andra UX-gränser som Design ska respektera."
+                        : "Capture principles such as accessibility, clarity, continuity, or other UX boundaries that Design should respect."
                     }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
@@ -955,9 +943,7 @@ export function FramingOutcomeSection({
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">
-                    {language === "sv"
-                      ? "Non-functional requirements att ta vidare till design"
-                      : "Non-functional requirements to carry into design"}
+                    {language === "sv" ? "Non-functional requirements" : "Non-functional requirements"}
                   </span>
                   <textarea
                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
@@ -966,8 +952,8 @@ export function FramingOutcomeSection({
                     name="nonFunctionalRequirements"
                     placeholder={
                       language === "sv"
-                        ? "Fånga krav på prestanda, säkerhet, tillgänglighet, compliance, privacy, tillgänglighet eller driftsäkerhet som design och leverans måste uppfylla."
-                        : "Capture performance, security, availability, compliance, privacy, accessibility or reliability requirements that design and delivery must satisfy."
+                        ? "Fånga krav på till exempel prestanda, säkerhet, tillgänglighet, integritet, compliance eller driftsäkerhet."
+                        : "Capture requirements such as performance, security, availability, privacy, compliance, accessibility, or reliability."
                     }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
@@ -977,7 +963,7 @@ export function FramingOutcomeSection({
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">
-                    {language === "sv" ? "Ytterligare krav att bära vidare" : "Additional requirements to carry forward"}
+                    {language === "sv" ? "Ytterligare krav" : "Additional requirements"}
                   </span>
                   <textarea
                     className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
@@ -986,8 +972,8 @@ export function FramingOutcomeSection({
                     name="additionalRequirements"
                     placeholder={
                       language === "sv"
-                        ? "Fånga extra affärsregler, beroenden, antaganden eller designkrav som inte får tappas bort när arbetet går vidare till design."
-                        : "Capture extra business rules, dependencies, assumptions or design-stage requirements that should not be lost when the work moves into design."
+                        ? "Fånga extra affärsregler, beroenden eller antaganden som inte får tappas bort."
+                        : "Capture extra business rules, dependencies, or assumptions that must not be lost."
                     }
                   />
                   <p className="text-sm leading-6 text-muted-foreground">
@@ -1003,13 +989,10 @@ export function FramingOutcomeSection({
                     name="dataSensitivity"
                     placeholder={
                       language === "sv"
-                        ? "Lista vilka datatyper som berörs och deras känslighetsnivå."
-                        : "List the data types involved and their sensitivity level."
+                        ? "Lista vilka datatyper som berörs och varför de påverkar risk eller kontroll."
+                        : "List the data types involved and why they change risk or control."
                     }
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="dataSensitivityDescription" />
-                  </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.data_sensitivity", language)} />
                 </label>
                 <div className="space-y-2">
@@ -1046,9 +1029,6 @@ export function FramingOutcomeSection({
                   field="baseline_definition"
                   guidance={
                     <>
-                      <p className="text-sm leading-6 text-muted-foreground">
-                        <DeliveryTypeGuidanceText slot="baselineCardDescription" />
-                      </p>
                       <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition", language)} />
                     </>
                   }
@@ -1061,7 +1041,7 @@ export function FramingOutcomeSection({
                   validateAction={validateBaselineDefinitionAiAction}
                 />
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Baseline-källa" : "Baseline source"}</span>
+                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Baselinekälla" : "Baseline source"}</span>
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.baselineSource ?? ""}
