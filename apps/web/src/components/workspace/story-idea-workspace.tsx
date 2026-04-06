@@ -536,7 +536,7 @@ export function StoryIdeaWorkspace({
             title={t("Imported lineage", "Importerad lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/review?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
+              <Link href={`/intake?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}

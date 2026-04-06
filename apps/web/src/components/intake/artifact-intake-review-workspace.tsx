@@ -808,6 +808,9 @@ function FramingImportSpine(props: {
           <form action={props.submitFramingBulkApproveAction} className="space-y-4">
             <input name="sessionId" type="hidden" value={props.session.id} />
             <input name="fileId" type="hidden" value={props.selectedFile.id} />
+            {props.suppressedOutcomeCandidateIds.map((candidateId) => (
+              <input key={candidateId} name="suppressedCandidateIds" type="hidden" value={candidateId} />
+            ))}
             <div className="rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">{t(language, "Outcome target", "Outcome-mål")}</p>
               {props.outcomeCandidateOptions.length > 1 ? (

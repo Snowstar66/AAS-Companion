@@ -437,7 +437,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   importedReadinessState: story.epic.importedReadinessState ?? null,
                   lineageHref:
                     story.epic.lineageSourceType === "artifact_aas_candidate" && story.epic.lineageSourceId
-                      ? `/review?candidateId=${story.epic.lineageSourceId}`
+                      ? `/intake?candidateId=${story.epic.lineageSourceId}`
                       : null,
                   stories: [
                     {
@@ -459,7 +459,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                       importedReadinessState: story.importedReadinessState ?? null,
                       lineageHref:
                         story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                          ? `/review?candidateId=${story.lineageSourceId}`
+                          ? `/intake?candidateId=${story.lineageSourceId}`
                           : null
                     }
                   ]
@@ -478,7 +478,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 importedReadinessState: story.outcome.importedReadinessState ?? null,
                 lineageHref:
                   story.outcome.lineageSourceType === "artifact_aas_candidate" && story.outcome.lineageSourceId
-                    ? `/review?candidateId=${story.outcome.lineageSourceId}`
+                    ? `/intake?candidateId=${story.outcome.lineageSourceId}`
                     : null
               }}
             />
@@ -597,7 +597,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             title={t("Imported lineage", "Importerad lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/review?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
+              <Link href={`/intake?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}

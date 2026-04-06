@@ -131,15 +131,31 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     workspace.state === "ready"
       ? workspace.sessions.find((artifactSession) => artifactSession.id === sessionId) ?? null
       : null;
+  const candidateSelectedSession =
+    workspace.state === "ready" && candidateId
+      ? workspace.sessions.find((artifactSession) =>
+          artifactSession.allCandidates.some((candidate) => candidate.id === candidateId)
+        ) ?? null
+      : null;
 
   const selectedSession =
     workspace.state === "ready"
-      ? explicitlySelectedSession ?? visibleSessions[0] ?? workspace.sessions[0] ?? null
+      ? explicitlySelectedSession ?? candidateSelectedSession ?? visibleSessions[0] ?? workspace.sessions[0] ?? null
       : null;
   const visibleFiles =
     selectedSession?.files.filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0) ?? [];
+  const candidateSelectedFile =
+    selectedSession && candidateId
+      ? selectedSession.files.find((artifactFile) =>
+          selectedSession.allCandidates.some((candidate) => candidate.id === candidateId && candidate.fileId === artifactFile.id)
+        ) ?? null
+      : null;
   const selectedFile =
-    selectedSession?.files.find((artifactFile) => artifactFile.id === fileId) ?? visibleFiles[0] ?? selectedSession?.files[0] ?? null;
+    selectedSession?.files.find((artifactFile) => artifactFile.id === fileId) ??
+    candidateSelectedFile ??
+    visibleFiles[0] ??
+    selectedSession?.files[0] ??
+    null;
   const selectedSessionCandidates =
     selectedSession && selectedSession.candidates.length > 0
       ? selectedSession.candidates

@@ -107,7 +107,7 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
               <p>{previewResult.errors[0]?.message ?? "Contract generation is currently unavailable."}</p>
               {storyResult.data.story.lineageSourceType === "artifact_aas_candidate" && storyResult.data.story.lineageSourceId ? (
                 <Button asChild className="gap-2" variant="secondary">
-                  <Link href={`/review?candidateId=${storyResult.data.story.lineageSourceId}`}>Open import lineage review</Link>
+                  <Link href={`/intake?candidateId=${storyResult.data.story.lineageSourceId}`}>Open import source</Link>
                 </Button>
               ) : null}
               <Button asChild className="gap-2" variant="secondary">

@@ -142,25 +142,25 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     const attentionStoryIdeas = selectedStoryIdeas.filter((idea) => !idea.ready);
     const lineageTargets = [
       ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
-        ? [{ href: `/review?candidateId=${selectedOutcome.lineageSourceId}`, label: t(language, `Open ${selectedOutcome.key} lineage`, `Oppna ${selectedOutcome.key} lineage`) }]
+        ? [{ href: `/intake?candidateId=${selectedOutcome.lineageSourceId}`, label: t(language, `Show ${selectedOutcome.key} origin`, `Visa ursprung för ${selectedOutcome.key}`) }]
         : []),
       ...selectedEpics
         .filter((epic) => epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId)
         .map((epic) => ({
-          href: `/review?candidateId=${epic.lineageSourceId}`,
-          label: t(language, `Open ${epic.key} lineage`, `Oppna ${epic.key} lineage`)
+          href: `/intake?candidateId=${epic.lineageSourceId}`,
+          label: t(language, `Show ${epic.key} origin`, `Visa ursprung för ${epic.key}`)
         })),
       ...selectedDirectionSeeds
         .filter((seed) => seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId)
         .map((seed) => ({
-          href: `/review?candidateId=${seed.lineageSourceId}`,
-          label: t(language, `Open ${seed.key} lineage`, `Oppna ${seed.key} lineage`)
+          href: `/intake?candidateId=${seed.lineageSourceId}`,
+          label: t(language, `Show ${seed.key} origin`, `Visa ursprung för ${seed.key}`)
         })),
       ...selectedLegacyStoryIdeas
         .filter((story) => story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId)
         .map((story) => ({
-          href: `/review?candidateId=${story.lineageSourceId}`,
-          label: t(language, `Open ${story.key} lineage`, `Oppna ${story.key} lineage`)
+          href: `/intake?candidateId=${story.lineageSourceId}`,
+          label: t(language, `Show ${story.key} origin`, `Visa ursprung för ${story.key}`)
         }))
     ];
     const firstVisibleStoryIdea = selectedStoryIdeas[0] ?? null;
@@ -261,7 +261,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                   importedReadinessState: epic.importedReadinessState ?? null,
                   lineageHref:
                     epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                      ? `/review?candidateId=${epic.lineageSourceId}`
+                      ? `/intake?candidateId=${epic.lineageSourceId}`
                       : null,
                   directionSeeds: (epic.directionSeeds ?? [])
                     .filter((seed) => seed.lifecycleState === "active")
@@ -281,7 +281,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                       importedReadinessState: seed.importedReadinessState ?? null,
                       lineageHref:
                         seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                          ? `/review?candidateId=${seed.lineageSourceId}`
+                          ? `/intake?candidateId=${seed.lineageSourceId}`
                           : null
                     })),
                   stories: (epic.stories ?? [])
@@ -305,7 +305,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                       importedReadinessState: story.importedReadinessState ?? null,
                       lineageHref:
                         story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                          ? `/review?candidateId=${story.lineageSourceId}`
+                          ? `/intake?candidateId=${story.lineageSourceId}`
                           : null
                     }))
                 }))}
@@ -322,7 +322,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                   importedReadinessState: selectedOutcome.importedReadinessState ?? null,
                   lineageHref:
                     selectedOutcome.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
-                      ? `/review?candidateId=${selectedOutcome.lineageSourceId}`
+                      ? `/intake?candidateId=${selectedOutcome.lineageSourceId}`
                       : null
                 }}
                 title={t(language, "Project Value Spine", "Projektets Value Spine")}

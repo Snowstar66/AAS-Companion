@@ -1243,7 +1243,7 @@ export function FramingOutcomeSection({
                     importedReadinessState: epic.importedReadinessState ?? null,
                     lineageHref:
                       epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                        ? `/review?candidateId=${epic.lineageSourceId}`
+                        ? `/intake?candidateId=${epic.lineageSourceId}`
                         : null,
                     directionSeeds: outcome.directionSeeds
                       .filter((seed) => seed.epicId === epic.id)
@@ -1263,7 +1263,7 @@ export function FramingOutcomeSection({
                         importedReadinessState: seed.importedReadinessState ?? null,
                         lineageHref:
                           seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                            ? `/review?candidateId=${seed.lineageSourceId}`
+                            ? `/intake?candidateId=${seed.lineageSourceId}`
                             : null
                       })),
                     stories: outcome.stories
@@ -1286,7 +1286,7 @@ export function FramingOutcomeSection({
                         importedReadinessState: story.importedReadinessState ?? null,
                         lineageHref:
                           story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                            ? `/review?candidateId=${story.lineageSourceId}`
+                            ? `/intake?candidateId=${story.lineageSourceId}`
                             : null
                       }))
                   }))}
@@ -1303,7 +1303,7 @@ export function FramingOutcomeSection({
                     importedReadinessState: outcome.importedReadinessState ?? null,
                     lineageHref:
                       outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId
-                        ? `/review?candidateId=${outcome.lineageSourceId}`
+                        ? `/intake?candidateId=${outcome.lineageSourceId}`
                         : null
                   }}
                 />

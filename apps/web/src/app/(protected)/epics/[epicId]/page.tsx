@@ -207,7 +207,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                   importedReadinessState: epic.importedReadinessState ?? null,
                   lineageHref:
                     epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                      ? `/review?candidateId=${epic.lineageSourceId}`
+                      ? `/intake?candidateId=${epic.lineageSourceId}`
                       : null,
                   directionSeeds: epic.directionSeeds.map((seed) => ({
                     id: seed.id,
@@ -225,7 +225,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     importedReadinessState: seed.importedReadinessState ?? null,
                     lineageHref:
                       seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                        ? `/review?candidateId=${seed.lineageSourceId}`
+                        ? `/intake?candidateId=${seed.lineageSourceId}`
                         : null
                   })),
                   stories: epic.stories.map((story) => ({
@@ -247,7 +247,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     importedReadinessState: story.importedReadinessState ?? null,
                     lineageHref:
                       story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                        ? `/review?candidateId=${story.lineageSourceId}`
+                        ? `/intake?candidateId=${story.lineageSourceId}`
                         : null
                   }))
                 }
@@ -265,7 +265,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                 importedReadinessState: epic.outcome.importedReadinessState ?? null,
                 lineageHref:
                   epic.outcome.lineageSourceType === "artifact_aas_candidate" && epic.outcome.lineageSourceId
-                    ? `/review?candidateId=${epic.outcome.lineageSourceId}`
+                    ? `/intake?candidateId=${epic.outcome.lineageSourceId}`
                     : null
               }}
             />
@@ -563,7 +563,7 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                 </CardHeader>
                 <CardContent>
                   <Button asChild className="gap-2" variant="secondary">
-                    <Link href={`/review?candidateId=${epic.lineageSourceId}`}>
+                    <Link href={`/intake?candidateId=${epic.lineageSourceId}`}>
                       <GitBranch className="h-4 w-4" />
                       Open source candidate review
                     </Link>

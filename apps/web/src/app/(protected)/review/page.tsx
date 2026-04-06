@@ -1408,7 +1408,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             }
             actionLabel={firstImportedCandidate ? <LocalizedText en="Open import approval" sv="Öppna importgodkännande" /> : undefined}
             className="border-border/70 bg-background text-foreground"
-            count={queue.summary.total}
+            count={remainingCount}
             description={
               <LocalizedText
                 en="Imported objects waiting to be approved into Framing or Design."

@@ -866,4 +866,186 @@ describe("Import page", () => {
     expect(screen.getByText(/Imported Story Idea/i)).toBeDefined();
     expect(screen.getByText(/Linked to imported Epic Imported Epic/i)).toBeDefined();
   });
+
+  it("can resolve the correct import workspace from candidateId alone", async () => {
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          candidateId: "candidate-1"
+        })
+      })
+    );
+
+    expect(screen.getAllByRole("heading", { name: "Framing value spine" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Approve" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Imported Story/i).length).toBeGreaterThan(0);
+  });
+
+  it("includes suppressed merged outcomes in framing bulk approval form data", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [],
+      projectEpics: [],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 3,
+        candidateObjects: 2,
+        humanReviewRequired: 1
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-merged-outcomes",
+          label: "Framing import with merged outcomes",
+          importIntent: "framing",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 2,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 2,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [
+            {
+              id: "candidate-outcome-1",
+              fileId: "file-merged-outcomes",
+              type: "outcome",
+              title: "Imported Outcome 1",
+              summary: "Primary outcome.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "OUT-001",
+                title: "Imported Outcome 1",
+                outcomeStatement: "Primary outcome.",
+                baselineDefinition: "",
+                baselineSource: "",
+                timeframe: "",
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: [],
+                outcomeCandidateId: null,
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-merged-outcomes",
+                fileName: "merged.md",
+                sectionId: "section-outcome-1",
+                sectionTitle: "OUT-001",
+                sectionMarker: "### OUT-001",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            },
+            {
+              id: "candidate-outcome-2",
+              fileId: "file-merged-outcomes",
+              type: "outcome",
+              title: "Imported Outcome 2",
+              summary: "Secondary outcome supplement.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "OUT-002",
+                title: "Imported Outcome 2",
+                outcomeStatement: "Secondary outcome supplement.",
+                baselineDefinition: "",
+                baselineSource: "",
+                timeframe: "",
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: [],
+                outcomeCandidateId: null,
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-merged-outcomes",
+                fileName: "merged.md",
+                sectionId: "section-outcome-2",
+                sectionTitle: "OUT-002",
+                sectionMarker: "### OUT-002",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            }
+          ],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "file-merged-outcomes",
+              fileName: "merged.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 1024,
+              content: "# Imported artifact",
+              parsedSectionCount: 2,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 2,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 2
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          sessionId: "session-merged-outcomes",
+          fileId: "file-merged-outcomes"
+        })
+      })
+    );
+
+    const hiddenSuppressedOutcome = document.querySelector(
+      'input[name="suppressedCandidateIds"][value="candidate-outcome-2"]'
+    );
+
+    expect(hiddenSuppressedOutcome).not.toBeNull();
+  });
 });
