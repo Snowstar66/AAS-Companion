@@ -226,7 +226,7 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
         <CardTitle>{copy.projectAccessTitle}</CardTitle>
         <CardDescription>{copy.projectAccessDescription}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+      <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <p className="mr-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{copy.availableProjects}</p>
@@ -274,7 +274,7 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
                   <p className="font-semibold text-sky-950">{copy.createProjectTitle}</p>
                 </div>
                 {props.canManageProjects ? (
-                  <form action={props.createProjectAction} className="flex flex-col gap-3 sm:flex-row">
+                  <form action={props.createProjectAction} className="flex flex-col gap-3">
                     <input
                       className="h-11 min-w-0 flex-1 rounded-2xl border border-sky-200 bg-background px-4 text-sm outline-none transition focus:border-primary"
                       name="projectName"
@@ -283,7 +283,7 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
                       type="text"
                     />
                     <PendingFormButton
-                      className="gap-2 sm:shrink-0"
+                      className="w-full gap-2"
                       icon={<ArrowRight className="h-4 w-4" />}
                       label={copy.createAndOpenProject}
                       pendingLabel={copy.creatingProject}
