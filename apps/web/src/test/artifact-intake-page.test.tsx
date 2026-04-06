@@ -455,6 +455,7 @@ describe("Import page", () => {
     expect(screen.getByText((_, element) => element?.textContent === "Outcomes: 0")).toBeDefined();
     expect(screen.getByText((_, element) => element?.textContent === "Epics: 0")).toBeDefined();
     expect(screen.getByText((_, element) => element?.textContent === "Story ideas: 1")).toBeDefined();
+    expect(screen.getByDisplayValue("section-2-architecture")).toBeDefined();
     expect(screen.queryByText("Missing required fields")).toBeNull();
     expect(screen.queryByText("Story type")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();

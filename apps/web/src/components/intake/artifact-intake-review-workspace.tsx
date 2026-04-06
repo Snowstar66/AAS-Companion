@@ -1421,6 +1421,10 @@ function FramingImportSpine(props: {
                 : "No hidden leftovers remain for this imported file."}
             </div>
 
+            {props.fileLeftovers.map((section) => (
+              <input key={section.id} name="leftoverSectionIds" type="hidden" value={section.id} />
+            ))}
+
             <FramingImportBulkDecisionButtons />
           </form>
         ) : null}
