@@ -149,67 +149,6 @@ export function HelpPageContent(props: { returnTo: string }) {
       </div>
 
       <div className="space-y-3">
-        <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.roundtripDescription} title={content.roundtripTitle}>
-          <div className="space-y-5">
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_minmax(0,0.9fr)]">
-              <div className="rounded-3xl border border-sky-200 bg-sky-50/70 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">{content.roundtripStageTitles[0]}</p>
-                <p className="mt-2 text-lg font-semibold text-sky-950">{content.roundtripStageSubtitles[0]}</p>
-                <div className="mt-4 grid gap-3">
-                  <div className="rounded-2xl border border-sky-200 bg-white p-4 text-sm leading-6 text-slate-700">
-                    <p className="font-semibold text-slate-950">{content.roundtripFramingCards[0]}</p>
-                    <p className="mt-2">{content.roundtripFramingCards[1]}</p>
-                  </div>
-                  <div className="rounded-2xl border border-sky-200 bg-white p-4 text-sm leading-6 text-slate-700">
-                    <p className="font-semibold text-slate-950">{content.roundtripFramingCards[2]}</p>
-                    <p className="mt-2">{content.roundtripFramingCards[3]}</p>
-                  </div>
-                  <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
-                    <p className="font-semibold text-sky-950">{content.roundtripFramingCards[4]}</p>
-                    <p className="mt-2">{content.roundtripFramingCards[5]}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-amber-200 bg-amber-50/70 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">{content.roundtripStageTitles[1]}</p>
-                <p className="mt-2 text-lg font-semibold text-amber-950">{content.roundtripStageSubtitles[1]}</p>
-                <div className="mt-4 grid gap-3">
-                  <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
-                    <p className="font-semibold text-slate-950">{content.roundtripDeliveryCards[0]}</p>
-                    <p className="mt-2">{content.roundtripDeliveryCards[1]}</p>
-                  </div>
-                  <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
-                    <p className="font-semibold text-slate-950">{content.roundtripDeliveryCards[2]}</p>
-                    <p className="mt-2">{content.roundtripDeliveryCards[3]}</p>
-                  </div>
-                  <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
-                    <p className="font-semibold text-slate-950">{content.roundtripDeliveryCards[4]}</p>
-                    <p className="mt-2">{content.roundtripDeliveryCards[5]}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">{content.roundtripStageTitles[2]}</p>
-                <p className="mt-2 text-lg font-semibold text-emerald-950">{content.roundtripStageSubtitles[2]}</p>
-                <div className="mt-4 grid gap-3">
-                  {content.roundtripFeedbackItems.map((item) => (
-                    <div className="rounded-2xl border border-emerald-200 bg-white p-4 text-sm leading-6 text-slate-700" key={item}>
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-border/70 bg-muted/10 p-5">
-              <p className="font-semibold text-foreground">{content.roundtripPlainLanguageTitle}</p>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{content.roundtripPlainLanguageBody}</p>
-            </div>
-          </div>
-        </CollapsibleSection>
-
         <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.waterfallDescription} title={content.waterfallTitle}>
           <div className="space-y-5">
             <div className="space-y-3">
@@ -292,32 +231,6 @@ export function HelpPageContent(props: { returnTo: string }) {
             <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5">
               <p className="font-semibold text-emerald-950">{content.faqSummaryTitle}</p>
               <p className="mt-3 text-sm leading-7 text-emerald-950">{content.faqSummaryBody}</p>
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.deepDiveDescription} title={content.deepDiveTitle}>
-          <div className="space-y-4">
-            <p className="text-sm leading-7 text-muted-foreground">{content.deepDiveBody}</p>
-            <div className="grid gap-4 lg:grid-cols-2">
-              {content.processSteps.map((step, index) => {
-                const Icon = processStepIcons[index] ?? Target;
-                const iconClass = processStepIconClasses[index] ?? "text-sky-700";
-
-                return (
-                  <div className="rounded-3xl border border-border/70 bg-muted/10 p-4" key={step.title}>
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-2xl border border-border/70 bg-background/90 p-2">
-                        <Icon className={`h-5 w-5 ${iconClass}`} />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-foreground">{step.title}</p>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </CollapsibleSection>
@@ -433,18 +346,6 @@ export function HelpPageContent(props: { returnTo: string }) {
           </div>
         </CollapsibleSection>
 
-        <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.platformDescription} title={content.platformTitle}>
-          <div className="grid gap-4 lg:grid-cols-2">
-            {content.platformNotes.map((item) => (
-              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item}>
-                <div className="flex items-start gap-3">
-                  <Compass className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <p className="text-sm leading-6 text-muted-foreground">{item}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CollapsibleSection>
       </div>
     </section>
   );

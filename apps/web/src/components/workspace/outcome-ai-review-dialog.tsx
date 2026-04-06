@@ -91,6 +91,10 @@ function formatAiLevel(level: "level_1" | "level_2" | "level_3" | null) {
   return level.replaceAll("_", " ");
 }
 
+function formatCurrentAiLevel(level: string) {
+  return level.replaceAll("_", " ");
+}
+
 function formatStatus(value: string) {
   return value.replaceAll("_", " ");
 }
@@ -138,6 +142,7 @@ export function OutcomeAiReviewDialog({
   initialState
 }: OutcomeAiReviewDialogProps) {
   const { language } = useAppChromeLanguage();
+  const currentAiLevelLabel = formatCurrentAiLevel(currentAiLevel);
   const [state, formAction, pending] = useActionState(action, initialState);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -214,10 +219,15 @@ export function OutcomeAiReviewDialog({
                   <Sparkles className="h-3.5 w-3.5" />
                   {t(language, "AI framing review", "AI-granskning av framing")}
                 </div>
-                <h3 className="text-xl font-semibold text-foreground">{t(language, "Framing review report", "Granskningsrapport for framing")}</h3>
+                <h3 className="text-xl font-semibold text-foreground">
+                  {t(language, "Framing review report", "Granskningsrapport för framing")} · {currentAiLevelLabel}
+                </h3>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  {t(language, "This report stays pinned to the viewport while you review the currently saved framing for AI level", "Den har rapporten ligger fast i vyn medan du granskar den sparade framingen for AI-niva")}{" "}
-                  {currentAiLevel.replaceAll("_", " ")}.
+                  {t(
+                    language,
+                    "Use this report to check whether the saved Framing is strong enough for the current AI level, what needs refinement before Tollgate 1, and whether the AI posture should be adjusted.",
+                    "Använd rapporten för att se om den sparade framingen är tillräckligt stark för aktuell AI-nivå, vad som behöver förtydligas före Tollgate 1 och om AI-upplägget bör justeras."
+                  )}
                 </p>
               </div>
               <Button onClick={() => setOpen(false)} size="sm" type="button" variant="secondary">

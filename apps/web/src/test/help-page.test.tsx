@@ -52,22 +52,20 @@ describe("Help page", () => {
 
     expect(screen.getAllByRole("heading", { name: "What is this tool?" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Framing -> Delivery -> Feedback loop")).toBeDefined();
-    expect(screen.getByText("Framing roundtrip")).toBeDefined();
     expect(screen.getByText("AAS is NOT Waterfall")).toBeDefined();
     expect(screen.getByText("AAS - Frequently Asked Questions")).toBeDefined();
-    expect(screen.getByText("Story Idea content")).toBeDefined();
-    expect(screen.getByText("Roundtrip in plain language")).toBeDefined();
     expect(screen.getByText("Outcome before output")).toBeDefined();
     expect(screen.getByText("It does not generate code.")).toBeDefined();
     expect(screen.getByText("Waterfall vs AAS")).toBeDefined();
     expect(screen.getByText("1. Is AAS waterfall?")).toBeDefined();
-    expect(screen.getByText("AAS method deep dive")).toBeDefined();
     expect(screen.getByText("Choosing AD, AT or AM in Framing")).toBeDefined();
     expect(screen.getByText("Primary question in Framing")).toBeDefined();
     expect(screen.getByText("What should we build to create new value?")).toBeDefined();
     expect(screen.getByText("Failed transformation (expensive)")).toBeDefined();
     expect(screen.getByText("AI levels and human mandate")).toBeDefined();
-    expect(screen.getByText("How this app is built")).toBeDefined();
+    expect(screen.queryByText("Framing roundtrip")).toBeNull();
+    expect(screen.queryByText("AAS method deep dive")).toBeNull();
+    expect(screen.queryByText("How this app is built")).toBeNull();
     expect(screen.getByRole("link", { name: /Back to work/i }).getAttribute("href")).toBe("/review");
   });
 

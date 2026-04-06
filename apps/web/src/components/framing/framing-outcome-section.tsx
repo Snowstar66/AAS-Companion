@@ -777,15 +777,6 @@ export function FramingOutcomeSection({
       ) : null}
 
       <FramingGuidanceShell>
-        <div className="flex justify-start">
-          <OutcomeAiReviewDialog
-            action={reviewFramingAction}
-            currentAiLevel={outcome.aiAccelerationLevel}
-            initialState={initialReviewFramingState}
-            outcomeId={outcome.id}
-          />
-        </div>
-
         <DeliveryTypeGuidanceProvider initialValue={deliveryTypeValue}>
         <form action={saveAction} className="space-y-6">
             <input name="outcomeId" type="hidden" value={outcome.id} />
@@ -1340,6 +1331,28 @@ export function FramingOutcomeSection({
             ) : null}
         </form>
         </DeliveryTypeGuidanceProvider>
+
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle>
+              <LocalizedText en="AI validation before Tollgate 1" sv="AI-validering inför Tollgate 1" />
+            </CardTitle>
+            <CardDescription>
+              <LocalizedText
+                en={`Review the current Framing against ${outcome.aiAccelerationLevel.replaceAll("_", " ")} before you record TG1 approvals. The report highlights readiness, gaps and possible AI-level corrections.`}
+                sv={`Granska aktuell framing mot ${outcome.aiAccelerationLevel.replaceAll("_", " ")} innan du registrerar TG1-godkännanden. Rapporten lyfter readiness, luckor och eventuella justeringar av AI-nivån.`}
+              />
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-start">
+            <OutcomeAiReviewDialog
+              action={reviewFramingAction}
+              currentAiLevel={outcome.aiAccelerationLevel}
+              initialState={initialReviewFramingState}
+              outcomeId={outcome.id}
+            />
+          </CardContent>
+        </Card>
 
         <Suspense fallback={<OutcomeTollgateSectionFallback />}>
           <OutcomeTollgateApprovalSection
