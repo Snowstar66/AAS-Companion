@@ -153,7 +153,7 @@ describe("Value Spine page", () => {
     expect(screen.getAllByText("IMP-OUT-1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
-    expect(screen.getAllByRole("link", { name: /Open lineage/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Show origin/i }).length).toBeGreaterThan(0);
     expect(screen.getByText("Visible Story Ideas")).toBeDefined();
     expect(screen.getAllByText(/Value intent:/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Framing status:/i)).toBeNull();

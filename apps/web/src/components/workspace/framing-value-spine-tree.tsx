@@ -293,7 +293,7 @@ function OutcomeRow({ outcome, mode, language }: { outcome: TreeOutcome; mode: "
             <Button asChild size="sm" variant="secondary">
               <Link href={outcome.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Öppna lineage")}
+                {t(language, "Show origin", "Visa ursprung")}
               </Link>
             </Button>
           ) : null}
@@ -398,7 +398,7 @@ function DirectionSeedRow({
             <Button asChild size="sm" variant="secondary">
               <Link href={seed.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Öppna lineage")}
+                {t(language, "Show origin", "Visa ursprung")}
               </Link>
             </Button>
           ) : null}
@@ -506,7 +506,7 @@ function StoryIdeaRow({ story, language }: { story: TreeStory; language: "en" | 
             <Button asChild size="sm" variant="secondary">
               <Link href={story.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Öppna lineage")}
+                {t(language, "Show origin", "Visa ursprung")}
               </Link>
             </Button>
           ) : null}
@@ -595,7 +595,7 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
             <Button asChild size="sm" variant="secondary">
               <Link href={story.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Öppna lineage")}
+                {t(language, "Show origin", "Visa ursprung")}
               </Link>
             </Button>
           ) : null}
@@ -712,7 +712,7 @@ function EpicRow({
               <Button asChild size="sm" variant="secondary">
                 <Link href={epic.lineageHref}>
                   <FileSearch className="mr-2 h-3.5 w-3.5" />
-                  {t(language, "Open lineage", "Öppna lineage")}
+                  {t(language, "Show origin", "Visa ursprung")}
                 </Link>
               </Button>
             ) : null}
