@@ -5,6 +5,21 @@ import { HelpPageContent } from "@/components/help/help-page-content";
 import { AppLanguageProvider } from "@/components/layout/app-language";
 import { Sidebar } from "@/components/layout/sidebar";
 
+const authMocks = vi.hoisted(() => ({
+  getAppSession: vi.fn(async () => ({
+    mode: "demo",
+    userId: "user-demo",
+    email: "value.owner@aas-companion.local",
+    displayName: "Demo Value Owner",
+    organization: {
+      organizationId: "org_demo_control_plane",
+      organizationName: "AAS Demo Organization",
+      organizationSlug: "aas-demo-org",
+      role: "value_owner"
+    }
+  }))
+}));
+
 vi.mock("@aas-companion/domain/navigation", () => ({
   primaryNavigation: [
     {
@@ -28,6 +43,8 @@ vi.mock("@aas-companion/domain/navigation", () => ({
 vi.mock("next/navigation", () => ({
   usePathname: vi.fn(() => "/review")
 }));
+
+vi.mock("@/lib/auth/server", () => authMocks);
 
 describe("Help page", () => {
   it("shows the global help entry in sidebar navigation", () => {

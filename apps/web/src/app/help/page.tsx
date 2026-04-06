@@ -1,5 +1,7 @@
 import { HelpPageContent } from "@/components/help/help-page-content";
+import { ViewerSessionProvider } from "@/components/auth/viewer-session-provider";
 import { AppShell } from "@/components/layout/app-shell";
+import { getAppSession } from "@/lib/auth/server";
 
 type HelpPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -20,17 +22,23 @@ function normalizeReturnTo(value: string | undefined) {
 export default async function HelpPage({ searchParams }: HelpPageProps) {
   const query = searchParams ? await searchParams : {};
   const returnTo = normalizeReturnTo(getParamValue(query.returnTo));
+  const session = await getAppSession();
+  const activeProjectName = session?.organization?.organizationName;
 
   return (
-    <AppShell
-      hideRightRail
-      topbarProps={{
-        title: "Help",
-        sectionLabel: "Help",
-        badge: "Method guide"
-      }}
-    >
-      <HelpPageContent returnTo={returnTo} />
-    </AppShell>
+    <ViewerSessionProvider session={session}>
+      <AppShell
+        {...(activeProjectName ? { activeProjectName } : {})}
+        hideRightRail
+        topbarProps={{
+          ...(activeProjectName ? { projectName: activeProjectName } : {}),
+          title: "Help",
+          sectionLabel: "Help",
+          badge: "Method guide"
+        }}
+      >
+        <HelpPageContent returnTo={returnTo} />
+      </AppShell>
+    </ViewerSessionProvider>
   );
 }
