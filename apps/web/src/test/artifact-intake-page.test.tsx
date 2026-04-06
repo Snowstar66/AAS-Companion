@@ -1048,4 +1048,264 @@ describe("Import page", () => {
 
     expect(hiddenSuppressedOutcome).not.toBeNull();
   });
+
+  it("keeps story ideas selectable when they already point to a project epic", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [
+        {
+          id: "project-outcome-1",
+          key: "OUT-002",
+          title: "Outcome"
+        }
+      ],
+      projectEpics: [
+        {
+          id: "project-epic-1",
+          key: "EPC-004",
+          title: "Påminnelser",
+          outcomeId: "project-outcome-1"
+        }
+      ],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 1,
+        candidateObjects: 1,
+        humanReviewRequired: 1
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-project-epic-link",
+          label: "Framing import with project epic link",
+          importIntent: "framing",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 1,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 1,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [
+            {
+              id: "candidate-story-project-epic",
+              fileId: "file-project-epic-link",
+              type: "story",
+              title: "Lageralert",
+              summary: "Kontinuitet",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              inferredOutcomeCandidateId: null,
+              inferredEpicCandidateId: "project-epic-1",
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "SC-032",
+                title: "Lageralert",
+                valueIntent: "Kontinuitet",
+                expectedBehavior: "Alert vid låg nivå",
+                outcomeCandidateId: "project-outcome-1",
+                epicCandidateId: "project-epic-1",
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: []
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-project-epic-link",
+                fileName: "krisapp2.md",
+                sectionId: "section-story-project-epic",
+                sectionTitle: "SC-032",
+                sectionMarker: "### SC-032",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            }
+          ],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "file-project-epic-link",
+              fileName: "krisapp2.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 1024,
+              content: "# Imported artifact",
+              parsedSectionCount: 1,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 1,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 1
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          sessionId: "session-project-epic-link",
+          fileId: "file-project-epic-link"
+        })
+      })
+    );
+
+    expect(
+      document.querySelector('input[name="candidateIds"][value="candidate-story-project-epic"]')
+    ).not.toBeNull();
+  });
+
+  it("can open origin for a handled candidate that only remains in allCandidates", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [
+        {
+          id: "project-outcome-1",
+          key: "OUT-001",
+          title: "Primary project outcome"
+        }
+      ],
+      projectEpics: [],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 1,
+        candidateObjects: 1,
+        humanReviewRequired: 0
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-origin-only",
+          label: "Handled import session",
+          importIntent: "framing",
+          status: "completed",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 1,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 0,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [],
+          allCandidates: [
+            {
+              id: "candidate-origin-only",
+              fileId: "file-origin-only",
+              type: "story",
+              title: "Imported Story",
+              summary: "Handled story source.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "SC-001",
+                title: "Imported Story",
+                valueIntent: "Handled story source.",
+                expectedBehavior: "Visible through origin.",
+                outcomeCandidateId: "project-outcome-1",
+                epicCandidateId: null,
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                definitionOfDone: []
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "promoted",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-origin-only",
+                fileName: "origin.md",
+                sectionId: "section-origin-only",
+                sectionTitle: "SC-001",
+                sectionMarker: "### SC-001",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            }
+          ],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "file-origin-only",
+              fileName: "origin.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 1024,
+              content: "# Imported artifact",
+              parsedSectionCount: 1,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 0,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 0
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          candidateId: "candidate-origin-only"
+        })
+      })
+    );
+
+    expect(screen.getAllByRole("heading", { name: "Framing value spine" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/No active import work remains/i)).toBeNull();
+    expect(screen.queryByText(/No import sessions yet/i)).toBeNull();
+  });
 });

@@ -768,7 +768,11 @@ function FramingImportSpine(props: {
       return inferredEpicId;
     }
 
-    return draftEpicId || inferredEpicId || "";
+    return "";
+  }
+
+  function resolveEpicSelection(candidate: IntakeArtifactCandidate) {
+    return candidate.draftRecord?.epicCandidateId?.trim() ?? candidate.inferredEpicCandidateId?.trim() ?? "";
   }
 
   const importedEpicOutcomeIdById = new Map(
@@ -1216,7 +1220,7 @@ function FramingImportSpine(props: {
                                           <span className="text-sm font-medium text-foreground">{t(language, "Linked Epic", "Länkat epic")}</span>
                                           <select
                                             className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                                            defaultValue={resolveImportedEpicLink(story) || epic.id}
+                                            defaultValue={resolveEpicSelection(story) || epic.id}
                                             name={`candidate:${story.id}:epicCandidateId`}
                                           >
                                             {storyEpicOptions.map((candidate) => (
@@ -1226,11 +1230,11 @@ function FramingImportSpine(props: {
                                             ))}
                                           </select>
                                         </label>
-                                        <input
-                                          name={`candidate:${story.id}:originalEpicCandidateId`}
-                                          type="hidden"
-                                          value={resolveImportedEpicLink(story) || epic.id}
-                                        />
+                                          <input
+                                            name={`candidate:${story.id}:originalEpicCandidateId`}
+                                            type="hidden"
+                                            value={resolveEpicSelection(story) || epic.id}
+                                          />
                                         <label className="space-y-2 md:col-span-2">
                                           <span className="text-sm font-medium text-foreground">{t(language, "Value intent", "Value intent")}</span>
                                           <textarea
@@ -1356,7 +1360,7 @@ function FramingImportSpine(props: {
                                         <select
                                           className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                                           defaultValue={
-                                            resolveImportedEpicLink(story) ||
+                                            resolveEpicSelection(story) ||
                                             props.defaultBulkEpicCandidateId ||
                                             FALLBACK_EPIC_OPTION_VALUE
                                           }
@@ -1369,11 +1373,11 @@ function FramingImportSpine(props: {
                                           ))}
                                         </select>
                                       </label>
-                                      <input
-                                        name={`candidate:${story.id}:originalEpicCandidateId`}
-                                        type="hidden"
-                                        value={
-                                          resolveImportedEpicLink(story) ||
+                                        <input
+                                          name={`candidate:${story.id}:originalEpicCandidateId`}
+                                          type="hidden"
+                                          value={
+                                          resolveEpicSelection(story) ||
                                           props.defaultBulkEpicCandidateId ||
                                           FALLBACK_EPIC_OPTION_VALUE
                                         }

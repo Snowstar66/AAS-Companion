@@ -157,8 +157,10 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     selectedSession?.files[0] ??
     null;
   const selectedSessionCandidates =
-    selectedSession && selectedSession.candidates.length > 0
-      ? selectedSession.candidates
+    selectedSession && candidateId
+      ? selectedSession.allCandidates
+      : selectedSession && selectedSession.candidates.length > 0
+        ? selectedSession.candidates
       : selectedSession?.displayCandidates ?? [];
   const normalizedSelectedFileCandidatesSource = selectedSessionCandidates.map((candidate) => ({
     ...candidate,
@@ -170,7 +172,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const selectedCandidate =
     selectedFileCandidates.find((candidate) => candidate.id === candidateId) ?? selectedFileCandidates[0] ?? null;
   const showBacklogCard = selectedSession?.importIntent !== "framing";
-  const shouldShowNoActiveWorkState = visibleSessions.length === 0 && !explicitlySelectedSession;
+  const shouldShowNoActiveWorkState = visibleSessions.length === 0 && !explicitlySelectedSession && !candidateSelectedSession;
 
   const backlogRows: BacklogRow[] =
     workspace.state === "ready"
