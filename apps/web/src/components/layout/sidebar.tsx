@@ -166,7 +166,9 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                 aria-label="Switch app language to English"
                 aria-pressed={language === "en"}
                 className={`inline-flex h-8 w-12 items-center justify-center rounded-xl text-sm transition ${
-                  language === "en" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
+                  language === "en"
+                    ? "border border-white/30 bg-white/10 text-white shadow-sm"
+                    : "border border-transparent text-slate-200 hover:border-white/15 hover:bg-white/10"
                 }`}
                 onClick={() => setLanguage("en")}
                 type="button"
@@ -177,7 +179,9 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                 aria-label="Switch app language to Swedish"
                 aria-pressed={language === "sv"}
                 className={`inline-flex h-8 w-12 items-center justify-center rounded-xl text-sm transition ${
-                  language === "sv" ? "bg-white text-slate-950 shadow-sm" : "text-slate-200 hover:bg-white/10"
+                  language === "sv"
+                    ? "border border-white/30 bg-white/10 text-white shadow-sm"
+                    : "border border-transparent text-slate-200 hover:border-white/15 hover:bg-white/10"
                 }`}
                 onClick={() => setLanguage("sv")}
                 type="button"

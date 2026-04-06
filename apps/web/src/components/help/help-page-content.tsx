@@ -48,7 +48,9 @@ export function HelpPageContent(props: { returnTo: string }) {
                     aria-label="Switch help page to English"
                     aria-pressed={language === "en"}
                     className={`inline-flex h-10 w-12 items-center justify-center rounded-xl text-base transition ${
-                      language === "en" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/40"
+                      language === "en"
+                        ? "border border-primary/30 bg-primary/10 text-foreground shadow-sm"
+                        : "border border-transparent text-muted-foreground hover:border-border/70 hover:bg-muted/40"
                     }`}
                     onClick={() => setLanguage("en")}
                     title="English"
@@ -60,7 +62,9 @@ export function HelpPageContent(props: { returnTo: string }) {
                     aria-label="Byt hjälpsidan till svenska"
                     aria-pressed={language === "sv"}
                     className={`inline-flex h-10 w-12 items-center justify-center rounded-xl text-base transition ${
-                      language === "sv" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/40"
+                      language === "sv"
+                        ? "border border-primary/30 bg-primary/10 text-foreground shadow-sm"
+                        : "border border-transparent text-muted-foreground hover:border-border/70 hover:bg-muted/40"
                     }`}
                     onClick={() => setLanguage("sv")}
                     title="Svenska"
