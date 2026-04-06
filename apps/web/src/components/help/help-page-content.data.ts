@@ -1,4 +1,4 @@
-type DeliveryTypeCard = {
+﻿type DeliveryTypeCard = {
   short: string;
   title: string;
   body: string;
@@ -13,6 +13,17 @@ type DeliveryTypeMatrixRow = {
   ad: string;
   at: string;
   am: string;
+};
+
+type WaterfallMatrixRow = {
+  dimension: string;
+  waterfall: string;
+  aas: string;
+};
+
+type HelpFaqItem = {
+  question: string;
+  answer: string;
 };
 
 export type HelpLanguage = "en" | "sv";
@@ -41,6 +52,26 @@ export type HelpContent = {
   roundtripFeedbackItems: string[];
   roundtripPlainLanguageTitle: string;
   roundtripPlainLanguageBody: string;
+  waterfallTitle: string;
+  waterfallDescription: string;
+  waterfallIntro: string;
+  waterfallBody: string;
+  waterfallFeedbackTitle: string;
+  waterfallFeedbackItems: string[];
+  waterfallBacktrackingTitle: string;
+  waterfallBacktrackingBody: string;
+  waterfallBacktrackingItems: string[];
+  waterfallEnablesTitle: string;
+  waterfallEnablesItems: string[];
+  waterfallSummary: string;
+  waterfallMatrixTitle: string;
+  waterfallMatrixHeaders: [string, string, string];
+  waterfallMatrix: WaterfallMatrixRow[];
+  faqTitle: string;
+  faqDescription: string;
+  faqItems: HelpFaqItem[];
+  faqSummaryTitle: string;
+  faqSummaryBody: string;
   deepDiveTitle: string;
   deepDiveDescription: string;
   deepDiveBody: string;
@@ -162,6 +193,105 @@ export const helpContent: Record<HelpLanguage, HelpContent> = {
     roundtripPlainLanguageTitle: "Roundtrip in plain language",
     roundtripPlainLanguageBody:
       "Start with a framing brief. Add Epics and Story Ideas. Use AI to refine structure, then turn one Story Idea into one or more Delivery Stories when the work becomes concrete enough to test and verify. After delivery, use the feedback counters in Value Spine to see whether the original Story Idea was stable, expanded or misaligned.",
+    waterfallTitle: "AAS is NOT Waterfall",
+    waterfallDescription:
+      "AAS can look phase-heavy at first glance, but the model is state-based governance rather than sequential delivery.",
+    waterfallIntro:
+      "AAS is sometimes mistaken for waterfall because the model contains phases and explicit control points. That is a misunderstanding.",
+    waterfallBody:
+      "AAS is not a sequential delivery model. It is a governance layer on top of existing ways of working such as Scrum, SAFe, or DevOps. Framing, Design, Build, and Transfer are control states that define what must be true, not a rigid order for how work must happen.",
+    waterfallFeedbackTitle: "Continuous feedback and return paths",
+    waterfallFeedbackItems: [
+      "Build -> Design: technical insight, test results, or constraints can require redesign.",
+      "Build -> Framing: new knowledge can change the Outcome, scope, or risk posture.",
+      "Transfer -> Framing: measured effect against baseline can drive reprioritization or adjusted targets.",
+      "Transfer -> Design or Build: operations data, incidents, and user behavior drive continuous improvement."
+    ],
+    waterfallBacktrackingTitle: "Going back in the model",
+    waterfallBacktrackingBody:
+      "Going back in AAS is not a failure. It is a controlled mechanism. Decisions are revisited explicitly, traceability is preserved through Value Spine updates, and new or adjusted Stories are created instead of silently mutating unclear work.",
+    waterfallBacktrackingItems: [
+      "Outcome, risk, and AI level are re-evaluated explicitly.",
+      "Traceability is preserved because the Value Spine is updated rather than bypassed.",
+      "New or adjusted Stories are created instead of changing delivery work implicitly."
+    ],
+    waterfallEnablesTitle: "What AAS still enables",
+    waterfallEnablesItems: [
+      "Iterative development as usual.",
+      "Continuous delivery.",
+      "Agile ways of working without replacement.",
+      "But no work starts without a defined Outcome, no AI runs without a decided AI Acceleration Level, and no delivery is treated as complete without testability and traceability."
+    ],
+    waterfallSummary:
+      "AAS does not slow delivery down for its own sake. It removes uncontrolled delivery by structuring value, risk, accountability, and evidence.",
+    waterfallMatrixTitle: "Waterfall vs AAS",
+    waterfallMatrixHeaders: ["Dimension", "Waterfall", "AAS"],
+    waterfallMatrix: [
+      { dimension: "Structure", waterfall: "Sequential", aas: "State-based" },
+      { dimension: "Feedback", waterfall: "Late", aas: "Continuous" },
+      { dimension: "Test", waterfall: "Late-stage", aas: "Integrated from the start" },
+      { dimension: "Scope", waterfall: "Fixed", aas: "Outcome-driven" },
+      { dimension: "AI", waterfall: "Not addressed", aas: "Formally governed" },
+      { dimension: "Traceability", waterfall: "Weak", aas: "Value Spine" }
+    ],
+    faqTitle: "AAS - Frequently Asked Questions",
+    faqDescription:
+      "Short answers to the most common concerns about control, delivery speed, agility, documentation, and AI governance.",
+    faqItems: [
+      {
+        question: "1. Is AAS waterfall?",
+        answer:
+          "No. AAS is a control structure, not a sequential model. Waterfall controls order. AAS controls responsibility, risk, and value."
+      },
+      {
+        question: "2. Does AAS reduce delivery speed?",
+        answer:
+          "AAS prioritizes correct delivery over fast activity. That usually reduces rework, technical debt, and misdirected investment."
+      },
+      {
+        question: "3. How does AAS relate to agile ways of working?",
+        answer:
+          "AAS does not replace agile methods. It ensures iterative delivery stays connected to measurable value instead of only producing output."
+      },
+      {
+        question: "4. Does AAS require teams to work differently day to day?",
+        answer:
+          "It changes less how work is performed and more what counts as acceptable and complete. Delivery must be linked to Outcome, tested, and traceable."
+      },
+      {
+        question: "5. How is feedback handled in AAS?",
+        answer:
+          "Feedback is built into the model. Insights from build and operations can lead to controlled design changes or explicit Outcome reconsideration."
+      },
+      {
+        question: "6. What does it mean to go back in the model?",
+        answer:
+          "Return is a governed mechanism, not an exception. Outcome, risk, or design is revisited explicitly and documented instead of drifting implicitly."
+      },
+      {
+        question: "7. Does AAS create more documentation?",
+        answer:
+          "AAS asks for evidence, not documentation for its own sake. The goal is that evidence should mostly come automatically from delivery tools and artifacts."
+      },
+      {
+        question: "8. Why must Outcome be defined early?",
+        answer:
+          "Outcome is the basis for deciding whether delivery creates value. Without it, teams measure activity instead of effect."
+      },
+      {
+        question: "9. Why is AI Acceleration Level mandatory?",
+        answer:
+          "AI changes risk, quality expectations, and accountability. Without a defined level, AI usage becomes uncontrolled and hard to review."
+      },
+      {
+        question: "10. What happens if you do not work according to AAS?",
+        answer:
+          "Delivery can still happen, but without reliable traceability, controlled risk, clear accountability, or verifiable linkage to business value."
+      }
+    ],
+    faqSummaryTitle: "Summary",
+    faqSummaryBody:
+      "AAS establishes a structure where every delivery is tied to a defined Outcome, governed through an explicit risk posture, verified through test and evidence, and traceable from business value to implementation.",
     deepDiveTitle: "AAS method deep dive",
     deepDiveDescription: "A tighter explanation of the four AAS phases and why the sequence matters.",
     deepDiveBody:
@@ -255,165 +385,265 @@ export const helpContent: Record<HelpLanguage, HelpContent> = {
     ]
   },
   sv: {
-    heroBadge: "Hjälp",
-    heroTitle: "Vad är det här verktyget?",
+    heroBadge: "HjÃ¤lp",
+    heroTitle: "Vad Ã¤r det hÃ¤r verktyget?",
     heroIntro:
-      "Det här verktyget hjälper dig att definiera, strukturera och kvalitetssäkra vad som ska byggas innan AI används. I stället för att börja med promptar kommer ni överens om outcome, strukturerar arbetet, bestämmer hur det ska verifieras och avgör hur mycket AI som ska användas.",
+      "Det hÃ¤r verktyget hjÃ¤lper dig att definiera, strukturera och kvalitetssÃ¤kra vad som ska byggas innan AI anvÃ¤nds. I stÃ¤llet fÃ¶r att bÃ¶rja med promptar kommer ni Ã¶verens om outcome, strukturerar arbetet, bestÃ¤mmer hur det ska verifieras och avgÃ¶r hur mycket AI som ska anvÃ¤ndas.",
     heroBody:
-      "I AAS-termer fungerar verktyget som ett operativt lager för Application Services. Det gör AI-acceleration mer strukturerad, granskningsbar och säker genom att hålla affärsintention, leveransstruktur och mänskligt ansvar synligt hela vägen.",
+      "I AAS-termer fungerar verktyget som ett operativt lager fÃ¶r Application Services. Det gÃ¶r AI-acceleration mer strukturerad, granskningsbar och sÃ¤ker genom att hÃ¥lla affÃ¤rsintention, leveransstruktur och mÃ¤nskligt ansvar synligt hela vÃ¤gen.",
     backToWork: "Tillbaka till arbetet",
-    languageLabel: "Språk",
+    languageLabel: "SprÃ¥k",
     processHeading: "Framing -> Delivery -> Feedback loop",
     processSteps: [
       {
         title: "Framing",
-        description: "Definiera outcome, baseline, AI-nivå, risk, epics och story ideas innan leveransstrukturen blir detaljerad."
+        description: "Definiera outcome, baseline, AI-nivÃ¥, risk, epics och story ideas innan leveransstrukturen blir detaljerad."
       },
       {
         title: "Delivery",
-        description: "Förfina story ideas till leveransstories och lägg sedan till acceptanskriterier, tester och byggbar struktur."
+        description: "FÃ¶rfina story ideas till leveransstories och lÃ¤gg sedan till acceptanskriterier, tester och byggbar struktur."
       },
       {
         title: "Feedback loop",
-        description: "Lär av faktisk leverans, extra stories och avvikelser utan att göra återkopplingen till ännu en grind."
+        description: "LÃ¤r av faktisk leverans, extra stories och avvikelser utan att gÃ¶ra Ã¥terkopplingen till Ã¤nnu en grind."
       }
     ],
     practiceTitle: "AAS i praktiken",
-    practiceDescription: "Vad det operativa arbetssättet lägger ovanpå vanlig leverans.",
+    practiceDescription: "Vad det operativa arbetssÃ¤ttet lÃ¤gger ovanpÃ¥ vanlig leverans.",
     quickTakeaways: [
-      "AAS är ett operativt lager ovanpå agil utveckling, DevOps och ITIL. Det ersätter inte befintliga arbetssätt utan lägger till styrning.",
-      "Value Spine skapar spårbarhet från affärseffekt till implementation: Outcome -> Epic -> Story -> Test.",
-      "Story Ideas hör hemma i Framing. Delivery Stories hör hemma senare i Design/Build, även när de spårar tillbaka till samma Epic och Outcome.",
-      "Ingen design bör börja utan ett definierat Outcome, och ingen implementation bör börja utan testbara Delivery Stories.",
-      "Ingen AI-genererad kod bör nå produktion utan mänsklig granskning och formellt godkännande."
+      "AAS Ã¤r ett operativt lager ovanpÃ¥ agil utveckling, DevOps och ITIL. Det ersÃ¤tter inte befintliga arbetssÃ¤tt utan lÃ¤gger till styrning.",
+      "Value Spine skapar spÃ¥rbarhet frÃ¥n affÃ¤rseffekt till implementation: Outcome -> Epic -> Story -> Test.",
+      "Story Ideas hÃ¶r hemma i Framing. Delivery Stories hÃ¶r hemma senare i Design/Build, Ã¤ven nÃ¤r de spÃ¥rar tillbaka till samma Epic och Outcome.",
+      "Ingen design bÃ¶r bÃ¶rja utan ett definierat Outcome, och ingen implementation bÃ¶r bÃ¶rja utan testbara Delivery Stories.",
+      "Ingen AI-genererad kod bÃ¶r nÃ¥ produktion utan mÃ¤nsklig granskning och formellt godkÃ¤nnande."
     ],
-    nonGoalsTitle: "Vad verktyget INTE gör",
-    nonGoalsDescription: "Det förbättrar readiness och governance. Det är inte automation som standard.",
+    nonGoalsTitle: "Vad verktyget INTE gÃ¶r",
+    nonGoalsDescription: "Det fÃ¶rbÃ¤ttrar readiness och governance. Det Ã¤r inte automation som standard.",
     nonGoals: [
       "Det genererar inte kod.",
-      "Det ersätter inte utvecklare.",
-      "Det auto-godkänner inte beslut.",
-      "Det ersätter inte agila metoder."
+      "Det ersÃ¤tter inte utvecklare.",
+      "Det auto-godkÃ¤nner inte beslut.",
+      "Det ersÃ¤tter inte agila metoder."
     ],
     roundtripTitle: "Framing-rundtur",
     roundtripDescription:
-      "En kompakt översikt över hur Framing, Story Ideas, Delivery Stories och feedback är tänkta att fungera tillsammans.",
+      "En kompakt Ã¶versikt Ã¶ver hur Framing, Story Ideas, Delivery Stories och feedback Ã¤r tÃ¤nkta att fungera tillsammans.",
     roundtripStageTitles: ["1. Framing", "2. Delivery", "3. Feedback loop"],
-    roundtripStageSubtitles: ["Definiera riktning och intention", "Förfina, bygg och verifiera", "Lär utan att blockera leverans"],
+    roundtripStageSubtitles: ["Definiera riktning och intention", "FÃ¶rfina, bygg och verifiera", "LÃ¤r utan att blockera leverans"],
     roundtripFramingCards: [
-      "Det här hör hemma här",
-      "Outcome, problem, baseline, value owner, AI-nivå, riskprofil, epics och story ideas.",
-      "Innehåll i Story Idea",
+      "Det hÃ¤r hÃ¶r hemma hÃ¤r",
+      "Outcome, problem, baseline, value owner, AI-nivÃ¥, riskprofil, epics och story ideas.",
+      "InnehÃ¥ll i Story Idea",
       "Titel, kopplad epic, value intent och expected behavior. Inte acceptanskriterier, tester eller DoD.",
-      "Redo för review",
-      "En Story Idea är framing-redo när value intent, epic-koppling och expected behavior finns."
+      "Redo fÃ¶r review",
+      "En Story Idea Ã¤r framing-redo nÃ¤r value intent, epic-koppling och expected behavior finns."
     ],
     roundtripDeliveryCards: [
-      "AI-förfining",
-      "En Story Idea kan delas, slås ihop eller förtydligas av AI innan den blir en eller flera Delivery Stories.",
+      "AI-fÃ¶rfining",
+      "En Story Idea kan delas, slÃ¥s ihop eller fÃ¶rtydligas av AI innan den blir en eller flera Delivery Stories.",
       "Delivery Stories",
-      "Det här är verifierbara exekveringsenheter med Value Spine-validering, acceptanskriterier och testdefinition.",
+      "Det hÃ¤r Ã¤r verifierbara exekveringsenheter med Value Spine-validering, acceptanskriterier och testdefinition.",
       "Minimal livscykel",
-      "Needs action -> Ready for review -> Approved är det användarsynliga statusflödet, medan byggprogress spåras separat."
+      "Needs action -> Ready for review -> Approved Ã¤r det anvÃ¤ndarsynliga statusflÃ¶det, medan byggprogress spÃ¥ras separat."
     ],
     roundtripFeedbackItems: [
-      "Stable: leveransen följde idén som planerat.",
-      "Expanded: fler delivery stories behövdes.",
-      "Misaligned: leveransen rörde sig bort från ursprungligt value intent."
+      "Stable: leveransen fÃ¶ljde idÃ©n som planerat.",
+      "Expanded: fler delivery stories behÃ¶vdes.",
+      "Misaligned: leveransen rÃ¶rde sig bort frÃ¥n ursprungligt value intent."
     ],
     roundtripPlainLanguageTitle: "Rundtur i klarspråk",
     roundtripPlainLanguageBody:
       "Börja med en framing brief. Lägg till Epics och Story Ideas. Använd AI för att förfina strukturen, och gör sedan en Story Idea till en eller flera Delivery Stories när arbetet blivit tillräckligt konkret för att testas och verifieras. Efter leverans använder du feedback-räknarna i Value Spine för att se om den ursprungliga Story Idea var stabil, expanderad eller felriktad.",
+    waterfallTitle: "AAS är INTE vattenfall",
+    waterfallDescription:
+      "AAS kan se fasindelat ut vid första anblick, men modellen är tillståndsbaserad governance snarare än sekventiell leverans.",
+    waterfallIntro:
+      "AAS uppfattas ibland som vattenfall eftersom modellen innehåller faser och tydliga kontrollpunkter. Det är en missuppfattning.",
+    waterfallBody:
+      "AAS är inte en sekventiell leveransmodell. Det är ett governance-lager ovanpå befintliga arbetssätt som Scrum, SAFe eller DevOps. Framing, Design, Build och Transfer är kontrolltillstånd som definierar vad som måste vara sant, inte en låst ordning för hur arbete måste ske.",
+    waterfallFeedbackTitle: "Kontinuerlig feedback och återkoppling",
+    waterfallFeedbackItems: [
+      "Build -> Design: tekniska insikter, testresultat eller begränsningar kan kräva omdesign.",
+      "Build -> Framing: ny kunskap kan påverka Outcome, scope eller risknivå.",
+      "Transfer -> Framing: mätning av faktisk effekt mot baseline kan leda till nya prioriteringar eller justerade mål.",
+      "Transfer -> Design eller Build: driftdata, incidenter och användarbeteende driver kontinuerliga förbättringar."
+    ],
+    waterfallBacktrackingTitle: "Att gå tillbaka i modellen",
+    waterfallBacktrackingBody:
+      "Att gå tillbaka i AAS är inte ett fel. Det är en kontrollerad mekanism. Beslut omprövas explicit, spårbarheten bevaras genom uppdaterad Value Spine och nya eller justerade Stories skapas i stället för att arbete förändras otydligt.",
+    waterfallBacktrackingItems: [
+      "Outcome, risk och AI-nivå omprövas explicit.",
+      "Spårbarheten bibehålls eftersom Value Spine uppdateras i stället för att kringgås.",
+      "Nya eller justerade Stories skapas i stället för att leveransarbetet förändras implicit."
+    ],
+    waterfallEnablesTitle: "Vad AAS fortfarande möjliggör",
+    waterfallEnablesItems: [
+      "Iterativ utveckling som vanligt.",
+      "Kontinuerlig leverans.",
+      "Agila arbetssätt utan att ersättas.",
+      "Men inget arbete startar utan definierat Outcome, ingen AI används utan beslutad AI Acceleration Level och ingen leverans räknas som klar utan testbarhet och spårbarhet."
+    ],
+    waterfallSummary:
+      "AAS begränsar inte hastighet för sakens skull. Det eliminerar okontrollerad leverans genom att strukturera värde, risk, ansvar och evidens.",
+    waterfallMatrixTitle: "Vattenfall vs AAS",
+    waterfallMatrixHeaders: ["Dimension", "Vattenfall", "AAS"],
+    waterfallMatrix: [
+      { dimension: "Struktur", waterfall: "Sekventiell", aas: "Tillståndsbaserad" },
+      { dimension: "Feedback", waterfall: "Sen", aas: "Kontinuerlig" },
+      { dimension: "Test", waterfall: "Sent", aas: "Integrerat från start" },
+      { dimension: "Scope", waterfall: "Fast", aas: "Outcome-styrd" },
+      { dimension: "AI", waterfall: "Ej hanterad", aas: "Formellt styrd" },
+      { dimension: "Spårbarhet", waterfall: "Svag", aas: "Value Spine" }
+    ],
+    faqTitle: "AAS – Vanliga frågor",
+    faqDescription:
+      "Korta svar på de vanligaste frågorna om styrning, leveranshastighet, agilitet, dokumentation och AI-governance.",
+    faqItems: [
+      {
+        question: "1. Är AAS vattenfall?",
+        answer:
+          "Nej. AAS är en kontrollstruktur, inte en sekventiell modell. Vattenfall styr ordning. AAS styr ansvar, risk och värde."
+      },
+      {
+        question: "2. Påverkar AAS leveranshastigheten?",
+        answer:
+          "AAS prioriterar korrekt leverans framför snabb aktivitet. Det minskar ofta omarbete, teknisk skuld och felriktade investeringar."
+      },
+      {
+        question: "3. Hur relaterar AAS till agila arbetssätt?",
+        answer:
+          "AAS ersätter inte agila metoder. Det säkerställer att iterativ leverans förblir kopplad till mätbart värde i stället för att bara producera output."
+      },
+      {
+        question: "4. Kräver AAS att team jobbar annorlunda i vardagen?",
+        answer:
+          "Det förändrar mindre hur arbetet utförs och mer vad som räknas som acceptabelt och färdigt. Leverans måste vara kopplad till Outcome, testad och spårbar."
+      },
+      {
+        question: "5. Hur hanteras feedback i AAS?",
+        answer:
+          "Feedback är inbyggd i modellen. Insikter från build och drift kan leda till kontrollerade designjusteringar eller uttrycklig omprövning av Outcome."
+      },
+      {
+        question: "6. Vad innebär det att gå tillbaka i modellen?",
+        answer:
+          "Återgång är en styrd mekanism, inte ett undantag. Outcome, risk eller design omprövas explicit och dokumenterat i stället för att glida iväg implicit."
+      },
+      {
+        question: "7. Leder AAS till mer dokumentation?",
+        answer:
+          "AAS kräver evidens, inte dokumentation för dokumentationens skull. Målet är att evidens till stor del ska komma automatiskt från leveransens verktyg och artefakter."
+      },
+      {
+        question: "8. Varför måste Outcome definieras tidigt?",
+        answer:
+          "Outcome är grunden för att avgöra om leverans skapar värde. Utan det mäter team aktivitet i stället för effekt."
+      },
+      {
+        question: "9. Varför är AI Acceleration Level obligatorisk?",
+        answer:
+          "AI påverkar risk, kvalitetskrav och ansvarsfördelning. Utan en definierad nivå blir AI-användning okontrollerad och svår att granska."
+      },
+      {
+        question: "10. Vad är konsekvensen av att inte arbeta enligt AAS?",
+        answer:
+          "Leverans kan fortfarande ske, men utan pålitlig spårbarhet, kontrollerad risk, tydligt ansvar eller verifierbar koppling till affärsvärde."
+      }
+    ],
+    faqSummaryTitle: "Sammanfattning",
+    faqSummaryBody:
+      "AAS etablerar en struktur där varje leverans är kopplad till ett definierat Outcome, styrd av en tydlig riskprofil, verifierad genom test och evidens samt spårbar från affärsvärde till implementation.",
     deepDiveTitle: "Fördjupning i AAS-metoden",
-    deepDiveDescription: "En tydligare förklaring av AAS-faserna och varför ordningen spelar roll.",
+    deepDiveDescription: "En tydligare fÃ¶rklaring av AAS-faserna och varfÃ¶r ordningen spelar roll.",
     deepDiveBody:
-      "AAS beskriver sammanhängande faser, men produktflödet här är medvetet förenklat till Framing, Delivery och Feedback Loop. Grundidén är att team inte ska hoppa direkt från ett vagt behov till AI-assisterad implementation. Först definieras effekten, sedan struktureras arbetet, därefter accelereras implementationen och till sist används resultatet för lärande tillbaka in i framing-modellen.",
-    deliveryTypesTitle: "Välja AD, AT eller AM i Framing",
+      "AAS beskriver sammanhÃ¤ngande faser, men produktflÃ¶det hÃ¤r Ã¤r medvetet fÃ¶renklat till Framing, Delivery och Feedback Loop. GrundidÃ©n Ã¤r att team inte ska hoppa direkt frÃ¥n ett vagt behov till AI-assisterad implementation. FÃ¶rst definieras effekten, sedan struktureras arbetet, dÃ¤refter accelereras implementationen och till sist anvÃ¤nds resultatet fÃ¶r lÃ¤rande tillbaka in i framing-modellen.",
+    deliveryTypesTitle: "VÃ¤lja AD, AT eller AM i Framing",
     deliveryTypesDescription:
-      "Använd den här matrisen när du väljer Delivery type i Framing. Den visar vad som behöver bli tyngre, striktare eller mer datadrivet beroende på projektets karaktär.",
+      "AnvÃ¤nd den hÃ¤r matrisen nÃ¤r du vÃ¤ljer Delivery type i Framing. Den visar vad som behÃ¶ver bli tyngre, striktare eller mer datadrivet beroende pÃ¥ projektets karaktÃ¤r.",
     deliveryTypeCards: [
       {
         short: "AD",
         title: "Application Development",
-        body: "Passar bäst när huvudutmaningen är att skapa nytt värde eller ny förmåga, och baselinen fortfarande är lättare eller delvis hypotesdriven.",
+        body: "Passar bÃ¤st nÃ¤r huvudutmaningen Ã¤r att skapa nytt vÃ¤rde eller ny fÃ¶rmÃ¥ga, och baselinen fortfarande Ã¤r lÃ¤ttare eller delvis hypotesdriven.",
         ...deliveryTypeCardClasses[0]
       },
       {
         short: "AT",
         title: "Application Transformation",
-        body: "Passar bäst när huvudutmaningen är strukturell förändring i ett befintligt landskap och Framing måste bevisa nulägesproblemet med starkare evidens.",
+        body: "Passar bÃ¤st nÃ¤r huvudutmaningen Ã¤r strukturell fÃ¶rÃ¤ndring i ett befintligt landskap och Framing mÃ¥ste bevisa nulÃ¤gesproblemet med starkare evidens.",
         ...deliveryTypeCardClasses[1]
       },
       {
         short: "AM",
         title: "Application Management",
-        body: "Passar bäst när huvudutmaningen är att förbättra en aktiv tjänst med operativ data, återkommande mönster och kontinuerlig leveransverklighet.",
+        body: "Passar bÃ¤st nÃ¤r huvudutmaningen Ã¤r att fÃ¶rbÃ¤ttra en aktiv tjÃ¤nst med operativ data, Ã¥terkommande mÃ¶nster och kontinuerlig leveransverklighet.",
         ...deliveryTypeCardClasses[2]
       }
     ],
     matrixDimensionHeader: "Dimension",
     matrixHeaders: ["AD - Application Development", "AT - Application Transformation", "AM - Application Management"],
     deliveryTypeMatrix: [
-      { dimension: "Primär fråga i Framing", ad: "Vad ska vi bygga för att skapa nytt värde?", at: "Vad i nuvarande system hindrar värde?", am: "Hur optimerar vi befintlig leverans?" },
-      { dimension: "Typ av förändring", ad: "Ny funktionalitet eller ny kapacitet", at: "Strukturell förändring i befintligt system", am: "Kontinuerlig förbättring" },
-      { dimension: "Utgångsläge (baseline)", ad: "Ofta svag eller saknas", at: "Obligatorisk och datadriven", am: "Objektspecifik och operativ" },
-      { dimension: "Baseline-exempel", ad: "Nuvarande manuellt arbetssätt eller workaround", at: "Lead time, tech debt, kostnad, incidenter", am: "SLA, incidentdata, kostnad per ärende" },
-      { dimension: "Outcome-typ", ad: "Affärsvärde eller användarvärde", at: "Strukturell effekt på hastighet, kostnad eller risk", am: "Stabilitet, effektivitet eller kostnadseffekt" },
-      { dimension: "Outcome-exempel", ad: "\"Öka konvertering med 15%.\"", at: "\"Halvera lead time.\"", am: "\"Minska MTTR från 6h till 2h.\"" },
-      { dimension: "Beviskrav i Framing", ad: "Hypotes plus rimlig värdelogik", at: "Mätbar problemverifiering förväntas", am: "Operativ dataanalys och återkommande mönster" },
+      { dimension: "PrimÃ¤r frÃ¥ga i Framing", ad: "Vad ska vi bygga fÃ¶r att skapa nytt vÃ¤rde?", at: "Vad i nuvarande system hindrar vÃ¤rde?", am: "Hur optimerar vi befintlig leverans?" },
+      { dimension: "Typ av fÃ¶rÃ¤ndring", ad: "Ny funktionalitet eller ny kapacitet", at: "Strukturell fÃ¶rÃ¤ndring i befintligt system", am: "Kontinuerlig fÃ¶rbÃ¤ttring" },
+      { dimension: "UtgÃ¥ngslÃ¤ge (baseline)", ad: "Ofta svag eller saknas", at: "Obligatorisk och datadriven", am: "Objektspecifik och operativ" },
+      { dimension: "Baseline-exempel", ad: "Nuvarande manuellt arbetssÃ¤tt eller workaround", at: "Lead time, tech debt, kostnad, incidenter", am: "SLA, incidentdata, kostnad per Ã¤rende" },
+      { dimension: "Outcome-typ", ad: "AffÃ¤rsvÃ¤rde eller anvÃ¤ndarvÃ¤rde", at: "Strukturell effekt pÃ¥ hastighet, kostnad eller risk", am: "Stabilitet, effektivitet eller kostnadseffekt" },
+      { dimension: "Outcome-exempel", ad: "\"Ã–ka konvertering med 15%.\"", at: "\"Halvera lead time.\"", am: "\"Minska MTTR frÃ¥n 6h till 2h.\"" },
+      { dimension: "Beviskrav i Framing", ad: "Hypotes plus rimlig vÃ¤rdelogik", at: "MÃ¤tbar problemverifiering fÃ¶rvÃ¤ntas", am: "Operativ dataanalys och Ã¥terkommande mÃ¶nster" },
       { dimension: "Problemdefinition", ad: "Hypotesdriven", at: "Faktabaserad och kvantifierad", am: "Datadriven och repetitiv" },
-      { dimension: "Epics karaktär", ad: "Funktionella capabilities", at: "Strukturella transformationssteg", am: "Förbättrings- och automationsteman" },
-      { dimension: "Exempel på epics", ad: "UI, API, onboarding", at: "Modularisering, CI/CD, dependency cleanup", am: "Incident automation, triage, monitoring" },
-      { dimension: "Dominerande risktyp", ad: "Fel funktionalitet eller låg användning", at: "Driftsregression eller systempåverkan", am: "Att optimera eller automatisera fel sak" },
-      { dimension: "Typisk risknivå", ad: "Medel", at: "Högst", am: "Låg till medel" },
-      { dimension: "Scope-stabilitet", ad: "Kan vara explorativ tidigt", at: "Behöver stabiliseras tidigt", am: "Kontinuerlig och iterativ" },
-      { dimension: "Typisk AI Acceleration Level", ad: "Level 1-2 (3 kan vara möjligt)", at: "Level 1-2 (3 endast med strikt kontroll)", am: "Level 1-3 (hög potential)" },
-      { dimension: "AI-roll i Framing", ad: "Stöd för idéer och struktur", at: "Analys av kod, beroenden och tech debt", am: "Identifiera mönster och analysera incidenter" },
-      { dimension: "Governance-tyngd i Framing", ad: "Outcome + Value Owner", at: "Outcome + baseline + risk + AI-nivå med tydligare disciplin", am: "Outcome + operativ baseline" },
-      { dimension: "Vanligt fel", ad: "Bygga features utan verkligt Outcome", at: "Modernisera utan mätbart effektmål", am: "Driva servicearbete utan förbättringsmål" },
-      { dimension: "Vad AAS skyddar mot", ad: "Output utan värde", at: "Teknikdriven transformation utan effektlogik", am: "Reaktiv support utan utvecklingsintention" },
-      { dimension: "Framing-tyngd", ad: "Medel", at: "Högst (kritisk fas)", am: "Medel" },
-      { dimension: "Konsekvens av dålig Framing", ad: "Fel produkt", at: "Misslyckad transformation (dyr)", am: "Ineffektiv tjänst" }
+      { dimension: "Epics karaktÃ¤r", ad: "Funktionella capabilities", at: "Strukturella transformationssteg", am: "FÃ¶rbÃ¤ttrings- och automationsteman" },
+      { dimension: "Exempel pÃ¥ epics", ad: "UI, API, onboarding", at: "Modularisering, CI/CD, dependency cleanup", am: "Incident automation, triage, monitoring" },
+      { dimension: "Dominerande risktyp", ad: "Fel funktionalitet eller lÃ¥g anvÃ¤ndning", at: "Driftsregression eller systempÃ¥verkan", am: "Att optimera eller automatisera fel sak" },
+      { dimension: "Typisk risknivÃ¥", ad: "Medel", at: "HÃ¶gst", am: "LÃ¥g till medel" },
+      { dimension: "Scope-stabilitet", ad: "Kan vara explorativ tidigt", at: "BehÃ¶ver stabiliseras tidigt", am: "Kontinuerlig och iterativ" },
+      { dimension: "Typisk AI Acceleration Level", ad: "Level 1-2 (3 kan vara mÃ¶jligt)", at: "Level 1-2 (3 endast med strikt kontroll)", am: "Level 1-3 (hÃ¶g potential)" },
+      { dimension: "AI-roll i Framing", ad: "StÃ¶d fÃ¶r idÃ©er och struktur", at: "Analys av kod, beroenden och tech debt", am: "Identifiera mÃ¶nster och analysera incidenter" },
+      { dimension: "Governance-tyngd i Framing", ad: "Outcome + Value Owner", at: "Outcome + baseline + risk + AI-nivÃ¥ med tydligare disciplin", am: "Outcome + operativ baseline" },
+      { dimension: "Vanligt fel", ad: "Bygga features utan verkligt Outcome", at: "Modernisera utan mÃ¤tbart effektmÃ¥l", am: "Driva servicearbete utan fÃ¶rbÃ¤ttringsmÃ¥l" },
+      { dimension: "Vad AAS skyddar mot", ad: "Output utan vÃ¤rde", at: "Teknikdriven transformation utan effektlogik", am: "Reaktiv support utan utvecklingsintention" },
+      { dimension: "Framing-tyngd", ad: "Medel", at: "HÃ¶gst (kritisk fas)", am: "Medel" },
+      { dimension: "Konsekvens av dÃ¥lig Framing", ad: "Fel produkt", at: "Misslyckad transformation (dyr)", am: "Ineffektiv tjÃ¤nst" }
     ],
-    principlesTitle: "Fem kärnprinciper",
-    principlesDescription: "De principer i arbetssättet som formar gränssnittet och flödet.",
+    principlesTitle: "Fem kÃ¤rnprinciper",
+    principlesDescription: "De principer i arbetssÃ¤ttet som formar grÃ¤nssnittet och flÃ¶det.",
     principles: [
-      { title: "Outcome före output", detail: "Börja med den effekt verksamheten vill uppnå. Det hindrar team från att producera mer kod utan att skapa mer värde." },
-      { title: "Value Spine är obligatorisk", detail: "Outcome, Epic, Story och Test hålls ihop så att leveransen förblir spårbar, granskningsbar och kopplad till affärsintention." },
-      { title: "AI är en nivå, inte ett verktygsval", detail: "AI-användning väljs som en explicit accelerationsnivå. Granskningsdjup, evidens och rolltydlighet skalas sedan utifrån det." },
-      { title: "Test och kvalitet integreras från start", detail: "Stories ska vara testbara innan byggarbete börjar. Kvalitet byggs in i strukturen, inte efteråt." },
-      { title: "Mänskligt mandat kvarstår", detail: "AI kan hjälpa till med analys, innehåll, tester och kod, men review, godkännande och riskacceptans ligger kvar hos namngivna personer." }
+      { title: "Outcome fÃ¶re output", detail: "BÃ¶rja med den effekt verksamheten vill uppnÃ¥. Det hindrar team frÃ¥n att producera mer kod utan att skapa mer vÃ¤rde." },
+      { title: "Value Spine Ã¤r obligatorisk", detail: "Outcome, Epic, Story och Test hÃ¥lls ihop sÃ¥ att leveransen fÃ¶rblir spÃ¥rbar, granskningsbar och kopplad till affÃ¤rsintention." },
+      { title: "AI Ã¤r en nivÃ¥, inte ett verktygsval", detail: "AI-anvÃ¤ndning vÃ¤ljs som en explicit accelerationsnivÃ¥. Granskningsdjup, evidens och rolltydlighet skalas sedan utifrÃ¥n det." },
+      { title: "Test och kvalitet integreras frÃ¥n start", detail: "Stories ska vara testbara innan byggarbete bÃ¶rjar. Kvalitet byggs in i strukturen, inte efterÃ¥t." },
+      { title: "MÃ¤nskligt mandat kvarstÃ¥r", detail: "AI kan hjÃ¤lpa till med analys, innehÃ¥ll, tester och kod, men review, godkÃ¤nnande och riskacceptans ligger kvar hos namngivna personer." }
     ],
-    aiTitle: "AI-nivåer och mänskligt mandat",
-    aiDescription: "Hur AAS ser på accelerationsnivåer, mänsklig review och formellt godkännande.",
+    aiTitle: "AI-nivÃ¥er och mÃ¤nskligt mandat",
+    aiDescription: "Hur AAS ser pÃ¥ accelerationsnivÃ¥er, mÃ¤nsklig review och formellt godkÃ¤nnande.",
     levelNotes: [
-      "Level 1 betyder assisterad leverans med nära mänsklig review.",
-      "Level 2 betyder strukturerad acceleration med starkare AI-review och högre krav på reproducerbarhet.",
-      "Level 3 betyder orkestrerad agentisk leverans, vilket bara är rimligt när governance, roller och tillsyn är mogna."
+      "Level 1 betyder assisterad leverans med nÃ¤ra mÃ¤nsklig review.",
+      "Level 2 betyder strukturerad acceleration med starkare AI-review och hÃ¶gre krav pÃ¥ reproducerbarhet.",
+      "Level 3 betyder orkestrerad agentisk leverans, vilket bara Ã¤r rimligt nÃ¤r governance, roller och tillsyn Ã¤r mogna."
     ],
-    reviewApprovalTitle: "Review och approval är inte samma sak",
+    reviewApprovalTitle: "Review och approval Ã¤r inte samma sak",
     reviewApprovalBody:
-      "Review verifierar artefaktkvalitet mot krav, arkitektur och tester. Approval är det formella mänskliga beslutet att acceptera kvarvarande risk och tillåta release eller övergång. AAS håller båda synliga eftersom mänskligt mandat kvarstår.",
-    spineTitle: "Varför Value Spine spelar roll",
-    spineDescription: "Den kompakta strukturella förklaringen bakom Outcome, Epic, Story och Test.",
+      "Review verifierar artefaktkvalitet mot krav, arkitektur och tester. Approval Ã¤r det formella mÃ¤nskliga beslutet att acceptera kvarvarande risk och tillÃ¥ta release eller Ã¶vergÃ¥ng. AAS hÃ¥ller bÃ¥da synliga eftersom mÃ¤nskligt mandat kvarstÃ¥r.",
+    spineTitle: "VarfÃ¶r Value Spine spelar roll",
+    spineDescription: "Den kompakta strukturella fÃ¶rklaringen bakom Outcome, Epic, Story och Test.",
     spineFormula: "Outcome -> Epic -> Story -> Test",
     spineFormulaBody:
-      "I arbetssättet är Value Spine inte bara ett dokumentationsmönster. Det är styrmekanismen som gör AI-användning förenlig med transparens, granskningsbarhet och ansvar.",
+      "I arbetssÃ¤ttet Ã¤r Value Spine inte bara ett dokumentationsmÃ¶nster. Det Ã¤r styrmekanismen som gÃ¶r AI-anvÃ¤ndning fÃ¶renlig med transparens, granskningsbarhet och ansvar.",
     compactDiagramTitle: "Kompakt diagram",
     compactDiagramLabels: ["Outcome", "Epic", "Delivery Story", "Test"],
     spineBullets: [
-      "Outcome definierar affärseffekt, ägare och baseline.",
-      "Epic samlar en meningsfull värdeslice så att scope och riktning förblir begriplig.",
-      "Story Idea fångar intention i Framing. Delivery Story blir senare den minsta styrda exekveringsenheten.",
-      "Test ger evidens för att den avsedda förändringen faktiskt skedde."
+      "Outcome definierar affÃ¤rseffekt, Ã¤gare och baseline.",
+      "Epic samlar en meningsfull vÃ¤rdeslice sÃ¥ att scope och riktning fÃ¶rblir begriplig.",
+      "Story Idea fÃ¥ngar intention i Framing. Delivery Story blir senare den minsta styrda exekveringsenheten.",
+      "Test ger evidens fÃ¶r att den avsedda fÃ¶rÃ¤ndringen faktiskt skedde."
     ],
-    platformTitle: "Hur appen är uppbyggd",
-    platformDescription: "En kompakt förklaring av produktantaganden som tidigare låg i högerspalten.",
+    platformTitle: "Hur appen Ã¤r uppbyggd",
+    platformDescription: "En kompakt fÃ¶rklaring av produktantaganden som tidigare lÃ¥g i hÃ¶gerspalten.",
     platformNotes: [
-      "Ett projekt är aktivt åt gången, så Framing, Value Spine, Import och Review förblir projektspecifika i stället för att blanda ihop orelaterat arbete.",
-      "Readiness, tollgates, sign-off och lineage visas nära arbetet i stället för att gömmas i ett separat governance-verktyg.",
-      "Nativt och importerat arbete kan samexistera, men importerat material behåller sin review-spårning tills människor väljer att promota det.",
-      "Nuvarande produktstandarder är Next.js App Router, React, TypeScript, Tailwind, shadcn/ui, Supabase, Prisma, PostHog och OpenTelemetry."
+      "Ett projekt Ã¤r aktivt Ã¥t gÃ¥ngen, sÃ¥ Framing, Value Spine, Import och Review fÃ¶rblir projektspecifika i stÃ¤llet fÃ¶r att blanda ihop orelaterat arbete.",
+      "Readiness, tollgates, sign-off och lineage visas nÃ¤ra arbetet i stÃ¤llet fÃ¶r att gÃ¶mmas i ett separat governance-verktyg.",
+      "Nativt och importerat arbete kan samexistera, men importerat material behÃ¥ller sin review-spÃ¥rning tills mÃ¤nniskor vÃ¤ljer att promota det.",
+      "Nuvarande produktstandarder Ã¤r Next.js App Router, React, TypeScript, Tailwind, shadcn/ui, Supabase, Prisma, PostHog och OpenTelemetry."
     ]
   }
 };
+

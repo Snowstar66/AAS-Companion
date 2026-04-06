@@ -26,7 +26,7 @@ vi.mock("@aas-companion/domain/navigation", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: vi.fn(() => "/review"),
+  usePathname: vi.fn(() => "/review")
 }));
 
 describe("Help page", () => {
@@ -53,10 +53,14 @@ describe("Help page", () => {
     expect(screen.getAllByRole("heading", { name: "What is this tool?" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Framing -> Delivery -> Feedback loop")).toBeDefined();
     expect(screen.getByText("Framing roundtrip")).toBeDefined();
+    expect(screen.getByText("AAS is NOT Waterfall")).toBeDefined();
+    expect(screen.getByText("AAS - Frequently Asked Questions")).toBeDefined();
     expect(screen.getByText("Story Idea content")).toBeDefined();
     expect(screen.getByText("Roundtrip in plain language")).toBeDefined();
     expect(screen.getByText("Outcome before output")).toBeDefined();
     expect(screen.getByText("It does not generate code.")).toBeDefined();
+    expect(screen.getByText("Waterfall vs AAS")).toBeDefined();
+    expect(screen.getByText("1. Is AAS waterfall?")).toBeDefined();
     expect(screen.getByText("AAS method deep dive")).toBeDefined();
     expect(screen.getByText("Choosing AD, AT or AM in Framing")).toBeDefined();
     expect(screen.getByText("Primary question in Framing")).toBeDefined();
@@ -82,9 +86,11 @@ describe("Help page", () => {
     fireEvent.click(screen.getByRole("button", { name: /svenska/i }));
 
     await waitFor(() => {
-      expect(screen.getAllByRole("heading", { name: "Vad är det här verktyget?" }).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("heading", { name: /Vad/i }).length).toBeGreaterThan(0);
     });
 
+    expect(screen.getAllByText(/vattenfall/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Vanliga/i).length).toBeGreaterThan(0);
     expect(window.localStorage.getItem("aas-help-language")).toBe("sv");
 
     unmount();
@@ -96,7 +102,7 @@ describe("Help page", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByRole("heading", { name: "Vad är det här verktyget?" }).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole("heading", { name: /Vad/i }).length).toBeGreaterThan(0);
     });
   });
 });

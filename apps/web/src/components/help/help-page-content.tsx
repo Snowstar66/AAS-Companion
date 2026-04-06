@@ -208,6 +208,92 @@ export function HelpPageContent(props: { returnTo: string }) {
           </div>
         </CollapsibleSection>
 
+        <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.waterfallDescription} title={content.waterfallTitle}>
+          <div className="space-y-5">
+            <div className="space-y-3">
+              <p className="text-sm leading-7 text-muted-foreground">{content.waterfallIntro}</p>
+              <p className="text-sm leading-7 text-muted-foreground">{content.waterfallBody}</p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="rounded-3xl border border-sky-200 bg-sky-50/70 p-5">
+                <p className="font-semibold text-sky-950">{content.waterfallFeedbackTitle}</p>
+                <div className="mt-4 space-y-3">
+                  {content.waterfallFeedbackItems.map((item) => (
+                    <div className="rounded-2xl border border-sky-200 bg-white p-4 text-sm leading-6 text-slate-700" key={item}>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-amber-200 bg-amber-50/75 p-5">
+                <p className="font-semibold text-amber-950">{content.waterfallBacktrackingTitle}</p>
+                <p className="mt-3 text-sm leading-7 text-amber-950">{content.waterfallBacktrackingBody}</p>
+                <div className="mt-4 space-y-3">
+                  {content.waterfallBacktrackingItems.map((item) => (
+                    <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700" key={item}>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50/75 p-5">
+                <p className="font-semibold text-emerald-950">{content.waterfallEnablesTitle}</p>
+                <div className="mt-4 space-y-3">
+                  {content.waterfallEnablesItems.map((item) => (
+                    <div className="rounded-2xl border border-emerald-200 bg-white p-4 text-sm leading-6 text-slate-700" key={item}>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-border/70 bg-muted/10 p-5">
+              <p className="font-semibold text-foreground">{content.waterfallMatrixTitle}</p>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">{content.waterfallSummary}</p>
+              <div className="mt-4 overflow-x-auto rounded-3xl border border-border/70 bg-background">
+                <table className="min-w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border/70 bg-muted/20 text-left">
+                      <th className="px-4 py-3 font-semibold text-foreground">{content.waterfallMatrixHeaders[0]}</th>
+                      <th className="px-4 py-3 font-semibold text-rose-900">{content.waterfallMatrixHeaders[1]}</th>
+                      <th className="px-4 py-3 font-semibold text-emerald-900">{content.waterfallMatrixHeaders[2]}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {content.waterfallMatrix.map((row) => (
+                      <tr className="border-b border-border/50 align-top" key={row.dimension}>
+                        <th className="bg-muted/10 px-4 py-3 text-left font-semibold text-foreground">{row.dimension}</th>
+                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.waterfall}</td>
+                        <td className="px-4 py-3 leading-6 text-muted-foreground">{row.aas}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.faqDescription} title={content.faqTitle}>
+          <div className="space-y-4">
+            {content.faqItems.map((item) => (
+              <div className="rounded-3xl border border-border/70 bg-muted/10 p-5" key={item.question}>
+                <p className="font-semibold text-foreground">{item.question}</p>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.answer}</p>
+              </div>
+            ))}
+
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5">
+              <p className="font-semibold text-emerald-950">{content.faqSummaryTitle}</p>
+              <p className="mt-3 text-sm leading-7 text-emerald-950">{content.faqSummaryBody}</p>
+            </div>
+          </div>
+        </CollapsibleSection>
+
         <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.deepDiveDescription} title={content.deepDiveTitle}>
           <div className="space-y-4">
             <p className="text-sm leading-7 text-muted-foreground">{content.deepDiveBody}</p>
