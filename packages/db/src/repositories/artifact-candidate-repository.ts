@@ -854,6 +854,15 @@ async function loadReviewFile(
 
 type ReviewCandidateRecord = NonNullable<Awaited<ReturnType<typeof loadReviewCandidate>>>;
 type ReviewFileRecord = NonNullable<Awaited<ReturnType<typeof loadReviewFile>>>;
+type PromotionCandidateRecord = Prisma.ArtifactAasCandidateGetPayload<{
+  include: {
+    intakeSession: {
+      select: {
+        importIntent: true;
+      };
+    };
+  };
+}>;
 
 async function reviewArtifactCandidateWithinTransaction(
   parsed: ParsedArtifactCandidateReviewActionInput,
@@ -1113,25 +1122,115 @@ export async function promoteArtifactCandidate(input: {
   return prisma.$transaction(
     async (tx) => {
       const seen = new Set<string>();
+      const candidateCache = new Map<string, PromotionCandidateRecord | null>();
+      const outcomeCache = new Map<string, Awaited<ReturnType<typeof tx.outcome.findFirst>> | null>();
+      const epicCache = new Map<string, Awaited<ReturnType<typeof tx.epic.findFirst>> | null>();
+      const fileCache = new Map<string, ReviewFileRecord | null>();
+      let preferredProjectOutcomeId: string | null | undefined;
+
+      async function loadCandidate(candidateId: string) {
+        if (candidateCache.has(candidateId)) {
+          return candidateCache.get(candidateId) ?? null;
+        }
+
+        const candidate = await tx.artifactAasCandidate.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            id: candidateId
+          },
+          include: {
+            intakeSession: {
+              select: {
+                importIntent: true
+              }
+            }
+          }
+        });
+
+        candidateCache.set(candidateId, candidate);
+        return candidate;
+      }
+
+      async function loadOutcome(outcomeId: string | null | undefined) {
+        if (!outcomeId) {
+          return null;
+        }
+
+        if (outcomeCache.has(outcomeId)) {
+          return outcomeCache.get(outcomeId) ?? null;
+        }
+
+        const outcome = await tx.outcome.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            id: outcomeId
+          }
+        });
+
+        outcomeCache.set(outcomeId, outcome);
+        return outcome;
+      }
+
+      async function loadEpic(epicId: string | null | undefined) {
+        if (!epicId) {
+          return null;
+        }
+
+        if (epicCache.has(epicId)) {
+          return epicCache.get(epicId) ?? null;
+        }
+
+        const epic = await tx.epic.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            id: epicId
+          }
+        });
+
+        epicCache.set(epicId, epic);
+        return epic;
+      }
+
+      async function loadFile(fileId: string) {
+        if (fileCache.has(fileId)) {
+          return fileCache.get(fileId) ?? null;
+        }
+
+        const file = await tx.artifactIntakeFile.findFirst({
+          where: {
+            organizationId: input.organizationId,
+            id: fileId
+          },
+          select: {
+            id: true,
+            sectionDispositions: true,
+            intakeSession: {
+              select: {
+                mappedArtifacts: true
+              }
+            }
+          }
+        });
+
+        fileCache.set(fileId, file);
+        return file;
+      }
+
+      async function loadPreferredProjectOutcomeId() {
+        if (preferredProjectOutcomeId !== undefined) {
+          return preferredProjectOutcomeId;
+        }
+
+        preferredProjectOutcomeId = await resolvePreferredProjectOutcomeId(tx, input.organizationId);
+        return preferredProjectOutcomeId;
+      }
 
     async function autoPromoteDependencyCandidate(dependencyCandidateId: string | null | undefined, label: string) {
       if (!dependencyCandidateId) {
         return null;
       }
 
-      const dependencyCandidate = await tx.artifactAasCandidate.findFirst({
-        where: {
-          organizationId: input.organizationId,
-          id: dependencyCandidateId
-        },
-        include: {
-          intakeSession: {
-            select: {
-              importIntent: true
-            }
-          }
-        }
-      });
+      const dependencyCandidate = await loadCandidate(dependencyCandidateId);
 
       if (!dependencyCandidate) {
         return null;
@@ -1156,24 +1255,20 @@ export async function promoteArtifactCandidate(input: {
                 `Auto-confirmed while promoting linked ${label.toLowerCase()} dependency.`
             }
           });
+          candidateCache.set(dependencyCandidate.id, {
+            ...dependencyCandidate,
+            reviewStatus: "confirmed",
+            reviewComment:
+              dependencyCandidate.reviewComment ??
+              `Auto-confirmed while promoting linked ${label.toLowerCase()} dependency.`
+          });
         }
 
         await promoteCandidateWithinTransaction(dependencyCandidate.id);
       }
 
-      return tx.artifactAasCandidate.findFirst({
-        where: {
-          organizationId: input.organizationId,
-          id: dependencyCandidateId
-        },
-        include: {
-          intakeSession: {
-            select: {
-              importIntent: true
-            }
-          }
-        }
-      });
+      const refreshedDependencyCandidate = await loadCandidate(dependencyCandidateId);
+      return refreshedDependencyCandidate;
     }
 
     async function promoteCandidateWithinTransaction(candidateId: string) {
@@ -1184,39 +1279,13 @@ export async function promoteArtifactCandidate(input: {
       seen.add(candidateId);
 
       try {
-        const candidate = await tx.artifactAasCandidate.findFirst({
-          where: {
-            organizationId: input.organizationId,
-            id: candidateId
-          },
-          include: {
-            intakeSession: {
-              select: {
-                importIntent: true
-              }
-            }
-          }
-        });
+        const candidate = await loadCandidate(candidateId);
 
         if (!candidate) {
           throw new Error("Artifact candidate was not found in organization scope.");
         }
 
-        const file = await tx.artifactIntakeFile.findFirst({
-          where: {
-            organizationId: input.organizationId,
-            id: candidate.fileId
-          },
-          select: {
-            id: true,
-            sectionDispositions: true,
-            intakeSession: {
-              select: {
-                mappedArtifacts: true
-              }
-            }
-          }
-        });
+        const file = await loadFile(candidate.fileId);
 
         if (candidate.promotedEntityId) {
           return {
@@ -1357,8 +1426,9 @@ export async function promoteArtifactCandidate(input: {
               originType: "imported",
               createdMode: "promotion",
               lineageReference
-            });
+            }, tx);
             promotedEntityId = updated.id;
+            outcomeCache.set(updated.id, updated);
           } else {
             const outcomeKey = await resolveNextGovernedKey({
               db: tx,
@@ -1392,40 +1462,19 @@ export async function promoteArtifactCandidate(input: {
               tx
             );
             promotedEntityId = created.id;
+            outcomeCache.set(created.id, created);
           }
         }
 
         if (candidate.type === "epic") {
           const promotedOutcomeCandidate = await autoPromoteDependencyCandidate(draftRecord.outcomeCandidateId, "Outcome");
-          const linkedOutcome =
-            promotedOutcomeCandidate?.promotedEntityId
-              ? await tx.outcome.findFirst({
-                  where: {
-                    organizationId: candidate.organizationId,
-                    id: promotedOutcomeCandidate.promotedEntityId
-                  }
-                })
-                : draftRecord.outcomeCandidateId
-                  ? await tx.outcome.findFirst({
-                      where: {
-                        organizationId: candidate.organizationId,
-                        id: draftRecord.outcomeCandidateId
-                      }
-                    })
-                : null;
+          const linkedOutcome = promotedOutcomeCandidate?.promotedEntityId
+            ? await loadOutcome(promotedOutcomeCandidate.promotedEntityId)
+            : await loadOutcome(draftRecord.outcomeCandidateId);
 
           const fallbackOutcome =
             linkedOutcome ??
-            (await resolvePreferredProjectOutcomeId(tx, candidate.organizationId).then((outcomeId) =>
-              outcomeId
-                ? tx.outcome.findFirst({
-                    where: {
-                      organizationId: candidate.organizationId,
-                      id: outcomeId
-                    }
-                  })
-                : null
-            ));
+            (await loadPreferredProjectOutcomeId().then((outcomeId) => loadOutcome(outcomeId)));
 
           if (!fallbackOutcome) {
             throw new Error("Select or link a valid project Outcome before promoting this Epic.");
@@ -1457,62 +1506,27 @@ export async function promoteArtifactCandidate(input: {
             tx
           );
           promotedEntityId = created.id;
+          epicCache.set(created.id, created);
         }
 
         if (candidate.type === "story") {
           const promotedOutcomeCandidate = await autoPromoteDependencyCandidate(draftRecord.outcomeCandidateId, "Outcome");
           const promotedEpicCandidate = await autoPromoteDependencyCandidate(draftRecord.epicCandidateId, "Epic");
-          let linkedOutcome =
-            promotedOutcomeCandidate?.promotedEntityId
-              ? await tx.outcome.findFirst({
-                  where: {
-                    organizationId: candidate.organizationId,
-                    id: promotedOutcomeCandidate.promotedEntityId
-                  }
-                })
-              : draftRecord.outcomeCandidateId
-                ? await tx.outcome.findFirst({
-                    where: {
-                      organizationId: candidate.organizationId,
-                      id: draftRecord.outcomeCandidateId
-                    }
-                  })
-                : null;
-          const linkedEpic =
-            promotedEpicCandidate?.promotedEntityId
-              ? await tx.epic.findFirst({
-                  where: {
-                    organizationId: candidate.organizationId,
-                    id: promotedEpicCandidate.promotedEntityId
-                  }
-                })
-              : draftRecord.epicCandidateId
-                ? await tx.epic.findFirst({
-                    where: {
-                      organizationId: candidate.organizationId,
-                      id: draftRecord.epicCandidateId
-                    }
-                  })
-                : null;
+          let linkedOutcome = promotedOutcomeCandidate?.promotedEntityId
+            ? await loadOutcome(promotedOutcomeCandidate.promotedEntityId)
+            : await loadOutcome(draftRecord.outcomeCandidateId);
+          const linkedEpic = promotedEpicCandidate?.promotedEntityId
+            ? await loadEpic(promotedEpicCandidate.promotedEntityId)
+            : await loadEpic(draftRecord.epicCandidateId);
 
-          const preferredOutcomeId = await resolvePreferredProjectOutcomeId(tx, candidate.organizationId);
+          const preferredOutcomeId = await loadPreferredProjectOutcomeId();
           if (!linkedOutcome || !linkedEpic) {
             const fallbackOutcome =
               linkedOutcome ??
               (linkedEpic
-                ? await tx.outcome.findFirst({
-                    where: {
-                      organizationId: candidate.organizationId,
-                      id: linkedEpic.outcomeId
-                    }
-                  })
+                ? await loadOutcome(linkedEpic.outcomeId)
                 : preferredOutcomeId
-                  ? await tx.outcome.findFirst({
-                      where: {
-                        organizationId: candidate.organizationId,
-                        id: preferredOutcomeId
-                      }
-                    })
+                  ? await loadOutcome(preferredOutcomeId)
                   : null);
 
             if (!fallbackOutcome || !linkedEpic) {
@@ -1598,6 +1612,14 @@ export async function promoteArtifactCandidate(input: {
             importedReadinessState: promotedReadinessState
           }
         });
+        candidateCache.set(candidate.id, {
+          ...candidate,
+          reviewStatus: "promoted",
+          promotedEntityType,
+          promotedEntityId,
+          promotedAt,
+          importedReadinessState: promotedReadinessState
+          });
 
         await appendActivityEvent(
           {

@@ -515,10 +515,10 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
   return persist(db);
 }
 
-export async function updateOutcome(input: unknown) {
+export async function updateOutcome(input: unknown, db: Prisma.TransactionClient | typeof prisma = prisma) {
   const parsed = outcomeUpdateInputSchema.parse(input);
 
-  return prisma.$transaction(async (tx) => {
+  const persist = async (tx: Prisma.TransactionClient) => {
     const existing = await tx.outcome.findFirst({
       where: {
         organizationId: parsed.organizationId,
@@ -743,5 +743,11 @@ export async function updateOutcome(input: unknown) {
     );
 
     return outcome;
-  });
+  };
+
+  if (db === prisma) {
+    return prisma.$transaction((tx) => persist(tx));
+  }
+
+  return persist(db);
 }
