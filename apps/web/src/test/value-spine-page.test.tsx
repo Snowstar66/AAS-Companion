@@ -155,8 +155,8 @@ describe("Value Spine page", () => {
     expect(screen.queryByText("Native Outcome")).toBeNull();
     expect(screen.getAllByRole("link", { name: /Open lineage/i }).length).toBeGreaterThan(0);
     expect(screen.getByText("Visible Story Ideas")).toBeDefined();
-    expect(screen.getAllByText(/Framing status:/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Needs action/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Value intent:/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Framing status:/i)).toBeNull();
   });
 
   it("shows direction seeds as clear when framing descriptions and expected behavior exist", async () => {
@@ -196,9 +196,6 @@ describe("Value Spine page", () => {
 
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
-    expect(screen.getByText(/Delivery feedback: Expanded/i)).toBeDefined();
-    expect(screen.getByText(/Derived Delivery Stories: 0/i)).toBeDefined();
-    expect(screen.getByText(/Additional: 1/i)).toBeDefined();
     expect(screen.getByText("Additional Delivery Stories")).toBeDefined();
     expect(screen.getByText("Extra delivery scope")).toBeDefined();
     expect(screen.getByText(/Additional in this Epic/i)).toBeDefined();

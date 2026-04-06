@@ -3,7 +3,20 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, CircleHelp, Compass, Eye, EyeOff, FileSearch, Inbox, LayoutDashboard, LibraryBig, Settings2, Shield, Workflow } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CircleHelp,
+  Compass,
+  Eye,
+  EyeOff,
+  FileSearch,
+  Inbox,
+  LayoutDashboard,
+  LibraryBig,
+  Settings2,
+  Shield,
+  Workflow
+} from "lucide-react";
 import { primaryNavigation } from "@aas-companion/domain/navigation";
 import { getLocalizedNavigationCopy, translateSectionLabel } from "@/components/layout/app-language.data";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
@@ -72,21 +85,12 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
 
         <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/12 to-white/4 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">{content.currentLocation}</p>
-          <p className="mt-3 text-base font-semibold text-white">
-            {activeProjectName ?? content.noProjectSelected}
-          </p>
-          <div className="mt-3 space-y-2">
+          <p className="mt-3 text-base font-semibold text-white">{activeProjectName ?? content.noProjectSelected}</p>
+          <div className="mt-3">
             <div className="rounded-2xl border border-white/10 bg-white/6 px-3 py-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{content.sectionLabel}</p>
-              <p className="mt-1 text-sm font-medium text-white">
-                {translatedSectionLabel ?? content.chooseProjectFirst}
-              </p>
+              <p className="mt-1 text-sm font-medium text-white">{translatedSectionLabel ?? content.chooseProjectFirst}</p>
             </div>
-            <p className="text-sm leading-6 text-slate-300">
-              {activeSectionLabel
-                ? content.highlightedNavigationHint
-                : content.chooseProjectHint}
-            </p>
           </div>
         </div>
 

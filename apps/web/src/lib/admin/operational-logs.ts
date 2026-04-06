@@ -16,6 +16,14 @@ function translate(language: AppLanguage, en: string, sv: string) {
   return language === "sv" ? sv : en;
 }
 
+function normalizeOperationalStatus(value: string | null) {
+  if (value === "error" || value === "success" || value === "started" || value === "warning") {
+    return value;
+  }
+
+  return "info";
+}
+
 export async function loadOperationalLogs(limit = 40, language: AppLanguage = "en") {
   try {
     const organization = await requireOrganizationContext();
@@ -46,7 +54,7 @@ export async function loadOperationalLogs(limit = 40, language: AppLanguage = "e
           actorName: event.actor?.fullName ?? event.actor?.email ?? null,
           scope: readString(metadata.scope) ?? translate(language, "operation", "operation"),
           action: readString(metadata.action) ?? translate(language, "unnamed_action", "namnlös_åtgärd"),
-          status: readString(metadata.status) ?? translate(language, "info", "info"),
+          status: normalizeOperationalStatus(readString(metadata.status)),
           summary: readString(metadata.summary) ?? translate(language, "Operational event", "Operativ händelse"),
           detail: readString(metadata.detail) ?? null,
           durationMs: readNumber(metadata.durationMs),

@@ -22,7 +22,7 @@ function getLogTone(status: string) {
     return "border-red-200 bg-red-50/80 text-red-900";
   }
 
-  if (status === "started") {
+  if (status === "warning") {
     return "border-amber-200 bg-amber-50/80 text-amber-900";
   }
 
@@ -30,7 +30,27 @@ function getLogTone(status: string) {
     return "border-emerald-200 bg-emerald-50/80 text-emerald-900";
   }
 
-  return "border-border/70 bg-background text-foreground";
+  return "border-slate-200 bg-slate-50/80 text-slate-900";
+}
+
+function getLogStatusLabel(language: AppLanguage, status: string) {
+  if (status === "error") {
+    return language === "sv" ? "fel" : "error";
+  }
+
+  if (status === "warning") {
+    return language === "sv" ? "varning" : "warning";
+  }
+
+  if (status === "success") {
+    return language === "sv" ? "lyckad" : "success";
+  }
+
+  if (status === "started") {
+    return language === "sv" ? "påbörjad" : "started";
+  }
+
+  return language === "sv" ? "info" : "info";
 }
 
 async function getServerLanguage(): Promise<AppLanguage> {
@@ -106,8 +126,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         ) : null}
 
         {!canManageProjects || isDemoSession ? (
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
               <CardTitle>{t("Admin cleanup is unavailable", "Administrativ rensning är inte tillgänglig")}</CardTitle>
               <CardDescription>{t("Open a normal signed-in project account before trying to remove persisted data.", "Öppna ett vanligt inloggat projektkonto innan du försöker ta bort sparad data.")}</CardDescription>
             </CardHeader>
@@ -230,6 +250,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
                   {operationalLogs.message}
                 </div>
+                <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-xs text-muted-foreground">
+                  {t(
+                    "Green means success, yellow means warning, red means failure, and gray means an operation is still in progress.",
+                    "Grönt betyder lyckad, gult betyder varning, rött betyder fel och grått betyder att en operation fortfarande pågår."
+                  )}
+                </div>
                 {operationalLogs.state !== "ready" || operationalLogs.items.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border/70 bg-background/70 p-5 text-sm text-muted-foreground">
                     {t("No operational logs are visible yet for the active project.", "Inga operativa loggar syns ännu för det aktiva projektet.")}
@@ -243,7 +269,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             {item.scope.replaceAll("_", " ")}
                           </span>
                           <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
-                            {item.status}
+                            {getLogStatusLabel(language, item.status)}
                           </span>
                           {item.durationMs !== null ? (
                             <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">

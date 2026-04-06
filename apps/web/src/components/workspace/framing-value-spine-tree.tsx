@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
@@ -13,16 +13,11 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import {
   getStoryIdeaBlockers,
   getStoryIdeaIntentText,
-  getStoryIdeaStatusText,
   isStoryIdeaReadyForFraming,
   isStoryIdeaStarted
 } from "@/lib/framing/story-idea-status";
 import {
-  getStoryIdeaDeliveryFeedback,
-  getStoryIdeaDeliveryFeedbackLabel,
-  getStoryIdeaDeliveryFeedbackSummary,
-  isLikelyDeliveryStory,
-  type StoryIdeaDeliveryFeedbackStatus
+  isLikelyDeliveryStory
 } from "@/lib/framing/story-idea-delivery-feedback";
 import { getStoryUxModel } from "@/lib/workspace/story-ux";
 
@@ -32,7 +27,8 @@ type TreeOutcome = {
   title: string;
   href: string;
   isCurrent?: boolean;
-  statement?: string | null;
+  problemStatement?: string | null;
+  outcomeStatement?: string | null;
   originType?: string | null;
   lifecycleState?: string | null;
   importedReadinessState?: string | null;
@@ -106,13 +102,6 @@ type FramingValueSpineTreeProps = {
   language?: "en" | "sv" | undefined;
 };
 
-type StoryIdeaFeedback = {
-  status: StoryIdeaDeliveryFeedbackStatus;
-  deliveryStoryCount: number;
-  completedDeliveryStoryCount: number;
-  additionalStoryCount: number;
-};
-
 function formatLabel(value: string | null | undefined) {
   return value ? value.replaceAll("_", " ") : null;
 }
@@ -179,19 +168,6 @@ function getStorySurfaceClasses(story: TreeStory, needsAttention: boolean, isRev
   return "border-border/70 bg-background";
 }
 
-function getFeedbackToneClasses(status: StoryIdeaDeliveryFeedbackStatus) {
-  switch (status) {
-    case "stable":
-      return "border-emerald-200 bg-emerald-50 text-emerald-800";
-    case "expanded":
-      return "border-amber-200 bg-amber-50 text-amber-900";
-    case "misaligned":
-      return "border-rose-200 bg-rose-50 text-rose-900";
-    default:
-      return "border-border/70 bg-muted/30 text-muted-foreground";
-  }
-}
-
 function DeliveryStoryChildRow({
   story,
   emphasis = "linked",
@@ -218,7 +194,7 @@ function DeliveryStoryChildRow({
   const structureMeta = joinMeta([
     t(language, `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`, `Acceptanskriterier: ${story.acceptanceCriteria?.length ?? 0}`),
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
-    story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")
+    story.testDefinition ? t(language, "Test path defined", "TestspÃ¥r definierat") : t(language, "Test path missing", "TestspÃ¥r saknas")
   ]);
 
   return (
@@ -239,13 +215,13 @@ function DeliveryStoryChildRow({
                   : "border-amber-200 bg-white text-amber-900"
               }`}
             >
-              {emphasis === "linked" ? t(language, "Derived from this idea", "Härledd från den här idén") : t(language, "Additional in this Epic", "Ytterligare i detta epic")}
+              {emphasis === "linked" ? t(language, "Derived from this idea", "HÃ¤rledd frÃ¥n den hÃ¤r idÃ©n") : t(language, "Additional in this Epic", "Ytterligare i detta epic")}
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
-            {story.valueIntent?.trim() || t(language, "This Delivery Story still needs a clearer value intent.", "Den här delivery storyn behöver fortfarande ett tydligare value intent.")}
+            {story.valueIntent?.trim() || t(language, "This Delivery Story still needs a clearer value intent.", "Den hÃ¤r delivery storyn behÃ¶ver fortfarande ett tydligare value intent.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">{t(language, "Delivery description:", "Leveransbeskrivning:")}</span> {deliveryDescription}
@@ -257,14 +233,14 @@ function DeliveryStoryChildRow({
           <p className="mt-2 text-xs text-muted-foreground">{structureMeta}</p>
           {missingInputs.length > 0 ? (
             <p className="mt-2 text-xs text-amber-900">
-              <span className="font-medium">{t(language, "Needs attention:", "Behöver uppmärksamhet:")}</span> {missingInputs.join(", ")}
+              <span className="font-medium">{t(language, "Needs attention:", "BehÃ¶ver uppmÃ¤rksamhet:")}</span> {missingInputs.join(", ")}
             </p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              {t(language, "Open Delivery Story", "Öppna Delivery Story")}
+              {t(language, "Open Delivery Story", "Ã–ppna Delivery Story")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -275,6 +251,9 @@ function DeliveryStoryChildRow({
 }
 
 function OutcomeRow({ outcome, mode, language }: { outcome: TreeOutcome; mode: "delivery" | "framing"; language: "en" | "sv" }) {
+  const hasProblemStatement = Boolean(outcome.problemStatement?.trim());
+  const hasOutcomeStatement = Boolean(outcome.outcomeStatement?.trim());
+
   return (
     <div className={`rounded-2xl border px-5 py-4 ${outcome.isCurrent ? "border-sky-200 bg-sky-50/55" : "border-border/70 bg-background"}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -289,7 +268,18 @@ function OutcomeRow({ outcome, mode, language }: { outcome: TreeOutcome; mode: "
             <h3 className="text-sm font-semibold text-foreground">{outcome.key}</h3>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{outcome.title}</p>
-          {outcome.statement ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{outcome.statement}</p> : null}
+          {hasProblemStatement ? (
+            <p className="mt-2 text-sm text-foreground">
+              <span className="font-medium">{t(language, "Problem statement:", "Problem statement:")}</span>{" "}
+              {outcome.problemStatement}
+            </p>
+          ) : null}
+          {hasOutcomeStatement ? (
+            <p className="mt-2 text-sm text-foreground">
+              <span className="font-medium">{t(language, "Outcome statement:", "Outcome statement:")}</span>{" "}
+              {outcome.outcomeStatement}
+            </p>
+          ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
             {joinMeta([
               getOriginLabel(outcome.originType),
@@ -303,13 +293,13 @@ function OutcomeRow({ outcome, mode, language }: { outcome: TreeOutcome; mode: "
             <Button asChild size="sm" variant="secondary">
               <Link href={outcome.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Öppna lineage")}
+                {t(language, "Open lineage", "Ã–ppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={outcome.href}>
-              {t(language, "Open Framing", "Öppna Framing")}
+              {t(language, "Open Framing", "Ã–ppna Framing")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -321,12 +311,10 @@ function OutcomeRow({ outcome, mode, language }: { outcome: TreeOutcome; mode: "
 
 function DirectionSeedRow({
   seed,
-  feedback,
   derivedStories,
   language
 }: {
   seed: TreeDirectionSeed;
-  feedback: StoryIdeaFeedback;
   derivedStories: TreeStory[];
   language: "en" | "sv";
 }) {
@@ -343,21 +331,12 @@ function DirectionSeedRow({
     expectedBehavior: seed.expectedBehavior
   });
   const needsAttention = !isReady;
-  const framingStatus = getStoryIdeaStatusText({
-    shortDescription: seed.shortDescription,
-    expectedBehavior: seed.expectedBehavior,
-    hasEpicLink: true
-  });
+  const valueIntent = intentText?.trim();
   const ideaBlockers = getStoryIdeaBlockers({
     shortDescription: seed.shortDescription,
     expectedBehavior: seed.expectedBehavior,
     hasEpicLink: true
   });
-  const nextImprovement = !intentText
-    ? t(language, "Add Value Intent so the story idea explains why it matters.", "Lägg till Value Intent så att story idean förklarar varför den spelar roll.")
-    : !seed.expectedBehavior?.trim()
-      ? t(language, "Add Expected Behavior so the story idea better guides design and AI refinement.", "Lägg till Expected Behavior så att story idean bättre vägleder design och AI-förfining.")
-      : t(language, "No immediate framing changes are required.", "Inga omedelbara framingändringar krävs.");
 
   return (
     <div
@@ -392,42 +371,17 @@ function DirectionSeedRow({
             ) : null}
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{seed.title}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {intentText || t(language, "Add Value Intent so this story idea explains what user or business value it should create.", "Lägg till Value Intent så att story idean förklarar vilket användar- eller affärsvärde den ska skapa.")}
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
+            {valueIntent || t(language, "Add Value Intent so this story idea explains what user or business value it should create.", "Lägg till Value Intent så att story idean förklarar vilket användar- eller affärsvärde den ska skapa.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">{t(language, "Framing status:", "Framingstatus:")}</span> {framingStatus}
-          </p>
-          <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span> {seed.expectedBehavior?.trim() || t(language, "Optional and not captured yet.", "Valfritt och ännu inte fångat.")}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span className={`inline-flex rounded-full border px-2.5 py-1 font-medium ${getFeedbackToneClasses(feedback.status)}`}>
-              {t(language, "Delivery feedback:", "Leveransfeedback:")} {getStoryIdeaDeliveryFeedbackLabel(feedback.status)}
-            </span>
-            <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
-              {t(language, "Derived Delivery Stories:", "Härledda Delivery Stories:")} {feedback.deliveryStoryCount}
-            </span>
-            <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
-              {t(language, "Completed:", "Klara:")} {feedback.completedDeliveryStoryCount}
-            </span>
-            <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
-              {t(language, "Additional:", "Ytterligare:")} {feedback.additionalStoryCount}
-            </span>
-          </div>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {getStoryIdeaDeliveryFeedbackSummary({
-              status: feedback.status,
-              deliveryStoryCount: feedback.deliveryStoryCount,
-              additionalStoryCount: feedback.additionalStoryCount
-            })}
-          </p>
-          <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
-            <span className="font-medium">{t(language, "Next best action:", "Bästa nästa steg:")}</span> {nextImprovement}
+            <span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span>{" "}
+            {seed.expectedBehavior?.trim() || t(language, "Optional and not captured yet.", "Valfritt och ännu inte fångat.")}
           </p>
           {ideaBlockers.length > 0 ? (
             <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">{t(language, "Blockers:", "Blockerare:")}</span> {ideaBlockers.join(" ")}
+              <span className="font-medium">{t(language, "Needs attention:", "Behöver uppmärksamhet:")}</span> {ideaBlockers.join(" ")}
             </p>
           ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
@@ -494,21 +448,11 @@ function StoryIdeaRow({ story, language }: { story: TreeStory; language: "en" | 
     expectedBehavior: story.expectedBehavior
   });
   const needsAttention = !isReady;
-  const framingStatus = getStoryIdeaStatusText({
-    valueIntent: story.valueIntent,
-    expectedBehavior: story.expectedBehavior,
-    hasEpicLink: true
-  });
   const ideaBlockers = getStoryIdeaBlockers({
     valueIntent: story.valueIntent,
     expectedBehavior: story.expectedBehavior,
     hasEpicLink: true
   });
-  const nextImprovement = !story.valueIntent?.trim()
-    ? t(language, "Add Value Intent so the story idea explains why it matters.", "Lägg till Value Intent så att story idean förklarar varför den spelar roll.")
-    : !story.expectedBehavior?.trim()
-      ? t(language, "Add Expected Behavior so the story idea better guides design and AI refinement.", "Lägg till Expected Behavior så att story idean bättre vägleder design och AI-förfining.")
-      : t(language, "No immediate framing changes are required.", "Inga omedelbara framingändringar krävs.");
 
   return (
     <div
@@ -535,21 +479,17 @@ function StoryIdeaRow({ story, language }: { story: TreeStory; language: "en" | 
             ) : null}
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          <p className="mt-2 text-sm text-foreground">
+            <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
             {story.valueIntent?.trim() || t(language, "Add Value Intent so this story idea explains what user or business value it should create.", "Lägg till Value Intent så att story idean förklarar vilket användar- eller affärsvärde den ska skapa.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">{t(language, "Framing status:", "Framingstatus:")}</span> {framingStatus}
-          </p>
-          <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span> {story.expectedBehavior?.trim() || t(language, "Not described yet.", "Inte beskrivet ännu.")}
-          </p>
-          <p className={`mt-1 text-sm ${needsAttention ? "text-amber-900" : "text-muted-foreground"}`}>
-            <span className="font-medium">{t(language, "Next best action:", "Bästa nästa steg:")}</span> {nextImprovement}
+            <span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span>{" "}
+            {story.expectedBehavior?.trim() || t(language, "Not described yet.", "Inte beskrivet ännu.")}
           </p>
           {ideaBlockers.length > 0 ? (
             <p className="mt-1 text-sm text-amber-900">
-              <span className="font-medium">{t(language, "Blockers:", "Blockerare:")}</span> {ideaBlockers.join(" ")}
+              <span className="font-medium">{t(language, "Needs attention:", "Behöver uppmärksamhet:")}</span> {ideaBlockers.join(" ")}
             </p>
           ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
@@ -609,7 +549,7 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
   const structureMeta = joinMeta([
     t(language, `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`, `Acceptanskriterier: ${story.acceptanceCriteria?.length ?? 0}`),
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
-    story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")
+    story.testDefinition ? t(language, "Test path defined", "TestspÃ¥r definierat") : t(language, "Test path missing", "TestspÃ¥r saknas")
   ]);
 
   const showReviewingTone = isReviewing;
@@ -644,7 +584,7 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
             </p>
           ) : null}
           <p className="mt-1 text-sm text-foreground">
-            <span className="font-medium">{t(language, "Next best action:", "Bästa nästa steg:")}</span> {nextStep}
+            <span className="font-medium">{t(language, "Next best action:", "BÃ¤sta nÃ¤sta steg:")}</span> {nextStep}
           </p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
           {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}
@@ -655,13 +595,13 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
             <Button asChild size="sm" variant="secondary">
               <Link href={story.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Öppna lineage")}
+                {t(language, "Open lineage", "Ã–ppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              {t(language, "Open Story", "Öppna Story")}
+              {t(language, "Open Story", "Ã–ppna Story")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -671,7 +611,7 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
         <span className={`inline-flex items-center gap-2 ${story.testDefinition ? "text-emerald-800" : "text-amber-800"}`}>
           <CheckCircle2 className="h-3.5 w-3.5" />
           <TestTube2 className="h-3.5 w-3.5" />
-          {story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")}
+          {story.testDefinition ? t(language, "Test path defined", "TestspÃ¥r definierat") : t(language, "Test path missing", "TestspÃ¥r saknas")}
         </span>
         {missingInputs.length > 0 ? (
           <span className="inline-flex items-center gap-2 text-amber-800">
@@ -726,7 +666,6 @@ function EpicRow({
         expectedBehavior: story.expectedBehavior
       })
   ).length;
-  const allSeedSourceStoryIds = directionSeeds.map((seed) => seed.sourceStoryId);
   const storyIdeaCount = directionSeeds.length + framingStories.length;
 
   return (
@@ -742,7 +681,14 @@ function EpicRow({
               <h4 className="text-sm font-semibold text-foreground">{epic.key}</h4>
             </div>
             <p className="mt-2 text-sm font-semibold text-foreground">{epic.title}</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{epic.scopeBoundary ?? epic.purpose ?? t(language, "Scope boundary is still missing.", "Scope-gräns saknas fortfarande.")}</p>
+            {epic.purpose?.trim() ? (
+              <p className="mt-2 text-sm text-foreground">
+                <span className="font-medium">{t(language, "Purpose:", "Purpose:")}</span> {epic.purpose}
+              </p>
+            ) : null}
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {epic.scopeBoundary?.trim() ?? t(language, "Scope boundary is still missing.", "Scope-grÃ¤ns saknas fortfarande.")}
+            </p>
             <p className="mt-2 text-xs text-muted-foreground">
               {joinMeta([
                 getOriginLabel(epic.originType),
@@ -752,10 +698,10 @@ function EpicRow({
                   : t(language, `${itemCount} stor${itemCount === 1 ? "y" : "ies"} in branch`, `${itemCount} stories i grenen`),
                 mode === "framing"
                   ? framingNeedsAttention + framingStoryNeedsAttention > 0
-                    ? t(language, `${framingNeedsAttention + framingStoryNeedsAttention} need clearer descriptions`, `${framingNeedsAttention + framingStoryNeedsAttention} behöver tydligare beskrivningar`)
+                    ? t(language, `${framingNeedsAttention + framingStoryNeedsAttention} need clearer descriptions`, `${framingNeedsAttention + framingStoryNeedsAttention} behÃ¶ver tydligare beskrivningar`)
                     : null
                   : deliveryNeedsAttention > 0
-                    ? t(language, `${deliveryNeedsAttention} need attention`, `${deliveryNeedsAttention} behöver uppmärksamhet`)
+                    ? t(language, `${deliveryNeedsAttention} need attention`, `${deliveryNeedsAttention} behÃ¶ver uppmÃ¤rksamhet`)
                     : null,
                 formatLabel(epic.importedReadinessState)
               ])}
@@ -766,13 +712,13 @@ function EpicRow({
               <Button asChild size="sm" variant="secondary">
                 <Link href={epic.lineageHref}>
                   <FileSearch className="mr-2 h-3.5 w-3.5" />
-                  {t(language, "Open lineage", "Öppna lineage")}
+                  {t(language, "Open lineage", "Ã–ppna lineage")}
                 </Link>
               </Button>
             ) : null}
             <Button asChild size="sm" variant="secondary">
               <Link href={epic.href}>
-                {t(language, "Open Epic", "Öppna Epic")}
+                {t(language, "Open Epic", "Ã–ppna Epic")}
                 <ArrowRight className="ml-2 h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -798,21 +744,16 @@ function EpicRow({
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.", "Story Ideas definierar intent, värde och expected behavior. De vägleder design men är inte leveransspecifikationer.")}
+                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.", "Story Ideas definierar intent, vÃ¤rde och expected behavior. De vÃ¤gleder design men Ã¤r inte leveransspecifikationer.")}
                     </p>
                   </div>
                   {storyIdeaCount === 0 ? (
-                    <div className="px-5 py-4 text-sm text-muted-foreground">{t(language, "No Story Ideas are currently visible in this Epic.", "Inga Story Ideas syns just nu i det här epicet.")}</div>
+                    <div className="px-5 py-4 text-sm text-muted-foreground">{t(language, "No Story Ideas are currently visible in this Epic.", "Inga Story Ideas syns just nu i det hÃ¤r epicet.")}</div>
                   ) : (
                     <div className="divide-y divide-border/70">
                       {directionSeeds.map((seed) => (
                         <DirectionSeedRow
                           derivedStories={stories.filter((story) => story.sourceDirectionSeedId === seed.id)}
-                          feedback={getStoryIdeaDeliveryFeedback({
-                            seedId: seed.id,
-                            stories,
-                            allSeedSourceStoryIds
-                          })}
                           key={`seed-${seed.id}`}
                           seed={seed}
                           language={language}
@@ -836,7 +777,7 @@ function EpicRow({
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.", "De här Delivery Stories hör till samma epic, men lades till under design eller leverans i stället för att skapas direkt från en Story Idea.")}
+                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.", "De hÃ¤r Delivery Stories hÃ¶r till samma epic, men lades till under design eller leverans i stÃ¤llet fÃ¶r att skapas direkt frÃ¥n en Story Idea.")}
                     </p>
                     <div className="mt-4 space-y-3">
                       {additionalDeliveryStories.map((story) => (
@@ -885,7 +826,7 @@ export function FramingValueSpineTree({
 
         {epics.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">{t(language, "No Epics are attached to this Framing yet.", "Inga Epics är kopplade till den här Framingen ännu.")}</p>
+            <p className="font-medium text-foreground">{t(language, "No Epics are attached to this Framing yet.", "Inga Epics Ã¤r kopplade till den hÃ¤r Framingen Ã¤nnu.")}</p>
             <p className="mt-2">{emptyEpicMessage}</p>
           </div>
         ) : (
@@ -905,3 +846,4 @@ export function FramingValueSpineTree({
 
   return <Card className="border-border/70 shadow-sm">{treeContent}</Card>;
 }
+
