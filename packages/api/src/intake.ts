@@ -237,6 +237,7 @@ export async function promoteArtifactCandidateService(input: {
   candidateId: string;
   actorId?: string | null;
   disableAutoPromoteDependencies?: boolean;
+  trustPreparedReadiness?: boolean;
 }) {
   try {
     return success(
@@ -244,7 +245,8 @@ export async function promoteArtifactCandidateService(input: {
         organizationId: input.organizationId,
         candidateId: input.candidateId,
         actorId: input.actorId ?? null,
-        disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false
+        disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false,
+        trustPreparedReadiness: input.trustPreparedReadiness ?? false
       })
     );
   } catch (error) {
@@ -260,6 +262,7 @@ export async function promoteArtifactCandidatesBulkService(input: {
   candidateIds: string[];
   actorId?: string | null;
   disableAutoPromoteDependencies?: boolean;
+  trustPreparedReadiness?: boolean;
 }) {
   try {
     return success(
@@ -267,7 +270,8 @@ export async function promoteArtifactCandidatesBulkService(input: {
         organizationId: input.organizationId,
         candidateIds: input.candidateIds,
         actorId: input.actorId ?? null,
-        disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false
+        disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false,
+        trustPreparedReadiness: input.trustPreparedReadiness ?? false
       })
     );
   } catch (error) {

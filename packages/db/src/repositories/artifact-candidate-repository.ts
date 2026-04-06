@@ -3,6 +3,7 @@ import type { Prisma } from "../../generated/client";
 import {
   analyzeArtifactCandidateCompliance,
   type ArtifactAasCandidate,
+  artifactComplianceResultSchema,
   parseFramingConstraintBundle,
   artifactMappingResultSchema,
   artifactCandidateDraftRecordSchema,
@@ -887,6 +888,7 @@ type PromoteArtifactCandidateInput = {
   candidateId: string;
   actorId?: string | null;
   disableAutoPromoteDependencies?: boolean;
+  trustPreparedReadiness?: boolean;
 };
 type PromotionState = {
   seen: Set<string>;
@@ -1327,8 +1329,6 @@ export async function promoteArtifactCandidate(
           throw new Error("Artifact candidate was not found in organization scope.");
         }
 
-        const file = await loadFile(candidate.fileId);
-
         if (candidate.promotedEntityId) {
           return {
             candidateId: candidate.id,
@@ -1341,46 +1341,60 @@ export async function promoteArtifactCandidate(
         const draftRecord = sanitizeArtifactPersistenceValue(artifactCandidateDraftRecordSchema.parse(candidate.draftRecord));
         const humanDecisions = sanitizeArtifactPersistenceValue(artifactCandidateHumanDecisionSchema.parse(candidate.humanDecisions));
         const issueDispositions = artifactIssueDispositionMapSchema.parse(candidate.issueDispositions ?? {});
-        const complianceResult = analyzeArtifactCandidateCompliance({
-          candidate: sanitizeArtifactPersistenceValue({
-            id: candidate.id,
-            type: candidate.type,
-            title: candidate.title,
-            summary: candidate.summary,
-            mappingState: candidate.mappingState,
-            source: {
+        const canTrustPreparedReadiness =
+          input.trustPreparedReadiness === true &&
+          (candidate.importedReadinessState === "imported_framing_ready" ||
+            candidate.importedReadinessState === "imported_design_ready");
+        const file = canTrustPreparedReadiness ? null : await loadFile(candidate.fileId);
+        const complianceResult = canTrustPreparedReadiness
+          ? artifactComplianceResultSchema.parse(candidate.complianceResult)
+          : analyzeArtifactCandidateCompliance({
+              candidate: sanitizeArtifactPersistenceValue({
+                id: candidate.id,
+                type: candidate.type,
+                title: candidate.title,
+                summary: candidate.summary,
+                mappingState: candidate.mappingState,
+                source: {
+                  fileId: candidate.fileId,
+                  fileName: candidate.sourceSectionTitle,
+                  sectionId: candidate.sourceSectionId,
+                  sectionTitle: candidate.sourceSectionTitle,
+                  sectionMarker: candidate.sourceSectionMarker,
+                  sourceType: candidate.sourceType,
+                  confidence: candidate.sourceConfidence
+                },
+                inferredOutcomeCandidateId: candidate.inferredOutcomeCandidateId,
+                inferredEpicCandidateId: candidate.inferredEpicCandidateId,
+                relationshipState: candidate.relationshipState,
+                relationshipNote: candidate.relationshipNote,
+                acceptanceCriteria: candidate.acceptanceCriteria,
+                testNotes: candidate.testNotes
+              }),
+              reviewStatus: candidate.reviewStatus,
+              draftRecord,
+              humanDecisions
+            });
+        const unmappedSectionContext = canTrustPreparedReadiness
+          ? {
+              unmappedSectionCount: 0,
+              sectionDispositions: artifactIssueDispositionMapSchema.parse({})
+            }
+          : getUnmappedSectionContext({
+              mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
               fileId: candidate.fileId,
-              fileName: candidate.sourceSectionTitle,
-              sectionId: candidate.sourceSectionId,
-              sectionTitle: candidate.sourceSectionTitle,
-              sectionMarker: candidate.sourceSectionMarker,
-              sourceType: candidate.sourceType,
-              confidence: candidate.sourceConfidence
-            },
-            inferredOutcomeCandidateId: candidate.inferredOutcomeCandidateId,
-            inferredEpicCandidateId: candidate.inferredEpicCandidateId,
-            relationshipState: candidate.relationshipState,
-            relationshipNote: candidate.relationshipNote,
-            acceptanceCriteria: candidate.acceptanceCriteria,
-            testNotes: candidate.testNotes
-          }),
-          reviewStatus: candidate.reviewStatus,
-          draftRecord,
-          humanDecisions
-        });
-        const unmappedSectionContext = getUnmappedSectionContext({
-          mappedArtifacts: file?.intakeSession.mappedArtifacts ?? null,
-          fileId: candidate.fileId,
-          sectionDispositions: file?.sectionDispositions ?? null
-        });
-        const importedReadinessState = deriveImportedReadinessState({
-          reviewStatus: candidate.reviewStatus,
-          complianceResult,
-          candidateType: candidate.type,
-          issueDispositions,
-          unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
-          sectionDispositions: unmappedSectionContext.sectionDispositions
-        });
+              sectionDispositions: file?.sectionDispositions ?? null
+            });
+        const importedReadinessState = canTrustPreparedReadiness
+          ? candidate.importedReadinessState ?? "imported"
+          : deriveImportedReadinessState({
+              reviewStatus: candidate.reviewStatus,
+              complianceResult,
+              candidateType: candidate.type,
+              issueDispositions,
+              unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+              sectionDispositions: unmappedSectionContext.sectionDispositions
+            });
         const issueProgress = getArtifactCandidateIssueProgress({
           complianceResult,
           issueDispositions,
@@ -1443,14 +1457,16 @@ export async function promoteArtifactCandidate(
           );
         }
 
-        const promotedReadinessState = deriveImportedReadinessState({
-          reviewStatus: "promoted",
-          complianceResult,
-          candidateType: candidate.type,
-          issueDispositions,
-          unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
-          sectionDispositions: unmappedSectionContext.sectionDispositions
-        });
+        const promotedReadinessState = canTrustPreparedReadiness
+          ? importedReadinessState
+          : deriveImportedReadinessState({
+              reviewStatus: "promoted",
+              complianceResult,
+              candidateType: candidate.type,
+              issueDispositions,
+              unmappedSectionCount: unmappedSectionContext.unmappedSectionCount,
+              sectionDispositions: unmappedSectionContext.sectionDispositions
+            });
         const lineageReference = {
           sourceType: "artifact_aas_candidate" as const,
           sourceId: candidate.id,
@@ -1752,6 +1768,7 @@ export async function promoteArtifactCandidatesBulk(input: {
   candidateIds: string[];
   actorId?: string | null;
   disableAutoPromoteDependencies?: boolean;
+  trustPreparedReadiness?: boolean;
 }) {
   if (input.candidateIds.length === 0) {
     return [];
@@ -1769,7 +1786,8 @@ export async function promoteArtifactCandidatesBulk(input: {
               organizationId: input.organizationId,
               candidateId,
               actorId: input.actorId ?? null,
-              disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false
+              disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false,
+              trustPreparedReadiness: input.trustPreparedReadiness ?? false
             },
             tx,
             sharedState

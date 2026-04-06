@@ -894,7 +894,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
         organizationId: session.organization.organizationId,
         candidateIds: candidateChunk.map((candidate) => candidate.id),
         actorId: session.userId,
-        disableAutoPromoteDependencies: true
+        disableAutoPromoteDependencies: true,
+        trustPreparedReadiness: true
       });
 
       if (!bulkPromoteResult.ok) {
@@ -988,7 +989,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
         organizationId: session.organization.organizationId,
         candidateIds: candidateChunk.map((candidate) => candidate.id),
         actorId: session.userId,
-        disableAutoPromoteDependencies: true
+        disableAutoPromoteDependencies: true,
+        trustPreparedReadiness: true
       });
 
       if (!bulkStoryPromoteResult.ok) {
