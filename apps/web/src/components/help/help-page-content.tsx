@@ -22,6 +22,8 @@ import { useAppLanguage } from "@/components/layout/app-language";
 
 const processStepIcons = [Target, Layers3, LibraryBig] as const;
 const processStepIconClasses = ["text-sky-700", "text-amber-700", "text-emerald-700"] as const;
+const GB_FLAG = "\uD83C\uDDEC\uD83C\uDDE7";
+const SE_FLAG = "\uD83C\uDDF8\uD83C\uDDEA";
 
 export function HelpPageContent(props: { returnTo: string }) {
   const { language, setLanguage } = useAppLanguage();
@@ -49,26 +51,26 @@ export function HelpPageContent(props: { returnTo: string }) {
                   <button
                     aria-label="Switch help page to English"
                     aria-pressed={language === "en"}
-                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-base transition ${
                       language === "en" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/40"
                     }`}
                     onClick={() => setLanguage("en")}
+                    title="English"
                     type="button"
                   >
-                    <span aria-hidden="true">🇬🇧</span>
-                    English
+                    <span aria-hidden="true" className="leading-none">{GB_FLAG}</span>
                   </button>
                   <button
                     aria-label="Byt hjälpsidan till svenska"
                     aria-pressed={language === "sv"}
-                    className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-base transition ${
                       language === "sv" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/40"
                     }`}
                     onClick={() => setLanguage("sv")}
+                    title="Svenska"
                     type="button"
                   >
-                    <span aria-hidden="true">🇸🇪</span>
-                    Svenska
+                    <span aria-hidden="true" className="leading-none">{SE_FLAG}</span>
                   </button>
                 </div>
               </div>
