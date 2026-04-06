@@ -69,7 +69,7 @@ describe("Home dashboard", () => {
 
     expect(screen.getByRole("heading", { name: "Project dashboard", level: 1 })).toBeDefined();
     expect(screen.getAllByText("Needs attention").length).toBeGreaterThan(0);
-    expect(screen.getByText("Framing phase")).toBeDefined();
+    expect(screen.getAllByText("Framing phase").length).toBeGreaterThan(0);
     expect(screen.getByText("Story Ideas")).toBeDefined();
     expect(screen.getByText("Framing-ready")).toBeDefined();
     expect(screen.getByText("Delivery Stories")).toBeDefined();

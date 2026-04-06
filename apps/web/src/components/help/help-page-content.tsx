@@ -19,11 +19,10 @@ import { AasBrandMark } from "@/components/shared/aas-brand-mark";
 import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { helpContent, type HelpLanguage } from "@/components/help/help-page-content.data";
 import { useAppLanguage } from "@/components/layout/app-language";
+import { FlagIcon } from "@/components/shared/flag-icon";
 
 const processStepIcons = [Target, Layers3, LibraryBig] as const;
 const processStepIconClasses = ["text-sky-700", "text-amber-700", "text-emerald-700"] as const;
-const GB_FLAG = "\uD83C\uDDEC\uD83C\uDDE7";
-const SE_FLAG = "\uD83C\uDDF8\uD83C\uDDEA";
 
 export function HelpPageContent(props: { returnTo: string }) {
   const { language, setLanguage } = useAppLanguage();
@@ -45,9 +44,6 @@ export function HelpPageContent(props: { returnTo: string }) {
 
               <div className="rounded-2xl border border-border/70 bg-background/90 p-1.5 shadow-sm">
                 <div className="flex items-center gap-1">
-                  <span className="px-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    {content.languageLabel}
-                  </span>
                   <button
                     aria-label="Switch help page to English"
                     aria-pressed={language === "en"}
@@ -58,7 +54,7 @@ export function HelpPageContent(props: { returnTo: string }) {
                     title="English"
                     type="button"
                   >
-                    <span aria-hidden="true" className="leading-none">{GB_FLAG}</span>
+                    <FlagIcon className="h-5 w-5" country="gb" />
                   </button>
                   <button
                     aria-label="Byt hjälpsidan till svenska"
@@ -70,7 +66,7 @@ export function HelpPageContent(props: { returnTo: string }) {
                     title="Svenska"
                     type="button"
                   >
-                    <span aria-hidden="true" className="leading-none">{SE_FLAG}</span>
+                    <FlagIcon className="h-5 w-5" country="se" />
                   </button>
                 </div>
               </div>

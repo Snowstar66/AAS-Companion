@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Clock3, FolderKanban, GitBranch, ShieldCheck } from "lucide-react";
+import { ArrowRight, Clock3, FolderKanban, GitBranch, ShieldCheck, Sparkles } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 
@@ -121,6 +121,26 @@ function MetricCard(props: {
   );
 }
 
+function SummaryChip(props: { label: string; value: string; tone?: "neutral" | "sky" | "rose" | "amber" | "emerald" }) {
+  const toneClass =
+    props.tone === "sky"
+      ? "border-sky-200 bg-sky-50 text-sky-900"
+      : props.tone === "rose"
+        ? "border-rose-200 bg-rose-50 text-rose-900"
+        : props.tone === "amber"
+          ? "border-amber-200 bg-amber-50 text-amber-900"
+          : props.tone === "emerald"
+            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+            : "border-border/70 bg-background/90 text-foreground";
+
+  return (
+    <div className={`rounded-2xl border px-4 py-3 ${toneClass}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-80">{props.label}</p>
+      <p className="mt-2 text-sm font-semibold">{props.value}</p>
+    </div>
+  );
+}
+
 export function HomeDashboardHero(props: HomeDashboardHeroProps) {
   const { language } = useAppChromeLanguage();
   const blockedCount = props.dashboard.topBlockers.length;
@@ -142,6 +162,8 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
     language
   );
 
+  const primaryFocus = props.dashboard.topBlockers[0] ?? props.dashboard.pendingActions[0] ?? null;
+
   const copy =
     language === "sv"
       ? {
@@ -149,18 +171,26 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
           badgeInactive: "Projektåtkomst",
           titleActive: "Projektöversikt",
           titleInactive: "Välj hur du går in i arbetet",
-          bodyActive: "En kompakt lägesbild av projektets fas, struktur och vad som faktiskt behöver uppmärksamhet.",
-          bodyInactive: "Öppna ett befintligt projekt, skapa ett nytt eller öppna Demo uttryckligen innan operativa vyer fylls med innehåll.",
+          bodyActive: "Se var projektet står just nu, vad som bromsar flödet och vad som är närmast att ta vidare i det aktiva projektet.",
+          bodyInactive: "Aktivera ett projekt för att få en levande överblick över fas, blockers, reviewflöden och leveransstatus.",
           currentProject: "Nuvarande projekt",
           noActiveProject: "Inget aktivt projekt valt",
           currentProjectDescription: props.isDemoSession
             ? "Demo visas bara eftersom det valdes uttryckligen."
-            : "Översikten gäller bara det aktiva projektet.",
+            : "All information nedan gäller bara det projekt som är aktivt just nu.",
           noProjectDescription: props.hasAuthenticatedUser
             ? "Välj eller skapa ett projekt för att tända dashboarden."
             : "Logga in och välj sedan ett projekt eller öppna Demo uttryckligen.",
           currentPhase: "Nuvarande fas",
           currentPosture: "Nuvarande läge",
+          summaryPhase: "Fas",
+          summaryBlockers: "Blockerare",
+          summaryPending: "Väntar",
+          summaryReady: "Redo",
+          focusTitle: "Viktigast just nu",
+          focusFallback: "Inga omedelbara blockerare eller väntande steg syns just nu.",
+          focusFallbackDetail: "Det aktiva projektet ser ut att vara i balans för stunden.",
+          openCurrent: "Öppna detta",
           storyIdeasTotal: "Story Ideas",
           storyIdeasReady: "Framing-redo",
           deliveryStoriesTotal: "Delivery Stories",
@@ -185,18 +215,26 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
           badgeInactive: "Project access",
           titleActive: "Project dashboard",
           titleInactive: "Choose how to enter work",
-          bodyActive: "A compact view of project phase, structure, and what actually needs attention.",
-          bodyInactive: "Open an existing project, create a new one, or open Demo explicitly before operational views are populated.",
+          bodyActive: "See where the project stands right now, what is slowing delivery down, and what is closest to moving forward.",
+          bodyInactive: "Activate a project to get a live overview of phase, blockers, review flow, and delivery status.",
           currentProject: "Current project",
           noActiveProject: "No active project selected",
           currentProjectDescription: props.isDemoSession
             ? "Demo only appears because it was chosen explicitly."
-            : "This overview only reflects the active project.",
+            : "All signals below only reflect the project that is active right now.",
           noProjectDescription: props.hasAuthenticatedUser
             ? "Select or create a project to light up the dashboard."
             : "Sign in, then choose a project or enter Demo explicitly.",
           currentPhase: "Current phase",
           currentPosture: "Current posture",
+          summaryPhase: "Phase",
+          summaryBlockers: "Blockers",
+          summaryPending: "Pending",
+          summaryReady: "Ready",
+          focusTitle: "Most important right now",
+          focusFallback: "No immediate blockers or pending steps are visible right now.",
+          focusFallbackDetail: "The active project currently looks balanced.",
+          openCurrent: "Open this",
           storyIdeasTotal: "Story Ideas",
           storyIdeasReady: "Framing-ready",
           deliveryStoriesTotal: "Delivery Stories",
@@ -220,8 +258,8 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
   return (
     <>
       <div className="rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(246,248,252,0.94))] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.6fr)]">
-          <div className="space-y-3">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+          <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               <FolderKanban className="h-3.5 w-3.5 text-primary" />
               {hasActiveProject ? copy.badgeActive : copy.badgeInactive}
@@ -234,6 +272,39 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
                 {hasActiveProject ? copy.bodyActive : copy.bodyInactive}
               </p>
             </div>
+
+            {hasActiveProject ? (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <SummaryChip label={copy.summaryPhase} tone="sky" value={props.dashboard.projectPhase.label} />
+                  <SummaryChip label={copy.summaryBlockers} tone={blockedCount > 0 ? "rose" : "neutral"} value={String(blockedCount)} />
+                  <SummaryChip label={copy.summaryPending} tone={pendingCount > 0 ? "amber" : "neutral"} value={String(pendingCount)} />
+                  <SummaryChip label={copy.summaryReady} tone={readyCount > 0 ? "emerald" : "neutral"} value={String(readyCount)} />
+                </div>
+
+                <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{copy.focusTitle}</p>
+                      <p className="mt-2 text-base font-semibold text-foreground">
+                        {primaryFocus ? primaryFocus.title : copy.focusFallback}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {primaryFocus ? primaryFocus.detail : copy.focusFallbackDetail}
+                      </p>
+                    </div>
+                    {primaryFocus?.href ? (
+                      <Button asChild className="gap-2" size="sm" variant="secondary">
+                        <Link href={primaryFocus.href}>
+                          {copy.openCurrent}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </>
+            ) : null}
           </div>
 
           <div className="rounded-3xl border border-border/70 bg-background/92 p-5 shadow-sm">
@@ -258,15 +329,15 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{status.detail}</p>
                 </div>
               </div>
+
+              {props.dashboard.state !== "live" && props.dashboard.message ? (
+                <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm leading-6 text-muted-foreground">
+                  {props.dashboard.message}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
-
-        {props.dashboard.state !== "live" && props.dashboard.message ? (
-          <div className="mt-4 rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm leading-6 text-muted-foreground">
-            {props.dashboard.message}
-          </div>
-        ) : null}
       </div>
 
       {hasActiveProject ? (
@@ -296,7 +367,7 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
             <MetricCard
               className="border-violet-200 bg-violet-50/75 text-violet-950"
               description={copy.readyToBuildDescription}
-              icon={AlertTriangle}
+              icon={Sparkles}
               label={copy.readyToBuild}
               value={props.dashboard.deliveryStoryStats.readyToStartBuild}
             />

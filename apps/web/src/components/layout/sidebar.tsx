@@ -20,9 +20,7 @@ import {
 import { primaryNavigation } from "@aas-companion/domain/navigation";
 import { getLocalizedNavigationCopy, translateSectionLabel } from "@/components/layout/app-language.data";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
-
-const GB_FLAG = "\uD83C\uDDEC\uD83C\uDDE7";
-const SE_FLAG = "\uD83C\uDDF8\uD83C\uDDEA";
+import { FlagIcon } from "@/components/shared/flag-icon";
 
 const icons = {
   "/": LayoutDashboard,
@@ -173,7 +171,7 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                 onClick={() => setLanguage("en")}
                 type="button"
               >
-                <span aria-hidden="true" className="leading-none">{GB_FLAG}</span>
+                <FlagIcon className="h-4 w-4" country="gb" />
               </button>
               <button
                 aria-label="Switch app language to Swedish"
@@ -184,7 +182,7 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                 onClick={() => setLanguage("sv")}
                 type="button"
               >
-                <span aria-hidden="true" className="leading-none">{SE_FLAG}</span>
+                <FlagIcon className="h-4 w-4" country="se" />
               </button>
             </div>
             <button

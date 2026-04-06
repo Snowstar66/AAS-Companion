@@ -194,7 +194,7 @@ function DeliveryStoryChildRow({
   const structureMeta = joinMeta([
     t(language, `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`, `Acceptanskriterier: ${story.acceptanceCriteria?.length ?? 0}`),
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
-    story.testDefinition ? t(language, "Test path defined", "TestspÃ¥r definierat") : t(language, "Test path missing", "TestspÃ¥r saknas")
+    story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")
   ]);
 
   return (
@@ -215,13 +215,13 @@ function DeliveryStoryChildRow({
                   : "border-amber-200 bg-white text-amber-900"
               }`}
             >
-              {emphasis === "linked" ? t(language, "Derived from this idea", "HÃ¤rledd frÃ¥n den hÃ¤r idÃ©n") : t(language, "Additional in this Epic", "Ytterligare i detta epic")}
+              {emphasis === "linked" ? t(language, "Derived from this idea", "Härledd från den här idén") : t(language, "Additional in this Epic", "Ytterligare i detta epic")}
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
-            {story.valueIntent?.trim() || t(language, "This Delivery Story still needs a clearer value intent.", "Den hÃ¤r delivery storyn behÃ¶ver fortfarande ett tydligare value intent.")}
+            {story.valueIntent?.trim() || t(language, "This Delivery Story still needs a clearer value intent.", "Den här delivery storyn behöver fortfarande ett tydligare value intent.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">{t(language, "Delivery description:", "Leveransbeskrivning:")}</span> {deliveryDescription}
@@ -233,14 +233,14 @@ function DeliveryStoryChildRow({
           <p className="mt-2 text-xs text-muted-foreground">{structureMeta}</p>
           {missingInputs.length > 0 ? (
             <p className="mt-2 text-xs text-amber-900">
-              <span className="font-medium">{t(language, "Needs attention:", "BehÃ¶ver uppmÃ¤rksamhet:")}</span> {missingInputs.join(", ")}
+              <span className="font-medium">{t(language, "Needs attention:", "Behöver uppmärksamhet:")}</span> {missingInputs.join(", ")}
             </p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              {t(language, "Open Delivery Story", "Ã–ppna Delivery Story")}
+              {t(language, "Open Delivery Story", "Öppna Delivery Story")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -293,13 +293,13 @@ function OutcomeRow({ outcome, mode, language }: { outcome: TreeOutcome; mode: "
             <Button asChild size="sm" variant="secondary">
               <Link href={outcome.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Ã–ppna lineage")}
+                {t(language, "Open lineage", "Öppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={outcome.href}>
-              {t(language, "Open Framing", "Ã–ppna Framing")}
+              {t(language, "Open Framing", "Öppna Framing")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -549,7 +549,7 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
   const structureMeta = joinMeta([
     t(language, `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`, `Acceptanskriterier: ${story.acceptanceCriteria?.length ?? 0}`),
     `DoD: ${story.definitionOfDone?.length ?? 0}`,
-    story.testDefinition ? t(language, "Test path defined", "TestspÃ¥r definierat") : t(language, "Test path missing", "TestspÃ¥r saknas")
+    story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")
   ]);
 
   const showReviewingTone = isReviewing;
@@ -584,7 +584,7 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
             </p>
           ) : null}
           <p className="mt-1 text-sm text-foreground">
-            <span className="font-medium">{t(language, "Next best action:", "BÃ¤sta nÃ¤sta steg:")}</span> {nextStep}
+            <span className="font-medium">{t(language, "Next best action:", "Bästa nästa steg:")}</span> {nextStep}
           </p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{nextStepDetail}</p>
           {storyMeta ? <p className="mt-2 text-xs text-muted-foreground">{storyMeta}</p> : null}
@@ -595,13 +595,13 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
             <Button asChild size="sm" variant="secondary">
               <Link href={story.lineageHref}>
                 <FileSearch className="mr-2 h-3.5 w-3.5" />
-                {t(language, "Open lineage", "Ã–ppna lineage")}
+                {t(language, "Open lineage", "Öppna lineage")}
               </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              {t(language, "Open Story", "Ã–ppna Story")}
+              {t(language, "Open Story", "Öppna Story")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -611,7 +611,7 @@ function StoryRow({ story, language }: { story: TreeStory; language: "en" | "sv"
         <span className={`inline-flex items-center gap-2 ${story.testDefinition ? "text-emerald-800" : "text-amber-800"}`}>
           <CheckCircle2 className="h-3.5 w-3.5" />
           <TestTube2 className="h-3.5 w-3.5" />
-          {story.testDefinition ? t(language, "Test path defined", "TestspÃ¥r definierat") : t(language, "Test path missing", "TestspÃ¥r saknas")}
+          {story.testDefinition ? t(language, "Test path defined", "Testspår definierat") : t(language, "Test path missing", "Testspår saknas")}
         </span>
         {missingInputs.length > 0 ? (
           <span className="inline-flex items-center gap-2 text-amber-800">
@@ -687,7 +687,7 @@ function EpicRow({
               </p>
             ) : null}
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {epic.scopeBoundary?.trim() ?? t(language, "Scope boundary is still missing.", "Scope-grÃ¤ns saknas fortfarande.")}
+              {epic.scopeBoundary?.trim() ?? t(language, "Scope boundary is still missing.", "Scope-gräns saknas fortfarande.")}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
               {joinMeta([
@@ -698,10 +698,10 @@ function EpicRow({
                   : t(language, `${itemCount} stor${itemCount === 1 ? "y" : "ies"} in branch`, `${itemCount} stories i grenen`),
                 mode === "framing"
                   ? framingNeedsAttention + framingStoryNeedsAttention > 0
-                    ? t(language, `${framingNeedsAttention + framingStoryNeedsAttention} need clearer descriptions`, `${framingNeedsAttention + framingStoryNeedsAttention} behÃ¶ver tydligare beskrivningar`)
+                    ? t(language, `${framingNeedsAttention + framingStoryNeedsAttention} need clearer descriptions`, `${framingNeedsAttention + framingStoryNeedsAttention} behöver tydligare beskrivningar`)
                     : null
                   : deliveryNeedsAttention > 0
-                    ? t(language, `${deliveryNeedsAttention} need attention`, `${deliveryNeedsAttention} behÃ¶ver uppmÃ¤rksamhet`)
+                    ? t(language, `${deliveryNeedsAttention} need attention`, `${deliveryNeedsAttention} behöver uppmärksamhet`)
                     : null,
                 formatLabel(epic.importedReadinessState)
               ])}
@@ -712,13 +712,13 @@ function EpicRow({
               <Button asChild size="sm" variant="secondary">
                 <Link href={epic.lineageHref}>
                   <FileSearch className="mr-2 h-3.5 w-3.5" />
-                  {t(language, "Open lineage", "Ã–ppna lineage")}
+                  {t(language, "Open lineage", "Öppna lineage")}
                 </Link>
               </Button>
             ) : null}
             <Button asChild size="sm" variant="secondary">
               <Link href={epic.href}>
-                {t(language, "Open Epic", "Ã–ppna Epic")}
+                {t(language, "Open Epic", "Öppna Epic")}
                 <ArrowRight className="ml-2 h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -744,11 +744,11 @@ function EpicRow({
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.", "Story Ideas definierar intent, vÃ¤rde och expected behavior. De vÃ¤gleder design men Ã¤r inte leveransspecifikationer.")}
+                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.", "Story Ideas definierar intent, värde och expected behavior. De vägleder design men är inte leveransspecifikationer.")}
                     </p>
                   </div>
                   {storyIdeaCount === 0 ? (
-                    <div className="px-5 py-4 text-sm text-muted-foreground">{t(language, "No Story Ideas are currently visible in this Epic.", "Inga Story Ideas syns just nu i det hÃ¤r epicet.")}</div>
+                    <div className="px-5 py-4 text-sm text-muted-foreground">{t(language, "No Story Ideas are currently visible in this Epic.", "Inga Story Ideas syns just nu i det här epicet.")}</div>
                   ) : (
                     <div className="divide-y divide-border/70">
                       {directionSeeds.map((seed) => (
@@ -777,7 +777,7 @@ function EpicRow({
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.", "De hÃ¤r Delivery Stories hÃ¶r till samma epic, men lades till under design eller leverans i stÃ¤llet fÃ¶r att skapas direkt frÃ¥n en Story Idea.")}
+                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.", "De här Delivery Stories hör till samma epic, men lades till under design eller leverans i stället för att skapas direkt från en Story Idea.")}
                     </p>
                     <div className="mt-4 space-y-3">
                       {additionalDeliveryStories.map((story) => (
@@ -826,7 +826,7 @@ export function FramingValueSpineTree({
 
         {epics.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">{t(language, "No Epics are attached to this Framing yet.", "Inga Epics Ã¤r kopplade till den hÃ¤r Framingen Ã¤nnu.")}</p>
+            <p className="font-medium text-foreground">{t(language, "No Epics are attached to this Framing yet.", "Inga Epics är kopplade till den här Framingen ännu.")}</p>
             <p className="mt-2">{emptyEpicMessage}</p>
           </div>
         ) : (
