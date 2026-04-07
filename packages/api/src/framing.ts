@@ -192,7 +192,7 @@ export async function getFramingCockpitData(
           importedReadinessState: entry.importedReadinessState ?? null,
           lineageHref:
             entry.lineageSourceType === "artifact_aas_candidate" && entry.lineageSourceId
-              ? `/review?candidateId=${entry.lineageSourceId}`
+              ? `/intake?candidateId=${entry.lineageSourceId}&entityId=${entry.id}&entityType=outcome`
               : null,
           status: entry.status,
           statusLabel: statusLabels[entry.status] ?? entry.status,

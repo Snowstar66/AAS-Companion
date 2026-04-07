@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, FileJson2, ShieldCheck } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
+import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 import { InlineTermHelp } from "@/components/shared/inline-term-help";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
@@ -437,7 +438,11 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   importedReadinessState: story.epic.importedReadinessState ?? null,
                   lineageHref:
                     story.epic.lineageSourceType === "artifact_aas_candidate" && story.epic.lineageSourceId
-                      ? `/intake?candidateId=${story.epic.lineageSourceId}`
+                      ? buildOriginIntakeHref({
+                          candidateId: story.epic.lineageSourceId,
+                          entityId: story.epic.id,
+                          entityType: "epic"
+                        })
                       : null,
                   stories: [
                     {
@@ -459,7 +464,11 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                       importedReadinessState: story.importedReadinessState ?? null,
                       lineageHref:
                         story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                          ? `/intake?candidateId=${story.lineageSourceId}`
+                          ? buildOriginIntakeHref({
+                              candidateId: story.lineageSourceId,
+                              entityId: story.id,
+                              entityType: "story"
+                            })
                           : null
                     }
                   ]
@@ -478,7 +487,11 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                 importedReadinessState: story.outcome.importedReadinessState ?? null,
                 lineageHref:
                   story.outcome.lineageSourceType === "artifact_aas_candidate" && story.outcome.lineageSourceId
-                    ? `/intake?candidateId=${story.outcome.lineageSourceId}`
+                    ? buildOriginIntakeHref({
+                        candidateId: story.outcome.lineageSourceId,
+                        entityId: story.outcome.id,
+                        entityType: "outcome"
+                      })
                     : null
               }}
             />
@@ -597,7 +610,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             title={t("Imported lineage", "Importerad lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/intake?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
+              <Link href={buildOriginIntakeHref({ candidateId: story.lineageSourceId, entityId: story.id, entityType: "story" }) ?? "/intake"}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}

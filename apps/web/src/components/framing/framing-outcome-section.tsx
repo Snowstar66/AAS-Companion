@@ -38,6 +38,7 @@ import { WorkspaceStatusSummary } from "@/components/workspace/story-workspace-s
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOrganizationUsersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
 import { buildFramingBriefExport, buildHumanFramingBriefExport } from "@/lib/framing/framing-brief-export";
+import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { getInlineGuidance } from "@/lib/help/aas-help";
 
@@ -1243,7 +1244,11 @@ export function FramingOutcomeSection({
                     importedReadinessState: epic.importedReadinessState ?? null,
                     lineageHref:
                       epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                        ? `/intake?candidateId=${epic.lineageSourceId}`
+                        ? buildOriginIntakeHref({
+                            candidateId: epic.lineageSourceId,
+                            entityId: epic.id,
+                            entityType: "epic"
+                          })
                         : null,
                     directionSeeds: outcome.directionSeeds
                       .filter((seed) => seed.epicId === epic.id)
@@ -1263,7 +1268,11 @@ export function FramingOutcomeSection({
                         importedReadinessState: seed.importedReadinessState ?? null,
                         lineageHref:
                           seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                            ? `/intake?candidateId=${seed.lineageSourceId}`
+                            ? buildOriginIntakeHref({
+                                candidateId: seed.lineageSourceId,
+                                entityId: seed.id,
+                                entityType: "direction_seed"
+                              })
                             : null
                       })),
                     stories: outcome.stories
@@ -1286,7 +1295,11 @@ export function FramingOutcomeSection({
                         importedReadinessState: story.importedReadinessState ?? null,
                         lineageHref:
                           story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                            ? `/intake?candidateId=${story.lineageSourceId}`
+                            ? buildOriginIntakeHref({
+                                candidateId: story.lineageSourceId,
+                                entityId: story.id,
+                                entityType: "story"
+                              })
                             : null
                       }))
                   }))}
@@ -1301,10 +1314,14 @@ export function FramingOutcomeSection({
                     originType: outcome.originType,
                     lifecycleState: outcome.lifecycleState,
                     importedReadinessState: outcome.importedReadinessState ?? null,
-                    lineageHref:
-                      outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId
-                        ? `/intake?candidateId=${outcome.lineageSourceId}`
-                        : null
+                  lineageHref:
+                    outcome.lineageSourceType === "artifact_aas_candidate" && outcome.lineageSourceId
+                      ? buildOriginIntakeHref({
+                          candidateId: outcome.lineageSourceId,
+                          entityId: outcome.id,
+                          entityType: "outcome"
+                        })
+                      : null
                   }}
                 />
               </div>

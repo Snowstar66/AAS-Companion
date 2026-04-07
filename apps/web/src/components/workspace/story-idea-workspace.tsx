@@ -6,6 +6,7 @@ import { StoryIdeaInlineSaveButton } from "@/components/workspace/story-idea-inl
 import { StoryIdeaUxSketchField } from "@/components/workspace/story-idea-ux-sketch-field";
 import { StoryIdeaAiValidatedTextarea } from "@/components/workspace/story-idea-ai-validated-textarea";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
+import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 import {
   archiveStoryAction,
   hardDeleteStoryAction,
@@ -536,7 +537,7 @@ export function StoryIdeaWorkspace({
             title={t("Imported lineage", "Importerad lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={`/intake?candidateId=${story.lineageSourceId}`}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
+              <Link href={buildOriginIntakeHref({ candidateId: story.lineageSourceId, entityId: story.id, entityType: "direction_seed" }) ?? "/intake"}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}

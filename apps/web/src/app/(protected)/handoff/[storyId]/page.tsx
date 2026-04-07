@@ -8,6 +8,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ExecutionContractPreview } from "@/components/handoff/execution-contract-preview";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 import { markStoryHandoffCompleteAction } from "./actions";
 
 type HandoffPageProps = {
@@ -107,7 +108,17 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
               <p>{previewResult.errors[0]?.message ?? "Contract generation is currently unavailable."}</p>
               {storyResult.data.story.lineageSourceType === "artifact_aas_candidate" && storyResult.data.story.lineageSourceId ? (
                 <Button asChild className="gap-2" variant="secondary">
-                  <Link href={`/intake?candidateId=${storyResult.data.story.lineageSourceId}`}>Open import source</Link>
+                  <Link
+                    href={
+                      buildOriginIntakeHref({
+                        candidateId: storyResult.data.story.lineageSourceId,
+                        entityId: storyResult.data.story.id,
+                        entityType: "story"
+                      }) ?? "/intake"
+                    }
+                  >
+                    Open import source
+                  </Link>
                 </Button>
               ) : null}
               <Button asChild className="gap-2" variant="secondary">

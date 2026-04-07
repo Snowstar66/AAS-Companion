@@ -87,6 +87,27 @@ function buildIntakeHref(sessionId: string, fileId: string, candidateId?: string
   return `/intake?${params.toString()}`;
 }
 
+function matchesOriginTarget(
+  candidate: {
+    id: string;
+    promotedEntityId?: string | null;
+  },
+  target: {
+    candidateId?: string | null | undefined;
+    entityId?: string | null | undefined;
+  }
+) {
+  if (target.candidateId && candidate.id === target.candidateId) {
+    return true;
+  }
+
+  if (target.entityId && candidate.promotedEntityId === target.entityId) {
+    return true;
+  }
+
+  return false;
+}
+
 async function getServerLanguage(): Promise<AppLanguage> {
   try {
     const cookieStore = await cookies();
@@ -108,6 +129,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
   const candidateId = getParamValue(query.candidateId);
+  const originEntityId = getParamValue(query.entityId);
   const queueFilter = getParamValue(query.queue) ?? "all";
   const visibleSessions =
     workspace.state === "ready"
@@ -132,9 +154,11 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
       ? workspace.sessions.find((artifactSession) => artifactSession.id === sessionId) ?? null
       : null;
   const candidateSelectedSession =
-    workspace.state === "ready" && candidateId
+    workspace.state === "ready" && (candidateId || originEntityId)
       ? workspace.sessions.find((artifactSession) =>
-          artifactSession.allCandidates.some((candidate) => candidate.id === candidateId)
+          artifactSession.allCandidates.some((candidate) =>
+            matchesOriginTarget(candidate, { candidateId, entityId: originEntityId })
+          )
         ) ?? null
       : null;
 
@@ -145,9 +169,13 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const visibleFiles =
     selectedSession?.files.filter((artifactFile) => (artifactFile.activeImportWorkCount ?? 1) > 0) ?? [];
   const candidateSelectedFile =
-    selectedSession && candidateId
+    selectedSession && (candidateId || originEntityId)
       ? selectedSession.files.find((artifactFile) =>
-          selectedSession.allCandidates.some((candidate) => candidate.id === candidateId && candidate.fileId === artifactFile.id)
+          selectedSession.allCandidates.some(
+            (candidate) =>
+              matchesOriginTarget(candidate, { candidateId, entityId: originEntityId }) &&
+              candidate.fileId === artifactFile.id
+          )
         ) ?? null
       : null;
   const selectedFile =
@@ -157,11 +185,11 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     selectedSession?.files[0] ??
     null;
   const selectedSessionCandidates =
-    selectedSession && candidateId
+    selectedSession && (candidateId || originEntityId)
       ? selectedSession.allCandidates
       : selectedSession && selectedSession.candidates.length > 0
         ? selectedSession.candidates
-      : selectedSession?.displayCandidates ?? [];
+        : selectedSession?.displayCandidates ?? [];
   const normalizedSelectedFileCandidatesSource = selectedSessionCandidates.map((candidate) => ({
     ...candidate,
     fileId: "fileId" in candidate ? candidate.fileId : candidate.source.fileId
@@ -170,7 +198,11 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
     ? normalizedSelectedFileCandidatesSource.filter((candidate) => candidate.fileId === selectedFile.id)
     : [];
   const selectedCandidate =
-    selectedFileCandidates.find((candidate) => candidate.id === candidateId) ?? selectedFileCandidates[0] ?? null;
+    selectedFileCandidates.find((candidate) =>
+      matchesOriginTarget(candidate, { candidateId, entityId: originEntityId })
+    ) ??
+    selectedFileCandidates[0] ??
+    null;
   const showBacklogCard = selectedSession?.importIntent !== "framing";
   const shouldShowNoActiveWorkState = visibleSessions.length === 0 && !explicitlySelectedSession && !candidateSelectedSession;
 
@@ -603,7 +635,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <ArtifactIntakeReviewWorkspace
                 fileCandidates={selectedFileCandidates}
                 language={serverLanguage}
-                originCandidateRequested={Boolean(candidateId)}
+                originCandidateRequested={Boolean(candidateId || originEntityId)}
                 projectEpics={workspace.projectEpics}
                 projectOutcomes={workspace.projectOutcomes}
                 selectedCandidate={selectedCandidate}

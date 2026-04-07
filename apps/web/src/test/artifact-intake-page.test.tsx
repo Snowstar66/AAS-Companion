@@ -880,6 +880,125 @@ describe("Import page", () => {
     expect(screen.getAllByText(/Imported Story/i).length).toBeGreaterThan(0);
   });
 
+  it("can resolve the correct import workspace from promoted entity fallback when candidateId is stale", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [],
+      projectEpics: [],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 1,
+        candidateObjects: 1,
+        humanReviewRequired: 1
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-origin-fallback",
+          label: "Artifact intake fallback",
+          importIntent: "framing",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 1,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 0,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [],
+          allCandidates: [
+            {
+              id: "candidate-story-promoted",
+              fileId: "file-origin-fallback",
+              type: "story",
+              title: "Imported Story Fallback",
+              summary: "Source object should still resolve.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "SC-002",
+                title: "Imported Story Fallback",
+                valueIntent: "Source object should still resolve.",
+                expectedBehavior: "",
+                outcomeCandidateId: null,
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "promoted",
+              importedReadinessState: "imported_framing_ready",
+              promotedEntityId: "seed-promoted-1",
+              promotedEntityType: "story",
+              source: {
+                fileId: "file-origin-fallback",
+                fileName: "origin.md",
+                sectionId: "section-origin-fallback",
+                sectionTitle: "US1.1",
+                sectionMarker: "### US1.1",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            }
+          ],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "file-origin-fallback",
+              fileName: "origin.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 1024,
+              content: "# Imported artifact",
+              parsedSectionCount: 1,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 0,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 0
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          candidateId: "stale-candidate-id",
+          entityId: "seed-promoted-1",
+          entityType: "direction_seed"
+        })
+      })
+    );
+
+    expect(screen.getAllByText("Source object").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("SC-002 Imported Story Fallback").length).toBeGreaterThan(0);
+  });
+
   it("includes suppressed merged outcomes in framing bulk approval form data", async () => {
     loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
       state: "ready",

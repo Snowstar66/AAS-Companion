@@ -9,6 +9,7 @@ import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { withDevTiming } from "@/lib/dev-timing";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { isStoryIdeaReadyForFraming } from "@/lib/framing/story-idea-status";
+import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 
 type WorkspacePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -142,24 +143,47 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     const attentionStoryIdeas = selectedStoryIdeas.filter((idea) => !idea.ready);
     const lineageTargets = [
       ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
-        ? [{ href: `/intake?candidateId=${selectedOutcome.lineageSourceId}`, label: t(language, `Show ${selectedOutcome.key} origin`, `Visa ursprung för ${selectedOutcome.key}`) }]
+        ? [{
+            href:
+              buildOriginIntakeHref({
+                candidateId: selectedOutcome.lineageSourceId,
+                entityId: selectedOutcome.id,
+                entityType: "outcome"
+              }) ?? "/intake",
+            label: t(language, `Show ${selectedOutcome.key} origin`, `Visa ursprung för ${selectedOutcome.key}`)
+          }]
         : []),
       ...selectedEpics
         .filter((epic) => epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId)
         .map((epic) => ({
-          href: `/intake?candidateId=${epic.lineageSourceId}`,
+          href:
+            buildOriginIntakeHref({
+              candidateId: epic.lineageSourceId,
+              entityId: epic.id,
+              entityType: "epic"
+            }) ?? "/intake",
           label: t(language, `Show ${epic.key} origin`, `Visa ursprung för ${epic.key}`)
         })),
       ...selectedDirectionSeeds
         .filter((seed) => seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId)
         .map((seed) => ({
-          href: `/intake?candidateId=${seed.lineageSourceId}`,
+          href:
+            buildOriginIntakeHref({
+              candidateId: seed.lineageSourceId,
+              entityId: seed.id,
+              entityType: "direction_seed"
+            }) ?? "/intake",
           label: t(language, `Show ${seed.key} origin`, `Visa ursprung för ${seed.key}`)
         })),
       ...selectedLegacyStoryIdeas
         .filter((story) => story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId)
         .map((story) => ({
-          href: `/intake?candidateId=${story.lineageSourceId}`,
+          href:
+            buildOriginIntakeHref({
+              candidateId: story.lineageSourceId,
+              entityId: story.id,
+              entityType: "story"
+            }) ?? "/intake",
           label: t(language, `Show ${story.key} origin`, `Visa ursprung för ${story.key}`)
         }))
     ];
@@ -261,7 +285,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                   importedReadinessState: epic.importedReadinessState ?? null,
                   lineageHref:
                     epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                      ? `/intake?candidateId=${epic.lineageSourceId}`
+                      ? buildOriginIntakeHref({
+                          candidateId: epic.lineageSourceId,
+                          entityId: epic.id,
+                          entityType: "epic"
+                        })
                       : null,
                   directionSeeds: (epic.directionSeeds ?? [])
                     .filter((seed) => seed.lifecycleState === "active")
@@ -281,7 +309,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                       importedReadinessState: seed.importedReadinessState ?? null,
                       lineageHref:
                         seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                          ? `/intake?candidateId=${seed.lineageSourceId}`
+                          ? buildOriginIntakeHref({
+                              candidateId: seed.lineageSourceId,
+                              entityId: seed.id,
+                              entityType: "direction_seed"
+                            })
                           : null
                     })),
                   stories: (epic.stories ?? [])
@@ -305,7 +337,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                       importedReadinessState: story.importedReadinessState ?? null,
                       lineageHref:
                         story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                          ? `/intake?candidateId=${story.lineageSourceId}`
+                          ? buildOriginIntakeHref({
+                              candidateId: story.lineageSourceId,
+                              entityId: story.id,
+                              entityType: "story"
+                            })
                           : null
                     }))
                 }))}
@@ -322,7 +358,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                   importedReadinessState: selectedOutcome.importedReadinessState ?? null,
                   lineageHref:
                     selectedOutcome.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
-                      ? `/intake?candidateId=${selectedOutcome.lineageSourceId}`
+                      ? buildOriginIntakeHref({
+                          candidateId: selectedOutcome.lineageSourceId,
+                          entityId: selectedOutcome.id,
+                          entityType: "outcome"
+                        })
                       : null
                 }}
                 title={t(language, "Project Value Spine", "Projektets Value Spine")}
