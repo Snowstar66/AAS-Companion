@@ -351,6 +351,15 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
       ? artifactCandidateDraftRecordSchema.safeParse(sourceImportDraftRecord.draftRecord ?? {})
       : null;
   const importedStoryDraft = importedStoryDraftResult?.success ? importedStoryDraftResult.data : null;
+  const compactTaggedSourceText = [
+    importedStoryDraft?.expectedBehavior ?? null,
+    importedStoryDraft?.valueIntent ?? null,
+    sourceImportDraftRecord?.summary ?? null,
+    seed.expectedBehavior ?? null,
+    seed.shortDescription ?? null
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join("\n");
   const sourceFallbackText = [
     sourceImportDraftRecord?.summary ?? null,
     seed.shortDescription ?? null,
@@ -358,6 +367,12 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
   ]
     .filter((value): value is string => Boolean(value?.trim()))
     .join("\n");
+  const extractedValueIntent = extractTaggedSegment(compactTaggedSourceText, ["Value Intent", "User Value", "Benefit", "Intent"]);
+  const extractedExpectedBehavior = extractTaggedSegment(compactTaggedSourceText, ["Expected Behavior", "Behavior", "Förväntat beteende"]);
+  const extractedAcceptanceCriteria = splitTaggedList(
+    extractTaggedSegment(compactTaggedSourceText, ["Acceptanskriterier", "Acceptance Criteria"])
+  );
+  const extractedTestDefinition = extractTaggedSegment(compactTaggedSourceText, ["Test Definition", "Test Notes"]);
   const fallbackValueIntent = extractTaggedSegment(sourceFallbackText, ["Value Intent", "User Value", "Benefit", "Intent"]);
   const fallbackExpectedBehavior = extractTaggedSegment(sourceFallbackText, ["Expected Behavior", "Behavior", "Förväntat beteende"]);
   const fallbackAcceptanceCriteria = splitTaggedList(
@@ -365,23 +380,28 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
   );
   const fallbackTestDefinition = extractTaggedSegment(sourceFallbackText, ["Test Definition", "Test Notes"]);
   const resolvedValueIntent =
+    extractedValueIntent ||
     importedStoryDraft?.valueIntent?.trim() ||
     seed.shortDescription?.trim() ||
     fallbackValueIntent ||
     seed.title;
   const resolvedExpectedBehavior =
+    extractedExpectedBehavior ||
     importedStoryDraft?.expectedBehavior?.trim() ||
     (seed.expectedBehavior?.includes("Value Intent:") || seed.expectedBehavior?.includes("Expected Behavior:")
       ? fallbackExpectedBehavior
       : seed.expectedBehavior?.trim()) ||
     null;
   const resolvedAcceptanceCriteria =
-    importedStoryDraft?.acceptanceCriteria?.filter(Boolean).length
+    extractedAcceptanceCriteria.length > 0
+      ? extractedAcceptanceCriteria
+      : importedStoryDraft?.acceptanceCriteria?.filter(Boolean).length
       ? importedStoryDraft.acceptanceCriteria.filter(Boolean)
       : sourceImportDraftRecord?.acceptanceCriteria?.filter(Boolean).length
         ? sourceImportDraftRecord.acceptanceCriteria.filter(Boolean)
         : fallbackAcceptanceCriteria;
   const resolvedTestDefinition =
+    extractedTestDefinition ||
     importedStoryDraft?.testDefinition?.trim() ||
     sourceImportDraftRecord?.testNotes?.filter(Boolean).join("\n").trim() ||
     fallbackTestDefinition ||
