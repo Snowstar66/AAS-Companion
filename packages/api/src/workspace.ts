@@ -543,48 +543,93 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
     }
 
     const snapshot = normalizeStoryWorkspaceSnapshot(rawSnapshot);
+    let importedBuildBlockers: string[] = [];
 
-    const importedBuildBlockers = await getImportedStoryBuildBlockers({
-      organizationId,
-      originType: snapshot.story.originType,
-      lineageSourceType: snapshot.story.lineageSourceType,
-      lineageSourceId: snapshot.story.lineageSourceId
-    });
-    const linkedSeed = snapshot.story.sourceDirectionSeedId
-      ? await getDirectionSeedById(organizationId, snapshot.story.sourceDirectionSeedId)
-      : null;
-    const originStoryIdea = linkedSeed
-      ? {
-          seedId: linkedSeed.id,
-          storyId: linkedSeed.sourceStoryId ?? null,
-          key: linkedSeed.key,
-          title: linkedSeed.title,
-          epicId: linkedSeed.epicId,
-          outcomeId: linkedSeed.outcomeId,
-          valueIntent: linkedSeed.shortDescription?.trim() || null,
-          expectedBehavior: linkedSeed.expectedBehavior?.trim() || null
+    try {
+      importedBuildBlockers = await getImportedStoryBuildBlockers({
+        organizationId,
+        originType: snapshot.story.originType,
+        lineageSourceType: snapshot.story.lineageSourceType,
+        lineageSourceId: snapshot.story.lineageSourceId
+      });
+    } catch {
+      importedBuildBlockers = [];
+    }
+
+    let linkedSeed: Awaited<ReturnType<typeof getDirectionSeedById>> | null = null;
+    let originStoryIdea:
+      | {
+          seedId: string;
+          storyId: string | null;
+          key: string;
+          title: string;
+          epicId: string;
+          outcomeId: string;
+          valueIntent: string | null;
+          expectedBehavior: string | null;
         }
-      : null;
-    const relatedSeed = snapshot.story.sourceDirectionSeedId
-      ? linkedSeed
-      : (await listDirectionSeeds(organizationId, { includeArchived: true })).find(
-          (seed) => seed.sourceStoryId === snapshot.story.id
-        ) ?? null;
-    const derivedDeliveryStories = relatedSeed
-      ? await listStoriesByDirectionSeedId(organizationId, relatedSeed.id)
-      : [];
+      | null = null;
+    let derivedDeliveryStories: Awaited<ReturnType<typeof listStoriesByDirectionSeedId>> = [];
+
+    try {
+      linkedSeed = snapshot.story.sourceDirectionSeedId
+        ? await getDirectionSeedById(organizationId, snapshot.story.sourceDirectionSeedId)
+        : null;
+
+      originStoryIdea = linkedSeed
+        ? {
+            seedId: linkedSeed.id,
+            storyId: linkedSeed.sourceStoryId ?? null,
+            key: linkedSeed.key,
+            title: linkedSeed.title,
+            epicId: linkedSeed.epicId,
+            outcomeId: linkedSeed.outcomeId,
+            valueIntent: linkedSeed.shortDescription?.trim() || null,
+            expectedBehavior: linkedSeed.expectedBehavior?.trim() || null
+          }
+        : null;
+
+      const relatedSeed = snapshot.story.sourceDirectionSeedId
+        ? linkedSeed
+        : (await listDirectionSeeds(organizationId, { includeArchived: true })).find(
+            (seed) => seed.sourceStoryId === snapshot.story.id
+          ) ?? null;
+
+      derivedDeliveryStories = relatedSeed
+        ? await listStoriesByDirectionSeedId(organizationId, relatedSeed.id)
+        : [];
+    } catch {
+      linkedSeed = null;
+      originStoryIdea = null;
+      derivedDeliveryStories = [];
+    }
+
     const valueSpineValidation = validateStoryAgainstValueSpine(snapshot.story);
     const baseReadinessBlockers = getStoryHandoffReadiness(snapshot.story).reasons.map((reason) => reason.message);
-    const tollgateReview = await getTollgateReviewWorkspaceService({
-      organizationId,
-      entityType: "story",
-      entityId: storyId,
-      tollgateType: "story_readiness",
-      aiAccelerationLevel: snapshot.story.aiAccelerationLevel,
-      fallbackBlockers: [...new Set([...(snapshot.tollgate?.blockers ?? baseReadinessBlockers), ...importedBuildBlockers])],
-      fallbackComments: snapshot.tollgate?.comments ?? null,
-      existingTollgate: snapshot.tollgate
-    });
+    let tollgateReview: Awaited<ReturnType<typeof getTollgateReviewWorkspaceService>> | null = null;
+
+    try {
+      tollgateReview = await getTollgateReviewWorkspaceService({
+        organizationId,
+        entityType: "story",
+        entityId: storyId,
+        tollgateType: "story_readiness",
+        aiAccelerationLevel: snapshot.story.aiAccelerationLevel,
+        fallbackBlockers: [...new Set([...(snapshot.tollgate?.blockers ?? baseReadinessBlockers), ...importedBuildBlockers])],
+        fallbackComments: snapshot.tollgate?.comments ?? null,
+        existingTollgate: snapshot.tollgate
+      });
+    } catch {
+      tollgateReview = null;
+    }
+
+    let removal: ReturnType<typeof buildStoryRemovalFromSnapshot> | null = null;
+
+    try {
+      removal = buildStoryRemovalFromSnapshot(snapshot);
+    } catch {
+      removal = null;
+    }
 
     return success({
       ...snapshot,
@@ -593,8 +638,8 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
       valueSpineValidation,
       readiness: getStoryHandoffReadiness(snapshot.story),
       importedBuildBlockers,
-      tollgateReview: tollgateReview.ok ? tollgateReview.data : null,
-      removal: buildStoryRemovalFromSnapshot(snapshot)
+      tollgateReview: tollgateReview?.ok ? tollgateReview.data : null,
+      removal
     });
   }, `organizationId=${organizationId} storyId=${storyId}`);
 }
