@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { CircleAlert, CircleCheckBig, Clock3 } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { LocalizedText } from "@/components/shared/localized-text";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
@@ -391,10 +392,13 @@ export async function OutcomeTollgateApprovalSection(props: {
                           />
                         </span>
                       </label>
-                      <Button className="gap-2" type="submit">
-                        <CircleCheckBig className="h-4 w-4" />
-                        <LocalizedText en="Record approval" sv="Registrera godkännande" />
-                      </Button>
+                      <PendingFormButton
+                        className="gap-2"
+                        icon={<CircleCheckBig className="h-4 w-4" />}
+                        label={language === "sv" ? "Registrera godkännande" : "Record approval"}
+                        pendingLabel={language === "sv" ? "Registrerar godkännande..." : "Recording approval..."}
+                        showPendingCursor
+                      />
                     </div>
                   </form>
                 ) : (

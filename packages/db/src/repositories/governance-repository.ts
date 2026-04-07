@@ -19,6 +19,63 @@ function buildId(prefix: string) {
   return `${prefix}_${randomUUID().replaceAll("-", "")}`;
 }
 
+async function syncValueOwnerMembershipFromPartyRole(
+  tx: Prisma.TransactionClient,
+  entry: {
+    organizationId: string;
+    fullName: string;
+    email: string;
+    organizationSide: string;
+    roleType: string;
+    isActive: boolean;
+  }
+) {
+  if (entry.organizationSide !== "customer" || entry.roleType !== "value_owner" || !entry.isActive) {
+    return;
+  }
+
+  const normalizedEmail = entry.email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return;
+  }
+
+  const appUser = await tx.appUser.upsert({
+    where: {
+      email: normalizedEmail
+    },
+    update: {
+      fullName: entry.fullName.trim() || null
+    },
+    create: {
+      id: buildId("user"),
+      email: normalizedEmail,
+      fullName: entry.fullName.trim() || null
+    },
+    select: {
+      id: true
+    }
+  });
+
+  await tx.membership.upsert({
+    where: {
+      organizationId_userId: {
+        organizationId: entry.organizationId,
+        userId: appUser.id
+      }
+    },
+    update: {
+      role: "value_owner"
+    },
+    create: {
+      id: buildId("membership"),
+      organizationId: entry.organizationId,
+      userId: appUser.id,
+      role: "value_owner"
+    }
+  });
+}
+
 async function requireActiveSupervisor(
   db: Prisma.TransactionClient,
   organizationId: string,
@@ -72,6 +129,8 @@ export async function createPartyRoleEntry(input: unknown, db: DbClient = prisma
         isActive: parsed.isActive
       }
     });
+
+    await syncValueOwnerMembershipFromPartyRole(tx, entry);
 
     await appendActivityEvent(
       {
@@ -160,6 +219,8 @@ export async function updatePartyRoleEntry(input: unknown) {
       },
       data
     });
+
+    await syncValueOwnerMembershipFromPartyRole(tx, entry);
 
     const eventType =
       existing.isActive && entry.isActive === false ? "party_role_entry_deactivated" : "party_role_entry_updated";

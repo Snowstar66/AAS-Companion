@@ -1,6 +1,7 @@
 import {
   appendActivityEvent,
   getDirectionSeedById,
+  listPartyRoleEntries,
   listOrganizationUsers,
   listDirectionSeeds,
   listStoriesByDirectionSeedId,
@@ -234,6 +235,36 @@ export async function getOutcomeWorkspaceService(organizationId: string, outcome
 export async function getOrganizationUsersService(organizationId: string) {
   return withDevTiming("api.getOrganizationUsersService", async () => {
     return success(await listOrganizationUsers(organizationId));
+  }, `organizationId=${organizationId}`);
+}
+
+export async function getOrganizationValueOwnersService(organizationId: string) {
+  return withDevTiming("api.getOrganizationValueOwnersService", async () => {
+    const [users, partyRoles] = await Promise.all([
+      listOrganizationUsers(organizationId),
+      listPartyRoleEntries(organizationId)
+    ]);
+
+    const usersByEmail = new Map(
+      users.map((user) => [user.email.trim().toLowerCase(), user] as const)
+    );
+
+    const matchedValueOwners = partyRoles
+      .filter((person) => person.isActive && person.organizationSide === "customer" && person.roleType === "value_owner")
+      .map((person) => usersByEmail.get(person.email.trim().toLowerCase()) ?? null)
+      .filter((user): user is NonNullable<typeof user> => Boolean(user));
+
+    if (matchedValueOwners.length === 0) {
+      return success(users);
+    }
+
+    const deduped = [...new Map(matchedValueOwners.map((user) => [user.userId, user] as const)).values()].sort((left, right) => {
+      const leftLabel = left.fullName ?? left.email;
+      const rightLabel = right.fullName ?? right.email;
+      return leftLabel.localeCompare(rightLabel, "en");
+    });
+
+    return success(deduped);
   }, `organizationId=${organizationId}`);
 }
 

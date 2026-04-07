@@ -271,7 +271,8 @@ vi.mock("@/lib/cache/project-data", () => ({
       }
     }
   })),
-  getCachedOrganizationUsersData: vi.fn(async () => ({ ok: true, data: [] }))
+  getCachedOrganizationUsersData: vi.fn(async () => ({ ok: true, data: [] })),
+  getCachedOrganizationValueOwnersData: vi.fn(async () => ({ ok: true, data: [] }))
 }));
 
 vi.mock("@/app/(protected)/framing/actions", () => ({

@@ -9,6 +9,7 @@ import {
   updatePartyRoleEntryService
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { revalidateOrganizationValueOwnersCache } from "@/lib/cache/project-data";
 
 function buildRedirect(params: {
   view?: string | undefined;
@@ -69,6 +70,7 @@ export async function createPartyRoleEntryAction(formData: FormData) {
   });
 
   revalidatePath("/governance");
+  revalidateOrganizationValueOwnersCache(session.organization.organizationId);
 
   if (!result.ok) {
     redirect(
@@ -110,6 +112,7 @@ export async function updatePartyRoleEntryAction(formData: FormData) {
   });
 
   revalidatePath("/governance");
+  revalidateOrganizationValueOwnersCache(session.organization.organizationId);
 
   if (!result.ok) {
     redirect(

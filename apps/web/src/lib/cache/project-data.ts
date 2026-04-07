@@ -1,6 +1,7 @@
 import { revalidateTag, unstable_cache } from "next/cache";
 import { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { getOrganizationUsersService } from "@aas-companion/api";
+import { getOrganizationValueOwnersService } from "@aas-companion/api";
 import { getOutcomeTollgateReviewService } from "@aas-companion/api";
 import { getFramingCockpitData } from "@aas-companion/api/framing";
 
@@ -14,6 +15,10 @@ export function getOutcomeWorkspaceTag(organizationId: string, outcomeId: string
 
 export function getOutcomeTollgateReviewTag(organizationId: string, outcomeId: string) {
   return `outcome-tollgate-review:${organizationId}:${outcomeId}`;
+}
+
+export function getOrganizationValueOwnersTag(organizationId: string) {
+  return `organization-value-owners:${organizationId}`;
 }
 
 export function getCachedFramingCockpitData(organizationId: string, organizationName: string) {
@@ -56,6 +61,17 @@ export function getCachedOrganizationUsersData(organizationId: string) {
   )();
 }
 
+export function getCachedOrganizationValueOwnersData(organizationId: string) {
+  return unstable_cache(
+    async () => getOrganizationValueOwnersService(organizationId),
+    ["organization-value-owners", organizationId],
+    {
+      tags: [getOrganizationValueOwnersTag(organizationId)],
+      revalidate: 300
+    }
+  )();
+}
+
 export function revalidateFramingCockpitCache(organizationId: string) {
   revalidateTag(getFramingCockpitTag(organizationId));
 }
@@ -74,4 +90,8 @@ export function revalidateOutcomeTollgateReviewCache(organizationId: string, out
   }
 
   revalidateTag(getOutcomeTollgateReviewTag(organizationId, outcomeId));
+}
+
+export function revalidateOrganizationValueOwnersCache(organizationId: string) {
+  revalidateTag(getOrganizationValueOwnersTag(organizationId));
 }

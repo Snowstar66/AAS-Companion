@@ -36,7 +36,7 @@ import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle
 import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { WorkspaceStatusSummary } from "@/components/workspace/story-workspace-shared";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
-import { getCachedOrganizationUsersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
+import { getCachedOrganizationValueOwnersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
 import { buildFramingBriefExport, buildHumanFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
@@ -807,6 +807,24 @@ export function FramingOutcomeSection({
                     }
                   />
                 </label>
+                <div className="space-y-2 xl:col-span-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-foreground" htmlFor="outcome-delivery-type">
+                      {language === "sv" ? "Leveranstyp" : "Delivery type"}
+                    </label>
+                    <LiveDeliveryTypeHelpCard />
+                  </div>
+                  <DeliveryTypeSelect
+                    defaultValue={outcome.deliveryType ?? ""}
+                    disabled={isArchived}
+                    id="outcome-delivery-type"
+                    name="deliveryType"
+                  />
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    <DeliveryTypeHelperText />
+                  </p>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type", language)} />
+                </div>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Tidsram" : "Timeframe"}</span>
                   <input
@@ -987,24 +1005,6 @@ export function FramingOutcomeSection({
                   />
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.data_sensitivity", language)} />
                 </label>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-foreground" htmlFor="outcome-delivery-type">
-                      {language === "sv" ? "Leveranstyp" : "Delivery type"}
-                    </label>
-                    <LiveDeliveryTypeHelpCard />
-                  </div>
-                  <DeliveryTypeSelect
-                    defaultValue={outcome.deliveryType ?? ""}
-                    disabled={isArchived}
-                    id="outcome-delivery-type"
-                    name="deliveryType"
-                  />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeHelperText />
-                  </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type", language)} />
-                </div>
               </CardContent>
             </Card>
 
@@ -1767,6 +1767,7 @@ export async function DeferredOutcomeTollgateSection(props: {
                       </label>
                       <PendingFormButton
                         className="gap-2 whitespace-nowrap"
+                        showPendingCursor
                         icon={<ShieldCheck className="h-4 w-4" />}
                         label={translate(language, `Approve as ${action.label}`, `Godkänn som ${action.label}`)}
                         pendingLabel={translate(language, "Recording approval...", "Registrerar godkännande...")}
@@ -1816,7 +1817,7 @@ async function DeferredValueOwnerField(props: {
   disabled: boolean;
   language: "en" | "sv";
 }) {
-  const ownersResult = await getCachedOrganizationUsersData(props.organizationId);
+  const ownersResult = await getCachedOrganizationValueOwnersData(props.organizationId);
 
   if (!ownersResult.ok) {
     return (
@@ -1837,6 +1838,11 @@ async function DeferredValueOwnerField(props: {
       name="valueOwnerId"
     >
       <option value="">{props.language === "sv" ? "Ej tilldelad" : "Unassigned"}</option>
+      {props.currentOwnerId && !ownersResult.data.some((owner) => owner.userId === props.currentOwnerId) ? (
+        <option value={props.currentOwnerId}>
+          {props.currentOwnerLabel ?? (props.language === "sv" ? "Nuvarande värdeägare" : "Current value owner")}
+        </option>
+      ) : null}
       {ownersResult.data.map((owner) => (
         <option key={owner.userId} value={owner.userId}>
           {formatPersonLabel(owner)}

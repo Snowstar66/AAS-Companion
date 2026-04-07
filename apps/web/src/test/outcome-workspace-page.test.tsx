@@ -215,6 +215,10 @@ vi.mock("@/lib/cache/project-data", () => ({
     ok: true,
     data: []
   })),
+  getCachedOrganizationValueOwnersData: vi.fn(async () => ({
+    ok: true,
+    data: []
+  })),
   getCachedOutcomeTollgateReviewData: vi.fn(async () => ({
     ok: true,
     data: {
