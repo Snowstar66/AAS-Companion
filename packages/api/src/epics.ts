@@ -23,6 +23,38 @@ import {
 } from "@aas-companion/domain";
 import { failure, success, type ApiResult } from "./shared";
 
+function normalizeCompactTaggedText(value: string | null | undefined) {
+  return (value ?? "")
+    .replace(/\r/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/(Value Intent|Expected Behavior|Acceptanskriterier|Acceptance Criteria|Test Definition|Test Notes|Definition of Done)\s*:/gi, "\n$1: ")
+    .trim();
+}
+
+function extractTaggedSegment(text: string, labels: string[]) {
+  const normalizedText = normalizeCompactTaggedText(text);
+
+  if (!normalizedText) {
+    return "";
+  }
+
+  const escapedLabels = labels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(
+    `(?:^|\\n)(?:${escapedLabels.join("|")})\\s*:\\s*([\\s\\S]*?)(?=\\n(?:Value Intent|Expected Behavior|Acceptanskriterier|Acceptance Criteria|Test Definition|Test Notes|Definition of Done)\\s*:|$)`,
+    "i"
+  );
+  const match = normalizedText.match(pattern);
+
+  return match?.[1]?.trim() ?? "";
+}
+
+function splitTaggedList(value: string) {
+  return value
+    .split(/\s+-\s+|\n-\s+|\n+/)
+    .map((item) => item.replace(/^[-*]\s+/, "").trim())
+    .filter(Boolean);
+}
+
 function toLineageReference(record: {
   lineageSourceType: string | null;
   lineageSourceId: string | null;
@@ -319,6 +351,41 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
       ? artifactCandidateDraftRecordSchema.safeParse(sourceImportDraftRecord.draftRecord ?? {})
       : null;
   const importedStoryDraft = importedStoryDraftResult?.success ? importedStoryDraftResult.data : null;
+  const sourceFallbackText = [
+    sourceImportDraftRecord?.summary ?? null,
+    seed.shortDescription ?? null,
+    seed.expectedBehavior ?? null
+  ]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join("\n");
+  const fallbackValueIntent = extractTaggedSegment(sourceFallbackText, ["Value Intent", "User Value", "Benefit", "Intent"]);
+  const fallbackExpectedBehavior = extractTaggedSegment(sourceFallbackText, ["Expected Behavior", "Behavior", "Förväntat beteende"]);
+  const fallbackAcceptanceCriteria = splitTaggedList(
+    extractTaggedSegment(sourceFallbackText, ["Acceptanskriterier", "Acceptance Criteria"])
+  );
+  const fallbackTestDefinition = extractTaggedSegment(sourceFallbackText, ["Test Definition", "Test Notes"]);
+  const resolvedValueIntent =
+    importedStoryDraft?.valueIntent?.trim() ||
+    seed.shortDescription?.trim() ||
+    fallbackValueIntent ||
+    seed.title;
+  const resolvedExpectedBehavior =
+    importedStoryDraft?.expectedBehavior?.trim() ||
+    (seed.expectedBehavior?.includes("Value Intent:") || seed.expectedBehavior?.includes("Expected Behavior:")
+      ? fallbackExpectedBehavior
+      : seed.expectedBehavior?.trim()) ||
+    null;
+  const resolvedAcceptanceCriteria =
+    importedStoryDraft?.acceptanceCriteria?.filter(Boolean).length
+      ? importedStoryDraft.acceptanceCriteria.filter(Boolean)
+      : sourceImportDraftRecord?.acceptanceCriteria?.filter(Boolean).length
+        ? sourceImportDraftRecord.acceptanceCriteria.filter(Boolean)
+        : fallbackAcceptanceCriteria;
+  const resolvedTestDefinition =
+    importedStoryDraft?.testDefinition?.trim() ||
+    sourceImportDraftRecord?.testNotes?.filter(Boolean).join("\n").trim() ||
+    fallbackTestDefinition ||
+    null;
   const key = buildNextKey(stories.map((story) => story.key), "STR");
   const createdStory = await createStory({
     organizationId: input.organizationId,
@@ -327,12 +394,12 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
     key,
     title: seed.title,
     storyType: importedStoryDraft?.storyType ?? "outcome_delivery",
-    valueIntent: seed.shortDescription,
-    expectedBehavior: seed.expectedBehavior ?? null,
-    acceptanceCriteria: importedStoryDraft?.acceptanceCriteria ?? [],
+    valueIntent: resolvedValueIntent,
+    expectedBehavior: resolvedExpectedBehavior,
+    acceptanceCriteria: resolvedAcceptanceCriteria,
     aiUsageScope: importedStoryDraft?.aiUsageScope ?? [],
     aiAccelerationLevel: outcome.aiAccelerationLevel,
-    testDefinition: importedStoryDraft?.testDefinition ?? null,
+    testDefinition: resolvedTestDefinition,
     definitionOfDone: importedStoryDraft?.definitionOfDone ?? [],
     sourceDirectionSeedId: seed.id,
     status: "draft",
