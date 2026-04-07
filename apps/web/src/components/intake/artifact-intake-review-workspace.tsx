@@ -1876,7 +1876,10 @@ export function ArtifactIntakeReviewWorkspace({
 
       <div className="space-y-6">
         <div className="space-y-6">
-          <CollapsibleReviewPanel defaultOpen={false} title={t(language, "Full imported source artifact", "Fullständigt importerat källunderlag")}>
+            <CollapsibleReviewPanel
+              defaultOpen={originCandidateRequested}
+              title={t(language, "Full imported source artifact", "Fullständigt importerat källunderlag")}
+            >
             <div className="space-y-4">
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1">
@@ -1970,9 +1973,10 @@ export function ArtifactIntakeReviewWorkspace({
                     return (
                       <div
                         className="rounded-2xl border border-border/70 bg-background/80 p-4"
-                        id={`source-section-${section.id}`}
+                        id={`source-section-${sourceSectionId}`}
                         key={section.id}
                       >
+                        <span className="block h-0 w-0 overflow-hidden" id={`source-section-${section.id}`} />
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <p className="font-medium text-foreground">{section.title}</p>

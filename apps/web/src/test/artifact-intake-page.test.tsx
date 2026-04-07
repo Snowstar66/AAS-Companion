@@ -629,7 +629,24 @@ describe("Import page", () => {
                   confidence: "high",
                   rationale: "Framing file."
                 },
-                sections: []
+                sections: [
+                  {
+                    id: "parsed-section-origin-only",
+                    title: "Imported Story",
+                    kind: "story",
+                    confidence: "high",
+                    isUncertain: false,
+                    text: "Handled story source section body.",
+                    sourceReference: {
+                      fileId: "file-origin-only",
+                      fileName: "origin.md",
+                      sectionId: "section-origin-only",
+                      lineStart: 1,
+                      lineEnd: 6,
+                      sectionMarker: "### SC-001"
+                    }
+                  }
+                ]
               }
             }
           ],
@@ -1427,6 +1444,7 @@ describe("Import page", () => {
     expect(screen.queryByText(/No import sessions yet/i)).toBeNull();
     expect(screen.getAllByText("Source object").length).toBeGreaterThan(0);
     expect(screen.getAllByText("SC-001 Imported Story").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Handled story source section body.").length).toBeGreaterThan(0);
     const sourceSectionLinks = screen.getAllByRole("link", { name: /Open source section/i });
     expect(sourceSectionLinks.some((link) => link.getAttribute("href") === "#source-section-section-origin-only")).toBe(true);
   });
