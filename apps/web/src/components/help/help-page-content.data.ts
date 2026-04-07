@@ -686,30 +686,30 @@ export const helpContent: Record<HelpLanguage, HelpContent> = {
       "Nuvarande produktstandarder är Next.js App Router, React, TypeScript, Tailwind, shadcn/ui, Supabase, Prisma, PostHog och OpenTelemetry."
     ]
   ,
-    roleLevelsTitle: "Roller och nÃ¤r de krÃ¤vs",
+    roleLevelsTitle: "Roller och när de krävs",
     roleLevelsDescription:
-      "Vilka roller som blir fÃ¶rvÃ¤ntade, villkorade eller kritiska nÃ¤r AI-nivÃ¥ och governance-tyngd Ã¶kar.",
+      "Vilka roller som blir förväntade, villkorade eller kritiska när AI-nivå och governance-tyngd ökar.",
     roleLevelsIntro:
-      "AAS utgÃ¥r inte frÃ¥n samma bemanning i varje leverans. Vissa roller krÃ¤vs alltid, vissa Ã¤r villkorade och vissa blir kritiska fÃ¶rst nÃ¤r AI-nivÃ¥, arkitekturpÃ¥verkan eller kommersiell risk Ã¶kar.",
+      "AAS utgår inte från samma bemanning i varje leverans. Vissa roller krävs alltid, vissa är villkorade och vissa blir kritiska först när AI-nivå, arkitekturpåverkan eller kommersiell risk ökar.",
     roleLevelsLegend: [
-      { label: "✔", meaning: "KrÃ¤vs normalt som namngiven roll pÃ¥ den nivÃ¥n." },
-      { label: "(✔)", meaning: "KrÃ¤vs villkorat beroende pÃ¥ skala, risk, arkitektur eller kommersiellt upplÃ¤gg." },
-      { label: "✖", meaning: "KrÃ¤vs normalt inte pÃ¥ den nivÃ¥n." }
+      { label: "✔", meaning: "Krävs normalt som namngiven roll på den nivån." },
+      { label: "(✔)", meaning: "Krävs villkorat beroende på skala, risk, arkitektur eller kommersiellt upplägg." },
+      { label: "✖", meaning: "Krävs normalt inte på den nivån." }
     ],
     roleLevelsHeaders: ["Roll", "Mandatfokus", "Huvudansvar", "Kritiska beslut", "Level 1", "Level 2", "Level 3"],
     roleLevelsMatrix: [
-      { role: "Value Owner (VO)", mandateFocus: "AffÃ¤rsvÃ¤rde och riskacceptans", responsibility: "Ã„ger Outcome, prioriterar Epics och godkÃ¤nner release", criticalDecisions: "Riskacceptans, release", level1: "✔", level2: "✔", level3: "✔" },
+      { role: "Value Owner (VO)", mandateFocus: "Affärsvärde och riskacceptans", responsibility: "Äger Outcome, prioriterar Epics och godkänner release", criticalDecisions: "Riskacceptans, release", level1: "✔", level2: "✔", level3: "✔" },
       { role: "Product Owner (PO)", mandateFocus: "Backlog och Stories", responsibility: "Bryter ner Epics till Stories och definierar acceptanskriterier", criticalDecisions: "Story readiness", level1: "✔", level2: "✔", level3: "✔" },
-      { role: "Developer", mandateFocus: "Implementation", responsibility: "Bygger funktionalitet enligt Story", criticalDecisions: "Teknisk lÃ¶sning", level1: "✔", level2: "✔", level3: "✔" },
-      { role: "Test / QA", mandateFocus: "Test och kvalitet", responsibility: "SÃ¤kerstÃ¤ller testning och verifiering", criticalDecisions: "TestgodkÃ¤nnande", level1: "✔", level2: "✔", level3: "✔" },
-      { role: "Solution / Enterprise Architect (SA)", mandateFocus: "Arkitektur", responsibility: "SÃ¤kerstÃ¤ller hÃ¥llbar design och NFR-alignment", criticalDecisions: "Design approval", level1: "(✔)", level2: "✔", level3: "✔" },
-      { role: "Delivery Lead (DL)", mandateFocus: "Leveransstyrning", responsibility: "SÃ¤kerstÃ¤ller governance, Value Spine-integritet och riskkontroll", criticalDecisions: "Eskalation", level1: "(✔)", level2: "✔", level3: "✔" },
-      { role: "AI Delivery Architect (AIDA)", mandateFocus: "AI-struktur och nivÃ¥", responsibility: "SÃ¤tter AI-nivÃ¥ och designar AI-anvÃ¤ndning", criticalDecisions: "AI-nivÃ¥, AI-arkitektur", level1: "(✔)", level2: "✔", level3: "✔" },
-      { role: "AI Quality Authority (AQA)", mandateFocus: "AI-kvalitet och risk", responsibility: "Granskar AI-output och sÃ¤kerstÃ¤ller reproducerbarhet", criticalDecisions: "Stoppa release", level1: "(✔)", level2: "✔", level3: "✔ (oberoende)" },
-      { role: "AI Commercial Lead (ACL)", mandateFocus: "Kommersiell risk", responsibility: "SÃ¤kerstÃ¤ller baseline, pricing och riskfÃ¶rdelning", criticalDecisions: "Dealstruktur", level1: "✖", level2: "(✔)", level3: "✔" },
-      { role: "Business Owner (BO)", mandateFocus: "AffÃ¤rsÃ¤garskap", responsibility: "Definierar effektmÃ¥l och prioriterar vÃ¤rde", criticalDecisions: "Outcome approval", level1: "(✔)", level2: "✔", level3: "✔" },
-      { role: "Customer Architect (CA)", mandateFocus: "Kundarkitektur", responsibility: "SÃ¤kerstÃ¤ller alignment med kundens miljÃ¶", criticalDecisions: "Arkitekturacceptans", level1: "✖", level2: "✔", level3: "✔" },
-      { role: "Governance / Risk Owner (GRO)", mandateFocus: "Risk och compliance", responsibility: "GodkÃ¤nner AI-anvÃ¤ndning och Ã¶vergripande risknivÃ¥", criticalDecisions: "RiskgodkÃ¤nnande", level1: "✖", level2: "(✔)", level3: "✔" }
+      { role: "Developer", mandateFocus: "Implementation", responsibility: "Bygger funktionalitet enligt Story", criticalDecisions: "Teknisk lösning", level1: "✔", level2: "✔", level3: "✔" },
+      { role: "Test / QA", mandateFocus: "Test och kvalitet", responsibility: "Säkerställer testning och verifiering", criticalDecisions: "Testgodkännande", level1: "✔", level2: "✔", level3: "✔" },
+      { role: "Solution / Enterprise Architect (SA)", mandateFocus: "Arkitektur", responsibility: "Säkerställer hållbar design och NFR-alignment", criticalDecisions: "Design approval", level1: "(✔)", level2: "✔", level3: "✔" },
+      { role: "Delivery Lead (DL)", mandateFocus: "Leveransstyrning", responsibility: "Säkerställer governance, Value Spine-integritet och riskkontroll", criticalDecisions: "Eskalation", level1: "(✔)", level2: "✔", level3: "✔" },
+      { role: "AI Delivery Architect (AIDA)", mandateFocus: "AI-struktur och nivå", responsibility: "Sätter AI-nivå och designar AI-användning", criticalDecisions: "AI-nivå, AI-arkitektur", level1: "(✔)", level2: "✔", level3: "✔" },
+      { role: "AI Quality Authority (AQA)", mandateFocus: "AI-kvalitet och risk", responsibility: "Granskar AI-output och säkerställer reproducerbarhet", criticalDecisions: "Stoppa release", level1: "(✔)", level2: "✔", level3: "✔ (oberoende)" },
+      { role: "AI Commercial Lead (ACL)", mandateFocus: "Kommersiell risk", responsibility: "Säkerställer baseline, pricing och riskfördelning", criticalDecisions: "Dealstruktur", level1: "✖", level2: "(✔)", level3: "✔" },
+      { role: "Business Owner (BO)", mandateFocus: "Affärsägarskap", responsibility: "Definierar effektmål och prioriterar värde", criticalDecisions: "Outcome approval", level1: "(✔)", level2: "✔", level3: "✔" },
+      { role: "Customer Architect (CA)", mandateFocus: "Kundarkitektur", responsibility: "Säkerställer alignment med kundens miljö", criticalDecisions: "Arkitekturacceptans", level1: "✖", level2: "✔", level3: "✔" },
+      { role: "Governance / Risk Owner (GRO)", mandateFocus: "Risk och compliance", responsibility: "Godkänner AI-användning och övergripande risknivå", criticalDecisions: "Riskgodkännande", level1: "✖", level2: "(✔)", level3: "✔" }
     ]
   }
 };
