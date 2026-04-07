@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CheckCircle2, ChevronDown, CircleAlert, GitBranch, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, CircleAlert, GitBranch, ShieldCheck } from "lucide-react";
 import type {
   ArtifactCarryForwardItem,
   ArtifactCandidateDraftRecord,
@@ -122,6 +122,7 @@ type ArtifactIntakeReviewWorkspaceProps = {
   selectedFile: IntakeArtifactFile;
   fileCandidates: IntakeArtifactCandidate[];
   language?: AppLanguage | undefined;
+  originCandidateRequested?: boolean | undefined;
   projectOutcomes: ProjectOutcomeOption[];
   projectEpics: ProjectEpicOption[];
   selectedCandidate: IntakeArtifactCandidate | null;
@@ -701,6 +702,8 @@ function FramingImportSpine(props: {
   session: IntakeArtifactSession;
   language: AppLanguage;
   selectedFile: IntakeArtifactFile;
+  selectedCandidate: IntakeArtifactCandidate | null;
+  originCandidateRequested?: boolean;
   importedOutcomeCandidates: IntakeArtifactCandidate[];
   importedEpicCandidates: IntakeArtifactCandidate[];
   importedStoryCandidates: IntakeArtifactCandidate[];
@@ -719,6 +722,16 @@ function FramingImportSpine(props: {
     props.importedStoryCandidates.length > 0 ||
     props.carryForwardItems.length > 0;
   const language = props.language;
+  const originCandidate =
+    props.originCandidateRequested && props.selectedCandidate?.fileId === props.selectedFile.id ? props.selectedCandidate : null;
+  const originCandidateStatus = originCandidate
+    ? framingCandidateStatus(originCandidate, language, {
+        resolvedKey:
+          originCandidate.draftRecord?.key && !isLegacyImportKey(originCandidate.draftRecord.key)
+            ? originCandidate.draftRecord.key
+            : buildSuggestedCandidateKey(props.session, originCandidate)
+      })
+    : null;
   const projectEpicOptions = [
     {
       id: FALLBACK_EPIC_OPTION_VALUE,
@@ -792,6 +805,64 @@ function FramingImportSpine(props: {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {originCandidate ? (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50/40 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
+                    {t(language, "Source object", "Källobjekt")}
+                  </span>
+                  <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    {label(originCandidate.type)}
+                  </span>
+                  {originCandidateStatus ? (
+                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${originCandidateStatus.tone}`}>
+                      {originCandidateStatus.label}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-2 font-medium text-foreground">
+                  {(originCandidate.draftRecord?.key && !isLegacyImportKey(originCandidate.draftRecord.key)
+                    ? originCandidate.draftRecord.key
+                    : buildSuggestedCandidateKey(props.session, originCandidate))}{" "}
+                  {originCandidate.title}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t(
+                    language,
+                    "You opened this exact imported source object from the current Value Spine item. It stays visible here even if it has already been approved or rejected.",
+                    "Du öppnade exakt det här importerade källobjektet från den aktuella Value Spine-posten. Det fortsätter vara synligt här även om det redan har godkänts eller avvisats."
+                  )}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {originCandidate.source.sectionMarker} {t(language, "in", "i")} {originCandidate.source.fileName}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="secondary">
+                  <Link
+                    href={intakeHref(
+                      props.session.id,
+                      props.selectedFile.id,
+                      originCandidate.id,
+                      `source-section-${originCandidate.source.sectionId}`,
+                      {
+                        sessionId: props.session.id,
+                        fileId: props.selectedFile.id,
+                        candidateId: originCandidate.id
+                      }
+                    )}
+                    prefetch={false}
+                  >
+                    {t(language, "Open source section", "Öppna källsektion")}
+                    <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-2 text-xs">
           {compactMetric(t(language, "Outcomes", "Outcomes"), props.importedOutcomeCandidates.length)}
           {compactMetric(t(language, "Epics", "Epics"), props.importedEpicCandidates.length)}
@@ -1445,6 +1516,7 @@ export function ArtifactIntakeReviewWorkspace({
   language = "en",
   selectedFile,
   fileCandidates,
+  originCandidateRequested = false,
   projectOutcomes,
   projectEpics,
   selectedCandidate,
@@ -1566,8 +1638,10 @@ export function ArtifactIntakeReviewWorkspace({
           importedOutcomeCandidates={importedOutcomeCandidates}
           importedStoryCandidates={importedStoryCandidates}
           language={language}
+          originCandidateRequested={originCandidateRequested}
           outcomeCandidateOptions={outcomeCandidateOptions}
           projectEpicOptionsForTarget={projectEpicOptionsForTarget}
+          selectedCandidate={selectedCandidate}
           selectedFile={selectedFile}
           session={session}
           suppressedOutcomeCandidateIds={collapsedFramingCandidates.suppressedOutcomeCandidateIds}

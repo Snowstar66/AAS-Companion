@@ -456,7 +456,6 @@ describe("Import page", () => {
     expect(screen.getByText((_, element) => element?.textContent === "Epics: 0")).toBeDefined();
     expect(screen.getByText((_, element) => element?.textContent === "Story ideas: 1")).toBeDefined();
     expect(screen.getByDisplayValue("section-2-architecture")).toBeDefined();
-    expect(screen.queryByText("Missing required fields")).toBeNull();
     expect(screen.queryByText("Story type")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Save and approve Story Idea import" })).toBeNull();
@@ -1307,5 +1306,9 @@ describe("Import page", () => {
     expect(screen.getAllByRole("heading", { name: "Framing value spine" }).length).toBeGreaterThan(0);
     expect(screen.queryByText(/No active import work remains/i)).toBeNull();
     expect(screen.queryByText(/No import sessions yet/i)).toBeNull();
+    expect(screen.getAllByText("Source object").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("SC-001 Imported Story").length).toBeGreaterThan(0);
+    const sourceSectionLinks = screen.getAllByRole("link", { name: /Open source section/i });
+    expect(sourceSectionLinks.some((link) => link.getAttribute("href") === "#source-section-section-origin-only")).toBe(true);
   });
 });

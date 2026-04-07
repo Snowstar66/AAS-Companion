@@ -603,6 +603,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <ArtifactIntakeReviewWorkspace
                 fileCandidates={selectedFileCandidates}
                 language={serverLanguage}
+                originCandidateRequested={Boolean(candidateId)}
                 projectEpics={workspace.projectEpics}
                 projectOutcomes={workspace.projectOutcomes}
                 selectedCandidate={selectedCandidate}

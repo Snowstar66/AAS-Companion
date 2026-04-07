@@ -153,7 +153,9 @@ describe("Value Spine page", () => {
     expect(screen.getAllByText("IMP-OUT-1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Imported Outcome").length).toBeGreaterThan(0);
     expect(screen.queryByText("Native Outcome")).toBeNull();
-    expect(screen.getAllByRole("link", { name: /Show origin/i }).length).toBeGreaterThan(0);
+    const showOriginLinks = screen.getAllByRole("link", { name: /Show origin/i });
+    expect(showOriginLinks.length).toBeGreaterThan(0);
+    expect(showOriginLinks.some((link) => link.getAttribute("href") === "/intake?candidateId=candidate-outcome-1")).toBe(true);
     expect(screen.getByText("Visible Story Ideas")).toBeDefined();
     expect(screen.getAllByText(/Value intent:/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Framing status:/i)).toBeNull();
