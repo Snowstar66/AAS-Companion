@@ -1446,6 +1446,150 @@ describe("Import page", () => {
     expect(screen.getAllByText("SC-001 Imported Story").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Handled story source section body.").length).toBeGreaterThan(0);
     const sourceSectionLinks = screen.getAllByRole("link", { name: /Open source section/i });
-    expect(sourceSectionLinks.some((link) => link.getAttribute("href") === "#source-section-section-origin-only")).toBe(true);
+    expect(
+      sourceSectionLinks.some(
+        (link) =>
+          link.getAttribute("href") ===
+          "/intake?sessionId=session-origin-only&fileId=file-origin-only&candidateId=candidate-origin-only&sourceSectionId=section-origin-only#source-section-section-origin-only"
+      )
+    ).toBe(true);
+  });
+
+  it("opens parsed sections and highlights the requested source section", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [],
+      projectEpics: [],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 1,
+        candidateObjects: 1,
+        humanReviewRequired: 0
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-source-focus",
+          label: "Source focus session",
+          importIntent: "framing",
+          status: "completed",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 1,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 0,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [],
+          allCandidates: [
+            {
+              id: "candidate-source-focus",
+              fileId: "file-source-focus",
+              type: "story",
+              title: "Focused source story",
+              summary: "Focus source.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "SC-051",
+                title: "Focused source story",
+                valueIntent: "Focus source.",
+                expectedBehavior: "",
+                outcomeCandidateId: null,
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "promoted",
+              importedReadinessState: "imported_framing_ready",
+              promotedEntityId: "seed-focus-1",
+              promotedEntityType: "story",
+              source: {
+                fileId: "file-source-focus",
+                fileName: "source.md",
+                sectionId: "section-source-focus",
+                sectionTitle: "US6.1",
+                sectionMarker: "## US6.1",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            }
+          ],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "file-source-focus",
+              fileName: "source.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 1024,
+              content: "# Imported artifact",
+              parsedSectionCount: 1,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 0,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: [
+                  {
+                    id: "parsed-source-focus",
+                    title: "US6.1 Optimera inköp",
+                    kind: "story",
+                    confidence: "high",
+                    isUncertain: false,
+                    text: "Focused section body.",
+                    sourceReference: {
+                      fileId: "file-source-focus",
+                      fileName: "source.md",
+                      sectionId: "section-source-focus",
+                      lineStart: 10,
+                      lineEnd: 20,
+                      sectionMarker: "## US6.1"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          activeImportWorkCount: 0
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          candidateId: "candidate-source-focus",
+          sourceSectionId: "section-source-focus"
+        })
+      })
+    );
+
+    const focusedSection = document.getElementById("source-section-section-source-focus");
+    expect(focusedSection).not.toBeNull();
+    expect(focusedSection?.className).toContain("border-sky-300");
+    expect(screen.getByText("Focused source section")).toBeDefined();
+    expect(screen.getAllByText("Focused section body.").length).toBeGreaterThan(0);
   });
 });

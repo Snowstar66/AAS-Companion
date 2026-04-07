@@ -123,6 +123,7 @@ type ArtifactIntakeReviewWorkspaceProps = {
   fileCandidates: IntakeArtifactCandidate[];
   language?: AppLanguage | undefined;
   originCandidateRequested?: boolean | undefined;
+  sourceSectionFocusId?: string | null | undefined;
   projectOutcomes: ProjectOutcomeOption[];
   projectEpics: ProjectEpicOption[];
   selectedCandidate: IntakeArtifactCandidate | null;
@@ -149,26 +150,15 @@ function intakeHref(
   sessionId: string,
   fileId: string,
   candidateId?: string | null,
-  hash?: string,
-  currentSelection?: {
-    sessionId: string;
-    fileId: string;
-    candidateId: string | null;
-  }
+  hash?: string
 ) {
-  if (
-    hash &&
-    currentSelection &&
-    currentSelection.sessionId === sessionId &&
-    currentSelection.fileId === fileId &&
-    currentSelection.candidateId === (candidateId ?? null)
-  ) {
-    return `#${hash}`;
-  }
-
   const params = new URLSearchParams({ sessionId, fileId });
   if (candidateId) {
     params.set("candidateId", candidateId);
+  }
+  const sourceSectionPrefix = "source-section-";
+  if (hash?.startsWith(sourceSectionPrefix)) {
+    params.set("sourceSectionId", hash.slice(sourceSectionPrefix.length));
   }
   return `/intake?${params.toString()}${hash ? `#${hash}` : ""}`;
 }
@@ -295,12 +285,7 @@ function dispositionLabel(action: string | null | undefined) {
 
 function queueItems(
   session: IntakeArtifactSession,
-  file: IntakeArtifactFile,
-  currentSelection?: {
-    sessionId: string;
-    fileId: string;
-    candidateId: string | null;
-  }
+  file: IntakeArtifactFile
 ) {
   const items: Array<{ key: string; title: string; description: string; items: QueueItem[] }> = [];
   const baseCandidateId =
@@ -323,7 +308,7 @@ function queueItems(
           file.sectionDispositions[section.id]?.action !== "blocked"
             ? ("resolved" as const)
             : ("unresolved" as const),
-        href: intakeHref(session.id, file.id, baseCandidateId, `source-section-${section.id}`, currentSelection),
+        href: intakeHref(session.id, file.id, baseCandidateId, `source-section-${section.id}`),
         selectedAction: file.sectionDispositions[section.id]?.action ?? null,
         dispositionLabel: dispositionLabel(file.sectionDispositions[section.id]?.action),
         resolvedActions: ["corrected", "not_relevant"],
@@ -704,6 +689,7 @@ function FramingImportSpine(props: {
   selectedFile: IntakeArtifactFile;
   selectedCandidate: IntakeArtifactCandidate | null;
   originCandidateRequested?: boolean;
+  sourceSectionFocusId?: string | null;
   importedOutcomeCandidates: IntakeArtifactCandidate[];
   importedEpicCandidates: IntakeArtifactCandidate[];
   importedStoryCandidates: IntakeArtifactCandidate[];
@@ -846,12 +832,7 @@ function FramingImportSpine(props: {
                       props.session.id,
                       props.selectedFile.id,
                       originCandidate.id,
-                      `source-section-${originCandidate.source.sectionId}`,
-                      {
-                        sessionId: props.session.id,
-                        fileId: props.selectedFile.id,
-                        candidateId: originCandidate.id
-                      }
+                      `source-section-${originCandidate.source.sectionId}`
                     )}
                     prefetch={false}
                   >
@@ -1517,6 +1498,7 @@ export function ArtifactIntakeReviewWorkspace({
   selectedFile,
   fileCandidates,
   originCandidateRequested = false,
+  sourceSectionFocusId = null,
   projectOutcomes,
   projectEpics,
   selectedCandidate,
@@ -1524,12 +1506,14 @@ export function ArtifactIntakeReviewWorkspace({
   submitFramingBulkApproveAction,
   submitSectionDispositionInlineAction
 }: ArtifactIntakeReviewWorkspaceProps) {
-  const currentSelection = {
-    sessionId: session.id,
-    fileId: selectedFile.id,
-    candidateId: selectedCandidate?.id ?? null
-  };
-  const groups = queueItems(session, selectedFile, currentSelection);
+  const sourceSectionTargetId = sourceSectionFocusId?.trim() ?? "";
+  const focusedSourceSection =
+    selectedFile.parsedArtifacts?.sections.find(
+      (section) =>
+        section.sourceReference.sectionId === sourceSectionTargetId ||
+        section.id === sourceSectionTargetId
+    ) ?? null;
+  const groups = queueItems(session, selectedFile);
   const carryForwardItems = (session.mappedArtifacts?.carryForwardItems ?? []).filter(
     (item) => item.sourceSection.sourceReference.fileId === selectedFile.id
   );
@@ -1628,6 +1612,42 @@ export function ArtifactIntakeReviewWorkspace({
 
   return (
     <div className="space-y-6">
+      {session.importIntent === "framing" && focusedSourceSection ? (
+        <Card className="border-sky-200 bg-sky-50/40 shadow-sm" id="focused-source-section">
+          <CardHeader>
+            <CardTitle>{t(language, "Focused source section", "Fokuserad källsektion")}</CardTitle>
+            <CardDescription>
+              {t(
+                language,
+                "This is the exact parsed source section behind the selected imported object. The full source artifact below is opened as well for broader context.",
+                "Det här är exakt den tolkade källsektionen bakom det valda importerade objektet. Hela källunderlaget längre ned öppnas också för bredare kontext."
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+                {focusedSourceSection.sourceReference.sectionMarker}
+              </span>
+              <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-muted-foreground">
+                {t(
+                  language,
+                  `Lines ${focusedSourceSection.sourceReference.lineStart}-${focusedSourceSection.sourceReference.lineEnd}`,
+                  `Rader ${focusedSourceSection.sourceReference.lineStart}-${focusedSourceSection.sourceReference.lineEnd}`
+                )}
+              </span>
+              <span className={`inline-flex rounded-full border px-2.5 py-1 ${confidenceTone(focusedSourceSection.confidence)}`}>
+                {focusedSourceSection.confidence}
+              </span>
+            </div>
+            <div className="rounded-2xl border border-sky-200 bg-background/90 p-4">
+              <p className="font-medium text-foreground">{focusedSourceSection.title}</p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{focusedSourceSection.text}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {session.importIntent === "framing" ? (
         <FramingImportSpine
           carryForwardItems={actionableCarryForwardItems}
@@ -1644,6 +1664,7 @@ export function ArtifactIntakeReviewWorkspace({
           selectedCandidate={selectedCandidate}
           selectedFile={selectedFile}
           session={session}
+          sourceSectionFocusId={sourceSectionFocusId}
           suppressedOutcomeCandidateIds={collapsedFramingCandidates.suppressedOutcomeCandidateIds}
           submitFramingBulkApproveAction={submitFramingBulkApproveAction}
         />
@@ -1877,7 +1898,7 @@ export function ArtifactIntakeReviewWorkspace({
       <div className="space-y-6">
         <div className="space-y-6">
             <CollapsibleReviewPanel
-              defaultOpen={originCandidateRequested}
+              defaultOpen={originCandidateRequested || Boolean(sourceSectionTargetId)}
               title={t(language, "Full imported source artifact", "Fullständigt importerat källunderlag")}
             >
             <div className="space-y-4">
@@ -1906,8 +1927,7 @@ export function ArtifactIntakeReviewWorkspace({
                         session.id,
                         selectedFile.id,
                         selectedCandidate?.id ?? null,
-                        `source-section-${section.id}`,
-                        currentSelection
+                        `source-section-${section.id}`
                       )}
                       key={section.id}
                       prefetch={false}
@@ -1924,7 +1944,7 @@ export function ArtifactIntakeReviewWorkspace({
             </div>
 
             {selectedFile.parsedArtifacts?.sections.length ? (
-              <details className="group rounded-2xl border border-border/70 bg-muted/10">
+              <details className="group rounded-2xl border border-border/70 bg-muted/10" open={Boolean(sourceSectionTargetId)}>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
                   <div>
                     <p className="text-sm font-semibold text-foreground">{t(language, "Parsed sections", "Tolkade sektioner")}</p>
@@ -1972,7 +1992,11 @@ export function ArtifactIntakeReviewWorkspace({
 
                     return (
                       <div
-                        className="rounded-2xl border border-border/70 bg-background/80 p-4"
+                        className={`rounded-2xl border bg-background/80 p-4 ${
+                          sourceSectionTargetId === sourceSectionId
+                            ? "border-sky-300 ring-2 ring-sky-100"
+                            : "border-border/70"
+                        }`}
                         id={`source-section-${sourceSectionId}`}
                         key={section.id}
                       >

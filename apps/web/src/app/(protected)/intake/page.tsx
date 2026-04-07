@@ -130,6 +130,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const status = getParamValue(query.status);
   const candidateId = getParamValue(query.candidateId);
   const originEntityId = getParamValue(query.entityId);
+  const sourceSectionId = getParamValue(query.sourceSectionId);
   const queueFilter = getParamValue(query.queue) ?? "all";
   const visibleSessions =
     workspace.state === "ready"
@@ -644,6 +645,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   ...selectedSession,
                   allCandidates: selectedSession.allCandidates ?? selectedSession.candidates ?? []
                 }}
+                sourceSectionFocusId={sourceSectionId ?? null}
                 submitAction={submitArtifactCandidateFromIntakeAction}
                 submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
                 submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
