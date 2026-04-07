@@ -24,6 +24,8 @@ export type HomeProjectSummary = {
   counts: {
     outcomes: number;
     epics: number;
+    storyIdeas: number;
+    deliveryStories: number;
     stories: number;
     activityEvents: number;
   };

@@ -22,6 +22,8 @@ type HomeProjectAccessProps = {
     counts: {
       outcomes: number;
       epics: number;
+      storyIdeas: number;
+      deliveryStories: number;
       stories: number;
       activityEvents: number;
     };
@@ -54,6 +56,8 @@ function ProjectToneCard(props: {
   counts: {
     outcomes: number;
     epics: number;
+    storyIdeas: number;
+    deliveryStories: number;
     stories: number;
     activityEvents: number;
   };
@@ -63,10 +67,9 @@ function ProjectToneCard(props: {
     currentProjectPill: string;
     activeProjectCardDescription: string;
     inactiveProjectCardDescription: string;
-    outcomes: string;
     epics: string;
-    stories: string;
-    events: string;
+    storyIdeas: string;
+    deliveryStories: string;
     continueInProject: string;
     openProject: string;
     openingProject: string;
@@ -97,10 +100,9 @@ function ProjectToneCard(props: {
             {props.active ? props.copy.activeProjectCardDescription : props.copy.inactiveProjectCardDescription}
           </p>
           <div className="flex flex-wrap gap-2">
-            <CompactProjectCount label={props.copy.outcomes} value={props.counts.outcomes} />
             <CompactProjectCount label={props.copy.epics} value={props.counts.epics} />
-            <CompactProjectCount label={props.copy.stories} value={props.counts.stories} />
-            <CompactProjectCount label={props.copy.events} value={props.counts.activityEvents} />
+            <CompactProjectCount label={props.copy.storyIdeas} value={props.counts.storyIdeas} />
+            <CompactProjectCount label={props.copy.deliveryStories} value={props.counts.deliveryStories} />
           </div>
         </div>
         <form action={props.openProjectAction} className="lg:min-w-[170px]">
@@ -141,10 +143,9 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
           currentProjectPill: "Nuvarande projekt",
           activeProjectCardDescription: "Det här projektet är redan aktivt. Gå direkt tillbaka till dess nuvarande Framing och operativa arbete.",
           inactiveProjectCardDescription: "Öppna projektet för att avgränsa dashboard, Framing, Value Spine, Import och Review till just den här arbetsgrenen.",
-          outcomes: "Outcomes",
           epics: "Epics",
-          stories: "Stories",
-          events: "Händelser",
+          storyIdeas: "Story Ideas",
+          deliveryStories: "Delivery Stories",
           continueInProject: "Fortsätt i projekt",
           openProject: "Öppna projekt",
           openingProject: "Öppnar projekt...",
@@ -189,10 +190,9 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
           currentProjectPill: "Current project",
           activeProjectCardDescription: "This project is already active. Continue straight back into its current Framing and operational work.",
           inactiveProjectCardDescription: "Open this project to scope the dashboard, Framing, Value Spine, Import and Review to this branch of work.",
-          outcomes: "Outcomes",
           epics: "Epics",
-          stories: "Stories",
-          events: "Events",
+          storyIdeas: "Story Ideas",
+          deliveryStories: "Delivery Stories",
           continueInProject: "Continue in project",
           openProject: "Open project",
           openingProject: "Opening project...",

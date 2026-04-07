@@ -13,6 +13,8 @@ export type OrganizationMembershipProjectSummary = OrganizationMembershipContext
   counts: {
     outcomes: number;
     epics: number;
+    storyIdeas: number;
+    deliveryStories: number;
     stories: number;
     activityEvents: number;
   };
@@ -195,6 +197,7 @@ export async function listOrganizationProjectSummariesForUser(
             select: {
               outcomes: true,
               epics: true,
+              directionSeeds: true,
               stories: true,
               activityEvents: true
             }
@@ -212,6 +215,8 @@ export async function listOrganizationProjectSummariesForUser(
     counts: {
       outcomes: membership.organization._count.outcomes,
       epics: membership.organization._count.epics,
+      storyIdeas: membership.organization._count.directionSeeds,
+      deliveryStories: membership.organization._count.stories,
       stories: membership.organization._count.stories,
       activityEvents: membership.organization._count.activityEvents
     }
