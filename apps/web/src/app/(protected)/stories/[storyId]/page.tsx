@@ -47,7 +47,30 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
   const createdAs = getParamValue(query.createdAs);
   const saveMessage = getParamValue(query.message);
   const blockersFromQuery = getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [];
-  const storyResult = await getStoryWorkspaceService(organization.organizationId, storyId);
+  let storyResult: Awaited<ReturnType<typeof getStoryWorkspaceService>>;
+
+  try {
+    storyResult = await getStoryWorkspaceService(organization.organizationId, storyId);
+  } catch {
+    return (
+      <AppShell
+        hideRightRail
+        topbarProps={{
+          eyebrow: "AAS Companion",
+          projectName: organization.organizationName,
+          sectionLabel: "Delivery Story",
+          badge: storyId
+        }}
+      >
+        <section className="space-y-6">
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            Delivery Story could not be opened right now. Return to the Epic and try again, or reload the route once the
+            new Story has finished persisting.
+          </div>
+        </section>
+      </AppShell>
+    );
+  }
 
   if (!storyResult.ok) {
     notFound();
