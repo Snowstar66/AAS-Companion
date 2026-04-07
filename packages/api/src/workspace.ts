@@ -72,6 +72,35 @@ function normalizeAiExecutionPattern(value: string | null | undefined) {
   return value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null;
 }
 
+function normalizeStringArray(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function normalizeStoryWorkspaceSnapshot(
+  snapshot: NonNullable<Awaited<ReturnType<typeof getStoryWorkspaceSnapshot>>>
+) {
+  return {
+    ...snapshot,
+    story: {
+      ...snapshot.story,
+      acceptanceCriteria: normalizeStringArray(snapshot.story.acceptanceCriteria),
+      aiUsageScope: normalizeStringArray(snapshot.story.aiUsageScope),
+      definitionOfDone: normalizeStringArray(snapshot.story.definitionOfDone),
+      uxSketches: Array.isArray(snapshot.story.uxSketches) ? snapshot.story.uxSketches : []
+    },
+    tollgate: snapshot.tollgate
+      ? {
+          ...snapshot.tollgate,
+          blockers: normalizeStringArray(snapshot.tollgate.blockers)
+        }
+      : null
+  };
+}
+
 function buildOutcomeRemovalFromSnapshot(snapshot: NonNullable<Awaited<ReturnType<typeof getOutcomeWorkspaceSnapshot>>>) {
   const activeChildren = [
     ...snapshot.outcome.epics.map((epic) => toGovernedChildImpact("epic", epic)),
@@ -504,14 +533,16 @@ export async function submitOutcomeTollgateService(input: {
 
 export async function getStoryWorkspaceService(organizationId: string, storyId: string) {
   return withDevTiming("api.getStoryWorkspaceService", async () => {
-  const snapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
+    const rawSnapshot = await getStoryWorkspaceSnapshot(organizationId, storyId);
 
-    if (!snapshot) {
+    if (!rawSnapshot) {
       return failure({
         code: "story_not_found",
         message: "Story was not found in the current organization."
       });
     }
+
+    const snapshot = normalizeStoryWorkspaceSnapshot(rawSnapshot);
 
     const importedBuildBlockers = await getImportedStoryBuildBlockers({
       organizationId,

@@ -62,7 +62,11 @@ export default async function StoryWorkspacePage({ params, searchParams }: Story
       : tollgateReview?.blockers ?? [...new Set([...(tollgate?.blockers ?? computedBlockers), ...importedBuildBlockers])];
   const isArchived = story.lifecycleState === "archived";
   const tollgateStatus = tollgateReview?.status ?? tollgate?.status ?? null;
-  const isDeliveryMode = Boolean(story.sourceDirectionSeedId) || tollgateStatus === "approved" || story.status === "in_progress";
+  const isDeliveryMode =
+    createdAs === "delivery" ||
+    Boolean(story.sourceDirectionSeedId) ||
+    tollgateStatus === "approved" ||
+    story.status === "in_progress";
 
   if (!isDeliveryMode) {
     redirect(`/story-ideas/${story.id}${buildQueryString(query)}`);
