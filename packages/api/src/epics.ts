@@ -314,10 +314,11 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
     seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
       ? await getArtifactCandidateById(input.organizationId, seed.lineageSourceId)
       : null;
-  const importedStoryDraft =
+  const importedStoryDraftResult =
     sourceImportDraftRecord?.type === "story"
-      ? artifactCandidateDraftRecordSchema.parse(sourceImportDraftRecord.draftRecord ?? {})
+      ? artifactCandidateDraftRecordSchema.safeParse(sourceImportDraftRecord.draftRecord ?? {})
       : null;
+  const importedStoryDraft = importedStoryDraftResult?.success ? importedStoryDraftResult.data : null;
   const key = buildNextKey(stories.map((story) => story.key), "STR");
   const createdStory = await createStory({
     organizationId: input.organizationId,

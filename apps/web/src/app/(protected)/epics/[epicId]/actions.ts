@@ -170,11 +170,22 @@ export async function createDeliveryStoryFromDirectionSeedAction(formData: FormD
   const session = await requireActiveProjectSession();
   const epicId = String(formData.get("epicId") ?? "");
   const seedId = String(formData.get("seedId") ?? "");
-  const result = await createDeliveryStoryFromDirectionSeedService({
-    organizationId: session.organization.organizationId,
-    directionSeedId: seedId,
-    actorId: session.userId
-  });
+  let result;
+
+  try {
+    result = await createDeliveryStoryFromDirectionSeedService({
+      organizationId: session.organization.organizationId,
+      directionSeedId: seedId,
+      actorId: session.userId
+    });
+  } catch (error) {
+    redirect(
+      buildEpicRedirect(epicId, {
+        save: "error",
+        message: error instanceof Error ? error.message : "Delivery Story could not be created."
+      }) + `#seed-${seedId}`
+    );
+  }
 
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidatePath(`/epics/${epicId}`);
