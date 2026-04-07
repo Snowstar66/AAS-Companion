@@ -305,6 +305,63 @@ export function HelpPageContent(props: { returnTo: string }) {
           </div>
         </CollapsibleSection>
 
+        <CollapsibleSection
+          accentClassName="border-border/70 bg-background/95"
+          description={content.roleLevelsDescription}
+          title={content.roleLevelsTitle}
+        >
+          <div className="space-y-5">
+            <p className="text-sm leading-7 text-muted-foreground">{content.roleLevelsIntro}</p>
+
+            <div className="flex flex-wrap gap-3">
+              {content.roleLevelsLegend.map((item) => (
+                <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-sm" key={`${item.label}-${item.meaning}`}>
+                  <span className="font-semibold text-foreground">{item.label}</span>
+                  <span className="ml-2 text-muted-foreground">{item.meaning}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="overflow-x-auto rounded-3xl border border-border/70 bg-background">
+              <table className="min-w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-border/70 bg-muted/20 text-left">
+                    {content.roleLevelsHeaders.map((header, index) => (
+                      <th
+                        className={`px-4 py-3 font-semibold ${
+                          index >= 4
+                            ? index === 4
+                              ? "text-sky-900"
+                              : index === 5
+                                ? "text-amber-900"
+                                : "text-emerald-900"
+                            : "text-foreground"
+                        }`}
+                        key={header}
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {content.roleLevelsMatrix.map((row) => (
+                    <tr className="border-b border-border/50 align-top" key={row.role}>
+                      <th className="bg-muted/10 px-4 py-3 text-left font-semibold text-foreground">{row.role}</th>
+                      <td className="px-4 py-3 leading-6 text-muted-foreground">{row.mandateFocus}</td>
+                      <td className="px-4 py-3 leading-6 text-muted-foreground">{row.responsibility}</td>
+                      <td className="px-4 py-3 leading-6 text-muted-foreground">{row.criticalDecisions}</td>
+                      <td className="px-4 py-3 font-semibold text-sky-900">{row.level1}</td>
+                      <td className="px-4 py-3 font-semibold text-amber-900">{row.level2}</td>
+                      <td className="px-4 py-3 font-semibold text-emerald-900">{row.level3}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </CollapsibleSection>
+
         <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.spineDescription} title={content.spineTitle}>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
             <div className="space-y-4">

@@ -80,6 +80,8 @@ describe("Help page", () => {
     expect(screen.getByText("What should we build to create new value?")).toBeDefined();
     expect(screen.getByText("Failed transformation (expensive)")).toBeDefined();
     expect(screen.getByText("AI levels and human mandate")).toBeDefined();
+    expect(screen.getByText("Roles and when they are required")).toBeDefined();
+    expect(screen.getByText("Value Owner (VO)")).toBeDefined();
     expect(screen.queryByText("Framing roundtrip")).toBeNull();
     expect(screen.queryByText("AAS method deep dive")).toBeNull();
     expect(screen.queryByText("How this app is built")).toBeNull();
@@ -106,6 +108,7 @@ describe("Help page", () => {
 
     expect(screen.getAllByText(/vattenfall/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Vanliga/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Roller och/i).length).toBeGreaterThan(0);
     expect(window.localStorage.getItem("aas-help-language")).toBe("sv");
 
     unmount();
