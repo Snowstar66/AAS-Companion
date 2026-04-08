@@ -48,6 +48,10 @@ function readCsv(formData: FormData, name: string) {
     .filter(Boolean);
 }
 
+function readNullableField(formData: FormData, name: string) {
+  return String(formData.get(name) ?? "").trim() || null;
+}
+
 function getPromotionLabel(candidateType: string, promotedEntityType: string, importIntent: "framing" | "design") {
   if (candidateType === "story" || promotedEntityType === "story") {
     return importIntent === "design" ? "Delivery Story" : "Story Idea";
@@ -83,6 +87,14 @@ function chunkItems<T>(items: T[], size: number) {
 
 function readDynamicField(formData: FormData, scope: "candidate" | "section", id: string, field: string) {
   return String(formData.get(`${scope}:${id}:${field}`) ?? "").trim();
+}
+
+function hasDynamicField(formData: FormData, scope: "candidate" | "section", id: string, field: string) {
+  return formData.has(`${scope}:${id}:${field}`);
+}
+
+function readNullableDynamicField(formData: FormData, scope: "candidate" | "section", id: string, field: string) {
+  return readDynamicField(formData, scope, id, field) || null;
 }
 
 function readDynamicLines(formData: FormData, scope: "candidate" | "section", id: string, field: string) {
@@ -330,26 +342,27 @@ export async function submitArtifactCandidateFromIntakeAction(formData: FormData
             : "edited",
     reviewComment,
     draftRecord: {
-      key: String(formData.get("key") ?? "") || null,
-      title: String(formData.get("title") ?? "") || null,
-      problemStatement: String(formData.get("problemStatement") ?? "") || null,
-      outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
-      baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
-      baselineSource: String(formData.get("baselineSource") ?? "") || null,
-      timeframe: String(formData.get("timeframe") ?? "") || null,
-      purpose: String(formData.get("purpose") ?? "") || null,
-      storyType:
-        candidateType === "story"
-          ? ((String(formData.get("storyType") ?? "") || null) as "outcome_delivery" | "governance" | "enablement" | null)
-          : null,
-      valueIntent: String(formData.get("valueIntent") ?? "") || null,
-      expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
-      acceptanceCriteria: readLines(formData, "acceptanceCriteria"),
-      aiUsageScope: readCsv(formData, "aiUsageScope"),
-      testDefinition: String(formData.get("testDefinition") ?? "") || null,
-      definitionOfDone: readLines(formData, "definitionOfDone"),
-      outcomeCandidateId: String(formData.get("outcomeCandidateId") ?? "") || null,
-      epicCandidateId: String(formData.get("epicCandidateId") ?? "") || null
+      ...(formData.has("key") ? { key: readNullableField(formData, "key") } : {}),
+      ...(formData.has("title") ? { title: readNullableField(formData, "title") } : {}),
+      ...(formData.has("problemStatement") ? { problemStatement: readNullableField(formData, "problemStatement") } : {}),
+      ...(formData.has("outcomeStatement") ? { outcomeStatement: readNullableField(formData, "outcomeStatement") } : {}),
+      ...(formData.has("baselineDefinition") ? { baselineDefinition: readNullableField(formData, "baselineDefinition") } : {}),
+      ...(formData.has("baselineSource") ? { baselineSource: readNullableField(formData, "baselineSource") } : {}),
+      ...(formData.has("timeframe") ? { timeframe: readNullableField(formData, "timeframe") } : {}),
+      ...(formData.has("purpose") ? { purpose: readNullableField(formData, "purpose") } : {}),
+      ...(candidateType === "story" && formData.has("storyType")
+        ? {
+            storyType: readNullableField(formData, "storyType") as "outcome_delivery" | "governance" | "enablement" | null
+          }
+        : {}),
+      ...(formData.has("valueIntent") ? { valueIntent: readNullableField(formData, "valueIntent") } : {}),
+      ...(formData.has("expectedBehavior") ? { expectedBehavior: readNullableField(formData, "expectedBehavior") } : {}),
+      ...(formData.has("acceptanceCriteria") ? { acceptanceCriteria: readLines(formData, "acceptanceCriteria") } : {}),
+      ...(formData.has("aiUsageScope") ? { aiUsageScope: readCsv(formData, "aiUsageScope") } : {}),
+      ...(formData.has("testDefinition") ? { testDefinition: readNullableField(formData, "testDefinition") } : {}),
+      ...(formData.has("definitionOfDone") ? { definitionOfDone: readLines(formData, "definitionOfDone") } : {}),
+      ...(formData.has("outcomeCandidateId") ? { outcomeCandidateId: readNullableField(formData, "outcomeCandidateId") } : {}),
+      ...(formData.has("epicCandidateId") ? { epicCandidateId: readNullableField(formData, "epicCandidateId") } : {})
     },
     humanDecisions: {
       valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,
@@ -791,35 +804,76 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       const draftRecord =
         candidate.type === "outcome"
           ? {
-              key: readDynamicField(formData, "candidate", candidate.id, "key") || null,
-              title: readDynamicField(formData, "candidate", candidate.id, "title") || null,
-              problemStatement: readDynamicField(formData, "candidate", candidate.id, "problemStatement") || null,
-              outcomeStatement: readDynamicField(formData, "candidate", candidate.id, "outcomeStatement") || null,
-              baselineDefinition: readDynamicField(formData, "candidate", candidate.id, "baselineDefinition") || null,
-              baselineSource: readDynamicField(formData, "candidate", candidate.id, "baselineSource") || null,
-              timeframe: readDynamicField(formData, "candidate", candidate.id, "timeframe") || null,
+              ...(candidate.draftRecord ?? {}),
+              ...(hasDynamicField(formData, "candidate", candidate.id, "key")
+                ? { key: readNullableDynamicField(formData, "candidate", candidate.id, "key") }
+                : {}),
+              ...(hasDynamicField(formData, "candidate", candidate.id, "title")
+                ? { title: readNullableDynamicField(formData, "candidate", candidate.id, "title") }
+                : {}),
+              ...(hasDynamicField(formData, "candidate", candidate.id, "problemStatement")
+                ? { problemStatement: readNullableDynamicField(formData, "candidate", candidate.id, "problemStatement") }
+                : {}),
+              ...(hasDynamicField(formData, "candidate", candidate.id, "outcomeStatement")
+                ? { outcomeStatement: readNullableDynamicField(formData, "candidate", candidate.id, "outcomeStatement") }
+                : {}),
+              ...(hasDynamicField(formData, "candidate", candidate.id, "baselineDefinition")
+                ? { baselineDefinition: readNullableDynamicField(formData, "candidate", candidate.id, "baselineDefinition") }
+                : {}),
+              ...(hasDynamicField(formData, "candidate", candidate.id, "baselineSource")
+                ? { baselineSource: readNullableDynamicField(formData, "candidate", candidate.id, "baselineSource") }
+                : {}),
+              ...(hasDynamicField(formData, "candidate", candidate.id, "timeframe")
+                ? { timeframe: readNullableDynamicField(formData, "candidate", candidate.id, "timeframe") }
+                : {}),
               outcomeCandidateId: targetOutcomeId
             }
           : candidate.type === "epic"
             ? {
-                key: readDynamicField(formData, "candidate", candidate.id, "key") || null,
-                title: readDynamicField(formData, "candidate", candidate.id, "title") || null,
-                purpose: readDynamicField(formData, "candidate", candidate.id, "purpose") || null,
-                scopeBoundary: readDynamicField(formData, "candidate", candidate.id, "scopeBoundary") || null,
-                riskNote: readDynamicField(formData, "candidate", candidate.id, "riskNote") || null,
+                ...(candidate.draftRecord ?? {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "key")
+                  ? { key: readNullableDynamicField(formData, "candidate", candidate.id, "key") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "title")
+                  ? { title: readNullableDynamicField(formData, "candidate", candidate.id, "title") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "purpose")
+                  ? { purpose: readNullableDynamicField(formData, "candidate", candidate.id, "purpose") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "scopeBoundary")
+                  ? { scopeBoundary: readNullableDynamicField(formData, "candidate", candidate.id, "scopeBoundary") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "riskNote")
+                  ? { riskNote: readNullableDynamicField(formData, "candidate", candidate.id, "riskNote") }
+                  : {}),
                 outcomeCandidateId: resolvedOutcomeLink || null
               }
             : {
-                key: readDynamicField(formData, "candidate", candidate.id, "key") || null,
-                title: readDynamicField(formData, "candidate", candidate.id, "title") || null,
-                storyType:
-                  ((readDynamicField(formData, "candidate", candidate.id, "storyType") || "outcome_delivery") as
-                    | "outcome_delivery"
-                    | "governance"
-                    | "enablement"),
-                valueIntent: readDynamicField(formData, "candidate", candidate.id, "valueIntent") || null,
-                expectedBehavior: readDynamicField(formData, "candidate", candidate.id, "expectedBehavior") || null,
-                acceptanceCriteria: readDynamicLines(formData, "candidate", candidate.id, "acceptanceCriteria"),
+                ...(candidate.draftRecord ?? {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "key")
+                  ? { key: readNullableDynamicField(formData, "candidate", candidate.id, "key") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "title")
+                  ? { title: readNullableDynamicField(formData, "candidate", candidate.id, "title") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "storyType")
+                  ? {
+                      storyType: readNullableDynamicField(formData, "candidate", candidate.id, "storyType") as
+                        | "outcome_delivery"
+                        | "governance"
+                        | "enablement"
+                        | null
+                    }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "valueIntent")
+                  ? { valueIntent: readNullableDynamicField(formData, "candidate", candidate.id, "valueIntent") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "expectedBehavior")
+                  ? { expectedBehavior: readNullableDynamicField(formData, "candidate", candidate.id, "expectedBehavior") }
+                  : {}),
+                ...(hasDynamicField(formData, "candidate", candidate.id, "acceptanceCriteria")
+                  ? { acceptanceCriteria: readDynamicLines(formData, "candidate", candidate.id, "acceptanceCriteria") }
+                  : {}),
                 outcomeCandidateId: resolvedOutcomeLink || null,
                 epicCandidateId: usesFallbackEpic ? null : currentEpicLink || null
               };

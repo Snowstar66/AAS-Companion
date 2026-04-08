@@ -2032,6 +2032,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                             {selectedCandidate.type === "outcome" ? (
                               <>
                                 <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Problem statement</span>
+                                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.problemStatement ?? ""} name="problemStatement" />
+                                </label>
+                                <label className="space-y-2">
                                   <span className="text-sm font-medium text-foreground">Outcome statement</span>
                                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.outcomeStatement ?? ""} name="outcomeStatement" />
                                 </label>
@@ -2042,6 +2046,10 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                 <label className="space-y-2">
                                   <span className="text-sm font-medium text-foreground">Baseline source</span>
                                   <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.baselineSource ?? ""} name="baselineSource" />
+                                </label>
+                                <label className="space-y-2">
+                                  <span className="text-sm font-medium text-foreground">Timeframe</span>
+                                  <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={selectedCandidate.draftRecord?.timeframe ?? ""} name="timeframe" type="text" />
                                 </label>
                               </>
                             ) : null}

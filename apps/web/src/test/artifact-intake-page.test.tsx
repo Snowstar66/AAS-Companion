@@ -1455,6 +1455,144 @@ describe("Import page", () => {
     ).toBe(true);
   });
 
+  it("shows problem statement and timeframe fields for outcome approval", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [
+        {
+          id: "project-outcome-1",
+          key: "OUT-001",
+          title: "Primary project outcome"
+        }
+      ],
+      projectEpics: [],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 1,
+        candidateObjects: 1,
+        humanReviewRequired: 1
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-outcome-fields",
+          label: "Outcome import session",
+          importIntent: "framing",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-25T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 1,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 1,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 0,
+          candidates: [
+            {
+              id: "candidate-outcome-fields",
+              fileId: "file-outcome-fields",
+              type: "outcome",
+              title: "Imported outcome",
+              summary: "Imported outcome summary.",
+              mappingState: "mapped",
+              relationshipState: "mapped",
+              relationshipNote: null,
+              inferredOutcomeCandidateId: null,
+              inferredEpicCandidateId: null,
+              acceptanceCriteria: [],
+              testNotes: [],
+              draftRecord: {
+                key: "OUT-009",
+                title: "Imported outcome",
+                problemStatement: "Imported problem statement.",
+                outcomeStatement: "Imported outcome summary.",
+                baselineDefinition: "Imported baseline definition.",
+                baselineSource: "Imported baseline source",
+                timeframe: "6-24 månader",
+                purpose: null,
+                scopeBoundary: null,
+                riskNote: null,
+                storyType: null,
+                valueIntent: null,
+                expectedBehavior: null,
+                acceptanceCriteria: [],
+                aiUsageScope: [],
+                testDefinition: null,
+                definitionOfDone: [],
+                outcomeCandidateId: "project-outcome-1",
+                epicCandidateId: null
+              },
+              humanDecisions: {},
+              complianceResult: {
+                findings: [],
+                summary: { missing: 0, uncertain: 0, humanOnly: 0, blocked: 0 },
+                promotionBlocked: false,
+                humanReviewRequired: false
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_framing_ready",
+              source: {
+                fileId: "file-outcome-fields",
+                fileName: "outcome.md",
+                sectionId: "section-outcome-fields",
+                sectionTitle: "OUT-009",
+                sectionMarker: "### OUT-009",
+                sourceType: "bmad_prd",
+                confidence: "high"
+              }
+            }
+          ],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: { candidates: [], unmappedSections: [] },
+          files: [
+            {
+              id: "file-outcome-fields",
+              fileName: "outcome.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-25T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "bmad_prd",
+              sourceTypeConfidence: "high",
+              sectionDispositions: {},
+              sizeBytes: 512,
+              content: "# Outcome",
+              parsedSectionCount: 1,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 1,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "bmad_prd",
+                  confidence: "high",
+                  rationale: "Framing file."
+                },
+                sections: []
+              }
+            }
+          ],
+          activeImportWorkCount: 1
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          sessionId: "session-outcome-fields",
+          fileId: "file-outcome-fields",
+          candidateId: "candidate-outcome-fields"
+        })
+      })
+    );
+
+    expect(screen.getAllByLabelText(/Problem statement/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(/Timeframe/i).length).toBeGreaterThan(0);
+  });
+
   it("opens parsed sections and highlights the requested source section", async () => {
     loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
       state: "ready",

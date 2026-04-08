@@ -39,6 +39,10 @@ function readCsv(formData: FormData, name: string) {
     .filter(Boolean);
 }
 
+function readNullableField(formData: FormData, name: string) {
+  return String(formData.get(name) ?? "").trim() || null;
+}
+
 function getPromotionLabel(candidateType: string, promotedEntityType: string, importIntent: "framing" | "design") {
   if (candidateType === "story" || promotedEntityType === "story") {
     return importIntent === "design" ? "Delivery Story" : "Story Idea";
@@ -93,31 +97,32 @@ export async function submitArtifactCandidateReviewAction(formData: FormData) {
           ? "rejected"
           : intent === "follow_up"
             ? "follow_up_needed"
-            : "edited",
+          : "edited",
     reviewComment,
     draftRecord: {
-      key: String(formData.get("key") ?? "") || null,
-      title: String(formData.get("title") ?? "") || null,
-      problemStatement: String(formData.get("problemStatement") ?? "") || null,
-      outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
-      baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
-      baselineSource: String(formData.get("baselineSource") ?? "") || null,
-      timeframe: String(formData.get("timeframe") ?? "") || null,
-      purpose: String(formData.get("purpose") ?? "") || null,
-      scopeBoundary: String(formData.get("scopeBoundary") ?? "") || null,
-      riskNote: String(formData.get("riskNote") ?? "") || null,
-      storyType:
-        candidateType === "story"
-          ? ((String(formData.get("storyType") ?? "") || null) as "outcome_delivery" | "governance" | "enablement" | null)
-          : null,
-      valueIntent: String(formData.get("valueIntent") ?? "") || null,
-      expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null,
-      acceptanceCriteria: readLines(formData, "acceptanceCriteria"),
-      aiUsageScope: readCsv(formData, "aiUsageScope"),
-      testDefinition: String(formData.get("testDefinition") ?? "") || null,
-      definitionOfDone: readLines(formData, "definitionOfDone"),
-      outcomeCandidateId: String(formData.get("outcomeCandidateId") ?? "") || null,
-      epicCandidateId: String(formData.get("epicCandidateId") ?? "") || null
+      ...(formData.has("key") ? { key: readNullableField(formData, "key") } : {}),
+      ...(formData.has("title") ? { title: readNullableField(formData, "title") } : {}),
+      ...(formData.has("problemStatement") ? { problemStatement: readNullableField(formData, "problemStatement") } : {}),
+      ...(formData.has("outcomeStatement") ? { outcomeStatement: readNullableField(formData, "outcomeStatement") } : {}),
+      ...(formData.has("baselineDefinition") ? { baselineDefinition: readNullableField(formData, "baselineDefinition") } : {}),
+      ...(formData.has("baselineSource") ? { baselineSource: readNullableField(formData, "baselineSource") } : {}),
+      ...(formData.has("timeframe") ? { timeframe: readNullableField(formData, "timeframe") } : {}),
+      ...(formData.has("purpose") ? { purpose: readNullableField(formData, "purpose") } : {}),
+      ...(formData.has("scopeBoundary") ? { scopeBoundary: readNullableField(formData, "scopeBoundary") } : {}),
+      ...(formData.has("riskNote") ? { riskNote: readNullableField(formData, "riskNote") } : {}),
+      ...(candidateType === "story" && formData.has("storyType")
+        ? {
+            storyType: readNullableField(formData, "storyType") as "outcome_delivery" | "governance" | "enablement" | null
+          }
+        : {}),
+      ...(formData.has("valueIntent") ? { valueIntent: readNullableField(formData, "valueIntent") } : {}),
+      ...(formData.has("expectedBehavior") ? { expectedBehavior: readNullableField(formData, "expectedBehavior") } : {}),
+      ...(formData.has("acceptanceCriteria") ? { acceptanceCriteria: readLines(formData, "acceptanceCriteria") } : {}),
+      ...(formData.has("aiUsageScope") ? { aiUsageScope: readCsv(formData, "aiUsageScope") } : {}),
+      ...(formData.has("testDefinition") ? { testDefinition: readNullableField(formData, "testDefinition") } : {}),
+      ...(formData.has("definitionOfDone") ? { definitionOfDone: readLines(formData, "definitionOfDone") } : {}),
+      ...(formData.has("outcomeCandidateId") ? { outcomeCandidateId: readNullableField(formData, "outcomeCandidateId") } : {}),
+      ...(formData.has("epicCandidateId") ? { epicCandidateId: readNullableField(formData, "epicCandidateId") } : {})
     },
     humanDecisions: {
       valueOwnerId: String(formData.get("valueOwnerId") ?? "") || null,

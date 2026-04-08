@@ -999,6 +999,14 @@ function FramingImportSpine(props: {
                             />
                           </label>
                           <label className="space-y-2 md:col-span-2">
+                            <span className="text-sm font-medium text-foreground">{t(language, "Problem statement", "Problemformulering")}</span>
+                            <textarea
+                              className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                              defaultValue={outcomeCandidate.draftRecord?.problemStatement ?? ""}
+                              name={`candidate:${outcomeCandidate.id}:problemStatement`}
+                            />
+                          </label>
+                          <label className="space-y-2 md:col-span-2">
                             <span className="text-sm font-medium text-foreground">{t(language, "Outcome statement", "Outcome-beskrivning")}</span>
                             <textarea
                               className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -2108,6 +2116,14 @@ export function ArtifactIntakeReviewWorkspace({
 
                   {selectedCandidate.type === "outcome" ? (
                     <>
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">{t(language, "Problem statement", "Problemformulering")}</span>
+                        <textarea
+                          className={withValidationTone("min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary", "problemStatement")}
+                          defaultValue={selectedCandidate.draftRecord?.problemStatement ?? ""}
+                          name="problemStatement"
+                        />
+                      </label>
                       {!quickEditFieldNames.has("outcomeStatement") ? (
                         <label className="space-y-2">
                           <span className="text-sm font-medium text-foreground">{t(language, "Outcome statement", "Outcome-beskrivning")}</span>
@@ -2153,6 +2169,15 @@ export function ArtifactIntakeReviewWorkspace({
                           ))}
                         </label>
                       ) : null}
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">{t(language, "Timeframe", "Tidsram")}</span>
+                        <input
+                          className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                          defaultValue={selectedCandidate.draftRecord?.timeframe ?? ""}
+                          name="timeframe"
+                          type="text"
+                        />
+                      </label>
                     </>
                   ) : null}
 
