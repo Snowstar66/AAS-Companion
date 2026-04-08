@@ -3,18 +3,21 @@ import {
   AlertTriangle,
   ChevronDown,
   DatabaseZap,
+  Sparkles,
   ShieldAlert,
   Trash2,
   UserRoundCog
 } from "lucide-react";
 import { membershipRoles } from "@aas-companion/domain";
-import { listOrganizationProjectUsers } from "@aas-companion/db";
+import { listOrganizationProjectUsers, listPartyRoleEntries } from "@aas-companion/db";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
+import { demoRoleSeeds } from "@/lib/admin/demo-role-catalog";
 import { loadOperationalLogs } from "@/lib/admin/operational-logs";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
 import {
+  applyDemoRoleBulkAction,
   clearOperationalLogsAction,
   hardDeleteProjectsAction,
   removeProjectUserAction,
@@ -84,6 +87,13 @@ function formatRoleLabel(language: AppLanguage, role: string) {
   return role.replaceAll("_", " ");
 }
 
+function groupRoleSeedsBySide() {
+  return {
+    customer: demoRoleSeeds.filter((seed) => seed.organizationSide === "customer"),
+    supplier: demoRoleSeeds.filter((seed) => seed.organizationSide === "supplier")
+  };
+}
+
 async function getServerLanguage(): Promise<AppLanguage> {
   try {
     const cookieStore = await cookies();
@@ -114,6 +124,31 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         };
   const projectUsers =
     activeProject && !isDemoSession ? await listOrganizationProjectUsers(activeProject.organizationId) : [];
+  const partyRoles =
+    activeProject && !isDemoSession
+      ? await listPartyRoleEntries(activeProject.organizationId, { includeInactive: true })
+      : [];
+  const roleSeedsBySide = groupRoleSeedsBySide();
+  const rolePresenceByKey = new Map<
+    string,
+    {
+      activeCount: number;
+      totalCount: number;
+    }
+  >();
+
+  for (const role of partyRoles) {
+    const key = `${role.organizationSide}:${role.roleType}`;
+    const existing = rolePresenceByKey.get(key) ?? {
+      activeCount: 0,
+      totalCount: 0
+    };
+    existing.totalCount += 1;
+    if (role.isActive) {
+      existing.activeCount += 1;
+    }
+    rolePresenceByKey.set(key, existing);
+  }
 
   return (
     <AppShell
@@ -327,6 +362,146 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <div className="flex items-start gap-3">
+                  <Sparkles className="mt-0.5 h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>{t("Demo role bulk tools", "Demo-rollverktyg i bulk")}</CardTitle>
+                    <CardDescription>
+                      {t(
+                        "Create or remove a ready-made customer and supplier role set for the active project. Each row uses a generated demo portrait, fixed role title, and mandate text aligned with the help guidance.",
+                        "Skapa eller ta bort en fardig uppsattning kund- och leverantorsroller for det aktiva projektet. Varje rad anvander ett genererat demoportatt, fast rolltitel och mandattext som foljer hjalpens guidance."
+                      )}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
+                  <div className="flex items-start gap-2">
+                    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                    <p>
+                      {t(
+                        "Remove is intentionally broad on this admin surface. It deletes all matching roles in the active project for the selected role type and side, even if they were created manually.",
+                        "Remove ar medvetet bred pa denna adminyta. Den tar bort alla matchande roller i det aktiva projektet for vald rolltyp och sida, aven om de skapades manuellt."
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <form action={applyDemoRoleBulkAction} className="space-y-6">
+                  <div className="grid gap-6 xl:grid-cols-2">
+                    {([
+                      ["customer", roleSeedsBySide.customer, t("Customer roles", "Kundroller")],
+                      ["supplier", roleSeedsBySide.supplier, t("Supplier roles", "Leverantorsroller")]
+                    ] as const).map(([side, seeds, heading]) => (
+                      <div className="space-y-3" key={side}>
+                        <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3">
+                          <p className="text-sm font-semibold text-foreground">{heading}</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                            {side === "customer"
+                              ? t(
+                                  "Customer-side authority for sponsorship, domain, value and risk.",
+                                  "Kundsidesansvar for sponsorskap, doman, varde och risk."
+                                )
+                              : t(
+                                  "Supplier-side authority for architecture, AI execution, quality and delivery.",
+                                  "Leverantorssidesansvar for arkitektur, AI-exekvering, kvalitet och leverans."
+                                )}
+                          </p>
+                        </div>
+
+                        {seeds.map((seed) => {
+                          const presence =
+                            rolePresenceByKey.get(`${seed.organizationSide}:${seed.roleType}`) ?? {
+                              activeCount: 0,
+                              totalCount: 0
+                            };
+
+                          return (
+                            <div className="rounded-3xl border border-border/70 bg-background p-4 shadow-sm" key={seed.id}>
+                              <div className="flex items-start gap-4">
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-muted/20">
+                                  <img
+                                    alt={seed.fullName}
+                                    className="h-full w-full object-cover"
+                                    src={seed.avatarUrl}
+                                  />
+                                </div>
+                                <div className="min-w-0 flex-1 space-y-2">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <p className="text-sm font-semibold text-foreground">{seed.roleLabel}</p>
+                                    <span className="rounded-full border border-border/70 bg-muted/20 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                      {seed.roleTitle}
+                                    </span>
+                                    <span
+                                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                        presence.activeCount > 0
+                                          ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                                          : "border border-border/70 bg-muted/20 text-muted-foreground"
+                                      }`}
+                                    >
+                                      {presence.activeCount > 0
+                                        ? t(
+                                            `${presence.activeCount} active / ${presence.totalCount} total`,
+                                            `${presence.activeCount} aktiv(a) / ${presence.totalCount} totalt`
+                                          )
+                                        : t("No current role", "Ingen nuvarande roll")}
+                                    </span>
+                                  </div>
+                                  <div className="text-sm leading-6">
+                                    <p className="font-medium text-foreground">{seed.fullName}</p>
+                                    <p className="text-muted-foreground">{seed.email}</p>
+                                  </div>
+                                  <p className="text-sm leading-6 text-muted-foreground">{seed.mandateNotes}</p>
+                                  <div className="flex flex-wrap gap-6 pt-1">
+                                    <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                                      <input
+                                        className="h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500"
+                                        name="createRoleIds"
+                                        type="checkbox"
+                                        value={seed.id}
+                                      />
+                                      <span>{t("Create", "Create")}</span>
+                                    </label>
+                                    <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                                      <input
+                                        className="h-4 w-4 rounded border-border text-red-600 focus:ring-red-500"
+                                        name="removeRoleIds"
+                                        type="checkbox"
+                                        value={seed.id}
+                                      />
+                                      <span>{t("Remove", "Remove")}</span>
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50/45 p-4">
+                    <p className="text-sm text-sky-900">
+                      {t(
+                        "Apply all checked demo role changes for the active project in one bulk action.",
+                        "Kor alla markerade demo-rollandringar for det aktiva projektet i en bulk-action."
+                      )}
+                    </p>
+                    <PendingFormButton
+                      className="gap-2"
+                      label={t("Apply demo role changes", "Kor demo-rollandringar")}
+                      pendingLabel={t("Applying demo role changes...", "Korar demo-rollandringar...")}
+                      showPendingCursor
+                    />
+                  </div>
+                </form>
               </CardContent>
             </Card>
 

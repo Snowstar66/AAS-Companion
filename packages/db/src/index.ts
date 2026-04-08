@@ -56,6 +56,7 @@ export {
 export {
   createAgentRegistryEntry,
   createPartyRoleEntry,
+  hardDeletePartyRoleEntry,
   listAgentRegistryEntries,
   listGovernanceRiskCombinationRules,
   listGovernanceRoleRequirements,

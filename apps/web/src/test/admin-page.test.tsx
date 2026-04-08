@@ -18,6 +18,23 @@ vi.mock("@aas-companion/db", () => ({
       role: "aqa",
       activeOutcomeOwnerCount: 0
     }
+  ]),
+  listPartyRoleEntries: vi.fn(async () => [
+    {
+      id: "party-role-1",
+      organizationId: "org-1",
+      fullName: "Meryl Streep",
+      email: "meryl.streep+customer-sponsor@demo.aas.local",
+      phoneNumber: null,
+      avatarUrl: "data:image/svg+xml;base64,AAA",
+      organizationSide: "customer",
+      roleType: "customer_sponsor",
+      roleTitle: "Executive Sponsor",
+      mandateNotes: "Owns sponsor authority, escalation ownership and tollgate sponsorship for the project.",
+      isActive: true,
+      createdAt: new Date("2026-04-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-04-01T00:00:00.000Z")
+    }
   ])
 }));
 
@@ -125,8 +142,12 @@ describe("Admin page", () => {
 
     expect(screen.getByRole("heading", { name: "Aggressive project cleanup", level: 1 })).toBeDefined();
     expect(screen.getByText("Internal users in active project")).toBeDefined();
+    expect(screen.getByText("Demo role bulk tools")).toBeDefined();
+    expect(screen.getByText("Meryl Streep")).toBeDefined();
     expect(screen.getByText("Pontus")).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Save user" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("checkbox", { name: "Create" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("checkbox", { name: "Remove" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: "Remove from active project" }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Hard delete removes the selected projects entirely/i)).toBeDefined();
     expect(screen.getByRole("checkbox", { name: /Hemmakoll/i })).toBeDefined();

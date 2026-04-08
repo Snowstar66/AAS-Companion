@@ -76,6 +76,57 @@ async function syncValueOwnerMembershipFromPartyRole(
   });
 }
 
+async function cleanupValueOwnerMembershipFromPartyRoleRemoval(
+  tx: Prisma.TransactionClient,
+  entry: {
+    organizationId: string;
+    email: string;
+    organizationSide: string;
+    roleType: string;
+  }
+) {
+  if (entry.organizationSide !== "customer" || entry.roleType !== "value_owner") {
+    return;
+  }
+
+  const normalizedEmail = entry.email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return;
+  }
+
+  const appUser = await tx.appUser.findUnique({
+    where: {
+      email: normalizedEmail
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!appUser) {
+    return;
+  }
+
+  await tx.outcome.updateMany({
+    where: {
+      organizationId: entry.organizationId,
+      valueOwnerId: appUser.id
+    },
+    data: {
+      valueOwnerId: null
+    }
+  });
+
+  await tx.membership.deleteMany({
+    where: {
+      organizationId: entry.organizationId,
+      userId: appUser.id,
+      role: "value_owner"
+    }
+  });
+}
+
 async function requireActiveSupervisor(
   db: Prisma.TransactionClient,
   organizationId: string,
@@ -244,6 +295,54 @@ export async function updatePartyRoleEntry(input: unknown) {
     );
 
     return partyRoleEntryRecordSchema.parse(entry);
+  });
+}
+
+export async function hardDeletePartyRoleEntry(input: {
+  organizationId: string;
+  id: string;
+  actorId?: string | null;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.partyRoleEntry.findFirst({
+      where: {
+        organizationId: input.organizationId,
+        id: input.id
+      }
+    });
+
+    if (!existing) {
+      throw new Error("Party role entry not found in organization scope.");
+    }
+
+    await cleanupValueOwnerMembershipFromPartyRoleRemoval(tx, existing);
+
+    await appendActivityEvent(
+      {
+        organizationId: input.organizationId,
+        entityType: "party_role_entry",
+        entityId: existing.id,
+        eventType: "party_role_entry_deactivated",
+        actorId: input.actorId ?? null,
+        metadata: {
+          fullName: existing.fullName,
+          email: existing.email,
+          organizationSide: existing.organizationSide,
+          roleType: existing.roleType,
+          isActive: false,
+          removed: true
+        }
+      },
+      tx
+    );
+
+    await tx.partyRoleEntry.delete({
+      where: {
+        id: existing.id
+      }
+    });
+
+    return partyRoleEntryRecordSchema.parse(existing);
   });
 }
 

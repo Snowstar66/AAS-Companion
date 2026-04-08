@@ -5,13 +5,18 @@ import { redirect } from "next/navigation";
 import { membershipRoleSchema } from "@aas-companion/domain";
 import { clearOperationalActivityEventsService } from "@aas-companion/api";
 import {
+  createPartyRoleEntry,
+  hardDeletePartyRoleEntry,
   hardDeleteOrganizationContextsForUser,
+  listPartyRoleEntries,
   removeOrganizationProjectUser,
+  updatePartyRoleEntry,
   updateOrganizationProjectUser
 } from "@aas-companion/db";
 import { z } from "zod";
 import { clearOrganizationContextCookie } from "@/lib/org-context";
 import { requireActiveProjectSession, requireProjectAccountIdentity, requireProtectedSession } from "@/lib/auth/guards";
+import { getDemoRoleSeedById } from "@/lib/admin/demo-role-catalog";
 
 function buildAdminRedirect(params: Record<string, string | undefined>) {
   const query = new URLSearchParams();
@@ -38,6 +43,8 @@ const updateProjectUserSchema = z.object({
 const removeProjectUserSchema = z.object({
   userId: z.string().trim().min(1)
 });
+
+const demoRoleIdsSchema = z.array(z.string().trim().min(1));
 
 function isUniqueConstraintError(error: unknown): error is { code: string } {
   return Boolean(
@@ -282,6 +289,166 @@ export async function removeProjectUserAction(formData: FormData) {
         result.clearedOutcomeAssignments > 0
           ? `Project user removed and ${result.clearedOutcomeAssignments} outcome owner assignment(s) were cleared.`
           : "Project user removed."
+    })
+  );
+}
+
+export async function applyDemoRoleBulkAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const activeProjectSession = await requireActiveProjectSession();
+
+  if (session.mode === "demo") {
+    redirect(
+      buildAdminRedirect({
+        status: "blocked",
+        message: "Demo role bulk tools are unavailable in Demo."
+      })
+    );
+  }
+
+  const createRoleIds = demoRoleIdsSchema.parse(
+    formData.getAll("createRoleIds").map((value) => String(value).trim()).filter(Boolean)
+  );
+  const removeRoleIds = demoRoleIdsSchema.parse(
+    formData.getAll("removeRoleIds").map((value) => String(value).trim()).filter(Boolean)
+  );
+  const overlappingIds = createRoleIds.filter((id) => removeRoleIds.includes(id));
+
+  if (createRoleIds.length === 0 && removeRoleIds.length === 0) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "Select at least one demo role to create or remove."
+      })
+    );
+  }
+
+  if (overlappingIds.length > 0) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "A role cannot be marked for both create and remove in the same bulk action."
+      })
+    );
+  }
+
+  const createSeeds = createRoleIds
+    .map((id) => getDemoRoleSeedById(id))
+    .filter((seed): seed is NonNullable<typeof seed> => Boolean(seed));
+  const removeSeeds = removeRoleIds
+    .map((id) => getDemoRoleSeedById(id))
+    .filter((seed): seed is NonNullable<typeof seed> => Boolean(seed));
+
+  if (createSeeds.length !== createRoleIds.length || removeSeeds.length !== removeRoleIds.length) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "One or more selected demo roles were invalid."
+      })
+    );
+  }
+
+  const organizationId = activeProjectSession.organization.organizationId;
+  let createdCount = 0;
+  let updatedCount = 0;
+  let removedCount = 0;
+
+  try {
+    const existingRoles = await listPartyRoleEntries(organizationId, { includeInactive: true });
+
+    for (const seed of createSeeds) {
+      const existing = existingRoles.find(
+        (entry) =>
+          entry.organizationSide === seed.organizationSide &&
+          entry.roleType === seed.roleType &&
+          entry.email.trim().toLowerCase() === seed.email.trim().toLowerCase()
+      );
+
+      if (existing) {
+        await updatePartyRoleEntry({
+          organizationId,
+          id: existing.id,
+          actorId: session.userId,
+          fullName: seed.fullName,
+          email: seed.email,
+          phoneNumber: null,
+          avatarUrl: seed.avatarUrl,
+          organizationSide: seed.organizationSide,
+          roleType: seed.roleType,
+          roleTitle: seed.roleTitle,
+          mandateNotes: seed.mandateNotes,
+          isActive: true
+        });
+        updatedCount += 1;
+      } else {
+        await createPartyRoleEntry({
+          organizationId,
+          actorId: session.userId,
+          fullName: seed.fullName,
+          email: seed.email,
+          phoneNumber: null,
+          avatarUrl: seed.avatarUrl,
+          organizationSide: seed.organizationSide,
+          roleType: seed.roleType,
+          roleTitle: seed.roleTitle,
+          mandateNotes: seed.mandateNotes,
+          isActive: true
+        });
+        createdCount += 1;
+      }
+    }
+
+    if (removeSeeds.length > 0) {
+      const refreshedRoles = await listPartyRoleEntries(organizationId, { includeInactive: true });
+
+      for (const seed of removeSeeds) {
+        const matches = refreshedRoles.filter(
+          (entry) =>
+            entry.organizationSide === seed.organizationSide &&
+            entry.roleType === seed.roleType
+        );
+
+        for (const match of matches) {
+          await hardDeletePartyRoleEntry({
+            organizationId,
+            id: match.id,
+            actorId: session.userId
+          });
+          removedCount += 1;
+        }
+      }
+    }
+  } catch (error) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The selected demo role changes could not be applied."
+      })
+    );
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/governance");
+  revalidatePath("/framing");
+  revalidatePath("/outcomes");
+  revalidatePath("/workspace");
+
+  const parts = [
+    createdCount > 0 ? `created ${createdCount}` : null,
+    updatedCount > 0 ? `updated ${updatedCount}` : null,
+    removedCount > 0 ? `removed ${removedCount}` : null
+  ].filter(Boolean);
+
+  redirect(
+    buildAdminRedirect({
+      status: "saved",
+      message:
+        parts.length > 0
+          ? `Demo role bulk action complete: ${parts.join(", ")}.`
+          : "Demo role bulk action completed with no matching changes."
     })
   );
 }
