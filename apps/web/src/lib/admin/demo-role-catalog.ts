@@ -125,25 +125,55 @@ function buildPortraitSvg(input: {
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
-  const shoulderCurve = input.side === "customer" ? "26 86 44 76 64 76 82 76 102 86" : "22 88 42 74 64 74 86 74 106 88";
+  const shoulderCurve =
+    input.side === "customer"
+      ? "26 92 42 80 64 78 86 80 102 92"
+      : "22 94 40 80 64 78 88 80 106 94";
   const hairPath =
     input.side === "customer"
       ? `M26 44c0-21 18-33 38-33 21 0 37 12 37 32 0 6-2 10-4 15-4-9-14-14-22-14-6 0-11 3-16 7-7 5-15 8-26 8-3 0-5 0-7-1 0-5 0-9 0-14Z`
       : `M24 42c1-19 18-31 40-31 23 0 40 11 40 29 0 7-2 13-5 17-4-9-13-15-24-15H49c-10 0-18 4-24 12-1-4-2-8-1-12Z`;
+  const jacketColor = input.side === "customer" ? "#243b53" : "#1f2937";
+  const shirtColor = input.side === "customer" ? "#f8fafc" : "#f9fafb";
+  const tieColor = input.side === "customer" ? palette.accent : "#3b82f6";
+  const lapelColor = input.side === "customer" ? "#1b2a41" : "#111827";
+  const badgeLabel = input.side === "customer" ? "Customer" : "Supplier";
+  const silhouette =
+    input.side === "customer"
+      ? `
+      <path d="M14 118c4-18 21-34 50-34 28 0 45 16 50 34H14Z" fill="${jacketColor}" />
+      <path d="M45 84h38l10 34H35l10-34Z" fill="${shirtColor}" />
+      <path d="M50 84h28l-6 34H56l-6-34Z" fill="${shirtColor}" />
+      <path d="M41 84 55 96 49 118H28c2-13 7-24 13-34Z" fill="${lapelColor}" />
+      <path d="M87 84 73 96 79 118h21c-2-13-7-24-13-34Z" fill="${lapelColor}" />
+      <path d="M64 88 71 98 64 118 57 98 64 88Z" fill="${tieColor}" />
+      `
+      : `
+      <path d="M12 118c3-19 21-35 52-35 30 0 48 16 52 35H12Z" fill="${jacketColor}" />
+      <path d="M46 83h36l10 35H36l10-35Z" fill="${shirtColor}" />
+      <path d="M43 83 57 97 50 118H26c2-15 8-26 17-35Z" fill="${lapelColor}" />
+      <path d="M85 83 71 97 78 118h24c-2-15-8-26-17-35Z" fill="${lapelColor}" />
+      <path d="M64 87 72 98 67 118h-6l-5-20 8-11Z" fill="${tieColor}" />
+      `;
 
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="${input.name}">
       <rect width="128" height="128" rx="28" fill="${palette.background}" />
       <rect x="10" y="10" width="108" height="108" rx="24" fill="${palette.card}" />
+      <rect x="18" y="18" width="92" height="28" rx="14" fill="#ffffff" opacity="0.72" />
+      <path d="M18 100c18-16 35-22 50-22 17 0 33 6 42 14 5 4 8 10 8 18v8H18v-18Z" fill="${palette.accent}" opacity="0.12" />
       <circle cx="64" cy="48" r="26" fill="${palette.skin}" />
       <path d="${hairPath}" fill="${palette.hair}" />
-      <path d="M16 118c2-17 18-33 48-33s46 16 48 33H16Z" fill="${palette.shirt}" />
-      <path d="M${shoulderCurve}" fill="${palette.accent}" opacity="0.88" />
+      <path d="M${shoulderCurve}" fill="${palette.accent}" opacity="0.18" />
+      ${silhouette}
       <circle cx="55" cy="49" r="2.5" fill="#241f1a" />
       <circle cx="73" cy="49" r="2.5" fill="#241f1a" />
-      <path d="M55 61c5 5 13 5 18 0" fill="none" stroke="#8a4b38" stroke-linecap="round" stroke-width="3" />
-      <rect x="16" y="16" width="34" height="20" rx="10" fill="${palette.accent}" opacity="0.92" />
-      <text x="33" y="30" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#ffffff">${initials}</text>
+      <path d="M56 61c4 3 12 3 16 0" fill="none" stroke="#8a4b38" stroke-linecap="round" stroke-width="2.5" />
+      <path d="M51 57c4 2 8 3 13 3s9-1 13-3" fill="none" stroke="#d89b84" stroke-linecap="round" stroke-width="2" opacity="0.8" />
+      <rect x="18" y="20" width="56" height="18" rx="9" fill="${palette.accent}" opacity="0.95" />
+      <text x="46" y="32" font-family="Arial, sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#ffffff">${badgeLabel}</text>
+      <rect x="82" y="20" width="28" height="18" rx="9" fill="#ffffff" opacity="0.92" />
+      <text x="96" y="32" font-family="Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="${jacketColor}">${initials}</text>
     </svg>
   `.trim();
 }
