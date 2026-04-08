@@ -51,34 +51,83 @@ function buildPrompt(input: { importIntent: ArtifactImportIntent; files: AiArtif
   return `
 You are assisting a governed Value Spine import.
 
-Goal:
-- Classify each file conservatively.
-- Reinterpret messy sections into Value Spine candidates when the source really supports it.
-- Put doubtful, weakly structured, or supporting material into leftoverSectionIds so a human can review it manually.
-- Do not invent delivery detail that is not grounded in the source.
-- Do not suggest improvements unless the source clearly needs strengthening.
-- If a field already seems adequate, keep it as-is rather than "improving" it.
+You are not writing a human-facing report or markdown handoff.
+You are producing strict JSON classification output for a downstream importer.
+
+Primary objective:
+- Map only source-grounded signal into governed Value Spine candidates.
+- Keep ambiguous, noisy, duplicative, weakly structured, or supporting material out of core candidates by using leftoverSectionIds.
+- Be conservative. It is better to omit a doubtful field or leave a section in leftovers than to over-structure weak source material.
+
+Non-goals:
+- Do not rewrite the source to make it "better".
+- Do not invent missing delivery detail.
+- Do not create elegant summaries that change meaning.
+- Do not force every section into a candidate.
 
 Import intent:
 - ${input.importIntent === "framing" ? "framing" : "design"}
 - If intent is framing:
-  - keep candidates outcome- and epic-oriented
-  - detailed user stories may still become story candidates, but only when you can restate them as framing-level Story Ideas
-  - story candidates must focus on title, value intent, and expected behavior
-  - whenever a story candidate clearly belongs to a specific epic section, set linkedEpicSectionId to that epic sectionId
-  - whenever an epic clearly belongs to a specific outcome section, set linkedOutcomeSectionId to that outcome sectionId
-  - do not preserve delivery-only detail such as acceptance criteria, test plans, or UI flows inside framing story candidates unless needed as weak source context
-  - leave UX, NFR, additional requirements, and detailed design sections outside candidates so the importer can carry them forward separately
-  - when a section is too detailed for framing and you cannot generalize it cleanly, prefer leftoverSectionIds over forcing a candidate
+  - prefer outcome and epic structure first
+  - story candidates are allowed only when the source can be restated as framing-level Story Ideas
+  - framing story candidates should focus on title, value intent, and expected behavior
+  - avoid preserving delivery-only detail such as full acceptance criteria, full test plans, UI flows, implementation steps, or build checklists unless a tiny amount of that detail is needed as weak source context
+  - leave NFR, UX, architecture, solution constraints, and other cross-cutting material outside candidates whenever they do not clearly belong inside an outcome/epic/story record
+  - when a section is too detailed for framing and cannot be cleanly generalized, put it in leftoverSectionIds
 - If intent is design:
-  - story candidates may stay concrete enough for delivery/design use
-  - preserve acceptance criteria and verification-oriented detail when the source clearly contains it
-  - still set linkedEpicSectionId and linkedOutcomeSectionId whenever the structure is visible in the source
+  - story candidates may stay concrete enough for design and delivery review
+  - preserve acceptance criteria, verification detail, and story typing when the source clearly contains them
+  - still classify weak, noisy, or cross-cutting material as leftovers instead of forcing it into a story
 
-Value Spine guidance:
-- Outcome = desired effect or business/user result, not implementation work.
-- Epic = bounded capability or delivery slice under an Outcome.
-- Story = implementable work item with testable acceptance criteria.
+Value Spine object meanings:
+- Outcome = desired user or business effect; not implementation work, not a task list, not a UI solution.
+- Epic = bounded capability, value area, or delivery slice under an Outcome.
+- Story = implementable work item. In framing mode it may be a Story Idea; in design mode it may stay delivery-oriented and testable.
+
+Field semantics for draftRecord:
+- outcome.title = concise name of the desired result.
+- outcome.problemStatement = why the work is needed now; current pain, obstacle, or gap.
+- outcome.outcomeStatement = the desired effect or result to achieve.
+- outcome.baselineDefinition = current state, missing capability, or current baseline.
+- outcome.baselineSource = how the baseline is known, measured, or validated.
+- outcome.timeframe = explicit timing horizon such as MVP, phase, release window, or review horizon.
+- epic.purpose = why this epic exists and what value area it covers.
+- epic.scopeBoundary = what is in scope or out of scope for the epic; boundaries only, not risks or implementation notes.
+- epic.riskNote = a real delivery, domain, compliance, or technical risk; not generic uncertainty.
+- story.storyType = outcome_delivery | governance | enablement only when the source supports that distinction.
+- story.valueIntent = user or business value the story should create.
+- story.expectedBehavior = what behavior or result the story should enable.
+- story.acceptanceCriteria = testable conditions only when clearly present in the source.
+- story.aiUsageScope = only include if the source clearly indicates AI or automation scope.
+- story.testDefinition = short verification approach when clearly grounded in the source.
+- story.definitionOfDone = completion conditions only when clearly present in the source.
+
+Classification heuristics:
+- problem statements, goals, business outcomes, success intent, baseline context -> usually outcome_candidate or problem_goal
+- bounded capability areas, larger workflow slices, named themes under an outcome -> usually epic_candidate
+- concrete user needs, story-shaped work items, implementable slices -> usually story_candidate
+- explicit acceptance criteria lists -> acceptance_criteria
+- explicit verification or test notes -> test_notes
+- architecture intent, cross-cutting technical decisions, design principles -> architecture_notes
+- unresolved notes, duplicates, meeting chatter, examples, appendices, speculative material, or text that does not clearly fit -> unmapped and likely leftoverSectionIds
+
+Noise and leftovers handling:
+- Treat duplicates, meeting chatter, open questions, implementation detail at the wrong level, vague aspiration text, and mixed notes conservatively.
+- If a section contains useful context but not enough clean structure for a governed candidate, classify it appropriately and include its sectionId in leftoverSectionIds.
+- File rationale should briefly mention if the file contains substantial noise, mixed granularity, or leftover-heavy content.
+
+Relationship rules:
+- Whenever a story candidate clearly belongs to a specific epic section, set linkedEpicSectionId to that epic sectionId.
+- Whenever an epic candidate clearly belongs to a specific outcome section, set linkedOutcomeSectionId to that outcome sectionId.
+- In design imports, also set linkedOutcomeSectionId for story candidates whenever the structure is visible.
+- Do not guess links from thematic similarity alone. If uncertain, omit the link and set relationshipState to uncertain or missing.
+
+Confidence and mapping rules:
+- Use high only when the section meaning is explicit and structurally clear.
+- Use medium when the meaning is plausible but still somewhat interpretive.
+- Use low when the material is weak, mixed, or ambiguous.
+- Prefer mappingState=uncertain over mapped when you had to infer structure from messy text.
+- Prefer relationshipState=uncertain or missing over inventing lineage.
 
 Allowed enums:
 - sourceType: bmad_prd | epic_file | story_file | mixed_markdown_bundle | unknown_artifact
@@ -88,15 +137,22 @@ Allowed enums:
 - mappingState / relationshipState: mapped | uncertain | missing
 - storyType in draftRecord: outcome_delivery | governance | enablement
 
-Required output:
+Required output contract:
 - Return JSON only, with shape { "files": [...] }.
 - Every input file must appear exactly once in the output.
 - Use the input fileName unchanged.
 - Every candidate must point to one existing sectionId from that file.
 - linkedEpicSectionId and linkedOutcomeSectionId must point to existing sectionIds from that same file when used.
 - leftoverSectionIds must only contain existing sectionIds from that file.
-- draftRecord should only include fields you can justify from the source. Leave other fields out.
-- For weak or uncertain material, prefer null/omitted draft fields and leftoverSectionIds over hallucinating structure.
+- sectionDecisions may revise the current section kind and confidence, but only when justified by the source.
+- draftRecord should include only fields justified by the source. Leave weak or missing fields out.
+- For weak or uncertain material, prefer omitted draft fields, uncertain mapping, and leftoverSectionIds over hallucinated structure.
+
+Final self-check before responding:
+- Did you keep uncertain material out of governed candidates where appropriate?
+- Did you avoid turning NFR/architecture/supporting notes into fake stories?
+- Did you avoid placing implementation detail into outcomes or epic purpose?
+- Did you keep the output strictly within the JSON schema?
 
 Payload:
 ${JSON.stringify(payload, null, 2)}
