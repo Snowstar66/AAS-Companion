@@ -276,7 +276,7 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
                 {props.canManageProjects ? (
                   <form action={props.createProjectAction} className="flex flex-col gap-3">
                     <input
-                      className="h-11 min-w-0 flex-1 rounded-2xl border border-sky-200 bg-background px-4 text-sm outline-none transition focus:border-primary"
+                      className="h-12 min-w-0 w-full rounded-2xl border border-sky-200/80 bg-white px-5 text-base text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15"
                       name="projectName"
                       placeholder={copy.newProjectName}
                       required
