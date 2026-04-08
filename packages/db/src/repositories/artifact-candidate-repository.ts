@@ -14,6 +14,7 @@ import {
   createArtifactCandidateDraftRecord,
   getArtifactCandidateIssueProgress,
   inferImportedReadinessState,
+  mergeImportedOutcomeIntoExistingOutcome,
   serializeFramingConstraintBundle,
   sanitizeArtifactPersistenceText,
   sanitizeArtifactPersistenceValue
@@ -1505,7 +1506,13 @@ export async function promoteArtifactCandidate(
                 id: targetOutcomeId
               },
               select: {
-                id: true
+                id: true,
+                title: true,
+                problemStatement: true,
+                outcomeStatement: true,
+                baselineDefinition: true,
+                baselineSource: true,
+                timeframe: true
               }
             });
 
@@ -1513,17 +1520,28 @@ export async function promoteArtifactCandidate(
               throw new Error("Select a valid project Outcome before approving this imported Outcome.");
             }
 
+            const mergedOutcomeFields = mergeImportedOutcomeIntoExistingOutcome({
+              existing: existingOutcome,
+              imported: {
+                title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
+                problemStatement: draftRecord.problemStatement ?? null,
+                outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
+                baselineDefinition: draftRecord.baselineDefinition ?? null,
+                baselineSource: draftRecord.baselineSource ?? null,
+                timeframe: draftRecord.timeframe ?? null
+              }
+            });
+
             const updated = await updateOutcome({
               organizationId: candidate.organizationId,
               actorId: input.actorId ?? null,
               id: existingOutcome.id,
-              key: draftRecord.key ?? undefined,
-              title: draftRecord.title ?? sanitizeArtifactPersistenceText(candidate.title),
-              problemStatement: draftRecord.problemStatement ?? null,
-              outcomeStatement: draftRecord.outcomeStatement ?? sanitizeArtifactPersistenceText(candidate.summary),
-              baselineDefinition: draftRecord.baselineDefinition ?? null,
-              baselineSource: draftRecord.baselineSource ?? null,
-              timeframe: draftRecord.timeframe ?? null,
+              title: mergedOutcomeFields.title,
+              problemStatement: mergedOutcomeFields.problemStatement,
+              outcomeStatement: mergedOutcomeFields.outcomeStatement,
+              baselineDefinition: mergedOutcomeFields.baselineDefinition,
+              baselineSource: mergedOutcomeFields.baselineSource,
+              timeframe: mergedOutcomeFields.timeframe,
               valueOwnerId: humanDecisions.valueOwnerId ?? null,
               riskProfile: humanDecisions.riskProfile ?? "medium",
               aiAccelerationLevel: humanDecisions.aiAccelerationLevel ?? "level_2",

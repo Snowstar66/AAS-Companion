@@ -120,6 +120,70 @@ export type OutcomeRecord = z.infer<typeof outcomeRecordSchema>;
 export type OutcomeCreateInput = z.infer<typeof outcomeCreateInputSchema>;
 export type OutcomeUpdateInput = z.infer<typeof outcomeUpdateInputSchema>;
 
+function normalizeOutcomeMergeValue(value: string | null | undefined) {
+  const normalized = value?.trim() ?? "";
+  return normalized.length > 0 ? normalized : null;
+}
+
+function mergeOutcomeParagraphText(existingValue: string | null | undefined, importedValue: string | null | undefined) {
+  const normalizedExisting = normalizeOutcomeMergeValue(existingValue);
+  const normalizedImported = normalizeOutcomeMergeValue(importedValue);
+
+  if (!normalizedExisting) {
+    return normalizedImported;
+  }
+
+  if (!normalizedImported) {
+    return normalizedExisting;
+  }
+
+  if (normalizedExisting === normalizedImported) {
+    return normalizedExisting;
+  }
+
+  return `${normalizedExisting}\n\n${normalizedImported}`;
+}
+
+function mergeOutcomeLineText(existingValue: string | null | undefined, importedValue: string | null | undefined) {
+  const mergedLines = [...new Set(
+    [existingValue, importedValue]
+      .flatMap((value) => (value ?? "").split(/\r?\n+/))
+      .map((value) => value.trim())
+      .filter(Boolean)
+  )];
+
+  return mergedLines.length > 0 ? mergedLines.join("\n") : null;
+}
+
+export function mergeImportedOutcomeIntoExistingOutcome(input: {
+  existing: Pick<
+    OutcomeRecord,
+    | "title"
+    | "problemStatement"
+    | "outcomeStatement"
+    | "baselineDefinition"
+    | "baselineSource"
+    | "timeframe"
+  >;
+  imported: {
+    title?: string | null | undefined;
+    problemStatement?: string | null | undefined;
+    outcomeStatement?: string | null | undefined;
+    baselineDefinition?: string | null | undefined;
+    baselineSource?: string | null | undefined;
+    timeframe?: string | null | undefined;
+  };
+}) {
+  return {
+    title: normalizeOutcomeMergeValue(input.existing.title) ?? normalizeOutcomeMergeValue(input.imported.title) ?? "",
+    problemStatement: mergeOutcomeParagraphText(input.existing.problemStatement, input.imported.problemStatement),
+    outcomeStatement: mergeOutcomeParagraphText(input.existing.outcomeStatement, input.imported.outcomeStatement),
+    baselineDefinition: mergeOutcomeParagraphText(input.existing.baselineDefinition, input.imported.baselineDefinition),
+    baselineSource: mergeOutcomeLineText(input.existing.baselineSource, input.imported.baselineSource),
+    timeframe: normalizeOutcomeMergeValue(input.existing.timeframe) ?? normalizeOutcomeMergeValue(input.imported.timeframe)
+  };
+}
+
 type OutcomeBaselineFields = Pick<OutcomeRecord, "baselineDefinition" | "baselineSource" | "status">;
 type OutcomeFramingFields = Pick<
   OutcomeRecord,

@@ -9,6 +9,7 @@ import {
   inferImportedReadinessState,
   isSupportedArtifactFile,
   mapParsedArtifactsToAasCandidates,
+  mergeImportedOutcomeIntoExistingOutcome,
   parseMarkdownArtifact,
   sanitizeArtifactPersistenceText,
   sanitizeArtifactPersistenceValue
@@ -1537,6 +1538,62 @@ describe("artifact intake helpers", () => {
     expect(compliance.findings.some((finding) => finding.code === "outcome_statement_missing")).toBe(false);
     expect(compliance.findings.some((finding) => finding.code === "baseline_definition_missing")).toBe(false);
     expect(compliance.findings.some((finding) => finding.code === "baseline_source_missing")).toBe(false);
+  });
+
+  it("appends imported outcome framing onto an existing outcome without overwriting title or timeframe", () => {
+    const merged = mergeImportedOutcomeIntoExistingOutcome({
+      existing: {
+        title: "Existing governed outcome",
+        problemStatement: "Existing problem statement.",
+        outcomeStatement: "Existing outcome statement.",
+        baselineDefinition: "Existing baseline definition.",
+        baselineSource: "Existing baseline source",
+        timeframe: "Q4 2026"
+      },
+      imported: {
+        title: "Imported calculator outcome",
+        problemStatement: "Imported problem statement.",
+        outcomeStatement: "Imported outcome statement.",
+        baselineDefinition: "Imported baseline definition.",
+        baselineSource: "Imported baseline source",
+        timeframe: "MVP / första release"
+      }
+    });
+
+    expect(merged.title).toBe("Existing governed outcome");
+    expect(merged.problemStatement).toBe("Existing problem statement.\n\nImported problem statement.");
+    expect(merged.outcomeStatement).toBe("Existing outcome statement.\n\nImported outcome statement.");
+    expect(merged.baselineDefinition).toBe("Existing baseline definition.\n\nImported baseline definition.");
+    expect(merged.baselineSource).toBe("Existing baseline source\nImported baseline source");
+    expect(merged.timeframe).toBe("Q4 2026");
+  });
+
+  it("fills missing existing outcome framing fields from the imported outcome", () => {
+    const merged = mergeImportedOutcomeIntoExistingOutcome({
+      existing: {
+        title: "",
+        problemStatement: null,
+        outcomeStatement: null,
+        baselineDefinition: null,
+        baselineSource: null,
+        timeframe: null
+      },
+      imported: {
+        title: "Imported calculator outcome",
+        problemStatement: "Imported problem statement.",
+        outcomeStatement: "Imported outcome statement.",
+        baselineDefinition: "Imported baseline definition.",
+        baselineSource: "Imported baseline source",
+        timeframe: "MVP / första release"
+      }
+    });
+
+    expect(merged.title).toBe("Imported calculator outcome");
+    expect(merged.problemStatement).toBe("Imported problem statement.");
+    expect(merged.outcomeStatement).toBe("Imported outcome statement.");
+    expect(merged.baselineDefinition).toBe("Imported baseline definition.");
+    expect(merged.baselineSource).toBe("Imported baseline source");
+    expect(merged.timeframe).toBe("MVP / första release");
   });
 
   it("tracks explicit issue dispositions and progress for import readiness", () => {
