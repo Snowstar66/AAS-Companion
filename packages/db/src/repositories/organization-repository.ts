@@ -26,6 +26,25 @@ export type AppUserIdentity = {
   fullName: string | null;
 };
 
+export type OrganizationProjectUserIdentity = AppUserIdentity & {
+  role: MembershipRole;
+  activeOutcomeOwnerCount: number;
+};
+
+export type RemoveOrganizationProjectUserResult =
+  | {
+      status: "removed";
+      user: OrganizationProjectUserIdentity;
+      clearedOutcomeAssignments: number;
+    }
+  | {
+      status: "blocked_last_member";
+      remainingMemberCount: number;
+    }
+  | {
+      status: "not_found";
+    };
+
 function buildId(prefix: string) {
   return `${prefix}_${crypto.randomUUID().replaceAll("-", "")}`;
 }
@@ -320,6 +339,11 @@ export async function getAppUserByEmail(email: string): Promise<AppUserIdentity 
 
 export async function listAppUsers(): Promise<AppUserIdentity[]> {
   const users = await prisma.appUser.findMany({
+    where: {
+      memberships: {
+        some: {}
+      }
+    },
     orderBy: [
       {
         fullName: "asc"
@@ -340,6 +364,68 @@ export async function listAppUsers(): Promise<AppUserIdentity[]> {
     email: user.email,
     fullName: user.fullName
   }));
+}
+
+export async function listOrganizationProjectUsers(
+  organizationId: string
+): Promise<OrganizationProjectUserIdentity[]> {
+  return withDevTiming("db.listOrganizationProjectUsers", async () => {
+    const [memberships, assignedOutcomes] = await Promise.all([
+      prisma.membership.findMany({
+        where: {
+          organizationId
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true
+            }
+          }
+        }
+      }),
+      prisma.outcome.findMany({
+        where: {
+          organizationId,
+          lifecycleState: "active",
+          valueOwnerId: {
+            not: null
+          }
+        },
+        select: {
+          valueOwnerId: true
+        }
+      })
+    ]);
+
+    const activeOutcomeOwnerCounts = new Map<string, number>();
+
+    for (const outcome of assignedOutcomes) {
+      if (!outcome.valueOwnerId) {
+        continue;
+      }
+
+      activeOutcomeOwnerCounts.set(
+        outcome.valueOwnerId,
+        (activeOutcomeOwnerCounts.get(outcome.valueOwnerId) ?? 0) + 1
+      );
+    }
+
+    return memberships
+      .map((membership) => ({
+        userId: membership.user.id,
+        email: membership.user.email,
+        fullName: membership.user.fullName,
+        role: membership.role as MembershipRole,
+        activeOutcomeOwnerCount: activeOutcomeOwnerCounts.get(membership.user.id) ?? 0
+      }))
+      .sort((left, right) => {
+        const leftLabel = left.fullName ?? left.email;
+        const rightLabel = right.fullName ?? right.email;
+        return leftLabel.localeCompare(rightLabel, "en");
+      });
+  }, `organizationId=${organizationId}`);
 }
 
 export async function listOrganizationUsers(organizationId: string): Promise<AppUserIdentity[]> {
@@ -371,6 +457,170 @@ export async function listOrganizationUsers(organizationId: string): Promise<App
         return leftLabel.localeCompare(rightLabel, "en");
       });
   }, `organizationId=${organizationId}`);
+}
+
+export async function updateOrganizationProjectUser(input: {
+  organizationId: string;
+  userId: string;
+  email: string;
+  fullName?: string | null;
+  role?: MembershipRole;
+}): Promise<OrganizationProjectUserIdentity | null> {
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const normalizedFullName = input.fullName?.trim() || null;
+
+  return withDevTiming("db.updateOrganizationProjectUser", async () => {
+    return prisma.$transaction(async (tx) => {
+      const membership = await tx.membership.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId: input.organizationId,
+            userId: input.userId
+          }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true
+            }
+          }
+        }
+      });
+
+      if (!membership) {
+        return null;
+      }
+
+      const updatedUser = await tx.appUser.update({
+        where: {
+          id: input.userId
+        },
+        data: {
+          email: normalizedEmail,
+          fullName: normalizedFullName
+        },
+        select: {
+          id: true,
+          email: true,
+          fullName: true
+        }
+      });
+
+      const updatedMembership =
+        input.role && input.role !== membership.role
+          ? await tx.membership.update({
+              where: {
+                organizationId_userId: {
+                  organizationId: input.organizationId,
+                  userId: input.userId
+                }
+              },
+              data: {
+                role: input.role
+              },
+              select: {
+                role: true
+              }
+            })
+          : { role: membership.role };
+
+      const activeOutcomeOwnerCount = await tx.outcome.count({
+        where: {
+          organizationId: input.organizationId,
+          lifecycleState: "active",
+          valueOwnerId: input.userId
+        }
+      });
+
+      return {
+        userId: updatedUser.id,
+        email: updatedUser.email,
+        fullName: updatedUser.fullName,
+        role: updatedMembership.role as MembershipRole,
+        activeOutcomeOwnerCount
+      } satisfies OrganizationProjectUserIdentity;
+    });
+  }, `organizationId=${input.organizationId} userId=${input.userId}`);
+}
+
+export async function removeOrganizationProjectUser(input: {
+  organizationId: string;
+  userId: string;
+}): Promise<RemoveOrganizationProjectUserResult> {
+  return withDevTiming("db.removeOrganizationProjectUser", async () => {
+    return prisma.$transaction(async (tx) => {
+      const [membership, memberCount] = await Promise.all([
+        tx.membership.findUnique({
+          where: {
+            organizationId_userId: {
+              organizationId: input.organizationId,
+              userId: input.userId
+            }
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                fullName: true
+              }
+            }
+          }
+        }),
+        tx.membership.count({
+          where: {
+            organizationId: input.organizationId
+          }
+        })
+      ]);
+
+      if (!membership) {
+        return {
+          status: "not_found"
+        } satisfies RemoveOrganizationProjectUserResult;
+      }
+
+      if (memberCount <= 1) {
+        return {
+          status: "blocked_last_member",
+          remainingMemberCount: memberCount
+        } satisfies RemoveOrganizationProjectUserResult;
+      }
+
+      const clearedAssignments = await tx.outcome.updateMany({
+        where: {
+          organizationId: input.organizationId,
+          valueOwnerId: input.userId
+        },
+        data: {
+          valueOwnerId: null
+        }
+      });
+
+      await tx.membership.delete({
+        where: {
+          organizationId_userId: {
+            organizationId: input.organizationId,
+            userId: input.userId
+          }
+        }
+      });
+
+      return {
+        status: "removed",
+        user: {
+          userId: membership.user.id,
+          email: membership.user.email,
+          fullName: membership.user.fullName,
+          role: membership.role as MembershipRole,
+          activeOutcomeOwnerCount: clearedAssignments.count
+        },
+        clearedOutcomeAssignments: clearedAssignments.count
+      } satisfies RemoveOrganizationProjectUserResult;
+    });
+  }, `organizationId=${input.organizationId} userId=${input.userId}`);
 }
 
 export async function upsertAppUserByEmail(input: {

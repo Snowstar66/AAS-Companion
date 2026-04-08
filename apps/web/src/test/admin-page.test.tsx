@@ -2,20 +2,27 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import AdminPage from "@/app/(protected)/admin/page";
 
-vi.mock("@/lib/home/dashboard", () => ({
-  loadHomeDashboard: vi.fn(async () => ({
-    session: {
-      mode: "local",
+vi.mock("@aas-companion/db", () => ({
+  listOrganizationProjectUsers: vi.fn(async () => [
+    {
       userId: "user-1",
       email: "pontus@example.com",
-      displayName: "Pontus",
-      organization: {
-        organizationId: "org-1",
-        organizationName: "Hemmakoll",
-        organizationSlug: "hemmakoll",
-        role: "value_owner"
-      }
+      fullName: "Pontus",
+      role: "value_owner",
+      activeOutcomeOwnerCount: 1
     },
+    {
+      userId: "user-2",
+      email: "aqa@example.com",
+      fullName: "AQA Reviewer",
+      role: "aqa",
+      activeOutcomeOwnerCount: 0
+    }
+  ])
+}));
+
+vi.mock("@/lib/home/dashboard", () => ({
+  loadHomeDashboard: vi.fn(async () => ({
     dashboard: {
       state: "live",
       organizationName: "Hemmakoll",
@@ -70,6 +77,18 @@ vi.mock("@/lib/home/dashboard", () => ({
       organizationSlug: "hemmakoll",
       role: "value_owner"
     },
+    session: {
+      mode: "local",
+      userId: "user-1",
+      email: "pontus@example.com",
+      displayName: "Pontus",
+      organization: {
+        organizationId: "org-1",
+        organizationName: "Hemmakoll",
+        organizationSlug: "hemmakoll",
+        role: "value_owner"
+      }
+    },
     hasAuthenticatedUser: true,
     canManageProjects: true,
     isDemoSession: false
@@ -101,10 +120,14 @@ vi.mock("@/lib/admin/operational-logs", () => ({
 }));
 
 describe("Admin page", () => {
-  it("renders a bulk cleanup surface for projects", async () => {
+  it("renders project user admin, bulk cleanup, and operational logs", async () => {
     render(await AdminPage({}));
 
     expect(screen.getByRole("heading", { name: "Aggressive project cleanup", level: 1 })).toBeDefined();
+    expect(screen.getByText("Internal users in active project")).toBeDefined();
+    expect(screen.getByText("Pontus")).toBeDefined();
+    expect(screen.getAllByRole("button", { name: "Save user" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Remove from active project" }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Hard delete removes the selected projects entirely/i)).toBeDefined();
     expect(screen.getByRole("checkbox", { name: /Hemmakoll/i })).toBeDefined();
     expect(screen.getByRole("checkbox", { name: /Test Project/i })).toBeDefined();

@@ -2,8 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { membershipRoleSchema } from "@aas-companion/domain";
 import { clearOperationalActivityEventsService } from "@aas-companion/api";
-import { hardDeleteOrganizationContextsForUser } from "@aas-companion/db";
+import {
+  hardDeleteOrganizationContextsForUser,
+  removeOrganizationProjectUser,
+  updateOrganizationProjectUser
+} from "@aas-companion/db";
+import { z } from "zod";
 import { clearOrganizationContextCookie } from "@/lib/org-context";
 import { requireActiveProjectSession, requireProjectAccountIdentity, requireProtectedSession } from "@/lib/auth/guards";
 
@@ -20,6 +26,28 @@ function buildAdminRedirect(params: Record<string, string | undefined>) {
 
   const serialized = query.toString();
   return serialized ? `/admin?${serialized}` : "/admin";
+}
+
+const updateProjectUserSchema = z.object({
+  userId: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  fullName: z.string().trim().optional(),
+  role: membershipRoleSchema
+});
+
+const removeProjectUserSchema = z.object({
+  userId: z.string().trim().min(1)
+});
+
+function isUniqueConstraintError(error: unknown): error is { code: string } {
+  return Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      typeof error.code === "string" &&
+      "name" in error &&
+      error.name === "PrismaClientKnownRequestError"
+  );
 }
 
 export async function hardDeleteProjectsAction(formData: FormData) {
@@ -111,6 +139,149 @@ export async function clearOperationalLogsAction() {
           ? `Cleared ${result.data.deletedCount} operational log event(s).`
           : "No operational logs needed clearing."
         : result.errors[0]?.message ?? "Operational logs could not be cleared."
+      })
+  );
+}
+
+export async function updateProjectUserAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const activeProjectSession = await requireActiveProjectSession();
+
+  if (session.mode === "demo") {
+    redirect(
+      buildAdminRedirect({
+        status: "blocked",
+        message: "Project user admin is unavailable in Demo."
+      })
+    );
+  }
+
+  const parsed = updateProjectUserSchema.safeParse({
+    userId: formData.get("userId"),
+    email: formData.get("email"),
+    fullName: formData.get("fullName"),
+    role: formData.get("role")
+  });
+
+  if (!parsed.success) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "Enter a valid email, choose a role, and try again."
+      })
+    );
+  }
+
+  try {
+    const updatedUser = await updateOrganizationProjectUser({
+      organizationId: activeProjectSession.organization.organizationId,
+      userId: parsed.data.userId,
+      email: parsed.data.email,
+      fullName: parsed.data.fullName ?? null,
+      role: parsed.data.role
+    });
+
+    if (!updatedUser) {
+      redirect(
+        buildAdminRedirect({
+          status: "error",
+          message: "That project user could not be found."
+        })
+      );
+    }
+  } catch (error) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: isUniqueConstraintError(error)
+          ? "That email is already used by another internal user."
+          : error instanceof Error
+            ? error.message
+            : "The project user could not be updated."
+      })
+    );
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/login");
+  revalidatePath("/");
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+
+  redirect(
+    buildAdminRedirect({
+      status: "saved",
+      message: "Project user updated."
+    })
+  );
+}
+
+export async function removeProjectUserAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const activeProjectSession = await requireActiveProjectSession();
+
+  if (session.mode === "demo") {
+    redirect(
+      buildAdminRedirect({
+        status: "blocked",
+        message: "Project user admin is unavailable in Demo."
+      })
+    );
+  }
+
+  const parsed = removeProjectUserSchema.safeParse({
+    userId: formData.get("userId")
+  });
+
+  if (!parsed.success) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "Choose a valid project user to remove."
+      })
+    );
+  }
+
+  const result = await removeOrganizationProjectUser({
+    organizationId: activeProjectSession.organization.organizationId,
+    userId: parsed.data.userId
+  });
+
+  if (result.status === "not_found") {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "That project user could not be found."
+      })
+    );
+  }
+
+  if (result.status === "blocked_last_member") {
+    redirect(
+      buildAdminRedirect({
+        status: "blocked",
+        message: "The last remaining project member cannot be removed."
+      })
+    );
+  }
+
+  if (parsed.data.userId === session.userId) {
+    await clearOrganizationContextCookie();
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/login");
+  revalidatePath("/");
+  revalidatePath("/framing");
+  revalidatePath("/workspace");
+
+  redirect(
+    buildAdminRedirect({
+      status: "removed",
+      message:
+        result.clearedOutcomeAssignments > 0
+          ? `Project user removed and ${result.clearedOutcomeAssignments} outcome owner assignment(s) were cleared.`
+          : "Project user removed."
     })
   );
 }

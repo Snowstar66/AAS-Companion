@@ -40,13 +40,18 @@ export {
   getAppUserById,
   getOrganizationContextForUser,
   listAppUsers,
+  listOrganizationProjectUsers,
   listOrganizationUsers,
   listOrganizationContextsForUser,
   listOrganizationProjectSummariesForUser,
+  removeOrganizationProjectUser,
+  updateOrganizationProjectUser,
   upsertAppUserByEmail,
   type AppUserIdentity,
+  type OrganizationProjectUserIdentity,
   type OrganizationMembershipContext,
-  type OrganizationMembershipProjectSummary
+  type OrganizationMembershipProjectSummary,
+  type RemoveOrganizationProjectUserResult
 } from "./repositories/organization-repository";
 export {
   createAgentRegistryEntry,

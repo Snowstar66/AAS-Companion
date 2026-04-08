@@ -1,11 +1,25 @@
 import { cookies } from "next/headers";
-import { AlertTriangle, DatabaseZap, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  DatabaseZap,
+  ShieldAlert,
+  Trash2,
+  UserRoundCog
+} from "lucide-react";
+import { membershipRoles } from "@aas-companion/domain";
+import { listOrganizationProjectUsers } from "@aas-companion/db";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { loadOperationalLogs } from "@/lib/admin/operational-logs";
 import { loadHomeDashboard } from "@/lib/home/dashboard";
-import { clearOperationalLogsAction, hardDeleteProjectsAction } from "./actions";
+import {
+  clearOperationalLogsAction,
+  hardDeleteProjectsAction,
+  removeProjectUserAction,
+  updateProjectUserAction
+} from "./actions";
 
 type AdminPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -47,10 +61,27 @@ function getLogStatusLabel(language: AppLanguage, status: string) {
   }
 
   if (status === "started") {
-    return language === "sv" ? "påbörjad" : "started";
+    return language === "sv" ? "paborjad" : "started";
   }
 
   return language === "sv" ? "info" : "info";
+}
+
+function formatRoleLabel(language: AppLanguage, role: string) {
+  const sv: Record<string, string> = {
+    value_owner: "Vardeagare",
+    aida: "AIDA",
+    aqa: "AQA",
+    architect: "Arkitekt",
+    delivery_lead: "Leveransledare",
+    builder: "Byggare"
+  };
+
+  if (language === "sv") {
+    return sv[role] ?? role.replaceAll("_", " ");
+  }
+
+  return role.replaceAll("_", " ");
 }
 
 async function getServerLanguage(): Promise<AppLanguage> {
@@ -68,16 +99,21 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const flashError = getParamValue(query.error);
   const flashMessage = getParamValue(query.message);
-  const { activeProject, canManageProjects, isDemoSession, projects } = await loadHomeDashboard();
+  const { activeProject, canManageProjects, isDemoSession, projects, session } = await loadHomeDashboard();
   const operationalLogs =
     activeProject && !isDemoSession
       ? await loadOperationalLogs(30, language)
       : {
           state: "unavailable" as const,
           items: [],
-          message: t("Open a normal active project to inspect operational logs.", "Öppna ett vanligt aktivt projekt för att granska operativa loggar."),
-          organizationName: activeProject?.organizationName ?? t("Unknown project", "Okänt projekt")
+          message: t(
+            "Open a normal active project to inspect operational logs.",
+            "Oppna ett vanligt aktivt projekt for att granska operativa loggar."
+          ),
+          organizationName: activeProject?.organizationName ?? t("Unknown project", "Okant projekt")
         };
+  const projectUsers =
+    activeProject && !isDemoSession ? await listOrganizationProjectUsers(activeProject.organizationId) : [];
 
   return (
     <AppShell
@@ -98,26 +134,33 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 {t("Admin cleanup", "Administrativ rensning")}
               </div>
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{t("Aggressive project cleanup", "Aggressiv projektrensning")}</h1>
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                  {t("Aggressive project cleanup", "Aggressiv projektrensning")}
+                </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
                   {t(
-                    "Use this page to remove test projects completely. Deletion is hard and cascades through framing, imports, review data, stories, tollgates, and activity history.",
-                    "Använd den här sidan för att ta bort testprojekt helt. Borttagningen är hård och går igenom framing, importer, reviewdata, stories, tollgates och aktivitetshistorik."
+                    "Use this page to remove test projects completely, manage internal project users, and inspect active troubleshooting logs.",
+                    "Anvand den har sidan for att ta bort testprojekt helt, hantera interna projektanvandare och granska aktiva felsokningsloggar."
                   )}
                 </p>
               </div>
             </div>
             <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm leading-6 text-red-900 lg:max-w-sm">
-              <p className="font-semibold">{t("No undo", "Ingen ångra")}</p>
+              <p className="font-semibold">{t("No undo", "Ingen angra")}</p>
               <p className="mt-2">
-                {t("This page is intentionally blunt. Only select projects you truly want to purge from the database.", "Den här sidan är medvetet hård. Välj bara projekt som du verkligen vill rensa bort från databasen.")}
+                {t(
+                  "Project deletion is permanent. User removal only affects the active project and is blocked for the last remaining member.",
+                  "Projektborttagning ar permanent. User removal paverkar bara det aktiva projektet och blockeras for sista kvarvarande medlemmen."
+                )}
               </p>
             </div>
           </div>
         </div>
 
         {flashError ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{flashError}</div>
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {flashError}
+          </div>
         ) : null}
         {flashMessage ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
@@ -128,175 +171,348 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         {!canManageProjects || isDemoSession ? (
           <Card className="border-border/70 shadow-sm">
             <CardHeader>
-              <CardTitle>{t("Admin cleanup is unavailable", "Administrativ rensning är inte tillgänglig")}</CardTitle>
-              <CardDescription>{t("Open a normal signed-in project account before trying to remove persisted data.", "Öppna ett vanligt inloggat projektkonto innan du försöker ta bort sparad data.")}</CardDescription>
+              <CardTitle>{t("Admin cleanup is unavailable", "Administrativ rensning ar inte tillganglig")}</CardTitle>
+              <CardDescription>
+                {t(
+                  "Open a normal signed-in project account before trying to remove persisted data.",
+                  "Oppna ett vanligt inloggat projektkonto innan du forsoker ta bort sparad data."
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              {t("Demo stays isolated on purpose, so destructive cleanup is disabled there.", "Demo är medvetet isolerad, så destruktiv rensning är avstängd där.")}
+              {t(
+                "Demo stays isolated on purpose, so destructive cleanup is disabled there.",
+                "Demo ar medvetet isolerad, sa destruktiv rensning ar avstangd dar."
+              )}
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
+          <div className="space-y-6">
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
-                <CardTitle>{t("Projects", "Projekt")}</CardTitle>
-                <CardDescription>{t("Mark one or more projects, then hard delete the selection in one operation.", "Markera ett eller flera projekt och hårdradera sedan urvalet i en operation.")}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {projects.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
-                    {t("No removable normal projects exist for this account right now.", "Det finns inga borttagbara vanliga projekt för det här kontot just nu.")}
-                  </div>
-                ) : (
-                  <form action={hardDeleteProjectsAction} className="space-y-4">
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/65 px-4 py-3 text-sm text-amber-900">
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                        <p>
-                          {t(
-                            "Hard delete removes the selected projects entirely. If the active project is included, the app will also clear the active project context.",
-                            "Hårdradering tar bort de valda projekten helt. Om det aktiva projektet ingår rensar appen också den aktiva projektkontexten."
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      {projects.map((project) => (
-                        <label
-                          className={`flex cursor-pointer items-start gap-4 rounded-3xl border p-5 shadow-sm transition ${
-                            project.isActive
-                              ? "border-red-200 bg-[linear-gradient(180deg,rgba(254,242,242,0.96),rgba(255,255,255,0.98))]"
-                              : "border-border/70 bg-background/95 hover:border-red-200/70"
-                          }`}
-                          key={project.organizationId}
-                        >
-                          <input
-                            className="mt-1 h-4 w-4 rounded border-border text-red-600 focus:ring-red-500"
-                            name="organizationIds"
-                            type="checkbox"
-                            value={project.organizationId}
-                          />
-                          <div className="min-w-0 flex-1 space-y-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-base font-semibold text-foreground">{project.organizationName}</p>
-                              {project.isActive ? (
-                                <span className="inline-flex rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-800">
-                                  {t("Active project", "Aktivt projekt")}
-                                </span>
-                              ) : null}
-                              <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                                {project.organizationSlug}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-2 text-xs">
-                              <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                {t("Outcomes", "Outcomes")} <span className="ml-1 font-semibold text-foreground">{project.counts.outcomes}</span>
-                              </span>
-                              <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                {t("Epics", "Epics")} <span className="ml-1 font-semibold text-foreground">{project.counts.epics}</span>
-                              </span>
-                              <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                {t("Stories", "Stories")} <span className="ml-1 font-semibold text-foreground">{project.counts.stories}</span>
-                              </span>
-                              <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
-                                {t("Events", "Händelser")} <span className="ml-1 font-semibold text-foreground">{project.counts.activityEvents}</span>
-                              </span>
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50/45 p-4">
-                      <p className="text-sm text-red-900">{t("Selected projects will be deleted permanently from the database.", "Valda projekt raderas permanent från databasen.")}</p>
-                      <PendingFormButton
-                        className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95"
-                        icon={<Trash2 className="h-4 w-4" />}
-                        label={t("Hard delete selected projects", "Hårdradera valda projekt")}
-                        pendingLabel={t("Deleting selected projects...", "Raderar valda projekt...")}
-                        showPendingCursor
-                      />
-                    </div>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex items-start gap-3">
+                  <UserRoundCog className="mt-0.5 h-5 w-5 text-primary" />
                   <div>
-                    <CardTitle>{t("Operational logs", "Operativa loggar")}</CardTitle>
+                    <CardTitle>{t("Internal users in active project", "Interna anvandare i aktivt projekt")}</CardTitle>
                     <CardDescription>
                       {t(
-                        "Lightweight troubleshooting for the active project. Slow or failed imports and approvals show up here with timing.",
-                        "Lättviktig felsökning för det aktiva projektet. Långsamma eller misslyckade importer och godkännanden visas här med tidmätning."
+                        "Update the user profile shown in local sign-in and around the app, change the role in this project, or remove the project membership safely.",
+                        "Uppdatera anvandarprofilen som visas i lokal inloggning och runtom i appen, andra rollen i detta projekt eller ta bort projektmembership pa ett sakert satt."
                       )}
                     </CardDescription>
                   </div>
-                  <form action={clearOperationalLogsAction}>
-                    <PendingFormButton
-                      className="gap-2"
-                      label={t("Clear all logs", "Rensa alla loggar")}
-                      pendingLabel={t("Clearing logs...", "Rensar loggar...")}
-                      showPendingCursor
-                      variant="secondary"
-                    />
-                  </form>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
-                  {operationalLogs.message}
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
+                  <div className="flex items-start gap-2">
+                    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                    <p>
+                      {t(
+                        "Profile edits update the same internal account everywhere it appears. Removing a user here only removes access to this active project, and active outcome owner assignments are cleared here before membership is removed.",
+                        "Profilandringar uppdaterar samma interna konto overallt dar det visas. Remove har tar bara bort access till detta aktiva projekt, och aktiva outcome-agarskap rensas har innan membership tas bort."
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-xs text-muted-foreground">
-                  {t(
-                    "Green means success, yellow means warning, red means failure, and gray means an operation is still in progress.",
-                    "Grönt betyder lyckad, gult betyder varning, rött betyder fel och grått betyder att en operation fortfarande pågår."
-                  )}
-                </div>
-                {operationalLogs.state !== "ready" || operationalLogs.items.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border/70 bg-background/70 p-5 text-sm text-muted-foreground">
-                    {t("No operational logs are visible yet for the active project.", "Inga operativa loggar syns ännu för det aktiva projektet.")}
+
+                {projectUsers.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
+                    {t(
+                      "No internal users are linked to the active project yet.",
+                      "Inga interna anvandare ar kopplade till det aktiva projektet annu."
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {operationalLogs.items.map((item) => (
-                      <div className={`rounded-3xl border p-4 shadow-sm ${getLogTone(item.status)}`} key={item.id}>
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em]">
-                            {item.scope.replaceAll("_", " ")}
-                          </span>
-                          <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
-                            {getLogStatusLabel(language, item.status)}
-                          </span>
-                          {item.durationMs !== null ? (
-                            <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
-                              {item.durationMs} ms
-                            </span>
-                          ) : null}
-                          {item.itemCount !== null ? (
-                            <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
-                              {item.itemCount} {t("items", "objekt")}
-                            </span>
-                          ) : null}
+                    {projectUsers.map((user) => (
+                      <details className="group rounded-3xl border border-border/70 bg-background shadow-sm" key={user.userId}>
+                        <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
+                          <div className="min-w-0 flex-1 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-base font-semibold text-foreground">{user.fullName ?? user.email}</p>
+                              {user.userId === session?.userId ? (
+                                <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                                  {t("You", "Du")}
+                                </span>
+                              ) : null}
+                              <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                {formatRoleLabel(language, user.role)}
+                              </span>
+                              {user.activeOutcomeOwnerCount > 0 ? (
+                                <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900">
+                                  {user.activeOutcomeOwnerCount}{" "}
+                                  {t("active outcome owner assignment(s)", "aktiv(a) outcome-agarskap")}
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                          </div>
+                          <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition group-open:rotate-180" />
+                        </summary>
+
+                        <div className="border-t border-border/70 px-5 py-4">
+                          <form action={updateProjectUserAction} className="grid gap-4 lg:grid-cols-2">
+                            <input name="userId" type="hidden" value={user.userId} />
+                            <label className="space-y-2">
+                              <span className="text-sm font-medium text-foreground">
+                                {t("Full name", "Fullstandigt namn")}
+                              </span>
+                              <input
+                                className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                defaultValue={user.fullName ?? ""}
+                                name="fullName"
+                                type="text"
+                              />
+                            </label>
+                            <label className="space-y-2">
+                              <span className="text-sm font-medium text-foreground">{t("Email", "E-post")}</span>
+                              <input
+                                className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                defaultValue={user.email}
+                                name="email"
+                                type="email"
+                              />
+                            </label>
+                            <label className="space-y-2">
+                              <span className="text-sm font-medium text-foreground">
+                                {t("Project role", "Projektroll")}
+                              </span>
+                              <select
+                                className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                                defaultValue={user.role}
+                                name="role"
+                              >
+                                {membershipRoles.map((role) => (
+                                  <option key={role} value={role}>
+                                    {formatRoleLabel(language, role)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
+                              {user.activeOutcomeOwnerCount > 0
+                                ? t(
+                                    "Removing this user clears their active outcome owner assignments in this project before the membership is removed.",
+                                    "Om du tar bort denna anvandare rensas deras aktiva outcome-agarskap i detta projekt innan membership tas bort."
+                                  )
+                                : t(
+                                    "This user currently has no active outcome owner assignments in the project.",
+                                    "Denna anvandare har inga aktiva outcome-agarskap i projektet just nu."
+                                  )}
+                            </div>
+                            <div className="lg:col-span-2">
+                              <PendingFormButton
+                                className="gap-2"
+                                label={t("Save user", "Spara anvandare")}
+                                pendingLabel={t("Saving user...", "Sparar anvandare...")}
+                                showPendingCursor
+                              />
+                            </div>
+                          </form>
+
+                          <form action={removeProjectUserAction} className="mt-4">
+                            <input name="userId" type="hidden" value={user.userId} />
+                            <PendingFormButton
+                              className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95"
+                              disabled={projectUsers.length <= 1}
+                              icon={<Trash2 className="h-4 w-4" />}
+                              label={t("Remove from active project", "Ta bort fran aktivt projekt")}
+                              pendingLabel={t("Removing from project...", "Tar bort fran projekt...")}
+                              showPendingCursor
+                            />
+                          </form>
                         </div>
-                        <p className="mt-3 text-sm font-semibold">{item.summary}</p>
-                        <p className="mt-2 text-sm opacity-80">
-                          {item.action.replaceAll("_", " ")} {t("on", "på")} {item.entityType.replaceAll("_", " ")} {item.entityId}
-                        </p>
-                        {item.detail ? <p className="mt-2 text-sm opacity-80">{item.detail}</p> : null}
-                        <p className="mt-3 text-xs opacity-70">
-                          {item.createdAt.toLocaleString(language === "sv" ? "sv-SE" : "en-US")}
-                          {item.actorName ? ` • ${item.actorName}` : ""}
-                        </p>
-                      </div>
+                      </details>
                     ))}
                   </div>
                 )}
               </CardContent>
             </Card>
+
+            <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>{t("Projects", "Projekt")}</CardTitle>
+                  <CardDescription>
+                    {t(
+                      "Mark one or more projects, then hard delete the selection in one operation.",
+                      "Markera ett eller flera projekt och hardradera sedan urvalet i en operation."
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {projects.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
+                      {t(
+                        "No removable normal projects exist for this account right now.",
+                        "Det finns inga borttagbara vanliga projekt for det har kontot just nu."
+                      )}
+                    </div>
+                  ) : (
+                    <form action={hardDeleteProjectsAction} className="space-y-4">
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50/65 px-4 py-3 text-sm text-amber-900">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                          <p>
+                            {t(
+                              "Hard delete removes the selected projects entirely. If the active project is included, the app will also clear the active project context.",
+                              "Hardradering tar bort de valda projekten helt. Om det aktiva projektet ingar rensar appen ocksa den aktiva projektkontexten."
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {projects.map((project) => (
+                          <label
+                            className={`flex cursor-pointer items-start gap-4 rounded-3xl border p-5 shadow-sm transition ${
+                              project.isActive
+                                ? "border-red-200 bg-[linear-gradient(180deg,rgba(254,242,242,0.96),rgba(255,255,255,0.98))]"
+                                : "border-border/70 bg-background/95 hover:border-red-200/70"
+                            }`}
+                            key={project.organizationId}
+                          >
+                            <input
+                              className="mt-1 h-4 w-4 rounded border-border text-red-600 focus:ring-red-500"
+                              name="organizationIds"
+                              type="checkbox"
+                              value={project.organizationId}
+                            />
+                            <div className="min-w-0 flex-1 space-y-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-base font-semibold text-foreground">{project.organizationName}</p>
+                                {project.isActive ? (
+                                  <span className="inline-flex rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-800">
+                                    {t("Active project", "Aktivt projekt")}
+                                  </span>
+                                ) : null}
+                                <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  {project.organizationSlug}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
+                                  {t("Outcomes", "Outcomes")}{" "}
+                                  <span className="ml-1 font-semibold text-foreground">{project.counts.outcomes}</span>
+                                </span>
+                                <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
+                                  {t("Epics", "Epics")}{" "}
+                                  <span className="ml-1 font-semibold text-foreground">{project.counts.epics}</span>
+                                </span>
+                                <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
+                                  {t("Stories", "Stories")}{" "}
+                                  <span className="ml-1 font-semibold text-foreground">{project.counts.stories}</span>
+                                </span>
+                                <span className="rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-muted-foreground">
+                                  {t("Events", "Handelser")}{" "}
+                                  <span className="ml-1 font-semibold text-foreground">{project.counts.activityEvents}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50/45 p-4">
+                        <p className="text-sm text-red-900">
+                          {t(
+                            "Selected projects will be deleted permanently from the database.",
+                            "Valda projekt raderas permanent fran databasen."
+                          )}
+                        </p>
+                        <PendingFormButton
+                          className="gap-2 border border-red-300 bg-red-600 text-white hover:opacity-95"
+                          icon={<Trash2 className="h-4 w-4" />}
+                          label={t("Hard delete selected projects", "Hardradera valda projekt")}
+                          pendingLabel={t("Deleting selected projects...", "Raderar valda projekt...")}
+                          showPendingCursor
+                        />
+                      </div>
+                    </form>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <CardTitle>{t("Operational logs", "Operativa loggar")}</CardTitle>
+                      <CardDescription>
+                        {t(
+                          "Lightweight troubleshooting for the active project. Slow or failed imports and approvals show up here with timing.",
+                          "Lattviktig felsokning for det aktiva projektet. Langsamma eller misslyckade importer och godkannanden visas har med tidmatning."
+                        )}
+                      </CardDescription>
+                    </div>
+                    <form action={clearOperationalLogsAction}>
+                      <PendingFormButton
+                        className="gap-2"
+                        label={t("Clear all logs", "Rensa alla loggar")}
+                        pendingLabel={t("Clearing logs...", "Rensar loggar...")}
+                        showPendingCursor
+                        variant="secondary"
+                      />
+                    </form>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
+                    {operationalLogs.message}
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-xs text-muted-foreground">
+                    {t(
+                      "Green means success, yellow means warning, red means failure, and gray means an operation is still in progress.",
+                      "Gront betyder lyckad, gult betyder varning, rott betyder fel och gratt betyder att en operation fortfarande pagar."
+                    )}
+                  </div>
+                  {operationalLogs.state !== "ready" || operationalLogs.items.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border/70 bg-background/70 p-5 text-sm text-muted-foreground">
+                      {t(
+                        "No operational logs are visible yet for the active project.",
+                        "Inga operativa loggar syns annu for det aktiva projektet."
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {operationalLogs.items.map((item) => (
+                        <div className={`rounded-3xl border p-4 shadow-sm ${getLogTone(item.status)}`} key={item.id}>
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-semibold uppercase tracking-[0.16em]">
+                              {item.scope.replaceAll("_", " ")}
+                            </span>
+                            <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
+                              {getLogStatusLabel(language, item.status)}
+                            </span>
+                            {item.durationMs !== null ? (
+                              <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
+                                {item.durationMs} ms
+                              </span>
+                            ) : null}
+                            {item.itemCount !== null ? (
+                              <span className="rounded-full border border-current/20 bg-white/70 px-2.5 py-1 font-medium">
+                                {item.itemCount} {t("items", "objekt")}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-3 text-sm font-semibold">{item.summary}</p>
+                          <p className="mt-2 text-sm opacity-80">
+                            {item.action.replaceAll("_", " ")} {t("on", "pa")}{" "}
+                            {item.entityType.replaceAll("_", " ")} {item.entityId}
+                          </p>
+                          {item.detail ? <p className="mt-2 text-sm opacity-80">{item.detail}</p> : null}
+                          <p className="mt-3 text-xs opacity-70">
+                            {item.createdAt.toLocaleString(language === "sv" ? "sv-SE" : "en-US")}
+                            {item.actorName ? ` - ${item.actorName}` : ""}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </section>
