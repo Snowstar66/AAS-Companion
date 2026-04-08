@@ -650,6 +650,46 @@ describe("artifact intake helpers", () => {
     );
   });
 
+  it("keeps a single explicit outcome candidate and reads block-based outcome fields", () => {
+    const parsed = parseMarkdownArtifact(
+      "file-outcome-block-1",
+      "outcome-block.md",
+      [
+        "## Outcome",
+        "### OUT-001",
+        "**Title:** Reliable basic calculator functionality",
+        "**Problem Statement:** Det finns ingen befintlig lösning som möjliggör enkla matematiska beräkningar på ett konsekvent och verifierbart sätt. Utan en sådan funktion kan användare inte utföra grundläggande beräkningar på ett pålitligt sätt.",
+        "**Outcome Statement:** En miniräknare som korrekt och konsekvent utför de fyra räknesätten (addition, subtraktion, multiplikation, division) och ger tydlig återkoppling vid både giltiga och ogiltiga beräkningar.",
+        "**Baseline Definition:** Ingen implementerad funktionalitet för beräkningar finns.",
+        "**Measurement Method:**",
+        "- Andel testfall för de fyra räknesätten som passerar",
+        "- Verifiering av korrekt felhantering (t.ex. division med noll)",
+        "- Manuell verifiering av användarflöde från input till resultat",
+        "**Timeframe:** MVP / första release"
+      ].join("\n")
+    );
+
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-outcome-block-1",
+          fileName: "outcome-block.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    const outcomeCandidates = mapping.candidates.filter((candidate) => candidate.type === "outcome");
+    expect(outcomeCandidates).toHaveLength(1);
+    expect(outcomeCandidates[0]?.draftRecord?.title).toBe("Reliable basic calculator functionality");
+    expect(outcomeCandidates[0]?.draftRecord?.baselineDefinition).toContain("Ingen implementerad funktionalitet");
+    expect(outcomeCandidates[0]?.draftRecord?.baselineSource).toContain("Andel testfall");
+    expect(outcomeCandidates[0]?.draftRecord?.baselineSource).toContain("Verifiering av korrekt felhantering");
+    expect(outcomeCandidates[0]?.draftRecord?.timeframe).toBe("MVP / första release");
+  });
+
   it("prefers deterministic framing import when AI under-reads explicit value spine counts", () => {
     expect(
       shouldPreferDeterministicFramingImport({

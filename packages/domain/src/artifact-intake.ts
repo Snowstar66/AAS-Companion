@@ -976,9 +976,13 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
   for (const section of sections) {
     const title = section.title.toLowerCase();
     const text = section.text.toLowerCase();
-    const hasExplicitOutcomeKey = Boolean(extractImportedCandidateKey("outcome", section.title));
-    const hasExplicitEpicKey = Boolean(extractImportedCandidateKey("epic", section.title));
-    const hasExplicitStoryKey = Boolean(extractImportedCandidateKey("story", section.title));
+    const trimmedSectionTitle = section.title.trim();
+    const hasExplicitOutcomeKey =
+      Boolean(extractImportedCandidateKey("outcome", section.title)) || /^(?:OUT|OUTCOME)-\d+\b/i.test(trimmedSectionTitle);
+    const hasExplicitEpicKey =
+      Boolean(extractImportedCandidateKey("epic", section.title)) || /^(?:EPIC|EPC)-\d+\b/i.test(trimmedSectionTitle);
+    const hasExplicitStoryKey =
+      Boolean(extractImportedCandidateKey("story", section.title)) || /^(?:STORY|SC|STR)-\d+\b/i.test(trimmedSectionTitle);
     const hasExplicitEpicHeading = /^epic\s+\d+\b/i.test(section.title.trim());
     const hasExplicitStoryHeading = /^us\d+(?:\.\d+)+\b/i.test(section.title.trim());
     const hasExplicitOutcomeHeading = /^outcome\b/i.test(section.title.trim());
@@ -1320,6 +1324,16 @@ function extractTaggedBlockText(text: string, labels: string[]) {
   return lines.join(" ");
 }
 
+function extractTaggedBlockMultilineText(text: string, labels: string[]) {
+  const lines = extractTaggedBlockList(text, labels);
+
+  if (lines.length === 0) {
+    return "";
+  }
+
+  return lines.join("\n");
+}
+
 function stripStructuredHeadingPrefix(candidateType: ArtifactAasCandidate["type"], value: string) {
   const trimmed = value.trim();
 
@@ -1645,8 +1659,56 @@ function mergeFramingOutcomeCandidates(candidates: ArtifactAasCandidate[]) {
   const outcomeAliasMap = new Map<string, string>();
   const mergedPrimaryOutcomeById = new Map<string, ArtifactAasCandidate>();
 
+  function scoreOutcomeCandidate(candidate: ArtifactAasCandidate) {
+    const draft = artifactCandidateDraftRecordSchema.parse({
+      ...createArtifactCandidateDraftRecord(candidate),
+      ...(candidate.draftRecord ?? {})
+    });
+
+    let score = 0;
+
+    if (draft.key?.trim()) {
+      score += 10;
+    }
+
+    if (
+      extractImportedCandidateKey("outcome", candidate.source.sectionTitle) ||
+      extractImportedCandidateKey("outcome", candidate.source.sectionMarker)
+    ) {
+      score += 8;
+    }
+
+    if (draft.title?.trim() && !isGenericFramingCandidateTitle("outcome", draft.title)) {
+      score += 6;
+    }
+
+    if (draft.problemStatement?.trim()) {
+      score += 3;
+    }
+
+    if (draft.outcomeStatement?.trim()) {
+      score += 4;
+    }
+
+    if (draft.baselineDefinition?.trim()) {
+      score += 3;
+    }
+
+    if (draft.baselineSource?.trim()) {
+      score += 3;
+    }
+
+    if (draft.timeframe?.trim()) {
+      score += 1;
+    }
+
+    return score;
+  }
+
   for (const fileCandidates of candidatesByFile.values()) {
-    const outcomeCandidates = fileCandidates.filter((candidate) => candidate.type === "outcome");
+    const outcomeCandidates = fileCandidates
+      .filter((candidate) => candidate.type === "outcome")
+      .sort((left, right) => scoreOutcomeCandidate(right) - scoreOutcomeCandidate(left));
 
     if (outcomeCandidates.length <= 1) {
       continue;
@@ -1678,7 +1740,14 @@ function mergeFramingOutcomeCandidates(candidates: ArtifactAasCandidate[]) {
       });
       const mergedDraft = artifactCandidateDraftRecordSchema.parse({
         ...mergedOutcome.draftRecord,
-        key: mergedOutcome.draftRecord?.key?.trim() || secondaryDraft.key || null,
+        key:
+          mergedOutcome.draftRecord?.key?.trim() ||
+          extractImportedCandidateKey("outcome", mergedOutcome.source.sectionTitle) ||
+          extractImportedCandidateKey("outcome", mergedOutcome.source.sectionMarker) ||
+          secondaryDraft.key ||
+          extractImportedCandidateKey("outcome", secondaryOutcome.source.sectionTitle) ||
+          extractImportedCandidateKey("outcome", secondaryOutcome.source.sectionMarker) ||
+          null,
         title:
           mergedOutcome.draftRecord?.title?.trim() &&
           !isGenericFramingCandidateTitle("outcome", mergedOutcome.draftRecord.title)
@@ -2270,7 +2339,9 @@ function resolveImportedCandidateKey(input: {
   return (
     extractImportedCandidateKey(input.candidateType, extractTaggedLineValue(input.section.text, idLabel)) ??
     extractImportedCandidateKey(input.candidateType, input.currentTitle) ??
-    extractImportedCandidateKey(input.candidateType, input.section.title)
+    extractImportedCandidateKey(input.candidateType, input.section.title) ??
+    extractImportedCandidateKey(input.candidateType, input.section.sourceReference.sectionMarker) ??
+    extractImportedCandidateKey(input.candidateType, input.section.text)
   );
 }
 
@@ -2382,25 +2453,30 @@ function buildDraftRecordFromParsedSection(input: {
       key: resolvedKey,
       title: resolvedTitle,
       problemStatement:
+        extractTaggedBlockText(input.section.text, ["Problem Statement", "Product Vision"]) ||
         extractTaggedLineValue(input.section.text, "Problem Statement") ||
         extractTaggedLineValue(input.section.text, "Product Vision") ||
         (/^problem statement$/.test(normalizedSectionTitle) ? sectionBody || input.section.text : "") ||
         null,
       outcomeStatement:
+        extractTaggedBlockText(input.section.text, ["Outcome Statement", "Statement"]) ||
         extractTaggedLineValue(input.section.text, "Outcome Statement") ||
         extractTaggedLineValue(input.section.text, "Statement") ||
         (/^outcome$/.test(normalizedSectionTitle) ? sectionBody || input.section.text : "") ||
         summarizeText(input.section.text),
       baselineDefinition:
+        extractTaggedBlockText(input.section.text, ["Baseline Definition", "Baseline"]) ||
         extractTaggedLineValue(input.section.text, "Baseline Definition") ||
         extractTaggedLineValue(input.section.text, "Baseline") ||
         (/^baseline$/.test(normalizedSectionTitle) ? sectionBody || input.section.text : "") ||
         null,
       baselineSource:
+        extractTaggedBlockMultilineText(input.section.text, ["Measurement Method", "Baseline Source"]) ||
         extractTaggedLineValue(input.section.text, "Measurement Method") ||
         extractTaggedLineValue(input.section.text, "Baseline Source") ||
         null,
       timeframe:
+        extractTaggedBlockText(input.section.text, ["Timeframe", "Time Horizon"]) ||
         extractTaggedLineValue(input.section.text, "Timeframe") ||
         extractTaggedLineValue(input.section.text, "Time Horizon") ||
         null,
@@ -2766,7 +2842,11 @@ export function buildAiAssistedArtifactProcessingResult(input: {
         (candidate) => candidate.type === "outcome" && candidate.source.fileId === file.id
       );
       const outcomeContextText = nextSections
-        .filter((section) => section.kind === "problem_goal" || isFramingOutcomeContextSection(section))
+        .filter(
+          (section) =>
+            section.kind === "problem_goal" ||
+            (section.kind !== "outcome_candidate" && isFramingOutcomeContextSection(section))
+        )
         .map((section) => section.text.trim())
         .filter(Boolean);
 
@@ -3565,7 +3645,12 @@ export function mapParsedArtifactsToAasCandidates(input: {
         continue;
       }
 
-      if (section.kind === "problem_goal" || (importIntent === "framing" && isFramingOutcomeContextSection(section))) {
+      if (
+        section.kind === "problem_goal" ||
+        (importIntent === "framing" &&
+          section.kind !== "outcome_candidate" &&
+          isFramingOutcomeContextSection(section))
+      ) {
         if (importIntent === "framing") {
           const contextText = section.text.trim();
 

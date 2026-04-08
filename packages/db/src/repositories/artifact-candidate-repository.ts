@@ -599,9 +599,18 @@ export async function createPersistedArtifactCandidates(input: {
   importIntent?: "framing" | "design";
 }, db: DbClient = prisma) {
   const importIntent = input.importIntent ?? "framing";
-  const preferredOutcomeId =
-    importIntent === "framing" ? await resolvePreferredProjectOutcomeId(db, input.organizationId) : null;
-  const [existingOutcomeKeys, existingEpicKeys, existingStoryIdeaKeys, existingStoryKeys] = await Promise.all([
+  const [activeOutcomes, existingOutcomeKeys, existingEpicKeys, existingStoryIdeaKeys, existingStoryKeys] = await Promise.all([
+    db.outcome.findMany({
+      where: {
+        organizationId: input.organizationId,
+        lifecycleState: "active"
+      },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        originType: true
+      }
+    }),
     db.outcome.findMany({
       where: { organizationId: input.organizationId },
       select: { key: true }
@@ -619,6 +628,11 @@ export async function createPersistedArtifactCandidates(input: {
       select: { key: true }
     })
   ]);
+  const preferredOutcomeId =
+    importIntent === "framing"
+      ? activeOutcomes.find((outcome) => outcome.originType === "native")?.id ?? activeOutcomes[0]?.id ?? null
+      : null;
+  const singleActiveOutcomeId = activeOutcomes.length === 1 ? activeOutcomes[0]!.id : null;
   const reservedKeysByPrefix = {
     OUT: new Set(existingOutcomeKeys.map((record) => record.key)),
     EPC: new Set(existingEpicKeys.map((record) => record.key)),
@@ -651,18 +665,23 @@ export async function createPersistedArtifactCandidates(input: {
 
   for (const candidate of input.candidates) {
     const sanitizedCandidate = sanitizeArtifactPersistenceValue(candidate);
+    const defaultOutcomeDestinationId =
+      importIntent !== "framing"
+        ? null
+        : sanitizedCandidate.type === "outcome"
+          ? singleActiveOutcomeId
+          : preferredOutcomeId;
     const draftRecord = sanitizeArtifactPersistenceValue(
       artifactCandidateDraftRecordSchema.parse({
         ...createArtifactCandidateDraftRecord(sanitizedCandidate),
         ...(sanitizedCandidate.draftRecord ?? {}),
         ...(
           importIntent === "framing" &&
-          preferredOutcomeId &&
-          sanitizedCandidate.type !== "outcome" &&
-          !sanitizedCandidate.inferredOutcomeCandidateId &&
+          defaultOutcomeDestinationId &&
+          (sanitizedCandidate.type === "outcome" || !sanitizedCandidate.inferredOutcomeCandidateId) &&
           !(sanitizedCandidate.draftRecord?.outcomeCandidateId?.trim())
             ? {
-                outcomeCandidateId: preferredOutcomeId
+                outcomeCandidateId: defaultOutcomeDestinationId
               }
             : {}
         ),
