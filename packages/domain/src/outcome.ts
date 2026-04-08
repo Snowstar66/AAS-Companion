@@ -175,12 +175,12 @@ export function mergeImportedOutcomeIntoExistingOutcome(input: {
   };
 }) {
   return {
-    title: normalizeOutcomeMergeValue(input.existing.title) ?? normalizeOutcomeMergeValue(input.imported.title) ?? "",
+    title: normalizeOutcomeMergeValue(input.imported.title) ?? normalizeOutcomeMergeValue(input.existing.title) ?? "",
     problemStatement: mergeOutcomeParagraphText(input.existing.problemStatement, input.imported.problemStatement),
     outcomeStatement: mergeOutcomeParagraphText(input.existing.outcomeStatement, input.imported.outcomeStatement),
     baselineDefinition: mergeOutcomeParagraphText(input.existing.baselineDefinition, input.imported.baselineDefinition),
     baselineSource: mergeOutcomeLineText(input.existing.baselineSource, input.imported.baselineSource),
-    timeframe: normalizeOutcomeMergeValue(input.existing.timeframe) ?? normalizeOutcomeMergeValue(input.imported.timeframe)
+    timeframe: mergeOutcomeLineText(input.existing.timeframe, input.imported.timeframe)
   };
 }
 

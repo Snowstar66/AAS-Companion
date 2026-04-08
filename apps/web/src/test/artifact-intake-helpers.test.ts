@@ -1540,7 +1540,7 @@ describe("artifact intake helpers", () => {
     expect(compliance.findings.some((finding) => finding.code === "baseline_source_missing")).toBe(false);
   });
 
-  it("appends imported outcome framing onto an existing outcome without overwriting title or timeframe", () => {
+  it("appends imported outcome framing onto an existing outcome while taking the imported title and merging timeframe", () => {
     const merged = mergeImportedOutcomeIntoExistingOutcome({
       existing: {
         title: "Existing governed outcome",
@@ -1560,12 +1560,12 @@ describe("artifact intake helpers", () => {
       }
     });
 
-    expect(merged.title).toBe("Existing governed outcome");
+    expect(merged.title).toBe("Imported calculator outcome");
     expect(merged.problemStatement).toBe("Existing problem statement.\n\nImported problem statement.");
     expect(merged.outcomeStatement).toBe("Existing outcome statement.\n\nImported outcome statement.");
     expect(merged.baselineDefinition).toBe("Existing baseline definition.\n\nImported baseline definition.");
     expect(merged.baselineSource).toBe("Existing baseline source\nImported baseline source");
-    expect(merged.timeframe).toBe("Q4 2026");
+    expect(merged.timeframe).toBe("Q4 2026\nMVP / första release");
   });
 
   it("fills missing existing outcome framing fields from the imported outcome", () => {
