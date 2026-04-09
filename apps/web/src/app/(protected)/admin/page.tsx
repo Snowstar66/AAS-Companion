@@ -94,6 +94,14 @@ function groupRoleSeedsBySide() {
   };
 }
 
+function buildSeedEntryKey(input: {
+  organizationSide: string;
+  roleType: string;
+  email: string;
+}) {
+  return `${input.organizationSide}:${input.roleType}:${input.email.trim().toLowerCase()}`;
+}
+
 async function getServerLanguage(): Promise<AppLanguage> {
   try {
     const cookieStore = await cookies();
@@ -136,6 +144,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       totalCount: number;
     }
   >();
+  const seededRoleEntriesByKey = new Map<
+    string,
+    {
+      isActive: boolean;
+    }
+  >();
 
   for (const role of partyRoles) {
     const key = `${role.organizationSide}:${role.roleType}`;
@@ -148,6 +162,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       existing.activeCount += 1;
     }
     rolePresenceByKey.set(key, existing);
+
+    seededRoleEntriesByKey.set(
+      buildSeedEntryKey({
+        organizationSide: role.organizationSide,
+        roleType: role.roleType,
+        email: role.email
+      }),
+      {
+        isActive: role.isActive
+      }
+    );
   }
 
   return (
@@ -421,16 +446,28 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                               activeCount: 0,
                               totalCount: 0
                             };
+                          const seededRoleEntry = seededRoleEntriesByKey.get(
+                            buildSeedEntryKey({
+                              organizationSide: seed.organizationSide,
+                              roleType: seed.roleType,
+                              email: seed.email
+                            })
+                          );
+                          const seededRoleIsActive = Boolean(seededRoleEntry?.isActive);
+                          const displayAvatarUrl = seededRoleIsActive ? seed.avatarUrl : seed.previewAvatarUrl;
 
                           return (
-                            <div className="rounded-3xl border border-border/70 bg-background p-4 shadow-sm" key={seed.id}>
+                            <div
+                              className={`rounded-3xl border p-4 shadow-sm ${
+                                seededRoleIsActive
+                                  ? "border-emerald-200 bg-[linear-gradient(180deg,rgba(236,253,245,0.92),rgba(255,255,255,0.98))]"
+                                  : "border-border/70 bg-background"
+                              }`}
+                              key={seed.id}
+                            >
                               <div className="flex items-start gap-4">
                                 <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-muted/20">
-                                  <img
-                                    alt={seed.fullName}
-                                    className="h-full w-full object-cover"
-                                    src={seed.previewAvatarUrl}
-                                  />
+                                  <img alt={seed.fullName} className="h-full w-full object-cover" src={displayAvatarUrl} />
                                 </div>
                                 <div className="min-w-0 flex-1 space-y-2">
                                   <div className="flex flex-wrap items-center gap-2">
@@ -440,17 +477,28 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                                     </span>
                                     <span
                                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                        presence.activeCount > 0
+                                        seededRoleIsActive
                                           ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                                          : "border border-border/70 bg-muted/20 text-muted-foreground"
+                                      }`}
+                                    >
+                                      {seededRoleIsActive
+                                        ? t("Demo role created", "Demo-roll skapad")
+                                        : t("Not created", "Inte skapad")}
+                                    </span>
+                                    <span
+                                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                        presence.activeCount > 0
+                                          ? "border border-sky-200 bg-sky-50 text-sky-800"
                                           : "border border-border/70 bg-muted/20 text-muted-foreground"
                                       }`}
                                     >
                                       {presence.activeCount > 0
                                         ? t(
-                                            `${presence.activeCount} active / ${presence.totalCount} total`,
-                                            `${presence.activeCount} aktiv(a) / ${presence.totalCount} totalt`
+                                            `${presence.activeCount} active / ${presence.totalCount} total in role`,
+                                            `${presence.activeCount} aktiv(a) / ${presence.totalCount} totalt i rollen`
                                           )
-                                        : t("No current role", "Ingen nuvarande roll")}
+                                        : t("No current role in project", "Ingen nuvarande roll i projektet")}
                                     </span>
                                   </div>
                                   <div className="text-sm leading-6">

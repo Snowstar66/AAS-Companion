@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import AdminPage from "@/app/(protected)/admin/page";
+import { demoRoleSeeds } from "@/lib/admin/demo-role-catalog";
 
 vi.mock("@aas-companion/db", () => ({
   listOrganizationProjectUsers: vi.fn(async () => [
@@ -139,11 +140,15 @@ vi.mock("@/lib/admin/operational-logs", () => ({
 describe("Admin page", () => {
   it("renders project user admin, bulk cleanup, and operational logs", async () => {
     render(await AdminPage({}));
+    const merylSeed = demoRoleSeeds.find((seed) => seed.id === "customer_sponsor");
+    const emilySeed = demoRoleSeeds.find((seed) => seed.id === "customer_domain_owner");
 
     expect(screen.getByRole("heading", { name: "Aggressive project cleanup", level: 1 })).toBeDefined();
     expect(screen.getByText("Internal users in active project")).toBeDefined();
     expect(screen.getByText("Demo role bulk tools")).toBeDefined();
     expect(screen.getByText("Meryl Streep")).toBeDefined();
+    expect(screen.getByText("Demo role created")).toBeDefined();
+    expect(screen.getAllByText("Not created").length).toBeGreaterThan(0);
     expect(screen.getByText("Pontus")).toBeDefined();
     expect(screen.getAllByRole("button", { name: "Save user" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("checkbox", { name: "Create" }).length).toBeGreaterThan(0);
@@ -156,5 +161,7 @@ describe("Admin page", () => {
     expect(screen.getByText("Operational logs")).toBeDefined();
     expect(screen.getByRole("button", { name: "Clear all logs" })).toBeDefined();
     expect(screen.getByText(/Transaction API error: Unable to start a transaction in the given time\./i)).toBeDefined();
+    expect(screen.getByAltText("Meryl Streep").getAttribute("src")).toBe(merylSeed?.avatarUrl);
+    expect(screen.getByAltText("Emily Blunt").getAttribute("src")).toBe(emilySeed?.previewAvatarUrl);
   });
 });
