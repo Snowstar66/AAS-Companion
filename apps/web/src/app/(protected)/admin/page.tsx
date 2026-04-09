@@ -398,8 +398,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <CardTitle>{t("Demo role bulk tools", "Demo-rollverktyg i bulk")}</CardTitle>
                     <CardDescription>
                       {t(
-                        "Create or remove a ready-made customer and supplier role set for the active project. Each row uses a generated demo portrait, fixed role title, and mandate text aligned with the help guidance.",
-                        "Skapa eller ta bort en fardig uppsattning kund- och leverantorsroller for det aktiva projektet. Varje rad anvander ett genererat demoportatt, fast rolltitel och mandattext som foljer hjalpens guidance."
+                        "Create or remove a ready-made customer and supplier role set for the active project. Each row uses a curated preview avatar before creation and a matched human photo after creation, plus fixed role title and mandate text aligned with the help guidance.",
+                        "Skapa eller ta bort en fardig uppsattning kund- och leverantorsroller for det aktiva projektet. Varje rad anvander en kuraterad preview-avatar fore skapande och ett matchat personfoto efter skapande, plus fast rolltitel och mandattext som foljer hjalpens guidance."
                       )}
                     </CardDescription>
                   </div>

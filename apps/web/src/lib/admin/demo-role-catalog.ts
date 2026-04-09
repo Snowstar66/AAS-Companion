@@ -1,8 +1,4 @@
 import type { OrganizationSide, PartyRoleType } from "@aas-companion/domain";
-import {
-  getRoleCartoonAvatarUrl,
-  getRolePhotoAvatarUrl
-} from "@/lib/governance/role-avatars";
 
 export type DemoRoleSeed = {
   id: string;
@@ -17,11 +13,15 @@ export type DemoRoleSeed = {
   previewAvatarUrl: string;
 };
 
+function buildSeedAvatarUrl(seedId: string, variant: "humans" | "avatars") {
+  return `/demo-avatars/${variant}/${seedId}.jpg`;
+}
+
 function buildSeed(input: Omit<DemoRoleSeed, "avatarUrl" | "previewAvatarUrl">): DemoRoleSeed {
   return {
     ...input,
-    avatarUrl: getRolePhotoAvatarUrl(input),
-    previewAvatarUrl: getRoleCartoonAvatarUrl(input)
+    avatarUrl: buildSeedAvatarUrl(input.id, "humans"),
+    previewAvatarUrl: buildSeedAvatarUrl(input.id, "avatars")
   };
 }
 

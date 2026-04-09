@@ -216,6 +216,12 @@ function getDisplayAvatarForRole(input: {
   email: string;
   avatarUrl?: string | null | undefined;
 }) {
+  const seed = getDemoRoleSeedByEmail(input.email);
+
+  if (seed && (!input.avatarUrl || isGeneratedSvgAvatarUrl(input.avatarUrl))) {
+    return seed.avatarUrl;
+  }
+
   if (shouldPreferGeneratedPhoto(input)) {
     return getRolePhotoAvatarUrl(input);
   }
