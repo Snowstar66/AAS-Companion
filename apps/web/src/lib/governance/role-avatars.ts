@@ -400,11 +400,14 @@ function buildCartoonAvatarSvg(input: RoleAvatarInput, gender: AvatarGender, pal
 function buildPhotoAvatarSvg(input: RoleAvatarInput, gender: AvatarGender, palette: AvatarPalette) {
   const isFemale = gender === "female";
   const hairPath = isFemale
-    ? `M31 51c0-22 14-36 33-36 20 0 35 13 35 34 0 8-2 16-7 23-3-10-11-20-22-24-8-3-17-1-24 4-6 4-11 11-15 18-1-6 0-12 0-19Z`
-    : `M30 49c2-21 16-34 35-34 21 0 35 12 35 31 0 8-2 14-6 20-7-9-17-14-31-14H48c-7 0-13 3-18 7-1-3-1-6 0-10Z`;
-  const shoulders = isFemale
-    ? `<path d="M22 118c6-18 21-30 42-30 21 0 36 12 42 30H22Z" fill="${palette.jacket}" />`
-    : `<path d="M18 118c6-18 22-30 46-30s40 12 46 30H18Z" fill="${palette.jacket}" />`;
+    ? `M28 50c0-23 15-37 36-37 21 0 37 14 37 35 0 11-3 20-9 28-2-9-7-18-15-23-7-5-15-7-23-7-9 0-17 3-24 9-4 4-8 9-11 15-1-5-1-12-1-20Z`
+    : `M28 49c1-22 17-36 37-36 22 0 37 12 37 33 0 10-3 18-8 25-4-7-10-13-17-16-5-3-10-4-16-4H49c-8 0-15 2-21 7-1-3-1-6 0-9Z`;
+  const jacketPath = isFemale
+    ? `M18 118c6-20 22-34 46-34 23 0 39 14 46 34H18Z`
+    : `M14 118c7-20 24-34 50-34s43 14 50 34H14Z`;
+  const collarPath = isFemale
+    ? `M45 86c6 8 12 12 19 12s13-4 19-12l7 32H38l7-32Z`
+    : `M43 85 64 100 85 85l-8 33H51l-8-33Z`;
 
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="${input.fullName ?? input.roleType}">
@@ -413,24 +416,40 @@ function buildPhotoAvatarSvg(input: RoleAvatarInput, gender: AvatarGender, palet
           <stop offset="0%" stop-color="${palette.backgroundStart}" />
           <stop offset="100%" stop-color="${palette.backgroundEnd}" />
         </linearGradient>
-        <radialGradient id="glow" cx="50%" cy="25%" r="70%">
-          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+        <radialGradient id="spotlight" cx="50%" cy="20%" r="70%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.92" />
           <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
         </radialGradient>
+        <radialGradient id="shadow" cx="50%" cy="75%" r="65%">
+          <stop offset="0%" stop-color="#0f172a" stop-opacity="0.18" />
+          <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
+        </radialGradient>
+        <clipPath id="portrait">
+          <rect x="12" y="12" width="104" height="104" rx="24" />
+        </clipPath>
       </defs>
       <rect width="128" height="128" rx="28" fill="url(#bg)" />
-      <circle cx="64" cy="64" r="47" fill="${palette.card}" opacity="0.72" />
-      <circle cx="64" cy="64" r="44" fill="url(#glow)" opacity="0.72" />
-      <circle cx="64" cy="52" r="23" fill="${palette.skin}" />
+      <rect x="12" y="12" width="104" height="104" rx="24" fill="${palette.card}" opacity="0.96" />
+      <g clip-path="url(#portrait)">
+        <rect x="12" y="12" width="104" height="104" fill="url(#spotlight)" opacity="0.92" />
+        <circle cx="30" cy="28" r="18" fill="#ffffff" opacity="0.28" />
+        <circle cx="100" cy="36" r="14" fill="${palette.accent}" opacity="0.12" />
+        <ellipse cx="64" cy="118" rx="42" ry="18" fill="url(#shadow)" />
+      </g>
+      <path d="${jacketPath}" fill="${palette.jacket}" />
+      <path d="${collarPath}" fill="${palette.shirt}" />
+      <path d="M44 118 64 96 84 118" fill="none" stroke="${palette.accent}" stroke-opacity="0.45" stroke-width="4" stroke-linecap="round" />
+      <ellipse cx="64" cy="54" rx="24" ry="29" fill="${palette.skin}" />
       <path d="${hairPath}" fill="${palette.hair}" />
-      <ellipse cx="64" cy="58" rx="16" ry="17" fill="${palette.skinShade}" opacity="0.12" />
-      <circle cx="56" cy="52" r="2.4" fill="#2b211d" />
-      <circle cx="72" cy="52" r="2.4" fill="#2b211d" />
-      <path d="M58 64c3 2 9 2 12 0" fill="none" stroke="#8a5848" stroke-linecap="round" stroke-width="2.2" />
-      <path d="M64 54v6" fill="none" stroke="#c88e74" stroke-linecap="round" stroke-width="1.8" opacity="0.65" />
-      <path d="M48 83c5 5 10 8 16 8 6 0 11-3 16-8l6 35H42l6-35Z" fill="${palette.shirt}" />
-      ${shoulders}
-      <path d="M26 118c8-11 22-18 38-18 18 0 32 7 38 18" fill="none" stroke="${palette.accent}" stroke-opacity="0.18" stroke-width="10" stroke-linecap="round" />
+      <ellipse cx="64" cy="60" rx="18" ry="21" fill="${palette.skinShade}" opacity="0.16" />
+      <path d="M48 55c3-3 7-4 11-4s8 1 11 4" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-linecap="round" stroke-width="5" />
+      <path d="M50 50c3-2 6-3 10-3s7 1 10 3" fill="none" stroke="#5b463c" stroke-linecap="round" stroke-width="1.8" opacity="0.55" />
+      <circle cx="55" cy="54" r="2.2" fill="#2b211d" />
+      <circle cx="73" cy="54" r="2.2" fill="#2b211d" />
+      <path d="M64 57v7" fill="none" stroke="#b97c64" stroke-linecap="round" stroke-width="1.8" opacity="0.55" />
+      <path d="M57 69c4 2 10 2 14 0" fill="none" stroke="#8a5848" stroke-linecap="round" stroke-width="2.1" />
+      <path d="M44 43c5-12 16-19 32-19 16 0 27 7 32 19" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-linecap="round" stroke-width="8" />
+      <rect x="12" y="12" width="104" height="104" rx="24" fill="none" stroke="#ffffff" stroke-opacity="0.45" />
     </svg>
   `.trim();
 }
