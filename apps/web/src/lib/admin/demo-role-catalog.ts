@@ -1,4 +1,5 @@
 import type { OrganizationSide, PartyRoleType } from "@aas-companion/domain";
+import { readEnv } from "@aas-companion/config";
 
 export type DemoRoleSeed = {
   id: string;
@@ -13,15 +14,21 @@ export type DemoRoleSeed = {
   previewAvatarUrl: string;
 };
 
-function buildSeedAvatarUrl(seedId: string, variant: "humans" | "avatars") {
+function buildSeedAvatarPath(seedId: string, variant: "humans" | "avatars") {
   return `/demo-avatars/${variant}/${seedId}.jpg`;
+}
+
+function buildSeedAvatarUrl(seedId: string, variant: "humans" | "avatars") {
+  const path = buildSeedAvatarPath(seedId, variant);
+  const env = readEnv();
+  return new URL(path, env.NEXT_PUBLIC_SITE_URL).toString();
 }
 
 function buildSeed(input: Omit<DemoRoleSeed, "avatarUrl" | "previewAvatarUrl">): DemoRoleSeed {
   return {
     ...input,
     avatarUrl: buildSeedAvatarUrl(input.id, "humans"),
-    previewAvatarUrl: buildSeedAvatarUrl(input.id, "avatars")
+    previewAvatarUrl: buildSeedAvatarPath(input.id, "avatars")
   };
 }
 

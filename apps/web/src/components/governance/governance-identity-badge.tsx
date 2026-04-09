@@ -29,14 +29,14 @@ export function GovernanceIdentityBadge({
 
   if (kind === "human" && avatarUrl) {
     return (
-      <div className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border ${toneClasses}`}>
+      <div className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border ${toneClasses}`}>
         <img alt={name} className="h-full w-full object-cover" src={avatarUrl} />
       </div>
     );
   }
 
   return (
-    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${toneClasses}`}>
+    <div className={`flex h-11 w-11 items-center justify-center rounded-full border ${toneClasses}`}>
       {kind === "human" ? <UserRound className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
     </div>
   );

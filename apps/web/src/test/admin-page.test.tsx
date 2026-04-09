@@ -163,7 +163,7 @@ describe("Admin page", () => {
     expect(screen.getByText(/Transaction API error: Unable to start a transaction in the given time\./i)).toBeDefined();
     expect(screen.getByAltText("Meryl Streep").getAttribute("src")).toBe(merylSeed?.avatarUrl);
     expect(screen.getByAltText("Emily Blunt").getAttribute("src")).toBe(emilySeed?.previewAvatarUrl);
-    expect(merylSeed?.avatarUrl).toBe("/demo-avatars/humans/customer_sponsor.jpg");
+    expect(merylSeed?.avatarUrl).toBe("http://localhost:3000/demo-avatars/humans/customer_sponsor.jpg");
     expect(emilySeed?.previewAvatarUrl).toBe("/demo-avatars/avatars/customer_domain_owner.jpg");
   }, 15000);
 });

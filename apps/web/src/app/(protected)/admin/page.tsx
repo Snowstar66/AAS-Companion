@@ -467,10 +467,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             >
                               <div className="flex items-start gap-4">
                                 <div
-                                  className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border bg-muted/20 ${
+                                  className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted/20 ${
                                     seededRoleIsActive
-                                      ? "rounded-full border-emerald-300 shadow-[0_10px_24px_rgba(16,185,129,0.18)] ring-2 ring-emerald-100"
-                                      : "rounded-2xl border-border/70"
+                                      ? "border-emerald-300 shadow-[0_10px_24px_rgba(16,185,129,0.18)] ring-2 ring-emerald-100"
+                                      : "border-border/70"
                                   }`}
                                 >
                                   <img alt={seed.fullName} className="h-full w-full object-cover" src={displayAvatarUrl} />
