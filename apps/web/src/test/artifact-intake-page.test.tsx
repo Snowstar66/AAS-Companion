@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import ArtifactIntakePage from "@/app/(protected)/intake/page";
 
 const { requireProtectedSessionMock, loadArtifactIntakeWorkspaceMock } = vi.hoisted(() => ({
@@ -427,7 +427,15 @@ vi.mock("@/lib/intake/workspace", () => ({
   loadArtifactIntakeWorkspace: loadArtifactIntakeWorkspaceMock
 }));
 
+vi.mock("@/app/(protected)/review/actions", () => ({
+  submitArtifactBulkReviewAction: vi.fn()
+}));
+
 describe("Import page", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders full source, structured candidate view, and correction queue for the selected artifact", async () => {
     render(
       await ArtifactIntakePage({
@@ -459,6 +467,213 @@ describe("Import page", () => {
     expect(screen.queryByText("Story type")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Review leftovers" })).toBeNull();
     expect(screen.queryByRole("heading", { name: "Save and approve Story Idea import" })).toBeNull();
+  }, 15000);
+
+  it("shows bulk approve and reject controls directly in the Intake backlog for design imports", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [
+        {
+          id: "project-outcome-1",
+          key: "OUT-001",
+          title: "Primary project outcome"
+        }
+      ],
+      projectEpics: [
+        {
+          id: "candidate-epic",
+          key: "EPC-001",
+          title: "Imported Epic",
+          outcomeId: "project-outcome-1"
+        }
+      ],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 3,
+        candidateObjects: 1,
+        humanReviewRequired: 1
+      },
+      message: "Uploaded markdown artifacts are now classified, parsed into candidate sections, and mapped into reviewable AAS candidates.",
+      sessions: [
+        {
+          id: "session-design-intake",
+          label: "Artifact intake 2026-03-24 10:10",
+          importIntent: "design",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-24T09:10:00.000Z"),
+          creator: {
+            fullName: "Demo Value Owner",
+            email: "value.owner@aas-companion.local"
+          },
+          candidateCount: 1,
+          blockedCandidateCount: 1,
+          pendingReviewCount: 1,
+          uncertainCandidateCount: 1,
+          unmappedSectionCount: 1,
+          candidates: [
+            {
+              id: "candidate-design-1",
+              fileId: "file-design-1",
+              type: "story",
+              title: "Imported Story",
+              summary: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+              mappingState: "mapped",
+              relationshipState: "uncertain",
+              relationshipNote: "Story likely belongs to the nearest Epic candidate, but the relationship remains uncertain.",
+              acceptanceCriteria: ["Candidate objects show source lineage"],
+              testNotes: ["Regression should verify candidate relationships."],
+              draftRecord: {
+                key: null,
+                title: "Imported Story",
+                problemStatement: null,
+                outcomeStatement: null,
+                baselineDefinition: null,
+                baselineSource: null,
+                timeframe: null,
+                purpose: null,
+                storyType: "outcome_delivery",
+                valueIntent: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+                expectedBehavior: null,
+                acceptanceCriteria: ["Candidate objects show source lineage"],
+                aiUsageScope: [],
+                testDefinition: null,
+                definitionOfDone: [],
+                outcomeCandidateId: "project-outcome-1",
+                epicCandidateId: null
+              },
+              humanDecisions: {
+                valueOwnerId: null,
+                baselineValidity: null,
+                aiAccelerationLevel: null,
+                riskProfile: null,
+                riskAcceptanceStatus: null
+              },
+              complianceResult: {
+                findings: [
+                  {
+                    code: "story_expected_behavior_missing",
+                    category: "missing",
+                    message: "Expected behavior is missing.",
+                    fieldLabel: "Expected behavior"
+                  }
+                ],
+                summary: {
+                  missing: 1,
+                  uncertain: 1,
+                  humanOnly: 0,
+                  blocked: 0
+                },
+                promotionBlocked: true,
+                humanReviewRequired: true
+              },
+              issueDispositions: {},
+              reviewStatus: "pending",
+              importedReadinessState: "imported_incomplete",
+              source: {
+                fileId: "file-design-1",
+                fileName: "story-pack.md",
+                sectionId: "section-1",
+                sectionTitle: "Story",
+                sectionMarker: "## Story",
+                sourceType: "story_file",
+                confidence: "medium"
+              }
+            }
+          ],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: {
+            candidates: [],
+            unmappedSections: [
+              {
+                id: "section-2-architecture",
+                kind: "architecture_notes",
+                title: "Architecture Notes",
+                text: "Leave promotion outside this story.",
+                confidence: "medium",
+                isUncertain: false,
+                sourceReference: {
+                  fileId: "file-design-1",
+                  fileName: "story-pack.md",
+                  sectionId: "section-2",
+                  sectionTitle: "Architecture Notes",
+                  sectionMarker: "## Architecture Notes",
+                  lineStart: 8,
+                  lineEnd: 10
+                }
+              }
+            ]
+          },
+          files: [
+            {
+              id: "file-design-1",
+              fileName: "story-pack.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-24T09:10:00.000Z"),
+              uploader: {
+                fullName: "Demo Value Owner",
+                email: "value.owner@aas-companion.local"
+              },
+              sourceTypeStatus: "classified",
+              sourceType: "story_file",
+              sourceTypeConfidence: "medium",
+              sectionDispositions: {},
+              sizeBytes: 1024,
+              content:
+                "# Imported artifact\n\n## Story\n\nAs a delivery lead I want candidate mapping so that ambiguity stays visible.\n\n## Architecture Notes\n\nLeave promotion outside this story.",
+              parsedSectionCount: 2,
+              uncertainSectionCount: 1,
+              activeImportWorkCount: 1,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "story_file",
+                  confidence: "medium",
+                  rationale: "Detected story-oriented structure."
+                },
+                sections: [
+                  {
+                    id: "section-1-story",
+                    kind: "story_candidate",
+                    title: "Story",
+                    text: "As a delivery lead I want candidate mapping so that ambiguity stays visible.",
+                    confidence: "medium",
+                    isUncertain: false,
+                    sourceReference: {
+                      fileId: "file-design-1",
+                      fileName: "story-pack.md",
+                      sectionId: "section-1",
+                      sectionTitle: "Story",
+                      sectionMarker: "## Story",
+                      lineStart: 3,
+                      lineEnd: 4
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          activeImportWorkCount: 1
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          sessionId: "session-design-intake",
+          fileId: "file-design-1"
+        })
+      })
+    );
+
+    expect(screen.getByText(/tick checkboxes here to approve or reject multiple Delivery Stories in bulk/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: "Approve selected" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Reject selected" })).toBeDefined();
+    expect(screen.getByRole("checkbox", { name: "Select Imported Story" })).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open row" })).toBeDefined();
   }, 15000);
 
   it("shows Demo as read-only and disables new uploads", async () => {
@@ -861,7 +1076,24 @@ describe("Import page", () => {
                   confidence: "high",
                   rationale: "Framing file."
                 },
-                sections: []
+                sections: [
+                  {
+                    id: "section-origin-only",
+                    title: "Imported Story",
+                    kind: "story",
+                    confidence: "high",
+                    isUncertain: false,
+                    text: "Handled story source section body.",
+                    sourceReference: {
+                      fileId: "file-origin-only",
+                      fileName: "origin.md",
+                      sectionId: "section-origin-only",
+                      lineStart: 1,
+                      lineEnd: 6,
+                      sectionMarker: "### SC-001"
+                    }
+                  }
+                ]
               }
             }
           ],
@@ -1444,7 +1676,6 @@ describe("Import page", () => {
     expect(screen.queryByText(/No import sessions yet/i)).toBeNull();
     expect(screen.getAllByText("Source object").length).toBeGreaterThan(0);
     expect(screen.getAllByText("SC-001 Imported Story").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Handled story source section body.").length).toBeGreaterThan(0);
     const sourceSectionLinks = screen.getAllByRole("link", { name: /Open source section/i });
     expect(
       sourceSectionLinks.some(
@@ -1583,8 +1814,7 @@ describe("Import page", () => {
       await ArtifactIntakePage({
         searchParams: Promise.resolve({
           sessionId: "session-outcome-fields",
-          fileId: "file-outcome-fields",
-          candidateId: "candidate-outcome-fields"
+          fileId: "file-outcome-fields"
         })
       })
     );

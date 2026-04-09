@@ -10,6 +10,7 @@ import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-inta
 import { LocalizedText } from "@/components/shared/localized-text";
 import { requireProtectedSession } from "@/lib/auth/guards";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
+import { submitArtifactBulkReviewAction } from "../review/actions";
 import {
   submitArtifactSectionDispositionInlineAction,
   submitArtifactCandidateIssueDispositionInlineAction,
@@ -512,113 +513,272 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="rounded-2xl border border-sky-200 bg-sky-50/40 px-4 py-4 text-sm text-sky-950">
-                    <p>
-                      <LocalizedText
-                        en="Use Intake to inspect one file at a time. When you want to approve or reject many imported rows together, continue to"
-                        sv="Använd Import för att granska en fil i taget. När du vill godkänna eller avvisa många importerade rader samtidigt går du vidare till"
-                      />{" "}
-                      <Link
-                        className="font-semibold underline underline-offset-4"
-                        href={`/review?importIntent=${selectedSession?.importIntent ?? "framing"}&reviewStatusFilter=pending`}
-                      >
-                        {getImportWorkspaceLabel(selectedSession?.importIntent)}
-                      </Link>
-                      .
-                    </p>
-                    <p className="mt-2 text-sky-900/80">
-                      <LocalizedText
-                        en={`There you can tick checkboxes and approve selected ${selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} in bulk.`}
-                        sv={`Där kan du markera kryssrutor och godkänna valda ${selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} i bulk.`}
-                      />
-                    </p>
+                    {selectedSession?.importIntent === "design" ? (
+                      <>
+                        <p>
+                          <LocalizedText
+                            en="Use Intake to inspect one imported row at a time, or tick checkboxes here to approve or reject multiple Delivery Stories in bulk."
+                            sv="Använd Import för att granska en importerad rad i taget, eller markera kryssrutorna här för att godkänna eller avvisa flera Delivery Stories i bulk."
+                          />
+                        </p>
+                        <p className="mt-2 text-sky-900/80">
+                          <LocalizedText en="The dedicated queue view is still available in" sv="Den dedikerade kövyn finns fortfarande i" />{" "}
+                          <Link
+                            className="font-semibold underline underline-offset-4"
+                            href={`/review?importIntent=${selectedSession?.importIntent ?? "framing"}&reviewStatusFilter=pending`}
+                          >
+                            {getImportWorkspaceLabel(selectedSession?.importIntent)}
+                          </Link>
+                          .
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          <LocalizedText
+                            en="Use Intake to inspect one file at a time. When you want to approve or reject many imported rows together, continue to"
+                            sv="Använd Import för att granska en fil i taget. När du vill godkänna eller avvisa många importerade rader samtidigt går du vidare till"
+                          />{" "}
+                          <Link
+                            className="font-semibold underline underline-offset-4"
+                            href={`/review?importIntent=${selectedSession?.importIntent ?? "framing"}&reviewStatusFilter=pending`}
+                          >
+                            {getImportWorkspaceLabel(selectedSession?.importIntent)}
+                          </Link>
+                          .
+                        </p>
+                        <p className="mt-2 text-sky-900/80">
+                          <LocalizedText
+                            en={`There you can tick checkboxes and approve selected ${selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} in bulk.`}
+                            sv={`Där kan du markera kryssrutor och godkänna valda ${selectedSession?.importIntent === "design" ? "Delivery Stories" : "Story Ideas"} i bulk.`}
+                          />
+                        </p>
+                      </>
+                    )}
                   </div>
                   {backlogRows.length > 0 ? (
-                    <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">
-                      {backlogRows.map((row, index) => {
-                        const needsAttention = row.unresolvedCount > 0 || row.blockedCount > 0 || row.leftoverCount > 0;
-
-                        return (
-                          <Link
-                            className={`block px-5 py-4 transition ${
-                              index > 0 ? "border-t border-border/70" : ""
-                            } ${
-                              row.isSelected
-                                ? "border-l-4 border-l-[#2f5f98] bg-[#2f5f98] text-white"
-                                : needsAttention
-                                  ? "border-l-4 border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/50"
-                                  : "border-l-4 border-l-transparent hover:bg-muted/30"
-                            }`}
-                            href={row.href}
-                            key={row.id}
-                            prefetch={false}
-                          >
-                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span
-                                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
-                                      row.isSelected
-                                        ? "border-white/30 bg-white/10 text-white"
-                                        : needsAttention
-                                          ? "border-amber-200 bg-amber-50 text-amber-700"
-                                          : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    }`}
-                                  >
-                                    {needsAttention ? <CircleAlert className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                                  </span>
-                                  <span
-                                    className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                                      row.isSelected
-                                        ? "border-white/20 bg-white/10 text-white/85"
-                                        : "border-border/70 bg-muted text-muted-foreground"
-                                    }`}
-                                  >
-                                    {row.typeLabel}
-                                  </span>
-                                  <h3 className={`text-sm font-semibold ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.title}</h3>
-                                </div>
-                                <p className={`mt-2 text-sm leading-6 ${row.isSelected ? "text-white/90" : "text-muted-foreground"}`}>
-                                  {row.subtitle}
-                                </p>
-                                <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs ${row.isSelected ? "text-white/75" : "text-muted-foreground"}`}>
-                                  <span>{row.fileName}</span>
-                                  <span>{row.sessionLabel}</span>
-                                  <span>{row.meta}</span>
-                                  <span>{row.statusLabel}</span>
-                                </div>
-                                <p className={`mt-2 text-xs ${row.isSelected ? "text-white/80" : "text-muted-foreground"}`}>
-                                  <LocalizedText en={needsAttention ? "Needs review:" : "Status:"} sv={needsAttention ? "Behöver granskning:" : "Status:"} />{" "}
-                                  {row.attentionPreview.join(" - ")}
-                                </p>
-                              </div>
-
-                              <div className="flex flex-wrap gap-2 text-xs">
-                                <span
-                                  className={`inline-flex rounded-full border px-3 py-1 ${
-                                    row.isSelected
-                                      ? "border-white/20 bg-white/10 text-white/90"
-                                      : "border-border/70 bg-background text-muted-foreground"
-                                  }`}
-                                >
-                                  <LocalizedText en="Open:" sv="Öppna:" />{" "}
-                                  <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
-                                </span>
-                                {row.blockedCount > 0 ? (
-                                  <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">
-                                    <LocalizedText en={`Blocked: ${row.blockedCount}`} sv={`Blockerad: ${row.blockedCount}`} />
-                                  </span>
-                                ) : null}
-                                {row.leftoverCount > 0 ? (
-                                  <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700">
-                                    <LocalizedText en={`Leftovers: ${row.leftoverCount}`} sv={`Restposter: ${row.leftoverCount}`} />
-                                  </span>
-                                ) : null}
-                              </div>
+                    selectedSession?.importIntent === "design" ? (
+                      <form action={submitArtifactBulkReviewAction} className="space-y-4">
+                        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                            <div className="flex-1">
+                              <label className="text-sm font-medium text-foreground" htmlFor="design-bulk-review-comment">
+                                <LocalizedText en="Review note" sv="Granskningsnotering" />
+                              </label>
+                              <textarea
+                                className="mt-2 min-h-24 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                id="design-bulk-review-comment"
+                                name="bulkReviewComment"
+                                placeholder="Optional note for the selected decisions."
+                              />
                             </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button className="gap-2" name="bulkIntent" type="submit" value="approve">
+                                <LocalizedText en="Approve selected" sv="Godkänn valda" />
+                              </Button>
+                              <Button className="gap-2" name="bulkIntent" type="submit" value="reject" variant="secondary">
+                                <LocalizedText en="Reject selected" sv="Avvisa valda" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">
+                          {backlogRows.map((row, index) => {
+                            const needsAttention = row.unresolvedCount > 0 || row.blockedCount > 0 || row.leftoverCount > 0;
+                            const rowTone = row.isSelected
+                              ? "border-l-4 border-l-[#2f5f98] bg-[#2f5f98] text-white"
+                              : needsAttention
+                                ? "border-l-4 border-l-amber-400 bg-amber-50/30"
+                                : "border-l-4 border-l-transparent";
+
+                            return (
+                              <div className={`px-5 py-4 transition ${index > 0 ? "border-t border-border/70" : ""} ${rowTone}`} key={row.id}>
+                                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                  <div className="flex min-w-0 flex-1 gap-3">
+                                    {row.kind === "candidate" ? (
+                                      <div className="pt-0.5">
+                                        <input
+                                          aria-label={`Select ${row.title}`}
+                                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                                          name="candidateIds"
+                                          type="checkbox"
+                                          value={row.id}
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div aria-hidden="true" className="w-4" />
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <span
+                                          className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
+                                            row.isSelected
+                                              ? "border-white/30 bg-white/10 text-white"
+                                              : needsAttention
+                                                ? "border-amber-200 bg-amber-50 text-amber-700"
+                                                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                          }`}
+                                        >
+                                          {needsAttention ? <CircleAlert className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                        </span>
+                                        <span
+                                          className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                                            row.isSelected
+                                              ? "border-white/20 bg-white/10 text-white/85"
+                                              : "border-border/70 bg-muted text-muted-foreground"
+                                          }`}
+                                        >
+                                          {row.typeLabel}
+                                        </span>
+                                        <h3 className={`text-sm font-semibold ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.title}</h3>
+                                      </div>
+                                      <p className={`mt-2 text-sm leading-6 ${row.isSelected ? "text-white/90" : "text-muted-foreground"}`}>
+                                        {row.subtitle}
+                                      </p>
+                                      <div
+                                        className={`mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs ${
+                                          row.isSelected ? "text-white/75" : "text-muted-foreground"
+                                        }`}
+                                      >
+                                        <span>{row.fileName}</span>
+                                        <span>{row.sessionLabel}</span>
+                                        <span>{row.meta}</span>
+                                        <span>{row.statusLabel}</span>
+                                      </div>
+                                      <p className={`mt-2 text-xs ${row.isSelected ? "text-white/80" : "text-muted-foreground"}`}>
+                                        <LocalizedText en={needsAttention ? "Needs review:" : "Status:"} sv={needsAttention ? "Behöver granskning:" : "Status:"} />{" "}
+                                        {row.attentionPreview.join(" - ")}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                                    <span
+                                      className={`inline-flex rounded-full border px-3 py-1 ${
+                                        row.isSelected
+                                          ? "border-white/20 bg-white/10 text-white/90"
+                                          : "border-border/70 bg-background text-muted-foreground"
+                                      }`}
+                                    >
+                                      <LocalizedText en="Open:" sv="Öppna:" />{" "}
+                                      <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
+                                    </span>
+                                    {row.blockedCount > 0 ? (
+                                      <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">
+                                        <LocalizedText en={`Blocked: ${row.blockedCount}`} sv={`Blockerad: ${row.blockedCount}`} />
+                                      </span>
+                                    ) : null}
+                                    {row.leftoverCount > 0 ? (
+                                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700">
+                                        <LocalizedText en={`Leftovers: ${row.leftoverCount}`} sv={`Restposter: ${row.leftoverCount}`} />
+                                      </span>
+                                    ) : null}
+                                    <Link
+                                      className={`inline-flex rounded-full border px-3 py-1 font-medium transition ${
+                                        row.isSelected
+                                          ? "border-white/20 bg-white/10 text-white hover:bg-white/15"
+                                          : "border-border/70 bg-background text-foreground hover:bg-muted"
+                                      }`}
+                                      href={row.href}
+                                      prefetch={false}
+                                    >
+                                      <LocalizedText en="Open row" sv="Öppna rad" />
+                                    </Link>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="overflow-hidden rounded-2xl border border-border/70 bg-background">
+                        {backlogRows.map((row, index) => {
+                          const needsAttention = row.unresolvedCount > 0 || row.blockedCount > 0 || row.leftoverCount > 0;
+
+                          return (
+                            <Link
+                              className={`block px-5 py-4 transition ${
+                                index > 0 ? "border-t border-border/70" : ""
+                              } ${
+                                row.isSelected
+                                  ? "border-l-4 border-l-[#2f5f98] bg-[#2f5f98] text-white"
+                                  : needsAttention
+                                    ? "border-l-4 border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/50"
+                                    : "border-l-4 border-l-transparent hover:bg-muted/30"
+                              }`}
+                              href={row.href}
+                              key={row.id}
+                              prefetch={false}
+                            >
+                              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span
+                                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border ${
+                                        row.isSelected
+                                          ? "border-white/30 bg-white/10 text-white"
+                                          : needsAttention
+                                            ? "border-amber-200 bg-amber-50 text-amber-700"
+                                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                      }`}
+                                    >
+                                      {needsAttention ? <CircleAlert className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                    </span>
+                                    <span
+                                      className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                                        row.isSelected
+                                          ? "border-white/20 bg-white/10 text-white/85"
+                                          : "border-border/70 bg-muted text-muted-foreground"
+                                      }`}
+                                    >
+                                      {row.typeLabel}
+                                    </span>
+                                    <h3 className={`text-sm font-semibold ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.title}</h3>
+                                  </div>
+                                  <p className={`mt-2 text-sm leading-6 ${row.isSelected ? "text-white/90" : "text-muted-foreground"}`}>
+                                    {row.subtitle}
+                                  </p>
+                                  <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs ${row.isSelected ? "text-white/75" : "text-muted-foreground"}`}>
+                                    <span>{row.fileName}</span>
+                                    <span>{row.sessionLabel}</span>
+                                    <span>{row.meta}</span>
+                                    <span>{row.statusLabel}</span>
+                                  </div>
+                                  <p className={`mt-2 text-xs ${row.isSelected ? "text-white/80" : "text-muted-foreground"}`}>
+                                    <LocalizedText en={needsAttention ? "Needs review:" : "Status:"} sv={needsAttention ? "Behöver granskning:" : "Status:"} />{" "}
+                                    {row.attentionPreview.join(" - ")}
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 text-xs">
+                                  <span
+                                    className={`inline-flex rounded-full border px-3 py-1 ${
+                                      row.isSelected
+                                        ? "border-white/20 bg-white/10 text-white/90"
+                                        : "border-border/70 bg-background text-muted-foreground"
+                                    }`}
+                                  >
+                                    <LocalizedText en="Open:" sv="Öppna:" />{" "}
+                                    <strong className={`ml-1 ${row.isSelected ? "text-white" : "text-foreground"}`}>{row.unresolvedCount}</strong>
+                                  </span>
+                                  {row.blockedCount > 0 ? (
+                                    <span className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-3 py-1 font-medium text-rose-700">
+                                      <LocalizedText en={`Blocked: ${row.blockedCount}`} sv={`Blockerad: ${row.blockedCount}`} />
+                                    </span>
+                                  ) : null}
+                                  {row.leftoverCount > 0 ? (
+                                    <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-medium text-amber-700">
+                                      <LocalizedText en={`Leftovers: ${row.leftoverCount}`} sv={`Restposter: ${row.leftoverCount}`} />
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )
                   ) : null}
                   {backlogRows.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-5 text-sm text-muted-foreground">
