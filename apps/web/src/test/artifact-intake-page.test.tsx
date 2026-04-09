@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ArtifactIntakePage from "@/app/(protected)/intake/page";
 
-const { requireProtectedSessionMock, loadArtifactIntakeWorkspaceMock } = vi.hoisted(() => ({
+const { requireProtectedSessionMock, loadArtifactIntakeWorkspaceMock, refreshRouterMock } = vi.hoisted(() => ({
   requireProtectedSessionMock: vi.fn(async () => ({
     mode: "local" as const,
     userId: "user-1",
@@ -416,7 +416,8 @@ const { requireProtectedSessionMock, loadArtifactIntakeWorkspaceMock } = vi.hois
         ]
       }
     ]
-  }))
+  })),
+  refreshRouterMock: vi.fn()
 }));
 
 vi.mock("@/lib/auth/guards", () => ({
@@ -430,6 +431,17 @@ vi.mock("@/lib/intake/workspace", () => ({
 vi.mock("@/app/(protected)/review/actions", () => ({
   submitArtifactBulkReviewAction: vi.fn()
 }));
+
+vi.mock("next/navigation", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/navigation")>();
+
+  return {
+    ...actual,
+    useRouter: () => ({
+      refresh: refreshRouterMock
+    })
+  };
+});
 
 describe("Import page", () => {
   afterEach(() => {
@@ -587,6 +599,32 @@ describe("Import page", () => {
           displayCandidates: [],
           mappedArtifacts: {
             candidates: [],
+            carryForwardItems: [
+              {
+                id: "carry-forward-1",
+                category: "ux_principle",
+                recommendedUse: "design_input",
+                title: "Design cue",
+                summary: "Keep this as design input until it is either confirmed or removed.",
+                sourceSection: {
+                  id: "section-3-design-cue",
+                  kind: "architecture_notes",
+                  title: "Design cue",
+                  text: "This import should remain visible as design input until removed.",
+                  confidence: "medium",
+                  isUncertain: false,
+                  sourceReference: {
+                    fileId: "file-design-1",
+                    fileName: "story-pack.md",
+                    sectionId: "section-3",
+                    sectionTitle: "Design cue",
+                    sectionMarker: "## Design cue",
+                    lineStart: 11,
+                    lineEnd: 12
+                  }
+                }
+              }
+            ],
             unmappedSections: [
               {
                 id: "section-2-architecture",
@@ -650,6 +688,23 @@ describe("Import page", () => {
                       lineStart: 3,
                       lineEnd: 4
                     }
+                  },
+                  {
+                    id: "section-3-design-cue",
+                    kind: "architecture_notes",
+                    title: "Design cue",
+                    text: "This import should remain visible as design input until removed.",
+                    confidence: "medium",
+                    isUncertain: false,
+                    sourceReference: {
+                      fileId: "file-design-1",
+                      fileName: "story-pack.md",
+                      sectionId: "section-3",
+                      sectionTitle: "Design cue",
+                      sectionMarker: "## Design cue",
+                      lineStart: 11,
+                      lineEnd: 12
+                    }
                   }
                 ]
               }
@@ -674,6 +729,178 @@ describe("Import page", () => {
     expect(screen.getByRole("button", { name: "Reject selected" })).toBeDefined();
     expect(screen.getByRole("checkbox", { name: "Select Imported Story" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open row" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Remove from design" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Remove leftover" })).toBeDefined();
+  }, 15000);
+
+  it("hides resolved carry-forward items and leftovers from the active design review lists", async () => {
+    loadArtifactIntakeWorkspaceMock.mockResolvedValueOnce({
+      state: "ready",
+      organizationName: "AAS Demo Organization",
+      projectOutcomes: [],
+      projectEpics: [],
+      summary: {
+        sessions: 1,
+        files: 1,
+        pendingClassification: 0,
+        parsedSections: 2,
+        candidateObjects: 0,
+        humanReviewRequired: 0
+      },
+      message: "Workspace loaded.",
+      sessions: [
+        {
+          id: "session-design-resolved",
+          label: "Resolved design import",
+          importIntent: "design",
+          status: "human_review_required",
+          createdAt: new Date("2026-03-24T09:10:00.000Z"),
+          creator: null,
+          candidateCount: 0,
+          blockedCandidateCount: 0,
+          pendingReviewCount: 0,
+          uncertainCandidateCount: 0,
+          unmappedSectionCount: 1,
+          candidates: [],
+          allCandidates: [],
+          displayCandidates: [],
+          mappedArtifacts: {
+            candidates: [],
+            carryForwardItems: [
+              {
+                id: "carry-forward-hidden",
+                category: "ux_principle",
+                recommendedUse: "design_input",
+                title: "Hidden design cue",
+                summary: "This should disappear after it is removed from design.",
+                sourceSection: {
+                  id: "carry-forward-section-hidden",
+                  kind: "architecture_notes",
+                  title: "Hidden design cue",
+                  text: "Already handled.",
+                  confidence: "medium",
+                  isUncertain: false,
+                  sourceReference: {
+                    fileId: "file-design-resolved",
+                    fileName: "traceability.md",
+                    sectionId: "section-carry-hidden",
+                    sectionTitle: "Hidden design cue",
+                    sectionMarker: "## Hidden design cue",
+                    lineStart: 1,
+                    lineEnd: 2
+                  }
+                }
+              }
+            ],
+            unmappedSections: [
+              {
+                id: "leftover-section-hidden",
+                kind: "architecture_notes",
+                title: "Hidden leftover",
+                text: "Already removed from review.",
+                confidence: "medium",
+                isUncertain: false,
+                sourceReference: {
+                  fileId: "file-design-resolved",
+                  fileName: "traceability.md",
+                  sectionId: "section-leftover-hidden",
+                  sectionTitle: "Hidden leftover",
+                  sectionMarker: "## Hidden leftover",
+                  lineStart: 3,
+                  lineEnd: 4
+                }
+              }
+            ]
+          },
+          files: [
+            {
+              id: "file-design-resolved",
+              fileName: "traceability.md",
+              extension: ".md",
+              uploadedAt: new Date("2026-03-24T09:10:00.000Z"),
+              uploader: null,
+              sourceTypeStatus: "classified",
+              sourceType: "story_file",
+              sourceTypeConfidence: "medium",
+              sectionDispositions: {
+                "carry-forward-section-hidden": {
+                  issueId: "carry-forward-section-hidden",
+                  action: "not_relevant",
+                  note: null
+                },
+                "leftover-section-hidden": {
+                  issueId: "leftover-section-hidden",
+                  action: "not_relevant",
+                  note: null
+                }
+              },
+              sizeBytes: 512,
+              content: "# Traceability",
+              parsedSectionCount: 2,
+              uncertainSectionCount: 0,
+              activeImportWorkCount: 0,
+              parsedArtifacts: {
+                classification: {
+                  sourceType: "story_file",
+                  confidence: "medium",
+                  rationale: "Detected story-oriented structure."
+                },
+                sections: [
+                  {
+                    id: "carry-forward-section-hidden",
+                    kind: "architecture_notes",
+                    title: "Hidden design cue",
+                    text: "Already handled.",
+                    confidence: "medium",
+                    isUncertain: false,
+                    sourceReference: {
+                      fileId: "file-design-resolved",
+                      fileName: "traceability.md",
+                      sectionId: "section-carry-hidden",
+                      sectionTitle: "Hidden design cue",
+                      sectionMarker: "## Hidden design cue",
+                      lineStart: 1,
+                      lineEnd: 2
+                    }
+                  },
+                  {
+                    id: "leftover-section-hidden",
+                    kind: "architecture_notes",
+                    title: "Hidden leftover",
+                    text: "Already removed from review.",
+                    confidence: "medium",
+                    isUncertain: false,
+                    sourceReference: {
+                      fileId: "file-design-resolved",
+                      fileName: "traceability.md",
+                      sectionId: "section-leftover-hidden",
+                      sectionTitle: "Hidden leftover",
+                      sectionMarker: "## Hidden leftover",
+                      lineStart: 3,
+                      lineEnd: 4
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          activeImportWorkCount: 0
+        }
+      ]
+    });
+
+    render(
+      await ArtifactIntakePage({
+        searchParams: Promise.resolve({
+          sessionId: "session-design-resolved",
+          fileId: "file-design-resolved"
+        })
+      })
+    );
+
+    expect(screen.queryByRole("button", { name: "Remove from design" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Remove leftover" })).toBeNull();
+    expect(screen.getByText("No leftover sections currently need review for the selected artifact.")).toBeDefined();
   }, 15000);
 
   it("shows Demo as read-only and disables new uploads", async () => {

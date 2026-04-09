@@ -316,7 +316,7 @@ function queueItems(
         issueId: section.id,
         actions: [
           { label: "Worked off", value: "corrected" as const },
-          { label: "Reject", value: "not_relevant" as const },
+          { label: "Remove leftover", value: "not_relevant" as const },
           { label: "Keep pending", value: "pending" as const },
           { label: "Mark blocker", value: "blocked" as const }
         ]
@@ -409,6 +409,10 @@ function isActionableFramingCandidate(candidate: IntakeArtifactCandidate) {
 }
 
 function isActionableFramingCarryForwardAction(action: string | null | undefined) {
+  return action !== "confirmed" && action !== "corrected" && action !== "not_relevant";
+}
+
+function isActionableSectionDecision(action: string | null | undefined) {
   return action !== "confirmed" && action !== "corrected" && action !== "not_relevant";
 }
 
@@ -1521,9 +1525,16 @@ export function ArtifactIntakeReviewWorkspace({
         section.sourceReference.sectionId === sourceSectionTargetId ||
         section.id === sourceSectionTargetId
     ) ?? null;
-  const groups = queueItems(session, selectedFile);
+  const groups = queueItems(session, selectedFile)
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => isActionableSectionDecision(item.selectedAction ?? null))
+    }))
+    .filter((group) => group.items.length > 0);
   const carryForwardItems = (session.mappedArtifacts?.carryForwardItems ?? []).filter(
-    (item) => item.sourceSection.sourceReference.fileId === selectedFile.id
+    (item) =>
+      item.sourceSection.sourceReference.fileId === selectedFile.id &&
+      isActionableSectionDecision(selectedFile.sectionDispositions[item.sourceSection.id]?.action ?? null)
   );
   const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
     (section) => section.sourceReference.fileId === selectedFile.id
@@ -1573,7 +1584,9 @@ export function ArtifactIntakeReviewWorkspace({
   const quickEditFieldNames = new Set<string>();
   const showHumanDecisionFields = true;
   const fileLeftovers = (session.mappedArtifacts?.unmappedSections ?? []).filter(
-    (section) => section.sourceReference.fileId === selectedFile.id
+    (section) =>
+      section.sourceReference.fileId === selectedFile.id &&
+      isActionableSectionDecision(selectedFile.sectionDispositions[section.id]?.action ?? null)
   );
   const leftoverGroups = groupLeftoversByKind(fileLeftovers);
   const carryForwardItemStates = carryForwardItems.map((item) => {
@@ -1586,6 +1599,7 @@ export function ArtifactIntakeReviewWorkspace({
     };
   });
   const unresolvedCarryForwardCount = carryForwardItemStates.filter((entry) => entry.status === "unresolved").length;
+  const unresolvedLeftoverCount = groups.reduce((total, group) => total + group.items.length, 0);
   const collapsedFramingCandidates = collapseFramingCandidatesForDisplay(fileCandidates);
   const actionableCollapsedFramingCandidates = collapsedFramingCandidates.candidates.filter(isActionableFramingCandidate);
   const actionableCarryForwardItems = carryForwardItems.filter((item) =>
@@ -1685,7 +1699,7 @@ export function ArtifactIntakeReviewWorkspace({
             <CardDescription>
               {t(
                 language,
-                "These sections were recognized as useful design or constraint input, so they are kept visible here instead of being treated as leftovers.",
+                "These sections were recognized as useful design or constraint input. Confirm keeps them as active design input, while Remove from design clears them out of this queue.",
                 "De här sektionerna bedömdes vara användbart design- eller begränsningsunderlag, så de visas här i stället för att behandlas som restposter."
               )}
             </CardDescription>
@@ -1728,7 +1742,7 @@ export function ArtifactIntakeReviewWorkspace({
                           ]
                         : [
                             { label: t(language, "Confirm", "Bekräfta"), value: "confirmed" as const },
-                            { label: t(language, "Not relevant", "Inte relevant"), value: "not_relevant" as const },
+                            { label: t(language, "Remove from design", "Ta bort fran design"), value: "not_relevant" as const },
                             { label: t(language, "Keep pending", "Behåll väntande"), value: "pending" as const },
                             { label: t(language, "Mark blocker", "Markera blockerare"), value: "blocked" as const }
                           ]
@@ -1758,9 +1772,9 @@ export function ArtifactIntakeReviewWorkspace({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {progress?.categories.unmapped ? (
+          {unresolvedLeftoverCount > 0 ? (
             <div className="flex flex-wrap gap-2 text-xs">
-              {compactMetric(t(language, "Review leftovers", "Granska restposter"), progress.categories.unmapped)}
+              {compactMetric(t(language, "Review leftovers", "Granska restposter"), unresolvedLeftoverCount)}
             </div>
           ) : null}
           {leftoverGroups.length > 0 ? (
@@ -1899,6 +1913,11 @@ export function ArtifactIntakeReviewWorkspace({
               </div>
             );
           })}
+          {groups.length === 0 ? (
+            <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+              {t(language, "No leftover sections currently need review for the selected artifact.", "Inga restsektioner behover just nu granskas for det valda underlaget.")}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
       ) : null}

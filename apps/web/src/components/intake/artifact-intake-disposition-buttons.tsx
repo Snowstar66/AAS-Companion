@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
@@ -71,7 +72,28 @@ function buttonClasses(action: DispositionAction, selected: boolean) {
   };
 }
 
+function selectedActionLabel(action: string) {
+  if (action === "not_relevant") {
+    return "removed";
+  }
+
+  if (action === "corrected") {
+    return "worked off";
+  }
+
+  if (action === "blocked") {
+    return "marked blocker";
+  }
+
+  if (action === "pending") {
+    return "kept pending";
+  }
+
+  return action.replaceAll("_", " ");
+}
+
 export function ArtifactIntakeDispositionButtons(props: ArtifactIntakeDispositionButtonsProps) {
+  const router = useRouter();
   const [selectedAction, setSelectedAction] = useState<string | null>(props.initialAction ?? null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +140,7 @@ export function ArtifactIntakeDispositionButtons(props: ArtifactIntakeDispositio
                   }
 
                   setSelectedAction(result.selectedAction);
+                  router.refresh();
                 });
               }}
               size="sm"
@@ -139,7 +162,7 @@ export function ArtifactIntakeDispositionButtons(props: ArtifactIntakeDispositio
         >
           {optimisticStatus}
         </span>
-        {selectedAction ? <span className="text-muted-foreground">Selected: {selectedAction.replaceAll("_", " ")}</span> : null}
+        {selectedAction ? <span className="text-muted-foreground">Selected: {selectedActionLabel(selectedAction)}</span> : null}
         {isPending ? (
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
             <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
