@@ -18,6 +18,7 @@ type PartyRoleEntryView = {
   email: string;
   phoneNumber?: string | null | undefined;
   avatarUrl?: string | null | undefined;
+  displayAvatarUrl?: string | null | undefined;
   organizationSide: string;
   roleType: string;
   roleTitle: string;
@@ -44,6 +45,12 @@ function t(language: "en" | "sv", en: string, sv: string) {
 
 function localizeRoleTitle(language: "en" | "sv", roleType: string, roleTitle: string) {
   if (language !== "sv") return roleTitle;
+
+  if (roleType === "customer_domain_owner") return "Dom\u00E4n\u00E4gare";
+  if (roleType === "value_owner") return "V\u00E4rde\u00E4gare";
+  if (roleType === "risk_owner") return "Risk\u00E4gare";
+  if (roleType === "architect") return "L\u00F6sningsarkitekt";
+  if (roleType === "delivery_lead") return "Leveransledare";
 
   const normalized = roleTitle.trim().toLowerCase();
   const byTitle: Record<string, string> = {
@@ -86,6 +93,18 @@ function localizeMandateNotes(
   mandateNotes?: string | null | undefined
 ) {
   if (language !== "sv" || !mandateNotes) return mandateNotes;
+
+  if (mandateNotes === "Owns business value.") {
+    return "\u00C4ger aff\u00E4rsv\u00E4rdet.";
+  }
+
+  if (mandateNotes === "Owns delivery coordination.") {
+    return "\u00C4ger leveranskoordineringen.";
+  }
+
+  if (mandateNotes === "Owns architecture review.") {
+    return "\u00C4ger arkitekturgranskningen.";
+  }
 
   const normalized = mandateNotes.trim();
   const byText: Record<string, string> = {
@@ -205,7 +224,7 @@ function PeopleGroup(props: {
               <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-4">
                 <div className="flex min-w-0 items-start gap-3">
                   <GovernanceIdentityBadge
-                    avatarUrl={person.avatarUrl}
+                    avatarUrl={person.displayAvatarUrl ?? person.avatarUrl}
                     kind="human"
                     name={person.fullName}
                     tone={props.tone}

@@ -10,6 +10,7 @@ import {
 } from "@aas-companion/api";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { revalidateOrganizationValueOwnersCache } from "@/lib/cache/project-data";
+import { getRolePhotoAvatarUrl } from "@/lib/governance/role-avatars";
 
 function buildRedirect(params: {
   view?: string | undefined;
@@ -54,16 +55,26 @@ function getReturnParams(formData: FormData) {
 export async function createPartyRoleEntryAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const returnParams = getReturnParams(formData);
+  const fullName = String(formData.get("fullName") ?? "");
+  const organizationSide = String(formData.get("organizationSide") ?? "customer");
+  const roleType = String(formData.get("roleType") ?? "value_owner");
+  const avatarUrl =
+    String(formData.get("avatarUrl") ?? "") ||
+    getRolePhotoAvatarUrl({
+      fullName,
+      organizationSide,
+      roleType
+    });
 
   const result = await createPartyRoleEntryService({
     organizationId: session.organization.organizationId,
     actorId: session.userId,
-    fullName: String(formData.get("fullName") ?? ""),
+    fullName,
     email: String(formData.get("email") ?? ""),
     phoneNumber: String(formData.get("phoneNumber") ?? "") || null,
-    avatarUrl: String(formData.get("avatarUrl") ?? "") || null,
-    organizationSide: String(formData.get("organizationSide") ?? "customer"),
-    roleType: String(formData.get("roleType") ?? "value_owner"),
+    avatarUrl,
+    organizationSide,
+    roleType,
     roleTitle: String(formData.get("roleTitle") ?? ""),
     mandateNotes: String(formData.get("mandateNotes") ?? "") || null,
     isActive: true
@@ -95,17 +106,27 @@ export async function updatePartyRoleEntryAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const returnParams = getReturnParams(formData);
   const isActive = String(formData.get("isActive") ?? "true") === "true";
+  const fullName = String(formData.get("fullName") ?? "");
+  const organizationSide = String(formData.get("organizationSide") ?? "customer");
+  const roleType = String(formData.get("roleType") ?? "value_owner");
+  const avatarUrl =
+    String(formData.get("avatarUrl") ?? "") ||
+    getRolePhotoAvatarUrl({
+      fullName,
+      organizationSide,
+      roleType
+    });
 
   const result = await updatePartyRoleEntryService({
     organizationId: session.organization.organizationId,
     id: String(formData.get("id") ?? ""),
     actorId: session.userId,
-    fullName: String(formData.get("fullName") ?? ""),
+    fullName,
     email: String(formData.get("email") ?? ""),
     phoneNumber: String(formData.get("phoneNumber") ?? "") || null,
-    avatarUrl: String(formData.get("avatarUrl") ?? "") || null,
-    organizationSide: String(formData.get("organizationSide") ?? "customer"),
-    roleType: String(formData.get("roleType") ?? "value_owner"),
+    avatarUrl,
+    organizationSide,
+    roleType,
     roleTitle: String(formData.get("roleTitle") ?? ""),
     mandateNotes: String(formData.get("mandateNotes") ?? "") || null,
     isActive

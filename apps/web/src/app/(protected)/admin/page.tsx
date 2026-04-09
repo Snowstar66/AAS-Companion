@@ -429,7 +429,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                                   <img
                                     alt={seed.fullName}
                                     className="h-full w-full object-cover"
-                                    src={seed.avatarUrl}
+                                    src={seed.previewAvatarUrl}
                                   />
                                 </div>
                                 <div className="min-w-0 flex-1 space-y-2">

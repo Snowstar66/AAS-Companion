@@ -6,9 +6,16 @@ import { aiAccelerationLevels } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { GovernanceAgentRegistryView } from "@/components/governance/governance-agent-registry-view";
 import { GovernanceDirectoryView } from "@/components/governance/governance-directory-view";
+import { GovernanceIdentityBadge } from "@/components/governance/governance-identity-badge";
 import { AppShell } from "@/components/layout/app-shell";
 import { ActionSummaryCard } from "@/components/shared/action-summary-card";
+import { getDemoRoleSeedByEmail } from "@/lib/admin/demo-role-catalog";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+import {
+  getRoleCartoonAvatarUrl,
+  getRolePhotoAvatarUrl,
+  isGeneratedSvgAvatarUrl
+} from "@/lib/governance/role-avatars";
 import {
   createAgentRegistryEntryAction,
   createPartyRoleEntryAction,
@@ -84,12 +91,12 @@ function localizeRoleBucketTitle(title: string, language: AppLanguage) {
 
 function localizeRoleLabel(label: string, language: AppLanguage) {
   if (language !== "sv") return label;
-  if (label === "Value Owner") return "Value Owner";
-  if (label === "Delivery Lead") return "Delivery Lead";
-  if (label === "Architect") return "Arkitekt";
-  if (label === "Risk Owner") return "Riskägare";
+  if (label === "Value Owner") return "V\u00E4rde\u00E4gare";
+  if (label === "Delivery Lead") return "Leveransledare";
+  if (label === "Architect") return "L\u00F6sningsarkitekt";
+  if (label === "Risk Owner") return "Risk\u00E4gare";
   if (label === "AI Governance Lead") return "AI Governance Lead";
-  if (label === "Domain Owner") return "Domänägare";
+  if (label === "Domain Owner") return "Dom\u00E4n\u00E4gare";
   return label;
 }
 
@@ -194,6 +201,35 @@ function getReadinessTone(readiness: "ready" | "partial" | "not_ready") {
   return "border-rose-200 bg-rose-50/80";
 }
 
+function shouldPreferGeneratedPhoto(input: {
+  email: string;
+  avatarUrl?: string | null | undefined;
+}) {
+  const seed = getDemoRoleSeedByEmail(input.email);
+  return Boolean(seed) && (!input.avatarUrl || isGeneratedSvgAvatarUrl(input.avatarUrl));
+}
+
+function getDisplayAvatarForRole(input: {
+  roleType: string;
+  organizationSide: string;
+  fullName: string;
+  email: string;
+  avatarUrl?: string | null | undefined;
+}) {
+  if (shouldPreferGeneratedPhoto(input)) {
+    return getRolePhotoAvatarUrl(input);
+  }
+
+  return (
+    input.avatarUrl ??
+    getRolePhotoAvatarUrl({
+      roleType: input.roleType,
+      organizationSide: input.organizationSide,
+      fullName: input.fullName
+    })
+  );
+}
+
 async function getServerLanguage(): Promise<AppLanguage> {
   try {
     const cookieStore = await cookies();
@@ -246,6 +282,15 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
   const roleBuckets = data.adaptive.roleBuckets;
   const readinessGaps = data.adaptive.readinessGaps;
   const activeAgents = data.agents.filter((agent) => agent.isActive);
+  const peopleWithDisplayAvatars = data.people.map((person) => {
+    const preferGeneratedPhoto = shouldPreferGeneratedPhoto(person);
+
+    return {
+      ...person,
+      avatarUrl: preferGeneratedPhoto ? null : person.avatarUrl,
+      displayAvatarUrl: getDisplayAvatarForRole(person)
+    };
+  });
   const sourceHref =
     data.sourceContext?.entityType === "outcome"
       ? `/outcomes/${data.sourceContext.entityId}`
@@ -403,7 +448,33 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                   <div className="mt-4 space-y-3">
                     {bucket.items.map((item) => (
                       <div className="rounded-2xl border border-border/70 bg-muted/10 p-3" key={`${bucket.category}-${item.organizationSide}-${item.roleType}`}>
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-start gap-3">
+                          <GovernanceIdentityBadge
+                            avatarUrl={
+                              item.assignedPeople.length > 0
+                                ? (peopleWithDisplayAvatars.find(
+                                    (person) =>
+                                      person.email === item.assignedPeople[0]?.email &&
+                                      person.roleType === item.roleType &&
+                                      person.organizationSide === item.organizationSide
+                                  )?.displayAvatarUrl ??
+                                    getRolePhotoAvatarUrl({
+                                      roleType: item.roleType,
+                                      organizationSide: item.organizationSide,
+                                      fullName: item.assignedPeople[0]?.fullName ?? item.label
+                                    }))
+                                : getRoleCartoonAvatarUrl({
+                                    roleType: item.roleType,
+                                    organizationSide: item.organizationSide,
+                                    fullName: item.label
+                                  })
+                            }
+                            kind="human"
+                            name={item.assignedPeople[0]?.fullName ?? item.label}
+                            tone={item.organizationSide === "customer" ? "customer" : "supplier"}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium text-foreground">{localizeRoleLabel(item.label, language)}</p>
                           <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
                             {formatLabel(item.organizationSide)}
@@ -429,6 +500,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                             ? item.assignedPeople.map((person) => person.fullName).join(", ")
                             : t(language, "No named active person yet.", "Ingen namngiven aktiv person ännu.")}
                         </p>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -445,10 +518,10 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
 
             <GovernanceDirectoryView
               createAction={createPartyRoleEntryAction}
-              customerPeople={data.people.filter((person) => person.organizationSide === "customer")}
+              customerPeople={peopleWithDisplayAvatars.filter((person) => person.organizationSide === "customer")}
               language={language}
               returnParams={returnParams}
-              supplierPeople={data.people.filter((person) => person.organizationSide === "supplier")}
+              supplierPeople={peopleWithDisplayAvatars.filter((person) => person.organizationSide === "supplier")}
               updateAction={updatePartyRoleEntryAction}
             />
           </CardContent>
@@ -503,7 +576,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
             </div>
 
             <GovernanceAgentRegistryView
-              activeSupervisors={data.people.filter((person) => person.isActive)}
+              activeSupervisors={peopleWithDisplayAvatars.filter((person) => person.isActive)}
               agents={data.agents}
               createAction={createAgentRegistryEntryAction}
               language={language}
