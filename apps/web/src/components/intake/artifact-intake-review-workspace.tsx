@@ -9,7 +9,6 @@ import type {
   ArtifactIssueDispositionMap,
   ArtifactParseResult
 } from "@aas-companion/domain";
-import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { ArtifactIntakeDispositionButtons } from "@/components/intake/artifact-intake-disposition-buttons";
 import { ArtifactIntakeReviewSubmitButtons } from "@/components/intake/artifact-intake-pending-actions";
@@ -1536,17 +1535,6 @@ export function ArtifactIntakeReviewWorkspace({
       item.sourceSection.sourceReference.fileId === selectedFile.id &&
       isActionableSectionDecision(selectedFile.sectionDispositions[item.sourceSection.id]?.action ?? null)
   );
-  const unmappedSectionCount = (session.mappedArtifacts?.unmappedSections ?? []).filter(
-    (section) => section.sourceReference.fileId === selectedFile.id
-  ).length;
-  const progress = selectedCandidate?.complianceResult
-    ? getArtifactCandidateIssueProgress({
-        complianceResult: selectedCandidate.complianceResult,
-        issueDispositions: selectedCandidate.issueDispositions,
-        unmappedSectionCount,
-        sectionDispositions: selectedFile.sectionDispositions
-      })
-    : null;
   const outcomeCandidateOptions = projectOutcomes ?? [];
   const selectedOutcomeCandidateId =
     selectedCandidate?.draftRecord?.outcomeCandidateId &&
