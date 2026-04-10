@@ -712,6 +712,14 @@ export default async function OutcomeApprovalDocumentPage({
                             <p className="mt-2 text-sm text-slate-700">
                               <span className="font-medium">{t(language, "Approved Epic:", "GodkÃ¤nd Epic:")}</span> {row.idea.linkedEpic ?? t(language, "Unassigned", "Otilldelad")}
                             </p>
+                            <p className="mt-1 text-sm text-slate-700">
+                              <span className="font-medium">{t(language, "Approved value intent:", "Godkänd value intent:")}</span>{" "}
+                              {row.idea.valueIntent ?? t(language, "Not captured", "Ej fångat")}
+                            </p>
+                            <p className="mt-1 text-sm text-slate-700">
+                              <span className="font-medium">{t(language, "Approved expected behavior:", "Godkänt förväntat beteende:")}</span>{" "}
+                              {row.idea.expectedBehavior ?? t(language, "Not captured", "Ej fångat")}
+                            </p>
                             <p className="mt-1 text-sm leading-6 text-slate-700">{statusCopy.description}</p>
                           </div>
                           <div className="flex flex-wrap gap-2">

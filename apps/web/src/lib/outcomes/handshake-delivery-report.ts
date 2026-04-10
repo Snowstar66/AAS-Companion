@@ -4,6 +4,8 @@ export type ApprovedHandshakeStoryIdea = {
   key: string;
   title: string;
   linkedEpic: string | null;
+  valueIntent?: string | null;
+  expectedBehavior?: string | null;
   sourceType: "direction_seed" | "legacy_story_idea";
 };
 

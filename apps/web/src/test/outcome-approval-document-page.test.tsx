@@ -259,6 +259,8 @@ describe("Outcome approval document page", () => {
     expect(screen.getAllByText(/US-01 Registrera hushallsprofil/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US-18 Paminn om uppdatering/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US-14 Snabbhjalpslage fran startsidan/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Approved value intent:/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Approved expected behavior:/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Import BMAD traceability CSV")).toBeDefined();
     expect(screen.getByText("Replace traceability CSV")).toBeDefined();
     expect(screen.getByText(/The imported CSV is the saved source material/i)).toBeDefined();
