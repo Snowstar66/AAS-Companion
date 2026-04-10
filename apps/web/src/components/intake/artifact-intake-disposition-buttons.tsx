@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Trash2 } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
 type DispositionAction = "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
@@ -170,6 +170,60 @@ export function ArtifactIntakeDispositionButtons(props: ArtifactIntakeDispositio
           </span>
         ) : null}
       </div>
+      {error ? <p className="text-xs text-rose-700">{error}</p> : null}
+    </div>
+  );
+}
+
+type ArtifactIntakeDeleteButtonProps = {
+  fileId: string;
+  sectionIds: string[];
+  queueLabel: string;
+  label: string;
+  pendingLabel: string;
+  helperText?: string;
+  submitSectionBulkDelete: (input: {
+    fileId: string;
+    sectionIds: string[];
+    queueLabel: string;
+  }) => Promise<{ ok: true; deletedCount: number } | { ok: false; message: string }>;
+};
+
+export function ArtifactIntakeDeleteButton(props: ArtifactIntakeDeleteButtonProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-2">
+      <Button
+        className="gap-2 border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+        disabled={isPending || props.sectionIds.length === 0}
+        onClick={() => {
+          setError(null);
+          startTransition(async () => {
+            const result = await props.submitSectionBulkDelete({
+              fileId: props.fileId,
+              sectionIds: props.sectionIds,
+              queueLabel: props.queueLabel
+            });
+
+            if (!result.ok) {
+              setError(result.message);
+              return;
+            }
+
+            router.refresh();
+          });
+        }}
+        size="sm"
+        type="button"
+        variant="secondary"
+      >
+        {isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+        {isPending ? props.pendingLabel : props.label}
+      </Button>
+      {props.helperText ? <p className="text-xs text-muted-foreground">{props.helperText}</p> : null}
       {error ? <p className="text-xs text-rose-700">{error}</p> : null}
     </div>
   );

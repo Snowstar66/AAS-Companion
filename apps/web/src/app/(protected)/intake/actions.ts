@@ -1330,3 +1330,56 @@ export async function submitArtifactSectionBulkDeleteAction(formData: FormData) 
     })
   );
 }
+
+export async function submitArtifactSectionBulkDeleteInlineAction(input: {
+  fileId: string;
+  sectionIds: string[];
+  queueLabel: string;
+}) {
+  const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    return {
+      ok: false as const,
+      message: "Import is read-only in Demo. Leave Demo and open a normal project before changing review state."
+    };
+  }
+
+  const fileId = input.fileId.trim();
+  const queueLabel = input.queueLabel.trim() || "items";
+  const sectionIds = input.sectionIds.map((sectionId) => sectionId.trim()).filter(Boolean);
+
+  if (!fileId || sectionIds.length === 0) {
+    return {
+      ok: false as const,
+      message: "No import sections were selected for deletion."
+    };
+  }
+
+  const result = await reviewArtifactFileSectionDispositionsBulkService(
+    sectionIds.map((sectionId) => ({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "not_relevant" as const,
+      note: `Deleted from ${queueLabel} in the intake import view.`
+    }))
+  );
+
+  revalidatePath("/intake");
+  revalidatePath("/review");
+  revalidatePath("/");
+
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      message: result.errors[0]?.message ?? `The selected ${queueLabel} could not be deleted.`
+    };
+  }
+
+  return {
+    ok: true as const,
+    deletedCount: sectionIds.length
+  };
+}

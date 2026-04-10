@@ -18,7 +18,7 @@ import { loadOperationalReviewDashboard } from "@/lib/review/operational-review"
 import {
   submitArtifactCandidateFromIntakeAction,
   submitArtifactCandidateIssueDispositionInlineAction,
-  submitArtifactSectionBulkDeleteAction,
+  submitArtifactSectionBulkDeleteInlineAction,
   submitArtifactSectionDispositionInlineAction,
   submitFramingBulkApproveFromIntakeAction
 } from "../intake/actions";
@@ -1803,7 +1803,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                 submitAction={submitArtifactCandidateFromIntakeAction}
                 submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
                 submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
-                submitSectionBulkDeleteAction={submitArtifactSectionBulkDeleteAction}
+                submitSectionBulkDeleteAction={submitArtifactSectionBulkDeleteInlineAction}
                 submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
               />
             ) : !selectedCandidate ? (
