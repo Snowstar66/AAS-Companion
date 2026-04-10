@@ -636,7 +636,11 @@ export default async function OutcomeApprovalDocumentPage({
                 </div>
 
                 {traceabilityEvidence ? (
-                  <TraceabilityEvidenceLibrary language={language} rows={traceabilityEvidence.rows} />
+                  <TraceabilityEvidenceLibrary
+                    language={language}
+                    rows={traceabilityEvidence.rows}
+                    storyIdeas={snapshot.storyIdeas}
+                  />
                 ) : null}
 
                 <div className="space-y-3">

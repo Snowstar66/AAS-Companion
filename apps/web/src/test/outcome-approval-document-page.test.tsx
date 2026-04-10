@@ -242,6 +242,12 @@ describe("Outcome approval document page", () => {
     expect(screen.getByText("Replace traceability CSV")).toBeDefined();
     expect(screen.getByText("Imported traceability stories")).toBeDefined();
     expect(screen.getByText(/The imported CSV is the saved source material/i)).toBeDefined();
+    expect(screen.getAllByText("Traceability chain").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Approved Story Idea").length).toBeGreaterThan(0);
+    expect(screen.getByText(/1. Approved source/i)).toBeDefined();
+    expect(screen.getByText(/2. Refined in BMAD/i)).toBeDefined();
+    expect(screen.getByText(/3. Implemented as/i)).toBeDefined();
+    expect(screen.getByText(/STORY-001 Capture household profile/i)).toBeDefined();
     expect(screen.getAllByText("Acceptance and done").length).toBeGreaterThan(0);
   });
 });

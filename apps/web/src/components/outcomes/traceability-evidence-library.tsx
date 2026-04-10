@@ -2,6 +2,13 @@ import type { TraceabilityEvidenceRow } from "@/lib/outcomes/traceability-eviden
 
 type AppLanguage = "en" | "sv";
 
+type ApprovedStoryIdea = {
+  key: string;
+  title: string;
+  linkedEpic: string | null;
+  sourceType: "direction_seed" | "legacy_story_idea";
+};
+
 function t(language: AppLanguage, en: string, sv: string) {
   return language === "sv" ? sv : en;
 }
@@ -44,13 +51,73 @@ function formatImplementationStoryLabel(row: TraceabilityEvidenceRow) {
   return storyIds || row.epicId || null;
 }
 
+function getOriginDescriptor(input: {
+  originId: string;
+  storyIdeasByKey: Map<string, ApprovedStoryIdea>;
+  language: AppLanguage;
+}) {
+  const storyIdea = input.storyIdeasByKey.get(input.originId);
+
+  if (storyIdea) {
+    return {
+      badge: t(input.language, "Approved Story Idea", "Godkänd Story Idea"),
+      title: `${storyIdea.key} ${storyIdea.title}`,
+      subtitle:
+        storyIdea.linkedEpic != null
+          ? `${t(input.language, "Approved Epic", "Godkänd Epic")}: ${storyIdea.linkedEpic}`
+          : t(input.language, "No approved Epic captured", "Ingen godkänd Epic fångad"),
+      classes: "border-emerald-200 bg-emerald-50/70"
+    };
+  }
+
+  if (input.originId === "ADDED") {
+    return {
+      badge: t(input.language, "Added Outside Handshake", "Tillagd utanför handslag"),
+      title: t(input.language, "No approved Story Idea source", "Ingen godkänd Story Idea-källa"),
+      subtitle: t(
+        input.language,
+        "This refinement was introduced after the approved handshake.",
+        "Den här förfiningen introducerades efter det godkända handslaget."
+      ),
+      classes: "border-amber-200 bg-amber-50/70"
+    };
+  }
+
+  if (input.originId.startsWith("NFR-")) {
+    return {
+      badge: t(input.language, "Approved NFR", "Godkänt NFR"),
+      title: input.originId,
+      subtitle: t(
+        input.language,
+        "Backed by approved framing constraints or non-functional requirements.",
+        "Stöds av godkända framing-constraints eller icke-funktionella krav."
+      ),
+      classes: "border-violet-200 bg-violet-50/70"
+    };
+  }
+
+  return {
+    badge: t(input.language, "Imported Source", "Importerad källa"),
+    title: input.originId,
+    subtitle: t(
+      input.language,
+      "This source id was imported but could not be resolved to an approved Story Idea in the snapshot.",
+      "Det här käll-id:t importerades men kunde inte lösas upp till en godkänd Story Idea i snapshoten."
+    ),
+    classes: "border-slate-200 bg-slate-50/70"
+  };
+}
+
 export function TraceabilityEvidenceLibrary({
   language,
-  rows
+  rows,
+  storyIdeas
 }: {
   language: AppLanguage;
   rows: TraceabilityEvidenceRow[];
+  storyIdeas: ApprovedStoryIdea[];
 }) {
+  const storyIdeasByKey = new Map(storyIdeas.map((storyIdea) => [storyIdea.key, storyIdea] as const));
   const sortedRows = [...rows].sort((left, right) => {
     const refinedCompare = left.refinedStoryId.localeCompare(right.refinedStoryId, "en");
 
@@ -74,8 +141,8 @@ export function TraceabilityEvidenceLibrary({
           <p className="mt-2 text-sm leading-6 text-slate-700">
             {t(
               language,
-              "Expand any refined story below to read the imported intent, expected behavior, acceptance summary, definition of done and the linked code or test evidence.",
-              "Expandera valfri förfinad story nedan för att läsa importerad intention, förväntat beteende, accepteranskriteriesammanfattning, definition of done och länkad kod- eller testevidens."
+              "Each expanded row shows a complete chain from the approved source in the handshake, through the BMAD refined story, to the implemented story and its evidence.",
+              "Varje expanderad rad visar en komplett kedja från den godkända källan i handslaget, via den BMAD-förfinade storyn, till den implementerade storyn och dess evidens."
             )}
           </p>
         </div>
@@ -96,6 +163,13 @@ export function TraceabilityEvidenceLibrary({
         {sortedRows.map((row, index) => {
           const classification = classifyTraceabilityRow(row);
           const implementationStoryLabel = formatImplementationStoryLabel(row);
+          const originDescriptors = row.sourceOriginIds.map((originId) =>
+            getOriginDescriptor({
+              originId,
+              storyIdeasByKey,
+              language
+            })
+          );
 
           return (
             <details
@@ -120,11 +194,11 @@ export function TraceabilityEvidenceLibrary({
                       ) : null}
                     </div>
                     <p className="mt-2 text-sm text-slate-700">
-                      <span className="font-medium">{t(language, "Origins:", "Ursprung:")}</span>{" "}
+                      <span className="font-medium">{t(language, "Approved source(s):", "Godkända källor:")}</span>{" "}
                       {row.sourceOriginIds.join(" | ") || t(language, "Not captured", "Ej fångat")}
                     </p>
                     <p className="mt-1 text-sm text-slate-700">
-                      <span className="font-medium">{t(language, "Implementation story:", "Implementationsstory:")}</span>{" "}
+                      <span className="font-medium">{t(language, "Implemented as:", "Implementerad som:")}</span>{" "}
                       {implementationStoryLabel ?? t(language, "Not captured", "Ej fångat")}
                       {row.epicStoryTitle ? ` - ${row.epicStoryTitle}` : ""}
                     </p>
@@ -141,9 +215,58 @@ export function TraceabilityEvidenceLibrary({
 
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 <div className="space-y-4">
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-900">
+                      {t(language, "Traceability chain", "Spårbarhetskedja")}
+                    </p>
+                    <div className="mt-3 grid gap-3">
+                      <div className="rounded-2xl border border-sky-200 bg-white/90 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          {t(language, "1. Approved source", "1. Godkänd källa")}
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {originDescriptors.map((origin, originIndex) => (
+                            <div className={`rounded-2xl border p-3 ${origin.classes}`} key={`${row.matchKey}:origin:${originIndex}`}>
+                              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">{origin.badge}</p>
+                              <p className="mt-1 font-medium text-slate-950">{origin.title}</p>
+                              <p className="mt-1 text-sm leading-6 text-slate-700">{origin.subtitle}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-sky-200 bg-white/90 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          {t(language, "2. Refined in BMAD", "2. Förfinad i BMAD")}
+                        </p>
+                        <p className="mt-2 font-medium text-slate-950">
+                          {row.refinedStoryId} {row.refinedStoryTitle}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">
+                          <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
+                          {row.sourceValueIntent ?? t(language, "Not captured", "Ej fångat")}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-sky-200 bg-white/90 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          {t(language, "3. Implemented as", "3. Implementerad som")}
+                        </p>
+                        <p className="mt-2 font-medium text-slate-950">
+                          {implementationStoryLabel ?? t(language, "Not captured", "Ej fångat")}
+                          {row.epicStoryTitle ? ` - ${row.epicStoryTitle}` : ""}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-700">
+                          <span className="font-medium">{t(language, "Implementation status:", "Implementationsstatus:")}</span>{" "}
+                          {row.implementationStatus ?? t(language, "Not captured", "Ej fångat")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      {t(language, "Source mapping", "Källmappning")}
+                      {t(language, "Why this mapping exists", "Varför den här mappningen finns")}
                     </p>
                     {row.sourceOriginNote ? (
                       <p className="mt-2 text-sm leading-6 text-slate-700">{row.sourceOriginNote}</p>
@@ -156,7 +279,7 @@ export function TraceabilityEvidenceLibrary({
 
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      {t(language, "Refined story intent", "Förfinad story-intention")}
+                      {t(language, "Refined story details", "Detaljer för förfinad story")}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
