@@ -16,7 +16,8 @@ import {
   getNfrTraceabilityRows,
   getOutsideHandshakeTraceabilityRows,
   getTraceabilityRowsForOrigin,
-  loadTraceabilityEvidenceForOutcome
+  loadTraceabilityEvidenceForOutcome,
+  type TraceabilityEvidenceRow
 } from "@/lib/outcomes/traceability-evidence";
 
 type AppLanguage = "en" | "sv";
@@ -166,8 +167,8 @@ function getHandshakeStatusCopy(status: HandshakeCoverageStatus, language: AppLa
         classes: "border-emerald-200 bg-emerald-50 text-emerald-900",
         description: t(
           language,
-          "At least one traced Delivery Story currently links back to this approved Story Idea.",
-          "Minst en spÃ¥rad Delivery Story lÃ¤nkar just nu tillbaka till den hÃ¤r godkÃ¤nda Story Idean."
+          "At least one current Delivery Story or imported BMAD evidence row traces back to this approved Story Idea.",
+          "Minst en nuvarande Delivery Story eller importerad BMAD-evidensrad spÃ¥rar tillbaka till den hÃ¤r godkÃ¤nda Story Idean."
         )
       };
     case "reshaped_within_handshake":
@@ -176,8 +177,8 @@ function getHandshakeStatusCopy(status: HandshakeCoverageStatus, language: AppLa
         classes: "border-sky-200 bg-sky-50 text-sky-900",
         description: t(
           language,
-          "Delivery exists, but it has been split or moved across Epic boundaries compared with the approved Story Idea.",
-          "Leverans finns, men den har delats upp eller flyttats Ã¶ver Epic-grÃ¤nser jÃ¤mfÃ¶rt med den godkÃ¤nda Story Idean."
+          "Delivery evidence exists, but it has been split, duplicated or otherwise reshaped compared with the approved Story Idea.",
+          "Det finns leveransevidens, men den har delats upp, duplicerats eller pÃ¥ annat sÃ¤tt omformats jÃ¤mfÃ¶rt med den godkÃ¤nda Story Idean."
         )
       };
     default:
@@ -186,11 +187,35 @@ function getHandshakeStatusCopy(status: HandshakeCoverageStatus, language: AppLa
         classes: "border-amber-200 bg-amber-50 text-amber-900",
         description: t(
           language,
-          "No traced Delivery Story currently links back to this approved Story Idea.",
-          "Ingen spÃ¥rad Delivery Story lÃ¤nkar just nu tillbaka till den hÃ¤r godkÃ¤nda Story Idean."
+          "No current Delivery Story or imported BMAD evidence row currently traces back to this approved Story Idea.",
+          "Ingen nuvarande Delivery Story eller importerad BMAD-evidensrad spÃ¥rar just nu tillbaka till den hÃ¤r godkÃ¤nda Story Idean."
         )
       };
   }
+}
+
+function getMergedHandshakeCoverageStatus(input: {
+  baseStatus: HandshakeCoverageStatus;
+  linkedDeliveryStoryCount: number;
+  evidenceRows: TraceabilityEvidenceRow[];
+}): HandshakeCoverageStatus {
+  if (input.baseStatus === "reshaped_within_handshake") {
+    return input.baseStatus;
+  }
+
+  const evidenceSuggestsReshape =
+    input.evidenceRows.length > 1 ||
+    input.evidenceRows.some((row) => row.epicStoryIds.length > 1);
+
+  if (input.linkedDeliveryStoryCount > 1 || evidenceSuggestsReshape) {
+    return "reshaped_within_handshake";
+  }
+
+  if (input.baseStatus === "covered" || input.evidenceRows.length > 0) {
+    return "covered";
+  }
+
+  return "not_implemented";
 }
 
 function getSingleSearchParamValue(
@@ -313,6 +338,31 @@ export default async function OutcomeApprovalDocumentPage({
             })
         })
       : null;
+  const handshakeCoverageRows = handshakeReport
+    ? handshakeReport.coverageRows.map((row) => {
+        const evidenceRows = traceabilityEvidence ? getTraceabilityRowsForOrigin(traceabilityEvidence.rows, row.idea.key) : [];
+        const mergedStatus = getMergedHandshakeCoverageStatus({
+          baseStatus: row.status,
+          linkedDeliveryStoryCount: row.linkedDeliveryStories.length,
+          evidenceRows
+        });
+
+        return {
+          ...row,
+          status: mergedStatus,
+          evidenceRows
+        };
+      })
+    : [];
+  const handshakeDisplaySummary = handshakeReport
+    ? {
+        approvedIdeaCount: handshakeCoverageRows.length,
+        coveredCount: handshakeCoverageRows.filter((row) => row.status === "covered").length,
+        reshapedCount: handshakeCoverageRows.filter((row) => row.status === "reshaped_within_handshake").length,
+        notImplementedCount: handshakeCoverageRows.filter((row) => row.status === "not_implemented").length,
+        outsideHandshakeCount: handshakeReport.outsideHandshakeStories.length + outsideHandshakeTraceabilityRows.length
+      }
+    : null;
 
   return (
     <section className="space-y-6 print:space-y-4">
@@ -539,19 +589,19 @@ export default async function OutcomeApprovalDocumentPage({
                 <div className="grid gap-3 lg:grid-cols-4">
                   <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Approved ideas", "GodkÃ¤nda idÃ©er")}</p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-950">{handshakeReport.summary.approvedIdeaCount}</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950">{handshakeDisplaySummary?.approvedIdeaCount ?? handshakeReport.summary.approvedIdeaCount}</p>
                   </div>
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">{t(language, "Covered", "TÃ¤ckta")}</p>
-                    <p className="mt-2 text-2xl font-semibold text-emerald-950">{handshakeReport.summary.coveredCount}</p>
+                    <p className="mt-2 text-2xl font-semibold text-emerald-950">{handshakeDisplaySummary?.coveredCount ?? handshakeReport.summary.coveredCount}</p>
                   </div>
                   <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">{t(language, "Reshaped", "Omformade")}</p>
-                    <p className="mt-2 text-2xl font-semibold text-sky-950">{handshakeReport.summary.reshapedCount}</p>
+                    <p className="mt-2 text-2xl font-semibold text-sky-950">{handshakeDisplaySummary?.reshapedCount ?? handshakeReport.summary.reshapedCount}</p>
                   </div>
                   <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">{t(language, "Outside handshake", "UtanfÃ¶r handslag")}</p>
-                    <p className="mt-2 text-2xl font-semibold text-amber-950">{handshakeReport.summary.outsideHandshakeCount}</p>
+                    <p className="mt-2 text-2xl font-semibold text-amber-950">{handshakeDisplaySummary?.outsideHandshakeCount ?? handshakeReport.summary.outsideHandshakeCount}</p>
                   </div>
                 </div>
 
@@ -645,11 +695,9 @@ export default async function OutcomeApprovalDocumentPage({
                 </div>
 
                 <div className="space-y-3">
-                  {handshakeReport.coverageRows.map((row) => {
+                  {handshakeCoverageRows.map((row) => {
                     const statusCopy = getHandshakeStatusCopy(row.status, language);
-                    const evidenceRows = traceabilityEvidence
-                      ? getTraceabilityRowsForOrigin(traceabilityEvidence.rows, row.idea.key)
-                      : [];
+                    const evidenceRows = row.evidenceRows;
 
                     return (
                       <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={`${row.idea.sourceType}:${row.idea.key}`}>
@@ -666,8 +714,13 @@ export default async function OutcomeApprovalDocumentPage({
                             </p>
                             <p className="mt-1 text-sm leading-6 text-slate-700">{statusCopy.description}</p>
                           </div>
-                          <div className="rounded-2xl border border-border/70 bg-white/80 px-3 py-2 text-sm text-slate-700">
-                            {t(language, "Linked Delivery Stories:", "LÃ¤nkade Delivery Stories:")} {row.linkedDeliveryStories.length}
+                          <div className="flex flex-wrap gap-2">
+                            <div className="rounded-2xl border border-border/70 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                              {t(language, "Linked Delivery Stories:", "LÃ¤nkade Delivery Stories:")} {row.linkedDeliveryStories.length}
+                            </div>
+                            <div className="rounded-2xl border border-sky-200 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                              {t(language, "BMAD rows:", "BMAD-rader:")} {evidenceRows.length}
+                            </div>
                           </div>
                         </div>
 
@@ -687,6 +740,14 @@ export default async function OutcomeApprovalDocumentPage({
                               </div>
                             ))}
                           </div>
+                        ) : evidenceRows.length > 0 ? (
+                          <p className="mt-4 text-sm text-slate-600">
+                            {t(
+                              language,
+                              "No current AAS Delivery Story is linked directly yet, but the imported BMAD evidence below still traces implementation back to this approved Story Idea.",
+                              "Ingen nuvarande AAS-Delivery Story Ã¤r lÃ¤nkad direkt Ã¤nnu, men den importerade BMAD-evidensen nedan spÃ¥rar fortfarande implementation tillbaka till den hÃ¤r godkÃ¤nda Story Idean."
+                            )}
+                          </p>
                         ) : (
                           <p className="mt-4 text-sm text-slate-600">
                             {t(

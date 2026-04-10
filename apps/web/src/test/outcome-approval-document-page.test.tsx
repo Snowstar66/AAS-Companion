@@ -140,6 +140,25 @@ vi.mock("@/lib/cache/project-data", () => ({
                 testEvidence: ["apps/web/src/features/offline-sync/__tests__/offline-state-banner.test.tsx"],
                 codeEvidence: ["apps/web/src/features/offline-sync/components/offline-state-banner.tsx"],
                 definitionOfDone: "Offline banner and persistence work."
+              },
+              {
+                matchKey: "OUT-001::STORY-002::US-18::2.1|2.2",
+                outcomeKey: "OUT-001",
+                sourceOriginIds: ["STORY-002"],
+                sourceOriginNote: "Split into two implementation slices during refinement.",
+                refinedStoryId: "US-18",
+                refinedStoryTitle: "Paminn om uppdatering",
+                epicId: "E2",
+                epicStoryIds: ["2.1", "2.2"],
+                epicStoryTitle: "Reminder flow",
+                implementationArtifacts: ["_bmad-output/implementation-artifacts/2-1-reminder-flow.md"],
+                implementationStatus: "review",
+                sourceValueIntent: "Bring users back to maintain data.",
+                sourceExpectedBehavior: "The app lets users set reminder schedules.",
+                acceptanceCriteriaSummary: "Users can create and edit reminders.",
+                testEvidence: ["apps/web/src/features/reminders/__tests__/reminder-settings.test.tsx"],
+                codeEvidence: ["apps/web/src/features/reminders/components/reminder-settings.tsx"],
+                definitionOfDone: "Reminder flow works."
               }
             ]
           },
@@ -225,23 +244,27 @@ afterEach(() => {
 });
 
 describe("Outcome approval document page", () => {
-  it("shows a handshake delivery coverage section with covered, missing and outside-handshake scope", async () => {
+  it("counts imported BMAD evidence in handshake coverage and summary cards", async () => {
     render(await OutcomeApprovalDocumentPage({ params: Promise.resolve({ outcomeId: "outcome-1" }) }));
 
     expect(screen.getByText("Handshake delivery coverage")).toBeDefined();
     expect(screen.getByText("Approved ideas")).toBeDefined();
     expect(screen.getByText("BMAD traceability evidence")).toBeDefined();
     expect(screen.getAllByText("Covered").length).toBeGreaterThan(0);
-    expect(screen.getByText("Not implemented")).toBeDefined();
+    expect(screen.getAllByText("Reshaped").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Not implemented")).toBeNull();
     expect(screen.getByText("Additional delivery outside the approved handshake")).toBeDefined();
     expect(screen.getByText(/DST-099/i)).toBeDefined();
     expect(screen.getAllByText(/STORY-002 Create reminder/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US-01 Registrera hushallsprofil/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/US-18 Paminn om uppdatering/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US-14 Snabbhjalpslage fran startsidan/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Import BMAD traceability CSV")).toBeDefined();
     expect(screen.getByText("Replace traceability CSV")).toBeDefined();
     expect(screen.getByText(/The imported CSV is the saved source material/i)).toBeDefined();
     expect(screen.getByText(/Imported BMAD rows are shown directly under the approved Story Idea/i)).toBeDefined();
+    expect(screen.getByText(/No current AAS Delivery Story is linked directly yet/i)).toBeDefined();
+    expect(screen.getAllByText(/BMAD rows:/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Acceptance and done").length).toBeGreaterThan(0);
   });
 });
