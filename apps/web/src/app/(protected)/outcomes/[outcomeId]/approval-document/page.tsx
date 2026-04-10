@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { CheckCircle2, CircleAlert, TriangleAlert } from "lucide-react";
 import { Card, CardContent } from "@aas-companion/ui";
-import { TraceabilityEvidenceLibrary } from "@/components/outcomes/traceability-evidence-library";
 import { AasBrandMark } from "@/components/shared/aas-brand-mark";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { ApprovalDocumentPrintButton } from "@/components/workspace/approval-document-print-button";
@@ -635,13 +634,15 @@ export default async function OutcomeApprovalDocumentPage({
                   </div>
                 </div>
 
-                {traceabilityEvidence ? (
-                  <TraceabilityEvidenceLibrary
-                    language={language}
-                    rows={traceabilityEvidence.rows}
-                    storyIdeas={snapshot.storyIdeas}
-                  />
-                ) : null}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                  <p className="text-sm leading-6 text-slate-700">
+                    {t(
+                      language,
+                      "Imported BMAD rows are shown directly under the approved Story Idea they map to. The separate imported-story library was removed to avoid repeating the same traceability twice.",
+                      "Importerade BMAD-rader visas nu direkt under den godkända Story Idea som de mappar till. Den separata importerade story-listan togs bort för att inte upprepa samma spårbarhet två gånger."
+                    )}
+                  </p>
+                </div>
 
                 <div className="space-y-3">
                   {handshakeReport.coverageRows.map((row) => {
