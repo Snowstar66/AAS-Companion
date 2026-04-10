@@ -16,6 +16,18 @@ function normalizeText(value: string | null | undefined) {
   return (value ?? "").replace(/\r\n/g, "\n").trim();
 }
 
+function normalizeStructuredSectionHeadings(source: string) {
+  let normalized = source;
+
+  for (const heading of Object.values(SECTION_LABELS)) {
+    const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(`(^|\\n)\\s*#+\\s*${escapedHeading}\\s*(?=\\n|$)`, "gi");
+    normalized = normalized.replace(pattern, (_match, prefix: string) => `${prefix}## ${heading}`);
+  }
+
+  return normalized;
+}
+
 function extractSectionBlock(source: string, heading: string) {
   const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(`(?:^|\\n)## ${escapedHeading}\\n([\\s\\S]*?)(?=\\n## [^\\n]+\\n|$)`, "i");
@@ -24,7 +36,7 @@ function extractSectionBlock(source: string, heading: string) {
 }
 
 export function parseFramingConstraintBundle(value: string | null | undefined): FramingConstraintBundle {
-  const normalized = normalizeText(value);
+  const normalized = normalizeStructuredSectionHeadings(normalizeText(value));
 
   if (!normalized) {
     return {
@@ -77,4 +89,3 @@ export function serializeFramingConstraintBundle(bundle: Partial<FramingConstrai
 
   return sections.length > 0 ? sections.join("\n\n") : null;
 }
-

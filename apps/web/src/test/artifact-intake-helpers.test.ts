@@ -1201,6 +1201,27 @@ describe("artifact intake helpers", () => {
     });
   });
 
+  it("parses structured framing constraint bundles even when headings contain extra markdown hashes", () => {
+    const malformed = [
+      "### General constraints",
+      "- Keep data within approved tenant boundaries",
+      "",
+      "## # UX principles",
+      "- Mobile first",
+      "- Clear save feedback",
+      "",
+      "#### Non-functional requirements",
+      "- Accessibility support is required"
+    ].join("\n");
+
+    expect(parseFramingConstraintBundle(malformed)).toEqual({
+      generalConstraints: "- Keep data within approved tenant boundaries",
+      uxPrinciples: "- Mobile first\n- Clear save feedback",
+      nonFunctionalRequirements: "- Accessibility support is required",
+      additionalRequirements: ""
+    });
+  });
+
   it("assigns an automatic unique-looking import key for story candidates", () => {
     const draftRecord = createArtifactCandidateDraftRecord({
       id: "mapped-file-1-section-1-story",

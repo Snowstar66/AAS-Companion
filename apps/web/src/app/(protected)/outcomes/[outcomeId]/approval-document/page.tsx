@@ -2,6 +2,7 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { CheckCircle2, CircleAlert, TriangleAlert } from "lucide-react";
+import { parseFramingConstraintBundle } from "@aas-companion/domain";
 import { Card, CardContent } from "@aas-companion/ui";
 import { AasBrandMark } from "@/components/shared/aas-brand-mark";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
@@ -218,6 +219,10 @@ function getMergedHandshakeCoverageStatus(input: {
   return "not_implemented";
 }
 
+function hasConstraintContent(value: string) {
+  return value.trim().length > 0;
+}
+
 function getSingleSearchParamValue(
   searchParams: Record<string, string | string[] | undefined>,
   key: string
@@ -297,6 +302,29 @@ export default async function OutcomeApprovalDocumentPage({
   const dataSensitivityRationale = parseRiskRationale(snapshot.outcome.riskRationale.dataSensitivity, language);
   const blastRadius = parseRiskRationale(snapshot.outcome.riskRationale.blastRadius, language);
   const decisionImpact = parseRiskRationale(snapshot.outcome.riskRationale.decisionImpact, language);
+  const structuredConstraints = parseFramingConstraintBundle(snapshot.outcome.constraints);
+  const constraintSections = [
+    {
+      key: "general",
+      label: t(language, "General constraints", "Generella constraints"),
+      value: structuredConstraints.generalConstraints
+    },
+    {
+      key: "ux",
+      label: t(language, "UX principles", "UX-principer"),
+      value: structuredConstraints.uxPrinciples
+    },
+    {
+      key: "nfr",
+      label: t(language, "Non-functional requirements", "Icke-funktionella krav"),
+      value: structuredConstraints.nonFunctionalRequirements
+    },
+    {
+      key: "additional",
+      label: t(language, "Additional requirements", "Ytterligare krav"),
+      value: structuredConstraints.additionalRequirements
+    }
+  ].filter((section) => hasConstraintContent(section.value));
   const storedTraceabilityEvidence = getStoredTraceabilityEvidenceSnapshot(snapshot, snapshot.outcome.key);
   const traceabilityEvidence = storedTraceabilityEvidence ?? (await loadTraceabilityEvidenceForOutcome(snapshot.outcome.key));
   const outsideHandshakeTraceabilityRows = traceabilityEvidence
@@ -457,7 +485,18 @@ export default async function OutcomeApprovalDocumentPage({
                 </div>
                 <div>
                   <p className="font-semibold">{t(language, "Constraints", "Constraints")}</p>
-                  <p className="mt-1 text-slate-700">{snapshot.outcome.constraints ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
+                  {constraintSections.length > 0 ? (
+                    <div className="mt-2 space-y-3">
+                      {constraintSections.map((section) => (
+                        <div key={section.key}>
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{section.label}</p>
+                          <p className="mt-1 whitespace-pre-line text-slate-700">{section.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-slate-700">{snapshot.outcome.constraints ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
+                  )}
                 </div>
               </div>
             </div>

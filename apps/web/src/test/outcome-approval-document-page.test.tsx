@@ -36,7 +36,7 @@ vi.mock("@/lib/cache/project-data", () => ({
             baselineDefinition: "Checklist completion and inventory confidence.",
             baselineSource: "Approved Framing",
             solutionContext: null,
-            constraints: null,
+            constraints: "## # General constraints\nNo explicit constraints.\n\n### UX principles\nKeep flows calm and clear.\n\n## Non-functional requirements\nOffline support is required.",
             dataSensitivity: "Low",
             deliveryType: "AD",
             aiLevel: "level_2",
@@ -250,6 +250,10 @@ describe("Outcome approval document page", () => {
     expect(screen.getByText("Handshake delivery coverage")).toBeDefined();
     expect(screen.getByText("Approved ideas")).toBeDefined();
     expect(screen.getByText("BMAD traceability evidence")).toBeDefined();
+    expect(screen.getByText("General constraints")).toBeDefined();
+    expect(screen.getByText("UX principles")).toBeDefined();
+    expect(screen.getByText("Non-functional requirements")).toBeDefined();
+    expect(screen.getByText(/No explicit constraints/i)).toBeDefined();
     expect(screen.getAllByText("Covered").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Reshaped").length).toBeGreaterThan(0);
     expect(screen.queryByText("Not implemented")).toBeNull();
