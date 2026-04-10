@@ -729,8 +729,8 @@ describe("Import page", () => {
     expect(screen.getByRole("button", { name: "Reject selected" })).toBeDefined();
     expect(screen.getByRole("checkbox", { name: "Select Imported Story" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open row" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Remove from design" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Remove leftover" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Delete carry-forward" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Delete leftover" })).toBeDefined();
   }, 15000);
 
   it("hides resolved carry-forward items and leftovers from the active design review lists", async () => {
@@ -898,8 +898,8 @@ describe("Import page", () => {
       })
     );
 
-    expect(screen.queryByRole("button", { name: "Remove from design" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Remove leftover" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Delete carry-forward" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Delete leftover" })).toBeNull();
     expect(screen.getByText("No leftover sections currently need review for the selected artifact.")).toBeDefined();
   }, 15000);
 

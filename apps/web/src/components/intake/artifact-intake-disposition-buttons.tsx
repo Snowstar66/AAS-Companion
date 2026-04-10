@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Trash2 } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
 type DispositionAction = "corrected" | "confirmed" | "not_relevant" | "pending" | "blocked";
@@ -170,6 +170,59 @@ export function ArtifactIntakeDispositionButtons(props: ArtifactIntakeDispositio
           </span>
         ) : null}
       </div>
+      {error ? <p className="text-xs text-rose-700">{error}</p> : null}
+    </div>
+  );
+}
+
+type ArtifactIntakeQuickDispositionButtonProps = {
+  fileId: string;
+  sectionId: string;
+  label: string;
+  helperText?: string;
+  action: DispositionAction;
+  submitSectionDisposition: (input: {
+    fileId: string;
+    sectionId: string;
+    action: DispositionAction;
+  }) => Promise<{ ok: true; selectedAction: DispositionAction } | { ok: false; message: string }>;
+};
+
+export function ArtifactIntakeQuickDispositionButton(props: ArtifactIntakeQuickDispositionButtonProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-2">
+      <Button
+        className="gap-2 border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+        disabled={isPending}
+        onClick={() => {
+          setError(null);
+          startTransition(async () => {
+            const result = await props.submitSectionDisposition({
+              fileId: props.fileId,
+              sectionId: props.sectionId,
+              action: props.action
+            });
+
+            if (!result.ok) {
+              setError(result.message);
+              return;
+            }
+
+            router.refresh();
+          });
+        }}
+        size="sm"
+        type="button"
+        variant="secondary"
+      >
+        <Trash2 className="h-4 w-4" />
+        {props.label}
+      </Button>
+      {props.helperText ? <p className="text-xs text-muted-foreground">{props.helperText}</p> : null}
       {error ? <p className="text-xs text-rose-700">{error}</p> : null}
     </div>
   );

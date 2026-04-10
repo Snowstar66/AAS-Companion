@@ -10,7 +10,10 @@ import type {
   ArtifactParseResult
 } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
-import { ArtifactIntakeDispositionButtons } from "@/components/intake/artifact-intake-disposition-buttons";
+import {
+  ArtifactIntakeDispositionButtons,
+  ArtifactIntakeQuickDispositionButton
+} from "@/components/intake/artifact-intake-disposition-buttons";
 import { ArtifactIntakeReviewSubmitButtons } from "@/components/intake/artifact-intake-pending-actions";
 import { FramingImportBulkDecisionButtons } from "@/components/intake/framing-import-bulk-decision-buttons";
 
@@ -1700,13 +1703,23 @@ export function ArtifactIntakeReviewWorkspace({
             <div className="grid gap-3">
               {carryForwardItemStates.map(({ item, selectedAction, dispositionLabel, status, tone }) => (
                 <div className={`rounded-2xl border p-4 ${tone}`} key={item.id}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
-                      {carryForwardCategoryLabel(item.category, language)}
-                    </span>
-                    <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                      {carryForwardUseLabel(item.recommendedUse, language)}
-                    </span>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-900">
+                        {carryForwardCategoryLabel(item.category, language)}
+                      </span>
+                      <span className="inline-flex rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                        {carryForwardUseLabel(item.recommendedUse, language)}
+                      </span>
+                    </div>
+                    <ArtifactIntakeQuickDispositionButton
+                      action="not_relevant"
+                      fileId={selectedFile.id}
+                      helperText={t(language, "Deletes this carry-forward item from the active import view.", "Tar bort den har carry-forward-posten fran den aktiva importvyn.")}
+                      label={t(language, "Delete carry-forward", "Radera carry forward")}
+                      sectionId={item.sourceSection.id}
+                      submitSectionDisposition={submitSectionDispositionInlineAction}
+                    />
                   </div>
                   <p className="mt-3 font-medium text-foreground">{item.title}</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.summary}</p>
@@ -1851,6 +1864,16 @@ export function ArtifactIntakeReviewWorkspace({
                             ) : null}
                           </div>
                           <div className="flex flex-wrap gap-2">
+                            {item.actionScope === "section" ? (
+                              <ArtifactIntakeQuickDispositionButton
+                                action="not_relevant"
+                                fileId={selectedFile.id}
+                                helperText={t(language, "Deletes this leftover from the active import review list.", "Tar bort den har restposten fran den aktiva importgranskningen.")}
+                                label={t(language, "Delete leftover", "Radera restpost")}
+                                sectionId={item.issueId}
+                                submitSectionDisposition={submitSectionDispositionInlineAction}
+                              />
+                            ) : null}
                             <span
                               className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${
                                 item.selectedAction === "blocked"
