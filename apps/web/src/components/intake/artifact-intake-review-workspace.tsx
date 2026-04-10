@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ChevronDown, CircleAlert, GitBranch, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, CircleAlert, GitBranch, ShieldCheck, Trash2 } from "lucide-react";
 import type {
   ArtifactCarryForwardItem,
   ArtifactCandidateDraftRecord,
@@ -10,12 +10,10 @@ import type {
   ArtifactParseResult
 } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
-import {
-  ArtifactIntakeDispositionButtons,
-  ArtifactIntakeQuickDispositionButton
-} from "@/components/intake/artifact-intake-disposition-buttons";
+import { ArtifactIntakeDispositionButtons } from "@/components/intake/artifact-intake-disposition-buttons";
 import { ArtifactIntakeReviewSubmitButtons } from "@/components/intake/artifact-intake-pending-actions";
 import { FramingImportBulkDecisionButtons } from "@/components/intake/framing-import-bulk-decision-buttons";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 
 type ParsedSection = ArtifactParseResult["sections"][number];
 
@@ -131,6 +129,7 @@ type ArtifactIntakeReviewWorkspaceProps = {
   selectedCandidate: IntakeArtifactCandidate | null;
   submitAction: (formData: FormData) => Promise<void>;
   submitFramingBulkApproveAction?: ((formData: FormData) => Promise<void>) | undefined;
+  submitSectionBulkDeleteAction: (formData: FormData) => Promise<void>;
   submitCandidateDispositionInlineAction: (input: {
     candidateId: string;
     candidateType: "outcome" | "epic" | "story";
@@ -1518,6 +1517,7 @@ export function ArtifactIntakeReviewWorkspace({
   selectedCandidate,
   submitAction,
   submitFramingBulkApproveAction,
+  submitSectionBulkDeleteAction,
   submitSectionDispositionInlineAction
 }: ArtifactIntakeReviewWorkspaceProps) {
   const sourceSectionTargetId = sourceSectionFocusId?.trim() ?? "";
@@ -1700,6 +1700,24 @@ export function ArtifactIntakeReviewWorkspace({
               {compactMetric(t(language, "Carry-forward items", "Vidareförda poster"), carryForwardItems.length)}
               {compactMetric(t(language, "Pending decisions", "Väntande beslut"), unresolvedCarryForwardCount)}
             </div>
+            {carryForwardItems.length > 0 ? (
+              <form action={submitSectionBulkDeleteAction}>
+                <input name="sessionId" type="hidden" value={session.id} />
+                <input name="fileId" type="hidden" value={selectedFile.id} />
+                <input name="queueLabel" type="hidden" value="carry-forward item(s)" />
+                {carryForwardItems.map((item) => (
+                  <input key={`delete-all-carry-forward-${item.id}`} name="sectionIds" type="hidden" value={item.sourceSection.id} />
+                ))}
+                <PendingFormButton
+                  className="gap-2 border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+                  icon={<Trash2 className="h-4 w-4" />}
+                  label={t(language, "Delete all carry-forward", "Radera alla carry forward")}
+                  pendingLabel={t(language, "Deleting carry-forward...", "Raderar carry forward...")}
+                  showPendingCursor
+                  variant="secondary"
+                />
+              </form>
+            ) : null}
             <div className="grid gap-3">
               {carryForwardItemStates.map(({ item, selectedAction, dispositionLabel, status, tone }) => (
                 <div className={`rounded-2xl border p-4 ${tone}`} key={item.id}>
@@ -1712,14 +1730,20 @@ export function ArtifactIntakeReviewWorkspace({
                         {carryForwardUseLabel(item.recommendedUse, language)}
                       </span>
                     </div>
-                    <ArtifactIntakeQuickDispositionButton
-                      action="not_relevant"
-                      fileId={selectedFile.id}
-                      helperText={t(language, "Deletes this carry-forward item from the active import view.", "Tar bort den har carry-forward-posten fran den aktiva importvyn.")}
-                      label={t(language, "Delete carry-forward", "Radera carry forward")}
-                      sectionId={item.sourceSection.id}
-                      submitSectionDisposition={submitSectionDispositionInlineAction}
-                    />
+                    <form action={submitSectionBulkDeleteAction}>
+                      <input name="sessionId" type="hidden" value={session.id} />
+                      <input name="fileId" type="hidden" value={selectedFile.id} />
+                      <input name="queueLabel" type="hidden" value="carry-forward item(s)" />
+                      <input name="sectionIds" type="hidden" value={item.sourceSection.id} />
+                      <PendingFormButton
+                        className="gap-2 border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+                        icon={<Trash2 className="h-4 w-4" />}
+                        label={t(language, "Delete carry-forward", "Radera carry forward")}
+                        pendingLabel={t(language, "Deleting carry-forward...", "Raderar carry forward...")}
+                        showPendingCursor
+                        variant="secondary"
+                      />
+                    </form>
                   </div>
                   <p className="mt-3 font-medium text-foreground">{item.title}</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.summary}</p>
@@ -1777,6 +1801,24 @@ export function ArtifactIntakeReviewWorkspace({
             <div className="flex flex-wrap gap-2 text-xs">
               {compactMetric(t(language, "Review leftovers", "Granska restposter"), unresolvedLeftoverCount)}
             </div>
+          ) : null}
+          {unresolvedLeftoverCount > 0 ? (
+            <form action={submitSectionBulkDeleteAction}>
+              <input name="sessionId" type="hidden" value={session.id} />
+              <input name="fileId" type="hidden" value={selectedFile.id} />
+              <input name="queueLabel" type="hidden" value="leftover(s)" />
+              {groups.flatMap((group) => group.items).map((item) => (
+                <input key={`delete-all-leftovers-${item.id}`} name="sectionIds" type="hidden" value={item.issueId} />
+              ))}
+              <PendingFormButton
+                className="gap-2 border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+                icon={<Trash2 className="h-4 w-4" />}
+                label={t(language, "Delete all leftovers", "Radera alla restposter")}
+                pendingLabel={t(language, "Deleting leftovers...", "Raderar restposter...")}
+                showPendingCursor
+                variant="secondary"
+              />
+            </form>
           ) : null}
           {leftoverGroups.length > 0 ? (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
@@ -1865,14 +1907,20 @@ export function ArtifactIntakeReviewWorkspace({
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {item.actionScope === "section" ? (
-                              <ArtifactIntakeQuickDispositionButton
-                                action="not_relevant"
-                                fileId={selectedFile.id}
-                                helperText={t(language, "Deletes this leftover from the active import review list.", "Tar bort den har restposten fran den aktiva importgranskningen.")}
-                                label={t(language, "Delete leftover", "Radera restpost")}
-                                sectionId={item.issueId}
-                                submitSectionDisposition={submitSectionDispositionInlineAction}
-                              />
+                              <form action={submitSectionBulkDeleteAction}>
+                                <input name="sessionId" type="hidden" value={session.id} />
+                                <input name="fileId" type="hidden" value={selectedFile.id} />
+                                <input name="queueLabel" type="hidden" value="leftover(s)" />
+                                <input name="sectionIds" type="hidden" value={item.issueId} />
+                                <PendingFormButton
+                                  className="gap-2 border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100"
+                                  icon={<Trash2 className="h-4 w-4" />}
+                                  label={t(language, "Delete leftover", "Radera restpost")}
+                                  pendingLabel={t(language, "Deleting leftover...", "Raderar restpost...")}
+                                  showPendingCursor
+                                  variant="secondary"
+                                />
+                              </form>
                             ) : null}
                             <span
                               className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${

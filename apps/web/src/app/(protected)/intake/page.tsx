@@ -13,6 +13,7 @@ import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
 import { submitArtifactBulkReviewAction } from "../review/actions";
 import {
   submitArtifactSectionDispositionInlineAction,
+  submitArtifactSectionBulkDeleteAction,
   submitArtifactCandidateIssueDispositionInlineAction,
   submitArtifactCandidateFromIntakeAction,
   submitFramingBulkApproveFromIntakeAction,
@@ -809,6 +810,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                 submitAction={submitArtifactCandidateFromIntakeAction}
                 submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
                 submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
+                submitSectionBulkDeleteAction={submitArtifactSectionBulkDeleteAction}
                 submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
               />
             ) : null}

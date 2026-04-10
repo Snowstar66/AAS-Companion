@@ -729,7 +729,9 @@ describe("Import page", () => {
     expect(screen.getByRole("button", { name: "Reject selected" })).toBeDefined();
     expect(screen.getByRole("checkbox", { name: "Select Imported Story" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open row" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Delete all carry-forward" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Delete carry-forward" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Delete all leftovers" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Delete leftover" })).toBeDefined();
   }, 15000);
 
@@ -898,7 +900,9 @@ describe("Import page", () => {
       })
     );
 
+    expect(screen.queryByRole("button", { name: "Delete all carry-forward" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Delete carry-forward" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Delete all leftovers" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Delete leftover" })).toBeNull();
     expect(screen.getByText("No leftover sections currently need review for the selected artifact.")).toBeDefined();
   }, 15000);

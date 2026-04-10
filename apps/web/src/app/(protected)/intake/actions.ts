@@ -1261,3 +1261,72 @@ export async function submitArtifactSectionDispositionInlineAction(input: {
     selectedAction: input.action
   };
 }
+
+export async function submitArtifactSectionBulkDeleteAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId: String(formData.get("sessionId") ?? "").trim() || undefined,
+        fileId: String(formData.get("fileId") ?? "").trim() || undefined,
+        message: "Import is read-only in Demo. Leave Demo and open a normal project before changing review state."
+      })
+    );
+  }
+
+  const sessionId = String(formData.get("sessionId") ?? "").trim();
+  const fileId = String(formData.get("fileId") ?? "").trim();
+  const queueLabel = String(formData.get("queueLabel") ?? "items").trim() || "items";
+  const sectionIds = formData
+    .getAll("sectionIds")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  if (!fileId || sectionIds.length === 0) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId: sessionId || undefined,
+        fileId: fileId || undefined,
+        message: "No import sections were selected for deletion."
+      })
+    );
+  }
+
+  const result = await reviewArtifactFileSectionDispositionsBulkService(
+    sectionIds.map((sectionId) => ({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "not_relevant" as const,
+      note: `Deleted from ${queueLabel} in the intake import view.`
+    }))
+  );
+
+  if (!result.ok) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "error",
+        sessionId: sessionId || undefined,
+        fileId,
+        message: result.errors[0]?.message ?? `The selected ${queueLabel} could not be deleted.`
+      })
+    );
+  }
+
+  revalidatePath("/intake");
+  revalidatePath("/review");
+  revalidatePath("/");
+
+  redirect(
+    buildRedirect("/intake", {
+      status: "success",
+      sessionId: sessionId || undefined,
+      fileId,
+      message: `Deleted ${sectionIds.length} ${queueLabel} from the import view.`
+    })
+  );
+}
