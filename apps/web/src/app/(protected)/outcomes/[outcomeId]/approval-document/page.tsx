@@ -4,10 +4,20 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, CircleAlert, TriangleAlert } from "lucide-react";
 import { Card, CardContent } from "@aas-companion/ui";
 import { AasBrandMark } from "@/components/shared/aas-brand-mark";
+import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { ApprovalDocumentPrintButton } from "@/components/workspace/approval-document-print-button";
+import { uploadOutcomeTraceabilityEvidenceAction } from "@/app/(protected)/outcomes/[outcomeId]/approval-document/actions";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
-import { getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
+import { getCachedOutcomeTollgateReviewData, getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import { formatAiLevelLabel, getAiLevelSummary } from "@/lib/help/aas-help";
+import { buildHandshakeDeliveryReport, type HandshakeCoverageStatus } from "@/lib/outcomes/handshake-delivery-report";
+import {
+  getStoredTraceabilityEvidenceSnapshot,
+  getNfrTraceabilityRows,
+  getOutsideHandshakeTraceabilityRows,
+  getTraceabilityRowsForOrigin,
+  loadTraceabilityEvidenceForOutcome
+} from "@/lib/outcomes/traceability-evidence";
 
 type AppLanguage = "en" | "sv";
 
@@ -148,6 +158,54 @@ function getRiskDisplay(level: "low" | "medium" | "high" | null, language: AppLa
   };
 }
 
+function getHandshakeStatusCopy(status: HandshakeCoverageStatus, language: AppLanguage) {
+  switch (status) {
+    case "covered":
+      return {
+        label: t(language, "Covered", "Täckt"),
+        classes: "border-emerald-200 bg-emerald-50 text-emerald-900",
+        description: t(
+          language,
+          "At least one traced Delivery Story currently links back to this approved Story Idea.",
+          "Minst en spårad Delivery Story länkar just nu tillbaka till den här godkända Story Idean."
+        )
+      };
+    case "reshaped_within_handshake":
+      return {
+        label: t(language, "Reshaped within handshake", "Omformad inom handslaget"),
+        classes: "border-sky-200 bg-sky-50 text-sky-900",
+        description: t(
+          language,
+          "Delivery exists, but it has been split or moved across Epic boundaries compared with the approved Story Idea.",
+          "Leverans finns, men den har delats upp eller flyttats över Epic-gränser jämfört med den godkända Story Idean."
+        )
+      };
+    default:
+      return {
+        label: t(language, "Not implemented", "Inte implementerad"),
+        classes: "border-amber-200 bg-amber-50 text-amber-900",
+        description: t(
+          language,
+          "No traced Delivery Story currently links back to this approved Story Idea.",
+          "Ingen spårad Delivery Story länkar just nu tillbaka till den här godkända Story Idean."
+        )
+      };
+  }
+}
+
+function getSingleSearchParamValue(
+  searchParams: Record<string, string | string[] | undefined>,
+  key: string
+) {
+  const value = searchParams[key];
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return Array.isArray(value) ? value[0] ?? null : null;
+}
+
 async function getServerLanguage(): Promise<AppLanguage> {
   try {
     const cookieStore = await cookies();
@@ -158,14 +216,20 @@ async function getServerLanguage(): Promise<AppLanguage> {
 }
 
 export default async function OutcomeApprovalDocumentPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ outcomeId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const language = await getServerLanguage();
   const { outcomeId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const session = await requireActiveProjectSession();
-  const reviewResult = await getCachedOutcomeTollgateReviewData(session.organization.organizationId, outcomeId);
+  const [reviewResult, workspaceResult] = await Promise.all([
+    getCachedOutcomeTollgateReviewData(session.organization.organizationId, outcomeId),
+    getCachedOutcomeWorkspaceData(session.organization.organizationId, outcomeId)
+  ]);
 
   if (!reviewResult.ok) {
     notFound();
@@ -208,6 +272,47 @@ export default async function OutcomeApprovalDocumentPage({
   const dataSensitivityRationale = parseRiskRationale(snapshot.outcome.riskRationale.dataSensitivity, language);
   const blastRadius = parseRiskRationale(snapshot.outcome.riskRationale.blastRadius, language);
   const decisionImpact = parseRiskRationale(snapshot.outcome.riskRationale.decisionImpact, language);
+  const storedTraceabilityEvidence = getStoredTraceabilityEvidenceSnapshot(snapshot, snapshot.outcome.key);
+  const traceabilityEvidence = storedTraceabilityEvidence ?? (await loadTraceabilityEvidenceForOutcome(snapshot.outcome.key));
+  const outsideHandshakeTraceabilityRows = traceabilityEvidence
+    ? getOutsideHandshakeTraceabilityRows(traceabilityEvidence.rows)
+    : [];
+  const nfrTraceabilityRows = traceabilityEvidence ? getNfrTraceabilityRows(traceabilityEvidence.rows) : [];
+  const traceabilityUploadStatus = getSingleSearchParamValue(resolvedSearchParams, "traceabilityUpload");
+  const traceabilityUploadMessage = getSingleSearchParamValue(resolvedSearchParams, "traceabilityMessage");
+  const handshakeReport =
+    workspaceResult.ok
+      ? buildHandshakeDeliveryReport({
+          approvedStoryIdeas: snapshot.storyIdeas,
+          currentSeeds: workspaceResult.data.outcome.directionSeeds
+            .filter((seed) => seed.lifecycleState === "active")
+            .map((seed) => ({
+              id: seed.id,
+              key: seed.key,
+              title: seed.title,
+              sourceStoryId: seed.sourceStoryId ?? null
+            })),
+          currentStories: workspaceResult.data.outcome.stories
+            .filter((story) => story.lifecycleState === "active")
+            .map((story) => {
+              const epic = workspaceResult.data.outcome.epics.find((candidate) => candidate.id === story.epicId) ?? null;
+
+              return {
+                id: story.id,
+                key: story.key,
+                title: story.title,
+                epicKey: epic?.key ?? null,
+                epicTitle: epic?.title ?? null,
+                sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
+                status: story.status,
+                acceptanceCriteria: story.acceptanceCriteria,
+                definitionOfDone: story.definitionOfDone,
+                testDefinition: story.testDefinition ?? null,
+                tollgateStatus: null
+              };
+            })
+        })
+      : null;
 
   return (
     <section className="space-y-6 print:space-y-4">
@@ -228,6 +333,18 @@ export default async function OutcomeApprovalDocumentPage({
           </Link>
         </div>
       </div>
+
+      {traceabilityUploadStatus && traceabilityUploadMessage ? (
+        <div
+          className={`rounded-3xl border px-5 py-4 text-sm leading-6 print:hidden ${
+            traceabilityUploadStatus === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+              : "border-rose-200 bg-rose-50 text-rose-950"
+          }`}
+        >
+          {traceabilityUploadMessage}
+        </div>
+      ) : null}
 
       <article className="rounded-[32px] border border-border/70 bg-white p-8 shadow-[0_24px_64px_rgba(15,23,42,0.08)] print:border-0 print:p-0 print:shadow-none">
         <div className="space-y-6">
@@ -403,6 +520,275 @@ export default async function OutcomeApprovalDocumentPage({
                 </div>
               ) : null}
             </div>
+          </section>
+
+          <section className="rounded-3xl border border-border/70 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              {t(language, "Handshake delivery coverage", "Leveranstäckning mot handslaget")}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              {t(
+                language,
+                "This first compliance view compares the approved Story Ideas with current traced Delivery Stories in AAS. It shows what is covered, what has been reshaped within the handshake, and what currently sits outside the approved framing.",
+                "Den här första compliance-vyn jämför de godkända Story Ideas med nuvarande spårade Delivery Stories i AAS. Den visar vad som är täckt, vad som har omformats inom handslaget och vad som just nu ligger utanför den godkända framingen."
+              )}
+            </p>
+
+            {handshakeReport ? (
+              <div className="mt-4 space-y-5">
+                <div className="grid gap-3 lg:grid-cols-4">
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Approved ideas", "Godkända idéer")}</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950">{handshakeReport.summary.approvedIdeaCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">{t(language, "Covered", "Täckta")}</p>
+                    <p className="mt-2 text-2xl font-semibold text-emerald-950">{handshakeReport.summary.coveredCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">{t(language, "Reshaped", "Omformade")}</p>
+                    <p className="mt-2 text-2xl font-semibold text-sky-950">{handshakeReport.summary.reshapedCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">{t(language, "Outside handshake", "Utanför handslag")}</p>
+                    <p className="mt-2 text-2xl font-semibold text-amber-950">{handshakeReport.summary.outsideHandshakeCount}</p>
+                  </div>
+                </div>
+
+                {traceabilityEvidence ? (
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50/40 p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">
+                          {t(language, "BMAD traceability evidence", "BMAD-spårbarhet som evidens")}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">
+                          {t(
+                            language,
+                            storedTraceabilityEvidence
+                              ? "Evidence was imported into this approved framing document and is now used as a supplemental proof layer in this report."
+                              : "Evidence was loaded from the configured BMAD traceability export and is now used as a supplemental proof layer in this report.",
+                            storedTraceabilityEvidence
+                              ? "Evidens importerades till det här godkända framingdokumentet och används nu som ett kompletterande bevislager i den här rapporten."
+                              : "Evidens lästes in från den konfigurerade BMAD-traceability-exporten och används nu som ett kompletterande bevislager i den här rapporten."
+                          )}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-500">{traceabilityEvidence.sourcePath}</p>
+                        {traceabilityEvidence.uploadedAt ? (
+                          <p className="mt-1 text-xs text-slate-500">
+                            {t(language, "Imported at:", "Importerad:")} {formatDate(traceabilityEvidence.uploadedAt, language)}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <div className="rounded-2xl border border-sky-200 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                          {t(language, "Traced rows:", "Spårade rader:")} {traceabilityEvidence.rows.length}
+                        </div>
+                        <div className="rounded-2xl border border-sky-200 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                          {t(language, "ADDED rows:", "ADDED-rader:")} {outsideHandshakeTraceabilityRows.length}
+                        </div>
+                        <div className="rounded-2xl border border-sky-200 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                          {t(language, "NFR rows:", "NFR-rader:")} {nfrTraceabilityRows.length}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="rounded-2xl border border-border/70 bg-white/80 p-4 print:hidden">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="max-w-2xl">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        {t(language, "Import BMAD traceability CSV", "Importera BMAD-traceability-CSV")}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {t(
+                          language,
+                          "Upload the exported traceability CSV here to bind implementation evidence to this approved handshake. The imported rows are stored with the approval document for this outcome.",
+                          "Ladda upp den exporterade traceability-CSV:n här för att binda implementationsevidens till det här godkända handslaget. De importerade raderna sparas tillsammans med approval-dokumentet för det här outcome:t."
+                        )}
+                      </p>
+                    </div>
+                    <form action={uploadOutcomeTraceabilityEvidenceAction} className="flex w-full max-w-xl flex-col gap-3 lg:items-end">
+                      <input name="outcomeId" type="hidden" value={outcomeId} />
+                      <input
+                        accept=".csv,text/csv"
+                        className="w-full rounded-2xl border border-border/70 bg-white px-4 py-3 text-sm text-slate-700 file:mr-3 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white"
+                        name="traceabilityCsv"
+                        required
+                        type="file"
+                      />
+                      <PendingFormButton
+                        className="rounded-full"
+                        label={t(language, traceabilityEvidence ? "Replace traceability CSV" : "Import traceability CSV", traceabilityEvidence ? "Byt traceability-CSV" : "Importera traceability-CSV")}
+                        pendingLabel={t(language, "Importing traceability...", "Importerar traceability...")}
+                      />
+                    </form>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {handshakeReport.coverageRows.map((row) => {
+                    const statusCopy = getHandshakeStatusCopy(row.status, language);
+                    const evidenceRows = traceabilityEvidence
+                      ? getTraceabilityRowsForOrigin(traceabilityEvidence.rows, row.idea.key)
+                      : [];
+
+                    return (
+                      <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={`${row.idea.sourceType}:${row.idea.key}`}>
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-semibold text-slate-950">{row.idea.key} {row.idea.title}</p>
+                              <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${statusCopy.classes}`}>
+                                {statusCopy.label}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm text-slate-700">
+                              <span className="font-medium">{t(language, "Approved Epic:", "Godkänd Epic:")}</span> {row.idea.linkedEpic ?? t(language, "Unassigned", "Otilldelad")}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-700">{statusCopy.description}</p>
+                          </div>
+                          <div className="rounded-2xl border border-border/70 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                            {t(language, "Linked Delivery Stories:", "Länkade Delivery Stories:")} {row.linkedDeliveryStories.length}
+                          </div>
+                        </div>
+
+                        {row.linkedDeliveryStories.length > 0 ? (
+                          <div className="mt-4 space-y-3">
+                            {row.linkedDeliveryStories.map((story) => (
+                              <div className="rounded-2xl border border-border/70 bg-white/80 p-4" key={story.id}>
+                                <p className="font-semibold text-slate-950">{story.key} {story.title}</p>
+                                <p className="mt-2 text-sm text-slate-700">
+                                  <span className="font-medium">{t(language, "Current Epic:", "Nuvarande Epic:")}</span>{" "}
+                                  {story.epicKey && story.epicTitle ? `${story.epicKey} ${story.epicTitle}` : t(language, "Not captured", "Ej fångat")}
+                                </p>
+                                <p className="mt-1 text-sm text-slate-700">
+                                  <span className="font-medium">{t(language, "Delivery status:", "Leveransstatus:")}</span>{" "}
+                                  {formatLabel(story.status ?? null, language)}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-4 text-sm text-slate-600">
+                            {t(
+                              language,
+                              "No traced Delivery Story currently proves implementation of this approved Story Idea.",
+                              "Ingen spårad Delivery Story bevisar just nu implementation av den här godkända Story Idean."
+                            )}
+                          </p>
+                        )}
+
+                        {evidenceRows.length > 0 ? (
+                          <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">
+                              {t(language, "Traceability evidence", "Spårbarhetsevidens")}
+                            </p>
+                            <div className="mt-3 space-y-3">
+                              {evidenceRows.map((evidenceRow) => (
+                                <div className="rounded-2xl border border-sky-200 bg-white/90 p-4" key={evidenceRow.matchKey}>
+                                  <p className="font-semibold text-slate-950">
+                                    {evidenceRow.refinedStoryId} {evidenceRow.refinedStoryTitle}
+                                  </p>
+                                  <p className="mt-2 text-sm text-slate-700">
+                                    <span className="font-medium">{t(language, "Implementation story:", "Implementationsstory:")}</span>{" "}
+                                    {evidenceRow.epicStoryIds.join(" | ") || t(language, "Not captured", "Ej fångat")}
+                                  </p>
+                                  <p className="mt-1 text-sm text-slate-700">
+                                    <span className="font-medium">{t(language, "Implementation artifacts:", "Implementation artifacts:")}</span>{" "}
+                                    {evidenceRow.implementationArtifacts
+                                      .map((artifact) => artifact.split("/").pop() ?? artifact)
+                                      .join(" | ") || t(language, "Not captured", "Ej fångat")}
+                                  </p>
+                                  <p className="mt-1 text-sm text-slate-700">
+                                    <span className="font-medium">{t(language, "Test evidence items:", "Testevidensposter:")}</span>{" "}
+                                    {evidenceRow.testEvidence.length}
+                                  </p>
+                                  {evidenceRow.sourceOriginNote ? (
+                                    <p className="mt-2 text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Trace note:", "Spårbarhetsnot:")}</span> {evidenceRow.sourceOriginNote}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">
+                    {t(language, "Additional delivery outside the approved handshake", "Ytterligare leverans utanför godkänt handslag")}
+                  </p>
+                  {handshakeReport.outsideHandshakeStories.length > 0 ? (
+                    <div className="mt-3 space-y-3">
+                      {handshakeReport.outsideHandshakeStories.map((story) => (
+                        <div className="rounded-2xl border border-amber-200 bg-white/90 p-4" key={story.id}>
+                          <p className="font-semibold text-slate-950">{story.key} {story.title}</p>
+                          <p className="mt-2 text-sm text-slate-700">
+                            <span className="font-medium">{t(language, "Epic:", "Epic:")}</span>{" "}
+                            {story.epicKey && story.epicTitle ? `${story.epicKey} ${story.epicTitle}` : t(language, "Not captured", "Ej fångat")}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-700">
+                            {t(
+                              language,
+                              "This Delivery Story currently has no direct trace back to an approved Story Idea in the handshake.",
+                              "Den här Delivery Storyn har just nu ingen direkt spårning tillbaka till en godkänd Story Idea i handslaget."
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-700">
+                      {t(
+                        language,
+                        "No additional Delivery Stories outside the approved handshake are currently visible.",
+                        "Inga ytterligare Delivery Stories utanför det godkända handslaget är just nu synliga."
+                      )}
+                    </p>
+                  )}
+
+                  {outsideHandshakeTraceabilityRows.length > 0 ? (
+                    <div className="mt-4 space-y-3">
+                      {outsideHandshakeTraceabilityRows.map((row) => (
+                        <div className="rounded-2xl border border-amber-200 bg-white/90 p-4" key={row.matchKey}>
+                          <p className="font-semibold text-slate-950">
+                            {row.refinedStoryId} {row.refinedStoryTitle}
+                          </p>
+                          <p className="mt-2 text-sm text-slate-700">
+                            <span className="font-medium">{t(language, "Implementation story:", "Implementationsstory:")}</span>{" "}
+                            {row.epicStoryIds.join(" | ") || t(language, "Not captured", "Ej fångat")}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-700">
+                            <span className="font-medium">{t(language, "Why outside handshake:", "Varför utanför handslaget:")}</span>{" "}
+                            {row.sourceOriginNote ?? t(language, "Marked as ADDED in BMAD traceability.", "Markerad som ADDED i BMAD-spårbarheten.")}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-700">
+                            <span className="font-medium">{t(language, "Implementation artifacts:", "Implementation artifacts:")}</span>{" "}
+                            {row.implementationArtifacts
+                              .map((artifact) => artifact.split("/").pop() ?? artifact)
+                              .join(" | ") || t(language, "Not captured", "Ej fångat")}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-700">
+                {t(
+                  language,
+                  "Current project data could not be loaded, so delivery coverage cannot yet be compared against the approved handshake.",
+                  "Nuvarande projektdata kunde inte laddas, så leveranstäckningen kan ännu inte jämföras mot det godkända handslaget."
+                )}
+              </div>
+            )}
           </section>
 
           <section className="rounded-3xl border border-border/70 p-5">
