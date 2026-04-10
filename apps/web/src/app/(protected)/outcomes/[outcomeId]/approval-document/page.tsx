@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { CheckCircle2, CircleAlert, TriangleAlert } from "lucide-react";
@@ -83,12 +83,12 @@ function t(language: AppLanguage, en: string, sv: string) {
 
 function formatDate(value: string | null, language: AppLanguage) {
   if (!value) {
-    return t(language, "Not captured", "Ej fångat");
+    return t(language, "Not captured", "Ej fÃ¥ngat");
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return t(language, "Not captured", "Ej fångat");
+    return t(language, "Not captured", "Ej fÃ¥ngat");
   }
 
   return new Intl.DateTimeFormat(language === "sv" ? "sv-SE" : "en-GB", {
@@ -101,14 +101,14 @@ function formatDate(value: string | null, language: AppLanguage) {
 }
 
 function formatLabel(value: string | null, language: AppLanguage) {
-  return value ? value.replaceAll("_", " ") : t(language, "Not captured", "Ej fångat");
+  return value ? value.replaceAll("_", " ") : t(language, "Not captured", "Ej fÃ¥ngat");
 }
 
 function parseRiskRationale(value: string | null, language: AppLanguage) {
   if (!value) {
     return {
       level: null,
-      rationale: t(language, "Not captured", "Ej fångat")
+      rationale: t(language, "Not captured", "Ej fÃ¥ngat")
     };
   }
 
@@ -126,14 +126,14 @@ function parseRiskRationale(value: string | null, language: AppLanguage) {
 
   return {
     level: (level ? level.toLowerCase() : "low") as "low" | "medium" | "high",
-    rationale: rationale || t(language, "Not captured", "Ej fångat")
+    rationale: rationale || t(language, "Not captured", "Ej fÃ¥ngat")
   };
 }
 
 function getRiskDisplay(level: "low" | "medium" | "high" | null, language: AppLanguage) {
   if (level === "low") {
     return {
-      label: t(language, "Risk: Low", "Risk: Låg"),
+      label: t(language, "Risk: Low", "Risk: LÃ¥g"),
       icon: <CheckCircle2 className="h-4 w-4 text-emerald-700" />
     };
   }
@@ -147,13 +147,13 @@ function getRiskDisplay(level: "low" | "medium" | "high" | null, language: AppLa
 
   if (level === "high") {
     return {
-      label: t(language, "Risk: High", "Risk: Hög"),
+      label: t(language, "Risk: High", "Risk: HÃ¶g"),
       icon: <CircleAlert className="h-4 w-4 text-rose-700" />
     };
   }
 
   return {
-    label: t(language, "Risk: Not captured", "Risk: Ej fångat"),
+    label: t(language, "Risk: Not captured", "Risk: Ej fÃ¥ngat"),
     icon: <CircleAlert className="h-4 w-4 text-slate-500" />
   };
 }
@@ -162,12 +162,12 @@ function getHandshakeStatusCopy(status: HandshakeCoverageStatus, language: AppLa
   switch (status) {
     case "covered":
       return {
-        label: t(language, "Covered", "Täckt"),
+        label: t(language, "Covered", "TÃ¤ckt"),
         classes: "border-emerald-200 bg-emerald-50 text-emerald-900",
         description: t(
           language,
           "At least one traced Delivery Story currently links back to this approved Story Idea.",
-          "Minst en spårad Delivery Story länkar just nu tillbaka till den här godkända Story Idean."
+          "Minst en spÃ¥rad Delivery Story lÃ¤nkar just nu tillbaka till den hÃ¤r godkÃ¤nda Story Idean."
         )
       };
     case "reshaped_within_handshake":
@@ -177,7 +177,7 @@ function getHandshakeStatusCopy(status: HandshakeCoverageStatus, language: AppLa
         description: t(
           language,
           "Delivery exists, but it has been split or moved across Epic boundaries compared with the approved Story Idea.",
-          "Leverans finns, men den har delats upp eller flyttats över Epic-gränser jämfört med den godkända Story Idean."
+          "Leverans finns, men den har delats upp eller flyttats Ã¶ver Epic-grÃ¤nser jÃ¤mfÃ¶rt med den godkÃ¤nda Story Idean."
         )
       };
     default:
@@ -187,7 +187,7 @@ function getHandshakeStatusCopy(status: HandshakeCoverageStatus, language: AppLa
         description: t(
           language,
           "No traced Delivery Story currently links back to this approved Story Idea.",
-          "Ingen spårad Delivery Story länkar just nu tillbaka till den här godkända Story Idean."
+          "Ingen spÃ¥rad Delivery Story lÃ¤nkar just nu tillbaka till den hÃ¤r godkÃ¤nda Story Idean."
         )
       };
   }
@@ -241,16 +241,16 @@ export default async function OutcomeApprovalDocumentPage({
     return (
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <AasBrandMark subtitle={t(language, "Approved framing document", "Godkänt framingdokument")} />
+          <AasBrandMark subtitle={t(language, "Approved framing document", "GodkÃ¤nt framingdokument")} />
           <Link className="text-sm font-medium text-primary underline-offset-4 hover:underline" href={`/outcomes/${outcomeId}`}>
             {t(language, "Back to Framing", "Tillbaka till Framing")}
           </Link>
         </div>
         <Card className="border-border/70 shadow-sm">
           <CardContent className="space-y-3 p-6">
-            <h1 className="text-xl font-semibold text-foreground">{t(language, "No approved framing document available", "Inget godkänt framingdokument finns tillgängligt")}</h1>
+            <h1 className="text-xl font-semibold text-foreground">{t(language, "No approved framing document available", "Inget godkÃ¤nt framingdokument finns tillgÃ¤ngligt")}</h1>
             <p className="text-sm leading-6 text-muted-foreground">
-              {t(language, "Tollgate 1 needs a completed approval before a framing approval document can be opened or printed.", "Tollgate 1 behöver ett slutfört godkännande innan ett framingdokument kan öppnas eller skrivas ut.")}
+              {t(language, "Tollgate 1 needs a completed approval before a framing approval document can be opened or printed.", "Tollgate 1 behÃ¶ver ett slutfÃ¶rt godkÃ¤nnande innan ett framingdokument kan Ã¶ppnas eller skrivas ut.")}
             </p>
           </CardContent>
         </Card>
@@ -318,9 +318,9 @@ export default async function OutcomeApprovalDocumentPage({
     <section className="space-y-6 print:space-y-4">
       <div className="flex flex-col gap-4 rounded-[28px] border border-border/70 bg-white px-6 py-5 shadow-sm print:hidden lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
-          <AasBrandMark subtitle={t(language, "Approved framing document", "Godkänt framingdokument")} />
+          <AasBrandMark subtitle={t(language, "Approved framing document", "GodkÃ¤nt framingdokument")} />
           <div className="text-sm text-muted-foreground">
-            {t(language, "Approved framing version", "Godkänd framingversion")} {snapshot.approvedVersion} {t(language, "on", "den")} {formatDate(snapshot.approvedAt, language)}
+            {t(language, "Approved framing version", "GodkÃ¤nd framingversion")} {snapshot.approvedVersion} {t(language, "on", "den")} {formatDate(snapshot.approvedAt, language)}
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -350,23 +350,23 @@ export default async function OutcomeApprovalDocumentPage({
         <div className="space-y-6">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-3">
-              <AasBrandMark subtitle={t(language, "Controlled framing approval record", "Styrt godkännandespår för framing")} />
+              <AasBrandMark subtitle={t(language, "Controlled framing approval record", "Styrt godkÃ¤nnandespÃ¥r fÃ¶r framing")} />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Tollgate 1 approval record", "Tollgate 1-godkännandepost")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Tollgate 1 approval record", "Tollgate 1-godkÃ¤nnandepost")}</p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">{snapshot.outcome.title}</h1>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {t(language, "This document captures the approved customer handshake, framing direction and sign-off trail for the approved Framing version.", "Det här dokumentet fångar den godkända kundhandshake:n, framingriktningen och sign-off-spåret för den godkända Framing-versionen.")}
+                  {t(language, "This document captures the approved customer handshake, framing direction and sign-off trail for the approved Framing version.", "Det hÃ¤r dokumentet fÃ¥ngar den godkÃ¤nda kundhandshake:n, framingriktningen och sign-off-spÃ¥ret fÃ¶r den godkÃ¤nda Framing-versionen.")}
                 </p>
               </div>
             </div>
             <div className="grid gap-3">
               <div className="rounded-3xl border border-sky-200 bg-sky-50/70 p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">{t(language, "Framing status", "Framingstatus")}</p>
-                <p className="mt-2 text-2xl font-semibold text-sky-950">{t(language, "Approved", "Godkänd")}</p>
+                <p className="mt-2 text-2xl font-semibold text-sky-950">{t(language, "Approved", "GodkÃ¤nd")}</p>
                 <p className="mt-2 text-sm text-sky-900">{t(language, "Version", "Version")} {snapshot.approvedVersion}</p>
               </div>
               <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">{t(language, "Approved at", "Godkänd den")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">{t(language, "Approved at", "GodkÃ¤nd den")}</p>
                 <p className="mt-2 text-sm font-medium text-emerald-950">{formatDate(snapshot.approvedAt, language)}</p>
               </div>
             </div>
@@ -377,15 +377,15 @@ export default async function OutcomeApprovalDocumentPage({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Business case", "Business case")}</p>
               <div className="mt-4 space-y-4 text-sm leading-6 text-slate-800">
                 <p><span className="font-semibold">{t(language, "Outcome key:", "Outcome-nyckel:")}</span> {snapshot.outcome.key}</p>
-                <p><span className="font-semibold">{t(language, "Timeframe:", "Tidsram:")}</span> {snapshot.outcome.timeframe ?? t(language, "Not captured", "Ej fångat")}</p>
+                <p><span className="font-semibold">{t(language, "Timeframe:", "Tidsram:")}</span> {snapshot.outcome.timeframe ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 <p><span className="font-semibold">{t(language, "Value Owner:", "Value Owner:")}</span> {snapshot.outcome.valueOwner ?? t(language, "Unassigned", "Ej tilldelad")}</p>
                 <div>
                   <p className="font-semibold">{t(language, "Problem statement", "Problemformulering")}</p>
-                  <p className="mt-1 text-slate-700">{snapshot.outcome.problemStatement ?? t(language, "Not captured", "Ej fångat")}</p>
+                  <p className="mt-1 text-slate-700">{snapshot.outcome.problemStatement ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 </div>
                 <div>
                   <p className="font-semibold">{t(language, "Outcome statement", "Outcome-formulering")}</p>
-                  <p className="mt-1 text-slate-700">{snapshot.outcome.outcomeStatement ?? t(language, "Not captured", "Ej fångat")}</p>
+                  <p className="mt-1 text-slate-700">{snapshot.outcome.outcomeStatement ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 </div>
               </div>
             </div>
@@ -395,19 +395,19 @@ export default async function OutcomeApprovalDocumentPage({
               <div className="mt-4 space-y-4 text-sm leading-6 text-slate-800">
                 <div>
                   <p className="font-semibold">{t(language, "Definition", "Definition")}</p>
-                  <p className="mt-1 text-slate-700">{snapshot.outcome.baselineDefinition ?? t(language, "Not captured", "Ej fångat")}</p>
+                  <p className="mt-1 text-slate-700">{snapshot.outcome.baselineDefinition ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 </div>
                 <div>
-                  <p className="font-semibold">{t(language, "Source", "Källa")}</p>
-                  <p className="mt-1 text-slate-700">{snapshot.outcome.baselineSource ?? t(language, "Not captured", "Ej fångat")}</p>
+                  <p className="font-semibold">{t(language, "Source", "KÃ¤lla")}</p>
+                  <p className="mt-1 text-slate-700">{snapshot.outcome.baselineSource ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 </div>
                 <div>
-                  <p className="font-semibold">{t(language, "Solution context", "Lösningskontext")}</p>
-                  <p className="mt-1 text-slate-700">{snapshot.outcome.solutionContext ?? t(language, "Not captured", "Ej fångat")}</p>
+                  <p className="font-semibold">{t(language, "Solution context", "LÃ¶sningskontext")}</p>
+                  <p className="mt-1 text-slate-700">{snapshot.outcome.solutionContext ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 </div>
                 <div>
                   <p className="font-semibold">{t(language, "Constraints", "Constraints")}</p>
-                  <p className="mt-1 text-slate-700">{snapshot.outcome.constraints ?? t(language, "Not captured", "Ej fångat")}</p>
+                  <p className="mt-1 text-slate-700">{snapshot.outcome.constraints ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 </div>
               </div>
             </div>
@@ -417,58 +417,58 @@ export default async function OutcomeApprovalDocumentPage({
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "AI and risk", "AI och risk")}</p>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-800">
-                <p><span className="font-semibold">{t(language, "AI Level:", "AI-nivå:")}</span> {formatAiLevelLabel(snapshot.outcome.aiLevel)}</p>
-                <p className="mt-2 text-slate-700">{getAiLevelSummary(snapshot.outcome.aiLevel) ?? t(language, "Not captured", "Ej fångat")}</p>
+                <p><span className="font-semibold">{t(language, "AI Level:", "AI-nivÃ¥:")}</span> {formatAiLevelLabel(snapshot.outcome.aiLevel)}</p>
+                <p className="mt-2 text-slate-700">{getAiLevelSummary(snapshot.outcome.aiLevel) ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                 <div className="mt-3 flex items-center gap-2">
                   {getRiskDisplay(snapshot.outcome.riskProfile, language).icon}
                   <p><span className="font-semibold">{getRiskDisplay(snapshot.outcome.riskProfile, language).label}</span></p>
                 </div>
-                <p><span className="font-semibold">{t(language, "Data sensitivity:", "Datakänslighet:")}</span> {snapshot.outcome.dataSensitivity ?? t(language, "Not captured", "Ej fångat")}</p>
-                <p><span className="font-semibold">{t(language, "Delivery type:", "Leveranstyp:")}</span> {snapshot.outcome.deliveryType ?? t(language, "Not captured", "Ej fångat")}</p>
+                <p><span className="font-semibold">{t(language, "Data sensitivity:", "DatakÃ¤nslighet:")}</span> {snapshot.outcome.dataSensitivity ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
+                <p><span className="font-semibold">{t(language, "Delivery type:", "Leveranstyp:")}</span> {snapshot.outcome.deliveryType ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-800">
                 <p className="font-semibold text-slate-950">{t(language, "Risk summary", "Risksammanfattning")}</p>
                 <p className="mt-2 text-slate-700">
-                  {t(language, "This risk posture was classified in Framing and approved as part of Tollgate 1 for the recorded Framing version.", "Den här riskpositionen klassificerades i Framing och godkändes som del av Tollgate 1 för den registrerade Framing-versionen.")}
+                  {t(language, "This risk posture was classified in Framing and approved as part of Tollgate 1 for the recorded Framing version.", "Den hÃ¤r riskpositionen klassificerades i Framing och godkÃ¤ndes som del av Tollgate 1 fÃ¶r den registrerade Framing-versionen.")}
                 </p>
               </div>
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
-                <p className="font-semibold text-slate-950">{t(language, "Business impact", "Affärspåverkan")}</p>
+                <p className="font-semibold text-slate-950">{t(language, "Business impact", "AffÃ¤rspÃ¥verkan")}</p>
                 <div className="mt-2 flex items-center gap-2">
                   {getRiskDisplay(businessImpact.level, language).icon}
                   <p className="font-medium text-slate-950">{getRiskDisplay(businessImpact.level, language).label}</p>
                 </div>
                 <p className="mt-2">{businessImpact.rationale}</p>
-                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe what happens to the business if the system or AI output is wrong.", "Motiveringen bör beskriva vad som händer med verksamheten om systemet eller AI-utdata blir fel.")}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe what happens to the business if the system or AI output is wrong.", "Motiveringen bÃ¶r beskriva vad som hÃ¤nder med verksamheten om systemet eller AI-utdata blir fel.")}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
-                <p className="font-semibold text-slate-950">{t(language, "Data sensitivity rationale", "Motivering för datakänslighet")}</p>
+                <p className="font-semibold text-slate-950">{t(language, "Data sensitivity rationale", "Motivering fÃ¶r datakÃ¤nslighet")}</p>
                 <div className="mt-2 flex items-center gap-2">
                   {getRiskDisplay(dataSensitivityRationale.level, language).icon}
                   <p className="font-medium text-slate-950">{getRiskDisplay(dataSensitivityRationale.level, language).label}</p>
                 </div>
                 <p className="mt-2">{dataSensitivityRationale.rationale}</p>
-                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe what kind of data is involved and whether it is personal, sensitive or regulated.", "Motiveringen bör beskriva vilken typ av data som ingår och om den är personlig, känslig eller reglerad.")}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe what kind of data is involved and whether it is personal, sensitive or regulated.", "Motiveringen bÃ¶r beskriva vilken typ av data som ingÃ¥r och om den Ã¤r personlig, kÃ¤nslig eller reglerad.")}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
-                <p className="font-semibold text-slate-950">{t(language, "Blast radius", "Sprängradie")}</p>
+                <p className="font-semibold text-slate-950">{t(language, "Blast radius", "SprÃ¤ngradie")}</p>
                 <div className="mt-2 flex items-center gap-2">
                   {getRiskDisplay(blastRadius.level, language).icon}
                   <p className="font-medium text-slate-950">{getRiskDisplay(blastRadius.level, language).label}</p>
                 </div>
                 <p className="mt-2">{blastRadius.rationale}</p>
-                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe how many users, teams or systems are affected if something goes wrong.", "Motiveringen bör beskriva hur många användare, team eller system som påverkas om något går fel.")}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe how many users, teams or systems are affected if something goes wrong.", "Motiveringen bÃ¶r beskriva hur mÃ¥nga anvÃ¤ndare, team eller system som pÃ¥verkas om nÃ¥got gÃ¥r fel.")}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background p-4 text-sm leading-6 text-slate-800">
-                <p className="font-semibold text-slate-950">{t(language, "Decision impact", "Beslutspåverkan")}</p>
+                <p className="font-semibold text-slate-950">{t(language, "Decision impact", "BeslutspÃ¥verkan")}</p>
                 <div className="mt-2 flex items-center gap-2">
                   {getRiskDisplay(decisionImpact.level, language).icon}
                   <p className="font-medium text-slate-950">{getRiskDisplay(decisionImpact.level, language).label}</p>
                 </div>
                 <p className="mt-2">{decisionImpact.rationale}</p>
-                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe whether AI only assists, influences decisions, or automates them.", "Motiveringen bör beskriva om AI bara assisterar, påverkar beslut eller automatiserar dem.")}</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">{t(language, "Rationale should describe whether AI only assists, influences decisions, or automates them.", "Motiveringen bÃ¶r beskriva om AI bara assisterar, pÃ¥verkar beslut eller automatiserar dem.")}</p>
               </div>
             </div>
           </section>
@@ -482,8 +482,8 @@ export default async function OutcomeApprovalDocumentPage({
                 return (
                   <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={epic.key}>
                     <p className="font-semibold text-slate-950">{epic.key} {epic.title}</p>
-                    <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t(language, "Purpose:", "Syfte:")}</span> {epic.purpose ?? t(language, "Not captured", "Ej fångat")}</p>
-                    <p className="mt-1 text-sm text-slate-700"><span className="font-medium">{t(language, "Scope boundary:", "Scope-gräns:")}</span> {epic.scopeBoundary ?? t(language, "Not captured", "Ej fångat")}</p>
+                    <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t(language, "Purpose:", "Syfte:")}</span> {epic.purpose ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
+                    <p className="mt-1 text-sm text-slate-700"><span className="font-medium">{t(language, "Scope boundary:", "Scope-grÃ¤ns:")}</span> {epic.scopeBoundary ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
 
                     <div className="mt-4 rounded-2xl border border-border/70 bg-white/70 p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Story Ideas", "Story Ideas")}</p>
@@ -492,18 +492,18 @@ export default async function OutcomeApprovalDocumentPage({
                           {epicStoryIdeas.map((storyIdea) => (
                             <div className="rounded-2xl border border-border/70 bg-background p-4" key={`${storyIdea.sourceType}:${storyIdea.key}`}>
                               <p className="font-semibold text-slate-950">{storyIdea.key} {storyIdea.title}</p>
-                              <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span> {storyIdea.valueIntent ?? t(language, "Not captured", "Ej fångat")}</p>
-                              <p className="mt-1 text-sm text-slate-700"><span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span> {storyIdea.expectedBehavior ?? t(language, "Not captured", "Ej fångat")}</p>
+                              <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span> {storyIdea.valueIntent ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
+                              <p className="mt-1 text-sm text-slate-700"><span className="font-medium">{t(language, "Expected behavior:", "FÃ¶rvÃ¤ntat beteende:")}</span> {storyIdea.expectedBehavior ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="mt-3 text-sm text-slate-600">{t(language, "No Story Ideas were linked to this Epic.", "Inga Story Ideas var länkade till denna Epic.")}</p>
+                        <p className="mt-3 text-sm text-slate-600">{t(language, "No Story Ideas were linked to this Epic.", "Inga Story Ideas var lÃ¤nkade till denna Epic.")}</p>
                       )}
                     </div>
                   </div>
                 );
-              }) : <p className="text-sm text-slate-600">{t(language, "No Epics were captured.", "Inga Epics fångades.")}</p>}
+              }) : <p className="text-sm text-slate-600">{t(language, "No Epics were captured.", "Inga Epics fÃ¥ngades.")}</p>}
 
               {unassignedStoryIdeas.length > 0 ? (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
@@ -512,8 +512,8 @@ export default async function OutcomeApprovalDocumentPage({
                     {unassignedStoryIdeas.map((storyIdea) => (
                       <div className="rounded-2xl border border-amber-200 bg-white/90 p-4" key={`${storyIdea.sourceType}:${storyIdea.key}`}>
                         <p className="font-semibold text-slate-950">{storyIdea.key} {storyIdea.title}</p>
-                        <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span> {storyIdea.valueIntent ?? t(language, "Not captured", "Ej fångat")}</p>
-                        <p className="mt-1 text-sm text-slate-700"><span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span> {storyIdea.expectedBehavior ?? t(language, "Not captured", "Ej fångat")}</p>
+                        <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span> {storyIdea.valueIntent ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
+                        <p className="mt-1 text-sm text-slate-700"><span className="font-medium">{t(language, "Expected behavior:", "FÃ¶rvÃ¤ntat beteende:")}</span> {storyIdea.expectedBehavior ?? t(language, "Not captured", "Ej fÃ¥ngat")}</p>
                       </div>
                     ))}
                   </div>
@@ -524,13 +524,13 @@ export default async function OutcomeApprovalDocumentPage({
 
           <section className="rounded-3xl border border-border/70 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              {t(language, "Handshake delivery coverage", "Leveranstäckning mot handslaget")}
+              {t(language, "Handshake delivery coverage", "LeveranstÃ¤ckning mot handslaget")}
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-700">
               {t(
                 language,
                 "This first compliance view compares the approved Story Ideas with current traced Delivery Stories in AAS. It shows what is covered, what has been reshaped within the handshake, and what currently sits outside the approved framing.",
-                "Den här första compliance-vyn jämför de godkända Story Ideas med nuvarande spårade Delivery Stories i AAS. Den visar vad som är täckt, vad som har omformats inom handslaget och vad som just nu ligger utanför den godkända framingen."
+                "Den hÃ¤r fÃ¶rsta compliance-vyn jÃ¤mfÃ¶r de godkÃ¤nda Story Ideas med nuvarande spÃ¥rade Delivery Stories i AAS. Den visar vad som Ã¤r tÃ¤ckt, vad som har omformats inom handslaget och vad som just nu ligger utanfÃ¶r den godkÃ¤nda framingen."
               )}
             </p>
 
@@ -538,11 +538,11 @@ export default async function OutcomeApprovalDocumentPage({
               <div className="mt-4 space-y-5">
                 <div className="grid gap-3 lg:grid-cols-4">
                   <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Approved ideas", "Godkända idéer")}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Approved ideas", "GodkÃ¤nda idÃ©er")}</p>
                     <p className="mt-2 text-2xl font-semibold text-slate-950">{handshakeReport.summary.approvedIdeaCount}</p>
                   </div>
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">{t(language, "Covered", "Täckta")}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900">{t(language, "Covered", "TÃ¤ckta")}</p>
                     <p className="mt-2 text-2xl font-semibold text-emerald-950">{handshakeReport.summary.coveredCount}</p>
                   </div>
                   <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-4">
@@ -550,7 +550,7 @@ export default async function OutcomeApprovalDocumentPage({
                     <p className="mt-2 text-2xl font-semibold text-sky-950">{handshakeReport.summary.reshapedCount}</p>
                   </div>
                   <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">{t(language, "Outside handshake", "Utanför handslag")}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">{t(language, "Outside handshake", "UtanfÃ¶r handslag")}</p>
                     <p className="mt-2 text-2xl font-semibold text-amber-950">{handshakeReport.summary.outsideHandshakeCount}</p>
                   </div>
                 </div>
@@ -560,7 +560,7 @@ export default async function OutcomeApprovalDocumentPage({
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">
-                          {t(language, "BMAD traceability evidence", "BMAD-spårbarhet som evidens")}
+                          {t(language, "BMAD traceability evidence", "BMAD-spÃ¥rbarhet som evidens")}
                         </p>
                         <p className="mt-2 text-sm leading-6 text-slate-700">
                           {t(
@@ -569,8 +569,8 @@ export default async function OutcomeApprovalDocumentPage({
                               ? "Evidence was imported into this approved framing document and is now used as a supplemental proof layer in this report."
                               : "Evidence was loaded from the configured BMAD traceability export and is now used as a supplemental proof layer in this report.",
                             storedTraceabilityEvidence
-                              ? "Evidens importerades till det här godkända framingdokumentet och används nu som ett kompletterande bevislager i den här rapporten."
-                              : "Evidens lästes in från den konfigurerade BMAD-traceability-exporten och används nu som ett kompletterande bevislager i den här rapporten."
+                              ? "Evidens importerades till det hÃ¤r godkÃ¤nda framingdokumentet och anvÃ¤nds nu som ett kompletterande bevislager i den hÃ¤r rapporten."
+                              : "Evidens lÃ¤stes in frÃ¥n den konfigurerade BMAD-traceability-exporten och anvÃ¤nds nu som ett kompletterande bevislager i den hÃ¤r rapporten."
                           )}
                         </p>
                         <p className="mt-2 text-xs text-slate-500">{traceabilityEvidence.sourcePath}</p>
@@ -582,7 +582,7 @@ export default async function OutcomeApprovalDocumentPage({
                       </div>
                       <div className="grid gap-2 sm:grid-cols-3">
                         <div className="rounded-2xl border border-sky-200 bg-white/80 px-3 py-2 text-sm text-slate-700">
-                          {t(language, "Traced rows:", "Spårade rader:")} {traceabilityEvidence.rows.length}
+                          {t(language, "Traced rows:", "SpÃ¥rade rader:")} {traceabilityEvidence.rows.length}
                         </div>
                         <div className="rounded-2xl border border-sky-200 bg-white/80 px-3 py-2 text-sm text-slate-700">
                           {t(language, "ADDED rows:", "ADDED-rader:")} {outsideHandshakeTraceabilityRows.length}
@@ -605,14 +605,14 @@ export default async function OutcomeApprovalDocumentPage({
                         {t(
                           language,
                           "Upload the exported traceability CSV here to bind implementation evidence to this approved handshake. The imported rows are stored with the approval document for this outcome.",
-                          "Ladda upp den exporterade traceability-CSV:n här för att binda implementationsevidens till det här godkända handslaget. De importerade raderna sparas tillsammans med approval-dokumentet för det här outcome:t."
+                          "Ladda upp den exporterade traceability-CSV:n hÃ¤r fÃ¶r att binda implementationsevidens till det hÃ¤r godkÃ¤nda handslaget. De importerade raderna sparas tillsammans med approval-dokumentet fÃ¶r det hÃ¤r outcome:t."
                         )}
                       </p>
                       <p className="mt-2 text-sm leading-6 text-slate-700">
                         {t(
                           language,
                           "The imported CSV is the saved source material. Use Print to PDF when you want a human-readable evidence package to share outside the tool.",
-                          "Den importerade CSV:n är det sparade källunderlaget. Använd Skriv ut till PDF när du vill dela ett mänskligt läsbart evidenspaket utanför verktyget."
+                          "Den importerade CSV:n Ã¤r det sparade kÃ¤llunderlaget. AnvÃ¤nd Skriv ut till PDF nÃ¤r du vill dela ett mÃ¤nskligt lÃ¤sbart evidenspaket utanfÃ¶r verktyget."
                         )}
                       </p>
                     </div>
@@ -639,7 +639,7 @@ export default async function OutcomeApprovalDocumentPage({
                     {t(
                       language,
                       "Imported BMAD rows are shown directly under the approved Story Idea they map to. The separate imported-story library was removed to avoid repeating the same traceability twice.",
-                      "Importerade BMAD-rader visas nu direkt under den godkända Story Idea som de mappar till. Den separata importerade story-listan togs bort för att inte upprepa samma spårbarhet två gånger."
+                      "Importerade BMAD-rader visas nu direkt under den godkÃ¤nda Story Idea som de mappar till. Den separata importerade story-listan togs bort fÃ¶r att inte upprepa samma spÃ¥rbarhet tvÃ¥ gÃ¥nger."
                     )}
                   </p>
                 </div>
@@ -662,12 +662,12 @@ export default async function OutcomeApprovalDocumentPage({
                               </span>
                             </div>
                             <p className="mt-2 text-sm text-slate-700">
-                              <span className="font-medium">{t(language, "Approved Epic:", "Godkänd Epic:")}</span> {row.idea.linkedEpic ?? t(language, "Unassigned", "Otilldelad")}
+                              <span className="font-medium">{t(language, "Approved Epic:", "GodkÃ¤nd Epic:")}</span> {row.idea.linkedEpic ?? t(language, "Unassigned", "Otilldelad")}
                             </p>
                             <p className="mt-1 text-sm leading-6 text-slate-700">{statusCopy.description}</p>
                           </div>
                           <div className="rounded-2xl border border-border/70 bg-white/80 px-3 py-2 text-sm text-slate-700">
-                            {t(language, "Linked Delivery Stories:", "Länkade Delivery Stories:")} {row.linkedDeliveryStories.length}
+                            {t(language, "Linked Delivery Stories:", "LÃ¤nkade Delivery Stories:")} {row.linkedDeliveryStories.length}
                           </div>
                         </div>
 
@@ -678,7 +678,7 @@ export default async function OutcomeApprovalDocumentPage({
                                 <p className="font-semibold text-slate-950">{story.key} {story.title}</p>
                                 <p className="mt-2 text-sm text-slate-700">
                                   <span className="font-medium">{t(language, "Current Epic:", "Nuvarande Epic:")}</span>{" "}
-                                  {story.epicKey && story.epicTitle ? `${story.epicKey} ${story.epicTitle}` : t(language, "Not captured", "Ej fångat")}
+                                  {story.epicKey && story.epicTitle ? `${story.epicKey} ${story.epicTitle}` : t(language, "Not captured", "Ej fÃ¥ngat")}
                                 </p>
                                 <p className="mt-1 text-sm text-slate-700">
                                   <span className="font-medium">{t(language, "Delivery status:", "Leveransstatus:")}</span>{" "}
@@ -692,7 +692,7 @@ export default async function OutcomeApprovalDocumentPage({
                             {t(
                               language,
                               "No traced Delivery Story currently proves implementation of this approved Story Idea.",
-                              "Ingen spårad Delivery Story bevisar just nu implementation av den här godkända Story Idean."
+                              "Ingen spÃ¥rad Delivery Story bevisar just nu implementation av den hÃ¤r godkÃ¤nda Story Idean."
                             )}
                           </p>
                         )}
@@ -700,34 +700,72 @@ export default async function OutcomeApprovalDocumentPage({
                         {evidenceRows.length > 0 ? (
                           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/35 p-4">
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900">
-                              {t(language, "Traceability evidence", "Spårbarhetsevidens")}
+                              {t(language, "Traceability evidence", "SpÃ¥rbarhetsevidens")}
                             </p>
                             <div className="mt-3 space-y-3">
-                              {evidenceRows.map((evidenceRow) => (
-                                <div className="rounded-2xl border border-sky-200 bg-white/90 p-4" key={evidenceRow.matchKey}>
-                                  <p className="font-semibold text-slate-950">
-                                    {evidenceRow.refinedStoryId} {evidenceRow.refinedStoryTitle}
-                                  </p>
-                                  <p className="mt-2 text-sm text-slate-700">
-                                    <span className="font-medium">{t(language, "Implementation story:", "Implementationsstory:")}</span>{" "}
-                                    {evidenceRow.epicStoryIds.join(" | ") || t(language, "Not captured", "Ej fångat")}
-                                  </p>
-                                  <p className="mt-1 text-sm text-slate-700">
-                                    <span className="font-medium">{t(language, "Implementation artifacts:", "Implementation artifacts:")}</span>{" "}
-                                    {evidenceRow.implementationArtifacts
-                                      .map((artifact) => artifact.split("/").pop() ?? artifact)
-                                      .join(" | ") || t(language, "Not captured", "Ej fångat")}
-                                  </p>
-                                  <p className="mt-1 text-sm text-slate-700">
-                                    <span className="font-medium">{t(language, "Test evidence items:", "Testevidensposter:")}</span>{" "}
-                                    {evidenceRow.testEvidence.length}
-                                  </p>
-                                  {evidenceRow.sourceOriginNote ? (
-                                    <p className="mt-2 text-sm text-slate-700">
-                                      <span className="font-medium">{t(language, "Trace note:", "Spårbarhetsnot:")}</span> {evidenceRow.sourceOriginNote}
+                              {evidenceRows.map((evidenceRow, evidenceIndex) => (
+                                <details
+                                  className="rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-sm open:bg-sky-50/20"
+                                  key={evidenceRow.matchKey}
+                                  open={evidenceIndex === 0}
+                                >
+                                  <summary className="cursor-pointer list-none">
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-semibold text-slate-950">
+                                          {evidenceRow.refinedStoryId} {evidenceRow.refinedStoryTitle}
+                                        </p>
+                                        <p className="mt-2 text-sm text-slate-700">
+                                          <span className="font-medium">{t(language, "Implemented as:", "Implementerad som:")}</span>{" "}
+                                          {evidenceRow.epicStoryIds.join(" | ") || t(language, "Not captured", "Ej fÃ¥ngat")}
+                                          {evidenceRow.epicStoryTitle ? ` - ${evidenceRow.epicStoryTitle}` : ""}
+                                        </p>
+                                      </div>
+                                      <div className="rounded-2xl border border-sky-200 bg-sky-50/60 px-3 py-2 text-sm text-slate-700">
+                                        {t(language, "Artifacts:", "Artefakter:")} {evidenceRow.implementationArtifacts.length}
+                                        {" · "}
+                                        {t(language, "Tests:", "Tester:")} {evidenceRow.testEvidence.length}
+                                      </div>
+                                    </div>
+                                  </summary>
+                                  <div className="mt-4 space-y-3">
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Approved source:", "Godkänd källa:")}</span>{" "}
+                                      {row.idea.key} {row.idea.title}
                                     </p>
-                                  ) : null}
-                                </div>
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Why it maps here:", "Varför den mappar hit:")}</span>{" "}
+                                      {evidenceRow.sourceOriginNote ??
+                                        t(language, "Mapped directly from the approved Story Idea.", "Mappad direkt från den godkända Story Idean.")}
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
+                                      {evidenceRow.sourceValueIntent ?? t(language, "Not captured", "Ej fångat")}
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Expected behavior:", "Förväntat beteende:")}</span>{" "}
+                                      {evidenceRow.sourceExpectedBehavior ?? t(language, "Not captured", "Ej fångat")}
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Acceptance summary:", "Acceptanssammanfattning:")}</span>{" "}
+                                      {evidenceRow.acceptanceCriteriaSummary ?? t(language, "Not captured", "Ej fångat")}
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Definition of done:", "Definition of done:")}</span>{" "}
+                                      {evidenceRow.definitionOfDone ?? t(language, "Not captured", "Ej fångat")}
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Implementation artifacts:", "Implementation artifacts:")}</span>{" "}
+                                      {evidenceRow.implementationArtifacts
+                                        .map((artifact) => artifact.split("/").pop() ?? artifact)
+                                        .join(" | ") || t(language, "Not captured", "Ej fÃ¥ngat")}
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                      <span className="font-medium">{t(language, "Test evidence items:", "Testevidensposter:")}</span>{" "}
+                                      {evidenceRow.testEvidence.length}
+                                    </p>
+                                  </div>
+                                </details>
                               ))}
                             </div>
                           </div>
@@ -739,7 +777,7 @@ export default async function OutcomeApprovalDocumentPage({
 
                 <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">
-                    {t(language, "Additional delivery outside the approved handshake", "Ytterligare leverans utanför godkänt handslag")}
+                    {t(language, "Additional delivery outside the approved handshake", "Ytterligare leverans utanfÃ¶r godkÃ¤nt handslag")}
                   </p>
                   {handshakeReport.outsideHandshakeStories.length > 0 ? (
                     <div className="mt-3 space-y-3">
@@ -748,13 +786,13 @@ export default async function OutcomeApprovalDocumentPage({
                           <p className="font-semibold text-slate-950">{story.key} {story.title}</p>
                           <p className="mt-2 text-sm text-slate-700">
                             <span className="font-medium">{t(language, "Epic:", "Epic:")}</span>{" "}
-                            {story.epicKey && story.epicTitle ? `${story.epicKey} ${story.epicTitle}` : t(language, "Not captured", "Ej fångat")}
+                            {story.epicKey && story.epicTitle ? `${story.epicKey} ${story.epicTitle}` : t(language, "Not captured", "Ej fÃ¥ngat")}
                           </p>
                           <p className="mt-1 text-sm text-slate-700">
                             {t(
                               language,
                               "This Delivery Story currently has no direct trace back to an approved Story Idea in the handshake.",
-                              "Den här Delivery Storyn har just nu ingen direkt spårning tillbaka till en godkänd Story Idea i handslaget."
+                              "Den hÃ¤r Delivery Storyn har just nu ingen direkt spÃ¥rning tillbaka till en godkÃ¤nd Story Idea i handslaget."
                             )}
                           </p>
                         </div>
@@ -765,7 +803,7 @@ export default async function OutcomeApprovalDocumentPage({
                       {t(
                         language,
                         "No additional Delivery Stories outside the approved handshake are currently visible.",
-                        "Inga ytterligare Delivery Stories utanför det godkända handslaget är just nu synliga."
+                        "Inga ytterligare Delivery Stories utanfÃ¶r det godkÃ¤nda handslaget Ã¤r just nu synliga."
                       )}
                     </p>
                   )}
@@ -779,17 +817,17 @@ export default async function OutcomeApprovalDocumentPage({
                           </p>
                           <p className="mt-2 text-sm text-slate-700">
                             <span className="font-medium">{t(language, "Implementation story:", "Implementationsstory:")}</span>{" "}
-                            {row.epicStoryIds.join(" | ") || t(language, "Not captured", "Ej fångat")}
+                            {row.epicStoryIds.join(" | ") || t(language, "Not captured", "Ej fÃ¥ngat")}
                           </p>
                           <p className="mt-1 text-sm text-slate-700">
-                            <span className="font-medium">{t(language, "Why outside handshake:", "Varför utanför handslaget:")}</span>{" "}
-                            {row.sourceOriginNote ?? t(language, "Marked as ADDED in BMAD traceability.", "Markerad som ADDED i BMAD-spårbarheten.")}
+                            <span className="font-medium">{t(language, "Why outside handshake:", "VarfÃ¶r utanfÃ¶r handslaget:")}</span>{" "}
+                            {row.sourceOriginNote ?? t(language, "Marked as ADDED in BMAD traceability.", "Markerad som ADDED i BMAD-spÃ¥rbarheten.")}
                           </p>
                           <p className="mt-1 text-sm text-slate-700">
                             <span className="font-medium">{t(language, "Implementation artifacts:", "Implementation artifacts:")}</span>{" "}
                             {row.implementationArtifacts
                               .map((artifact) => artifact.split("/").pop() ?? artifact)
-                              .join(" | ") || t(language, "Not captured", "Ej fångat")}
+                              .join(" | ") || t(language, "Not captured", "Ej fÃ¥ngat")}
                           </p>
                         </div>
                       ))}
@@ -802,14 +840,14 @@ export default async function OutcomeApprovalDocumentPage({
                 {t(
                   language,
                   "Current project data could not be loaded, so delivery coverage cannot yet be compared against the approved handshake.",
-                  "Nuvarande projektdata kunde inte laddas, så leveranstäckningen kan ännu inte jämföras mot det godkända handslaget."
+                  "Nuvarande projektdata kunde inte laddas, sÃ¥ leveranstÃ¤ckningen kan Ã¤nnu inte jÃ¤mfÃ¶ras mot det godkÃ¤nda handslaget."
                 )}
               </div>
             )}
           </section>
 
           <section className="rounded-3xl border border-border/70 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Approval trail", "Godkännandespår")}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Approval trail", "GodkÃ¤nnandespÃ¥r")}</p>
             <div className="mt-4 space-y-4">
               {snapshot.signoffs.map((record) => (
                 <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-slate-800" key={record.id}>
@@ -831,3 +869,4 @@ export default async function OutcomeApprovalDocumentPage({
     </section>
   );
 }
+
