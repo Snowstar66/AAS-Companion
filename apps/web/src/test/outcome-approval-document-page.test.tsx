@@ -236,9 +236,12 @@ describe("Outcome approval document page", () => {
     expect(screen.getByText("Additional delivery outside the approved handshake")).toBeDefined();
     expect(screen.getByText(/DST-099/i)).toBeDefined();
     expect(screen.getAllByText(/STORY-002 Create reminder/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/US-01 Registrera hushallsprofil/i)).toBeDefined();
-    expect(screen.getByText(/US-14 Snabbhjalpslage fran startsidan/i)).toBeDefined();
+    expect(screen.getAllByText(/US-01 Registrera hushallsprofil/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/US-14 Snabbhjalpslage fran startsidan/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Import BMAD traceability CSV")).toBeDefined();
     expect(screen.getByText("Replace traceability CSV")).toBeDefined();
+    expect(screen.getByText("Imported traceability stories")).toBeDefined();
+    expect(screen.getByText(/The imported CSV is the saved source material/i)).toBeDefined();
+    expect(screen.getAllByText("Acceptance and done").length).toBeGreaterThan(0);
   });
 });

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { CheckCircle2, CircleAlert, TriangleAlert } from "lucide-react";
 import { Card, CardContent } from "@aas-companion/ui";
+import { TraceabilityEvidenceLibrary } from "@/components/outcomes/traceability-evidence-library";
 import { AasBrandMark } from "@/components/shared/aas-brand-mark";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
 import { ApprovalDocumentPrintButton } from "@/components/workspace/approval-document-print-button";
@@ -608,6 +609,13 @@ export default async function OutcomeApprovalDocumentPage({
                           "Ladda upp den exporterade traceability-CSV:n här för att binda implementationsevidens till det här godkända handslaget. De importerade raderna sparas tillsammans med approval-dokumentet för det här outcome:t."
                         )}
                       </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {t(
+                          language,
+                          "The imported CSV is the saved source material. Use Print to PDF when you want a human-readable evidence package to share outside the tool.",
+                          "Den importerade CSV:n är det sparade källunderlaget. Använd Skriv ut till PDF när du vill dela ett mänskligt läsbart evidenspaket utanför verktyget."
+                        )}
+                      </p>
                     </div>
                     <form action={uploadOutcomeTraceabilityEvidenceAction} className="flex w-full max-w-xl flex-col gap-3 lg:items-end">
                       <input name="outcomeId" type="hidden" value={outcomeId} />
@@ -626,6 +634,10 @@ export default async function OutcomeApprovalDocumentPage({
                     </form>
                   </div>
                 </div>
+
+                {traceabilityEvidence ? (
+                  <TraceabilityEvidenceLibrary language={language} rows={traceabilityEvidence.rows} />
+                ) : null}
 
                 <div className="space-y-3">
                   {handshakeReport.coverageRows.map((row) => {
