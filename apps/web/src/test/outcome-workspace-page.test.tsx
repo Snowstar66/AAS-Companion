@@ -480,6 +480,7 @@ describe("Outcome page", () => {
     expect(await screen.findByRole("button", { name: "Copy Framing Brief" })).toBeDefined();
     expect(await screen.findByRole("button", { name: "Copy AI Handoff JSON" })).toBeDefined();
     expect(await screen.findByText("AI and risk")).toBeDefined();
+    expect(await screen.findByText(/AI is a formally chosen acceleration level/i)).toBeDefined();
     expect(await screen.findByText("No Epics exist for this case yet.")).toBeDefined();
     expect(await screen.findByRole("button", { name: "Create Epic" })).toBeDefined();
     expect((await screen.findByRole("button", { name: "Create Story Idea" })).hasAttribute("disabled")).toBe(true);

@@ -146,7 +146,11 @@ function getDefaultGuidance(language: AppLanguage): DeliveryTypeGuidance {
     dataSensitivityDescription: tr(language, "Call out the data that changes governance expectations. If sensitivity goes up, control usually must go up too.", "Markera den data som ändrar governance-förväntningar. Om känsligheten stiger bör kontrollnivån vanligtvis också göra det."),
     baselineCardDescription: tr(language, "These fields help ground the Framing before approval is recorded.", "Dessa fält hjälper till att förankra Framing innan godkännande registreras."),
     baselineSourceDescription: tr(language, "Make the starting point defendable. The stronger the case, the easier later approvals and follow-up become.", "Gör startpunkten försvarbar. Ju starkare case, desto enklare blir senare godkännanden och uppföljning."),
-    aiRiskDescription: tr(language, "Use this area to make the AI posture explicit instead of leaving it implicit in delivery later.", "Använd denna yta för att göra AI-hållningen explicit i stället för att lämna den implicit till leveransen senare."),
+    aiRiskDescription: tr(
+      language,
+      "In AAS, AI is a formally chosen acceleration level, not an ad hoc tool choice. Use this area to state how AI will be used, classify the risk posture, and make the control model explicit before Tollgate 1. Human mandate for review, approval, and risk acceptance always remains with people.",
+      "I AAS \u00e4r AI en formellt vald accelerationsniv\u00e5, inte ett ad hoc-verktygsval. Anv\u00e4nd denna yta f\u00f6r att beskriva hur AI ska anv\u00e4ndas, klassificera riskbilden och g\u00f6ra kontrollmodellen explicit f\u00f6re Tollgate 1. M\u00e4nskligt mandat f\u00f6r granskning, godk\u00e4nnande och riskacceptans ligger alltid kvar hos m\u00e4nniskor."
+    ),
     structureDescription: tr(language, "Use Epics and Story Ideas to shape direction and scope, not to create a delivery backlog too early.", "Använd Epics och Story Ideas för att forma riktning och scope, inte för att skapa en leveransbacklog för tidigt."),
     quickEpicDescription: tr(language, "An Epic should name a meaningful scope boundary, not a to-do bucket.", "En Epic ska namnge en meningsfull scope-gräns, inte en att-göra-hink."),
     quickStoryIdeaDescription: tr(language, "A Story Idea should express intent and expected effect. Save delivery detail for later.", "En Story Idea ska uttrycka intent och förväntad effekt. Spara leveransdetaljer till senare.")
@@ -333,8 +337,8 @@ function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | und
     ),
     aiRiskDescription: tr(
       language,
-      `${profile.aiRole} ${profile.riskType} Use this section to make that explicit before Tollgate 1.`,
-      `${profile.aiRole} ${profile.riskType} Använd sektionen för att göra det explicit före Tollgate 1.`
+      `In AAS, AI is a formally chosen acceleration level, not an ad hoc tool choice. Use this section to state how AI will support ${profile.changeType.toLowerCase()} in this case, classify the risk posture, and make the control model explicit before Tollgate 1. Human mandate for review, approval, and risk acceptance always remains with people.`,
+      `I AAS \u00e4r AI en formellt vald accelerationsniv\u00e5, inte ett ad hoc-verktygsval. Anv\u00e4nd sektionen f\u00f6r att beskriva hur AI ska st\u00f6dja ${profile.changeType.toLowerCase()} i just det h\u00e4r caset, klassificera riskbilden och g\u00f6ra kontrollmodellen explicit f\u00f6re Tollgate 1. M\u00e4nskligt mandat f\u00f6r granskning, godk\u00e4nnande och riskacceptans ligger alltid kvar hos m\u00e4nniskor.`
     ),
     structureDescription: tr(
       language,
