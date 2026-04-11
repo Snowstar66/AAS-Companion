@@ -811,11 +811,10 @@ export default async function OutcomeApprovalDocumentPage({
                               {t(language, "Traceability evidence", "SpÃ¥rbarhetsevidens")}
                             </p>
                             <div className="mt-3 space-y-3">
-                              {evidenceRows.map((evidenceRow, evidenceIndex) => (
+                              {evidenceRows.map((evidenceRow) => (
                                 <details
                                   className="group rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-sm open:bg-sky-50/20"
                                   key={evidenceRow.matchKey}
-                                  open={evidenceIndex === 0}
                                 >
                                   <summary className="cursor-pointer list-none">
                                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

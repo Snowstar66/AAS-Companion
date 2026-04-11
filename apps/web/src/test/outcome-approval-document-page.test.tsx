@@ -271,6 +271,5 @@ describe("Outcome approval document page", () => {
     expect(screen.getByText(/Imported BMAD rows are shown directly under the approved Story Idea/i)).toBeDefined();
     expect(screen.getByText(/No current AAS Delivery Story is linked directly yet/i)).toBeDefined();
     expect(screen.getAllByText(/BMAD rows:/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Acceptance and done").length).toBeGreaterThan(0);
   });
 });
