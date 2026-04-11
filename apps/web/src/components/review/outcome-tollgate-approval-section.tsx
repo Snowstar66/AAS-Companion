@@ -80,6 +80,13 @@ export async function OutcomeTollgateApprovalSection(props: {
   const hasApprovedDocument = Boolean(tollgateReview.approvalSnapshot);
   const approvedVersion = tollgateReview.approvedVersion ?? null;
   const currentFramingVersion = outcome.framingVersion;
+  const activeSubmissionVersion = tollgateReview.activeSubmissionVersion ?? currentFramingVersion;
+  const approvedSnapshotVersion =
+    tollgateReview.approvalSnapshot &&
+    typeof tollgateReview.approvalSnapshot === "object" &&
+    typeof (tollgateReview.approvalSnapshot as { approvedVersion?: unknown }).approvedVersion === "number"
+      ? ((tollgateReview.approvalSnapshot as { approvedVersion: number }).approvedVersion)
+      : approvedVersion;
   const currentVersionApproved = approvedVersion === currentFramingVersion && tollgateReview.status === "approved";
   const completedApprovals = tollgateReview.approvalActions.filter((action) => action.completedRecords.length > 0);
   const hasPartialApprovals = !currentVersionApproved && completedApprovals.length > 0;
@@ -193,8 +200,43 @@ export async function OutcomeTollgateApprovalSection(props: {
                   </p>
                   <p className="mt-2 leading-6 text-foreground">
                     {language === "sv"
-                      ? `Version ${currentFramingVersion} och ${completedApprovals.length} av ${tollgateReview.approvalActions.length} godkännanden registrerade`
-                      : `Version ${currentFramingVersion} and ${completedApprovals.length} of ${tollgateReview.approvalActions.length} approvals recorded`}
+                      ? `${completedApprovals.length} av ${tollgateReview.approvalActions.length} godkannanden registrerade for submissionsversion ${activeSubmissionVersion}`
+                      : `${completedApprovals.length} of ${tollgateReview.approvalActions.length} approvals recorded for submission version ${activeSubmissionVersion}`}
+                  </p>
+                  <div className="mt-3 grid gap-2 md:grid-cols-3">
+                    <div className="rounded-2xl border border-border/70 bg-background px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {language === "sv" ? "Inskickad framing" : "Submitted framing"}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">{`Version ${activeSubmissionVersion}`}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {language === "sv" ? "Godkand baseline" : "Approved baseline"}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {approvedSnapshotVersion ? `Version ${approvedSnapshotVersion}` : language === "sv" ? "Inte sparad annu" : "Not stored yet"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {language === "sv" ? "Nuvarande arbetsframing" : "Current working framing"}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">{`Version ${currentFramingVersion}`}</p>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {approvedSnapshotVersion
+                      ? approvedSnapshotVersion === currentFramingVersion
+                        ? language === "sv"
+                          ? "Den godkanda baselinen och aktuell arbetsframing ar samma version."
+                          : "The approved baseline and the current working Framing are the same version."
+                        : language === "sv"
+                          ? "Det sparade godkannandet pekar pa en tidigare godkand baseline an den nuvarande arbetsframingen."
+                          : "The saved approval record points to an earlier approved baseline than the current working Framing."
+                      : language === "sv"
+                        ? "Ingen godkand baseline finns annu sparad for den har framingen."
+                        : "No approved baseline is stored yet for this Framing."}
                   </p>
                 </div>
                 {versionRecommendationVisible ? (

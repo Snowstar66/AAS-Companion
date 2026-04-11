@@ -9,7 +9,7 @@ import { GovernanceDirectoryView } from "@/components/governance/governance-dire
 import { GovernanceIdentityBadge } from "@/components/governance/governance-identity-badge";
 import { AppShell } from "@/components/layout/app-shell";
 import { ActionSummaryCard } from "@/components/shared/action-summary-card";
-import { getDemoRoleSeedByEmail } from "@/lib/admin/demo-role-catalog";
+import { getDemoRoleSeedByEmail, getDemoRoleSeedByRole } from "@/lib/admin/demo-role-catalog";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import {
   getRoleCartoonAvatarUrl,
@@ -452,7 +452,13 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                 <div className="rounded-2xl border border-border/70 bg-background/90 p-4" key={bucket.category}>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{localizeRoleBucketTitle(bucket.title, language)}</p>
                   <div className="mt-4 space-y-3">
-                    {bucket.items.map((item) => (
+                    {bucket.items.map((item) => {
+                      const roleSeed = getDemoRoleSeedByRole({
+                        roleType: item.roleType,
+                        organizationSide: item.organizationSide
+                      });
+
+                      return (
                       <div className="rounded-2xl border border-border/70 bg-muted/10 p-3" key={`${bucket.category}-${item.organizationSide}-${item.roleType}`}>
                         <div className="flex items-start gap-3">
                           <GovernanceIdentityBadge
@@ -469,7 +475,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                                       organizationSide: item.organizationSide,
                                       fullName: item.assignedPeople[0]?.fullName ?? item.label
                                     }))
-                                : getRoleCartoonAvatarUrl({
+                                : roleSeed?.previewAvatarUrl ??
+                                  getRoleCartoonAvatarUrl({
                                     roleType: item.roleType,
                                     organizationSide: item.organizationSide,
                                     fullName: item.label
@@ -509,7 +516,8 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
                           </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

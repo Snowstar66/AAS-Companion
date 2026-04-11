@@ -1469,6 +1469,13 @@ export async function DeferredOutcomeTollgateSection(props: {
   const hasApprovedDocument = Boolean(tollgateReview.approvalSnapshot);
   const approvedVersion = tollgateReview.approvedVersion ?? null;
   const currentFramingVersion = outcome.framingVersion;
+  const activeSubmissionVersion = tollgateReview.activeSubmissionVersion ?? currentFramingVersion;
+  const approvedSnapshotVersion =
+    tollgateReview.approvalSnapshot &&
+    typeof tollgateReview.approvalSnapshot === "object" &&
+    typeof (tollgateReview.approvalSnapshot as { approvedVersion?: unknown }).approvedVersion === "number"
+      ? ((tollgateReview.approvalSnapshot as { approvedVersion: number }).approvedVersion)
+      : approvedVersion;
   const currentVersionApproved = approvedVersion === currentFramingVersion && tollgateReview.status === "approved";
   const completedApprovals = tollgateReview.approvalActions.filter((action) => action.completedRecords.length > 0);
   const hasPartialApprovals =
@@ -1585,9 +1592,56 @@ export async function DeferredOutcomeTollgateSection(props: {
                   <p className="mt-2 leading-6 text-foreground">
                     {translate(
                       language,
-                      `Version ${currentFramingVersion} and ${completedApprovals.length} of ${tollgateReview.approvalActions.length} approvals recorded`,
-                      `Version ${currentFramingVersion} och ${completedApprovals.length} av ${tollgateReview.approvalActions.length} godkännanden registrerade`
+                      `${completedApprovals.length} of ${tollgateReview.approvalActions.length} approvals recorded for submission version ${activeSubmissionVersion}`,
+                      `${completedApprovals.length} av ${tollgateReview.approvalActions.length} godkannanden registrerade for submissionsversion ${activeSubmissionVersion}`
                     )}
+                  </p>
+                  <div className="mt-3 grid gap-2 md:grid-cols-3">
+                    <div className="rounded-2xl border border-border/70 bg-background px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {translate(language, "Submitted framing", "Inskickad framing")}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {translate(language, `Version ${activeSubmissionVersion}`, `Version ${activeSubmissionVersion}`)}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {translate(language, "Approved baseline", "Godkand baseline")}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {approvedSnapshotVersion
+                          ? translate(language, `Version ${approvedSnapshotVersion}`, `Version ${approvedSnapshotVersion}`)
+                          : translate(language, "Not stored yet", "Inte sparad annu")}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-background px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {translate(language, "Current working framing", "Nuvarande arbetsframing")}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {translate(language, `Version ${currentFramingVersion}`, `Version ${currentFramingVersion}`)}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {approvedSnapshotVersion
+                      ? approvedSnapshotVersion === currentFramingVersion
+                        ? translate(
+                            language,
+                            "The approved baseline and the current working Framing are the same version.",
+                            "Den godkanda baselinen och aktuell arbetsframing ar samma version."
+                          )
+                        : translate(
+                            language,
+                            "The saved approval record points to an earlier approved baseline than the current working Framing.",
+                            "Det sparade godkannandet pekar pa en tidigare godkand baseline an den nuvarande arbetsframingen."
+                          )
+                      : translate(
+                          language,
+                          "No approved baseline is stored yet for this Framing.",
+                          "Ingen godkand baseline finns annu sparad for den har framingen."
+                        )}
                   </p>
                 </div>
                 {versionRecommendationVisible ? (

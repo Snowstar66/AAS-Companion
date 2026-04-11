@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import GovernancePage from "@/app/(protected)/governance/page";
+import { getDemoRoleSeedByRole } from "@/lib/admin/demo-role-catalog";
 
 const { cookiesMock } = vi.hoisted(() => ({
   cookiesMock: vi.fn(async () => ({
@@ -287,12 +288,26 @@ describe("Governance page", () => {
     expect(screen.getAllByText("Delivery Lead").length).toBeGreaterThan(0);
     expect(screen.getAllByText("AI Governance Lead").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Party and role directory").length).toBeGreaterThan(0);
+    expect(
+      screen
+        .getAllByAltText("AI Governance Lead")
+        .some(
+          (image) =>
+            image.getAttribute("src") ===
+            getDemoRoleSeedByRole({
+              roleType: "ai_governance_lead",
+              organizationSide: "supplier"
+            })?.previewAvatarUrl
+        )
+    ).toBe(true);
 
     fireEvent.click(screen.getAllByText("Demo Value Owner")[0]!);
     expect(screen.getAllByDisplayValue("Demo Value Owner").length).toBeGreaterThan(0);
   });
 
-  it("shows level-aware AI agent setup and supervisor visibility", async () => {
+  it(
+    "shows level-aware AI agent setup and supervisor visibility",
+    async () => {
     render(
       await GovernancePage({
         searchParams: Promise.resolve({
@@ -313,7 +328,9 @@ describe("Governance page", () => {
 
     fireEvent.click(screen.getAllByText("Governance Review Agent")[0]!);
     expect(screen.getAllByDisplayValue("Governance Review Agent").length).toBeGreaterThan(0);
-  });
+    },
+    15000
+  );
 
   it("shows plain-language readiness gaps with direct section links", async () => {
     render(

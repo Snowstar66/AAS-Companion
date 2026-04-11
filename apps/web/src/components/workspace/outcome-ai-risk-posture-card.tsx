@@ -200,16 +200,25 @@ function StepCard(props: {
   );
 }
 
+type RiskDimensionGuidance = {
+  rationaleTip: string;
+  low: string;
+  medium: string;
+  high: string;
+};
+
 function RiskDimensionFields(props: {
   label: string;
   levelName: string;
   rationaleName: string;
   defaultLevel: RiskLevel | null;
+  currentLevel: RiskLevel | null;
   defaultRationale: string | null;
   disabled: boolean;
   onLevelChange: (value: RiskLevel | null) => void;
   onRationaleChange: (value: string) => void;
   helper: string;
+  guidance: RiskDimensionGuidance;
 }) {
   return (
     <div className="rounded-2xl border border-border/70 bg-muted/10 p-3.5">
@@ -245,6 +254,28 @@ function RiskDimensionFields(props: {
             placeholder={props.helper}
           />
         </label>
+      </div>
+      <div className="mt-3 rounded-2xl border border-sky-200 bg-sky-50/50 p-3 text-xs leading-5 text-slate-700">
+        <p className="font-semibold text-sky-950">{props.guidance.rationaleTip}</p>
+        <div className="mt-2 grid gap-2 lg:grid-cols-3">
+          {([
+            ["low", props.guidance.low],
+            ["medium", props.guidance.medium],
+            ["high", props.guidance.high]
+          ] as const).map(([level, text]) => (
+            <div
+              className={`rounded-xl border px-3 py-2 ${
+                props.currentLevel === level
+                  ? "border-sky-300 bg-white text-sky-950"
+                  : "border-sky-100 bg-white/70 text-slate-700"
+              }`}
+              key={level}
+            >
+              <p className="font-semibold capitalize">{level}</p>
+              <p className="mt-1">{text}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -397,6 +428,48 @@ export function OutcomeAiRiskPostureCard({
       : t(language, "AI and risk posture is complete. Continue into Epics and Story Ideas or move into Tollgate 1 approval.", "AI- och riskpositionen är komplett. Fortsätt till Epics och Story Ideas eller gå vidare till Tollgate 1-godkännande.")));
 
   const statusTone = getStatusTone(blockers.length, derivedRisk, aiLevel);
+  const riskDimensionGuidance = {
+    businessImpact: {
+      rationaleTip: t(
+        language,
+        "Write the business consequence in plain language: what becomes wrong, delayed, unsafe or expensive if the output is wrong?",
+        "Skriv affarskonsekvensen i klartext: vad blir fel, forsenat, osakert eller dyrt om utfallet blir fel?"
+      ),
+      low: t(language, "Minor inconvenience, easy workaround, limited business consequence.", "Mindre storning, enkel workaround, begransad affarskonsekvens."),
+      medium: t(language, "Noticeable service or value loss that needs manual correction or follow-up.", "Tydlig tjanste- eller vardeforlust som kraver manuell rattning eller uppfoljning."),
+      high: t(language, "Serious business harm, safety issue, legal exposure or major trust damage.", "Allvarlig affarsskada, sakerhetsproblem, juridisk exponering eller stor fortroendeskada.")
+    },
+    dataSensitivity: {
+      rationaleTip: t(
+        language,
+        "State what data is involved and why that changes governance expectations.",
+        "Beskriv vilken data som ingar och varfor det forandrar governancekraven."
+      ),
+      low: t(language, "No personal or regulated data, or only harmless demo-like information.", "Ingen person- eller reglerad data, eller bara harmlos demo-lik information."),
+      medium: t(language, "Personal or business-relevant data exists, but not highly sensitive or regulated.", "Persondata eller verksamhetsrelevant data finns, men inte starkt kanslig eller reglerad."),
+      high: t(language, "Sensitive, regulated, security-critical or otherwise highly protected data is involved.", "Kanslig, reglerad, sakerhetskritisk eller annars starkt skyddad data ingar.")
+    },
+    blastRadius: {
+      rationaleTip: t(
+        language,
+        "Describe how far the consequence spreads: one user, one team, one service, or several systems and stakeholders.",
+        "Beskriv hur langt konsekvensen sprider sig: en anvandare, ett team, en tjanst eller flera system och intressenter."
+      ),
+      low: t(language, "Contained to one user flow, one team or one isolated service.", "Begransat till ett anvandarflode, ett team eller en isolerad tjanst."),
+      medium: t(language, "Affects several users, a visible service area or a connected delivery flow.", "Paverkar flera anvandare, en synlig tjansteyta eller ett kopplat leveransflode."),
+      high: t(language, "Spreads across multiple teams, systems, customers or critical business operations.", "Sprids over flera team, system, kunder eller kritiska verksamhetsfloden.")
+    },
+    decisionImpact: {
+      rationaleTip: t(
+        language,
+        "Explain whether AI only supports humans or materially shapes decisions, approvals or automated actions.",
+        "Forklara om AI bara stodjer manniskor eller faktiskt paverkar beslut, godkannanden eller automatiska atgarder."
+      ),
+      low: t(language, "AI assists with drafts or suggestions while humans decide everything important.", "AI hjalper med utkast eller forslag medan manniskor fattar alla viktiga beslut."),
+      medium: t(language, "AI influences prioritization or recommendations, but humans still check before action.", "AI paverkar prioritering eller rekommendationer, men manniskor kontrollerar innan handling."),
+      high: t(language, "AI materially influences or automates decisions with real user, business or release impact.", "AI paverkar vasentligt eller automatiserar beslut med verklig anvandar-, affars- eller releasepaverkan.")
+    }
+  } as const;
 
   const content = (
     <CardContent className={embedded ? "space-y-5 p-0" : "space-y-5"}>
@@ -484,13 +557,34 @@ export function OutcomeAiRiskPostureCard({
 
         <StepCard
           title={t(language, "Step 2 and 3 - Assess and classify risk", "Steg 2 och 3 - Bedöm och klassificera risk")}
-          description={t(language, "Classify each dimension as Low, Medium or High, then explain the reasoning in one short business-facing statement.", "Klassificera varje dimension som Low, Medium eller High och förklara sedan resonemanget i en kort affärsnära formulering.")}
+          description={t(language, "Classify each dimension as Low, Medium or High. Start from business consequence if the output is wrong, choose the lowest honest level, and explain the reasoning in one short business-facing statement.", "Klassificera varje dimension som Low, Medium eller High. Börja i affärskonsekvensen om utfallet blir fel, välj den lägsta ärliga nivån och förklara resonemanget i en kort affärsnära formulering.")}
         >
           <div className="space-y-3">
+            <div className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm leading-6 text-foreground">
+              <p className="font-semibold">
+                {t(language, "How to classify risk in AAS", "Så klassificerar du risk i AAS")}
+              </p>
+              <ul className="mt-2 space-y-1.5 text-muted-foreground">
+                <li>
+                  {t(language, "Assess consequence, not technical complexity. Ask what happens if AI or the system is wrong.", "Bedöm konsekvens, inte teknisk komplexitet. Fråga vad som händer om AI eller systemet har fel.")}
+                </li>
+                <li>
+                  {t(language, "Choose the lowest level you can defend. Medium is appropriate when noticeable manual follow-up is needed.", "Välj den lägsta nivå du kan försvara. Medium passar när tydlig manuell uppföljning eller rättning krävs.")}
+                </li>
+                <li>
+                  {t(language, "If personal, regulated or protected data is involved, do not default to Low without explaining why.", "Om persondata, reglerad eller skyddad data ingår ska du inte defaulta till Low utan att förklara varför.")}
+                </li>
+                <li>
+                  {t(language, "Overall risk becomes the highest selected dimension, so one honest High means High overall.", "Totalrisk blir den högsta valda dimensionen, så en ärlig High innebär High totalt.")}
+                </li>
+              </ul>
+            </div>
             <RiskDimensionFields
+              currentLevel={businessImpactLevel}
               defaultLevel={defaultBusinessImpactLevel}
               defaultRationale={defaultBusinessImpactRationale}
               disabled={disabled}
+              guidance={riskDimensionGuidance.businessImpact}
               helper="What happens if the system or AI produces incorrect results?"
               label="Business impact"
               levelName="businessImpactLevel"
@@ -499,9 +593,11 @@ export function OutcomeAiRiskPostureCard({
               rationaleName="businessImpactRationale"
             />
             <RiskDimensionFields
+              currentLevel={dataSensitivityLevel}
               defaultLevel={defaultDataSensitivityLevel}
               defaultRationale={defaultDataSensitivityRationale}
               disabled={disabled}
+              guidance={riskDimensionGuidance.dataSensitivity}
               helper="What data category is involved: no personal data, personal data, or sensitive/regulated data?"
               label="Data sensitivity"
               levelName="dataSensitivityLevel"
@@ -510,9 +606,11 @@ export function OutcomeAiRiskPostureCard({
               rationaleName="dataSensitivityRationale"
             />
             <RiskDimensionFields
+              currentLevel={blastRadiusLevel}
               defaultLevel={defaultBlastRadiusLevel}
               defaultRationale={defaultBlastRadiusRationale}
               disabled={disabled}
+              guidance={riskDimensionGuidance.blastRadius}
               helper="How widely would the impact spread if something goes wrong?"
               label="Blast radius"
               levelName="blastRadiusLevel"
@@ -521,9 +619,11 @@ export function OutcomeAiRiskPostureCard({
               rationaleName="blastRadiusRationale"
             />
             <RiskDimensionFields
+              currentLevel={decisionImpactLevel}
               defaultLevel={defaultDecisionImpactLevel}
               defaultRationale={defaultDecisionImpactRationale}
               disabled={disabled}
+              guidance={riskDimensionGuidance.decisionImpact}
               helper="Does AI only assist, or does it influence or automate meaningful decisions?"
               label="Decision impact"
               levelName="decisionImpactLevel"

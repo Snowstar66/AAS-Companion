@@ -143,3 +143,14 @@ export function getDemoRoleSeedByEmail(email: string) {
   const normalizedEmail = email.trim().toLowerCase();
   return demoRoleSeeds.find((seed) => seed.email.trim().toLowerCase() === normalizedEmail) ?? null;
 }
+
+export function getDemoRoleSeedByRole(input: {
+  roleType: PartyRoleType;
+  organizationSide: OrganizationSide;
+}) {
+  return (
+    demoRoleSeeds.find(
+      (seed) => seed.roleType === input.roleType && seed.organizationSide === input.organizationSide
+    ) ?? null
+  );
+}

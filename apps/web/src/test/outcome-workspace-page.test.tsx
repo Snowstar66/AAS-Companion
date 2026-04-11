@@ -232,6 +232,7 @@ vi.mock("@/lib/cache/project-data", () => ({
         blockers: ["Baseline definition is missing.", "Baseline source is missing."],
         approvalSnapshot: null,
         approvedVersion: null,
+        activeSubmissionVersion: 1,
         approvalActions: [],
         reviewActions: [],
         blockedActions: [],
@@ -284,6 +285,7 @@ vi.mock("@/lib/cache/project-data", () => ({
         status: "blocked",
         blockers: ["Baseline definition is missing.", "Baseline source is missing."],
         comments: null,
+        activeSubmissionVersion: 1,
         availablePeople: [
           {
             id: "party-vo",
@@ -481,6 +483,8 @@ describe("Outcome page", () => {
     expect(await screen.findByRole("button", { name: "Copy AI Handoff JSON" })).toBeDefined();
     expect(await screen.findByText("AI and risk")).toBeDefined();
     expect(await screen.findByText(/AI is a formally chosen acceleration level/i)).toBeDefined();
+    expect(await screen.findByText("How to classify risk in AAS")).toBeDefined();
+    expect(await screen.findByText(/Minor inconvenience, easy workaround/i)).toBeDefined();
     expect(await screen.findByText("No Epics exist for this case yet.")).toBeDefined();
     expect(await screen.findByRole("button", { name: "Create Epic" })).toBeDefined();
     expect((await screen.findByRole("button", { name: "Create Story Idea" })).hasAttribute("disabled")).toBe(true);
