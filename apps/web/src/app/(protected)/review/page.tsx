@@ -1023,6 +1023,86 @@ function ReviewSummaryCard(props: {
   );
 }
 
+function ActiveFramingReviewWorkspaceFallback() {
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <CardTitle>Loading framing review workspace</CardTitle>
+        <CardDescription>
+          The focused import workspace is loading separately so the review backlog can stay responsive.
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}
+
+async function ActiveFramingReviewWorkspace(props: {
+  candidate: ReviewCandidate;
+  projectOutcomes: ReviewQueue["projectOutcomes"];
+  projectEpics: ReviewQueue["projectEpics"];
+}) {
+  const workspace = await loadArtifactIntakeWorkspace(
+    {
+      sessionId: props.candidate.intakeSession?.id ?? null,
+      fileId: props.candidate.file?.id ?? null
+    },
+    {
+      includeProjectCatalog: false
+    }
+  );
+
+  if (workspace.state !== "ready") {
+    return (
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>Framing review workspace unavailable</CardTitle>
+          <CardDescription>{workspace.message}</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const activeFramingSession =
+    workspace.sessions.find((session) => session.id === props.candidate.intakeSession?.id) ?? null;
+  const activeFramingFile = activeFramingSession?.files.find((file) => file.id === props.candidate.file?.id) ?? null;
+  const activeFramingFileCandidates = activeFramingFile
+    ? (activeFramingSession?.candidates ?? []).filter((candidate) => candidate.fileId === activeFramingFile.id)
+    : [];
+  const activeFramingWorkspaceCandidate =
+    activeFramingFileCandidates.find((candidate) => candidate.id === props.candidate.id) ??
+    activeFramingFileCandidates[0] ??
+    null;
+
+  if (!activeFramingSession || !activeFramingFile || !activeFramingWorkspaceCandidate) {
+    return (
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>Framing review workspace unavailable</CardTitle>
+          <CardDescription>
+            The selected framing import could not be reconstructed into its focused correction workspace.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  return (
+    <ArtifactIntakeReviewWorkspace
+      fileCandidates={activeFramingFileCandidates}
+      projectEpics={props.projectEpics}
+      projectOutcomes={props.projectOutcomes}
+      selectedCandidate={activeFramingWorkspaceCandidate}
+      selectedFile={activeFramingFile}
+      session={activeFramingSession}
+      submitAction={submitArtifactCandidateFromIntakeAction}
+      submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
+      submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
+      submitSectionBulkDeleteAction={submitArtifactSectionBulkDeleteInlineAction}
+      submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
+    />
+  );
+}
+
 export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const query = searchParams ? await searchParams : {};
   const candidateId = getParamValue(query.candidateId);
@@ -1118,33 +1198,6 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
       : !selectedCandidate
         ? visibleFramingItems[0] ?? null
         : null;
-  const activeFramingWorkspace =
-    activeFramingCandidate
-      ? await loadArtifactIntakeWorkspace({
-          sessionId: activeFramingCandidate.intakeSession?.id ?? null,
-          fileId: activeFramingCandidate.file?.id ?? null
-        })
-      : null;
-  const activeFramingSession =
-    activeFramingWorkspace?.state === "ready"
-      ? activeFramingWorkspace.sessions.find((session) => session.id === activeFramingCandidate?.intakeSession?.id) ?? null
-      : null;
-  const activeFramingFile =
-    activeFramingSession?.files.find((file) => file.id === activeFramingCandidate?.file?.id) ?? null;
-  const activeFramingFileCandidates = activeFramingFile
-    ? (activeFramingSession?.candidates ?? []).filter((candidate) => candidate.fileId === activeFramingFile.id)
-    : [];
-  const activeFramingWorkspaceCandidate =
-    activeFramingFileCandidates.find((candidate) => candidate.id === activeFramingCandidate?.id) ??
-    activeFramingFileCandidates[0] ??
-    null;
-  const showImportStyleFramingReview = Boolean(
-    activeFramingCandidate &&
-      activeFramingWorkspace?.state === "ready" &&
-      activeFramingSession &&
-      activeFramingFile &&
-      activeFramingWorkspaceCandidate
-  );
 
   const importIntentGroups = (["framing", "design"] as const)
     .map((importIntent) => {
@@ -1659,7 +1712,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                           {intentGroup.sessions.map((group) => (
                             <CollapsibleSection
                               badge={`${group.items.length}`}
-                              defaultOpen={activeFramingSession ? group.id === activeFramingSession.id : true}
+                              defaultOpen={activeFramingCandidate ? group.id === activeFramingCandidate.intakeSession?.id : true}
                               description={`Files: ${group.fileNames.join(", ")}.`}
                               key={`${intentGroup.importIntent}-${group.id}`}
                               title={group.label}
@@ -1682,7 +1735,7 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                                 </div>
                                 <div className="grid gap-3">
                                 {group.files.map((file) => {
-                                  const isActive = activeFramingFile?.id === file.id;
+                                  const isActive = activeFramingCandidate?.file?.id === file.id;
 
                                   return (
                                     <Link
@@ -1791,24 +1844,14 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </CardContent>
             </Card>
 
-            {showImportStyleFramingReview &&
-            activeFramingWorkspace?.state === "ready" &&
-            activeFramingSession &&
-            activeFramingFile &&
-            activeFramingWorkspaceCandidate ? (
-              <ArtifactIntakeReviewWorkspace
-                fileCandidates={activeFramingFileCandidates}
-                projectEpics={activeFramingWorkspace.projectEpics}
-                projectOutcomes={activeFramingWorkspace.projectOutcomes}
-                selectedCandidate={activeFramingWorkspaceCandidate}
-                selectedFile={activeFramingFile}
-                session={activeFramingSession}
-                submitAction={submitArtifactCandidateFromIntakeAction}
-                submitCandidateDispositionInlineAction={submitArtifactCandidateIssueDispositionInlineAction}
-                submitFramingBulkApproveAction={submitFramingBulkApproveFromIntakeAction}
-                submitSectionBulkDeleteAction={submitArtifactSectionBulkDeleteInlineAction}
-                submitSectionDispositionInlineAction={submitArtifactSectionDispositionInlineAction}
-              />
+            {activeFramingCandidate ? (
+              <Suspense fallback={<ActiveFramingReviewWorkspaceFallback />}>
+                <ActiveFramingReviewWorkspace
+                  candidate={activeFramingCandidate}
+                  projectEpics={queue.projectEpics}
+                  projectOutcomes={queue.projectOutcomes}
+                />
+              </Suspense>
             ) : !selectedCandidate ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>

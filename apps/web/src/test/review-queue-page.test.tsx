@@ -305,7 +305,7 @@ describe("Review queue page", () => {
     expect(screen.getAllByRole("link", { name: /Open/i }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Individual Delivery Stories no longer use human approval lanes here/i)).toBeDefined();
     expect(screen.getByText(/this section only covers imported objects from Import/i)).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Framing import workspace" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Loading framing review workspace" })).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });
 
@@ -484,9 +484,7 @@ describe("Review queue page", () => {
 
     expect(screen.getAllByRole("heading", { name: "Human Review dashboard", level: 1 }).length).toBeGreaterThan(0);
     expect(screen.getByText("Open human review help")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Framing import workspace" })).toBeDefined();
-    expect(screen.getAllByText("Imported reviewable story").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("story-pack.md").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Loading framing review workspace" })).toBeDefined();
     expect(screen.queryByRole("heading", { name: "Focused correction workspace" })).toBeNull();
   });
 });

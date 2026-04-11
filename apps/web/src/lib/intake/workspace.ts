@@ -101,6 +101,10 @@ type ArtifactIntakeWorkspaceSelection = {
   fileId?: string | null | undefined;
 };
 
+type ArtifactIntakeWorkspaceOptions = {
+  includeProjectCatalog?: boolean;
+};
+
 function isActiveImportCandidate(candidate: {
   reviewStatus: "pending" | "confirmed" | "edited" | "rejected" | "follow_up_needed" | "promoted";
   importedReadinessState?: string | null;
@@ -116,13 +120,17 @@ function isActiveImportCandidate(candidate: {
   return true;
 }
 
-export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorkspaceSelection = {}) {
+export async function loadArtifactIntakeWorkspace(
+  selection: ArtifactIntakeWorkspaceSelection = {},
+  options: ArtifactIntakeWorkspaceOptions = {}
+) {
   try {
     const [language, organization] = await Promise.all([getServerLanguage(), requireOrganizationContext()]);
+    const includeProjectCatalog = options.includeProjectCatalog ?? true;
     const [result, outcomesResult, epicsResult] = await Promise.all([
       listArtifactIntakeSessionsService(organization.organizationId),
-      listOutcomesService(organization.organizationId),
-      listEpicsService(organization.organizationId)
+      includeProjectCatalog ? listOutcomesService(organization.organizationId) : Promise.resolve(null),
+      includeProjectCatalog ? listEpicsService(organization.organizationId) : Promise.resolve(null)
     ]);
 
     if (!result.ok) {
@@ -284,14 +292,14 @@ export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorks
     return {
       state: "ready" as const,
       organizationName: organization.organizationName,
-      projectOutcomes: outcomesResult.ok
+      projectOutcomes: outcomesResult?.ok
         ? outcomesResult.data.map((outcome) => ({
             id: outcome.id,
             key: outcome.key,
             title: outcome.title
           }))
         : [],
-      projectEpics: epicsResult.ok
+      projectEpics: epicsResult?.ok
         ? epicsResult.data.map((epic) => ({
             id: epic.id,
             key: epic.key,
