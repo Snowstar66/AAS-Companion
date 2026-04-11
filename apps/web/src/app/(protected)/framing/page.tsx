@@ -30,6 +30,8 @@ type FramingPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+const emptySearchParams: Record<string, string | string[] | undefined> = {};
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -46,7 +48,7 @@ async function getServerLanguage() {
 export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
     const [query, serverLanguage] = await Promise.all([
-      searchParams ? searchParams : Promise.resolve({}),
+      searchParams ? searchParams : Promise.resolve(emptySearchParams),
       getServerLanguage()
     ]);
     const requestedOutcomeId = getParamValue(query.outcomeId) ?? null;

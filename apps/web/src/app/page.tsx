@@ -15,13 +15,15 @@ type HomePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+const emptySearchParams: Record<string, string | string[] | undefined> = {};
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const [query, home] = await Promise.all([
-    searchParams ? searchParams : Promise.resolve({}),
+    searchParams ? searchParams : Promise.resolve(emptySearchParams),
     loadHomeDashboard()
   ]);
   const {

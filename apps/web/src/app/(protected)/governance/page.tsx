@@ -29,6 +29,8 @@ type GovernancePageProps = {
 
 type AppLanguage = "en" | "sv";
 
+const emptySearchParams: Record<string, string | string[] | undefined> = {};
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -249,7 +251,7 @@ export default async function GovernancePage({ searchParams }: GovernancePagePro
   const [organization, language, query] = await Promise.all([
     requireOrganizationContext(),
     getServerLanguage(),
-    searchParams ? searchParams : Promise.resolve({})
+    searchParams ? searchParams : Promise.resolve(emptySearchParams)
   ]);
   const level = getParamValue(query.level) ?? undefined;
   const sourceEntity = getParamValue(query.sourceEntity) as "outcome" | "story" | undefined;

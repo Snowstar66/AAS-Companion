@@ -16,11 +16,17 @@ const packages = [
 
 function run(command, args, cwd, label) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+    const commandToRun =
+      process.platform === "win32" && command === "pnpm" ? "cmd.exe" : command;
+    const argsToRun =
+      process.platform === "win32" && command === "pnpm"
+        ? ["/d", "/s", "/c", command, ...args]
+        : args;
+
+    const child = spawn(commandToRun, argsToRun, {
       cwd,
       stdio: ["ignore", "pipe", "pipe"],
-      env: process.env,
-      shell: process.platform === "win32" && command !== process.execPath
+      env: process.env
     });
     let stdout = "";
     let stderr = "";

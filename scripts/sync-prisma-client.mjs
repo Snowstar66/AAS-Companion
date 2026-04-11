@@ -13,6 +13,7 @@ const targetDirs = [
 ];
 const schemaPath = path.join(repoRoot, "packages", "db", "prisma", "schema.prisma");
 const generatedIndexPath = path.join(sourceDir, "index.d.ts");
+const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 function shouldRegenerateSourceClient() {
   if (process.env.VERCEL === "1" || !existsSync(sourceDir) || !existsSync(generatedIndexPath)) {
@@ -55,10 +56,9 @@ function syncDirectory(targetDir) {
 }
 
 if (shouldRegenerateSourceClient()) {
-  const result = spawnSync("pnpm", ["db:generate"], {
+  const result = spawnSync(pnpmCommand, ["db:generate"], {
     cwd: repoRoot,
     stdio: "inherit",
-    shell: true,
     env: process.env
   });
 

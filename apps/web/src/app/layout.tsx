@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { NavigationPendingState } from "@/components/layout/navigation-pending-state";
 import "./globals.css";
 
@@ -22,7 +22,9 @@ export default function RootLayout({
   return (
     <html className={manrope.variable} lang="en">
       <body>
-        <NavigationPendingState />
+        <Suspense fallback={null}>
+          <NavigationPendingState />
+        </Suspense>
         {children}
       </body>
     </html>
