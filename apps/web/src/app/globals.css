@@ -63,6 +63,21 @@ body {
   font-family: var(--font-sans), sans-serif;
 }
 
+html[data-navigation-pending="true"] body,
+html[data-navigation-pending="true"] a,
+html[data-navigation-pending="true"] button,
+html[data-navigation-pending="true"] [role="button"],
+html:has([data-pending="true"]) body,
+html:has([data-pending="true"]) a,
+html:has([data-pending="true"]) button,
+html:has([data-pending="true"]) [role="button"],
+html:has([aria-busy="true"]) body,
+html:has([aria-busy="true"]) a,
+html:has([aria-busy="true"]) button,
+html:has([aria-busy="true"]) [role="button"] {
+  cursor: wait !important;
+}
+
 ::selection {
   background: rgba(83, 125, 176, 0.2);
 }

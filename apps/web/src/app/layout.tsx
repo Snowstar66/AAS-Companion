@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import type { ReactNode } from "react";
+import { NavigationPendingState } from "@/components/layout/navigation-pending-state";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -20,7 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html className={manrope.variable} lang="en">
-      <body>{children}</body>
+      <body>
+        <NavigationPendingState />
+        {children}
+      </body>
     </html>
   );
 }

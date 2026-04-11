@@ -111,6 +111,7 @@ function ProjectToneCard(props: {
             className="w-full gap-2"
             label={props.active ? props.copy.continueInProject : props.copy.openProject}
             pendingLabel={props.copy.openingProject}
+            showPendingCursor
             size="sm"
             variant={props.active ? "default" : "secondary"}
           />

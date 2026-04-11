@@ -58,8 +58,10 @@ function StatCard(props: {
 export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
   return withDevTiming("web.page.workspace", async () => {
     void searchParams;
-    const language = await getServerLanguage();
-    const session = await requireActiveProjectSession();
+    const [language, session] = await Promise.all([
+      getServerLanguage(),
+      requireActiveProjectSession()
+    ]);
     const snapshot = await getValueSpineService(session.organization.organizationId);
 
     if (!snapshot.ok) {

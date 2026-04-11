@@ -45,8 +45,10 @@ async function getServerLanguage() {
 
 export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
-    const query = searchParams ? await searchParams : {};
-    const serverLanguage = await getServerLanguage();
+    const [query, serverLanguage] = await Promise.all([
+      searchParams ? searchParams : Promise.resolve({}),
+      getServerLanguage()
+    ]);
     const requestedOutcomeId = getParamValue(query.outcomeId) ?? null;
     const requestedView = getParamValue(query.view) ?? null;
     const { cockpit, session, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);

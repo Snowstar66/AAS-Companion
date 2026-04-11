@@ -246,9 +246,11 @@ async function getServerLanguage(): Promise<AppLanguage> {
 }
 
 export default async function GovernancePage({ searchParams }: GovernancePageProps) {
-  const organization = await requireOrganizationContext();
-  const language = await getServerLanguage();
-  const query = searchParams ? await searchParams : {};
+  const [organization, language, query] = await Promise.all([
+    requireOrganizationContext(),
+    getServerLanguage(),
+    searchParams ? searchParams : Promise.resolve({})
+  ]);
   const level = getParamValue(query.level) ?? undefined;
   const sourceEntity = getParamValue(query.sourceEntity) as "outcome" | "story" | undefined;
   const sourceId = getParamValue(query.sourceId) ?? undefined;

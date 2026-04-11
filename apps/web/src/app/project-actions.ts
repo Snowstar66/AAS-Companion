@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   appendActivityEvent,
@@ -51,8 +50,6 @@ export async function createProjectAction(formData: FormData) {
 
   await setOrganizationContextCookie(project);
 
-  revalidatePath("/");
-  revalidatePath("/admin");
   redirect(`/framing?projectCreated=1`);
 }
 
@@ -76,7 +73,6 @@ export async function openProjectAction(formData: FormData) {
   }
 
   await setOrganizationContextCookie(project);
-  revalidatePath("/");
   redirect("/framing");
 }
 
@@ -89,13 +85,11 @@ export async function clearActiveProjectAction() {
     await clearOrganizationContextCookie();
   }
 
-  revalidatePath("/");
   redirect(buildHomeRedirect({ status: "cleared", message: "Active project cleared. Choose a project to continue." }));
 }
 
 export async function openDemoProjectAction() {
   await createDemoSession();
-  revalidatePath("/");
   redirect("/framing");
 }
 
@@ -128,8 +122,6 @@ export async function deleteCurrentProjectAction() {
   });
 
   await clearOrganizationContextCookie();
-  revalidatePath("/");
-  revalidatePath("/admin");
 
   redirect(
     buildHomeRedirect({

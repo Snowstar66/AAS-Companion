@@ -20,7 +20,10 @@ function getParamValue(value: string | string[] | undefined) {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const query = searchParams ? await searchParams : {};
+  const [query, home] = await Promise.all([
+    searchParams ? searchParams : Promise.resolve({}),
+    loadHomeDashboard()
+  ]);
   const {
     session,
     dashboard,
@@ -29,7 +32,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     hasAuthenticatedUser,
     canManageProjects,
     isDemoSession
-  } = await loadHomeDashboard();
+  } = home;
 
   const flashError = getParamValue(query.error);
   const flashMessage = getParamValue(query.message);

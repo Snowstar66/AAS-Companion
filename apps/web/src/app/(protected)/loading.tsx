@@ -14,7 +14,7 @@ export default async function ProtectedLoading() {
         badge: "Project section"
       }}
     >
-      <section className="space-y-6">
+      <section className="cursor-wait space-y-6">
         <div className="h-32 animate-pulse rounded-3xl border border-border/70 bg-muted/30" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
