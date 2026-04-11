@@ -121,11 +121,13 @@ async function getServerLanguage(): Promise<AppLanguage> {
 
 export default async function ArtifactIntakePage({ searchParams }: ArtifactIntakePageProps) {
   const query = searchParams ? await searchParams : {};
-  const serverLanguage = await getServerLanguage();
-  const session = await requireProtectedSession();
   const sessionId = getParamValue(query.sessionId);
   const fileId = getParamValue(query.fileId);
-  const workspace = await loadArtifactIntakeWorkspace({ sessionId, fileId });
+  const [serverLanguage, session, workspace] = await Promise.all([
+    getServerLanguage(),
+    requireProtectedSession(),
+    loadArtifactIntakeWorkspace({ sessionId, fileId })
+  ]);
   const isDemoSession = session.mode === "demo" || session.organization?.organizationId === DEMO_ORGANIZATION.organizationId;
   const error = getParamValue(query.error);
   const message = getParamValue(query.message);

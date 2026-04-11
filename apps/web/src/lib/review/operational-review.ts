@@ -20,8 +20,7 @@ async function getServerLanguage(): Promise<AppLanguage> {
 
 export async function loadOperationalReviewDashboard() {
   try {
-    const language = await getServerLanguage();
-    const organization = await requireOrganizationContext();
+    const [language, organization] = await Promise.all([getServerLanguage(), requireOrganizationContext()]);
     const result = await getHumanReviewDashboardService(organization.organizationId);
 
     if (!result.ok) {

@@ -113,29 +113,31 @@ async function getServerLanguage(): Promise<AppLanguage> {
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const query = searchParams ? await searchParams : {};
-  const language = await getServerLanguage();
+  const [language, homeDashboard] = await Promise.all([getServerLanguage(), loadHomeDashboard()]);
   const t = (en: string, sv: string) => (language === "sv" ? sv : en);
   const flashError = getParamValue(query.error);
   const flashMessage = getParamValue(query.message);
-  const { activeProject, canManageProjects, isDemoSession, projects, session } = await loadHomeDashboard();
-  const operationalLogs =
+  const { activeProject, canManageProjects, isDemoSession, projects, session } = homeDashboard;
+  const [operationalLogs, projectUsers, partyRoles] =
     activeProject && !isDemoSession
-      ? await loadOperationalLogs(30, language)
-      : {
-          state: "unavailable" as const,
-          items: [],
-          message: t(
-            "Open a normal active project to inspect operational logs.",
-            "Oppna ett vanligt aktivt projekt for att granska operativa loggar."
-          ),
-          organizationName: activeProject?.organizationName ?? t("Unknown project", "Okant projekt")
-        };
-  const projectUsers =
-    activeProject && !isDemoSession ? await listOrganizationProjectUsers(activeProject.organizationId) : [];
-  const partyRoles =
-    activeProject && !isDemoSession
-      ? await listPartyRoleEntries(activeProject.organizationId, { includeInactive: true })
-      : [];
+      ? await Promise.all([
+          loadOperationalLogs(30, language),
+          listOrganizationProjectUsers(activeProject.organizationId),
+          listPartyRoleEntries(activeProject.organizationId, { includeInactive: true })
+        ])
+      : [
+          {
+            state: "unavailable" as const,
+            items: [],
+            message: t(
+              "Open a normal active project to inspect operational logs.",
+              "Oppna ett vanligt aktivt projekt for att granska operativa loggar."
+            ),
+            organizationName: activeProject?.organizationName ?? t("Unknown project", "Okant projekt")
+          },
+          [],
+          []
+        ];
   const roleSeedsBySide = groupRoleSeedsBySide();
   const rolePresenceByKey = new Map<
     string,

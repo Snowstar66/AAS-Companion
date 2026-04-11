@@ -107,8 +107,7 @@ function parseReviewCandidate<T extends {
 
 export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
   try {
-    const language = await getServerLanguage();
-    const organization = await requireOrganizationContext();
+    const [language, organization] = await Promise.all([getServerLanguage(), requireOrganizationContext()]);
     const [result, selectedCandidateResult, outcomesResult, epicsResult] = await Promise.all([
       listArtifactCandidateQueueService(organization.organizationId),
       selectedCandidateId ? getArtifactCandidateService(organization.organizationId, selectedCandidateId) : Promise.resolve(null),

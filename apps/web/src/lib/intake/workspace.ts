@@ -118,8 +118,7 @@ function isActiveImportCandidate(candidate: {
 
 export async function loadArtifactIntakeWorkspace(selection: ArtifactIntakeWorkspaceSelection = {}) {
   try {
-    const language = await getServerLanguage();
-    const organization = await requireOrganizationContext();
+    const [language, organization] = await Promise.all([getServerLanguage(), requireOrganizationContext()]);
     const [result, outcomesResult, epicsResult] = await Promise.all([
       listArtifactIntakeSessionsService(organization.organizationId),
       listOutcomesService(organization.organizationId),

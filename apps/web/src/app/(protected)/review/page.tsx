@@ -1025,9 +1025,12 @@ function ReviewSummaryCard(props: {
 
 export default async function ReviewPage({ searchParams }: ReviewPageProps) {
   const query = searchParams ? await searchParams : {};
-  const language = await getServerLanguage();
   const candidateId = getParamValue(query.candidateId);
-  const [queue, operationalReview] = await Promise.all([loadArtifactReviewQueue(candidateId), loadOperationalReviewDashboard()]);
+  const [language, queue, operationalReview] = await Promise.all([
+    getServerLanguage(),
+    loadArtifactReviewQueue(candidateId),
+    loadOperationalReviewDashboard()
+  ]);
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
   const reviewStatusFilter = getParamValue(query.reviewStatusFilter) ?? "all";
