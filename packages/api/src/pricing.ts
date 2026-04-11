@@ -117,7 +117,13 @@ export async function getProjectPricingWorkspaceService(input: {
   outcomeId?: string;
 }) {
   try {
-    const snapshot = await getProjectSpineSnapshot(input.organizationId);
+    const [snapshot, people, agents, requirements, riskRules] = await Promise.all([
+      getProjectSpineSnapshot(input.organizationId),
+      listPartyRoleEntries(input.organizationId, { includeInactive: true }),
+      listAgentRegistryEntries(input.organizationId, { includeInactive: true }),
+      listGovernanceRoleRequirements(input.organizationId),
+      listGovernanceRiskCombinationRules(input.organizationId)
+    ]);
 
     if (!snapshot) {
       return failure({
@@ -132,12 +138,6 @@ export async function getProjectPricingWorkspaceService(input: {
     });
 
     const governanceAiLevel = selectedOutcome?.aiAccelerationLevel ?? "level_2";
-    const [people, agents, requirements, riskRules] = await Promise.all([
-      listPartyRoleEntries(input.organizationId, { includeInactive: true }),
-      listAgentRegistryEntries(input.organizationId, { includeInactive: true }),
-      listGovernanceRoleRequirements(input.organizationId),
-      listGovernanceRiskCombinationRules(input.organizationId)
-    ]);
     const governance = buildGovernanceCoverageAssessment({
       aiAccelerationLevel: governanceAiLevel,
       requirements,

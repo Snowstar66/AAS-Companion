@@ -38,9 +38,13 @@ function buildQueryString(query: Record<string, string | string[] | undefined>) 
 }
 
 export default async function StoryWorkspacePage({ params, searchParams }: StoryWorkspacePageProps) {
-  const organization = await requireOrganizationContext();
-  const { storyId } = await params;
-  const query = searchParams ? await searchParams : {};
+  const emptySearchParams: Record<string, string | string[] | undefined> = {};
+  const [organization, resolvedParams, query] = await Promise.all([
+    requireOrganizationContext(),
+    params,
+    searchParams ? searchParams : Promise.resolve(emptySearchParams)
+  ]);
+  const { storyId } = resolvedParams;
   const created = getParamValue(query.created) === "1";
   const saveState = getParamValue(query.save);
   const lifecycleState = getParamValue(query.lifecycle);

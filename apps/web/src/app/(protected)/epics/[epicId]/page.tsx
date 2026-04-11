@@ -68,10 +68,14 @@ function getWorkspaceLabel(epic: { originType: string; createdMode: string }) {
 }
 
 export default async function EpicWorkspacePage({ params, searchParams }: EpicWorkspacePageProps) {
-  const organization = await requireOrganizationContext();
-  const language = await getServerLanguage();
-  const { epicId } = await params;
-  const query = searchParams ? await searchParams : {};
+  const emptySearchParams: Record<string, string | string[] | undefined> = {};
+  const [organization, language, resolvedParams, query] = await Promise.all([
+    requireOrganizationContext(),
+    getServerLanguage(),
+    params,
+    searchParams ? searchParams : Promise.resolve(emptySearchParams)
+  ]);
+  const { epicId } = resolvedParams;
   const created = getParamValue(query.created) === "1";
   const saveState = getParamValue(query.save);
   const lifecycleState = getParamValue(query.lifecycle);

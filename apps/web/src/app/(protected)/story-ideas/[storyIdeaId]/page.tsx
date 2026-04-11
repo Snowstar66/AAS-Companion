@@ -44,10 +44,14 @@ async function getServerLanguage(): Promise<AppLanguage> {
 }
 
 export default async function StoryIdeaWorkspacePage({ params, searchParams }: StoryIdeaWorkspacePageProps) {
-  const language = await getServerLanguage();
-  const organization = await requireOrganizationContext();
-  const { storyIdeaId } = await params;
-  const query = searchParams ? await searchParams : {};
+  const emptySearchParams: Record<string, string | string[] | undefined> = {};
+  const [language, organization, resolvedParams, query] = await Promise.all([
+    getServerLanguage(),
+    requireOrganizationContext(),
+    params,
+    searchParams ? searchParams : Promise.resolve(emptySearchParams)
+  ]);
+  const { storyIdeaId } = resolvedParams;
   const created = getParamValue(query.created) === "1";
   const saveState = getParamValue(query.save);
   const lifecycleState = getParamValue(query.lifecycle);

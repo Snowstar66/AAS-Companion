@@ -31,9 +31,12 @@ async function getServerLanguage(): Promise<AppLanguage> {
 }
 
 export default async function StoriesPage({ searchParams }: StoriesPageProps) {
-  const language = await getServerLanguage();
-  const organization = await requireOrganizationContext();
-  const query = searchParams ? await searchParams : {};
+  const emptySearchParams: Record<string, string | string[] | undefined> = {};
+  const [language, organization, query] = await Promise.all([
+    getServerLanguage(),
+    requireOrganizationContext(),
+    searchParams ? searchParams : Promise.resolve(emptySearchParams)
+  ]);
   const readinessFilter = getParamValue(query.state) ?? "all";
   const missingTestsOnly = getParamValue(query.missingTests) === "1";
   const storiesResult = await listStoriesService(organization.organizationId);

@@ -1,7 +1,7 @@
 ﻿import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { CheckCircle2, CircleAlert, TriangleAlert } from "lucide-react";
+import { CheckCircle2, ChevronDown, CircleAlert, TriangleAlert } from "lucide-react";
 import { parseFramingConstraintBundle } from "@aas-companion/domain";
 import { Card, CardContent } from "@aas-companion/ui";
 import { AasBrandMark } from "@/components/shared/aas-brand-mark";
@@ -813,7 +813,7 @@ export default async function OutcomeApprovalDocumentPage({
                             <div className="mt-3 space-y-3">
                               {evidenceRows.map((evidenceRow, evidenceIndex) => (
                                 <details
-                                  className="rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-sm open:bg-sky-50/20"
+                                  className="group rounded-2xl border border-sky-200 bg-white/90 p-4 shadow-sm open:bg-sky-50/20"
                                   key={evidenceRow.matchKey}
                                   open={evidenceIndex === 0}
                                 >
@@ -829,10 +829,15 @@ export default async function OutcomeApprovalDocumentPage({
                                           {evidenceRow.epicStoryTitle ? ` - ${evidenceRow.epicStoryTitle}` : ""}
                                         </p>
                                       </div>
-                                      <div className="rounded-2xl border border-sky-200 bg-sky-50/60 px-3 py-2 text-sm text-slate-700">
-                                        {t(language, "Artifacts:", "Artefakter:")} {evidenceRow.implementationArtifacts.length}
-                                        {" · "}
-                                        {t(language, "Tests:", "Tester:")} {evidenceRow.testEvidence.length}
+                                      <div className="flex items-center gap-2">
+                                        <div className="rounded-2xl border border-sky-200 bg-sky-50/60 px-3 py-2 text-sm text-slate-700">
+                                          {t(language, "Artifacts:", "Artefakter:")} {evidenceRow.implementationArtifacts.length}
+                                          {" · "}
+                                          {t(language, "Tests:", "Tester:")} {evidenceRow.testEvidence.length}
+                                        </div>
+                                        <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sky-200 bg-white text-sky-900 shadow-sm">
+                                          <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+                                        </div>
                                       </div>
                                     </div>
                                   </summary>

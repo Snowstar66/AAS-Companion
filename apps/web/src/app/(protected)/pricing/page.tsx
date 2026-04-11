@@ -453,10 +453,13 @@ function translateModel(
 }
 
 export default async function PricingPage({ searchParams }: PricingPageProps) {
-  const organization = await requireOrganizationContext();
-  const language = await getServerLanguage();
+  const emptySearchParams: Record<string, string | string[] | undefined> = {};
+  const [organization, language, query] = await Promise.all([
+    requireOrganizationContext(),
+    getServerLanguage(),
+    searchParams ? searchParams : Promise.resolve(emptySearchParams)
+  ]);
   const copy = getCopy(language);
-  const query = searchParams ? await searchParams : {};
   const outcomeId = getParamValue(query.outcomeId);
   const pricing = await getProjectPricingWorkspaceService({
     organizationId: organization.organizationId,
