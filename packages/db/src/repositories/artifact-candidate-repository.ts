@@ -843,18 +843,64 @@ export async function getArtifactCandidatesByIds(organizationId: string, candida
     return [];
   }
 
-  return prisma.artifactAasCandidate.findMany({
+  const candidates = await prisma.artifactAasCandidate.findMany({
     where: {
       organizationId,
       id: {
         in: candidateIds
       }
     },
-    include: {
-      intakeSession: true,
-      file: true
+    select: {
+      id: true,
+      intakeSessionId: true,
+      organizationId: true,
+      fileId: true,
+      type: true,
+      title: true,
+      summary: true,
+      mappingState: true,
+      sourceType: true,
+      sourceConfidence: true,
+      sourceSectionId: true,
+      sourceSectionTitle: true,
+      sourceSectionMarker: true,
+      inferredOutcomeCandidateId: true,
+      inferredEpicCandidateId: true,
+      relationshipState: true,
+      relationshipNote: true,
+      acceptanceCriteria: true,
+      testNotes: true,
+      draftRecord: true,
+      humanDecisions: true,
+      complianceResult: true,
+      issueDispositions: true,
+      reviewStatus: true,
+      reviewComment: true,
+      followUpNeeded: true,
+      importedReadinessState: true,
+      promotedEntityType: true,
+      promotedEntityId: true,
+      promotedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      intakeSession: {
+        select: {
+          importIntent: true
+        }
+      },
+      file: {
+        select: {
+          id: true
+        }
+      }
     }
   });
+
+  return candidates.map((candidate) => ({
+    ...parseCandidateRecord(candidate),
+    intakeSession: candidate.intakeSession,
+    file: candidate.file
+  }));
 }
 
 async function loadReviewCandidate(

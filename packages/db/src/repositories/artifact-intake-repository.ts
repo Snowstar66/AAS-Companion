@@ -433,6 +433,10 @@ export async function reviewArtifactFileSectionDispositionsBulk(inputs: unknown[
         where: {
           id: { in: uniqueFileIds },
           organizationId
+        },
+        select: {
+          id: true,
+          sectionDispositions: true
         }
       });
       const filesById = new Map(files.map((file) => [file.id, file] as const));

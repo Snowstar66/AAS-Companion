@@ -654,43 +654,32 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       );
     }
 
+    const rejectCandidatePayloads = [
+      ...candidates.map((candidate) => ({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        candidateId: candidate.id,
+        reviewStatus: "rejected" as const,
+        reviewComment: "Rejected from the framing import spine."
+      })),
+      ...suppressedCandidateIds.map((candidateId) => ({
+        organizationId: session.organization.organizationId,
+        actorId: session.userId,
+        candidateId,
+        reviewStatus: "rejected" as const,
+        reviewComment: "Merged into the primary imported Outcome in the framing spine."
+      }))
+    ];
     const candidateRejectResult =
-      candidates.length > 0
-        ? await reviewArtifactCandidatesBulkService(
-            candidates.map((candidate) => ({
-              organizationId: session.organization.organizationId,
-              actorId: session.userId,
-              candidateId: candidate.id,
-              reviewStatus: "rejected",
-              reviewComment: "Rejected from the framing import spine."
-            }))
-          )
+      rejectCandidatePayloads.length > 0
+        ? await reviewArtifactCandidatesBulkService(rejectCandidatePayloads)
         : { ok: true as const, data: [] };
     const failedCandidateReject = !candidateRejectResult.ok ? candidateRejectResult : null;
 
     if (failedCandidateReject && !failedCandidateReject.ok) {
       await redirectWithApprovalError(
-        failedCandidateReject.errors[0]?.message ?? "One or more selected framing items could not be rejected."
-      );
-    }
-
-    const suppressedRejectResult =
-      suppressedCandidateIds.length > 0
-        ? await reviewArtifactCandidatesBulkService(
-            suppressedCandidateIds.map((candidateId) => ({
-              organizationId: session.organization.organizationId,
-              actorId: session.userId,
-              candidateId,
-              reviewStatus: "rejected",
-              reviewComment: "Merged into the primary imported Outcome in the framing spine."
-            }))
-          )
-        : { ok: true as const, data: [] };
-    const failedSuppressedReject = !suppressedRejectResult.ok ? suppressedRejectResult : null;
-
-    if (failedSuppressedReject && !failedSuppressedReject.ok) {
-      await redirectWithApprovalError(
-        failedSuppressedReject.errors[0]?.message ?? "One or more merged Outcome candidates could not be cleared."
+        failedCandidateReject.errors[0]?.message ??
+          "One or more selected framing items or merged Outcome candidates could not be rejected."
       );
     }
 
@@ -741,45 +730,34 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     }
   }
 
-  const carryForwardConfirmResult =
-    selectedCarryForwardSectionIds.length > 0
-      ? await reviewArtifactFileSectionDispositionsBulkService(
-          selectedCarryForwardSectionIds.map((sectionId) => ({
-            organizationId: session.organization.organizationId,
-            actorId: session.userId,
-            fileId,
-            sectionId,
-            action: "confirmed",
-            note: "Approved from the framing import spine."
-          }))
-        )
+  const sectionDispositionPayloads = [
+    ...selectedCarryForwardSectionIds.map((sectionId) => ({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "confirmed" as const,
+      note: "Approved from the framing import spine."
+    })),
+    ...leftoverSectionIds.map((sectionId) => ({
+      organizationId: session.organization.organizationId,
+      actorId: session.userId,
+      fileId,
+      sectionId,
+      action: "not_relevant" as const,
+      note: "Ignored during framing spine approval."
+    }))
+  ];
+  const sectionDispositionResult =
+    sectionDispositionPayloads.length > 0
+      ? await reviewArtifactFileSectionDispositionsBulkService(sectionDispositionPayloads)
       : { ok: true as const, data: [] };
-  const failedCarryForwardConfirm = !carryForwardConfirmResult.ok ? carryForwardConfirmResult : null;
+  const failedSectionDisposition = !sectionDispositionResult.ok ? sectionDispositionResult : null;
 
-  if (failedCarryForwardConfirm && !failedCarryForwardConfirm.ok) {
+  if (failedSectionDisposition && !failedSectionDisposition.ok) {
     await redirectWithApprovalError(
-      failedCarryForwardConfirm.errors[0]?.message ?? "Selected framing constraints could not be approved."
-    );
-  }
-
-  const leftoverDispositionResult =
-    leftoverSectionIds.length > 0
-      ? await reviewArtifactFileSectionDispositionsBulkService(
-          leftoverSectionIds.map((sectionId) => ({
-            organizationId: session.organization.organizationId,
-            actorId: session.userId,
-            fileId,
-            sectionId,
-            action: "not_relevant",
-            note: "Ignored during framing spine approval."
-          }))
-        )
-      : { ok: true as const, data: [] };
-  const failedLeftoverDisposition = !leftoverDispositionResult.ok ? leftoverDispositionResult : null;
-
-  if (failedLeftoverDisposition && !failedLeftoverDisposition.ok) {
-    await redirectWithApprovalError(
-      failedLeftoverDisposition.errors[0]?.message ?? "Leftover cleanup could not be saved."
+      failedSectionDisposition.errors[0]?.message ??
+        "Selected framing constraints or leftover cleanup decisions could not be saved."
     );
   }
 
@@ -898,34 +876,26 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
 
       return reviewStatusNeedsUpdate || reviewCommentNeedsUpdate || draftNeedsUpdate ? [payload] : [];
     });
+  const suppressedCleanupPayloads = suppressedCandidateIds.map((candidateId) => ({
+    organizationId: session.organization.organizationId,
+    actorId: session.userId,
+    candidateId,
+    reviewStatus: "rejected" as const,
+    reviewComment: "Merged into the primary imported Outcome in the framing spine."
+  }));
   const candidatePreparationResult =
-    candidatePreparationPayloads.length > 0
-      ? await reviewArtifactCandidatesBulkService(candidatePreparationPayloads)
+    candidatePreparationPayloads.length > 0 || suppressedCleanupPayloads.length > 0
+      ? await reviewArtifactCandidatesBulkService([
+          ...candidatePreparationPayloads,
+          ...suppressedCleanupPayloads
+        ])
       : { ok: true as const, data: [] };
   const failedCandidatePreparation = !candidatePreparationResult.ok ? candidatePreparationResult : null;
 
   if (failedCandidatePreparation && !failedCandidatePreparation.ok) {
     await redirectWithApprovalError(
-      failedCandidatePreparation.errors[0]?.message ?? "Imported framing items could not be prepared for approval."
-    );
-  }
-  const suppressedCleanupResult =
-    suppressedCandidateIds.length > 0
-      ? await reviewArtifactCandidatesBulkService(
-          suppressedCandidateIds.map((candidateId) => ({
-            organizationId: session.organization.organizationId,
-            actorId: session.userId,
-            candidateId,
-            reviewStatus: "rejected",
-            reviewComment: "Merged into the primary imported Outcome in the framing spine."
-          }))
-        )
-      : { ok: true as const, data: [] };
-  const failedSuppressedCleanup = !suppressedCleanupResult.ok ? suppressedCleanupResult : null;
-
-  if (failedSuppressedCleanup && !failedSuppressedCleanup.ok) {
-    await redirectWithApprovalError(
-      failedSuppressedCleanup.errors[0]?.message ?? "Merged Outcome cleanup could not be saved."
+      failedCandidatePreparation.errors[0]?.message ??
+        "Imported framing items or merged Outcome cleanup could not be prepared for approval."
     );
   }
 
