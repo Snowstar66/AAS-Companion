@@ -2012,11 +2012,14 @@ export function ArtifactIntakeReviewWorkspace({
             <div className="rounded-2xl border border-border/70 bg-slate-950 px-5 py-5 text-sm text-slate-100 shadow-inner">
               <div className="max-h-[720px] overflow-auto font-mono leading-6">
                 {getSourceArtifactLines(selectedFile.content).map((line, index) => (
-                  <div className="grid grid-cols-[auto,minmax(0,1fr)] items-start gap-4" key={`${selectedFile.id}-line-${index + 1}`}>
-                    <span className="select-none text-right text-slate-500" data-source-line-number>
+                  <div className="flex items-start" key={`${selectedFile.id}-line-${index + 1}`}>
+                    <span
+                      className="w-10 shrink-0 pr-4 text-right tabular-nums select-none text-slate-500"
+                      data-source-line-number
+                    >
                       {index + 1}
                     </span>
-                    <span className="whitespace-pre-wrap break-words">{line.length > 0 ? line : " "}</span>
+                    <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{line.length > 0 ? line : " "}</span>
                   </div>
                 ))}
               </div>
