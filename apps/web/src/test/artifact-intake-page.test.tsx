@@ -465,6 +465,8 @@ describe("Import page", () => {
     expect(screen.queryByRole("button", { name: /Create import session/i })).toBeNull();
     expect(screen.getByRole("heading", { name: "Full imported source artifact" })).toBeDefined();
     expect(screen.getAllByText("# Imported artifact", { exact: false }).length).toBeGreaterThan(0);
+    expect(screen.getByText("1", { selector: "[data-source-line-number]" })).toBeDefined();
+    expect(screen.getByText("2", { selector: "[data-source-line-number]" })).toBeDefined();
     expect(screen.getAllByRole("heading", { name: "Framing value spine" }).length).toBeGreaterThan(0);
     expect(screen.queryAllByRole("heading", { name: "Imported candidates" })).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Approve" })).toBeDefined();

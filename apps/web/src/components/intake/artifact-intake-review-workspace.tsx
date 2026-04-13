@@ -228,6 +228,10 @@ function buildSuggestedCandidateKey(session: IntakeArtifactSession, candidate: I
   return `${prefix}-${String(sequence).padStart(3, "0")}`;
 }
 
+function getSourceArtifactLines(content: string) {
+  return content.replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n");
+}
+
 function isLegacyImportKey(value: string | null | undefined) {
   return /^IMP-(OUT|EPC|STR|STORY)-/i.test(value?.trim() ?? "");
 }
@@ -2006,7 +2010,16 @@ export function ArtifactIntakeReviewWorkspace({
             ) : null}
 
             <div className="rounded-2xl border border-border/70 bg-slate-950 px-5 py-5 text-sm text-slate-100 shadow-inner">
-              <pre className="max-h-[720px] overflow-auto whitespace-pre-wrap break-words font-mono leading-6">{selectedFile.content}</pre>
+              <div className="max-h-[720px] overflow-auto font-mono leading-6">
+                {getSourceArtifactLines(selectedFile.content).map((line, index) => (
+                  <div className="grid grid-cols-[auto,minmax(0,1fr)] items-start gap-4" key={`${selectedFile.id}-line-${index + 1}`}>
+                    <span className="select-none text-right text-slate-500" data-source-line-number>
+                      {index + 1}
+                    </span>
+                    <span className="whitespace-pre-wrap break-words">{line.length > 0 ? line : " "}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {selectedFile.parsedArtifacts?.sections.length ? (
