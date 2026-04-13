@@ -557,8 +557,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const selectedStoryCandidates = candidates.filter((candidate) => candidate.type === "story");
   function readResolvedStoryEpicSelection(candidate: {
     id: string;
-    draftRecord?: { epicCandidateId?: string | null } | null;
-    inferredEpicCandidateId?: string | null;
+    draftRecord?: { epicCandidateId?: string | null | undefined } | null;
+    inferredEpicCandidateId?: string | null | undefined;
   }) {
     return (
       readDynamicField(formData, "candidate", candidate.id, "epicCandidateId") ||
@@ -571,8 +571,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
   function readResolvedStoryOutcomeSelection(candidate: {
     id: string;
-    draftRecord?: { outcomeCandidateId?: string | null } | null;
-    inferredOutcomeCandidateId?: string | null;
+    draftRecord?: { outcomeCandidateId?: string | null | undefined } | null;
+    inferredOutcomeCandidateId?: string | null | undefined;
   }) {
     return (
       readDynamicField(formData, "candidate", candidate.id, "outcomeCandidateId") ||
