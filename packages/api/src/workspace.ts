@@ -632,7 +632,9 @@ export async function reviewOutcomeFramingWithAiService(input: {
           epicKey: snapshot.outcome.epics.find((epic) => epic.id === seed.epicId)?.key ?? null,
           shortDescription: seed.shortDescription?.trim() || null,
           expectedBehavior: seed.expectedBehavior?.trim() || null
-        }))
+        })),
+        journeyContexts: snapshot.outcome.journeyContexts,
+        downstreamAiInstructions: snapshot.outcome.downstreamAiInstructions
       });
 
       return success(result);

@@ -10,6 +10,7 @@ import {
   upsertTollgate
 } from "@aas-companion/db";
 import {
+  analyzeDownstreamAiInstructions,
   getTollgateDecisionProfile,
   getOutcomeFramingReadiness,
   recordTollgateDecisionInputSchema,
@@ -132,10 +133,52 @@ function buildOutcomeApprovalSnapshot(input: {
       input.snapshot.outcome.directionSeeds.some((seed) => seed.epicId === story.epicId) ? false : !seedIdsByEpic.has(story.id)
     )
     .filter((story) => story.status === "draft" || story.status === "definition_blocked");
+  const journeyContexts = input.snapshot.outcome.journeyContexts;
+  const journeySummaries =
+    journeyContexts.length > 0
+      ? {
+          contextCount: journeyContexts.length,
+          journeyCount: journeyContexts.reduce((count, context) => count + context.journeys.length, 0),
+          analysedJourneyCount: journeyContexts.reduce(
+            (count, context) =>
+              count + context.journeys.filter((journey) => journey.coverage && journey.coverage.status !== "unanalysed").length,
+            0
+          ),
+          uncoveredJourneyCount: journeyContexts.reduce(
+            (count, context) =>
+              count + context.journeys.filter((journey) => journey.coverage?.status === "uncovered").length,
+            0
+          ),
+          contexts: journeyContexts.map((context) => ({
+            id: context.id,
+            title: context.title,
+            description: context.description ?? null,
+            notes: context.notes ?? null,
+            journeys: context.journeys.map((journey) => ({
+              id: journey.id,
+              title: journey.title,
+              primaryActor: journey.primaryActor,
+              goal: journey.goal,
+              trigger: journey.trigger,
+              currentState: journey.currentState ?? null,
+              desiredFutureState: journey.desiredFutureState ?? null,
+              coverageStatus: journey.coverage?.status ?? "unanalysed",
+              linkedEpicIds: journey.linkedEpicIds ?? [],
+              linkedStoryIdeaIds: journey.linkedStoryIdeaIds ?? []
+            }))
+          }))
+        }
+      : null;
+  const downstreamAnalysis = input.snapshot.outcome.downstreamAiInstructions
+    ? analyzeDownstreamAiInstructions({
+        instructions: input.snapshot.outcome.downstreamAiInstructions,
+        hasJourneyContext: journeyContexts.length > 0
+      })
+    : null;
 
   return {
     kind: "framing_approval_document",
-    version: 1,
+    version: 2,
     approvedVersion: input.approvedVersion,
     approvedAt: input.approvedAt.toISOString(),
     outcome: {
@@ -202,6 +245,34 @@ function buildOutcomeApprovalSnapshot(input: {
         sourceType: "legacy_story_idea" as const
       }))
     ],
+    journeyContext: journeySummaries,
+    downstreamAiInstructions: downstreamAnalysis
+      ? {
+          initiativeType: input.snapshot.outcome.downstreamAiInstructions!.initiativeType,
+          aiLevel: input.snapshot.outcome.downstreamAiInstructions!.aiLevel,
+          alwaysOnControls: input.snapshot.outcome.downstreamAiInstructions!.mandatoryControls.map((control) => ({
+            id: control.id,
+            title: control.title,
+            description: control.description
+          })),
+          deviations: downstreamAnalysis.deviations.map((deviation) => ({
+            id: deviation.id,
+            group: deviation.group,
+            title: deviation.title,
+            recommended: deviation.recommended,
+            selected: deviation.selected,
+            rationale: deviation.rationale
+          })),
+          warnings: [...downstreamAnalysis.hardIssues, ...downstreamAnalysis.warnings],
+          customInstructions: input.snapshot.outcome.downstreamAiInstructions!.customInstructions.map((instruction) => ({
+            id: instruction.id,
+            title: instruction.title,
+            body: instruction.body,
+            category: instruction.category,
+            priority: instruction.priority
+          }))
+        }
+      : null,
     signoffs: input.signoffRecords.map((record) => ({
       id: record.id,
       decisionKind: record.decisionKind,

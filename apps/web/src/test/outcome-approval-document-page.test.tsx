@@ -22,7 +22,7 @@ vi.mock("@/lib/cache/project-data", () => ({
       tollgateReview: {
         approvalSnapshot: {
           kind: "framing_approval_document",
-          version: 1,
+          version: 2,
           approvedVersion: 30,
           approvedAt: "2026-04-08T14:56:14.315Z",
           outcome: {
@@ -80,6 +80,77 @@ vi.mock("@/lib/cache/project-data", () => ({
               sourceType: "direction_seed"
             }
           ],
+          journeyContext: {
+            contextCount: 1,
+            journeyCount: 2,
+            analysedJourneyCount: 1,
+            uncoveredJourneyCount: 0,
+            contexts: [
+              {
+                id: "jc-1",
+                title: "Household preparedness",
+                description: "Broad flow guidance for household readiness work.",
+                notes: null,
+                journeys: [
+                  {
+                    id: "journey-1",
+                    title: "Build a readiness baseline",
+                    primaryActor: "Household member",
+                    goal: "Understand the current preparedness level.",
+                    trigger: "A user opens the app to assess readiness.",
+                    currentState: "Readiness is tracked ad hoc.",
+                    desiredFutureState: "The app gives a clearer baseline.",
+                    coverageStatus: "covered",
+                    linkedEpicIds: ["EPIC-001"],
+                    linkedStoryIdeaIds: ["STORY-001"]
+                  },
+                  {
+                    id: "journey-2",
+                    title: "Keep inventory updated",
+                    primaryActor: "Household member",
+                    goal: "Maintain a trusted inventory over time.",
+                    trigger: "The user needs to revisit supplies.",
+                    currentState: null,
+                    desiredFutureState: "Updates feel lightweight and regular.",
+                    coverageStatus: "unanalysed",
+                    linkedEpicIds: ["EPIC-002"],
+                    linkedStoryIdeaIds: ["STORY-002"]
+                  }
+                ]
+              }
+            ]
+          },
+          downstreamAiInstructions: {
+            initiativeType: "AD",
+            aiLevel: 2,
+            alwaysOnControls: [
+              {
+                id: "MC-1",
+                title: "Preserve Epic -> Story -> Test traceability",
+                description: "Keep lineage visible."
+              }
+            ],
+            deviations: [
+              {
+                id: "D2",
+                group: "design",
+                title: "Prefer reuse when fit-for-purpose",
+                recommended: "NO",
+                selected: "YES",
+                rationale: "Existing assets should be reused first."
+              }
+            ],
+            warnings: ["Many refinement preferences are set to N/A, so downstream AI may become underconstrained."],
+            customInstructions: [
+              {
+                id: "CI-1",
+                title: "Keep stress mode simple",
+                body: "Downstream AI should preserve direct access to critical household guidance.",
+                category: "Design",
+                priority: "High"
+              }
+            ]
+          },
           traceabilityEvidence: {
             sourcePath: "traceability-export.csv",
             uploadedAt: "2026-04-10T08:00:00.000Z",
@@ -250,10 +321,13 @@ describe("Outcome approval document page", () => {
     expect(screen.getByText("Handshake delivery coverage")).toBeDefined();
     expect(screen.getByText("Approved ideas")).toBeDefined();
     expect(screen.getByText("BMAD traceability evidence")).toBeDefined();
-    expect(screen.getByText("General constraints")).toBeDefined();
-    expect(screen.getByText("UX principles")).toBeDefined();
-    expect(screen.getByText("Non-functional requirements")).toBeDefined();
-    expect(screen.getByText(/No explicit constraints/i)).toBeDefined();
+    expect(screen.getByText(/Keep flows calm and clear/i)).toBeDefined();
+    expect(screen.getByText(/Offline support is required/i)).toBeDefined();
+    expect(screen.getByText("Journey Context for downstream refinement")).toBeDefined();
+    expect(screen.getByText("Household preparedness")).toBeDefined();
+    expect(screen.getByText("Build a readiness baseline")).toBeDefined();
+    expect(screen.getByText("Downstream AI Instructions")).toBeDefined();
+    expect(screen.getByText("Keep stress mode simple")).toBeDefined();
     expect(screen.getAllByText("Covered").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Reshaped").length).toBeGreaterThan(0);
     expect(screen.queryByText("Not implemented")).toBeNull();

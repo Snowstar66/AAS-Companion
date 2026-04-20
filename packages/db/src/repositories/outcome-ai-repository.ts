@@ -1,6 +1,12 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  analyzeDownstreamAiInstructions,
+  mapAiAccelerationLevelToDownstreamAiLevel,
+  type DownstreamAiInstructions,
+  type JourneyContext
+} from "@aas-companion/domain";
 
 type DeliveryType = "AD" | "AT" | "AM";
 
@@ -50,6 +56,21 @@ export type OutcomeFramingAiReview = {
     assessment: "appropriate" | "too_high" | "too_low";
     suggestedLevel: "level_1" | "level_2" | "level_3" | null;
     comment: string;
+  };
+  journeyContext: {
+    status: "not_used" | "helpful" | "needs_refinement";
+    comment: string;
+    gaps: string[];
+  };
+  downstreamAiInstructions: {
+    status: "not_configured" | "configured" | "needs_refinement";
+    comment: string;
+    warnings: string[];
+  };
+  tollgateHandshake: {
+    status: "ready" | "needs_refinement";
+    comment: string;
+    missingItems: string[];
   };
   framingReadiness: {
     score: number;
@@ -103,6 +124,8 @@ type OutcomeFramingAiReviewInput = {
     shortDescription?: string | null;
     expectedBehavior?: string | null;
   }>;
+  journeyContexts?: JourneyContext[];
+  downstreamAiInstructions?: DownstreamAiInstructions | null;
 };
 
 const repositoryDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -287,6 +310,9 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
   const storyCoverage = candidate.storyCoverage;
   const riskOverview = candidate.riskOverview;
   const aiLevel = candidate.aiLevel;
+  const journeyContext = candidate.journeyContext;
+  const downstreamAiInstructions = candidate.downstreamAiInstructions;
+  const tollgateHandshake = candidate.tollgateHandshake;
   const framingReadiness = candidate.framingReadiness;
 
   if (!outcomeQuality || typeof outcomeQuality !== "object") {
@@ -413,6 +439,35 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
     throw new Error("AI framing review returned an invalid readiness score.");
   }
 
+  const defaultJourneyContext: OutcomeFramingAiReview["journeyContext"] = {
+    status: "not_used",
+    comment: "No Journey Context review details were returned.",
+    gaps: []
+  };
+  const defaultDownstreamAiInstructions: OutcomeFramingAiReview["downstreamAiInstructions"] = {
+    status: "not_configured",
+    comment: "No Downstream AI Instructions review details were returned.",
+    warnings: []
+  };
+  const defaultTollgateHandshake: OutcomeFramingAiReview["tollgateHandshake"] = {
+    status: "needs_refinement",
+    comment: "No Tollgate 1 handshake summary was returned.",
+    missingItems: []
+  };
+
+  const parsedJourneyContext =
+    journeyContext && typeof journeyContext === "object"
+      ? (journeyContext as Record<string, unknown>)
+      : null;
+  const parsedDownstreamAiInstructions =
+    downstreamAiInstructions && typeof downstreamAiInstructions === "object"
+      ? (downstreamAiInstructions as Record<string, unknown>)
+      : null;
+  const parsedTollgateHandshake =
+    tollgateHandshake && typeof tollgateHandshake === "object"
+      ? (tollgateHandshake as Record<string, unknown>)
+      : null;
+
   return {
     validationMode: "generic",
     outcomeQuality: {
@@ -444,6 +499,46 @@ function parseOutcomeFramingAiReview(input: unknown): OutcomeFramingAiReview {
       suggestedLevel: parsedAiLevel.suggestedLevel,
       comment: parsedAiLevel.comment.trim()
     },
+    journeyContext:
+      parsedJourneyContext &&
+      (parsedJourneyContext.status === "not_used" ||
+        parsedJourneyContext.status === "helpful" ||
+        parsedJourneyContext.status === "needs_refinement") &&
+      typeof parsedJourneyContext.comment === "string" &&
+      Array.isArray(parsedJourneyContext.gaps) &&
+      parsedJourneyContext.gaps.every((item) => typeof item === "string")
+        ? {
+            status: parsedJourneyContext.status,
+            comment: parsedJourneyContext.comment.trim(),
+            gaps: parsedJourneyContext.gaps.map((item) => item.trim()).filter(Boolean)
+          }
+        : defaultJourneyContext,
+    downstreamAiInstructions:
+      parsedDownstreamAiInstructions &&
+      (parsedDownstreamAiInstructions.status === "not_configured" ||
+        parsedDownstreamAiInstructions.status === "configured" ||
+        parsedDownstreamAiInstructions.status === "needs_refinement") &&
+      typeof parsedDownstreamAiInstructions.comment === "string" &&
+      Array.isArray(parsedDownstreamAiInstructions.warnings) &&
+      parsedDownstreamAiInstructions.warnings.every((item) => typeof item === "string")
+        ? {
+            status: parsedDownstreamAiInstructions.status,
+            comment: parsedDownstreamAiInstructions.comment.trim(),
+            warnings: parsedDownstreamAiInstructions.warnings.map((item) => item.trim()).filter(Boolean)
+          }
+        : defaultDownstreamAiInstructions,
+    tollgateHandshake:
+      parsedTollgateHandshake &&
+      (parsedTollgateHandshake.status === "ready" || parsedTollgateHandshake.status === "needs_refinement") &&
+      typeof parsedTollgateHandshake.comment === "string" &&
+      Array.isArray(parsedTollgateHandshake.missingItems) &&
+      parsedTollgateHandshake.missingItems.every((item) => typeof item === "string")
+        ? {
+            status: parsedTollgateHandshake.status,
+            comment: parsedTollgateHandshake.comment.trim(),
+            missingItems: parsedTollgateHandshake.missingItems.map((item) => item.trim()).filter(Boolean)
+          }
+        : defaultTollgateHandshake,
     framingReadiness: {
       score: Math.round(parsedFramingReadiness.score),
       interpretation: parsedFramingReadiness.interpretation
@@ -476,11 +571,42 @@ function deriveDeterministicFramingAdjustments(
   const epicKeys = new Set(input.epics.map((epic) => epic.key));
   const epicCoverageFindings: string[] = [];
   const storyCoverageFindings: string[] = [];
+  const journeyFindings: string[] = [];
+  const downstreamFindings: string[] = [];
+  const handshakeFindings: string[] = [];
   const riskFindings: string[] = [];
   const requiredActions: string[] = [];
   const combinedProblemEvidence = [input.outcome.problemStatement, input.outcome.baselineDefinition, input.outcome.baselineSource]
     .filter(Boolean)
     .join(" ");
+  const journeyContexts = input.journeyContexts ?? [];
+  const totalJourneys = journeyContexts.reduce((count, context) => count + context.journeys.length, 0);
+  const allJourneys = journeyContexts.flatMap((context) =>
+    context.journeys.map((journey) => ({
+      context,
+      journey
+    }))
+  );
+  const journeysWithoutCoverage = allJourneys.filter(
+    ({ journey }) => !journey.coverage || journey.coverage.status === "unanalysed"
+  );
+  const uncoveredJourneys = allJourneys.filter(({ journey }) => journey.coverage?.status === "uncovered");
+  const granularJourneys = allJourneys.filter(({ journey }) => journey.steps.length >= 8);
+  const incompleteJourneys = allJourneys.filter(
+    ({ journey }) =>
+      !journey.title.trim() ||
+      !journey.primaryActor.trim() ||
+      !journey.goal.trim() ||
+      !journey.trigger.trim()
+  );
+  const parsedDownstreamInstructions = input.downstreamAiInstructions ?? null;
+  const downstreamAnalysis = parsedDownstreamInstructions
+    ? analyzeDownstreamAiInstructions({
+        instructions: parsedDownstreamInstructions,
+        hasJourneyContext: journeyContexts.length > 0
+      })
+    : null;
+  const expectedDownstreamAiLevel = mapAiAccelerationLevelToDownstreamAiLevel(input.outcome.aiAccelerationLevel);
 
   if (!input.outcome.outcomeStatement?.trim()) {
     report.outcomeQuality.status = "needs_improvement";
@@ -554,6 +680,7 @@ function deriveDeterministicFramingAdjustments(
   if (input.directionSeeds.length === 0) {
     report.storyCoverage.status = "partial";
     storyCoverageFindings.push(`[${input.outcome.key}] No Story Ideas are defined yet.`);
+    requiredActions.push("Capture at least one Story Idea before asking Tollgate 1 to sign the package.");
   }
 
   for (const seed of input.directionSeeds) {
@@ -598,11 +725,155 @@ function deriveDeterministicFramingAdjustments(
     }
   }
 
+  if (journeyContexts.length === 0) {
+    report.journeyContext.status = "not_used";
+    report.journeyContext.comment =
+      "No Journey Context is captured. That is optional, but downstream refinement can only rely on the main Framing spine right now.";
+
+    if (input.outcome.aiAccelerationLevel !== "level_1") {
+      requiredActions.push("Decide whether a broad Journey Context would help downstream AI refine this case before export.");
+    }
+  } else {
+    report.journeyContext.status = "helpful";
+    report.journeyContext.comment = `Journey Context adds ${totalJourneys} Journey${totalJourneys === 1 ? "" : "s"} of extra business-flow context to the package.`;
+
+    if (totalJourneys === 0) {
+      report.journeyContext.status = "needs_refinement";
+      journeyFindings.push("Journey Context exists, but it still contains no Journeys.");
+      requiredActions.push("Add at least one broad Journey before relying on Journey Context in Framing.");
+    }
+
+    if (incompleteJourneys.length > 0) {
+      report.journeyContext.status = "needs_refinement";
+      journeyFindings.push(
+        `${incompleteJourneys.length} Journey${incompleteJourneys.length === 1 ? "" : "s"} still miss core actor, goal, or trigger framing.`
+      );
+      requiredActions.push("Complete the core actor, goal, and trigger fields for each saved Journey.");
+    }
+
+    if (journeysWithoutCoverage.length > 0 && input.directionSeeds.length > 0) {
+      journeyFindings.push(
+        `${journeysWithoutCoverage.length} Journey${journeysWithoutCoverage.length === 1 ? "" : "s"} have not yet been checked against Story Ideas and Epics.`
+      );
+      requiredActions.push("Run Journey Coverage analysis before final export when Journey Context is part of the package.");
+    }
+
+    if (uncoveredJourneys.length > 0) {
+      report.journeyContext.status = "needs_refinement";
+      journeyFindings.push(
+        `${uncoveredJourneys.length} Journey${uncoveredJourneys.length === 1 ? " appears" : " appear"} uncovered by the current Story Ideas or Epics.`
+      );
+      requiredActions.push("Resolve uncovered Journeys by refining Story Ideas, Epics, or the Journey framing.");
+    }
+
+    if (granularJourneys.length > 0) {
+      journeyFindings.push(
+        `${granularJourneys.length} Journey${granularJourneys.length === 1 ? "" : "s"} look overly granular and may need to be simplified back to broad flow guidance.`
+      );
+    }
+  }
+
+  if (!parsedDownstreamInstructions) {
+    report.downstreamAiInstructions.status = "not_configured";
+    report.downstreamAiInstructions.comment =
+      "Downstream AI Instructions are not configured yet. Export still works, but later Design and Build AI will receive looser guidance.";
+
+    if (input.outcome.aiAccelerationLevel !== "level_1") {
+      requiredActions.push("Configure Downstream AI Instructions before export if downstream AI is expected to do meaningful refinement.");
+    }
+  } else {
+    const warnings = downstreamAnalysis ? [...downstreamAnalysis.hardIssues, ...downstreamAnalysis.warnings] : [];
+    report.downstreamAiInstructions.status =
+      warnings.length > 0 || parsedDownstreamInstructions.aiLevel !== expectedDownstreamAiLevel
+        ? "needs_refinement"
+        : "configured";
+    report.downstreamAiInstructions.comment =
+      report.downstreamAiInstructions.status === "configured"
+        ? "Downstream AI Instructions are configured and aligned closely enough to guide Design and Build refinement."
+        : "Downstream AI Instructions exist, but they still contain issues or weak combinations that could dilute downstream guidance.";
+
+    if (parsedDownstreamInstructions.aiLevel !== expectedDownstreamAiLevel) {
+      downstreamFindings.push(
+        `Downstream AI Instructions use AI Level ${parsedDownstreamInstructions.aiLevel}, while the current Framing case is set to ${expectedDownstreamAiLevel}.`
+      );
+      requiredActions.push("Align the Downstream AI Instructions AI Level with the current Framing AI level.");
+    }
+
+    for (const issue of warnings.slice(0, 5)) {
+      downstreamFindings.push(issue);
+    }
+
+    for (const issue of downstreamAnalysis?.hardIssues ?? []) {
+      requiredActions.push(issue);
+    }
+  }
+
+  const hasBaselineForHandshake = Boolean(input.outcome.baselineDefinition?.trim());
+  const hasRiskRationale =
+    Boolean(input.outcome.businessImpactRationale?.trim()) &&
+    Boolean(input.outcome.dataSensitivityRationale?.trim()) &&
+    Boolean(input.outcome.blastRadiusRationale?.trim()) &&
+    Boolean(input.outcome.decisionImpactRationale?.trim());
+
+  if (!input.outcome.valueOwner?.trim()) {
+    handshakeFindings.push("Value Owner is missing from the approval package.");
+  }
+
+  if (!input.outcome.problemStatement?.trim()) {
+    handshakeFindings.push("Problem statement is missing from the handshake package.");
+  }
+
+  if (!input.outcome.outcomeStatement?.trim()) {
+    handshakeFindings.push("Outcome statement is missing from the handshake package.");
+  }
+
+  if ((deliveryType === "AT" || deliveryType === "AM") && !hasBaselineForHandshake) {
+    handshakeFindings.push(`${deliveryType} requires a visible baseline in the signed Tollgate 1 package.`);
+  }
+
+  if (input.epics.length === 0) {
+    handshakeFindings.push("No Epics are available for the Tollgate 1 handshake.");
+  }
+
+  if (input.directionSeeds.length === 0) {
+    handshakeFindings.push("No Story Ideas are available for the Tollgate 1 handshake.");
+  }
+
+  if (!hasRiskRationale) {
+    handshakeFindings.push("Structured risk rationale is still incomplete for the Tollgate 1 handshake.");
+  }
+
+  if (journeyContexts.length > 0 && report.journeyContext.status === "needs_refinement") {
+    handshakeFindings.push("Journey Context exists, but it is not yet strong enough to sign as part of the package.");
+  }
+
+  if (parsedDownstreamInstructions && report.downstreamAiInstructions.status === "needs_refinement") {
+    handshakeFindings.push("Downstream AI Instructions exist, but their current configuration is too weak to sign with confidence.");
+  }
+
+  report.tollgateHandshake = {
+    status: handshakeFindings.length === 0 ? "ready" : "needs_refinement",
+    comment:
+      handshakeFindings.length === 0
+        ? "The current Framing package looks structurally complete enough to become the Tollgate 1 handshake document."
+        : "The current Framing package can still be refined before Tollgate 1 so the signed handshake is clearer and more complete.",
+    missingItems: handshakeFindings
+  };
+
   report.epicCoverage.missingAreas = prependUnique(epicCoverageFindings, report.epicCoverage.missingAreas);
   report.storyCoverage.gapsOrOverlaps = prependUnique(storyCoverageFindings, report.storyCoverage.gapsOrOverlaps);
+  report.journeyContext.gaps = prependUnique(journeyFindings, report.journeyContext.gaps);
+  report.downstreamAiInstructions.warnings = prependUnique(
+    downstreamFindings,
+    report.downstreamAiInstructions.warnings
+  );
+  report.tollgateHandshake.missingItems = prependUnique(
+    handshakeFindings,
+    report.tollgateHandshake.missingItems
+  );
   report.riskOverview.topRisks = prependUnique(riskFindings, report.riskOverview.topRisks).slice(0, 5);
   report.validationMode = deliveryType ?? "generic";
-  report.requiredActions = prependUnique(requiredActions, report.requiredActions).slice(0, 8);
+  report.requiredActions = prependUnique(requiredActions, report.requiredActions).slice(0, 10);
 
   if (storyCoverageFindings.length > 0 && report.storyCoverage.comment.length > 0) {
     const referencedSeeds = storyCoverageFindings
@@ -652,6 +923,22 @@ function deriveDeterministicFramingAdjustments(
     readinessScore -= 10;
   }
 
+  if (report.journeyContext.status === "needs_refinement") {
+    readinessScore -= 8;
+  }
+
+  if (report.downstreamAiInstructions.status === "needs_refinement") {
+    readinessScore -= 8;
+  }
+
+  if (!parsedDownstreamInstructions && input.outcome.aiAccelerationLevel !== "level_1") {
+    readinessScore -= 5;
+  }
+
+  if (report.tollgateHandshake.status === "needs_refinement") {
+    readinessScore -= 10;
+  }
+
   if (deliveryType === "AT" && !input.outcome.baselineDefinition?.trim()) {
     readinessScore -= 20;
   }
@@ -679,6 +966,8 @@ function deriveDeterministicFramingAdjustments(
           ? "not_ready"
           : !input.outcome.outcomeStatement?.trim() || input.epics.length === 0
             ? "not_ready"
+            : report.tollgateHandshake.missingItems.length >= 5
+              ? "not_ready"
             : readinessScore >= 80
               ? "ready_for_tollgate"
               : readinessScore >= 60
@@ -858,6 +1147,8 @@ function buildFramingReviewPrompt(input: {
   outcome: OutcomeFramingAiReviewInput["outcome"];
   epics: OutcomeFramingAiReviewInput["epics"];
   directionSeeds: OutcomeFramingAiReviewInput["directionSeeds"];
+  journeyContexts?: OutcomeFramingAiReviewInput["journeyContexts"];
+  downstreamAiInstructions?: OutcomeFramingAiReviewInput["downstreamAiInstructions"];
 }) {
   const deliveryType = normalizeDeliveryType(input.outcome.deliveryType);
   const validationReference = buildValidationReferenceContext(deliveryType);
@@ -874,18 +1165,23 @@ You will receive:
 - Outcome (including baseline and owner context)
 - Solution Context & Constraints
 - AI execution pattern, lifecycle usage intent and structured risk rationale
+- Optional Journey Context
 - Epics
 - Story Ideas (with Value Intent and Expected Behavior)
+- Optional Downstream AI Instructions
 - Selected AI Acceleration Level
 - Delivery Type rules for ${deliveryType ?? "generic framing"}
 
-Evaluate the framing across five dimensions:
+Evaluate the framing across these dimensions:
 1. Outcome Quality
 2. Problem -> Outcome Alignment
 3. Epic Coverage
 4. Story Idea Coverage
-5. Risk & Complexity
-6. AI Level Appropriateness
+5. Journey Context Quality
+6. Downstream AI Instructions Quality
+7. Tollgate 1 Handshake Completeness
+8. Risk & Complexity
+9. AI Level Appropriateness
 
 Rules:
 - Do NOT rewrite everything.
@@ -920,12 +1216,27 @@ Evaluation details:
 - Check whether the story ideas support the epics, whether ideas are redundant, and whether important ideas are missing.
 - Return status Good or Partial.
 
-5. Risk & Complexity
+5. Journey Context Quality
+- If Journey Context is absent, mark it as not_used and explain whether that is acceptable.
+- If Journey Context exists, check whether Journeys are broad enough, whether actor/goal/trigger are visible, and whether coverage analysis or obvious links are missing.
+- Return status Not used, Helpful, or Needs refinement.
+
+6. Downstream AI Instructions Quality
+- If Downstream AI Instructions are absent, mark them as not_configured.
+- If they exist, check whether they are coherent, aligned with initiative type and AI level, and free from weak combinations.
+- Return status Not configured, Configured, or Needs refinement.
+
+7. Tollgate 1 Handshake Completeness
+- Treat the full framing package as the future signed handshake document.
+- Consider whether the package is complete enough for Tollgate 1, including optional Journey Context and Downstream AI Instructions when they exist.
+- Return status Ready or Needs refinement.
+
+8. Risk & Complexity
 - Identify product, technical, data/privacy and AI-related risks.
 - Also identify likely expansion and misalignment risk.
 - Return top 3-5 risks, plus Expansion Risk and Misalignment Risk as Low/Medium/High.
 
-6. AI Level Validation
+9. AI Level Validation
 - Check whether the selected AI level is appropriate for risk, clarity and structure.
 - Return Appropriate, Too high or Too low.
 - If not appropriate, suggest a better level.
@@ -980,6 +1291,21 @@ Required output:
     "assessment": "appropriate" | "too_high" | "too_low",
     "suggestedLevel": "level_1" | "level_2" | "level_3" | null,
     "comment": "short explanation"
+  },
+  "journeyContext": {
+    "status": "not_used" | "helpful" | "needs_refinement",
+    "comment": "short explanation",
+    "gaps": ["..."]
+  },
+  "downstreamAiInstructions": {
+    "status": "not_configured" | "configured" | "needs_refinement",
+    "comment": "short explanation",
+    "warnings": ["..."]
+  },
+  "tollgateHandshake": {
+    "status": "ready" | "needs_refinement",
+    "comment": "short explanation",
+    "missingItems": ["..."]
   },
   "framingReadiness": {
     "score": 0,
@@ -1188,6 +1514,8 @@ export async function reviewOutcomeFramingWithAi(input: {
     shortDescription?: string | null;
     expectedBehavior?: string | null;
   }>;
+  journeyContexts?: JourneyContext[];
+  downstreamAiInstructions?: DownstreamAiInstructions | null;
 }) {
   const env = readRequiredLlmEnv();
   const response = await fetch(new URL("responses", env.endpoint), {

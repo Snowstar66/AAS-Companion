@@ -345,6 +345,21 @@ export type ReviewOutcomeFramingAiActionState = {
           suggestedLevel: "level_1" | "level_2" | "level_3" | null;
           comment: string;
         };
+        journeyContext: {
+          status: "not_used" | "helpful" | "needs_refinement";
+          comment: string;
+          gaps: string[];
+        };
+        downstreamAiInstructions: {
+          status: "not_configured" | "configured" | "needs_refinement";
+          comment: string;
+          warnings: string[];
+        };
+        tollgateHandshake: {
+          status: "ready" | "needs_refinement";
+          comment: string;
+          missingItems: string[];
+        };
         framingReadiness: {
           score: number;
           interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";

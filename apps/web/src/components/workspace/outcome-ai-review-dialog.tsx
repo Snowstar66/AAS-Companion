@@ -45,6 +45,21 @@ type OutcomeAiReviewDialogProps = {
             suggestedLevel: "level_1" | "level_2" | "level_3" | null;
             comment: string;
           };
+          journeyContext: {
+            status: "not_used" | "helpful" | "needs_refinement";
+            comment: string;
+            gaps: string[];
+          };
+          downstreamAiInstructions: {
+            status: "not_configured" | "configured" | "needs_refinement";
+            comment: string;
+            warnings: string[];
+          };
+          tollgateHandshake: {
+            status: "ready" | "needs_refinement";
+            comment: string;
+            missingItems: string[];
+          };
           framingReadiness: {
             score: number;
             interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready";
@@ -120,6 +135,18 @@ function formatCurrentAiLevel(level: string) {
 
 function formatStatus(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function getJourneyTone(status: "not_used" | "helpful" | "needs_refinement") {
+  return status === "helpful" ? "good" : status === "needs_refinement" ? "warning" : "warning";
+}
+
+function getDownstreamTone(status: "not_configured" | "configured" | "needs_refinement") {
+  return status === "configured" ? "good" : "warning";
+}
+
+function getHandshakeTone(status: "ready" | "needs_refinement") {
+  return status === "ready" ? "good" : "warning";
 }
 
 function formatRisk(value: "low" | "medium" | "high") {
@@ -264,7 +291,7 @@ export function OutcomeAiReviewDialog({
                 <p className="text-sm leading-6 text-muted-foreground">
                   {t(
                     language,
-                    "Use this report to check whether the saved Framing is strong enough for the current AI level, what needs refinement before Tollgate 1, and whether the AI posture should be adjusted.",
+                    "Use this report to check whether the saved Framing package is strong enough for the current AI level, what needs refinement before Tollgate 1, and whether Journey Context, downstream AI guidance, or the signed handshake package still need work.",
                     "Använd rapporten för att se om den sparade framingen är tillräckligt stark för aktuell AI-nivå, vad som behöver förtydligas före Tollgate 1 och om AI-upplägget bör justeras."
                   )}
                 </p>
@@ -311,6 +338,8 @@ export function OutcomeAiReviewDialog({
                               Outcome Quality: {formatStatus(state.report.outcomeQuality.status)}. Problem Alignment: {formatStatus(state.report.problemAlignment.status)}.
                               {" "}
                               Epic Coverage: {formatStatus(state.report.epicCoverage.status)}. Story Coverage: {formatStatus(state.report.storyCoverage.status)}.
+                              {" "}
+                              Journey Context: {formatStatus(state.report.journeyContext.status)}. Downstream AI Instructions: {formatStatus(state.report.downstreamAiInstructions.status)}.
                             </p>
                             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">
                               {t(language, "Validation mode:", "Valideringslage:")} {formatValidationMode(state.report.validationMode)}
@@ -344,6 +373,71 @@ export function OutcomeAiReviewDialog({
                             <span>{formatStatus(state.report.problemAlignment.status)}</span>
                           </div>
                           <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.problemAlignment.comment}</p>
+                        </section>
+                      </div>
+
+                      <div className="grid gap-6 xl:grid-cols-3">
+                        <section className="rounded-2xl border border-border/70 bg-background p-5">
+                          <h4 className="text-sm font-semibold text-foreground">Journey Context</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={getJourneyTone(state.report.journeyContext.status)} />
+                            <span>{formatStatus(state.report.journeyContext.status)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.journeyContext.comment}</p>
+                          {state.report.journeyContext.gaps.length > 0 ? (
+                            <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                              {state.report.journeyContext.gaps.map((item) => (
+                                <li className="flex gap-2" key={item}>
+                                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-4 text-sm text-muted-foreground">No Journey Context follow-up gaps were identified.</p>
+                          )}
+                        </section>
+
+                        <section className="rounded-2xl border border-border/70 bg-background p-5">
+                          <h4 className="text-sm font-semibold text-foreground">Downstream AI Instructions</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={getDownstreamTone(state.report.downstreamAiInstructions.status)} />
+                            <span>{formatStatus(state.report.downstreamAiInstructions.status)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.downstreamAiInstructions.comment}</p>
+                          {state.report.downstreamAiInstructions.warnings.length > 0 ? (
+                            <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                              {state.report.downstreamAiInstructions.warnings.map((item) => (
+                                <li className="flex gap-2" key={item}>
+                                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-4 text-sm text-muted-foreground">No downstream AI guidance warnings were identified.</p>
+                          )}
+                        </section>
+
+                        <section className="rounded-2xl border border-border/70 bg-background p-5">
+                          <h4 className="text-sm font-semibold text-foreground">Tollgate 1 Handshake</h4>
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                            <StatusIcon tone={getHandshakeTone(state.report.tollgateHandshake.status)} />
+                            <span>{formatStatus(state.report.tollgateHandshake.status)}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{state.report.tollgateHandshake.comment}</p>
+                          {state.report.tollgateHandshake.missingItems.length > 0 ? (
+                            <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
+                              {state.report.tollgateHandshake.missingItems.map((item) => (
+                                <li className="flex gap-2" key={item}>
+                                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-4 text-sm text-muted-foreground">No structural handshake gaps were identified.</p>
+                          )}
                         </section>
                       </div>
 

@@ -25,7 +25,7 @@ type AppLanguage = "en" | "sv";
 
 type ApprovalSnapshot = {
   kind: "framing_approval_document";
-  version: 1;
+  version: 1 | 2;
   approvedVersion: number;
   approvedAt: string;
   outcome: {
@@ -65,6 +65,55 @@ type ApprovalSnapshot = {
     expectedBehavior: string | null;
     sourceType: "direction_seed" | "legacy_story_idea";
   }>;
+  journeyContext?: {
+    contextCount: number;
+    journeyCount: number;
+    analysedJourneyCount: number;
+    uncoveredJourneyCount: number;
+    contexts: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      notes: string | null;
+      journeys: Array<{
+        id: string;
+        title: string;
+        primaryActor: string;
+        goal: string;
+        trigger: string;
+        currentState: string | null;
+        desiredFutureState: string | null;
+        coverageStatus: "unanalysed" | "covered" | "partially_covered" | "uncovered";
+        linkedEpicIds: string[];
+        linkedStoryIdeaIds: string[];
+      }>;
+    }>;
+  } | null;
+  downstreamAiInstructions?: {
+    initiativeType: "AD" | "AT" | "AM";
+    aiLevel: number;
+    alwaysOnControls: Array<{
+      id: string;
+      title: string;
+      description: string;
+    }>;
+    deviations: Array<{
+      id: string;
+      group: string;
+      title: string;
+      recommended: "YES" | "NO" | "N/A";
+      selected: "YES" | "NO" | "N/A";
+      rationale: string | null;
+    }>;
+    warnings: string[];
+    customInstructions: Array<{
+      id: string;
+      title: string;
+      body: string;
+      category: string;
+      priority: string;
+    }>;
+  } | null;
   signoffs: Array<{
     id: string;
     decisionKind: string;
@@ -104,6 +153,17 @@ function formatDate(value: string | null, language: AppLanguage) {
 
 function formatLabel(value: string | null, language: AppLanguage) {
   return value ? value.replaceAll("_", " ") : t(language, "Not captured", "Ej fÃ¥ngat");
+}
+
+function formatCoverageStatus(
+  value: "unanalysed" | "covered" | "partially_covered" | "uncovered",
+  language: AppLanguage
+) {
+  if (value === "partially_covered") {
+    return t(language, "Partially covered", "Delvis tÃ¤ckt");
+  }
+
+  return formatLabel(value, language);
 }
 
 function parseRiskRationale(value: string | null, language: AppLanguage) {
@@ -561,6 +621,185 @@ export default async function OutcomeApprovalDocumentPage({
               </div>
             </div>
           </section>
+
+          {snapshot.journeyContext ? (
+            <section className="rounded-3xl border border-border/70 p-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    {t(language, "Journey Context for downstream refinement", "Journey Context fÃ¶r downstream refinement")}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    {t(
+                      language,
+                      "This section captures the broader business-flow context that was part of the approved Framing package and can be reused in downstream AI or human handover.",
+                      "Den hÃ¤r sektionen fÃ¥ngar den bredare verksamhetsflÃ¶deskontext som ingick i det godkÃ¤nda Framing-paketet och kan Ã¥teranvÃ¤ndas i downstream AI eller mÃ¤nsklig handover."
+                    )}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm text-slate-700 lg:min-w-[280px]">
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Contexts", "Contexts")}</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-950">{snapshot.journeyContext.contextCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Journeys", "Journeys")}</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-950">{snapshot.journeyContext.journeyCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Analysed", "Analyserade")}</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-950">{snapshot.journeyContext.analysedJourneyCount}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Uncovered", "Otäckta")}</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-950">{snapshot.journeyContext.uncoveredJourneyCount}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {snapshot.journeyContext.contexts.map((context) => (
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={context.id}>
+                    <p className="font-semibold text-slate-950">{context.title}</p>
+                    {context.description ? <p className="mt-2 text-sm text-slate-700">{context.description}</p> : null}
+                    {context.notes ? <p className="mt-2 text-sm text-slate-700"><span className="font-medium">{t(language, "Notes:", "Noteringar:")}</span> {context.notes}</p> : null}
+
+                    <div className="mt-4 space-y-3">
+                      {context.journeys.map((journey) => (
+                        <div className="rounded-2xl border border-border/70 bg-white/80 p-4" key={journey.id}>
+                          <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold text-slate-950">{journey.title}</p>
+                              <p className="mt-2 text-sm text-slate-700">
+                                <span className="font-medium">{t(language, "Primary actor:", "HuvudaktÃ¶r:")}</span> {journey.primaryActor}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-700">
+                                <span className="font-medium">{t(language, "Goal:", "MÃ¥l:")}</span> {journey.goal}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-700">
+                                <span className="font-medium">{t(language, "Trigger:", "Trigger:")}</span> {journey.trigger}
+                              </p>
+                              {journey.currentState ? (
+                                <p className="mt-1 text-sm text-slate-700">
+                                  <span className="font-medium">{t(language, "Current state:", "NulÃ¤ge:")}</span> {journey.currentState}
+                                </p>
+                              ) : null}
+                              {journey.desiredFutureState ? (
+                                <p className="mt-1 text-sm text-slate-700">
+                                  <span className="font-medium">{t(language, "Desired future state:", "Ãnskat framtida lÃ¤ge:")}</span> {journey.desiredFutureState}
+                                </p>
+                              ) : null}
+                            </div>
+                            <div className="rounded-full border border-border/70 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                              {t(language, "Coverage:", "Täckning:")} {formatCoverageStatus(journey.coverageStatus, language)}
+                            </div>
+                          </div>
+
+                          {(journey.linkedEpicIds.length > 0 || journey.linkedStoryIdeaIds.length > 0) ? (
+                            <div className="mt-3 text-sm text-slate-700">
+                              {journey.linkedEpicIds.length > 0 ? (
+                                <p><span className="font-medium">{t(language, "Linked Epics:", "Länkade Epics:")}</span> {journey.linkedEpicIds.join(", ")}</p>
+                              ) : null}
+                              {journey.linkedStoryIdeaIds.length > 0 ? (
+                                <p className="mt-1"><span className="font-medium">{t(language, "Linked Story Ideas:", "Länkade Story Ideas:")}</span> {journey.linkedStoryIdeaIds.join(", ")}</p>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {snapshot.downstreamAiInstructions ? (
+            <section className="rounded-3xl border border-border/70 p-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    {t(language, "Downstream AI Instructions", "Downstream AI Instructions")}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                    {t(
+                      language,
+                      "These settings were part of the approved Framing package and define how downstream AI should interpret and refine the signed handshake in Design and Build.",
+                      "De hÃ¤r instÃ¤llningarna ingick i det godkÃ¤nda Framing-paketet och beskriver hur downstream AI ska tolka och fÃ¶rÃ¤dla det signerade handslaget i Design och Build."
+                    )}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-sm text-slate-700">
+                  <span className="rounded-full border border-border/70 bg-muted/10 px-3 py-2">
+                    {t(language, "Initiative type:", "Initiativtyp:")} {snapshot.downstreamAiInstructions.initiativeType}
+                  </span>
+                  <span className="rounded-full border border-border/70 bg-muted/10 px-3 py-2">
+                    {t(language, "AI level:", "AI-nivÃ¥:")} {snapshot.downstreamAiInstructions.aiLevel}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Always-on controls", "Always-on controls")}</p>
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+                    {snapshot.downstreamAiInstructions.alwaysOnControls.map((control) => (
+                      <li key={control.id}>
+                        <span className="font-medium">{control.title}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Deviations", "Avvikelser")}</p>
+                  {snapshot.downstreamAiInstructions.deviations.length > 0 ? (
+                    <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+                      {snapshot.downstreamAiInstructions.deviations.map((deviation) => (
+                        <li key={deviation.id}>
+                          <span className="font-medium">{deviation.id}</span> {deviation.title} {t(language, "is set to", "är satt till")} {deviation.selected} {t(language, "instead of", "i stället för")} {deviation.recommended}.
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-700">{t(language, "No deviations from the recommended defaults were captured in the approved package.", "Inga avvikelser frÃ¥n rekommenderade standardvÃ¤rden fÃ¥ngades i det godkÃ¤nda paketet.")}</p>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-border/70 bg-muted/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Warnings", "Varningar")}</p>
+                  {snapshot.downstreamAiInstructions.warnings.length > 0 ? (
+                    <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+                      {snapshot.downstreamAiInstructions.warnings.map((warning) => (
+                        <li key={warning}>{warning}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm text-slate-700">{t(language, "No warnings were active in the approved downstream instruction package.", "Inga varningar var aktiva i det godkÃ¤nda downstream-instruktionspaketet.")}</p>
+                  )}
+                </div>
+              </div>
+
+              {snapshot.downstreamAiInstructions.customInstructions.length > 0 ? (
+                <div className="mt-4 rounded-2xl border border-border/70 bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{t(language, "Custom instructions", "Egna instruktioner")}</p>
+                  <div className="mt-3 space-y-3">
+                    {snapshot.downstreamAiInstructions.customInstructions.map((instruction) => (
+                      <div className="rounded-2xl border border-border/70 bg-background p-4" key={instruction.id}>
+                        <p className="font-semibold text-slate-950">{instruction.title}</p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          <span className="font-medium">{t(language, "Category:", "Kategori:")}</span> {instruction.category}
+                          {" · "}
+                          <span className="font-medium">{t(language, "Priority:", "Prioritet:")}</span> {instruction.priority}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">{instruction.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="rounded-3xl border border-border/70 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t(language, "Epics and Story Ideas", "Epics och Story Ideas")}</p>
