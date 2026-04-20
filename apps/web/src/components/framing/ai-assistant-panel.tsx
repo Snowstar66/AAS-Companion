@@ -341,6 +341,79 @@ function buildJourneyFocusOptions(rawJourneyContexts: JourneyContext[]): Journey
   );
 }
 
+function toSentenceCase(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function ensurePeriod(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function toTitleCase(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function buildGuidedJourneyDraft(input: {
+  target: GuidedJourneyInterviewTarget;
+  rawAnswer: string;
+}) {
+  const raw = input.rawAnswer.trim();
+
+  if (!raw) {
+    return "";
+  }
+
+  switch (input.target.field) {
+    case "contextTitle":
+      return toTitleCase(raw.replace(/[.:]+$/g, ""));
+    case "journeyTitle":
+      return toSentenceCase(raw.replace(/[.:]+$/g, ""));
+    case "primaryActor":
+      return toTitleCase(raw.replace(/[.:]+$/g, ""));
+    case "goal": {
+      const normalized = ensurePeriod(toSentenceCase(raw));
+      return /\b(actor|user|team|role)\b/i.test(normalized)
+        ? normalized
+        : `The primary actor aims to ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+    }
+    case "trigger": {
+      const normalized = ensurePeriod(toSentenceCase(raw));
+      return /^(when|once|if|after|a |an |the )/i.test(normalized)
+        ? normalized
+        : `The journey begins when ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+    }
+    case "currentState": {
+      const normalized = ensurePeriod(toSentenceCase(raw));
+      return /^(today|currently|at the moment)/i.test(normalized)
+        ? normalized
+        : `Today, ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+    }
+    case "desiredFutureState": {
+      const normalized = ensurePeriod(toSentenceCase(raw));
+      return /^(in the future|going forward|ideally)/i.test(normalized)
+        ? normalized
+        : `In the desired future state, ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+    }
+  }
+}
+
 function buildGuidedJourneySuggestion(input: {
   target: GuidedJourneyInterviewTarget;
   answer: string;
@@ -447,6 +520,7 @@ export function AiAssistantPanel({
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [copiedArtifact, setCopiedArtifact] = useState<string | null>(null);
   const [guidedAnswer, setGuidedAnswer] = useState("");
+  const [guidedDraft, setGuidedDraft] = useState("");
   const [skippedPromptKeys, setSkippedPromptKeys] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
@@ -500,7 +574,22 @@ export function AiAssistantPanel({
 
   useEffect(() => {
     setGuidedAnswer("");
+    setGuidedDraft("");
   }, [guidedJourneyInterview?.target?.promptKey]);
+
+  useEffect(() => {
+    if (!guidedJourneyInterview?.target || !guidedAnswer.trim()) {
+      setGuidedDraft("");
+      return;
+    }
+
+    setGuidedDraft(
+      buildGuidedJourneyDraft({
+        target: guidedJourneyInterview.target,
+        rawAnswer: guidedAnswer
+      })
+    );
+  }, [guidedAnswer, guidedJourneyInterview?.target]);
 
   function dismissSuggestion(suggestionId: string) {
     setDismissedIds((current) => (current.includes(suggestionId) ? current : [...current, suggestionId]));
@@ -515,18 +604,21 @@ export function AiAssistantPanel({
     dismissSuggestion(suggestion.id);
   }
 
-  function applyGuidedJourneyAnswer() {
-    if (!guidedJourneyInterview?.target || !onApplySuggestion || !guidedAnswer.trim()) {
+  function applyGuidedJourneyAnswer(answerOverride?: string) {
+    const finalAnswer = answerOverride?.trim() || guidedAnswer.trim();
+
+    if (!guidedJourneyInterview?.target || !onApplySuggestion || !finalAnswer) {
       return;
     }
 
     const suggestion = buildGuidedJourneySuggestion({
       target: guidedJourneyInterview.target,
-      answer: guidedAnswer
+      answer: finalAnswer
     });
 
     onApplySuggestion(suggestion);
     setGuidedAnswer("");
+    setGuidedDraft("");
     setSkippedPromptKeys((current) => current.filter((entry) => entry !== guidedJourneyInterview.target?.promptKey));
   }
 
@@ -543,6 +635,7 @@ export function AiAssistantPanel({
         : [...current, promptKey]
     );
     setGuidedAnswer("");
+    setGuidedDraft("");
   }
 
   function handleCopyArtifact(kind: string, value: string) {
@@ -721,9 +814,25 @@ export function AiAssistantPanel({
                   placeholder={guidedJourneyInterview.target.placeholder}
                   value={guidedAnswer}
                 />
+                {guidedDraft && guidedDraft !== guidedAnswer.trim() ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">AI draft</p>
+                    <p className="mt-2 text-sm leading-6 text-foreground">{guidedDraft}</p>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      This is a cleaner Journey-style wording suggestion based on your raw answer.
+                    </p>
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap gap-3">
-                  <Button disabled={!guidedAnswer.trim()} onClick={applyGuidedJourneyAnswer} type="button">
-                    Apply answer
+                  <Button
+                    disabled={!guidedDraft.trim()}
+                    onClick={() => applyGuidedJourneyAnswer(guidedDraft)}
+                    type="button"
+                  >
+                    Apply AI draft
+                  </Button>
+                  <Button disabled={!guidedAnswer.trim()} onClick={() => applyGuidedJourneyAnswer()} type="button" variant="secondary">
+                    Apply raw answer
                   </Button>
                   <Button onClick={skipGuidedJourneyQuestion} type="button" variant="secondary">
                     Skip for now
