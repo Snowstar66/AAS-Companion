@@ -4,6 +4,7 @@ import { FramingOutcomeSection } from "@/components/framing/framing-outcome-sect
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
+import { runFramingAgentAction } from "../../framing/actions";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
@@ -59,6 +60,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
         hardDeleteAction={hardDeleteOutcomeAction}
         recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
         restoreAction={restoreOutcomeAction}
+        runAgentAction={runFramingAgentAction}
         saveAction={saveOutcomeWorkspaceAction}
         saveInlineAction={saveOutcomeWorkspaceInlineAction}
         search={{

@@ -17,6 +17,7 @@ import { withDevTiming } from "@/lib/dev-timing";
 import {
   analyzeJourneyCoverageAction,
   createDraftOutcomeAction,
+  runFramingAgentAction,
   saveDownstreamAiInstructionsAction,
   saveJourneyContextsAction
 } from "./actions";
@@ -426,6 +427,7 @@ async function SelectedFramingOutcomeSection(props: {
           analyzeAction={analyzeJourneyCoverageAction}
           data={selectedOutcome.data}
           flash={props.journeyFlash}
+          runAgentAction={runFramingAgentAction}
           saveAction={saveJourneyContextsAction}
         />
       </div>
@@ -444,6 +446,7 @@ async function SelectedFramingOutcomeSection(props: {
         <DownstreamAiInstructionsPage
           data={selectedOutcome.data}
           flash={props.downstreamFlash}
+          runAgentAction={runFramingAgentAction}
           saveAction={saveDownstreamAiInstructionsAction}
         />
       </div>
@@ -465,6 +468,7 @@ async function SelectedFramingOutcomeSection(props: {
       recordTollgateDecisionAction: recordOutcomeTollgateDecisionAction,
       restoreAction: restoreOutcomeAction,
       reviewFramingAction: reviewOutcomeFramingWithAiAction,
+      runAgentAction: runFramingAgentAction,
       saveAction: saveOutcomeWorkspaceAction,
       saveInlineAction: saveOutcomeWorkspaceInlineAction,
       search: props.search,

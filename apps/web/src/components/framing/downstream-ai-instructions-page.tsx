@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { CustomInstructionsEditor } from "@/components/framing/custom-instructions-editor";
 import { DownstreamAiInstructionSection } from "@/components/framing/downstream-ai-instruction-section";
+import { AiAssistantPanel } from "@/components/framing/ai-assistant-panel";
 import {
   createDefaultDownstreamAiInstructions,
   downstreamPreferenceGroupLabels,
@@ -19,12 +20,15 @@ import type {
   DownstreamPreferenceGroup,
   RefinementPreferenceSelection
 } from "@/lib/framing/downstreamInstructionTypes";
+import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
+import type { FramingAgentSuggestion } from "@/lib/framing/agentTypes";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
 
 type DownstreamAiInstructionsPageProps = {
   data: OutcomeWorkspaceData;
   saveAction: (formData: FormData) => void | Promise<void>;
+  runAgentAction: (formData: FormData) => Promise<FramingAgentActionResult>;
   flash?: {
     save?: "success" | "error" | null;
     message?: string | null;
@@ -68,7 +72,7 @@ function normalizeInitiativeType(value: unknown) {
   return value === "AD" || value === "AT" || value === "AM" ? value : null;
 }
 
-export function DownstreamAiInstructionsPage({ data, saveAction, flash }: DownstreamAiInstructionsPageProps) {
+export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction, flash }: DownstreamAiInstructionsPageProps) {
   const deliveryType = normalizeInitiativeType(data.outcome.deliveryType) ?? normalizeInitiativeType(data.outcome.downstreamAiInstructions?.initiativeType) ?? "AD";
   const aiLevel = data.outcome.downstreamAiInstructions?.aiLevel ?? mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel);
   const downstreamAiInstructionsStorageAvailable =
@@ -180,6 +184,26 @@ export function DownstreamAiInstructionsPage({ data, saveAction, flash }: Downst
     });
   }
 
+  function applySuggestion(suggestion: FramingAgentSuggestion) {
+    if (suggestion.kind === "preference_change") {
+      updatePreference(suggestion.preferenceId, (preference) => ({
+        ...preference,
+        selectedValue: suggestion.suggestedValue,
+        rationale: suggestion.rationale
+      }));
+      return;
+    }
+
+    if (suggestion.kind === "add_custom_instruction") {
+      setInstructions((current) => ({
+        ...current,
+        initiativeType: deliveryType,
+        aiLevel,
+        customInstructions: [...current.customInstructions, suggestion.instruction]
+      }));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card className="border-border/70 shadow-sm">
@@ -247,6 +271,17 @@ export function DownstreamAiInstructionsPage({ data, saveAction, flash }: Downst
           </div>
         </CardContent>
       </Card>
+
+      <AiAssistantPanel
+        aiLevel={aiLevel}
+        downstreamAiInstructionsJson={serializedInstructions}
+        initiativeType={deliveryType}
+        onApplySuggestion={applySuggestion}
+        outcomeId={data.outcome.id}
+        runAction={runAgentAction}
+        scopeKind="downstream-ai-instructions"
+        scopeLabel="Downstream AI Instructions"
+      />
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
+import { mapAiAccelerationLevelToDownstreamAiLevel } from "@aas-companion/domain";
+import { AiAssistantPanel } from "@/components/framing/ai-assistant-panel";
 import { JourneyContextSection } from "@/components/framing/journey-context-section";
 import {
   getJourneyContextCounts,
@@ -11,6 +13,8 @@ import {
   type JourneyReferenceOption
 } from "@/lib/framing/journey-context-ui";
 import type { Journey, JourneyContext, JourneyInitiativeType, JourneyStep } from "@/lib/framing/journeyContextTypes";
+import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
+import type { FramingAgentSuggestion } from "@/lib/framing/agentTypes";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
 
@@ -18,6 +22,7 @@ type JourneyContextPageProps = {
   data: OutcomeWorkspaceData;
   saveAction: (formData: FormData) => void | Promise<void>;
   analyzeAction: (formData: FormData) => void | Promise<void>;
+  runAgentAction: (formData: FormData) => Promise<FramingAgentActionResult>;
   flash?: {
     save?: "success" | "error" | null;
     analyze?: "success" | "error" | null;
@@ -103,7 +108,7 @@ function FlashBanner(props: { tone: "success" | "error"; message: string }) {
   return <div className={`rounded-2xl border px-4 py-3 text-sm ${classes}`}>{props.message}</div>;
 }
 
-export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: JourneyContextPageProps) {
+export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAction, flash }: JourneyContextPageProps) {
   const journeyContextStorageAvailable =
     (data.outcome as { journeyContextsStorageAvailable?: boolean }).journeyContextsStorageAvailable !== false;
   const initiativeType =
@@ -197,6 +202,46 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
     });
   }
 
+  function applySuggestion(suggestion: FramingAgentSuggestion) {
+    if (suggestion.kind === "rewrite_journey_context") {
+      setContexts((current) => current.map((context) => (context.id === suggestion.contextId ? suggestion.nextContext : context)));
+      return;
+    }
+
+    if (suggestion.kind === "rewrite_journey") {
+      updateJourney(suggestion.contextId, suggestion.journeyId, () => suggestion.nextJourney);
+      return;
+    }
+
+    if (suggestion.kind === "rewrite_journey_step") {
+      updateStep(suggestion.contextId, suggestion.journeyId, suggestion.stepId, () => suggestion.nextStep);
+      return;
+    }
+
+    if (suggestion.kind === "apply_journey_coverage") {
+      updateJourney(suggestion.contextId, suggestion.journeyId, (journey) => ({
+        ...journey,
+        coverage: suggestion.coverage
+      }));
+      return;
+    }
+
+    if (suggestion.kind === "link_story_idea_to_journey") {
+      updateJourney(suggestion.contextId, suggestion.journeyId, (journey) => ({
+        ...journey,
+        linkedStoryIdeaIds: Array.from(new Set([...(journey.linkedStoryIdeaIds ?? []), suggestion.storyIdeaId]))
+      }));
+      return;
+    }
+
+    if (suggestion.kind === "link_epic_to_journey") {
+      updateJourney(suggestion.contextId, suggestion.journeyId, (journey) => ({
+        ...journey,
+        linkedEpicIds: Array.from(new Set([...(journey.linkedEpicIds ?? []), suggestion.epicId]))
+      }));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card className="border-border/70 shadow-sm">
@@ -288,6 +333,18 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
           ) : null}
         </CardContent>
       </Card>
+
+      <AiAssistantPanel
+        aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel)}
+        initiativeType={initiativeType}
+        journeyContextsJson={serializedContexts}
+        onApplySuggestion={applySuggestion}
+        outcomeId={data.outcome.id}
+        runAction={runAgentAction}
+        scopeEntityId={contexts[0]?.id ?? null}
+        scopeKind="journey-context"
+        scopeLabel="Journey Context"
+      />
 
       {contexts.length === 0 ? (
         <Card className="border-border/70 shadow-sm">

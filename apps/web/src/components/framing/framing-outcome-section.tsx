@@ -6,6 +6,7 @@ import {
   deriveOutcomeRiskProfile,
   getOutcomeAiAndRiskBlockers,
   getOutcomeFramingBlockers,
+  mapAiAccelerationLevelToDownstreamAiLevel,
   parseFramingConstraintBundle
 } from "@aas-companion/domain";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
@@ -16,6 +17,7 @@ import type {
   reviewOutcomeFramingWithAiAction
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
 import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
+import { AiAssistantPanel } from "@/components/framing/ai-assistant-panel";
 import {
   DeliveryTypeGuidanceProvider,
   DeliveryTypeGuidanceText,
@@ -41,6 +43,7 @@ import { buildFramingBriefExport, buildHumanFramingBriefExport } from "@/lib/fra
 import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
 import { getInlineGuidance } from "@/lib/help/aas-help";
+import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
 
@@ -65,6 +68,7 @@ type FramingOutcomeSectionProps = {
   };
   embeddedInFraming?: boolean;
   saveAction: (formData: FormData) => void | Promise<void>;
+  runAgentAction: (formData: FormData) => Promise<FramingAgentActionResult>;
   saveInlineAction: (formData: FormData) => Promise<OutcomeInlineSaveActionState>;
   createEpicAction: (formData: FormData) => void | Promise<void>;
   createStoryIdeaAction: (formData: FormData) => void | Promise<void>;
@@ -451,6 +455,7 @@ export function FramingOutcomeSection({
   search,
   embeddedInFraming = false,
   saveAction,
+  runAgentAction,
   saveInlineAction,
   createEpicAction,
   createStoryIdeaAction,
@@ -848,7 +853,7 @@ export function FramingOutcomeSection({
       <FramingGuidanceShell>
         <DeliveryTypeGuidanceProvider initialValue={deliveryTypeValue}>
         <form action={saveAction} className="space-y-6">
-            <input name="outcomeId" type="hidden" value={outcome.id} />
+      <input name="outcomeId" type="hidden" value={outcome.id} />
             <input name="returnPath" type="hidden" value={returnPath} />
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
@@ -1272,6 +1277,15 @@ export function FramingOutcomeSection({
                     ) : null}
                   </div>
                 </div>
+                <AiAssistantPanel
+                  aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(outcome.aiAccelerationLevel)}
+                  createStoryIdeaAction={createStoryIdeaAction}
+                  initiativeType={outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null}
+                  outcomeId={outcome.id}
+                  runAction={runAgentAction}
+                  scopeKind="story-ideas"
+                  scopeLabel={language === "sv" ? "Story Ideas i Framing" : "Story Ideas in Framing"}
+                />
                 <FramingValueSpineTree
                   description={
                     language === "sv"
@@ -1486,6 +1500,14 @@ export function FramingOutcomeSection({
           }
           title={language === "sv" ? "Exportera framingpaket" : "Export framing packages"}
         >
+          <AiAssistantPanel
+            aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(outcome.aiAccelerationLevel)}
+            initiativeType={outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null}
+            outcomeId={outcome.id}
+            runAction={runAgentAction}
+            scopeKind="export"
+            scopeLabel={language === "sv" ? "Export av Framing-paket" : "Framing export package"}
+          />
           {framingBriefExport && humanFramingBrief ? (
             <FramingBriefExportPanel
               aiMarkdown={framingBriefExport.markdown}

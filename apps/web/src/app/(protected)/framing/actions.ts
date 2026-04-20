@@ -11,11 +11,14 @@ import { type CreateOutcomeActionState } from "@/lib/framing/create-outcome";
 import {
   analyzeOutcomeJourneyCoverageService,
   createCleanDraftOutcomeFromFramingService,
+  getOutcomeWorkspaceService,
   saveOutcomeDownstreamAiInstructionsService,
   saveOutcomeJourneyContextsService
 } from "@aas-companion/api";
 import { downstreamAiInstructionsSchema, journeyContextCollectionSchema } from "@aas-companion/domain";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
+import { runFramingAgentOrchestrator } from "@/lib/framing/agentOrchestrator";
+import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
 
 function buildFramingRedirect(input: {
   outcomeId: string;
@@ -68,6 +71,24 @@ function readDownstreamAiInstructionsJson(formData: FormData) {
   } catch {
     return null;
   }
+}
+
+function readAgentScopeKind(formData: FormData) {
+  const value = String(formData.get("scopeKind") ?? "");
+
+  return value === "journey-context" ||
+    value === "story-ideas" ||
+    value === "downstream-ai-instructions" ||
+    value === "export" ||
+    value === "full-framing"
+    ? value
+    : "full-framing";
+}
+
+function readAgentMode(formData: FormData) {
+  const value = String(formData.get("mode") ?? "");
+
+  return value === "ask" || value === "analyze" || value === "refine" || value === "export" ? value : "ask";
 }
 
 export async function createDraftOutcomeAction(
@@ -248,4 +269,61 @@ export async function saveDownstreamAiInstructionsAction(formData: FormData) {
       }
     })
   );
+}
+
+export async function runFramingAgentAction(formData: FormData): Promise<FramingAgentActionResult> {
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const scopeKind = readAgentScopeKind(formData);
+  const mode = readAgentMode(formData);
+  const prompt = String(formData.get("prompt") ?? "").trim();
+  const scopeLabel = String(formData.get("scopeLabel") ?? "Current Framing package").trim() || "Current Framing package";
+  const scopeEntityId = String(formData.get("scopeEntityId") ?? "").trim() || null;
+  const quickActionId = String(formData.get("quickActionId") ?? "").trim() || null;
+
+  if (!outcomeId) {
+    return {
+      ok: false,
+      error: "Outcome id is required before the AI assistant can run."
+    };
+  }
+
+  if (!prompt) {
+    return {
+      ok: false,
+      error: "A prompt is required before the AI assistant can run."
+    };
+  }
+
+  const workspace = await getOutcomeWorkspaceService(session.organization.organizationId, outcomeId);
+
+  if (!workspace.ok) {
+    return {
+      ok: false,
+      error: workspace.errors[0]?.message ?? "The Framing workspace could not be loaded for AI assistance."
+    };
+  }
+
+  try {
+    return await runFramingAgentOrchestrator({
+      data: workspace.data,
+      mode,
+      scope: {
+        kind: scopeKind,
+        label: scopeLabel,
+        entityId: scopeEntityId
+      },
+      prompt,
+      quickActionId,
+      journeyContextsOverride: formData.has("journeyContextsJson") ? readJourneyContextsJson(formData) : null,
+      downstreamAiInstructionsOverride: formData.has("downstreamAiInstructionsJson")
+        ? readDownstreamAiInstructionsJson(formData)
+        : null
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "The AI assistant could not complete the request."
+    };
+  }
 }
