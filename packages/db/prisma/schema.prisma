@@ -399,6 +399,7 @@ model Outcome {
   solutionContext     String?
   solutionConstraints String?
   dataSensitivity     String?
+  journeyContexts     Json?
   deliveryType        String?
   aiUsageRole         String?
   aiExecutionPattern  String?

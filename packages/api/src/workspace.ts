@@ -16,6 +16,7 @@ import {
 } from "@aas-companion/db";
 import {
   artifactComplianceResultSchema,
+  analyzeJourneyCoverage,
   buildGovernedRemovalDecision,
   deriveOutcomeRiskProfile,
   executionContractSchema,
@@ -23,6 +24,7 @@ import {
   type GovernedChildImpact,
   getOutcomeFramingReadiness,
   getStoryHandoffReadiness,
+  parseJourneyContexts,
   validateStoryAgainstValueSpine
 } from "@aas-companion/domain";
 import { getArtifactCandidateById } from "@aas-companion/db";
@@ -338,6 +340,7 @@ export async function saveOutcomeWorkspaceService(input: {
   solutionContext?: string | null;
   solutionConstraints?: string | null;
   dataSensitivity?: string | null;
+  journeyContexts?: ReturnType<typeof parseJourneyContexts>;
   deliveryType?: "AD" | "AT" | "AM" | null;
   aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
   aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
@@ -375,6 +378,7 @@ export async function saveOutcomeWorkspaceService(input: {
     solutionContext: input.solutionContext,
     solutionConstraints: input.solutionConstraints,
     dataSensitivity: input.dataSensitivity,
+    journeyContexts: input.journeyContexts,
     deliveryType: input.deliveryType,
     aiUsageRole: input.aiUsageRole,
     aiExecutionPattern: input.aiExecutionPattern,
@@ -395,6 +399,82 @@ export async function saveOutcomeWorkspaceService(input: {
   });
 
   return success(result);
+}
+
+export async function saveOutcomeJourneyContextsService(input: {
+  organizationId: string;
+  outcomeId: string;
+  actorId?: string | null;
+  journeyContexts: ReturnType<typeof parseJourneyContexts>;
+}) {
+  const result = await updateOutcome({
+    organizationId: input.organizationId,
+    id: input.outcomeId,
+    actorId: input.actorId ?? null,
+    journeyContexts: input.journeyContexts
+  });
+
+  return success(result);
+}
+
+export async function analyzeOutcomeJourneyCoverageService(input: {
+  organizationId: string;
+  outcomeId: string;
+  journeyContextId: string;
+  actorId?: string | null;
+  journeyContexts?: ReturnType<typeof parseJourneyContexts>;
+}) {
+  const snapshot = await getOutcomeWorkspaceSnapshot(input.organizationId, input.outcomeId);
+
+  if (!snapshot) {
+    return failure({
+      code: "outcome_not_found",
+      message: "Outcome was not found in the current organization."
+    });
+  }
+
+  const currentJourneyContexts = input.journeyContexts ?? snapshot.outcome.journeyContexts;
+  const matchingJourneyContext = currentJourneyContexts.find((context) => context.id === input.journeyContextId);
+
+  if (!matchingJourneyContext) {
+    return failure({
+      code: "journey_context_not_found",
+      message: "Journey Context was not found for the selected outcome."
+    });
+  }
+
+  const analyzedJourneyContext = analyzeJourneyCoverage({
+    journeyContext: matchingJourneyContext,
+    epics: snapshot.outcome.epics.map((epic) => ({
+      id: epic.id,
+      key: epic.key,
+      title: epic.title,
+      purpose: epic.purpose ?? null,
+      scopeBoundary: epic.scopeBoundary ?? null
+    })),
+    storyIdeas: snapshot.outcome.directionSeeds.map((seed) => ({
+      id: seed.id,
+      key: seed.key,
+      title: seed.title,
+      valueIntent: seed.shortDescription ?? null,
+      expectedBehavior: seed.expectedBehavior ?? null,
+      epicId: seed.epicId ?? null
+    }))
+  });
+  const nextJourneyContexts = currentJourneyContexts.map((context) =>
+    context.id === analyzedJourneyContext.id ? analyzedJourneyContext : context
+  );
+  const result = await updateOutcome({
+    organizationId: input.organizationId,
+    id: input.outcomeId,
+    actorId: input.actorId ?? null,
+    journeyContexts: nextJourneyContexts
+  });
+
+  return success({
+    outcome: result,
+    analyzedJourneyContext
+  });
 }
 
 export async function validateOutcomeFieldWithAiService(input: {

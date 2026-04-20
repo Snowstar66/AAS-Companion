@@ -1,3 +1,5 @@
+import type { JourneyContext } from "@aas-companion/domain";
+
 type FramingBriefOutcome = {
   id: string;
   key: string;
@@ -9,6 +11,7 @@ type FramingBriefOutcome = {
   solutionContext: string | null;
   solutionConstraints: string | null;
   dataSensitivity: string | null;
+  journeyContexts: JourneyContext[];
   deliveryType: string | null;
   aiExecutionPattern: string | null;
   aiUsageIntent: string | null;
@@ -71,7 +74,7 @@ type FramingApprovalSnapshot = {
 
 export type FramingBriefExportPayload = {
   kind: "framing_brief";
-  version: 3;
+  version: 4;
   handshake: {
     outcome_key: string;
     outcome_title: string;
@@ -139,6 +142,56 @@ export type FramingBriefExportPayload = {
       }>;
     }>;
   };
+  journey_contexts: Array<{
+    id: string;
+    outcome_id: string;
+    initiative_type: "AD" | "AT" | "AM";
+    title: string;
+    description: string | null;
+    notes: string | null;
+    journeys: Array<{
+      id: string;
+      title: string;
+      type: string | null;
+      primary_actor: string;
+      supporting_actors: string[];
+      goal: string;
+      trigger: string;
+      current_state: string | null;
+      desired_future_state: string | null;
+      pain_points: string[];
+      desired_support: string[];
+      exceptions: string[];
+      notes: string | null;
+      linked_epic_ids: string[];
+      linked_story_idea_ids: string[];
+      linked_figma_refs: string[];
+      steps: Array<{
+        id: string;
+        title: string;
+        actor: string | null;
+        description: string;
+        current_pain: string | null;
+        desired_support: string | null;
+        decision_point: boolean;
+      }>;
+      coverage: {
+        status: "unanalysed" | "covered" | "partially_covered" | "uncovered";
+        suggested_epic_ids: string[];
+        suggested_story_idea_ids: string[];
+        suggested_new_story_ideas: Array<{
+          title: string;
+          description: string;
+          value_intent: string | null;
+          expected_outcome: string | null;
+          based_on_journey_ids: string[];
+          based_on_step_ids: string[];
+          confidence: number | null;
+        }>;
+        notes: string | null;
+      } | null;
+    }>;
+  }>;
   approvals: {
     status: "approved" | "not_approved";
     approved_version: number | null;
@@ -332,6 +385,61 @@ function getSketches(
   }));
 }
 
+function mapJourneyContexts(outcome: FramingBriefOutcome) {
+  return outcome.journeyContexts.map((context) => ({
+    id: context.id,
+    outcome_id: context.outcomeId,
+    initiative_type: context.initiativeType,
+    title: context.title,
+    description: context.description ?? null,
+    notes: context.notes ?? null,
+    journeys: context.journeys.map((journey) => ({
+      id: journey.id,
+      title: journey.title,
+      type: journey.type ?? null,
+      primary_actor: journey.primaryActor,
+      supporting_actors: journey.supportingActors ?? [],
+      goal: journey.goal,
+      trigger: journey.trigger,
+      current_state: journey.currentState ?? null,
+      desired_future_state: journey.desiredFutureState ?? null,
+      pain_points: journey.painPoints ?? [],
+      desired_support: journey.desiredSupport ?? [],
+      exceptions: journey.exceptions ?? [],
+      notes: journey.notes ?? null,
+      linked_epic_ids: journey.linkedEpicIds ?? [],
+      linked_story_idea_ids: journey.linkedStoryIdeaIds ?? [],
+      linked_figma_refs: journey.linkedFigmaRefs ?? [],
+      steps: journey.steps.map((step) => ({
+        id: step.id,
+        title: step.title,
+        actor: step.actor ?? null,
+        description: step.description,
+        current_pain: step.currentPain ?? null,
+        desired_support: step.desiredSupport ?? null,
+        decision_point: Boolean(step.decisionPoint)
+      })),
+      coverage: journey.coverage
+        ? {
+            status: journey.coverage.status,
+            suggested_epic_ids: journey.coverage.suggestedEpicIds ?? [],
+            suggested_story_idea_ids: journey.coverage.suggestedStoryIdeaIds ?? [],
+            suggested_new_story_ideas: (journey.coverage.suggestedNewStoryIdeas ?? []).map((idea) => ({
+              title: idea.title,
+              description: idea.description,
+              value_intent: idea.valueIntent ?? null,
+              expected_outcome: idea.expectedOutcome ?? null,
+              based_on_journey_ids: idea.basedOnJourneyIds ?? [],
+              based_on_step_ids: idea.basedOnStepIds ?? [],
+              confidence: idea.confidence ?? null
+            })),
+            notes: journey.coverage.notes ?? null
+          }
+        : null
+    }))
+  }));
+}
+
 export function buildFramingBriefExport(input: {
   outcome: FramingBriefOutcome;
   blockers: string[];
@@ -380,10 +488,11 @@ export function buildFramingBriefExport(input: {
         storyIdeaTitle: seed.title
       })
     }));
+  const journeyContexts = mapJourneyContexts(input.outcome);
 
   const payload: FramingBriefExportPayload = {
     kind: "framing_brief",
-    version: 3,
+    version: 4,
     handshake: {
       outcome_key: input.outcome.key,
       outcome_title: input.outcome.title,
@@ -424,6 +533,7 @@ export function buildFramingBriefExport(input: {
       epics: epicsWithSeeds,
       unassigned_story_ideas: unassignedStoryIdeas
     },
+    journey_contexts: journeyContexts,
     approvals: {
       status: input.tollgate?.status === "approved" ? "approved" : "not_approved",
       approved_version: approvalSnapshot.approvedVersion ?? input.tollgate?.approvedVersion ?? null,
@@ -540,6 +650,69 @@ export function buildFramingBriefExport(input: {
           ""
         ]
       : []),
+    ...(payload.journey_contexts.length > 0
+      ? [
+          "## Journey Context",
+          ...payload.journey_contexts.flatMap((context) => [
+            `### ${context.title || context.id}`,
+            `ID: ${context.id}`,
+            `Outcome ID: ${context.outcome_id}`,
+            `Initiative type: ${context.initiative_type}`,
+            `Description: ${context.description ?? "Not captured yet"}`,
+            `Notes: ${context.notes ?? "Not captured yet"}`,
+            ...(context.journeys.length > 0
+              ? context.journeys.flatMap((journey) => [
+                  `#### Journey ${journey.id}: ${journey.title || "Untitled Journey"}`,
+                  `Type: ${journey.type ?? "Not captured yet"}`,
+                  `Primary actor: ${journey.primary_actor || "Not captured yet"}`,
+                  `Supporting actors: ${journey.supporting_actors.length > 0 ? journey.supporting_actors.join(", ") : "None captured"}`,
+                  `Goal: ${journey.goal || "Not captured yet"}`,
+                  `Trigger: ${journey.trigger || "Not captured yet"}`,
+                  `Current state: ${journey.current_state ?? "Not captured yet"}`,
+                  `Desired future state: ${journey.desired_future_state ?? "Not captured yet"}`,
+                  `Pain points: ${journey.pain_points.length > 0 ? journey.pain_points.join(" | ") : "None captured"}`,
+                  `Desired support: ${journey.desired_support.length > 0 ? journey.desired_support.join(" | ") : "None captured"}`,
+                  `Exceptions: ${journey.exceptions.length > 0 ? journey.exceptions.join(" | ") : "None captured"}`,
+                  `Notes: ${journey.notes ?? "Not captured yet"}`,
+                  `Linked Epics: ${journey.linked_epic_ids.length > 0 ? journey.linked_epic_ids.join(", ") : "None"}`,
+                  `Linked Story Ideas: ${journey.linked_story_idea_ids.length > 0 ? journey.linked_story_idea_ids.join(", ") : "None"}`,
+                  `Linked Figma refs: ${journey.linked_figma_refs.length > 0 ? journey.linked_figma_refs.join(", ") : "None"}`,
+                  ...(journey.steps.length > 0
+                    ? journey.steps.flatMap((step) => [
+                        `- Step ${step.id}: ${step.title || "Untitled Step"}`,
+                        `  Actor: ${step.actor ?? "Not captured yet"}`,
+                        `  Description: ${step.description || "Not captured yet"}`,
+                        `  Current pain: ${step.current_pain ?? "Not captured yet"}`,
+                        `  Desired support: ${step.desired_support ?? "Not captured yet"}`,
+                        `  Decision point: ${step.decision_point ? "Yes" : "No"}`
+                      ])
+                    : ["- No Steps captured yet."]),
+                  ...(journey.coverage
+                    ? [
+                        `Coverage status: ${journey.coverage.status}`,
+                        `Coverage suggested Epics: ${journey.coverage.suggested_epic_ids.length > 0 ? journey.coverage.suggested_epic_ids.join(", ") : "None"}`,
+                        `Coverage suggested Story Ideas: ${journey.coverage.suggested_story_idea_ids.length > 0 ? journey.coverage.suggested_story_idea_ids.join(", ") : "None"}`,
+                        ...(journey.coverage.suggested_new_story_ideas.length > 0
+                          ? journey.coverage.suggested_new_story_ideas.flatMap((idea) => [
+                              `- Suggested Story Idea: ${idea.title}`,
+                              `  Description: ${idea.description}`,
+                              `  Value intent: ${idea.value_intent ?? "Not captured yet"}`,
+                              `  Expected outcome: ${idea.expected_outcome ?? "Not captured yet"}`,
+                              `  Based on journey IDs: ${idea.based_on_journey_ids.length > 0 ? idea.based_on_journey_ids.join(", ") : "None"}`,
+                              `  Based on step IDs: ${idea.based_on_step_ids.length > 0 ? idea.based_on_step_ids.join(", ") : "None"}`,
+                              `  Confidence: ${idea.confidence ?? "Not captured yet"}`
+                            ])
+                          : ["Coverage suggested new Story Ideas: None"]),
+                        `Coverage notes: ${journey.coverage.notes ?? "Not captured yet"}`
+                      ]
+                    : ["Coverage status: unanalysed"]),
+                  ""
+                ])
+              : ["No Journeys captured yet.", ""]),
+            ""
+          ])
+        ]
+      : []),
     "## Tollgate 1 Approval Context",
     `Approval status: ${payload.approvals.status === "approved" ? "Approved" : "Not yet approved"}`,
     `Approved version: ${payload.approvals.approved_version ?? "Not captured yet"}`,
@@ -629,6 +802,30 @@ export function buildHumanFramingBriefExport(input: {
               `- ${storyIdea.key} - ${storyIdea.title}${storyIdea.value_intent ? `: ${storyIdea.value_intent}` : ""}`
           ),
           ""
+        ]
+      : []),
+    ...(payload.journey_contexts.length > 0
+      ? [
+          "## Journey Context",
+          ...payload.journey_contexts.flatMap((context) => [
+            `### ${context.title || context.id} (${context.initiative_type})`,
+            context.description ?? "No description captured yet.",
+            ...(context.journeys.length > 0
+              ? context.journeys.flatMap((journey) => [
+                  `- Journey ${journey.id}: ${journey.title || "Untitled Journey"}`,
+                  `  Primary actor: ${journey.primary_actor || "Not captured yet"}`,
+                  `  Goal: ${journey.goal || "Not captured yet"}`,
+                  `  Trigger: ${journey.trigger || "Not captured yet"}`,
+                  `  Coverage: ${journey.coverage?.status ?? "unanalysed"}`,
+                  ...(journey.coverage?.suggested_new_story_ideas?.length
+                    ? journey.coverage.suggested_new_story_ideas.map(
+                        (idea) => `  Suggested Story Idea: ${idea.title} - ${idea.description}`
+                      )
+                    : [])
+                ])
+              : ["- No Journeys are captured yet."]),
+            ""
+          ])
         ]
       : []),
     "## Approval context",

@@ -10,6 +10,8 @@ export * from "./governance";
 export * from "./governed-lifecycle";
 export * from "./governed-object";
 export * from "./handoff";
+export * from "./journey-coverage-engine";
+export * from "./journey-context";
 export * from "./navigation";
 export * from "./organization";
 export * from "./outcome";

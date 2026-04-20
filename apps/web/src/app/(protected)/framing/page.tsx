@@ -7,11 +7,13 @@ import { FramingOutcomeSection } from "@/components/framing/framing-outcome-sect
 import { AppShell } from "@/components/layout/app-shell";
 import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import { FramingCockpit } from "@/components/framing/framing-cockpit";
+import { FramingSubpageNav } from "@/components/framing/framing-subpage-nav";
+import { JourneyContextPage } from "@/components/framing/journey-context-page";
 import { FramingRightRail } from "@/components/framing/framing-right-rail";
 import { LocalizedText } from "@/components/shared/localized-text";
 import { loadFramingCockpit } from "@/lib/framing/cockpit";
 import { withDevTiming } from "@/lib/dev-timing";
-import { createDraftOutcomeAction } from "./actions";
+import { analyzeJourneyCoverageAction, createDraftOutcomeAction, saveJourneyContextsAction } from "./actions";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
@@ -53,6 +55,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
     ]);
     const requestedOutcomeId = getParamValue(query.outcomeId) ?? null;
     const requestedView = getParamValue(query.view) ?? null;
+    const requestedSubpage = getParamValue(query.subpage) ?? null;
     const { cockpit, session, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);
     const originFilter = getParamValue(query.origin) ?? "native";
     const readinessFilter = getParamValue(query.readiness) ?? "all";
@@ -126,10 +129,16 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
             {outcomeId ? (
               <Suspense fallback={<FramingWorkspaceFallback />}>
                 <SelectedFramingOutcomeSection
+                  activeSubpage={requestedSubpage === "journey-context" ? "journey-context" : "overview"}
                   language={serverLanguage}
                   organizationId={session.organization.organizationId}
                   outcomeId={outcomeId}
                   search={parsedSearch}
+                  journeyFlash={{
+                    analyze: (getParamValue(query.journeyAnalyze) as "success" | "error" | null) ?? null,
+                    message: getParamValue(query.journeyMessage) ?? null,
+                    save: (getParamValue(query.journeySave) as "success" | "error" | null) ?? null
+                  }}
                 />
               </Suspense>
             ) : (
@@ -229,6 +238,7 @@ function FramingWorkspaceFallback() {
 }
 
 async function SelectedFramingOutcomeSection(props: {
+  activeSubpage: "overview" | "journey-context";
   language: "en" | "sv";
   organizationId: string;
   outcomeId: string;
@@ -247,6 +257,11 @@ async function SelectedFramingOutcomeSection(props: {
     aiError?: string | null;
     draftOutcomeStatement?: string | null;
     draftBaselineDefinition?: string | null;
+  };
+  journeyFlash: {
+    save?: "success" | "error" | null;
+    analyze?: "success" | "error" | null;
+    message?: string | null;
   };
 }) {
   const selectedOutcome = await getCachedOutcomeWorkspaceData(props.organizationId, props.outcomeId);
@@ -269,23 +284,39 @@ async function SelectedFramingOutcomeSection(props: {
   }
 
   return (
-    <FramingOutcomeSection
-      archiveAction={archiveOutcomeAction}
-      createEpicAction={createEpicFromOutcomeAction}
-      createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
-      data={selectedOutcome.data}
-      embeddedInFraming
-      hardDeleteAction={hardDeleteOutcomeAction}
-      initialReviewFramingState={{ status: "idle", message: null, report: null }}
-      language={props.language}
-      recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
-      restoreAction={restoreOutcomeAction}
-      reviewFramingAction={reviewOutcomeFramingWithAiAction}
-      saveAction={saveOutcomeWorkspaceAction}
-      saveInlineAction={saveOutcomeWorkspaceInlineAction}
-      search={props.search}
-      validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
-      validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
-    />
+    <div className="space-y-6">
+      <FramingSubpageNav
+        activeSubpage={props.activeSubpage}
+        journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+        outcomeId={props.outcomeId}
+      />
+      {props.activeSubpage === "journey-context" ? (
+        <JourneyContextPage
+          analyzeAction={analyzeJourneyCoverageAction}
+          data={selectedOutcome.data}
+          flash={props.journeyFlash}
+          saveAction={saveJourneyContextsAction}
+        />
+      ) : (
+        <FramingOutcomeSection
+          archiveAction={archiveOutcomeAction}
+          createEpicAction={createEpicFromOutcomeAction}
+          createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
+          data={selectedOutcome.data}
+          embeddedInFraming
+          hardDeleteAction={hardDeleteOutcomeAction}
+          initialReviewFramingState={{ status: "idle", message: null, report: null }}
+          language={props.language}
+          recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
+          restoreAction={restoreOutcomeAction}
+          reviewFramingAction={reviewOutcomeFramingWithAiAction}
+          saveAction={saveOutcomeWorkspaceAction}
+          saveInlineAction={saveOutcomeWorkspaceInlineAction}
+          search={props.search}
+          validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
+          validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
+        />
+      )}
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { Prisma } from "../../generated/client";
-import { outcomeCreateInputSchema, outcomeUpdateInputSchema } from "@aas-companion/domain";
+import { Prisma } from "../../generated/client";
+import { outcomeCreateInputSchema, outcomeUpdateInputSchema, parseJourneyContexts } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { logDevTiming, withDevTiming } from "../dev-timing";
 import { appendActivityEvent } from "./activity-repository";
@@ -21,6 +21,22 @@ function hasScalarChanged<T>(nextValue: T | undefined, currentValue: T | null | 
   }
 
   return nextValue !== currentValue;
+}
+
+function hasJsonChanged(nextValue: unknown, currentValue: unknown) {
+  if (nextValue === undefined) {
+    return false;
+  }
+
+  return JSON.stringify(nextValue ?? null) !== JSON.stringify(currentValue ?? null);
+}
+
+function toPrismaJsonValue(value: unknown): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput {
+  if (value === null || value === undefined) {
+    return Prisma.JsonNull;
+  }
+
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
 async function invalidateOutcomeTollgateForNewFramingVersion(
@@ -276,6 +292,7 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           solutionContext: true,
           solutionConstraints: true,
           dataSensitivity: true,
+          journeyContexts: true,
           deliveryType: true,
           aiUsageRole: true,
           aiExecutionPattern: true,
@@ -422,6 +439,7 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
     return {
       outcome: {
         ...outcome,
+        journeyContexts: parseJourneyContexts(outcome.journeyContexts),
         epics: outcome.epics
           .filter((epic) => epic.lifecycleState === relatedLifecycleState)
           .map((epic) =>
@@ -460,6 +478,7 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         solutionContext: parsed.solutionContext ?? null,
         solutionConstraints: parsed.solutionConstraints ?? null,
         dataSensitivity: parsed.dataSensitivity ?? null,
+        journeyContexts: toPrismaJsonValue(parsed.journeyContexts),
         deliveryType: parsed.deliveryType ?? null,
         aiUsageRole: parsed.aiUsageRole ?? null,
         aiExecutionPattern: parsed.aiExecutionPattern ?? null,
@@ -555,6 +574,7 @@ export async function updateOutcome(input: unknown, db: Prisma.TransactionClient
       hasScalarChanged(parsed.solutionContext, existing.solutionContext) ||
       hasScalarChanged(parsed.solutionConstraints, existing.solutionConstraints) ||
       hasScalarChanged(parsed.dataSensitivity, existing.dataSensitivity) ||
+      hasJsonChanged(parsed.journeyContexts, existing.journeyContexts) ||
       hasScalarChanged(parsed.deliveryType, existing.deliveryType) ||
       hasScalarChanged(parsed.aiUsageRole, existing.aiUsageRole) ||
       hasScalarChanged(parsed.aiExecutionPattern, existing.aiExecutionPattern) ||
@@ -609,6 +629,10 @@ export async function updateOutcome(input: unknown, db: Prisma.TransactionClient
 
     if (parsed.dataSensitivity !== undefined) {
       data.dataSensitivity = parsed.dataSensitivity;
+    }
+
+    if (parsed.journeyContexts !== undefined) {
+      data.journeyContexts = toPrismaJsonValue(parsed.journeyContexts);
     }
 
     if (parsed.deliveryType !== undefined) {
