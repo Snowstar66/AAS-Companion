@@ -47,168 +47,247 @@ async function getServerLanguage() {
   }
 }
 
+function isDynamicServerUsageError(error: unknown) {
+  return (
+    error instanceof Error &&
+    ("digest" in error ? (error as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE" : false)
+  );
+}
+
+function FramingRouteFallback() {
+  return (
+    <AppShell
+      topbarProps={{
+        projectName: "AAS Companion",
+        sectionLabel: "Framing",
+        badge: "Unavailable"
+      }}
+    >
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>
+            <LocalizedText en="Framing is temporarily unavailable" sv="Framing ar tillfalligt otillganglig" />
+          </CardTitle>
+          <CardDescription>
+            <LocalizedText
+              en="The route hit a server-side rendering problem before the workspace could load."
+              sv="Sidan stotte pa ett serverfel innan arbetsytan hann laddas."
+            />
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm text-muted-foreground">
+          <p>
+            <LocalizedText
+              en="The framing route now stays online and shows this fallback instead of crashing the full page."
+              sv="Framing-routen halls nu uppe och visar denna fallback i stallet for att krascha hela sidan."
+            />
+          </p>
+          <Button asChild className="gap-2" variant="secondary">
+            <Link href="/">
+              <LocalizedText en="Back to Home" sv="Tillbaka till Hem" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </AppShell>
+  );
+}
+
+function SelectedFramingOutcomeErrorCard() {
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <CardTitle>
+          <LocalizedText en="Selected Framing could not be loaded" sv="Vald Framing kunde inte laddas" />
+        </CardTitle>
+        <CardDescription>
+          <LocalizedText
+            en="The active framing workspace hit a server-side loading problem."
+            sv="Den aktiva framing-arbetsytan stotte pa ett serverfel vid inlasning."
+          />
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
+        <LocalizedText
+          en="Try opening the cockpit view or another framing while we keep the route available."
+          sv="Prova att oppna cockpit-vyn eller en annan framing medan routen fortsatter vara tillganglig."
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
-    const [query, serverLanguage] = await Promise.all([
-      searchParams ? searchParams : Promise.resolve(emptySearchParams),
-      getServerLanguage()
-    ]);
-    const requestedOutcomeId = getParamValue(query.outcomeId) ?? null;
-    const requestedView = getParamValue(query.view) ?? null;
-    const requestedSubpage = getParamValue(query.subpage) ?? null;
-    const { cockpit, session, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);
-    const originFilter = getParamValue(query.origin) ?? "native";
-    const readinessFilter = getParamValue(query.readiness) ?? "all";
-    const defaultOutcomeId =
-      resolvedOutcomeId ??
-      cockpit.items.find((item) => item.originType === "native")?.id ??
-      cockpit.items[0]?.id;
-    const outcomeId = requestedView === "cockpit" ? null : requestedOutcomeId ?? defaultOutcomeId;
-    const operationalItems = cockpit.items.filter((item) => item.originType !== "seeded");
-    const hasDemoItems = cockpit.items.some((item) => item.originType === "seeded");
-    const showCompactSwitcher = cockpit.state === "live" && Boolean(outcomeId) && (operationalItems.length > 1 || hasDemoItems);
-    const demoItem = cockpit.items.find((item) => item.originType === "seeded") ?? null;
-    const parsedSearch = {
-      aiConfidence: (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | null) ?? null,
-      aiError: getParamValue(query.aiError) ?? null,
-      aiField: (getParamValue(query.aiField) as "outcome_statement" | "baseline_definition" | null) ?? null,
-      aiReason: getParamValue(query.aiReason) ?? null,
-      aiSuggestion: getParamValue(query.aiSuggestion) ?? null,
-      aiVerdict: (getParamValue(query.aiVerdict) as "good" | "needs_revision" | "unclear" | null) ?? null,
-      draftBaselineDefinition: getParamValue(query.draftBaselineDefinition) ?? null,
-      draftOutcomeStatement: getParamValue(query.draftOutcomeStatement) ?? null,
-      blockersFromQuery: getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [],
-      created: getParamValue(query.created) === "1",
-      lifecycleState: getParamValue(query.lifecycle) ?? null,
-      saveMessage: getParamValue(query.message) ?? null,
-      saveState: getParamValue(query.save) ?? null,
-      submitState: getParamValue(query.submit) ?? null
-    };
+    try {
+      const [query, serverLanguage] = await Promise.all([
+        searchParams ? searchParams : Promise.resolve(emptySearchParams),
+        getServerLanguage()
+      ]);
+      const requestedOutcomeId = getParamValue(query.outcomeId) ?? null;
+      const requestedView = getParamValue(query.view) ?? null;
+      const requestedSubpage = getParamValue(query.subpage) ?? null;
+      const { cockpit, session, resolvedOutcomeId } = await loadFramingCockpit(requestedOutcomeId);
+      const originFilter = getParamValue(query.origin) ?? "native";
+      const readinessFilter = getParamValue(query.readiness) ?? "all";
+      const defaultOutcomeId =
+        resolvedOutcomeId ??
+        cockpit.items.find((item) => item.originType === "native")?.id ??
+        cockpit.items[0]?.id;
+      const outcomeId = requestedView === "cockpit" ? null : requestedOutcomeId ?? defaultOutcomeId;
+      const operationalItems = cockpit.items.filter((item) => item.originType !== "seeded");
+      const hasDemoItems = cockpit.items.some((item) => item.originType === "seeded");
+      const showCompactSwitcher = cockpit.state === "live" && Boolean(outcomeId) && (operationalItems.length > 1 || hasDemoItems);
+      const demoItem = cockpit.items.find((item) => item.originType === "seeded") ?? null;
+      const parsedSearch = {
+        aiConfidence: (getParamValue(query.aiConfidence) as "high" | "medium" | "low" | null) ?? null,
+        aiError: getParamValue(query.aiError) ?? null,
+        aiField: (getParamValue(query.aiField) as "outcome_statement" | "baseline_definition" | null) ?? null,
+        aiReason: getParamValue(query.aiReason) ?? null,
+        aiSuggestion: getParamValue(query.aiSuggestion) ?? null,
+        aiVerdict: (getParamValue(query.aiVerdict) as "good" | "needs_revision" | "unclear" | null) ?? null,
+        draftBaselineDefinition: getParamValue(query.draftBaselineDefinition) ?? null,
+        draftOutcomeStatement: getParamValue(query.draftOutcomeStatement) ?? null,
+        blockersFromQuery: getParamValue(query.blockers)?.split(" | ").filter(Boolean) ?? [],
+        created: getParamValue(query.created) === "1",
+        lifecycleState: getParamValue(query.lifecycle) ?? null,
+        saveMessage: getParamValue(query.message) ?? null,
+        saveState: getParamValue(query.save) ?? null,
+        submitState: getParamValue(query.submit) ?? null
+      };
 
-    return (
-      <AppShell
-        hideRightRail={Boolean(outcomeId)}
-        rightRail={outcomeId ? undefined : <FramingRightRail summary={cockpit.summary} />}
-        topbarProps={{
-          projectName: cockpit.organizationName,
-          sectionLabel: "Framing",
-          badge: cockpit.state === "live" ? "Project section" : "Unavailable"
-        }}
-      >
-        <PageViewAnalytics
-          eventName="framing_cockpit_viewed"
-          properties={{
-            organizationName: cockpit.organizationName,
-            state: cockpit.state
+      return (
+        <AppShell
+          hideRightRail={Boolean(outcomeId)}
+          rightRail={outcomeId ? undefined : <FramingRightRail summary={cockpit.summary} />}
+          topbarProps={{
+            projectName: cockpit.organizationName,
+            sectionLabel: "Framing",
+            badge: cockpit.state === "live" ? "Project section" : "Unavailable"
           }}
-        />
-        {cockpit.state === "unavailable" ? (
-          <Card className="border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>
-                <LocalizedText en="Framing data is unavailable" sv="Framingdata är inte tillgänglig" />
-              </CardTitle>
-              <CardDescription>
-                <LocalizedText
-                  en="The route is online, but the cockpit could not load its organization data."
-                  sv="Sidan är tillgänglig, men cockpit-vyn kunde inte ladda organisationens data."
+        >
+          <PageViewAnalytics
+            eventName="framing_cockpit_viewed"
+            properties={{
+              organizationName: cockpit.organizationName,
+              state: cockpit.state
+            }}
+          />
+          {cockpit.state === "unavailable" ? (
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>
+                  <LocalizedText en="Framing data is unavailable" sv="Framingdata ar inte tillganglig" />
+                </CardTitle>
+                <CardDescription>
+                  <LocalizedText
+                    en="The route is online, but the cockpit could not load its organization data."
+                    sv="Sidan ar tillganglig, men cockpit-vyn kunde inte ladda organisationens data."
+                  />
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm text-muted-foreground">
+                <p>{cockpit.message}</p>
+                <Button asChild className="gap-2" variant="secondary">
+                  <Link href="/">
+                    <LocalizedText en="Back to Home" sv="Tillbaka till Hem" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {outcomeId ? (
+                <Suspense fallback={<FramingWorkspaceFallback />}>
+                  <SelectedFramingOutcomeSection
+                    activeSubpage={requestedSubpage === "journey-context" ? "journey-context" : "overview"}
+                    language={serverLanguage}
+                    organizationId={session.organization.organizationId}
+                    outcomeId={outcomeId}
+                    search={parsedSearch}
+                    journeyFlash={{
+                      analyze: (getParamValue(query.journeyAnalyze) as "success" | "error" | null) ?? null,
+                      message: getParamValue(query.journeyMessage) ?? null,
+                      save: (getParamValue(query.journeySave) as "success" | "error" | null) ?? null
+                    }}
+                  />
+                </Suspense>
+              ) : (
+                <FramingCockpit
+                  createAction={createDraftOutcomeAction}
+                  initialOriginFilter={originFilter}
+                  initialReadinessFilter={readinessFilter}
+                  items={cockpit.items}
+                  message={cockpit.message}
+                  state={cockpit.state}
+                  suggestedOutcomeId={defaultOutcomeId ?? null}
                 />
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <p>{cockpit.message}</p>
-              <Button asChild className="gap-2" variant="secondary">
-                <Link href="/">
-                  <LocalizedText en="Back to Home" sv="Tillbaka till Hem" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {outcomeId ? (
-              <Suspense fallback={<FramingWorkspaceFallback />}>
-                <SelectedFramingOutcomeSection
-                  activeSubpage={requestedSubpage === "journey-context" ? "journey-context" : "overview"}
-                  language={serverLanguage}
-                  organizationId={session.organization.organizationId}
-                  outcomeId={outcomeId}
-                  search={parsedSearch}
-                  journeyFlash={{
-                    analyze: (getParamValue(query.journeyAnalyze) as "success" | "error" | null) ?? null,
-                    message: getParamValue(query.journeyMessage) ?? null,
-                    save: (getParamValue(query.journeySave) as "success" | "error" | null) ?? null
-                  }}
-                />
-              </Suspense>
-            ) : (
-              <FramingCockpit
-                createAction={createDraftOutcomeAction}
-                initialOriginFilter={originFilter}
-                initialReadinessFilter={readinessFilter}
-                items={cockpit.items}
-                message={cockpit.message}
-                state={cockpit.state}
-                suggestedOutcomeId={defaultOutcomeId ?? null}
-              />
-            )}
-            {showCompactSwitcher ? (
-              <Card className="border-border/70 shadow-sm">
-                <CardHeader>
-                  <CardTitle>
-                    <LocalizedText en="Switch Framing" sv="Byt Framing" />
-                  </CardTitle>
-                  <CardDescription>
-                    <LocalizedText
-                      en="The active framing is already open. Use this only when you intentionally want to switch branch or open Demo."
-                      sv="Den aktiva framingen är redan öppen. Använd detta bara när du medvetet vill byta gren eller öppna Demo."
-                    />
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {operationalItems.length > 1 ? (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        <LocalizedText en="Available project framings" sv="Tillgängliga framings i projektet" />
-                      </p>
-                      <div className="-mx-1 overflow-x-auto pb-1">
-                        <div className="flex min-w-max gap-2 px-1">
-                          {operationalItems.map((item) => (
-                            <Button asChild key={item.id} size="sm" variant={item.id === outcomeId ? "default" : "secondary"}>
-                              <Link href={`/framing?outcomeId=${item.id}`}>{item.key}: {item.title}</Link>
-                            </Button>
-                          ))}
+              )}
+              {showCompactSwitcher ? (
+                <Card className="border-border/70 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>
+                      <LocalizedText en="Switch Framing" sv="Byt Framing" />
+                    </CardTitle>
+                    <CardDescription>
+                      <LocalizedText
+                        en="The active framing is already open. Use this only when you intentionally want to switch branch or open Demo."
+                        sv="Den aktiva framingen ar redan oppen. Anvand detta bara nar du medvetet vill byta gren eller oppna Demo."
+                      />
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {operationalItems.length > 1 ? (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          <LocalizedText en="Available project framings" sv="Tillgangliga framings i projektet" />
+                        </p>
+                        <div className="-mx-1 overflow-x-auto pb-1">
+                          <div className="flex min-w-max gap-2 px-1">
+                            {operationalItems.map((item) => (
+                              <Button asChild key={item.id} size="sm" variant={item.id === outcomeId ? "default" : "secondary"}>
+                                <Link href={`/framing?outcomeId=${item.id}`}>{item.key}: {item.title}</Link>
+                              </Button>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : null}
-                  {demoItem ? (
-                    <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">
-                          <LocalizedText en="Demo stays available separately" sv="Demo finns kvar separat" />
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          <LocalizedText
-                            en="Open Demo only when you intentionally want to compare against reference content."
-                            sv="Öppna Demo bara när du medvetet vill jämföra mot referensinnehåll."
-                          />
-                        </p>
+                    ) : null}
+                    {demoItem ? (
+                      <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="font-medium text-foreground">
+                            <LocalizedText en="Demo stays available separately" sv="Demo finns kvar separat" />
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            <LocalizedText
+                              en="Open Demo only when you intentionally want to compare against reference content."
+                              sv="Oppna Demo bara nar du medvetet vill jamfora mot referensinnehall."
+                            />
+                          </p>
+                        </div>
+                        <Button asChild className="gap-2" variant="secondary">
+                          <Link href={demoItem.detailHref}>
+                            <LocalizedText en="Open Demo Framing" sv="Oppna demo-framing" />
+                          </Link>
+                        </Button>
                       </div>
-                      <Button asChild className="gap-2" variant="secondary">
-                        <Link href={demoItem.detailHref}>
-                          <LocalizedText en="Open Demo Framing" sv="Öppna demo-framing" />
-                        </Link>
-                      </Button>
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ) : null}
-          </>
-        )}
-      </AppShell>
-    );
+                    ) : null}
+                  </CardContent>
+                </Card>
+              ) : null}
+            </>
+          )}
+        </AppShell>
+      );
+    } catch (error) {
+      if (isDynamicServerUsageError(error)) {
+        throw error;
+      }
+
+      console.error("Failed to render Framing route", error);
+      return <FramingRouteFallback />;
+    }
   });
 }
 
@@ -222,7 +301,7 @@ function FramingWorkspaceFallback() {
         <CardDescription>
           <LocalizedText
             en="The active framing brief is loading while the cockpit stays available."
-            sv="Den aktiva framingbriefen laddas medan cockpit-vyn fortfarande är tillgänglig."
+            sv="Den aktiva framingbriefen laddas medan cockpit-vyn fortfarande ar tillganglig."
           />
         </CardDescription>
       </CardHeader>
@@ -264,7 +343,14 @@ async function SelectedFramingOutcomeSection(props: {
     message?: string | null;
   };
 }) {
-  const selectedOutcome = await getCachedOutcomeWorkspaceData(props.organizationId, props.outcomeId);
+  let selectedOutcome: Awaited<ReturnType<typeof getCachedOutcomeWorkspaceData>>;
+
+  try {
+    selectedOutcome = await getCachedOutcomeWorkspaceData(props.organizationId, props.outcomeId);
+  } catch (error) {
+    console.error("Failed to load selected Framing outcome", error);
+    return <SelectedFramingOutcomeErrorCard />;
+  }
 
   if (!selectedOutcome.ok) {
     return (
@@ -275,7 +361,7 @@ async function SelectedFramingOutcomeSection(props: {
           </CardTitle>
           <CardDescription>
             {selectedOutcome.errors[0]?.message ?? (
-              <LocalizedText en="The selected framing is unavailable right now." sv="Den valda framingen är inte tillgänglig just nu." />
+              <LocalizedText en="The selected framing is unavailable right now." sv="Den valda framingen ar inte tillganglig just nu." />
             )}
           </CardDescription>
         </CardHeader>

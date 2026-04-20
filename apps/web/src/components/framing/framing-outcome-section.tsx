@@ -1441,11 +1441,30 @@ export async function DeferredOutcomeTollgateSection(props: {
 }) {
   void props.submitTollgateAction;
   const language = props.language ?? "en";
-  const session = await requireActiveProjectSession();
-  const tollgateResult = await getCachedOutcomeTollgateReviewData(
-    session.organization.organizationId,
-    props.outcomeId
-  );
+  let tollgateResult: Awaited<ReturnType<typeof getCachedOutcomeTollgateReviewData>>;
+
+  try {
+    const session = await requireActiveProjectSession();
+    tollgateResult = await getCachedOutcomeTollgateReviewData(
+      session.organization.organizationId,
+      props.outcomeId
+    );
+  } catch (error) {
+    console.error("Failed to load Framing tollgate section", error);
+
+    return (
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>
+            <LocalizedText en="Tollgate follow-up is unavailable" sv="Tollgate-uppfÃ¶ljning Ã¤r inte tillgÃ¤nglig" />
+          </CardTitle>
+          <CardDescription>
+            <LocalizedText en="The Tollgate workspace hit a server-side loading problem." sv="Tollgate-arbetsytan stÃ¶tte pÃ¥ ett serverfel vid inlÃ¤sning." />
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (!tollgateResult.ok) {
     return (
@@ -1871,7 +1890,21 @@ async function DeferredValueOwnerField(props: {
   disabled: boolean;
   language: "en" | "sv";
 }) {
-  const ownersResult = await getCachedOrganizationValueOwnersData(props.organizationId);
+  let ownersResult: Awaited<ReturnType<typeof getCachedOrganizationValueOwnersData>>;
+
+  try {
+    ownersResult = await getCachedOrganizationValueOwnersData(props.organizationId);
+  } catch (error) {
+    console.error("Failed to load Framing value owners", error);
+    return (
+      <ValueOwnerFieldFallback
+        currentOwnerId={props.currentOwnerId}
+        currentOwnerLabel={props.currentOwnerLabel}
+        disabled={props.disabled}
+        language={props.language}
+      />
+    );
+  }
 
   if (!ownersResult.ok) {
     return (
