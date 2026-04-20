@@ -374,9 +374,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
       <details className="rounded-[28px] border border-border/70 bg-background shadow-sm" open={contexts.length === 0}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="text-base font-semibold text-foreground">Guided AI help</p>
+            <p className="text-base font-semibold text-foreground">Step-by-step help</p>
             <p className="text-sm text-muted-foreground">
-              Optional. Use this when you want help phrasing Journeys, filling gaps, or analyzing coverage.
+              Use this when you want a simple guided interview for Journey wording, missing fields, or coverage help.
             </p>
           </div>
           <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">

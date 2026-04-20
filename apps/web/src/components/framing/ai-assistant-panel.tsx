@@ -921,27 +921,27 @@ export function AiAssistantPanel({
       </CardHeader>
       <CardContent className="space-y-5">
         {guidedJourneyInterview ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-950">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">Guided journey interview</p>
-                <p className="mt-1 text-sm text-emerald-900/85">
+                <p className="font-medium text-foreground">Step-by-step journey help</p>
+                <p className="mt-1 text-sm text-sky-900/85">
                   Work one question at a time. Each answer updates the local Journey draft only after you explicitly apply it.
                 </p>
                 {guidedJourneyInterview.focusedJourneyLabel ? (
-                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-emerald-900/75">
+                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-sky-900/75">
                     Focused on {guidedJourneyInterview.focusedJourneyLabel}
                   </p>
                 ) : null}
               </div>
-              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-medium text-emerald-800">
+              <span className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-medium text-sky-800">
                 {guidedJourneyInterview.contextCount} context / {guidedJourneyInterview.journeyCount} journey
               </span>
             </div>
 
             {journeyFocusOptions.length > 0 && onFocusJourney ? (
               <div className="mt-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Journey focus</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Journey focus</p>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     onClick={() => onFocusJourney(null)}
@@ -965,7 +965,7 @@ export function AiAssistantPanel({
             ) : null}
 
             {canGenerateFirstDraft && firstDraftJourneySuggestion ? (
-              <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+              <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-medium text-foreground">Generate first draft journey</p>
@@ -982,17 +982,17 @@ export function AiAssistantPanel({
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft current state</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft current state</p>
                     <p className="text-sm leading-6 text-foreground">{firstDraftJourneySuggestion.nextJourney.currentState}</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft desired future state</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft desired future state</p>
                     <p className="text-sm leading-6 text-foreground">{firstDraftJourneySuggestion.nextJourney.desiredFutureState}</p>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft pain points</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft pain points</p>
                     <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                       {(firstDraftJourneySuggestion.nextJourney.painPoints ?? []).map((item) => (
                         <li key={item}>{item}</li>
@@ -1000,7 +1000,7 @@ export function AiAssistantPanel({
                     </ul>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft desired support</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft desired support</p>
                     <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                       {(firstDraftJourneySuggestion.nextJourney.desiredSupport ?? []).map((item) => (
                         <li key={item}>{item}</li>
@@ -1010,7 +1010,7 @@ export function AiAssistantPanel({
                 </div>
                 {firstDraftJourneySuggestion.nextJourney.steps.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft broad steps</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft broad steps</p>
                     <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                       {firstDraftJourneySuggestion.nextJourney.steps.map((step) => (
                         <li key={step.id}>
@@ -1025,10 +1025,11 @@ export function AiAssistantPanel({
 
             {guidedJourneyInterview.target ? (
               <div className="mt-4 space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{guidedJourneyInterview.target.question}</p>
-                  <p className="mt-1 text-xs leading-5 text-emerald-900/80">{guidedJourneyInterview.target.helper}</p>
-                  <p className="mt-2 text-xs text-emerald-900/70">
+                <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Current question</p>
+                  <p className="mt-2 text-lg font-semibold leading-7 text-foreground">{guidedJourneyInterview.target.question}</p>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{guidedJourneyInterview.target.helper}</p>
+                  <p className="mt-3 text-xs text-sky-900/70">
                     Remaining gaps: {guidedJourneyInterview.target.totalMissing}
                     {guidedJourneyInterview.target.skippedMissing > 0
                       ? ` / skipped for now: ${guidedJourneyInterview.target.skippedMissing}`
@@ -1036,14 +1037,14 @@ export function AiAssistantPanel({
                   </p>
                 </div>
                 <textarea
-                  className="min-h-24 w-full rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
+                  className="min-h-24 w-full rounded-2xl border border-sky-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-500"
                   onChange={(event) => setGuidedAnswer(event.target.value)}
                   placeholder={guidedJourneyInterview.target.placeholder}
                   value={guidedAnswer}
                 />
                 {guidedDraft && guidedDraft !== guidedAnswer.trim() ? (
-                  <div className="rounded-2xl border border-emerald-200 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">AI draft</p>
+                  <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">AI draft</p>
                     <p className="mt-2 text-sm leading-6 text-foreground">{guidedDraft}</p>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">
                       This is a cleaner Journey-style wording suggestion based on your raw answer.
@@ -1072,14 +1073,14 @@ export function AiAssistantPanel({
                 </div>
               </div>
             ) : guidedJourneyInterview.isComplete ? (
-              <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+              <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
                 <p className="font-medium text-foreground">The core Journey framing is already captured.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Move to `Refine` for wording help or `Analyze` for coverage against Epics and Story Ideas.
                 </p>
               </div>
             ) : guidedJourneyInterview.hasOnlySkippedQuestions ? (
-              <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+              <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
                 <p className="font-medium text-foreground">All remaining guided questions are currently skipped.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Bring them back when you want to continue tightening the Journey description.
