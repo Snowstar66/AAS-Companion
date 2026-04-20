@@ -627,6 +627,7 @@ export async function reviewOutcomeFramingWithAiService(input: {
           seedCount: epic.directionSeeds.length
         })),
         directionSeeds: snapshot.outcome.directionSeeds.map((seed) => ({
+          storyIdeaId: seed.id,
           seedId: seed.key,
           title: seed.title,
           epicKey: snapshot.outcome.epics.find((epic) => epic.id === seed.epicId)?.key ?? null,

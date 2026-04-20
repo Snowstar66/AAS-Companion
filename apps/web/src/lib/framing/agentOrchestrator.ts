@@ -141,14 +141,14 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
     suggestions.push({
       id: buildFramingAgentSuggestionId(["starter-journey-context", source.outcome.id]),
       kind: "rewrite_journey_context",
-      title: "Create a starter Journey Context",
-      description: "Start with one broad flow area and one broad Journey. You can refine the wording before saving.",
+      title: "Create starter Journeys",
+      description: "Start with one broad Journey. The page itself acts as Journey Context, so you do not need to name a separate container first.",
       contextId: starterContextId,
       nextContext: {
         id: starterContextId,
         outcomeId: source.outcome.id,
         initiativeType: source.outcome.deliveryType ?? "AD",
-        title: "New Journey Context",
+        title: "",
         description: "",
         journeys: [
           {
@@ -180,7 +180,7 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
     });
 
     questions.push(
-      "What is the name of the flow area you want to describe?",
+      "What should the first journey be called?",
       "Who is the primary actor in that journey?",
       "What is the actor trying to achieve?",
       "What usually triggers the journey to begin?"
@@ -188,7 +188,7 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
 
     return {
       message:
-        "Journey Context is empty right now, so the next best move is to start broad. Describe one meaningful flow area, one primary actor, the goal, and what triggers the journey. Keep it at flow level rather than screen or click level.",
+        "Journey Context is empty right now, so the next best move is to start with one broad Journey. Describe the actor, the goal, and what triggers the journey. Keep it at flow level rather than screen or click level.",
       suggestions,
       questions,
       warnings: ["No Journey Context exists yet, so coverage analysis and refinement will stay shallow until you add the first broad Journey."],
@@ -200,24 +200,6 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
   }
 
   for (const context of contexts) {
-    if (!hasText(context.title)) {
-      const firstJourney = context.journeys[0];
-      const nextContext = {
-        ...context,
-        title: firstJourney?.title ? `${firstJourney.title} context` : "Journey Context"
-      };
-
-      suggestions.push({
-        id: buildFramingAgentSuggestionId(["refine-context-title", context.id]),
-        kind: "rewrite_journey_context",
-        title: "Add a clearer Journey Context title",
-        description: "A Journey Context groups a meaningful flow area. A concrete title makes later AI refinement easier.",
-        contextId: context.id,
-        nextContext,
-        confidence: 0.62
-      });
-    }
-
     for (const [journeyIndex, journey] of context.journeys.entries()) {
       const journeyLabel = describeJourneyForPrompt({
         title: journey.title,

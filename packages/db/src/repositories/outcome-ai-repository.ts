@@ -118,6 +118,7 @@ type OutcomeFramingAiReviewInput = {
     seedCount: number;
   }>;
   directionSeeds: Array<{
+    storyIdeaId: string;
     seedId: string;
     title: string;
     epicKey?: string | null;
@@ -591,6 +592,15 @@ function deriveDeterministicFramingAdjustments(
     ({ journey }) => !journey.coverage || journey.coverage.status === "unanalysed"
   );
   const uncoveredJourneys = allJourneys.filter(({ journey }) => journey.coverage?.status === "uncovered");
+  const representedStoryIdeaIds = new Set(
+    allJourneys.flatMap(({ journey }) => [
+      ...(journey.linkedStoryIdeaIds ?? []),
+      ...(journey.coverage?.suggestedStoryIdeaIds ?? [])
+    ])
+  );
+  const storyIdeasOutsideJourneys = input.directionSeeds.filter(
+    (seed) => !representedStoryIdeaIds.has(seed.storyIdeaId)
+  );
   const granularJourneys = allJourneys.filter(({ journey }) => journey.steps.length >= 8);
   const incompleteJourneys = allJourneys.filter(
     ({ journey }) =>
@@ -764,6 +774,18 @@ function deriveDeterministicFramingAdjustments(
         `${uncoveredJourneys.length} Journey${uncoveredJourneys.length === 1 ? " appears" : " appear"} uncovered by the current Story Ideas or Epics.`
       );
       requiredActions.push("Resolve uncovered Journeys by refining Story Ideas, Epics, or the Journey framing.");
+    }
+
+    if (storyIdeasOutsideJourneys.length > 0) {
+      storyCoverageFindings.push(
+        `${storyIdeasOutsideJourneys
+          .slice(0, 3)
+          .map((seed) => `[${seed.seedId}]`)
+          .join(", ")} ${storyIdeasOutsideJourneys.length === 1 ? "is" : "are"} not currently visible in any Journey.`
+      );
+      requiredActions.push(
+        "Review whether each Story Idea should be represented by a Journey when Journey Context is part of the case."
+      );
     }
 
     if (granularJourneys.length > 0) {
@@ -1508,6 +1530,7 @@ export async function reviewOutcomeFramingWithAi(input: {
     seedCount: number;
   }>;
   directionSeeds: Array<{
+    storyIdeaId: string;
     seedId: string;
     title: string;
     epicKey?: string | null;

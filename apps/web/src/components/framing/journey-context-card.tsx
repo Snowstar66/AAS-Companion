@@ -72,9 +72,9 @@ export function JourneyContextCard({
             </span>
           </div>
           <div>
-            <p className="text-base font-semibold text-foreground">{context.title || "Untitled Journey Context"}</p>
+            <p className="text-base font-semibold text-foreground">Journeys for this outcome</p>
             <p className="text-sm text-muted-foreground">
-              {context.description || "Use one Journey Context for one meaningful flow area, such as onboarding, case handling, or incident resolution."}
+              Put the value in the Journeys below. You normally do not need to name or describe the page-level Journey Context separately.
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{coverageLabel}</p>
           </div>
@@ -84,33 +84,14 @@ export function JourneyContextCard({
       <div className="border-t border-border/70 px-5 py-5">
         <Card className="border-border/70 bg-muted/10 shadow-none">
           <CardHeader>
-            <CardTitle className="text-base">Context direction</CardTitle>
+            <CardTitle className="text-base">How to use this page</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              A Journey Context groups related Journeys for one outcome. Keep this level short and directional so the Journeys underneath can carry the actual flow.
+              Journey Context is mainly the name of this page and export section. In practice, the Journeys are what carry the value.
             </p>
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Title</span>
-                <input
-                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                  onChange={(event) => onChange({ ...context, title: event.target.value })}
-                  type="text"
-                  value={context.title}
-                />
-                <FieldError>{validation?.title}</FieldError>
-              </label>
-
-              <label className="space-y-2 md:col-span-2">
-                <span className="text-sm font-medium text-foreground">Description</span>
-                <textarea
-                  className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                  onChange={(event) => onChange({ ...context, description: event.target.value })}
-                  value={context.description ?? ""}
-                />
-                <FieldHint>Describe what this flow area covers in one or two short sentences.</FieldHint>
-              </label>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+              Start with the individual Journeys. If several Journeys together make the business case clearer, that is enough to count as useful Journey Context.
             </div>
             <div className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm text-muted-foreground">
               Bound automatically to outcome <span className="font-medium text-foreground">{context.outcomeId}</span> and initiative type{" "}
@@ -122,7 +103,7 @@ export function JourneyContextCard({
               <Button onClick={onAddJourney} type="button">Add Journey</Button>
               {analyzeAction}
               <Button onClick={onDelete} type="button" variant="secondary">
-                Delete Journey Context
+                Clear Journeys
               </Button>
             </div>
           </CardContent>
@@ -132,8 +113,8 @@ export function JourneyContextCard({
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-foreground">Optional notes</p>
-                <p className="text-sm text-muted-foreground">Only use this if the flow area needs a little extra context.</p>
+                <p className="text-base font-semibold text-foreground">Optional page note</p>
+                <p className="text-sm text-muted-foreground">Only use this if all Journeys together need one short shared note.</p>
               </div>
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
                 Expand
@@ -142,13 +123,13 @@ export function JourneyContextCard({
           </summary>
           <div className="border-t border-border/70 px-4 py-4">
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Notes</span>
+              <span className="text-sm font-medium text-foreground">Shared note</span>
               <textarea
                 className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                 onChange={(event) => onChange({ ...context, notes: event.target.value })}
                 value={context.notes ?? ""}
               />
-              <FieldHint>Journey Context is optional and meant to enrich later AI-assisted refinement, not replace the main delivery structure.</FieldHint>
+              <FieldHint>Optional. Most cases can leave this empty and let the Journeys speak for themselves.</FieldHint>
             </label>
           </div>
         </details>

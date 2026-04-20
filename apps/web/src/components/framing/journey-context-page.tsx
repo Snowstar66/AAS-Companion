@@ -288,9 +288,6 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
               </span>
             ) : null}
             <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-              {counts.contextCount} context{counts.contextCount === 1 ? "" : "s"}
-            </span>
-            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
               {counts.journeyCount} journey{counts.journeyCount === 1 ? "" : "s"}
             </span>
             {counts.uncoveredJourneyCount > 0 ? (
@@ -311,7 +308,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
               Describe a few important journeys that make the case easier to understand for people and give downstream AI better context for refinement, design, and build guidance.
             </p>
             <p className="mt-3">
-              Focus on who is involved, what they are trying to achieve, what triggers the work, and where today&apos;s friction exists. Keep it broad unless extra detail materially improves analysis.
+              Treat Journey Context mainly as this page and export section. The actual value should sit in the Journeys: who is involved, what they are trying to achieve, what triggers the work, and where today&apos;s friction exists.
             </p>
             <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
           </div>
@@ -328,33 +325,37 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
               : "Journey Context is saved and in sync with the current Framing package."}
           </div>
 
-          {flash?.save === "success" ? <FlashBanner message="Journey Context saved to the Framing package." tone="success" /> : null}
+          {flash?.save === "success" ? <FlashBanner message="Journeys saved to the Framing package." tone="success" /> : null}
           {flash?.analyze === "success" ? <FlashBanner message="Journey coverage analysis updated for the selected Journey Context." tone="success" /> : null}
           {flash?.message && (flash.save === "error" || flash.analyze === "error") ? (
             <FlashBanner message={flash.message} tone="error" />
           ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              disabled={!initiativeType}
-              onClick={() => {
-                if (!initiativeType) {
-                  return;
-                }
+            {contexts.length === 0 ? (
+              <Button
+                disabled={!initiativeType}
+                onClick={() => {
+                  if (!initiativeType) {
+                    return;
+                  }
 
-                const nextContext = createEmptyJourneyContext(data.outcome.id, initiativeType);
-                setContexts((current) => [...current, nextContext]);
-                setFocusedJourneyId(nextContext.journeys[0]?.id ?? null);
-              }}
-              type="button"
-            >
-              Add Journey Context
-            </Button>
+                  const nextContext = createEmptyJourneyContext(data.outcome.id, initiativeType);
+                  setContexts([nextContext]);
+                  setFocusedJourneyId(nextContext.journeys[0]?.id ?? null);
+                }}
+                type="button"
+              >
+                Start Journeys
+              </Button>
+            ) : null}
 
             <form action={saveAction}>
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
               <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
-              <Button disabled={!hasUnsavedChanges} type="submit" variant="secondary">Save Journey Context</Button>
+              <Button disabled={!hasUnsavedChanges} type="submit" variant="secondary">
+                Save Journeys
+              </Button>
             </form>
 
             <p className="text-sm text-muted-foreground">
@@ -381,7 +382,8 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           <div>
             <p className="text-base font-semibold text-foreground">Step-by-step help</p>
             <p className="text-sm text-muted-foreground">
-              Use this when you want help clarifying one Journey at a time for the business case. It starts with the Journey itself and helps name the broader context later.
+              Use this when you want help clarifying one Journey at a time for the business case. It starts with the Journey itself.
+              You do not need to invent a separate Journey Context name first.
             </p>
           </div>
           <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -411,9 +413,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
       {contexts.length === 0 ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>No Journey Context added yet</CardTitle>
+            <CardTitle>No Journeys added yet</CardTitle>
             <CardDescription>
-              Add Journey Context when you want richer flow-based context for later AI refinement of Epics, Story Ideas, design guidance, or build guidance.
+              Add one or more broad Journeys when you want richer flow-based context for later AI refinement of Epics, Story Ideas, design guidance, or build guidance.
             </CardDescription>
           </CardHeader>
         </Card>

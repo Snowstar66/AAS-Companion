@@ -21,7 +21,6 @@ export type JourneyValidation = {
 };
 
 export type JourneyContextValidation = {
-  title: string | undefined;
   journeysSummary: string | undefined;
   journeys: Record<string, JourneyValidation>;
 };
@@ -102,7 +101,6 @@ export function validateJourneyContext(
   }
 ): JourneyContextValidation {
   return {
-    title: hasText(context.title) ? undefined : "Journey Context title is required.",
     journeysSummary: context.journeys.length > 0 ? undefined : "Add at least one Journey to this Journey Context.",
     journeys: Object.fromEntries(
       context.journeys.map((journey) => [journey.id, validateJourney(journey, references)] as const)
@@ -115,7 +113,7 @@ export function journeyContextHasBlockingValidation(validation: JourneyContextVa
     return false;
   }
 
-  if (validation.title || validation.journeysSummary) {
+  if (validation.journeysSummary) {
     return true;
   }
 

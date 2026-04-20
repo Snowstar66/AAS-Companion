@@ -41,7 +41,6 @@ type ConversationEntry = {
 };
 
 type GuidedJourneyField =
-  | "contextTitle"
   | "journeyTitle"
   | "primaryActor"
   | "goal"
@@ -169,22 +168,6 @@ function hasCoreJourneyInputs(journey: JourneyContext["journeys"][number]) {
   return hasText(journey.title) && hasText(journey.primaryActor) && hasText(journey.goal) && hasText(journey.trigger);
 }
 
-function shouldAskForContextTitle(context: JourneyContext) {
-  if (hasText(context.title)) {
-    return false;
-  }
-
-  if (context.journeys.length > 1) {
-    return context.journeys.some((journey) => hasCoreJourneyInputs(journey));
-  }
-
-  return context.journeys.some(
-    (journey) =>
-      hasCoreJourneyInputs(journey) &&
-      (hasText(journey.currentState) || hasText(journey.desiredFutureState))
-  );
-}
-
 function buildGuidedJourneyPrompt(
   input: {
     field: GuidedJourneyField;
@@ -198,18 +181,6 @@ function buildGuidedJourneyPrompt(
   const epicPreview = formatReferencePreview(input.epicLabels);
 
   switch (input.field) {
-    case "contextTitle":
-      return {
-        question:
-          input.context.journeys.length > 1
-            ? "What should tie these journeys together?"
-            : "What should this Journey Context be called?",
-        placeholder: input.context.journeys.length > 1 ? "Example: Inventory control and follow-up" : "Example: Inventory control",
-        helper:
-          input.context.journeys.length > 1
-            ? `Name the broader context that holds these journeys together. Keep it short and descriptive.${storyIdeaPreview ? ` Existing Story Ideas to consider: ${storyIdeaPreview}.` : ""}`
-            : `Name the broader context for this journey only after the journey itself feels clear.${storyIdeaPreview ? ` Existing Story Ideas to consider: ${storyIdeaPreview}.` : ""}`
-      };
     case "journeyTitle":
       return {
         question: `What should ${input.journeyLabel} be called?`,
@@ -336,26 +307,6 @@ function buildGuidedJourneyInterviewState(input: {
       }
     });
 
-    if (shouldAskForContextTitle(context)) {
-      const prompt = buildGuidedJourneyPrompt({
-        field: "contextTitle",
-        journeyLabel: "this journey",
-        context,
-        epicLabels: input.epicLabels,
-        storyIdeaLabels: input.storyIdeaLabels
-      });
-      missingTargets.push({
-        context,
-        journey: firstJourney,
-        field: "contextTitle",
-        question: prompt.question,
-        placeholder: prompt.placeholder,
-        helper: prompt.helper,
-        promptKey: `${context.id}:contextTitle`,
-        totalMissing: 0,
-        skippedMissing: 0
-      });
-    }
   }
 
   const target = missingTargets.find((candidate) => !skipped.has(candidate.promptKey)) ?? null;
@@ -461,8 +412,6 @@ function buildGuidedJourneyDraft(input: {
   }
 
   switch (input.target.field) {
-    case "contextTitle":
-      return toTitleCase(raw.replace(/[.:]+$/g, ""));
     case "journeyTitle":
       return toSentenceCase(raw.replace(/[.:]+$/g, ""));
     case "primaryActor":
@@ -529,10 +478,6 @@ function buildGuidedJourneySuggestion(input: {
             }
           ]
   };
-
-  if (input.target.field === "contextTitle") {
-    nextContext.title = answer;
-  }
 
   return {
     id: createId("guided-journey-answer"),
