@@ -59,6 +59,14 @@ function normalizeRiskLevel(value: unknown): "low" | "medium" | "high" | null {
   return value === "low" || value === "medium" || value === "high" ? value : null;
 }
 
+function describeJourneyForPrompt(input: { title?: string | null; index: number }) {
+  if (hasText(input.title)) {
+    return `"${input.title!.trim()}"`;
+  }
+
+  return input.index === 0 ? "this journey" : `journey ${input.index + 1}`;
+}
+
 function buildSourceOfTruth(input: {
   data: OutcomeWorkspaceData;
   journeyContextsOverride: ReturnType<typeof parseJourneyContexts> | null | undefined;
@@ -210,31 +218,36 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
       });
     }
 
-    for (const journey of context.journeys) {
+    for (const [journeyIndex, journey] of context.journeys.entries()) {
+      const journeyLabel = describeJourneyForPrompt({
+        title: journey.title,
+        index: journeyIndex
+      });
+
       if (journey.steps.length > 5) {
         warnings.push(
-          `"${journey.title || journey.id}" has ${journey.steps.length} detailed Steps. Consider keeping only major handoffs, decisions, or coverage-relevant moments.`
+          `${journeyLabel} has ${journey.steps.length} detailed Steps. Consider keeping only major handoffs, decisions, or coverage-relevant moments.`
         );
         questions.push(
-          `Which 3-5 moments actually matter most in "${journey.title || journey.id}"?`,
-          `Which detailed Steps in "${journey.title || journey.id}" could be collapsed into a broader flow description?`
+          `Which 3-5 moments actually matter most in ${journeyLabel}?`,
+          `Which detailed Steps in ${journeyLabel} could be collapsed into a broader flow description?`
         );
       }
 
       if (!hasText(journey.goal)) {
-        questions.push(`What is the primary goal in "${journey.title || journey.id}"?`);
+        questions.push(`What is the primary goal in ${journeyLabel}?`);
       }
 
       if (!hasText(journey.trigger)) {
-        questions.push(`What triggers "${journey.title || journey.id}"?`);
+        questions.push(`What triggers ${journeyLabel}?`);
       }
 
       if (!hasText(journey.currentState)) {
-        questions.push(`How does "${journey.title || journey.id}" work today, especially where it is fragmented or slow?`);
+        questions.push(`How does ${journeyLabel} work today, especially where it is fragmented or slow?`);
       }
 
       if (!hasText(journey.desiredFutureState)) {
-        questions.push(`How should "${journey.title || journey.id}" feel or work in the desired future state?`);
+        questions.push(`How should ${journeyLabel} feel or work in the desired future state?`);
       }
 
       for (const step of journey.steps) {

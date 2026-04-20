@@ -72,7 +72,7 @@ function suggestionDetails(suggestion: FramingAgentSuggestion) {
   }
 
   if (suggestion.kind === "add_custom_instruction") {
-    return `${suggestion.instruction.category} · ${suggestion.instruction.priority} · ${suggestion.instruction.body}`;
+    return `${suggestion.instruction.category} / ${suggestion.instruction.priority} / ${suggestion.instruction.body}`;
   }
 
   return suggestion.description;
@@ -418,7 +418,7 @@ export function AiAssistantPanel({
               {history.slice(0, 5).map((entry) => (
                 <div className="rounded-2xl border border-border/70 bg-background px-4 py-3" key={entry.id}>
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    {framingAgentModeLabels[entry.mode]} · {new Date(entry.createdAt).toLocaleString("sv-SE")}
+                    {framingAgentModeLabels[entry.mode]} / {new Date(entry.createdAt).toLocaleString("sv-SE")}
                   </p>
                   <p className="mt-2 text-sm font-medium text-foreground">{entry.prompt}</p>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{entry.message}</p>
