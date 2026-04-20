@@ -376,7 +376,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           <div>
             <p className="text-base font-semibold text-foreground">Step-by-step help</p>
             <p className="text-sm text-muted-foreground">
-              Use this when you want a simple guided interview for Journey wording, missing fields, or coverage help.
+              Use this when you want to build one Journey at a time. It starts with the Journey itself and helps name the broader context later.
             </p>
           </div>
           <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
@@ -386,6 +386,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
         <div className="border-t border-border/70 px-5 py-5">
           <AiAssistantPanel
             aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel)}
+            epicLabels={availableEpics.map((option) => option.label)}
             focusedJourneyId={focusedJourneyId}
             hasUnsavedChanges={hasUnsavedChanges}
             initiativeType={initiativeType}
@@ -397,6 +398,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             scopeEntityId={focusedContextId}
             scopeKind="journey-context"
             scopeLabel="Journey Context"
+            storyIdeaLabels={availableStoryIdeas.map((option) => option.label)}
           />
         </div>
       </details>

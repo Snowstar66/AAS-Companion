@@ -25,6 +25,8 @@ type AiAssistantPanelProps = {
   runAction: (formData: FormData) => Promise<FramingAgentActionResult>;
   journeyContextsJson?: string | null;
   downstreamAiInstructionsJson?: string | null;
+  epicLabels?: string[];
+  storyIdeaLabels?: string[];
   onApplySuggestion?: (suggestion: FramingAgentSuggestion) => void;
   createStoryIdeaAction?: (formData: FormData) => void | Promise<void>;
 };
@@ -154,52 +156,95 @@ function buildJourneyFieldLabel(journey: JourneyContext["journeys"][number], ind
   return index === 0 ? "this journey" : `journey ${index + 1}`;
 }
 
+function formatReferencePreview(labels: string[] | undefined, max = 3) {
+  if (!labels || labels.length === 0) {
+    return "";
+  }
+
+  const preview = labels.slice(0, max).join(", ");
+  return labels.length > max ? `${preview}, and ${labels.length - max} more` : preview;
+}
+
+function hasCoreJourneyInputs(journey: JourneyContext["journeys"][number]) {
+  return hasText(journey.title) && hasText(journey.primaryActor) && hasText(journey.goal) && hasText(journey.trigger);
+}
+
+function shouldAskForContextTitle(context: JourneyContext) {
+  if (hasText(context.title)) {
+    return false;
+  }
+
+  if (context.journeys.length > 1) {
+    return context.journeys.some((journey) => hasCoreJourneyInputs(journey));
+  }
+
+  return context.journeys.some(
+    (journey) =>
+      hasCoreJourneyInputs(journey) &&
+      (hasText(journey.currentState) || hasText(journey.desiredFutureState))
+  );
+}
+
 function buildGuidedJourneyPrompt(
-  field: GuidedJourneyField,
-  journeyLabel: string
+  input: {
+    field: GuidedJourneyField;
+    journeyLabel: string;
+    context: JourneyContext;
+    storyIdeaLabels: string[] | undefined;
+    epicLabels: string[] | undefined;
+  }
 ): Pick<GuidedJourneyInterviewTarget, "question" | "placeholder" | "helper"> {
-  switch (field) {
+  const storyIdeaPreview = formatReferencePreview(input.storyIdeaLabels);
+  const epicPreview = formatReferencePreview(input.epicLabels);
+
+  switch (input.field) {
     case "contextTitle":
       return {
-        question: "What should this flow area be called?",
-        placeholder: "Example: Case handling context",
-        helper: "Name the broader flow area first. Keep it short and meaningful."
+        question:
+          input.context.journeys.length > 1
+            ? "What should tie these journeys together?"
+            : "What should this Journey Context be called?",
+        placeholder: input.context.journeys.length > 1 ? "Example: Inventory control and follow-up" : "Example: Inventory control",
+        helper:
+          input.context.journeys.length > 1
+            ? `Name the broader context that holds these journeys together. Keep it short and descriptive.${storyIdeaPreview ? ` Existing Story Ideas to consider: ${storyIdeaPreview}.` : ""}`
+            : `Name the broader context for this journey only after the journey itself feels clear.${storyIdeaPreview ? ` Existing Story Ideas to consider: ${storyIdeaPreview}.` : ""}`
       };
     case "journeyTitle":
       return {
-        question: `What should ${journeyLabel} be called?`,
+        question: `What should ${input.journeyLabel} be called?`,
         placeholder: "Example: Handle incoming case",
-        helper: "Use a short verb-driven name that describes the whole flow."
+        helper: `Use a short verb-driven name that describes the whole flow.${storyIdeaPreview ? ` If relevant, make it broad enough to hold Story Ideas like ${storyIdeaPreview}.` : ""}`
       };
     case "primaryActor":
       return {
-        question: `Who is the primary actor in ${journeyLabel}?`,
+        question: `Who is the primary actor in ${input.journeyLabel}?`,
         placeholder: "Example: Case officer",
-        helper: "Name the main role driving the journey."
+        helper: `Name the main role driving the journey.${epicPreview ? ` Existing Epics include ${epicPreview}, which may help you think about where this actor fits.` : ""}`
       };
     case "goal":
       return {
-        question: `What is the primary goal in ${journeyLabel}?`,
+        question: `What is the primary goal in ${input.journeyLabel}?`,
         placeholder: "Example: Resolve the case without manual handoffs",
-        helper: "Describe what the actor is trying to achieve, not which screen they need."
+        helper: `Describe what the actor is trying to achieve, not which screen they need.${storyIdeaPreview ? ` If some Story Ideas already exist, describe the shared outcome they should move: ${storyIdeaPreview}.` : ""}`
       };
     case "trigger":
       return {
-        question: `What usually triggers ${journeyLabel}?`,
+        question: `What usually triggers ${input.journeyLabel}?`,
         placeholder: "Example: A new customer case arrives",
-        helper: "Describe what starts the flow."
+        helper: `Describe what starts the flow.${storyIdeaPreview ? ` You can use existing Story Ideas as clues for what event, request, or handoff usually starts the work.` : ""}`
       };
     case "currentState":
       return {
-        question: `How does ${journeyLabel} work today?`,
+        question: `How does ${input.journeyLabel} work today?`,
         placeholder: "Example: Work starts in email, continues in spreadsheets, and often stalls during handoff",
-        helper: "Focus on friction, fragmentation, delays, or ambiguity in the current flow."
+        helper: `Focus on friction, fragmentation, delays, or ambiguity in the current flow.${storyIdeaPreview ? ` If Story Ideas already exist, explain what is still messy, slow, or unclear around them.` : ""}`
       };
     case "desiredFutureState":
       return {
-        question: `How should ${journeyLabel} work in the desired future state?`,
+        question: `How should ${input.journeyLabel} work in the desired future state?`,
         placeholder: "Example: The actor follows one clear flow with visible status and fewer manual checks",
-        helper: "Describe better support and smoother flow, not detailed UI design."
+        helper: `Describe better support and smoother flow, not detailed UI design.${storyIdeaPreview ? ` If Story Ideas already exist, describe how they should feel together when the journey works well.` : ""}`
       };
   }
 }
@@ -210,6 +255,8 @@ function buildGuidedJourneyInterviewState(input: {
   rawJourneyContexts: JourneyContext[];
   skippedPromptKeys: string[];
   focusedJourneyId: string | null;
+  epicLabels: string[] | undefined;
+  storyIdeaLabels: string[] | undefined;
 }): GuidedJourneyInterviewState {
   const normalizedContexts = input.rawJourneyContexts.length > 0 ? input.rawJourneyContexts : [createStarterJourneyContext(input.outcomeId, input.initiativeType)];
   const skipped = new Set(input.skippedPromptKeys);
@@ -229,27 +276,6 @@ function buildGuidedJourneyInterviewState(input: {
     }
 
     journeyCount += journeys.length;
-
-    const contextFieldOrder: GuidedJourneyField[] = ["contextTitle"];
-
-    for (const field of contextFieldOrder) {
-      const promptKey = `${context.id}:${field}`;
-
-      if (field === "contextTitle" && !hasText(context.title)) {
-        const prompt = buildGuidedJourneyPrompt(field, "this journey");
-        missingTargets.push({
-          context,
-          journey: firstJourney,
-          field,
-          question: prompt.question,
-          placeholder: prompt.placeholder,
-          helper: prompt.helper,
-          promptKey,
-          totalMissing: 0,
-          skippedMissing: 0
-        });
-      }
-    }
 
     journeys.forEach((journey, index) => {
       if (input.focusedJourneyId && journey.id !== input.focusedJourneyId) {
@@ -289,7 +315,13 @@ function buildGuidedJourneyInterviewState(input: {
           continue;
         }
 
-        const prompt = buildGuidedJourneyPrompt(field, journeyLabel);
+        const prompt = buildGuidedJourneyPrompt({
+          field,
+          journeyLabel,
+          context,
+          epicLabels: input.epicLabels,
+          storyIdeaLabels: input.storyIdeaLabels
+        });
         missingTargets.push({
           context,
           journey,
@@ -303,6 +335,27 @@ function buildGuidedJourneyInterviewState(input: {
         });
       }
     });
+
+    if (shouldAskForContextTitle(context)) {
+      const prompt = buildGuidedJourneyPrompt({
+        field: "contextTitle",
+        journeyLabel: "this journey",
+        context,
+        epicLabels: input.epicLabels,
+        storyIdeaLabels: input.storyIdeaLabels
+      });
+      missingTargets.push({
+        context,
+        journey: firstJourney,
+        field: "contextTitle",
+        question: prompt.question,
+        placeholder: prompt.placeholder,
+        helper: prompt.helper,
+        promptKey: `${context.id}:contextTitle`,
+        totalMissing: 0,
+        skippedMissing: 0
+      });
+    }
   }
 
   const target = missingTargets.find((candidate) => !skipped.has(candidate.promptKey)) ?? null;
@@ -492,10 +545,6 @@ function buildGuidedJourneySuggestion(input: {
   };
 }
 
-function hasCoreJourneyInputs(journey: JourneyContext["journeys"][number]) {
-  return hasText(journey.title) && hasText(journey.primaryActor) && hasText(journey.goal) && hasText(journey.trigger);
-}
-
 function lowerFirst(value: string) {
   const trimmed = value.trim();
 
@@ -641,6 +690,8 @@ export function AiAssistantPanel({
   runAction,
   journeyContextsJson,
   downstreamAiInstructionsJson,
+  epicLabels,
+  storyIdeaLabels,
   onApplySuggestion,
   createStoryIdeaAction
 }: AiAssistantPanelProps) {
@@ -704,10 +755,12 @@ export function AiAssistantPanel({
             initiativeType,
             rawJourneyContexts,
             skippedPromptKeys,
-            focusedJourneyId: focusedJourneyId ?? null
+            focusedJourneyId: focusedJourneyId ?? null,
+            epicLabels,
+            storyIdeaLabels
           })
         : null,
-    [focusedJourneyId, initiativeType, mode, outcomeId, rawJourneyContexts, scopeKind, skippedPromptKeys]
+    [epicLabels, focusedJourneyId, initiativeType, mode, outcomeId, rawJourneyContexts, scopeKind, skippedPromptKeys, storyIdeaLabels]
   );
   const visibleSuggestions = useMemo(
     () => result?.suggestions.filter((suggestion) => !dismissedIds.includes(suggestion.id)) ?? [],
@@ -926,7 +979,7 @@ export function AiAssistantPanel({
               <div>
                 <p className="font-medium text-foreground">Step-by-step journey help</p>
                 <p className="mt-1 text-sm text-sky-900/85">
-                  Work one question at a time. Each answer updates the local Journey draft only after you explicitly apply it.
+                  Start with the journey itself. The broader Journey Context name comes later, once there is enough substance to name.
                 </p>
                 {guidedJourneyInterview.focusedJourneyLabel ? (
                   <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-sky-900/75">
