@@ -11,6 +11,8 @@ type JourneyCardProps = {
   availableEpics: JourneyReferenceOption[];
   availableStoryIdeas: JourneyReferenceOption[];
   availableFigmaRefs: JourneyReferenceOption[];
+  isFocused: boolean;
+  onFocus: (() => void) | undefined;
   onChange: (nextJourney: Journey) => void;
   onRemove: () => void;
   onAddStep: () => void;
@@ -117,6 +119,8 @@ export function JourneyCard({
   availableEpics,
   availableStoryIdeas,
   availableFigmaRefs,
+  isFocused,
+  onFocus,
   onChange,
   onRemove,
   onAddStep,
@@ -125,7 +129,12 @@ export function JourneyCard({
   onRemoveStep
 }: JourneyCardProps) {
   return (
-    <details className="group rounded-[28px] border border-border/70 bg-background shadow-none" open>
+    <details
+      className={`group rounded-[28px] border bg-background shadow-none ${
+        isFocused ? "border-emerald-300 ring-2 ring-emerald-100" : "border-border/70"
+      }`}
+      open
+    >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -139,6 +148,11 @@ export function JourneyCard({
             ) : null}
             <StepSummary count={journey.steps.length} />
             <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} />
+            {isFocused ? (
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+                AI focus
+              </span>
+            ) : null}
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">{journey.title || "Untitled Journey"}</p>
@@ -148,9 +162,34 @@ export function JourneyCard({
             </p>
           </div>
         </div>
-        <Button onClick={onRemove} size="sm" type="button" variant="secondary">
-          Delete Journey
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {onFocus ? (
+            <Button
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onFocus();
+              }}
+              size="sm"
+              type="button"
+              variant={isFocused ? "default" : "secondary"}
+            >
+              {isFocused ? "Focused in AI" : "Focus in AI"}
+            </Button>
+          ) : null}
+          <Button
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onRemove();
+            }}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            Delete Journey
+          </Button>
+        </div>
       </summary>
 
       <div className="border-t border-border/70 px-5 py-5">

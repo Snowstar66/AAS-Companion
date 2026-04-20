@@ -11,9 +11,11 @@ type JourneyContextSectionProps = {
   availableEpics: JourneyReferenceOption[];
   availableStoryIdeas: JourneyReferenceOption[];
   availableFigmaRefs: JourneyReferenceOption[];
+  focusedJourneyId: string | null;
   onChangeContext: (contextId: string, nextContext: JourneyContext) => void;
   onDeleteContext: (contextId: string) => void;
   onAddJourney: (contextId: string) => void;
+  onFocusJourney: (journeyId: string) => void;
   onUpdateJourney: (contextId: string, journeyId: string, updater: (journey: Journey) => Journey) => void;
   onRemoveJourney: (contextId: string, journeyId: string) => void;
   onAddStep: (contextId: string, journeyId: string) => void;
@@ -34,9 +36,11 @@ export function JourneyContextSection({
   availableEpics,
   availableStoryIdeas,
   availableFigmaRefs,
+  focusedJourneyId,
   onChangeContext,
   onDeleteContext,
   onAddJourney,
+  onFocusJourney,
   onUpdateJourney,
   onRemoveJourney,
   onAddStep,
@@ -54,11 +58,13 @@ export function JourneyContextSection({
           availableFigmaRefs={availableFigmaRefs}
           availableStoryIdeas={availableStoryIdeas}
           context={context}
+          focusedJourneyId={focusedJourneyId}
           key={context.id}
           onAddJourney={() => onAddJourney(context.id)}
           onAddStep={(journeyId) => onAddStep(context.id, journeyId)}
           onChange={(nextContext) => onChangeContext(context.id, nextContext)}
           onDelete={() => onDeleteContext(context.id)}
+          onFocusJourney={onFocusJourney}
           onMoveStep={(journeyId, stepId, direction) => onMoveStep(context.id, journeyId, stepId, direction)}
           onRemoveJourney={(journeyId) => onRemoveJourney(context.id, journeyId)}
           onRemoveStep={(journeyId, stepId) => onRemoveStep(context.id, journeyId, stepId)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { mapAiAccelerationLevelToDownstreamAiLevel } from "@aas-companion/domain";
@@ -115,7 +115,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
     data.outcome.deliveryType === "AD" || data.outcome.deliveryType === "AT" || data.outcome.deliveryType === "AM"
       ? data.outcome.deliveryType
       : null;
-  const [contexts, setContexts] = useState<JourneyContext[]>(data.outcome.journeyContexts ?? []);
+  const initialContexts = useMemo(() => data.outcome.journeyContexts ?? [], [data.outcome.journeyContexts]);
+  const [contexts, setContexts] = useState<JourneyContext[]>(initialContexts);
+  const [focusedJourneyId, setFocusedJourneyId] = useState<string | null>(initialContexts[0]?.journeys[0]?.id ?? null);
   const availableEpics: JourneyReferenceOption[] = data.outcome.epics.map((epic) => ({
     id: epic.id,
     label: `${epic.key} - ${epic.title}`
@@ -141,7 +143,20 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
     ] as const)
   );
   const counts = getJourneyContextCounts(contexts);
+  const initialSerializedContexts = JSON.stringify(initialContexts);
   const serializedContexts = JSON.stringify(contexts);
+  const hasUnsavedChanges = serializedContexts !== initialSerializedContexts;
+  const allJourneyIds = contexts.flatMap((context) => context.journeys.map((journey) => journey.id));
+  const focusedContextId =
+    contexts.find((context) => context.journeys.some((journey) => journey.id === focusedJourneyId))?.id ?? contexts[0]?.id ?? null;
+
+  useEffect(() => {
+    if (focusedJourneyId && allJourneyIds.includes(focusedJourneyId)) {
+      return;
+    }
+
+    setFocusedJourneyId(allJourneyIds[0] ?? null);
+  }, [allJourneyIds, focusedJourneyId]);
 
   function updateContext(contextId: string, nextContext: JourneyContext) {
     setContexts((current) => current.map((context) => (context.id === contextId ? nextContext : context)));
@@ -307,6 +322,18 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <p className="mt-2 text-muted-foreground">{getInitiativeRecommendation(initiativeType)}</p>
           </div>
 
+          <div
+            className={`rounded-2xl border px-4 py-4 text-sm ${
+              hasUnsavedChanges
+                ? "border-amber-200 bg-amber-50 text-amber-900"
+                : "border-emerald-200 bg-emerald-50 text-emerald-900"
+            }`}
+          >
+            {hasUnsavedChanges
+              ? "You have local Journey Context changes that are not saved to the Framing package yet."
+              : "The local Journey Context draft matches the saved Framing package."}
+          </div>
+
           {flash?.save === "success" ? <FlashBanner message="Journey Context saved to the Framing package." tone="success" /> : null}
           {flash?.analyze === "success" ? <FlashBanner message="Journey coverage analysis updated for the selected Journey Context." tone="success" /> : null}
           {flash?.message && (flash.save === "error" || flash.analyze === "error") ? (
@@ -321,7 +348,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
                   return;
                 }
 
-                setContexts((current) => [...current, createEmptyJourneyContext(data.outcome.id, initiativeType)]);
+                const nextContext = createEmptyJourneyContext(data.outcome.id, initiativeType);
+                setContexts((current) => [...current, nextContext]);
+                setFocusedJourneyId(nextContext.journeys[0]?.id ?? null);
               }}
               type="button"
             >
@@ -331,7 +360,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <form action={saveAction}>
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
               <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
-              <Button type="submit" variant="secondary">Save Journey Context</Button>
+              <Button disabled={!hasUnsavedChanges} type="submit" variant="secondary">Save Journey Context</Button>
             </form>
           </div>
 
@@ -351,12 +380,15 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
 
       <AiAssistantPanel
         aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel)}
+        focusedJourneyId={focusedJourneyId}
+        hasUnsavedChanges={hasUnsavedChanges}
         initiativeType={initiativeType}
         journeyContextsJson={serializedContexts}
         onApplySuggestion={applySuggestion}
+        onFocusJourney={setFocusedJourneyId}
         outcomeId={data.outcome.id}
         runAction={runAgentAction}
-        scopeEntityId={contexts[0]?.id ?? null}
+        scopeEntityId={focusedContextId}
         scopeKind="journey-context"
         scopeLabel="Journey Context"
       />
@@ -376,17 +408,23 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           availableFigmaRefs={availableFigmaRefs}
           availableStoryIdeas={availableStoryIdeas}
           contexts={contexts}
+          focusedJourneyId={focusedJourneyId}
           onAddJourney={(contextId) =>
-            setContexts((current) =>
-              current.map((context) =>
-                context.id === contextId
-                  ? {
-                      ...context,
-                      journeys: [...context.journeys, createEmptyJourney()]
-                    }
-                  : context
-              )
-            )
+            {
+              const nextJourney = createEmptyJourney();
+
+              setContexts((current) =>
+                current.map((context) =>
+                  context.id === contextId
+                    ? {
+                        ...context,
+                        journeys: [...context.journeys, nextJourney]
+                      }
+                    : context
+                )
+              );
+              setFocusedJourneyId(nextJourney.id);
+            }
           }
           onAddStep={(contextId, journeyId) =>
             updateJourney(contextId, journeyId, (journey) => ({
@@ -396,6 +434,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           }
           onChangeContext={updateContext}
           onDeleteContext={(contextId) => setContexts((current) => current.filter((context) => context.id !== contextId))}
+          onFocusJourney={setFocusedJourneyId}
           onMoveStep={moveStep}
           onRemoveJourney={(contextId, journeyId) =>
             setContexts((current) =>
@@ -437,7 +476,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <form action={saveAction}>
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
               <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
-              <Button type="submit">Save Journey Context</Button>
+              <Button disabled={!hasUnsavedChanges} type="submit">Save Journey Context</Button>
             </form>
           </CardContent>
         </Card>

@@ -13,9 +13,11 @@ type JourneyContextCardProps = {
   availableStoryIdeas: JourneyReferenceOption[];
   availableFigmaRefs: JourneyReferenceOption[];
   analyzeAction: ReactNode;
+  focusedJourneyId: string | null;
   onChange: (nextContext: JourneyContext) => void;
   onDelete: () => void;
   onAddJourney: () => void;
+  onFocusJourney: ((journeyId: string) => void) | undefined;
   onUpdateJourney: (journeyId: string, updater: (journey: Journey) => Journey) => void;
   onRemoveJourney: (journeyId: string) => void;
   onAddStep: (journeyId: string) => void;
@@ -43,9 +45,11 @@ export function JourneyContextCard({
   availableStoryIdeas,
   availableFigmaRefs,
   analyzeAction,
+  focusedJourneyId,
   onChange,
   onDelete,
   onAddJourney,
+  onFocusJourney,
   onUpdateJourney,
   onRemoveJourney,
   onAddStep,
@@ -143,10 +147,12 @@ export function JourneyContextCard({
               availableEpics={availableEpics}
               availableFigmaRefs={availableFigmaRefs}
               availableStoryIdeas={availableStoryIdeas}
+              isFocused={focusedJourneyId === journey.id}
               journey={journey}
               key={journey.id}
               onAddStep={() => onAddStep(journey.id)}
               onChange={(nextJourney) => onUpdateJourney(journey.id, () => nextJourney)}
+              onFocus={onFocusJourney ? () => onFocusJourney(journey.id) : undefined}
               onMoveStep={(stepId, direction) => onMoveStep(journey.id, stepId, direction)}
               onRemove={() => onRemoveJourney(journey.id)}
               onRemoveStep={(stepId) => onRemoveStep(journey.id, stepId)}

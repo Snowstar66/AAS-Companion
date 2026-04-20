@@ -19,6 +19,9 @@ type AiAssistantPanelProps = {
   scopeKind: FramingAgentScopeKind;
   scopeLabel: string;
   scopeEntityId?: string | null;
+  focusedJourneyId?: string | null;
+  onFocusJourney?: (journeyId: string | null) => void;
+  hasUnsavedChanges?: boolean;
   runAction: (formData: FormData) => Promise<FramingAgentActionResult>;
   journeyContextsJson?: string | null;
   downstreamAiInstructionsJson?: string | null;
@@ -62,6 +65,13 @@ type GuidedJourneyInterviewState = {
   hasOnlySkippedQuestions: boolean;
   contextCount: number;
   journeyCount: number;
+  focusedJourneyLabel: string | null;
+};
+
+type JourneyFocusOption = {
+  journeyId: string;
+  contextId: string;
+  label: string;
 };
 
 function createId(prefix: string) {
@@ -193,11 +203,13 @@ function buildGuidedJourneyInterviewState(input: {
   initiativeType: "AD" | "AT" | "AM" | null;
   rawJourneyContexts: JourneyContext[];
   skippedPromptKeys: string[];
+  focusedJourneyId: string | null;
 }): GuidedJourneyInterviewState {
   const normalizedContexts = input.rawJourneyContexts.length > 0 ? input.rawJourneyContexts : [createStarterJourneyContext(input.outcomeId, input.initiativeType)];
   const skipped = new Set(input.skippedPromptKeys);
   const missingTargets: GuidedJourneyInterviewTarget[] = [];
   let journeyCount = 0;
+  let focusedJourneyLabel: string | null = null;
 
   for (const context of normalizedContexts) {
     const journeys =
@@ -234,7 +246,16 @@ function buildGuidedJourneyInterviewState(input: {
     }
 
     journeys.forEach((journey, index) => {
+      if (input.focusedJourneyId && journey.id !== input.focusedJourneyId) {
+        return;
+      }
+
       const journeyLabel = buildJourneyFieldLabel(journey, index);
+
+      if (journey.id === input.focusedJourneyId) {
+        focusedJourneyLabel = journeyLabel;
+      }
+
       const fieldOrder: GuidedJourneyField[] = [
         "journeyTitle",
         "primaryActor",
@@ -287,7 +308,8 @@ function buildGuidedJourneyInterviewState(input: {
       isComplete: missingTargets.length === 0,
       hasOnlySkippedQuestions: missingTargets.length > 0,
       contextCount: normalizedContexts.length,
-      journeyCount
+      journeyCount,
+      focusedJourneyLabel
     };
   }
 
@@ -300,8 +322,23 @@ function buildGuidedJourneyInterviewState(input: {
     isComplete: false,
     hasOnlySkippedQuestions: false,
     contextCount: normalizedContexts.length,
-    journeyCount
+    journeyCount,
+    focusedJourneyLabel
   };
+}
+
+function buildJourneyFocusOptions(rawJourneyContexts: JourneyContext[]): JourneyFocusOption[] {
+  return rawJourneyContexts.flatMap((context) =>
+    context.journeys.map((journey, index) => ({
+      journeyId: journey.id,
+      contextId: context.id,
+      label: hasText(journey.title)
+        ? journey.title.trim()
+        : hasText(context.title)
+          ? `${context.title.trim()} / journey ${index + 1}`
+          : `Journey ${index + 1}`
+    }))
+  );
 }
 
 function buildGuidedJourneySuggestion(input: {
@@ -394,6 +431,9 @@ export function AiAssistantPanel({
   scopeKind,
   scopeLabel,
   scopeEntityId,
+  focusedJourneyId,
+  onFocusJourney,
+  hasUnsavedChanges,
   runAction,
   journeyContextsJson,
   downstreamAiInstructionsJson,
@@ -411,6 +451,7 @@ export function AiAssistantPanel({
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
   const rawJourneyContexts = useMemo(() => parseJourneyContextsJson(journeyContextsJson), [journeyContextsJson]);
+  const journeyFocusOptions = useMemo(() => buildJourneyFocusOptions(rawJourneyContexts), [rawJourneyContexts]);
   const guidedJourneyInterview = useMemo(
     () =>
       scopeKind === "journey-context" && mode === "ask"
@@ -418,10 +459,11 @@ export function AiAssistantPanel({
             outcomeId,
             initiativeType,
             rawJourneyContexts,
-            skippedPromptKeys
+            skippedPromptKeys,
+            focusedJourneyId: focusedJourneyId ?? null
           })
         : null,
-    [initiativeType, mode, outcomeId, rawJourneyContexts, scopeKind, skippedPromptKeys]
+    [focusedJourneyId, initiativeType, mode, outcomeId, rawJourneyContexts, scopeKind, skippedPromptKeys]
   );
   const visibleSuggestions = useMemo(
     () => result?.suggestions.filter((suggestion) => !dismissedIds.includes(suggestion.id)) ?? [],
@@ -596,6 +638,15 @@ export function AiAssistantPanel({
             <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
               Scope: {scopeLabel}
             </span>
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                hasUnsavedChanges
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}
+            >
+              {hasUnsavedChanges ? "Unsaved draft" : "Saved draft"}
+            </span>
           </div>
         </div>
       </CardHeader>
@@ -616,11 +667,41 @@ export function AiAssistantPanel({
                 <p className="mt-1 text-sm text-emerald-900/85">
                   Work one question at a time. Each answer updates the local Journey draft only after you explicitly apply it.
                 </p>
+                {guidedJourneyInterview.focusedJourneyLabel ? (
+                  <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-emerald-900/75">
+                    Focused on {guidedJourneyInterview.focusedJourneyLabel}
+                  </p>
+                ) : null}
               </div>
               <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-medium text-emerald-800">
                 {guidedJourneyInterview.contextCount} context / {guidedJourneyInterview.journeyCount} journey
               </span>
             </div>
+
+            {journeyFocusOptions.length > 0 && onFocusJourney ? (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Journey focus</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={() => onFocusJourney(null)}
+                    type="button"
+                    variant={focusedJourneyId ? "secondary" : "default"}
+                  >
+                    All journeys
+                  </Button>
+                  {journeyFocusOptions.map((option) => (
+                    <Button
+                      key={option.journeyId}
+                      onClick={() => onFocusJourney(option.journeyId)}
+                      type="button"
+                      variant={focusedJourneyId === option.journeyId ? "default" : "secondary"}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {guidedJourneyInterview.target ? (
               <div className="mt-4 space-y-3">
