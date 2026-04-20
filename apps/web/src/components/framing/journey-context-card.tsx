@@ -84,6 +84,9 @@ export function JourneyContextCard({
             <p className="text-sm text-muted-foreground">
               A Journey Context groups one or more related Journeys for this outcome. Use it to describe a meaningful flow area, such as case handling, onboarding, incident resolution, or transformation of a legacy process.
             </p>
+            <p className="text-sm text-muted-foreground">
+              Keep Journeys broad and meaningful. This page works best when each Journey captures a real flow or responsibility area, not a screen-by-screen walkthrough.
+            </p>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm font-medium text-foreground">Title</span>

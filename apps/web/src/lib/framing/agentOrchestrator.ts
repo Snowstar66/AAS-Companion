@@ -158,6 +158,12 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
     }
 
     for (const journey of context.journeys) {
+      if (journey.steps.length > 5) {
+        warnings.push(
+          `"${journey.title || journey.id}" has ${journey.steps.length} detailed Steps. Consider keeping only major handoffs, decisions, or coverage-relevant moments.`
+        );
+      }
+
       if (!hasText(journey.goal)) {
         questions.push(`What is the primary goal in "${journey.title || journey.id}"?`);
       }

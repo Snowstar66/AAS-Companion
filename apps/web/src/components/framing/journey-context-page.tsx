@@ -57,7 +57,7 @@ function createEmptyJourney(): Journey {
     trigger: "",
     currentState: "",
     desiredFutureState: "",
-    steps: [createEmptyStep()],
+    steps: [],
     painPoints: [],
     desiredSupport: [],
     exceptions: [],
@@ -285,6 +285,13 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
             Journey Context is optional. Use it when you want to describe role-based, user, operational, or transformation flows that can help later AI refinement. It is especially useful when handoffs, decision points, pain points, or multi-step support needs matter.
+          </div>
+
+          <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm">
+            <p className="font-medium text-foreground">Keep Journeys broad</p>
+            <p className="mt-2 text-muted-foreground">
+              Start with a few meaningful Journeys that describe the overall flow. Do not model every click, screen, or micro-step. Add detailed Steps only when they genuinely help coverage analysis or downstream refinement.
+            </p>
           </div>
 
           <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm">

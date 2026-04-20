@@ -59,6 +59,14 @@ function CoverageBadge({ status }: { status: string }) {
   );
 }
 
+function StepSummary({ count }: { count: number }) {
+  return (
+    <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
+      {count} detailed step{count === 1 ? "" : "s"}
+    </span>
+  );
+}
+
 function MultiSelectLinks(props: {
   title: string;
   helper: string;
@@ -129,11 +137,15 @@ export function JourneyCard({
                 {journey.type}
               </span>
             ) : null}
+            <StepSummary count={journey.steps.length} />
             <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} />
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">{journey.title || "Untitled Journey"}</p>
-            <p className="text-sm text-muted-foreground">Primary actor: {journey.primaryActor || "Not captured yet"}</p>
+            <p className="text-sm text-muted-foreground">
+              Primary actor: {journey.primaryActor || "Not captured yet"}
+              {journey.goal ? ` · Goal: ${journey.goal}` : ""}
+            </p>
           </div>
         </div>
         <Button onClick={onRemove} size="sm" type="button" variant="secondary">
@@ -142,7 +154,11 @@ export function JourneyCard({
       </summary>
 
       <div className="border-t border-border/70 px-5 py-5">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+          Describe the Journey at flow level first. Focus on actor, goal, trigger, current friction, and desired support. Add detailed Steps only if they help explain a decision, handoff, or gap.
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">Title</span>
             <input
@@ -156,27 +172,6 @@ export function JourneyCard({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Type</span>
-            <select
-              className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-              onChange={(event) =>
-                onChange({
-                  ...journey,
-                  type: event.target.value ? (event.target.value as Journey["type"]) : undefined
-                })
-              }
-              value={journey.type ?? ""}
-            >
-              <option value="">Optional</option>
-              <option value="business">Business</option>
-              <option value="user">User</option>
-              <option value="operational">Operational</option>
-              <option value="support">Support</option>
-              <option value="transformation">Transformation</option>
-            </select>
-          </label>
-
-          <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">Primary Actor</span>
             <input
               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
@@ -185,15 +180,6 @@ export function JourneyCard({
               value={journey.primaryActor}
             />
             <FieldError>{validation?.primaryActor}</FieldError>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Supporting Actors</span>
-            <textarea
-              className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-              onChange={(event) => onChange({ ...journey, supportingActors: parseLines(event.target.value) })}
-              value={joinLines(journey.supportingActors)}
-            />
           </label>
 
           <label className="space-y-2 md:col-span-2">
@@ -218,7 +204,7 @@ export function JourneyCard({
             <FieldError>{validation?.trigger}</FieldError>
           </label>
 
-          <label className="space-y-2 md:col-span-2">
+          <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">Current State</span>
             <textarea
               className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -228,7 +214,7 @@ export function JourneyCard({
             <FieldHint>Describe how the journey works today, especially friction or fragmentation.</FieldHint>
           </label>
 
-          <label className="space-y-2 md:col-span-2">
+          <label className="space-y-2">
             <span className="text-sm font-medium text-foreground">Desired Future State</span>
             <textarea
               className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
@@ -238,110 +224,167 @@ export function JourneyCard({
             <FieldHint>Describe how the journey should work with better support.</FieldHint>
           </label>
 
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Pain Points</span>
-            <textarea
-              className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-              onChange={(event) => onChange({ ...journey, painPoints: parseLines(event.target.value) })}
-              value={joinLines(journey.painPoints)}
-            />
-            <FieldHint>List the most important frictions, delays, ambiguities, or risks.</FieldHint>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Desired Support</span>
-            <textarea
-              className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-              onChange={(event) => onChange({ ...journey, desiredSupport: parseLines(event.target.value) })}
-              value={joinLines(journey.desiredSupport)}
-            />
-            <FieldHint>Describe desired support as capabilities or help, not detailed UI design.</FieldHint>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Exceptions</span>
-            <textarea
-              className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-              onChange={(event) => onChange({ ...journey, exceptions: parseLines(event.target.value) })}
-              value={joinLines(journey.exceptions)}
-            />
-            <FieldHint>Optional. Use when the journey has important variations or failure modes.</FieldHint>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Notes</span>
-            <textarea
-              className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-              onChange={(event) => onChange({ ...journey, notes: event.target.value })}
-              value={journey.notes ?? ""}
-            />
-            <FieldHint>Optional. Add context that may help later refinement.</FieldHint>
-          </label>
         </div>
 
-        <div className="mt-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-base font-semibold text-foreground">Steps</p>
-              <p className="text-sm text-muted-foreground">
-                Add the major steps in the flow. Reorder them when the sequence matters.
-              </p>
-              <FieldError>{validation?.stepsSummary}</FieldError>
+        <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10" open={false}>
+          <summary className="cursor-pointer list-none px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-base font-semibold text-foreground">Optional detail</p>
+                <p className="text-sm text-muted-foreground">
+                  Add supporting actors, pain points, detailed steps, and manual links only when they add signal.
+                </p>
+              </div>
+              <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                Expand details
+              </span>
             </div>
-            <Button onClick={onAddStep} type="button">Add Step</Button>
-          </div>
+          </summary>
 
-          {journey.steps.map((step, index) => (
-            <JourneyStepEditor
-              isFirst={index === 0}
-              isLast={index === journey.steps.length - 1}
-              key={step.id}
-              onChange={(nextStep) => onUpdateStep(step.id, () => nextStep)}
-              onMoveDown={() => onMoveStep(step.id, "down")}
-              onMoveUp={() => onMoveStep(step.id, "up")}
-              onRemove={() => onRemoveStep(step.id)}
-              step={step}
-              validation={validation?.steps[step.id]}
-            />
-          ))}
-        </div>
+          <div className="border-t border-border/70 px-4 py-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Type</span>
+                <select
+                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                  onChange={(event) =>
+                    onChange({
+                      ...journey,
+                      type: event.target.value ? (event.target.value as Journey["type"]) : undefined
+                    })
+                  }
+                  value={journey.type ?? ""}
+                >
+                  <option value="">Optional</option>
+                  <option value="business">Business</option>
+                  <option value="user">User</option>
+                  <option value="operational">Operational</option>
+                  <option value="support">Support</option>
+                  <option value="transformation">Transformation</option>
+                </select>
+              </label>
 
-        <div className="mt-6 space-y-4 rounded-[24px] border border-border/70 bg-muted/15 p-4">
-          <div>
-            <p className="text-base font-semibold text-foreground">Optional manual links</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Optional. Add links if obvious, but you do not need to manually map everything. AI coverage analysis can suggest likely Epic and Story Idea matches later.
-            </p>
-          </div>
-          <MultiSelectLinks
-            helper="Optional Epic links for obvious alignment."
-            onChange={(nextIds) => onChange({ ...journey, linkedEpicIds: nextIds })}
-            options={availableEpics}
-            selectedIds={journey.linkedEpicIds}
-            title="Linked Epics"
-          />
-          <MultiSelectLinks
-            helper="Optional Story Idea links for obvious alignment."
-            onChange={(nextIds) => onChange({ ...journey, linkedStoryIdeaIds: nextIds })}
-            options={availableStoryIdeas}
-            selectedIds={journey.linkedStoryIdeaIds}
-            title="Linked Story Ideas"
-          />
-          <MultiSelectLinks
-            helper="Optional Figma or reference links when they already exist in this Framing package."
-            onChange={(nextIds) => onChange({ ...journey, linkedFigmaRefs: nextIds })}
-            options={availableFigmaRefs}
-            selectedIds={journey.linkedFigmaRefs}
-            title="Linked Figma / References"
-          />
-          {validation?.linkErrors.length ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              {validation.linkErrors.map((message) => (
-                <p key={message}>{message}</p>
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Supporting Actors</span>
+                <textarea
+                  className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  onChange={(event) => onChange({ ...journey, supportingActors: parseLines(event.target.value) })}
+                  value={joinLines(journey.supportingActors)}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Pain Points</span>
+                <textarea
+                  className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  onChange={(event) => onChange({ ...journey, painPoints: parseLines(event.target.value) })}
+                  value={joinLines(journey.painPoints)}
+                />
+                <FieldHint>List only the most important frictions, delays, ambiguities, or risks.</FieldHint>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Desired Support</span>
+                <textarea
+                  className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  onChange={(event) => onChange({ ...journey, desiredSupport: parseLines(event.target.value) })}
+                  value={joinLines(journey.desiredSupport)}
+                />
+                <FieldHint>Describe desired support as capabilities or help, not detailed UI design.</FieldHint>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Exceptions</span>
+                <textarea
+                  className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  onChange={(event) => onChange({ ...journey, exceptions: parseLines(event.target.value) })}
+                  value={joinLines(journey.exceptions)}
+                />
+                <FieldHint>Optional. Use when the journey has important variations or failure modes.</FieldHint>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Notes</span>
+                <textarea
+                  className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  onChange={(event) => onChange({ ...journey, notes: event.target.value })}
+                  value={journey.notes ?? ""}
+                />
+                <FieldHint>Optional. Add context that may help later refinement.</FieldHint>
+              </label>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-base font-semibold text-foreground">Detailed Steps</p>
+                  <p className="text-sm text-muted-foreground">
+                    Optional. Add only the major steps, decisions, or handoffs that help coverage analysis.
+                  </p>
+                  <FieldError>{validation?.stepsSummary}</FieldError>
+                </div>
+                <Button onClick={onAddStep} type="button" variant="secondary">Add detailed Step</Button>
+              </div>
+
+              {journey.steps.length === 0 ? (
+                <div className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm text-muted-foreground">
+                  No detailed Steps added yet. Keep it this way unless extra flow detail will genuinely help.
+                </div>
+              ) : null}
+
+              {journey.steps.map((step, index) => (
+                <JourneyStepEditor
+                  isFirst={index === 0}
+                  isLast={index === journey.steps.length - 1}
+                  key={step.id}
+                  onChange={(nextStep) => onUpdateStep(step.id, () => nextStep)}
+                  onMoveDown={() => onMoveStep(step.id, "down")}
+                  onMoveUp={() => onMoveStep(step.id, "up")}
+                  onRemove={() => onRemoveStep(step.id)}
+                  step={step}
+                  validation={validation?.steps[step.id]}
+                />
               ))}
             </div>
-          ) : null}
-        </div>
+
+            <div className="mt-6 space-y-4 rounded-[24px] border border-border/70 bg-muted/15 p-4">
+              <div>
+                <p className="text-base font-semibold text-foreground">Optional manual links</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Optional. Add links if obvious, but you do not need to manually map everything. AI coverage analysis can suggest likely Epic and Story Idea matches later.
+                </p>
+              </div>
+              <MultiSelectLinks
+                helper="Optional Epic links for obvious alignment."
+                onChange={(nextIds) => onChange({ ...journey, linkedEpicIds: nextIds })}
+                options={availableEpics}
+                selectedIds={journey.linkedEpicIds}
+                title="Linked Epics"
+              />
+              <MultiSelectLinks
+                helper="Optional Story Idea links for obvious alignment."
+                onChange={(nextIds) => onChange({ ...journey, linkedStoryIdeaIds: nextIds })}
+                options={availableStoryIdeas}
+                selectedIds={journey.linkedStoryIdeaIds}
+                title="Linked Story Ideas"
+              />
+              <MultiSelectLinks
+                helper="Optional Figma or reference links when they already exist in this Framing package."
+                onChange={(nextIds) => onChange({ ...journey, linkedFigmaRefs: nextIds })}
+                options={availableFigmaRefs}
+                selectedIds={journey.linkedFigmaRefs}
+                title="Linked Figma / References"
+              />
+              {validation?.linkErrors.length ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  {validation.linkErrors.map((message) => (
+                    <p key={message}>{message}</p>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </details>
 
         {journey.coverage ? (
           <Card className="mt-6 border-border/70 bg-muted/10 shadow-none">

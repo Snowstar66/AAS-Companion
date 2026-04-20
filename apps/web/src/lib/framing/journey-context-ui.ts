@@ -86,7 +86,8 @@ export function validateJourney(
     primaryActor: hasText(journey.primaryActor) ? undefined : "Primary Actor is required.",
     goal: hasText(journey.goal) ? undefined : "Goal is required.",
     trigger: hasText(journey.trigger) ? undefined : "Trigger is required.",
-    stepsSummary: journey.steps.length > 0 ? undefined : "Add at least one Step to this Journey.",
+    stepsSummary:
+      journey.steps.length > 0 ? undefined : "No detailed Steps added yet. That is okay unless you want finer-grained coverage analysis.",
     steps,
     linkErrors
   };
@@ -120,7 +121,7 @@ export function journeyContextHasBlockingValidation(validation: JourneyContextVa
 
   return Object.values(validation.journeys).some(
     (journey) =>
-      Boolean(journey.title || journey.primaryActor || journey.goal || journey.trigger || journey.stepsSummary) ||
+      Boolean(journey.title || journey.primaryActor || journey.goal || journey.trigger) ||
       Object.values(journey.steps).some((step) => Boolean(step.title || step.description))
   );
 }

@@ -42,7 +42,7 @@ export function JourneyStepEditor({
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div>
           <CardTitle className="text-base">Step {step.id}</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">Describe the step in plain business or operational language.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Optional detailed step for major handoffs, decisions, or coverage gaps.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={onMoveUp} size="sm" type="button" variant="secondary" disabled={isFirst}>
