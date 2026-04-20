@@ -74,6 +74,12 @@ type JourneyFocusOption = {
   label: string;
 };
 
+type JourneyDraftTarget = {
+  context: JourneyContext;
+  journey: JourneyContext["journeys"][number];
+  journeyLabel: string;
+};
+
 function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -341,6 +347,27 @@ function buildJourneyFocusOptions(rawJourneyContexts: JourneyContext[]): Journey
   );
 }
 
+function findJourneyDraftTarget(input: {
+  rawJourneyContexts: JourneyContext[];
+  focusedJourneyId: string | null;
+}): JourneyDraftTarget | null {
+  for (const context of input.rawJourneyContexts) {
+    for (const [index, journey] of context.journeys.entries()) {
+      if (input.focusedJourneyId && journey.id !== input.focusedJourneyId) {
+        continue;
+      }
+
+      return {
+        context,
+        journey,
+        journeyLabel: buildJourneyFieldLabel(journey, index)
+      };
+    }
+  }
+
+  return null;
+}
+
 function toSentenceCase(value: string) {
   const trimmed = value.trim();
 
@@ -465,6 +492,110 @@ function buildGuidedJourneySuggestion(input: {
   };
 }
 
+function hasCoreJourneyInputs(journey: JourneyContext["journeys"][number]) {
+  return hasText(journey.title) && hasText(journey.primaryActor) && hasText(journey.goal) && hasText(journey.trigger);
+}
+
+function lowerFirst(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
+}
+
+function buildFirstDraftJourneySuggestion(input: {
+  target: JourneyDraftTarget;
+  initiativeType: "AD" | "AT" | "AM" | null;
+}): FramingAgentSuggestion {
+  const { context, journey } = input.target;
+  const actor = journey.primaryActor.trim();
+  const goal = journey.goal.trim();
+  const trigger = journey.trigger.trim();
+  const title = journey.title.trim();
+  const initiativePhrase =
+    input.initiativeType === "AT"
+      ? "across current and future ways of working"
+      : input.initiativeType === "AM"
+        ? "with stronger operational continuity"
+        : "with clearer support and less friction";
+
+  const generatedSteps =
+    journey.steps.length > 0
+      ? journey.steps
+      : [
+          {
+            id: createId("step"),
+            title: `Start ${title || "journey"}`,
+            actor,
+            description: `${actor} receives or detects the trigger and understands why the journey needs to begin.`,
+            currentPain: "Entry into the flow may be fragmented or unclear.",
+            desiredSupport: "The trigger and next action should be visible immediately.",
+            decisionPoint: false
+          },
+          {
+            id: createId("step"),
+            title: `Progress ${title || "journey"}`,
+            actor,
+            description: `${actor} works through the main flow toward ${lowerFirst(goal)} while coordinating any needed handoffs or checks.`,
+            currentPain: "Important progress may depend on manual coordination or hidden status.",
+            desiredSupport: "The flow should guide progress, decisions, and handoffs clearly.",
+            decisionPoint: true
+          },
+          {
+            id: createId("step"),
+            title: `Complete ${title || "journey"}`,
+            actor,
+            description: `${actor} confirms the outcome, closes the journey, and makes the result visible to the right people.`,
+            currentPain: "Completion and follow-up can be inconsistent or hard to verify.",
+            desiredSupport: "Completion should be explicit, visible, and easy to hand over or audit.",
+            decisionPoint: false
+          }
+        ];
+
+  const nextJourney: JourneyContext["journeys"][number] = {
+    ...journey,
+    currentState:
+      journey.currentState && journey.currentState.trim().length > 0
+        ? journey.currentState
+        : `Today, ${actor.toLowerCase()} often starts when ${lowerFirst(trigger)} but the flow can become fragmented through manual coordination, limited visibility, or unclear handoffs.`,
+    desiredFutureState:
+      journey.desiredFutureState && journey.desiredFutureState.trim().length > 0
+        ? journey.desiredFutureState
+        : `In the desired future state, ${actor.toLowerCase()} can ${lowerFirst(goal)} ${initiativePhrase}, with clearer status, fewer manual interruptions, and smoother decisions.`,
+    painPoints:
+      journey.painPoints && journey.painPoints.length > 0
+        ? journey.painPoints
+        : [
+            `The flow can start inconsistently when ${lowerFirst(trigger)}.`,
+            "Status, ownership, or next action may become unclear during the journey.",
+            `Manual coordination makes it harder to ${lowerFirst(goal)} predictably.`
+          ],
+    desiredSupport:
+      journey.desiredSupport && journey.desiredSupport.length > 0
+        ? journey.desiredSupport
+        : [
+            "Clear entry into the flow with visible trigger and ownership.",
+            "Guided progress with better visibility of status, handoffs, and decisions.",
+            `Consistent completion support so ${lowerFirst(goal)} is easier to achieve and verify.`
+          ],
+    steps: generatedSteps
+  };
+
+  return {
+    id: createId("first-draft-journey"),
+    kind: "rewrite_journey",
+    title: `Generate first draft for ${title || "this journey"}`,
+    description: "Creates a broad first Journey draft with flow language, pain points, desired support, and a few high-level steps.",
+    contextId: context.id,
+    journeyId: journey.id,
+    nextJourney,
+    confidence: 0.84
+  };
+}
+
 function suggestionDetails(suggestion: FramingAgentSuggestion) {
   if (suggestion.kind === "rewrite_journey_step") {
     return suggestion.nextStep.description;
@@ -526,6 +657,43 @@ export function AiAssistantPanel({
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
   const rawJourneyContexts = useMemo(() => parseJourneyContextsJson(journeyContextsJson), [journeyContextsJson]);
   const journeyFocusOptions = useMemo(() => buildJourneyFocusOptions(rawJourneyContexts), [rawJourneyContexts]);
+  const journeyDraftTarget = useMemo(
+    () =>
+      scopeKind === "journey-context"
+        ? findJourneyDraftTarget({
+            rawJourneyContexts,
+            focusedJourneyId: focusedJourneyId ?? null
+          })
+        : null,
+    [focusedJourneyId, rawJourneyContexts, scopeKind]
+  );
+  const firstDraftSuggestion = useMemo(
+    () =>
+      journeyDraftTarget && hasCoreJourneyInputs(journeyDraftTarget.journey)
+        ? buildFirstDraftJourneySuggestion({
+            target: journeyDraftTarget,
+            initiativeType
+          })
+        : null,
+    [initiativeType, journeyDraftTarget]
+  );
+  const firstDraftJourneySuggestion =
+    firstDraftSuggestion?.kind === "rewrite_journey" ? firstDraftSuggestion : null;
+  const canGenerateFirstDraft = Boolean(
+    firstDraftJourneySuggestion &&
+      (
+        !hasText(firstDraftJourneySuggestion.nextJourney.currentState) ||
+        !hasText(firstDraftJourneySuggestion.nextJourney.desiredFutureState) ||
+        (firstDraftJourneySuggestion.nextJourney.painPoints?.length ?? 0) === 0 ||
+        (firstDraftJourneySuggestion.nextJourney.desiredSupport?.length ?? 0) === 0 ||
+        (firstDraftJourneySuggestion.nextJourney.steps?.length ?? 0) === 0 ||
+        !journeyDraftTarget?.journey.currentState ||
+        !journeyDraftTarget?.journey.desiredFutureState ||
+        (journeyDraftTarget?.journey.painPoints?.length ?? 0) === 0 ||
+        (journeyDraftTarget?.journey.desiredSupport?.length ?? 0) === 0 ||
+        (journeyDraftTarget?.journey.steps?.length ?? 0) === 0
+      )
+  );
   const guidedJourneyInterview = useMemo(
     () =>
       scopeKind === "journey-context" && mode === "ask"
@@ -793,6 +961,65 @@ export function AiAssistantPanel({
                     </Button>
                   ))}
                 </div>
+              </div>
+            ) : null}
+
+            {canGenerateFirstDraft && firstDraftJourneySuggestion ? (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-foreground">Generate first draft journey</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      The core Journey inputs are in place. You can now generate a broader first draft for the rest of the flow.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleApplySuggestion(firstDraftJourneySuggestion)}
+                    type="button"
+                  >
+                    Apply first draft
+                  </Button>
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft current state</p>
+                    <p className="text-sm leading-6 text-foreground">{firstDraftJourneySuggestion.nextJourney.currentState}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft desired future state</p>
+                    <p className="text-sm leading-6 text-foreground">{firstDraftJourneySuggestion.nextJourney.desiredFutureState}</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft pain points</p>
+                    <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                      {(firstDraftJourneySuggestion.nextJourney.painPoints ?? []).map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft desired support</p>
+                    <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                      {(firstDraftJourneySuggestion.nextJourney.desiredSupport ?? []).map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                {firstDraftJourneySuggestion.nextJourney.steps.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/75">Draft broad steps</p>
+                    <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                      {firstDraftJourneySuggestion.nextJourney.steps.map((step) => (
+                        <li key={step.id}>
+                          <span className="font-medium text-foreground">{step.title}:</span> {step.description}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
