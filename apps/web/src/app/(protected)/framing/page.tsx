@@ -393,35 +393,45 @@ async function SelectedFramingOutcomeSection(props: {
     );
   }
 
-  let content: ReturnType<typeof JourneyContextPage> | ReturnType<typeof FramingOutcomeSection>;
+  if (props.activeSubpage === "journey-context") {
+    return (
+      <div className="space-y-6">
+        <FramingSubpageNav
+          activeSubpage={props.activeSubpage}
+          journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+          outcomeId={props.outcomeId}
+        />
+        <JourneyContextPage
+          analyzeAction={analyzeJourneyCoverageAction}
+          data={selectedOutcome.data}
+          flash={props.journeyFlash}
+          saveAction={saveJourneyContextsAction}
+        />
+      </div>
+    );
+  }
+
+  let content: ReturnType<typeof FramingOutcomeSection>;
 
   try {
-    content =
-      props.activeSubpage === "journey-context"
-        ? JourneyContextPage({
-            analyzeAction: analyzeJourneyCoverageAction,
-            data: selectedOutcome.data,
-            flash: props.journeyFlash,
-            saveAction: saveJourneyContextsAction
-          })
-        : FramingOutcomeSection({
-            archiveAction: archiveOutcomeAction,
-            createEpicAction: createEpicFromOutcomeAction,
-            createStoryIdeaAction: createStoryIdeaFromOutcomeAction,
-            data: selectedOutcome.data,
-            embeddedInFraming: true,
-            hardDeleteAction: hardDeleteOutcomeAction,
-            initialReviewFramingState: { status: "idle", message: null, report: null },
-            language: props.language,
-            recordTollgateDecisionAction: recordOutcomeTollgateDecisionAction,
-            restoreAction: restoreOutcomeAction,
-            reviewFramingAction: reviewOutcomeFramingWithAiAction,
-            saveAction: saveOutcomeWorkspaceAction,
-            saveInlineAction: saveOutcomeWorkspaceInlineAction,
-            search: props.search,
-            validateBaselineDefinitionAiAction: validateBaselineDefinitionAiAction,
-            validateOutcomeStatementAiAction: validateOutcomeStatementAiAction
-          });
+    content = FramingOutcomeSection({
+      archiveAction: archiveOutcomeAction,
+      createEpicAction: createEpicFromOutcomeAction,
+      createStoryIdeaAction: createStoryIdeaFromOutcomeAction,
+      data: selectedOutcome.data,
+      embeddedInFraming: true,
+      hardDeleteAction: hardDeleteOutcomeAction,
+      initialReviewFramingState: { status: "idle", message: null, report: null },
+      language: props.language,
+      recordTollgateDecisionAction: recordOutcomeTollgateDecisionAction,
+      restoreAction: restoreOutcomeAction,
+      reviewFramingAction: reviewOutcomeFramingWithAiAction,
+      saveAction: saveOutcomeWorkspaceAction,
+      saveInlineAction: saveOutcomeWorkspaceInlineAction,
+      search: props.search,
+      validateBaselineDefinitionAiAction: validateBaselineDefinitionAiAction,
+      validateOutcomeStatementAiAction: validateOutcomeStatementAiAction
+    });
   } catch (error) {
     console.error("Failed to render selected Framing content", error);
 
