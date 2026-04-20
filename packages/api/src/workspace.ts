@@ -24,6 +24,7 @@ import {
   type GovernedChildImpact,
   getOutcomeFramingReadiness,
   getStoryHandoffReadiness,
+  parseDownstreamAiInstructions,
   parseJourneyContexts,
   validateStoryAgainstValueSpine
 } from "@aas-companion/domain";
@@ -34,6 +35,10 @@ import { getTollgateReviewWorkspaceService } from "./tollgates";
 
 function isJourneyContextsStorageUnavailableError(error: unknown) {
   return error instanceof Error && error.message.toLowerCase().includes("journeycontexts");
+}
+
+function isDownstreamAiInstructionsStorageUnavailableError(error: unknown) {
+  return error instanceof Error && error.message.toLowerCase().includes("downstreamaiinstructions");
 }
 
 function toLineageReference(record: {
@@ -345,6 +350,7 @@ export async function saveOutcomeWorkspaceService(input: {
   solutionConstraints?: string | null;
   dataSensitivity?: string | null;
   journeyContexts?: ReturnType<typeof parseJourneyContexts>;
+  downstreamAiInstructions?: ReturnType<typeof parseDownstreamAiInstructions>;
   deliveryType?: "AD" | "AT" | "AM" | null;
   aiUsageRole?: "support" | "generation" | "validation" | "decision_support" | "automation" | null;
   aiExecutionPattern?: "assisted" | "step_by_step" | "orchestrated" | null;
@@ -383,6 +389,7 @@ export async function saveOutcomeWorkspaceService(input: {
     solutionConstraints: input.solutionConstraints,
     dataSensitivity: input.dataSensitivity,
     journeyContexts: input.journeyContexts,
+    downstreamAiInstructions: input.downstreamAiInstructions,
     deliveryType: input.deliveryType,
     aiUsageRole: input.aiUsageRole,
     aiExecutionPattern: input.aiExecutionPattern,
@@ -425,6 +432,33 @@ export async function saveOutcomeJourneyContextsService(input: {
       return failure({
         code: "journey_context_storage_unavailable",
         message: "Journey Context needs the latest database migration before it can be saved."
+      });
+    }
+
+    throw error;
+  }
+}
+
+export async function saveOutcomeDownstreamAiInstructionsService(input: {
+  organizationId: string;
+  outcomeId: string;
+  actorId?: string | null;
+  downstreamAiInstructions: ReturnType<typeof parseDownstreamAiInstructions>;
+}) {
+  try {
+    const result = await updateOutcome({
+      organizationId: input.organizationId,
+      id: input.outcomeId,
+      actorId: input.actorId ?? null,
+      downstreamAiInstructions: input.downstreamAiInstructions
+    });
+
+    return success(result);
+  } catch (error) {
+    if (isDownstreamAiInstructionsStorageUnavailableError(error)) {
+      return failure({
+        code: "downstream_ai_instructions_storage_unavailable",
+        message: "Downstream AI Instructions need the latest database migration before they can be saved."
       });
     }
 

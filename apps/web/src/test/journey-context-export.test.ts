@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeJourneyCoverage } from "@aas-companion/domain";
+import { analyzeJourneyCoverage, type DownstreamAiInstructions } from "@aas-companion/domain";
 import type { JourneyContext } from "@aas-companion/domain";
 import { buildFramingBriefExport } from "@/lib/framing/framing-brief-export";
 
@@ -75,6 +75,57 @@ describe("journey context export", () => {
         solutionConstraints: "Keep audit trail intact",
         dataSensitivity: "Personal data",
         journeyContexts: [journeyContext],
+        downstreamAiInstructions: {
+          initiativeType: "AT",
+          aiLevel: 2,
+          mandatoryControls: [
+            {
+              id: "MC-1",
+              title: "Preserve Epic -> Story -> Test traceability",
+              description: "Keep traceability visible.",
+              enabled: true
+            }
+          ],
+          refinementPreferences: [
+            {
+              id: "E1",
+              group: "epic",
+              title: "Keep each Epic centered on one coherent capability/value area",
+              description: "Prefer coherent Epic scope",
+              defaultByMode: {
+                AD: "YES",
+                AT: "YES",
+                AM: "YES"
+              },
+              allowNa: true,
+              selectedValue: "YES",
+              rationale: ""
+            },
+            {
+              id: "B8",
+              group: "build",
+              title: "Prefer low blast radius and reversibility in rollout",
+              description: "Favor safer release mechanics",
+              defaultByMode: {
+                AD: "NO",
+                AT: "YES",
+                AM: "YES"
+              },
+              allowNa: true,
+              selectedValue: "NO",
+              rationale: "Current rollout tooling is not phased yet."
+            }
+          ],
+          customInstructions: [
+            {
+              id: "custom-1",
+              title: "Preserve coexistence language",
+              body: "Downstream AI should keep coexistence planning visible in design and build guidance.",
+              category: "Design",
+              priority: "High"
+            }
+          ]
+        } satisfies DownstreamAiInstructions,
         deliveryType: "AT",
         aiExecutionPattern: "step_by_step",
         aiUsageIntent: "Refine framing and story ideas",
@@ -124,10 +175,13 @@ describe("journey context export", () => {
       blockers: []
     });
 
-    expect(exportResult.payload.version).toBe(4);
+    expect(exportResult.payload.version).toBe(5);
     expect(exportResult.payload.journey_contexts).toHaveLength(1);
     expect(exportResult.payload.journey_contexts[0]?.journeys[0]?.coverage?.status).toBe("partially_covered");
+    expect(exportResult.payload.downstream_ai_instructions?.initiativeType).toBe("AT");
+    expect(exportResult.payload.downstream_ai_instructions?.deviations).toHaveLength(1);
     expect(exportResult.markdown).toContain("## Journey Context");
+    expect(exportResult.markdown).toContain("## Downstream AI Instructions");
     expect(exportResult.markdown).toContain("Handle incoming case");
     expect(exportResult.markdown).toContain("Coverage status: partially_covered");
   });

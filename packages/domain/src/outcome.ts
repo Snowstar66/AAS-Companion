@@ -8,6 +8,7 @@ import {
   outcomeStatusSchema,
   riskProfileSchema
 } from "./enums";
+import { downstreamAiInstructionsSchema } from "./downstream-ai-instructions";
 import { journeyContextCollectionSchema } from "./journey-context";
 import {
   createReadinessAssessment,
@@ -30,6 +31,7 @@ export const outcomeRecordSchema = z.object({
   solutionConstraints: z.string().nullish(),
   dataSensitivity: z.string().nullish(),
   journeyContexts: journeyContextCollectionSchema.nullish(),
+  downstreamAiInstructions: downstreamAiInstructionsSchema.nullish(),
   deliveryType: z.enum(["AD", "AT", "AM"]).nullish(),
   aiUsageRole: z.enum(["support", "generation", "validation", "decision_support", "automation"]).nullish(),
   aiExecutionPattern: z.enum(["assisted", "step_by_step", "orchestrated"]).nullish(),

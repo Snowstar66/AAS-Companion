@@ -400,6 +400,7 @@ model Outcome {
   solutionConstraints String?
   dataSensitivity     String?
   journeyContexts     Json?
+  downstreamAiInstructions Json?
   deliveryType        String?
   aiUsageRole         String?
   aiExecutionPattern  String?

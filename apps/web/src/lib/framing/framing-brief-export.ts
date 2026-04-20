@@ -1,4 +1,10 @@
-import type { JourneyContext } from "@aas-companion/domain";
+import {
+  analyzeDownstreamAiInstructions,
+  mapAiAccelerationLevelToDownstreamAiLevel,
+  parseDownstreamAiInstructions,
+  type DownstreamAiInstructions,
+  type JourneyContext
+} from "@aas-companion/domain";
 
 type FramingBriefOutcome = {
   id: string;
@@ -12,6 +18,7 @@ type FramingBriefOutcome = {
   solutionConstraints: string | null;
   dataSensitivity: string | null;
   journeyContexts: JourneyContext[];
+  downstreamAiInstructions?: DownstreamAiInstructions | null;
   deliveryType: string | null;
   aiExecutionPattern: string | null;
   aiUsageIntent: string | null;
@@ -74,7 +81,7 @@ type FramingApprovalSnapshot = {
 
 export type FramingBriefExportPayload = {
   kind: "framing_brief";
-  version: 4;
+  version: 5;
   handshake: {
     outcome_key: string;
     outcome_title: string;
@@ -192,6 +199,58 @@ export type FramingBriefExportPayload = {
       } | null;
     }>;
   }>;
+  downstream_ai_instructions: {
+    initiativeType: "AD" | "AT" | "AM";
+    aiLevel: 0 | 1 | 2 | 3;
+    mandatoryControls: Array<{
+      id: string;
+      title: string;
+      description: string;
+      enabled: true;
+    }>;
+    refinementPreferences: Array<{
+      id: string;
+      group: "epic" | "story" | "journey" | "design" | "build";
+      title: string;
+      description: string | null;
+      recommended: "YES" | "NO" | "N/A";
+      selectedValue: "YES" | "NO" | "N/A";
+      allowNa: boolean;
+      rationale: string | null;
+    }>;
+    customInstructions: Array<{
+      id: string;
+      title: string;
+      body: string;
+      category: "General" | "Epic" | "Story" | "Journey" | "Design" | "Build";
+      priority: "Normal" | "High";
+    }>;
+    deviations: Array<{
+      id: string;
+      group: "epic" | "story" | "journey" | "design" | "build";
+      title: string;
+      recommended: "YES" | "NO" | "N/A";
+      selected: "YES" | "NO" | "N/A";
+      rationale: string | null;
+    }>;
+    warnings: string[];
+    hard_validation_issues: string[];
+    generatedGuidance: {
+      epicRefinementGuide: string[];
+      storyIdeaRefinementGuide: string[];
+      journeyUsageGuide: string[];
+      designAiGuidance: string[];
+      buildAiGuidance: string[];
+      customInstructionAppendix: Array<{
+        title: string;
+        category: string;
+        priority: string;
+        body: string;
+      }>;
+      deviationsSummary: string[];
+      warningValidationNotes: string[];
+    };
+  } | null;
   approvals: {
     status: "approved" | "not_approved";
     approved_version: number | null;
@@ -440,6 +499,64 @@ function mapJourneyContexts(outcome: FramingBriefOutcome) {
   }));
 }
 
+function mapDownstreamAiInstructions(outcome: FramingBriefOutcome) {
+  const deliveryType =
+    outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : "AD";
+  const instructions =
+    parseDownstreamAiInstructions(outcome.downstreamAiInstructions, {
+      initiativeType: deliveryType,
+      aiLevel: mapAiAccelerationLevelToDownstreamAiLevel(outcome.aiAccelerationLevel)
+    }) ?? null;
+
+  if (!instructions) {
+    return null;
+  }
+
+  const analysis = analyzeDownstreamAiInstructions({
+    instructions,
+    hasJourneyContext: outcome.journeyContexts.length > 0
+  });
+
+  return {
+    initiativeType: instructions.initiativeType,
+    aiLevel: instructions.aiLevel,
+    mandatoryControls: instructions.mandatoryControls.map((control) => ({
+      id: control.id,
+      title: control.title,
+      description: control.description,
+      enabled: true as const
+    })),
+    refinementPreferences: instructions.refinementPreferences.map((preference) => ({
+      id: preference.id,
+      group: preference.group,
+      title: preference.title,
+      description: preference.description ?? null,
+      recommended: preference.defaultByMode[instructions.initiativeType],
+      selectedValue: preference.selectedValue,
+      allowNa: preference.allowNa,
+      rationale: preference.rationale?.trim() || null
+    })),
+    customInstructions: instructions.customInstructions.map((instruction) => ({
+      id: instruction.id,
+      title: instruction.title,
+      body: instruction.body,
+      category: instruction.category,
+      priority: instruction.priority
+    })),
+    deviations: analysis.deviations.map((deviation) => ({
+      id: deviation.id,
+      group: deviation.group,
+      title: deviation.title,
+      recommended: deviation.recommended,
+      selected: deviation.selected,
+      rationale: deviation.rationale
+    })),
+    warnings: analysis.warnings,
+    hard_validation_issues: analysis.hardIssues,
+    generatedGuidance: analysis.generatedGuidance
+  };
+}
+
 export function buildFramingBriefExport(input: {
   outcome: FramingBriefOutcome;
   blockers: string[];
@@ -489,10 +606,11 @@ export function buildFramingBriefExport(input: {
       })
     }));
   const journeyContexts = mapJourneyContexts(input.outcome);
+  const downstreamAiInstructions = mapDownstreamAiInstructions(input.outcome);
 
   const payload: FramingBriefExportPayload = {
     kind: "framing_brief",
-    version: 4,
+    version: 5,
     handshake: {
       outcome_key: input.outcome.key,
       outcome_title: input.outcome.title,
@@ -534,6 +652,7 @@ export function buildFramingBriefExport(input: {
       unassigned_story_ideas: unassignedStoryIdeas
     },
     journey_contexts: journeyContexts,
+    downstream_ai_instructions: downstreamAiInstructions,
     approvals: {
       status: input.tollgate?.status === "approved" ? "approved" : "not_approved",
       approved_version: approvalSnapshot.approvedVersion ?? input.tollgate?.approvedVersion ?? null,
@@ -713,6 +832,83 @@ export function buildFramingBriefExport(input: {
           ])
         ]
       : []),
+    ...(payload.downstream_ai_instructions
+      ? [
+          "## Downstream AI Instructions",
+          "",
+          "### Always-on Controls",
+          ...payload.downstream_ai_instructions.mandatoryControls.map(
+            (control) => `- ${control.title}: ${control.description}`
+          ),
+          "",
+          "### Epic Refinement",
+          ...payload.downstream_ai_instructions.refinementPreferences
+            .filter((preference) => preference.group === "epic")
+            .map(
+              (preference) =>
+                `- ${preference.id} ${preference.title}: ${preference.selectedValue} (recommended ${preference.recommended})${preference.rationale ? ` - ${preference.rationale}` : ""}`
+            ),
+          "",
+          "### Story Idea Refinement",
+          ...payload.downstream_ai_instructions.refinementPreferences
+            .filter((preference) => preference.group === "story")
+            .map(
+              (preference) =>
+                `- ${preference.id} ${preference.title}: ${preference.selectedValue} (recommended ${preference.recommended})${preference.rationale ? ` - ${preference.rationale}` : ""}`
+            ),
+          "",
+          "### Journey Usage",
+          ...payload.downstream_ai_instructions.refinementPreferences
+            .filter((preference) => preference.group === "journey")
+            .map(
+              (preference) =>
+                `- ${preference.id} ${preference.title}: ${preference.selectedValue} (recommended ${preference.recommended})${preference.rationale ? ` - ${preference.rationale}` : ""}`
+            ),
+          "",
+          "### Design Guidance",
+          ...payload.downstream_ai_instructions.refinementPreferences
+            .filter((preference) => preference.group === "design")
+            .map(
+              (preference) =>
+                `- ${preference.id} ${preference.title}: ${preference.selectedValue} (recommended ${preference.recommended})${preference.rationale ? ` - ${preference.rationale}` : ""}`
+            ),
+          "",
+          "### Build Guidance",
+          ...payload.downstream_ai_instructions.refinementPreferences
+            .filter((preference) => preference.group === "build")
+            .map(
+              (preference) =>
+                `- ${preference.id} ${preference.title}: ${preference.selectedValue} (recommended ${preference.recommended})${preference.rationale ? ` - ${preference.rationale}` : ""}`
+            ),
+          "",
+          "### Custom Instructions",
+          ...(payload.downstream_ai_instructions.customInstructions.length > 0
+            ? payload.downstream_ai_instructions.customInstructions.flatMap((instruction) => [
+                `- ${instruction.priority} ${instruction.category}: ${instruction.title}`,
+                `  ${instruction.body}`
+              ])
+            : ["- No custom instructions added."]),
+          "",
+          "### Deviations from Recommended Defaults",
+          ...payload.downstream_ai_instructions.generatedGuidance.deviationsSummary.map((line) => `- ${line}`),
+          "",
+          "### Warnings / Validation Notes",
+          ...payload.downstream_ai_instructions.generatedGuidance.warningValidationNotes.map((line) => `- ${line}`),
+          "",
+          "### Generated Downstream Guidance",
+          "#### Epic Refinement Guide",
+          ...payload.downstream_ai_instructions.generatedGuidance.epicRefinementGuide.map((line) => `- ${line}`),
+          "#### Story Idea Refinement Guide",
+          ...payload.downstream_ai_instructions.generatedGuidance.storyIdeaRefinementGuide.map((line) => `- ${line}`),
+          "#### Journey Usage Guide",
+          ...payload.downstream_ai_instructions.generatedGuidance.journeyUsageGuide.map((line) => `- ${line}`),
+          "#### Design AI Guidance",
+          ...payload.downstream_ai_instructions.generatedGuidance.designAiGuidance.map((line) => `- ${line}`),
+          "#### Build AI Guidance",
+          ...payload.downstream_ai_instructions.generatedGuidance.buildAiGuidance.map((line) => `- ${line}`),
+          ""
+        ]
+      : []),
     "## Tollgate 1 Approval Context",
     `Approval status: ${payload.approvals.status === "approved" ? "Approved" : "Not yet approved"}`,
     `Approved version: ${payload.approvals.approved_version ?? "Not captured yet"}`,
@@ -826,6 +1022,16 @@ export function buildHumanFramingBriefExport(input: {
               : ["- No Journeys are captured yet."]),
             ""
           ])
+        ]
+      : []),
+    ...(payload.downstream_ai_instructions
+      ? [
+          "## Downstream AI Instructions",
+          `Initiative type: ${payload.downstream_ai_instructions.initiativeType}`,
+          `AI level: ${payload.downstream_ai_instructions.aiLevel}`,
+          ...payload.downstream_ai_instructions.generatedGuidance.deviationsSummary.map((line) => `- ${line}`),
+          ...payload.downstream_ai_instructions.generatedGuidance.warningValidationNotes.map((line) => `- ${line}`),
+          ""
         ]
       : []),
     "## Approval context",

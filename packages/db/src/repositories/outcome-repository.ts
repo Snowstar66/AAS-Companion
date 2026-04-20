@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Prisma } from "../../generated/client";
-import { outcomeCreateInputSchema, outcomeUpdateInputSchema, parseJourneyContexts } from "@aas-companion/domain";
+import {
+  outcomeCreateInputSchema,
+  outcomeUpdateInputSchema,
+  parseDownstreamAiInstructions,
+  parseJourneyContexts
+} from "@aas-companion/domain";
 import { prisma } from "../client";
 import { logDevTiming, withDevTiming } from "../dev-timing";
 import { appendActivityEvent } from "./activity-repository";
@@ -39,16 +44,29 @@ function toPrismaJsonValue(value: unknown): Prisma.InputJsonValue | Prisma.Nulla
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
-function isMissingJourneyContextsColumnError(error: unknown) {
+function isMissingOptionalJsonColumnError(error: unknown, columnName: string) {
   if (!(error instanceof Error)) {
     return false;
   }
 
   const message = error.message.toLowerCase();
-  return message.includes("journeycontexts") && (message.includes("column") || message.includes("p2022"));
+  return message.includes(columnName.toLowerCase()) && (message.includes("column") || message.includes("p2022"));
 }
 
-function buildOutcomeScalarSelect(includeJourneyContexts = false) {
+function isMissingOptionalOutcomeJsonColumnError(error: unknown) {
+  return (
+    isMissingOptionalJsonColumnError(error, "journeycontexts") ||
+    isMissingOptionalJsonColumnError(error, "downstreamaiinstructions")
+  );
+}
+
+function buildOutcomeScalarSelect(options?: {
+  includeJourneyContexts?: boolean;
+  includeDownstreamAiInstructions?: boolean;
+}) {
+  const includeJourneyContexts = options?.includeJourneyContexts ?? false;
+  const includeDownstreamAiInstructions = options?.includeDownstreamAiInstructions ?? false;
+
   return {
     id: true,
     organizationId: true,
@@ -63,6 +81,7 @@ function buildOutcomeScalarSelect(includeJourneyContexts = false) {
     solutionConstraints: true,
     dataSensitivity: true,
     ...(includeJourneyContexts ? { journeyContexts: true } : {}),
+    ...(includeDownstreamAiInstructions ? { downstreamAiInstructions: true } : {}),
     deliveryType: true,
     aiUsageRole: true,
     aiExecutionPattern: true,
@@ -97,9 +116,12 @@ function buildOutcomeScalarSelect(includeJourneyContexts = false) {
   } satisfies Prisma.OutcomeSelect;
 }
 
-function buildOutcomeWorkspaceSelect(includeJourneyContexts = false) {
+function buildOutcomeWorkspaceSelect(options?: {
+  includeJourneyContexts?: boolean;
+  includeDownstreamAiInstructions?: boolean;
+}) {
   return {
-    ...buildOutcomeScalarSelect(includeJourneyContexts),
+    ...buildOutcomeScalarSelect(options),
     valueOwner: {
       select: {
         id: true,
@@ -412,40 +434,42 @@ export async function getOutcomeById(organizationId: string, id: string) {
 export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: string) {
   return withDevTiming("db.getOutcomeWorkspaceSnapshot", async () => {
     const outcomePromise = async () => {
-      try {
-        const outcome = await prisma.outcome.findFirst({
-          where: {
-            organizationId,
-            id
-          },
-          select: buildOutcomeWorkspaceSelect(true)
-        });
+      const selectCombos = [
+        { includeJourneyContexts: true, includeDownstreamAiInstructions: true },
+        { includeJourneyContexts: true, includeDownstreamAiInstructions: false },
+        { includeJourneyContexts: false, includeDownstreamAiInstructions: true },
+        { includeJourneyContexts: false, includeDownstreamAiInstructions: false }
+      ];
+      let lastOptionalColumnError: unknown = null;
 
-        return {
-          outcome,
-          journeyContextsAvailable: true
-        };
-      } catch (error) {
-        if (!isMissingJourneyContextsColumnError(error)) {
-          throw error;
+      for (const combo of selectCombos) {
+        try {
+          const outcome = await prisma.outcome.findFirst({
+            where: {
+              organizationId,
+              id
+            },
+            select: buildOutcomeWorkspaceSelect(combo)
+          });
+
+          return {
+            outcome,
+            journeyContextsAvailable: combo.includeJourneyContexts,
+            downstreamAiInstructionsAvailable: combo.includeDownstreamAiInstructions
+          };
+        } catch (error) {
+          if (!isMissingOptionalOutcomeJsonColumnError(error)) {
+            throw error;
+          }
+
+          lastOptionalColumnError = error;
         }
-
-        const outcome = await prisma.outcome.findFirst({
-          where: {
-            organizationId,
-            id
-          },
-          select: buildOutcomeWorkspaceSelect(false)
-        });
-
-        return {
-          outcome,
-          journeyContextsAvailable: false
-        };
       }
+
+      throw lastOptionalColumnError;
     };
 
-    const [{ outcome, journeyContextsAvailable }, tollgate, activityEventCount] = await Promise.all([
+    const [{ outcome, journeyContextsAvailable, downstreamAiInstructionsAvailable }, tollgate, activityEventCount] = await Promise.all([
       outcomePromise(),
       prisma.tollgate.findFirst({
         where: {
@@ -494,6 +518,15 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
         ...outcome,
         journeyContexts: parseJourneyContexts(journeyContextsAvailable ? outcome.journeyContexts : null),
         journeyContextsStorageAvailable: journeyContextsAvailable,
+        downstreamAiInstructions: parseDownstreamAiInstructions(
+          downstreamAiInstructionsAvailable ? outcome.downstreamAiInstructions : null,
+          {
+            initiativeType: outcome.deliveryType ?? null,
+            aiLevel:
+              outcome.aiAccelerationLevel === "level_1" ? 1 : outcome.aiAccelerationLevel === "level_2" ? 2 : outcome.aiAccelerationLevel === "level_3" ? 3 : 0
+          }
+        ),
+        downstreamAiInstructionsStorageAvailable: downstreamAiInstructionsAvailable,
         epics: outcome.epics
           .filter((epic) => epic.lifecycleState === relatedLifecycleState)
           .map((epic) =>
@@ -535,6 +568,11 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         ...(parsed.journeyContexts !== undefined
           ? {
               journeyContexts: toPrismaJsonValue(parsed.journeyContexts)
+            }
+          : {}),
+        ...(parsed.downstreamAiInstructions !== undefined
+          ? {
+              downstreamAiInstructions: toPrismaJsonValue(parsed.downstreamAiInstructions)
             }
           : {}),
         deliveryType: parsed.deliveryType ?? null,
@@ -601,7 +639,10 @@ export async function updateOutcome(input: unknown, db: Prisma.TransactionClient
         organizationId: parsed.organizationId,
         id: parsed.id
       },
-      select: buildOutcomeScalarSelect(parsed.journeyContexts !== undefined)
+      select: buildOutcomeScalarSelect({
+        includeJourneyContexts: parsed.journeyContexts !== undefined,
+        includeDownstreamAiInstructions: parsed.downstreamAiInstructions !== undefined
+      })
     });
 
     if (!existing) {
@@ -634,6 +675,7 @@ export async function updateOutcome(input: unknown, db: Prisma.TransactionClient
       hasScalarChanged(parsed.solutionConstraints, existing.solutionConstraints) ||
       hasScalarChanged(parsed.dataSensitivity, existing.dataSensitivity) ||
       hasJsonChanged(parsed.journeyContexts, existing.journeyContexts) ||
+      hasJsonChanged(parsed.downstreamAiInstructions, existing.downstreamAiInstructions) ||
       hasScalarChanged(parsed.deliveryType, existing.deliveryType) ||
       hasScalarChanged(parsed.aiUsageRole, existing.aiUsageRole) ||
       hasScalarChanged(parsed.aiExecutionPattern, existing.aiExecutionPattern) ||
@@ -692,6 +734,10 @@ export async function updateOutcome(input: unknown, db: Prisma.TransactionClient
 
     if (parsed.journeyContexts !== undefined) {
       data.journeyContexts = toPrismaJsonValue(parsed.journeyContexts);
+    }
+
+    if (parsed.downstreamAiInstructions !== undefined) {
+      data.downstreamAiInstructions = toPrismaJsonValue(parsed.downstreamAiInstructions);
     }
 
     if (parsed.deliveryType !== undefined) {

@@ -11,9 +11,10 @@ import { type CreateOutcomeActionState } from "@/lib/framing/create-outcome";
 import {
   analyzeOutcomeJourneyCoverageService,
   createCleanDraftOutcomeFromFramingService,
+  saveOutcomeDownstreamAiInstructionsService,
   saveOutcomeJourneyContextsService
 } from "@aas-companion/api";
-import { journeyContextCollectionSchema } from "@aas-companion/domain";
+import { downstreamAiInstructionsSchema, journeyContextCollectionSchema } from "@aas-companion/domain";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
 function buildFramingRedirect(input: {
@@ -52,6 +53,17 @@ function readJourneyContextsJson(formData: FormData) {
 
   try {
     const parsed = journeyContextCollectionSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function readDownstreamAiInstructionsJson(formData: FormData) {
+  const raw = String(formData.get("downstreamAiInstructionsJson") ?? "null");
+
+  try {
+    const parsed = downstreamAiInstructionsSchema.safeParse(JSON.parse(raw));
     return parsed.success ? parsed.data : null;
   } catch {
     return null;
@@ -182,6 +194,57 @@ export async function analyzeJourneyCoverageAction(formData: FormData) {
       subpage: "journey-context",
       search: {
         journeyAnalyze: "success"
+      }
+    })
+  );
+}
+
+export async function saveDownstreamAiInstructionsAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
+  const downstreamAiInstructions = readDownstreamAiInstructionsJson(formData);
+
+  if (!downstreamAiInstructions) {
+    redirect(
+      buildFramingRedirect({
+        outcomeId,
+        subpage: "downstream-ai-instructions",
+        search: {
+          downstreamSave: "error",
+          downstreamMessage: "Downstream AI Instructions could not be parsed."
+        }
+      })
+    );
+  }
+
+  const result = await saveOutcomeDownstreamAiInstructionsService({
+    organizationId: session.organization.organizationId,
+    outcomeId,
+    actorId: session.userId,
+    downstreamAiInstructions
+  });
+
+  revalidateFramingWorkspaceRoutes(session.organization.organizationId, outcomeId);
+
+  if (!result.ok) {
+    redirect(
+      buildFramingRedirect({
+        outcomeId,
+        subpage: "downstream-ai-instructions",
+        search: {
+          downstreamSave: "error",
+          downstreamMessage: result.errors[0]?.message ?? "Downstream AI Instructions could not be saved."
+        }
+      })
+    );
+  }
+
+  redirect(
+    buildFramingRedirect({
+      outcomeId,
+      subpage: "downstream-ai-instructions",
+      search: {
+        downstreamSave: "success"
       }
     })
   );

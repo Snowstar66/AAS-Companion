@@ -7,13 +7,19 @@ import { FramingOutcomeSection } from "@/components/framing/framing-outcome-sect
 import { AppShell } from "@/components/layout/app-shell";
 import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import { FramingCockpit } from "@/components/framing/framing-cockpit";
+import { DownstreamAiInstructionsPage } from "@/components/framing/downstream-ai-instructions-page";
 import { FramingSubpageNav } from "@/components/framing/framing-subpage-nav";
 import { JourneyContextPage } from "@/components/framing/journey-context-page";
 import { FramingRightRail } from "@/components/framing/framing-right-rail";
 import { LocalizedText } from "@/components/shared/localized-text";
 import { loadFramingCockpit } from "@/lib/framing/cockpit";
 import { withDevTiming } from "@/lib/dev-timing";
-import { analyzeJourneyCoverageAction, createDraftOutcomeAction, saveJourneyContextsAction } from "./actions";
+import {
+  analyzeJourneyCoverageAction,
+  createDraftOutcomeAction,
+  saveDownstreamAiInstructionsAction,
+  saveJourneyContextsAction
+} from "./actions";
 import {
   archiveOutcomeAction,
   createEpicFromOutcomeAction,
@@ -224,7 +230,13 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
               {outcomeId ? (
                 <Suspense fallback={<FramingWorkspaceFallback />}>
                   <SelectedFramingOutcomeSection
-                    activeSubpage={requestedSubpage === "journey-context" ? "journey-context" : "overview"}
+                    activeSubpage={
+                      requestedSubpage === "journey-context"
+                        ? "journey-context"
+                        : requestedSubpage === "downstream-ai-instructions"
+                          ? "downstream-ai-instructions"
+                          : "overview"
+                    }
                     language={serverLanguage}
                     organizationId={session.organization.organizationId}
                     outcomeId={outcomeId}
@@ -233,6 +245,10 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
                       analyze: (getParamValue(query.journeyAnalyze) as "success" | "error" | null) ?? null,
                       message: getParamValue(query.journeyMessage) ?? null,
                       save: (getParamValue(query.journeySave) as "success" | "error" | null) ?? null
+                    }}
+                    downstreamFlash={{
+                      message: getParamValue(query.downstreamMessage) ?? null,
+                      save: (getParamValue(query.downstreamSave) as "success" | "error" | null) ?? null
                     }}
                   />
                 </Suspense>
@@ -341,7 +357,7 @@ function FramingWorkspaceFallback() {
 }
 
 async function SelectedFramingOutcomeSection(props: {
-  activeSubpage: "overview" | "journey-context";
+  activeSubpage: "overview" | "journey-context" | "downstream-ai-instructions";
   language: "en" | "sv";
   organizationId: string;
   outcomeId: string;
@@ -364,6 +380,10 @@ async function SelectedFramingOutcomeSection(props: {
   journeyFlash: {
     save?: "success" | "error" | null;
     analyze?: "success" | "error" | null;
+    message?: string | null;
+  };
+  downstreamFlash: {
+    save?: "success" | "error" | null;
     message?: string | null;
   };
 }) {
@@ -398,6 +418,7 @@ async function SelectedFramingOutcomeSection(props: {
       <div className="space-y-6">
         <FramingSubpageNav
           activeSubpage={props.activeSubpage}
+          customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
           journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
           outcomeId={props.outcomeId}
         />
@@ -406,6 +427,24 @@ async function SelectedFramingOutcomeSection(props: {
           data={selectedOutcome.data}
           flash={props.journeyFlash}
           saveAction={saveJourneyContextsAction}
+        />
+      </div>
+    );
+  }
+
+  if (props.activeSubpage === "downstream-ai-instructions") {
+    return (
+      <div className="space-y-6">
+        <FramingSubpageNav
+          activeSubpage={props.activeSubpage}
+          customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
+          journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+          outcomeId={props.outcomeId}
+        />
+        <DownstreamAiInstructionsPage
+          data={selectedOutcome.data}
+          flash={props.downstreamFlash}
+          saveAction={saveDownstreamAiInstructionsAction}
         />
       </div>
     );
@@ -439,6 +478,7 @@ async function SelectedFramingOutcomeSection(props: {
       <div className="space-y-6">
         <FramingSubpageNav
           activeSubpage={props.activeSubpage}
+          customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
           journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
           outcomeId={props.outcomeId}
         />
@@ -451,6 +491,7 @@ async function SelectedFramingOutcomeSection(props: {
     <div className="space-y-6">
       <FramingSubpageNav
         activeSubpage={props.activeSubpage}
+        customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
         journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
         outcomeId={props.outcomeId}
       />

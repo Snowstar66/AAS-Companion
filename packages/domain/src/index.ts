@@ -2,6 +2,8 @@ export * from "./activity";
 export * from "./artifact-intake";
 export * from "./auth";
 export * from "./demo";
+export * from "./downstream-ai-instructions";
+export * from "./downstream-guidance-engine";
 export * from "./direction-seed";
 export * from "./epic";
 export * from "./enums";
