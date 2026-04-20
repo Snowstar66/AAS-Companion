@@ -32,6 +32,10 @@ import { withDevTiming } from "./dev-timing";
 import { failure, success, type ApiResult } from "./shared";
 import { getTollgateReviewWorkspaceService } from "./tollgates";
 
+function isJourneyContextsStorageUnavailableError(error: unknown) {
+  return error instanceof Error && error.message.toLowerCase().includes("journeycontexts");
+}
+
 function toLineageReference(record: {
   lineageSourceType: string | null;
   lineageSourceId: string | null;
@@ -407,14 +411,25 @@ export async function saveOutcomeJourneyContextsService(input: {
   actorId?: string | null;
   journeyContexts: ReturnType<typeof parseJourneyContexts>;
 }) {
-  const result = await updateOutcome({
-    organizationId: input.organizationId,
-    id: input.outcomeId,
-    actorId: input.actorId ?? null,
-    journeyContexts: input.journeyContexts
-  });
+  try {
+    const result = await updateOutcome({
+      organizationId: input.organizationId,
+      id: input.outcomeId,
+      actorId: input.actorId ?? null,
+      journeyContexts: input.journeyContexts
+    });
 
-  return success(result);
+    return success(result);
+  } catch (error) {
+    if (isJourneyContextsStorageUnavailableError(error)) {
+      return failure({
+        code: "journey_context_storage_unavailable",
+        message: "Journey Context needs the latest database migration before it can be saved."
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function analyzeOutcomeJourneyCoverageService(input: {
@@ -464,17 +479,28 @@ export async function analyzeOutcomeJourneyCoverageService(input: {
   const nextJourneyContexts = currentJourneyContexts.map((context) =>
     context.id === analyzedJourneyContext.id ? analyzedJourneyContext : context
   );
-  const result = await updateOutcome({
-    organizationId: input.organizationId,
-    id: input.outcomeId,
-    actorId: input.actorId ?? null,
-    journeyContexts: nextJourneyContexts
-  });
+  try {
+    const result = await updateOutcome({
+      organizationId: input.organizationId,
+      id: input.outcomeId,
+      actorId: input.actorId ?? null,
+      journeyContexts: nextJourneyContexts
+    });
 
-  return success({
-    outcome: result,
-    analyzedJourneyContext
-  });
+    return success({
+      outcome: result,
+      analyzedJourneyContext
+    });
+  } catch (error) {
+    if (isJourneyContextsStorageUnavailableError(error)) {
+      return failure({
+        code: "journey_context_storage_unavailable",
+        message: "Journey Context analysis cannot be saved until the latest database migration is applied."
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function validateOutcomeFieldWithAiService(input: {

@@ -39,6 +39,142 @@ function toPrismaJsonValue(value: unknown): Prisma.InputJsonValue | Prisma.Nulla
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
+function isMissingJourneyContextsColumnError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes("journeycontexts") && (message.includes("column") || message.includes("p2022"));
+}
+
+function buildOutcomeScalarSelect(includeJourneyContexts = false) {
+  return {
+    id: true,
+    organizationId: true,
+    key: true,
+    title: true,
+    framingVersion: true,
+    problemStatement: true,
+    outcomeStatement: true,
+    baselineDefinition: true,
+    baselineSource: true,
+    solutionContext: true,
+    solutionConstraints: true,
+    dataSensitivity: true,
+    ...(includeJourneyContexts ? { journeyContexts: true } : {}),
+    deliveryType: true,
+    aiUsageRole: true,
+    aiExecutionPattern: true,
+    aiUsageIntent: true,
+    businessImpactLevel: true,
+    businessImpactRationale: true,
+    dataSensitivityLevel: true,
+    dataSensitivityRationale: true,
+    blastRadiusLevel: true,
+    blastRadiusRationale: true,
+    decisionImpactLevel: true,
+    decisionImpactRationale: true,
+    aiLevelJustification: true,
+    riskAcceptedAt: true,
+    riskAcceptedByValueOwnerId: true,
+    timeframe: true,
+    valueOwnerId: true,
+    riskProfile: true,
+    aiAccelerationLevel: true,
+    status: true,
+    originType: true,
+    createdMode: true,
+    lifecycleState: true,
+    archivedAt: true,
+    archiveReason: true,
+    lineageSourceType: true,
+    lineageSourceId: true,
+    lineageNote: true,
+    importedReadinessState: true,
+    createdAt: true,
+    updatedAt: true
+  } satisfies Prisma.OutcomeSelect;
+}
+
+function buildOutcomeWorkspaceSelect(includeJourneyContexts = false) {
+  return {
+    ...buildOutcomeScalarSelect(includeJourneyContexts),
+    valueOwner: {
+      select: {
+        id: true,
+        fullName: true,
+        email: true
+      }
+    },
+    epics: {
+      select: {
+        id: true,
+        organizationId: true,
+        outcomeId: true,
+        key: true,
+        title: true,
+        purpose: true,
+        summary: true,
+        originType: true,
+        lifecycleState: true,
+        lineageSourceType: true,
+        lineageSourceId: true,
+        importedReadinessState: true
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    },
+    directionSeeds: {
+      select: {
+        id: true,
+        organizationId: true,
+        outcomeId: true,
+        epicId: true,
+        key: true,
+        title: true,
+        shortDescription: true,
+        expectedBehavior: true,
+        uxSketchName: true,
+        uxSketchDataUrl: true,
+        sourceStoryId: true,
+        originType: true,
+        lifecycleState: true,
+        lineageSourceType: true,
+        lineageSourceId: true,
+        importedReadinessState: true
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    },
+    stories: {
+      select: {
+        id: true,
+        epicId: true,
+        key: true,
+        title: true,
+        valueIntent: true,
+        expectedBehavior: true,
+        acceptanceCriteria: true,
+        testDefinition: true,
+        definitionOfDone: true,
+        sourceDirectionSeedId: true,
+        status: true,
+        originType: true,
+        lifecycleState: true,
+        lineageSourceType: true,
+        lineageSourceId: true,
+        importedReadinessState: true
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    }
+  } satisfies Prisma.OutcomeSelect;
+}
+
 async function invalidateOutcomeTollgateForNewFramingVersion(
   tx: Prisma.TransactionClient,
   input: {
@@ -126,7 +262,8 @@ export async function listOutcomes(organizationId: string, options?: { includeAr
     where,
     orderBy: {
       createdAt: "desc"
-    }
+    },
+    select: buildOutcomeScalarSelect()
   });
 }
 
@@ -267,133 +404,49 @@ export async function getOutcomeById(organizationId: string, id: string) {
     where: {
       organizationId,
       id
-    }
+    },
+    select: buildOutcomeScalarSelect()
   });
 }
 
 export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: string) {
   return withDevTiming("db.getOutcomeWorkspaceSnapshot", async () => {
-    const [outcome, tollgate, activityEventCount] = await Promise.all([
-      prisma.outcome.findFirst({
-        where: {
-          organizationId,
-          id
-        },
-        select: {
-          id: true,
-          organizationId: true,
-          key: true,
-          title: true,
-          framingVersion: true,
-          problemStatement: true,
-          outcomeStatement: true,
-          baselineDefinition: true,
-          baselineSource: true,
-          solutionContext: true,
-          solutionConstraints: true,
-          dataSensitivity: true,
-          journeyContexts: true,
-          deliveryType: true,
-          aiUsageRole: true,
-          aiExecutionPattern: true,
-          aiUsageIntent: true,
-          businessImpactLevel: true,
-          businessImpactRationale: true,
-          dataSensitivityLevel: true,
-          dataSensitivityRationale: true,
-          blastRadiusLevel: true,
-          blastRadiusRationale: true,
-          decisionImpactLevel: true,
-          decisionImpactRationale: true,
-          aiLevelJustification: true,
-          riskAcceptedAt: true,
-          riskAcceptedByValueOwnerId: true,
-          timeframe: true,
-          valueOwnerId: true,
-          riskProfile: true,
-          aiAccelerationLevel: true,
-          status: true,
-          originType: true,
-          createdMode: true,
-          lifecycleState: true,
-          lineageSourceType: true,
-          lineageSourceId: true,
-          lineageNote: true,
-          importedReadinessState: true,
-          valueOwner: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true
-            }
+    const outcomePromise = async () => {
+      try {
+        const outcome = await prisma.outcome.findFirst({
+          where: {
+            organizationId,
+            id
           },
-          epics: {
-            select: {
-              id: true,
-              organizationId: true,
-              outcomeId: true,
-              key: true,
-              title: true,
-              purpose: true,
-              summary: true,
-              originType: true,
-              lifecycleState: true,
-              lineageSourceType: true,
-              lineageSourceId: true,
-              importedReadinessState: true
-            },
-            orderBy: {
-              createdAt: "asc"
-            }
-          },
-          directionSeeds: {
-            select: {
-              id: true,
-              organizationId: true,
-              outcomeId: true,
-              epicId: true,
-              key: true,
-              title: true,
-              shortDescription: true,
-              expectedBehavior: true,
-              uxSketchName: true,
-              uxSketchDataUrl: true,
-              sourceStoryId: true,
-              originType: true,
-              lifecycleState: true,
-              lineageSourceType: true,
-              lineageSourceId: true,
-              importedReadinessState: true
-            },
-            orderBy: {
-              createdAt: "asc"
-            }
-          },
-          stories: {
-            select: {
-              id: true,
-              epicId: true,
-              key: true,
-              title: true,
-              valueIntent: true,
-              expectedBehavior: true,
-              acceptanceCriteria: true,
-              testDefinition: true,
-              definitionOfDone: true,
-              sourceDirectionSeedId: true,
-              status: true,
-              originType: true,
-              lifecycleState: true,
-              lineageSourceType: true,
-              lineageSourceId: true,
-              importedReadinessState: true
-            },
-            orderBy: {
-              createdAt: "asc"
-            }
-          }
+          select: buildOutcomeWorkspaceSelect(true)
+        });
+
+        return {
+          outcome,
+          journeyContextsAvailable: true
+        };
+      } catch (error) {
+        if (!isMissingJourneyContextsColumnError(error)) {
+          throw error;
         }
-      }),
+
+        const outcome = await prisma.outcome.findFirst({
+          where: {
+            organizationId,
+            id
+          },
+          select: buildOutcomeWorkspaceSelect(false)
+        });
+
+        return {
+          outcome,
+          journeyContextsAvailable: false
+        };
+      }
+    };
+
+    const [{ outcome, journeyContextsAvailable }, tollgate, activityEventCount] = await Promise.all([
+      outcomePromise(),
       prisma.tollgate.findFirst({
         where: {
           organizationId,
@@ -439,7 +492,8 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
     return {
       outcome: {
         ...outcome,
-        journeyContexts: parseJourneyContexts(outcome.journeyContexts),
+        journeyContexts: parseJourneyContexts(journeyContextsAvailable ? outcome.journeyContexts : null),
+        journeyContextsStorageAvailable: journeyContextsAvailable,
         epics: outcome.epics
           .filter((epic) => epic.lifecycleState === relatedLifecycleState)
           .map((epic) =>
@@ -478,7 +532,11 @@ export async function createOutcome(input: unknown, db: Prisma.TransactionClient
         solutionContext: parsed.solutionContext ?? null,
         solutionConstraints: parsed.solutionConstraints ?? null,
         dataSensitivity: parsed.dataSensitivity ?? null,
-        journeyContexts: toPrismaJsonValue(parsed.journeyContexts),
+        ...(parsed.journeyContexts !== undefined
+          ? {
+              journeyContexts: toPrismaJsonValue(parsed.journeyContexts)
+            }
+          : {}),
         deliveryType: parsed.deliveryType ?? null,
         aiUsageRole: parsed.aiUsageRole ?? null,
         aiExecutionPattern: parsed.aiExecutionPattern ?? null,
@@ -542,7 +600,8 @@ export async function updateOutcome(input: unknown, db: Prisma.TransactionClient
       where: {
         organizationId: parsed.organizationId,
         id: parsed.id
-      }
+      },
+      select: buildOutcomeScalarSelect(parsed.journeyContexts !== undefined)
     });
 
     if (!existing) {

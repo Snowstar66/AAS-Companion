@@ -104,6 +104,8 @@ function FlashBanner(props: { tone: "success" | "error"; message: string }) {
 }
 
 export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: JourneyContextPageProps) {
+  const journeyContextStorageAvailable =
+    (data.outcome as { journeyContextsStorageAvailable?: boolean }).journeyContextsStorageAvailable !== false;
   const initiativeType =
     data.outcome.deliveryType === "AD" || data.outcome.deliveryType === "AT" || data.outcome.deliveryType === "AM"
       ? data.outcome.deliveryType
@@ -276,6 +278,12 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
           {!initiativeType ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               Journey Context auto-binds to the current outcome and its initiative type. Set AD, AT, or AM in Framing Overview first.
+            </div>
+          ) : null}
+
+          {!journeyContextStorageAvailable ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Journey Context is visible, but the database migration is not applied yet. The Framing route will still load, but Journey Context changes cannot be saved until the latest migration runs.
             </div>
           ) : null}
         </CardContent>
