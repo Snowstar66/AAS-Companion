@@ -33,6 +33,20 @@ function t(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
 }
 
+function formatValidationError(language: "en" | "sv", error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+
+  if (message.includes("Server Action") && message.includes("was not found on the server")) {
+    return t(
+      language,
+      "The page is using an older AI action reference after a recent update. Reload the page and try AI validate again.",
+      "Sidan anvander en aldre AI-actionreferens efter en nylig uppdatering. Ladda om sidan och forsok AI-validera igen."
+    );
+  }
+
+  return error instanceof Error ? error.message : t(language, "AI validation failed.", "AI-validering misslyckades.");
+}
+
 export function OutcomeAiValidatedTextarea({
   field,
   label,
@@ -125,7 +139,7 @@ export function OutcomeAiValidatedTextarea({
         setResult({
           status: "error",
           field,
-          error: error instanceof Error ? error.message : t(language, "AI validation failed.", "AI-validering misslyckades.")
+          error: formatValidationError(language, error)
         });
       }
     });
@@ -175,7 +189,9 @@ export function OutcomeAiValidatedTextarea({
         setSaveMessage(saveResult.message);
         setSaveError(null);
       } catch (error) {
-        setSaveError(error instanceof Error ? error.message : t(language, "Suggestion could not be saved.", "Forslaget kunde inte sparas."));
+        setSaveError(
+          error instanceof Error ? error.message : t(language, "Suggestion could not be saved.", "Forslaget kunde inte sparas.")
+        );
         setSaveMessage(null);
       }
     });

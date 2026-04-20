@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { AlertTriangle, CheckCircle2, CircleAlert, ShieldAlert, Sparkles, X } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
@@ -55,8 +55,31 @@ type OutcomeAiReviewDialogProps = {
   };
 };
 
+type OutcomeAiReviewDialogState = OutcomeAiReviewDialogProps["initialState"];
+
 function t(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
+}
+
+function isMissingServerActionError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("Server Action") && message.includes("was not found on the server");
+}
+
+function formatReviewError(language: "en" | "sv", error: unknown) {
+  if (isMissingServerActionError(error)) {
+    return t(
+      language,
+      "The page is using an older AI action reference after a recent update. Reload the page and try the AI review again.",
+      "Sidan anvander en aldre AI-actionreferens efter en nylig uppdatering. Ladda om sidan och forsok AI-granskningen igen."
+    );
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return t(language, "AI framing review could not run.", "AI-granskning av framing kunde inte koras.");
 }
 
 function getReadinessTone(interpretation: "ready_for_tollgate" | "needs_refinement" | "not_ready") {
@@ -143,8 +166,9 @@ export function OutcomeAiReviewDialog({
 }: OutcomeAiReviewDialogProps) {
   const { language } = useAppChromeLanguage();
   const currentAiLevelLabel = formatCurrentAiLevel(currentAiLevel);
-  const [state, formAction, pending] = useActionState(action, initialState);
+  const [state, setState] = useState<OutcomeAiReviewDialogState>(initialState);
   const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -192,9 +216,24 @@ export function OutcomeAiReviewDialog({
   return (
     <>
       <form
-        action={formAction}
-        onSubmit={() => {
+        action={undefined}
+        onSubmit={(event) => {
+          event.preventDefault();
           setOpen(true);
+          const formData = new FormData(event.currentTarget);
+
+          startTransition(async () => {
+            try {
+              const nextState = await action(state, formData);
+              setState(nextState);
+            } catch (error) {
+              setState({
+                status: "error",
+                message: formatReviewError(language, error),
+                report: null
+              });
+            }
+          });
         }}
       >
         <input name="outcomeId" type="hidden" value={outcomeId} />

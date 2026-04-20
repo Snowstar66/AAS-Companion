@@ -11,6 +11,9 @@ type FramingErrorProps = {
 };
 
 export default function FramingError({ error, reset }: FramingErrorProps) {
+  const isMissingServerAction =
+    error.message.includes("Server Action") && error.message.includes("was not found on the server");
+
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -32,11 +35,25 @@ export default function FramingError({ error, reset }: FramingErrorProps) {
           <CardDescription>The cockpit encountered an error before the route could finish rendering.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{error.message}</p>
+          {isMissingServerAction ? (
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>The page is using an older server action reference after a recent update.</p>
+              <p>Reload the page to pick up the latest Framing build, then run the AI validation again.</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">{error.message}</p>
+          )}
           {error.digest ? <p className="text-xs text-muted-foreground">Digest: {error.digest}</p> : null}
-          <Button onClick={() => reset()} type="button" variant="secondary">
-            Retry route
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            {isMissingServerAction ? (
+              <Button onClick={() => window.location.reload()} type="button">
+                Reload page
+              </Button>
+            ) : null}
+            <Button onClick={() => reset()} type="button" variant="secondary">
+              Retry route
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </AppShell>
