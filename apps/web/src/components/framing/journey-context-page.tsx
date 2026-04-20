@@ -204,7 +204,15 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
 
   function applySuggestion(suggestion: FramingAgentSuggestion) {
     if (suggestion.kind === "rewrite_journey_context") {
-      setContexts((current) => current.map((context) => (context.id === suggestion.contextId ? suggestion.nextContext : context)));
+      setContexts((current) => {
+        const existingIndex = current.findIndex((context) => context.id === suggestion.contextId);
+
+        if (existingIndex === -1) {
+          return [...current, suggestion.nextContext];
+        }
+
+        return current.map((context) => (context.id === suggestion.contextId ? suggestion.nextContext : context));
+      });
       return;
     }
 

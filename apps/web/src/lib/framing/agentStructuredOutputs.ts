@@ -50,6 +50,7 @@ export type FramingAgentRunResult = {
   scopeLabel: string;
   usedLiveAi: boolean;
   message: string;
+  followUpQuestions: string[];
   warnings: string[];
   helperText?: string | null;
   suggestions: FramingAgentSuggestion[];

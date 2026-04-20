@@ -307,6 +307,17 @@ export function AiAssistantPanel({
           </div>
         ) : null}
 
+        {result?.followUpQuestions.length ? (
+          <div className="rounded-2xl border border-sky-200/80 bg-white px-4 py-4 text-sm text-foreground">
+            <p className="font-medium text-foreground">Follow-up questions</p>
+            <ul className="mt-2 list-disc space-y-2 pl-5 text-muted-foreground">
+              {result.followUpQuestions.map((question) => (
+                <li key={question}>{question}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         {result?.warnings.length ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
             <p className="font-medium">Warnings</p>

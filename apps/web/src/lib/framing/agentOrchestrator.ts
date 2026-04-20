@@ -127,14 +127,67 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
   const uiSpecificPattern = /\b(screen|page|button|tab|modal|dropdown|field|click|ui)\b/i;
 
   if (contexts.length === 0) {
+    const starterContextId = `journey-context-${source.outcome.id}`;
+    const starterJourneyId = `journey-${source.outcome.id}`;
+
+    suggestions.push({
+      id: buildFramingAgentSuggestionId(["starter-journey-context", source.outcome.id]),
+      kind: "rewrite_journey_context",
+      title: "Create a starter Journey Context",
+      description: "Start with one broad flow area and one broad Journey. You can refine the wording before saving.",
+      contextId: starterContextId,
+      nextContext: {
+        id: starterContextId,
+        outcomeId: source.outcome.id,
+        initiativeType: source.outcome.deliveryType ?? "AD",
+        title: "New Journey Context",
+        description: "",
+        journeys: [
+          {
+            id: starterJourneyId,
+            title: "",
+            type: undefined,
+            primaryActor: "",
+            supportingActors: [],
+            goal: "",
+            trigger: "",
+            currentState: "",
+            desiredFutureState: "",
+            steps: [],
+            painPoints: [],
+            desiredSupport: [],
+            exceptions: [],
+            notes: "",
+            linkedEpicIds: [],
+            linkedStoryIdeaIds: [],
+            linkedFigmaRefs: [],
+            coverage: {
+              status: "unanalysed"
+            }
+          }
+        ],
+        notes: ""
+      },
+      confidence: 0.88
+    });
+
+    questions.push(
+      "What is the name of the flow area you want to describe?",
+      "Who is the primary actor in that journey?",
+      "What is the actor trying to achieve?",
+      "What usually triggers the journey to begin?"
+    );
+
     return {
-      message: "Journey Context is empty right now. Start by capturing one Journey Context with at least one Journey and one Step.",
+      message:
+        "Journey Context is empty right now, so the next best move is to start broad. Describe one meaningful flow area, one primary actor, the goal, and what triggers the journey. Keep it at flow level rather than screen or click level.",
       suggestions,
-      warnings: ["Journey Context exists only after at least one Journey Context item is captured."],
+      questions,
+      warnings: ["No Journey Context exists yet, so coverage analysis and refinement will stay shallow until you add the first broad Journey."],
       helperText:
         "Journey Context is optional. Use it when you want to describe role-based, user, operational, or transformation flows that can help later AI refinement.",
       toolCalls: [{ tool: "getJourneyContext" as const }],
-      toolTrace: [{ tool: "getJourneyContext" as const, summary: "No Journey Context was available for refinement." }]
+      toolTrace: [{ tool: "getJourneyContext" as const, summary: "No Journey Context was available, so the assistant prepared a starter Journey Context plus interview questions." }]
     };
   }
 
@@ -161,6 +214,10 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
       if (journey.steps.length > 5) {
         warnings.push(
           `"${journey.title || journey.id}" has ${journey.steps.length} detailed Steps. Consider keeping only major handoffs, decisions, or coverage-relevant moments.`
+        );
+        questions.push(
+          `Which 3-5 moments actually matter most in "${journey.title || journey.id}"?`,
+          `Which detailed Steps in "${journey.title || journey.id}" could be collapsed into a broader flow description?`
         );
       }
 
@@ -225,12 +282,20 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
     warnings.push("The current Journey Context already looks reasonably structured. Use Analyze mode if you want coverage guidance instead of wording help.");
   }
 
+  if (questions.length === 0) {
+    questions.push(
+      "Which actor, goal, or trigger in this Journey still feels fuzzy?",
+      "Where does the current flow break down or create friction today?"
+    );
+  }
+
   return {
     message:
       suggestions.length > 0
         ? `I found ${suggestions.length} refinement suggestion(s) to make the Journey language more actor-, flow-, and support-oriented.${questions.length > 0 ? ` Follow-up questions: ${questions.slice(0, 3).join(" ")}` : ""}`
         : "The current Journey Context reads fairly well. The next best step is usually coverage analysis or explicit link cleanup.",
     suggestions,
+    questions: dedupeStrings(questions),
     warnings,
     helperText:
       "Journey Context is optional. Use it when you want to describe role-based, user, operational, or transformation flows that can help later AI refinement.",
@@ -528,6 +593,7 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
 
   let suggestions: FramingAgentSuggestion[] = [];
   const artifacts: FramingAgentRunResult["artifacts"] = [];
+  const followUpQuestions: string[] = [];
   const warnings: string[] = [];
   const toolTrace: FramingAgentRunResult["toolTrace"] = [];
 
@@ -549,6 +615,7 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
   if (input.scope.kind === "journey-context" && (input.mode === "ask" || input.mode === "refine")) {
     const journeyAssistant = buildJourneyRefinementSuggestions(source, input.scope.entityId ?? null);
     suggestions = suggestions.concat(journeyAssistant.suggestions);
+    followUpQuestions.push(...journeyAssistant.questions);
     warnings.push(...journeyAssistant.warnings);
     toolTrace.push(...journeyAssistant.toolTrace);
     helperText = journeyAssistant.helperText;
@@ -662,6 +729,7 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
     scopeLabel: input.scope.label,
     usedLiveAi: Boolean(livePlanner),
     message,
+    followUpQuestions: dedupeStrings(followUpQuestions),
     warnings: dedupeStrings(warnings),
     helperText,
     suggestions: dedupeById(suggestions),
