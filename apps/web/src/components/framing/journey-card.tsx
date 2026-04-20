@@ -144,7 +144,7 @@ export function JourneyCard({
             <p className="text-base font-semibold text-foreground">{journey.title || "Untitled Journey"}</p>
             <p className="text-sm text-muted-foreground">
               Primary actor: {journey.primaryActor || "Not captured yet"}
-              {journey.goal ? ` · Goal: ${journey.goal}` : ""}
+              {journey.goal ? ` / Goal: ${journey.goal}` : ""}
             </p>
           </div>
         </div>

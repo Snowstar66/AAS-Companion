@@ -5,6 +5,7 @@ import { Check, Copy, Sparkles } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { framingAgentIntroText, framingAgentModeLabels, framingAgentQuickActions } from "@/lib/framing/agentModes";
 import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
+import type { JourneyContext, JourneyInitiativeType } from "@/lib/framing/journeyContextTypes";
 import type {
   FramingAgentMode,
   FramingAgentScopeKind,
@@ -34,6 +35,35 @@ type ConversationEntry = {
   scopeLabel: string;
 };
 
+type GuidedJourneyField =
+  | "contextTitle"
+  | "journeyTitle"
+  | "primaryActor"
+  | "goal"
+  | "trigger"
+  | "currentState"
+  | "desiredFutureState";
+
+type GuidedJourneyInterviewTarget = {
+  context: JourneyContext;
+  journey: JourneyContext["journeys"][number];
+  field: GuidedJourneyField;
+  question: string;
+  placeholder: string;
+  helper: string;
+  promptKey: string;
+  totalMissing: number;
+  skippedMissing: number;
+};
+
+type GuidedJourneyInterviewState = {
+  target: GuidedJourneyInterviewTarget | null;
+  isComplete: boolean;
+  hasOnlySkippedQuestions: boolean;
+  contextCount: number;
+  journeyCount: number;
+};
+
 function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -44,6 +74,285 @@ function buildHistoryKey(outcomeId: string) {
 
 function buildDismissedKey(outcomeId: string) {
   return `framing-ai-dismissed:${outcomeId}`;
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value && value.trim());
+}
+
+function createStarterJourney(id: string): JourneyContext["journeys"][number] {
+  return {
+    id,
+    title: "",
+    type: undefined,
+    primaryActor: "",
+    supportingActors: [],
+    goal: "",
+    trigger: "",
+    currentState: "",
+    desiredFutureState: "",
+    steps: [],
+    painPoints: [],
+    desiredSupport: [],
+    exceptions: [],
+    notes: "",
+    linkedEpicIds: [],
+    linkedStoryIdeaIds: [],
+    linkedFigmaRefs: [],
+    coverage: {
+      status: "unanalysed"
+    }
+  };
+}
+
+function createStarterJourneyContext(outcomeId: string, initiativeType: "AD" | "AT" | "AM" | null): JourneyContext {
+  return {
+    id: `journey-context-${outcomeId}`,
+    outcomeId,
+    initiativeType: (initiativeType ?? "AD") as JourneyInitiativeType,
+    title: "",
+    description: "",
+    journeys: [createStarterJourney(`journey-${outcomeId}`)],
+    notes: ""
+  };
+}
+
+function parseJourneyContextsJson(raw: string | null | undefined) {
+  if (!raw) {
+    return [] as JourneyContext[];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as JourneyContext[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function buildJourneyFieldLabel(journey: JourneyContext["journeys"][number], index: number) {
+  if (hasText(journey.title)) {
+    return `"${journey.title.trim()}"`;
+  }
+
+  return index === 0 ? "this journey" : `journey ${index + 1}`;
+}
+
+function buildGuidedJourneyPrompt(
+  field: GuidedJourneyField,
+  journeyLabel: string
+): Pick<GuidedJourneyInterviewTarget, "question" | "placeholder" | "helper"> {
+  switch (field) {
+    case "contextTitle":
+      return {
+        question: "What should this flow area be called?",
+        placeholder: "Example: Case handling context",
+        helper: "Name the broader flow area first. Keep it short and meaningful."
+      };
+    case "journeyTitle":
+      return {
+        question: `What should ${journeyLabel} be called?`,
+        placeholder: "Example: Handle incoming case",
+        helper: "Use a short verb-driven name that describes the whole flow."
+      };
+    case "primaryActor":
+      return {
+        question: `Who is the primary actor in ${journeyLabel}?`,
+        placeholder: "Example: Case officer",
+        helper: "Name the main role driving the journey."
+      };
+    case "goal":
+      return {
+        question: `What is the primary goal in ${journeyLabel}?`,
+        placeholder: "Example: Resolve the case without manual handoffs",
+        helper: "Describe what the actor is trying to achieve, not which screen they need."
+      };
+    case "trigger":
+      return {
+        question: `What usually triggers ${journeyLabel}?`,
+        placeholder: "Example: A new customer case arrives",
+        helper: "Describe what starts the flow."
+      };
+    case "currentState":
+      return {
+        question: `How does ${journeyLabel} work today?`,
+        placeholder: "Example: Work starts in email, continues in spreadsheets, and often stalls during handoff",
+        helper: "Focus on friction, fragmentation, delays, or ambiguity in the current flow."
+      };
+    case "desiredFutureState":
+      return {
+        question: `How should ${journeyLabel} work in the desired future state?`,
+        placeholder: "Example: The actor follows one clear flow with visible status and fewer manual checks",
+        helper: "Describe better support and smoother flow, not detailed UI design."
+      };
+  }
+}
+
+function buildGuidedJourneyInterviewState(input: {
+  outcomeId: string;
+  initiativeType: "AD" | "AT" | "AM" | null;
+  rawJourneyContexts: JourneyContext[];
+  skippedPromptKeys: string[];
+}): GuidedJourneyInterviewState {
+  const normalizedContexts = input.rawJourneyContexts.length > 0 ? input.rawJourneyContexts : [createStarterJourneyContext(input.outcomeId, input.initiativeType)];
+  const skipped = new Set(input.skippedPromptKeys);
+  const missingTargets: GuidedJourneyInterviewTarget[] = [];
+  let journeyCount = 0;
+
+  for (const context of normalizedContexts) {
+    const journeys =
+      context.journeys.length > 0
+        ? context.journeys
+        : [createStarterJourney(`journey-${context.id}`)];
+    const firstJourney = journeys[0];
+
+    if (!firstJourney) {
+      continue;
+    }
+
+    journeyCount += journeys.length;
+
+    const contextFieldOrder: GuidedJourneyField[] = ["contextTitle"];
+
+    for (const field of contextFieldOrder) {
+      const promptKey = `${context.id}:${field}`;
+
+      if (field === "contextTitle" && !hasText(context.title)) {
+        const prompt = buildGuidedJourneyPrompt(field, "this journey");
+        missingTargets.push({
+          context,
+          journey: firstJourney,
+          field,
+          question: prompt.question,
+          placeholder: prompt.placeholder,
+          helper: prompt.helper,
+          promptKey,
+          totalMissing: 0,
+          skippedMissing: 0
+        });
+      }
+    }
+
+    journeys.forEach((journey, index) => {
+      const journeyLabel = buildJourneyFieldLabel(journey, index);
+      const fieldOrder: GuidedJourneyField[] = [
+        "journeyTitle",
+        "primaryActor",
+        "goal",
+        "trigger",
+        "currentState",
+        "desiredFutureState"
+      ];
+
+      for (const field of fieldOrder) {
+        const value =
+          field === "journeyTitle"
+            ? journey.title
+            : field === "primaryActor"
+              ? journey.primaryActor
+              : field === "goal"
+                ? journey.goal
+                : field === "trigger"
+                  ? journey.trigger
+                  : field === "currentState"
+                    ? journey.currentState
+                    : journey.desiredFutureState;
+
+        if (hasText(value)) {
+          continue;
+        }
+
+        const prompt = buildGuidedJourneyPrompt(field, journeyLabel);
+        missingTargets.push({
+          context,
+          journey,
+          field,
+          question: prompt.question,
+          placeholder: prompt.placeholder,
+          helper: prompt.helper,
+          promptKey: `${journey.id}:${field}`,
+          totalMissing: 0,
+          skippedMissing: 0
+        });
+      }
+    });
+  }
+
+  const target = missingTargets.find((candidate) => !skipped.has(candidate.promptKey)) ?? null;
+  const skippedMissing = missingTargets.filter((candidate) => skipped.has(candidate.promptKey)).length;
+
+  if (!target) {
+    return {
+      target: null,
+      isComplete: missingTargets.length === 0,
+      hasOnlySkippedQuestions: missingTargets.length > 0,
+      contextCount: normalizedContexts.length,
+      journeyCount
+    };
+  }
+
+  return {
+    target: {
+      ...target,
+      totalMissing: missingTargets.length,
+      skippedMissing
+    },
+    isComplete: false,
+    hasOnlySkippedQuestions: false,
+    contextCount: normalizedContexts.length,
+    journeyCount
+  };
+}
+
+function buildGuidedJourneySuggestion(input: {
+  target: GuidedJourneyInterviewTarget;
+  answer: string;
+}): FramingAgentSuggestion {
+  const answer = input.answer.trim();
+  const nextContext: JourneyContext = {
+    ...input.target.context,
+    journeys:
+      input.target.context.journeys.length > 0
+        ? input.target.context.journeys.map((journey) =>
+            journey.id !== input.target.journey.id
+              ? journey
+              : {
+                  ...journey,
+                  title: input.target.field === "journeyTitle" ? answer : journey.title,
+                  primaryActor: input.target.field === "primaryActor" ? answer : journey.primaryActor,
+                  goal: input.target.field === "goal" ? answer : journey.goal,
+                  trigger: input.target.field === "trigger" ? answer : journey.trigger,
+                  currentState: input.target.field === "currentState" ? answer : journey.currentState,
+                  desiredFutureState: input.target.field === "desiredFutureState" ? answer : journey.desiredFutureState
+                }
+          )
+        : [
+            {
+              ...input.target.journey,
+              title: input.target.field === "journeyTitle" ? answer : input.target.journey.title,
+              primaryActor: input.target.field === "primaryActor" ? answer : input.target.journey.primaryActor,
+              goal: input.target.field === "goal" ? answer : input.target.journey.goal,
+              trigger: input.target.field === "trigger" ? answer : input.target.journey.trigger,
+              currentState: input.target.field === "currentState" ? answer : input.target.journey.currentState,
+              desiredFutureState:
+                input.target.field === "desiredFutureState" ? answer : input.target.journey.desiredFutureState
+            }
+          ]
+  };
+
+  if (input.target.field === "contextTitle") {
+    nextContext.title = answer;
+  }
+
+  return {
+    id: createId("guided-journey-answer"),
+    kind: "rewrite_journey_context",
+    title: `Apply answer for ${input.target.field}`,
+    description: "Adds your guided interview answer to the current Journey Context draft.",
+    contextId: nextContext.id,
+    nextContext,
+    confidence: 0.95
+  };
 }
 
 function suggestionDetails(suggestion: FramingAgentSuggestion) {
@@ -97,8 +406,23 @@ export function AiAssistantPanel({
   const [history, setHistory] = useState<ConversationEntry[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [copiedArtifact, setCopiedArtifact] = useState<string | null>(null);
+  const [guidedAnswer, setGuidedAnswer] = useState("");
+  const [skippedPromptKeys, setSkippedPromptKeys] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
+  const rawJourneyContexts = useMemo(() => parseJourneyContextsJson(journeyContextsJson), [journeyContextsJson]);
+  const guidedJourneyInterview = useMemo(
+    () =>
+      scopeKind === "journey-context" && mode === "ask"
+        ? buildGuidedJourneyInterviewState({
+            outcomeId,
+            initiativeType,
+            rawJourneyContexts,
+            skippedPromptKeys
+          })
+        : null,
+    [initiativeType, mode, outcomeId, rawJourneyContexts, scopeKind, skippedPromptKeys]
+  );
   const visibleSuggestions = useMemo(
     () => result?.suggestions.filter((suggestion) => !dismissedIds.includes(suggestion.id)) ?? [],
     [dismissedIds, result]
@@ -132,6 +456,10 @@ export function AiAssistantPanel({
     }
   }, [dismissedIds, outcomeId]);
 
+  useEffect(() => {
+    setGuidedAnswer("");
+  }, [guidedJourneyInterview?.target?.promptKey]);
+
   function dismissSuggestion(suggestionId: string) {
     setDismissedIds((current) => (current.includes(suggestionId) ? current : [...current, suggestionId]));
   }
@@ -143,6 +471,36 @@ export function AiAssistantPanel({
 
     onApplySuggestion(suggestion);
     dismissSuggestion(suggestion.id);
+  }
+
+  function applyGuidedJourneyAnswer() {
+    if (!guidedJourneyInterview?.target || !onApplySuggestion || !guidedAnswer.trim()) {
+      return;
+    }
+
+    const suggestion = buildGuidedJourneySuggestion({
+      target: guidedJourneyInterview.target,
+      answer: guidedAnswer
+    });
+
+    onApplySuggestion(suggestion);
+    setGuidedAnswer("");
+    setSkippedPromptKeys((current) => current.filter((entry) => entry !== guidedJourneyInterview.target?.promptKey));
+  }
+
+  function skipGuidedJourneyQuestion() {
+    if (!guidedJourneyInterview?.target) {
+      return;
+    }
+
+    const promptKey = guidedJourneyInterview.target.promptKey;
+
+    setSkippedPromptKeys((current) =>
+      current.includes(promptKey)
+        ? current
+        : [...current, promptKey]
+    );
+    setGuidedAnswer("");
   }
 
   function handleCopyArtifact(kind: string, value: string) {
@@ -249,6 +607,75 @@ export function AiAssistantPanel({
             </Button>
           ))}
         </div>
+
+        {guidedJourneyInterview ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-950">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-medium text-foreground">Guided journey interview</p>
+                <p className="mt-1 text-sm text-emerald-900/85">
+                  Work one question at a time. Each answer updates the local Journey draft only after you explicitly apply it.
+                </p>
+              </div>
+              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-medium text-emerald-800">
+                {guidedJourneyInterview.contextCount} context / {guidedJourneyInterview.journeyCount} journey
+              </span>
+            </div>
+
+            {guidedJourneyInterview.target ? (
+              <div className="mt-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{guidedJourneyInterview.target.question}</p>
+                  <p className="mt-1 text-xs leading-5 text-emerald-900/80">{guidedJourneyInterview.target.helper}</p>
+                  <p className="mt-2 text-xs text-emerald-900/70">
+                    Remaining gaps: {guidedJourneyInterview.target.totalMissing}
+                    {guidedJourneyInterview.target.skippedMissing > 0
+                      ? ` / skipped for now: ${guidedJourneyInterview.target.skippedMissing}`
+                      : ""}
+                  </p>
+                </div>
+                <textarea
+                  className="min-h-24 w-full rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500"
+                  onChange={(event) => setGuidedAnswer(event.target.value)}
+                  placeholder={guidedJourneyInterview.target.placeholder}
+                  value={guidedAnswer}
+                />
+                <div className="flex flex-wrap gap-3">
+                  <Button disabled={!guidedAnswer.trim()} onClick={applyGuidedJourneyAnswer} type="button">
+                    Apply answer
+                  </Button>
+                  <Button onClick={skipGuidedJourneyQuestion} type="button" variant="secondary">
+                    Skip for now
+                  </Button>
+                  {skippedPromptKeys.length > 0 ? (
+                    <Button onClick={() => setSkippedPromptKeys([])} type="button" variant="secondary">
+                      Review skipped questions
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ) : guidedJourneyInterview.isComplete ? (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+                <p className="font-medium text-foreground">The core Journey framing is already captured.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Move to `Refine` for wording help or `Analyze` for coverage against Epics and Story Ideas.
+                </p>
+              </div>
+            ) : guidedJourneyInterview.hasOnlySkippedQuestions ? (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-4 py-4">
+                <p className="font-medium text-foreground">All remaining guided questions are currently skipped.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Bring them back when you want to continue tightening the Journey description.
+                </p>
+                <div className="mt-3">
+                  <Button onClick={() => setSkippedPromptKeys([])} type="button" variant="secondary">
+                    Review skipped questions
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {quickActions.length > 0 ? (
           <div className="space-y-3">
