@@ -644,6 +644,7 @@ export function AiAssistantPanel({
   onApplySuggestion,
   createStoryIdeaAction
 }: AiAssistantPanelProps) {
+  const isCompactSurface = scopeKind === "journey-context" || scopeKind === "story-ideas";
   const [mode, setMode] = useState<FramingAgentMode>(scopeKind === "export" ? "export" : "ask");
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<Extract<FramingAgentActionResult, { ok: true }> | null>(null);
@@ -653,6 +654,7 @@ export function AiAssistantPanel({
   const [guidedAnswer, setGuidedAnswer] = useState("");
   const [guidedDraft, setGuidedDraft] = useState("");
   const [skippedPromptKeys, setSkippedPromptKeys] = useState<string[]>([]);
+  const [showAdvancedWorkspace, setShowAdvancedWorkspace] = useState(!isCompactSurface);
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
   const rawJourneyContexts = useMemo(() => parseJourneyContextsJson(journeyContextsJson), [journeyContextsJson]);
@@ -758,6 +760,12 @@ export function AiAssistantPanel({
       })
     );
   }, [guidedAnswer, guidedJourneyInterview?.target]);
+
+  useEffect(() => {
+    if (mode !== "ask" || result || prompt.trim()) {
+      setShowAdvancedWorkspace(true);
+    }
+  }, [mode, prompt, result]);
 
   function dismissSuggestion(suggestionId: string) {
     setDismissedIds((current) => (current.includes(suggestionId) ? current : [...current, suggestionId]));
@@ -912,14 +920,6 @@ export function AiAssistantPanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="flex flex-wrap gap-2">
-          {(["ask", "analyze", "refine", "export"] as FramingAgentMode[]).map((entry) => (
-            <Button key={entry} onClick={() => setMode(entry)} type="button" variant={mode === entry ? "default" : "secondary"}>
-              {framingAgentModeLabels[entry]}
-            </Button>
-          ))}
-        </div>
-
         {guidedJourneyInterview ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-950">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1094,182 +1094,210 @@ export function AiAssistantPanel({
           </div>
         ) : null}
 
-        {quickActions.length > 0 ? (
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Quick actions</p>
+        {isCompactSurface ? (
+          <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-medium text-foreground">Advanced AI help</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Open this only when you want analysis, freeform prompting, Story Idea suggestions, or export support.
+                </p>
+              </div>
+              <Button onClick={() => setShowAdvancedWorkspace((current) => !current)} type="button" variant="secondary">
+                {showAdvancedWorkspace ? "Hide advanced AI" : "Show advanced AI"}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {(showAdvancedWorkspace || !isCompactSurface) ? (
+          <div className="space-y-5 rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
             <div className="flex flex-wrap gap-2">
-              {quickActions.map((action) => (
-                <Button
-                  key={action.id}
-                  onClick={() => {
-                    setPrompt(action.prompt);
-                    submitAgentRun(action.mode, action.prompt, action.id);
-                  }}
-                  type="button"
-                  variant="secondary"
-                >
-                  {action.label}
+              {(["ask", "analyze", "refine", "export"] as FramingAgentMode[]).map((entry) => (
+                <Button key={entry} onClick={() => setMode(entry)} type="button" variant={mode === entry ? "default" : "secondary"}>
+                  {framingAgentModeLabels[entry]}
                 </Button>
               ))}
             </div>
-          </div>
-        ) : null}
 
-        <div className="space-y-3">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Prompt</span>
-            <textarea
-              className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-              onChange={(event) => setPrompt(event.target.value)}
-              placeholder="Ask, analyze, refine, or export against the current Framing package."
-              value={prompt}
-            />
-          </label>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              disabled={isPending || !prompt.trim()}
-              onClick={() => submitAgentRun(mode, prompt)}
-              type="button"
-            >
-              {isPending ? "Running..." : "Run assistant"}
-            </Button>
-          </div>
-        </div>
-
-        {result ? (
-          <div className="space-y-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-900">
-                {result.role}
-              </span>
-              <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-900">
-                {result.usedLiveAi ? "Live AI planner" : "Structured local planner"}
-              </span>
-            </div>
-            <p>{result.message}</p>
-            {result.helperText ? <p className="text-xs leading-6 text-sky-900/80">{result.helperText}</p> : null}
-          </div>
-        ) : null}
-
-        {result?.followUpQuestions.length ? (
-          <div className="rounded-2xl border border-sky-200/80 bg-white px-4 py-4 text-sm text-foreground">
-            <p className="font-medium text-foreground">Follow-up questions</p>
-            <ul className="mt-2 list-disc space-y-2 pl-5 text-muted-foreground">
-              {result.followUpQuestions.map((question) => (
-                <li key={question}>{question}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {result?.warnings.length ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-            <p className="font-medium">Warnings</p>
-            <ul className="mt-2 list-disc space-y-2 pl-5">
-              {result.warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {visibleSuggestions.length > 0 ? (
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Suggested actions</p>
-            {visibleSuggestions.map((suggestion) => (
-              <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4" key={suggestion.id}>
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
-                    <p className="font-medium text-foreground">{suggestion.title}</p>
-                    <p className="text-sm leading-6 text-muted-foreground">{suggestion.description}</p>
-                    <p className="text-sm leading-6 text-foreground">{suggestionDetails(suggestion)}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestion.kind === "story_idea_candidate" && createStoryIdeaAction ? (
-                      <form action={createStoryIdeaAction}>
-                        <input name="outcomeId" type="hidden" value={outcomeId} />
-                        <input name="quickStoryIdeaEpicId" type="hidden" value={suggestion.storyIdea.suggestedEpicId ?? ""} />
-                        <input name="quickStoryIdeaTitle" type="hidden" value={suggestion.storyIdea.title} />
-                        <Button type="submit">Apply suggestion</Button>
-                      </form>
-                    ) : onApplySuggestion ? (
-                      <Button onClick={() => handleApplySuggestion(suggestion)} type="button">
-                        Apply suggestion
-                      </Button>
-                    ) : null}
-                    <Button onClick={() => dismissSuggestion(suggestion.id)} type="button" variant="secondary">
-                      Dismiss
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        {result?.artifacts.length ? (
-          <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Generated artifacts</p>
-            {result.artifacts.map((artifact) => (
-              <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4" key={artifact.kind}>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-foreground">{artifact.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{artifact.summary}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+            {quickActions.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Focused actions</p>
+                <div className="flex flex-wrap gap-2">
+                  {quickActions.map((action) => (
                     <Button
-                      onClick={() => handleCopyArtifact(`${artifact.kind}-markdown`, artifact.markdown)}
+                      key={action.id}
+                      onClick={() => {
+                        setPrompt(action.prompt);
+                        submitAgentRun(action.mode, action.prompt, action.id);
+                      }}
                       type="button"
                       variant="secondary"
                     >
-                      {copiedArtifact === `${artifact.kind}-markdown` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      Copy markdown
+                      {action.label}
                     </Button>
-                    <Button
-                      onClick={() => handleCopyArtifact(`${artifact.kind}-json`, JSON.stringify(artifact.json, null, 2))}
-                      type="button"
-                      variant="secondary"
-                    >
-                      {copiedArtifact === `${artifact.kind}-json` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      Copy JSON
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-                <pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-background p-4 text-xs text-foreground">
-                  <code>{artifact.markdown}</code>
-                </pre>
               </div>
-            ))}
-          </div>
-        ) : null}
+            ) : null}
 
-        {result?.toolTrace.length ? (
-          <details className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <summary className="cursor-pointer text-sm font-medium text-foreground">Tool trace</summary>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-              {result.toolTrace.map((entry, index) => (
-                <li key={`${entry.tool}-${index}`}>{entry.tool}: {entry.summary}</li>
-              ))}
-            </ul>
-          </details>
-        ) : null}
-
-        {history.length > 0 ? (
-          <details className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <summary className="cursor-pointer text-sm font-medium text-foreground">Recent conversation history</summary>
-            <div className="mt-3 space-y-3">
-              {history.slice(0, 5).map((entry) => (
-                <div className="rounded-2xl border border-border/70 bg-background px-4 py-3" key={entry.id}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    {framingAgentModeLabels[entry.mode]} / {new Date(entry.createdAt).toLocaleString("sv-SE")}
-                  </p>
-                  <p className="mt-2 text-sm font-medium text-foreground">{entry.prompt}</p>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{entry.message}</p>
-                </div>
-              ))}
+            <div className="space-y-3">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Prompt</span>
+                <textarea
+                  className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                  onChange={(event) => setPrompt(event.target.value)}
+                  placeholder="Ask, analyze, refine, or export against the current Framing package."
+                  value={prompt}
+                />
+              </label>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  disabled={isPending || !prompt.trim()}
+                  onClick={() => submitAgentRun(mode, prompt)}
+                  type="button"
+                >
+                  {isPending ? "Running..." : "Run assistant"}
+                </Button>
+              </div>
             </div>
-          </details>
+
+            {result ? (
+              <div className="space-y-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-900">
+                    {result.role}
+                  </span>
+                  <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-900">
+                    {result.usedLiveAi ? "Live AI planner" : "Structured local planner"}
+                  </span>
+                </div>
+                <p>{result.message}</p>
+                {result.helperText ? <p className="text-xs leading-6 text-sky-900/80">{result.helperText}</p> : null}
+              </div>
+            ) : null}
+
+            {result?.followUpQuestions.length ? (
+              <div className="rounded-2xl border border-sky-200/80 bg-white px-4 py-4 text-sm text-foreground">
+                <p className="font-medium text-foreground">Follow-up questions</p>
+                <ul className="mt-2 list-disc space-y-2 pl-5 text-muted-foreground">
+                  {result.followUpQuestions.map((question) => (
+                    <li key={question}>{question}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {result?.warnings.length ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
+                <p className="font-medium">Warnings</p>
+                <ul className="mt-2 list-disc space-y-2 pl-5">
+                  {result.warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {visibleSuggestions.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Suggested actions</p>
+                {visibleSuggestions.map((suggestion) => (
+                  <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={suggestion.id}>
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-2">
+                        <p className="font-medium text-foreground">{suggestion.title}</p>
+                        <p className="text-sm leading-6 text-muted-foreground">{suggestion.description}</p>
+                        <p className="text-sm leading-6 text-foreground">{suggestionDetails(suggestion)}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {suggestion.kind === "story_idea_candidate" && createStoryIdeaAction ? (
+                          <form action={createStoryIdeaAction}>
+                            <input name="outcomeId" type="hidden" value={outcomeId} />
+                            <input name="quickStoryIdeaEpicId" type="hidden" value={suggestion.storyIdea.suggestedEpicId ?? ""} />
+                            <input name="quickStoryIdeaTitle" type="hidden" value={suggestion.storyIdea.title} />
+                            <Button type="submit">Apply suggestion</Button>
+                          </form>
+                        ) : onApplySuggestion ? (
+                          <Button onClick={() => handleApplySuggestion(suggestion)} type="button">
+                            Apply suggestion
+                          </Button>
+                        ) : null}
+                        <Button onClick={() => dismissSuggestion(suggestion.id)} type="button" variant="secondary">
+                          Dismiss
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {result?.artifacts.length ? (
+              <div className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Generated artifacts</p>
+                {result.artifacts.map((artifact) => (
+                  <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={artifact.kind}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-foreground">{artifact.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{artifact.summary}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          onClick={() => handleCopyArtifact(`${artifact.kind}-markdown`, artifact.markdown)}
+                          type="button"
+                          variant="secondary"
+                        >
+                          {copiedArtifact === `${artifact.kind}-markdown` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          Copy markdown
+                        </Button>
+                        <Button
+                          onClick={() => handleCopyArtifact(`${artifact.kind}-json`, JSON.stringify(artifact.json, null, 2))}
+                          type="button"
+                          variant="secondary"
+                        >
+                          {copiedArtifact === `${artifact.kind}-json` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          Copy JSON
+                        </Button>
+                      </div>
+                    </div>
+                    <pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-white p-4 text-xs text-foreground">
+                      <code>{artifact.markdown}</code>
+                    </pre>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {result?.toolTrace.length ? (
+              <details className="rounded-2xl border border-border/70 bg-background px-4 py-4">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">Tool trace</summary>
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                  {result.toolTrace.map((entry, index) => (
+                    <li key={`${entry.tool}-${index}`}>{entry.tool}: {entry.summary}</li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+
+            {history.length > 0 ? (
+              <details className="rounded-2xl border border-border/70 bg-background px-4 py-4">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">Recent conversation history</summary>
+                <div className="mt-3 space-y-3">
+                  {history.slice(0, 5).map((entry) => (
+                    <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={entry.id}>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                        {framingAgentModeLabels[entry.mode]} / {new Date(entry.createdAt).toLocaleString("sv-SE")}
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-foreground">{entry.prompt}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{entry.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+          </div>
         ) : null}
       </CardContent>
     </Card>

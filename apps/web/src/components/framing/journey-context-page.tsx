@@ -272,7 +272,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           <CardTitle>Journey Context</CardTitle>
           <CardDescription>Optional flow-based context for AI-assisted refinement of Epics and Story Ideas</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
               Outcome {data.outcome.key}
@@ -285,41 +285,30 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
                 {initiativeType}
               </span>
             ) : null}
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-4">
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Journey Context items</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{counts.contextCount}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Journeys</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{counts.journeyCount}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Uncovered Journeys</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{counts.uncoveredJourneyCount}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Suggested Story Ideas</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{counts.suggestedStoryIdeaCount}</p>
-            </div>
+            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+              {counts.contextCount} context{counts.contextCount === 1 ? "" : "s"}
+            </span>
+            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+              {counts.journeyCount} journey{counts.journeyCount === 1 ? "" : "s"}
+            </span>
+            {counts.uncoveredJourneyCount > 0 ? (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
+                {counts.uncoveredJourneyCount} uncovered
+              </span>
+            ) : null}
+            {counts.suggestedStoryIdeaCount > 0 ? (
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+                {counts.suggestedStoryIdeaCount} suggested Story Ideas
+              </span>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            Journey Context is optional. Use it when you want to describe role-based, user, operational, or transformation flows that can help later AI refinement. It is especially useful when handoffs, decision points, pain points, or multi-step support needs matter.
-          </div>
-
-          <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm">
-            <p className="font-medium text-foreground">Keep Journeys broad</p>
-            <p className="mt-2 text-muted-foreground">
-              Start with a few meaningful Journeys that describe the overall flow. Do not model every click, screen, or micro-step. Add detailed Steps only when they genuinely help coverage analysis or downstream refinement.
+            <p className="font-medium text-foreground">Use Journey Context only to give direction</p>
+            <p className="mt-2">
+              Keep it broad. Capture a few real flows, actors, goals, triggers, and current friction. Skip screen-by-screen detail unless it adds clear value for analysis or downstream refinement.
             </p>
-          </div>
-
-          <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm">
-            <p className="font-medium text-foreground">Contextual recommendation</p>
-            <p className="mt-2 text-muted-foreground">{getInitiativeRecommendation(initiativeType)}</p>
+            <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
           </div>
 
           <div
@@ -340,7 +329,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <FlashBanner message={flash.message} tone="error" />
           ) : null}
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               disabled={!initiativeType}
               onClick={() => {
@@ -362,6 +351,10 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
               <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
               <Button disabled={!hasUnsavedChanges} type="submit" variant="secondary">Save Journey Context</Button>
             </form>
+
+            <p className="text-sm text-muted-foreground">
+              Start with one Journey Context and one broad Journey. Add more only when they clarify a different flow.
+            </p>
           </div>
 
           {!initiativeType ? (
@@ -378,20 +371,35 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
         </CardContent>
       </Card>
 
-      <AiAssistantPanel
-        aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel)}
-        focusedJourneyId={focusedJourneyId}
-        hasUnsavedChanges={hasUnsavedChanges}
-        initiativeType={initiativeType}
-        journeyContextsJson={serializedContexts}
-        onApplySuggestion={applySuggestion}
-        onFocusJourney={setFocusedJourneyId}
-        outcomeId={data.outcome.id}
-        runAction={runAgentAction}
-        scopeEntityId={focusedContextId}
-        scopeKind="journey-context"
-        scopeLabel="Journey Context"
-      />
+      <details className="rounded-[28px] border border-border/70 bg-background shadow-sm" open={contexts.length === 0}>
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
+          <div>
+            <p className="text-base font-semibold text-foreground">Guided AI help</p>
+            <p className="text-sm text-muted-foreground">
+              Optional. Use this when you want help phrasing Journeys, filling gaps, or analyzing coverage.
+            </p>
+          </div>
+          <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
+            {contexts.length === 0 ? "Recommended to start" : "Optional"}
+          </span>
+        </summary>
+        <div className="border-t border-border/70 px-5 py-5">
+          <AiAssistantPanel
+            aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel)}
+            focusedJourneyId={focusedJourneyId}
+            hasUnsavedChanges={hasUnsavedChanges}
+            initiativeType={initiativeType}
+            journeyContextsJson={serializedContexts}
+            onApplySuggestion={applySuggestion}
+            onFocusJourney={setFocusedJourneyId}
+            outcomeId={data.outcome.id}
+            runAction={runAgentAction}
+            scopeEntityId={focusedContextId}
+            scopeKind="journey-context"
+            scopeLabel="Journey Context"
+          />
+        </div>
+      </details>
 
       {contexts.length === 0 ? (
         <Card className="border-border/70 shadow-sm">
@@ -469,18 +477,6 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           validations={validations}
         />
       )}
-
-      {contexts.length > 0 ? (
-        <Card className="border-border/70 shadow-sm">
-          <CardContent className="flex flex-wrap gap-3 pt-6">
-            <form action={saveAction}>
-              <input name="outcomeId" type="hidden" value={data.outcome.id} />
-              <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
-              <Button disabled={!hasUnsavedChanges} type="submit">Save Journey Context</Button>
-            </form>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }

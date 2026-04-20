@@ -41,8 +41,8 @@ export function JourneyStepEditor({
     <Card className="border-border/70 bg-background shadow-none">
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div>
-          <CardTitle className="text-base">Step {step.id}</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">Optional detailed step for major handoffs, decisions, or coverage gaps.</p>
+          <CardTitle className="text-base">{step.title || "Untitled step"}</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">Optional detail for a major handoff, decision, or break in flow.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={onMoveUp} size="sm" type="button" variant="secondary" disabled={isFirst}>

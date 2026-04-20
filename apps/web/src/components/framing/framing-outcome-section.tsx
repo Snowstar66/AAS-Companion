@@ -1162,6 +1162,14 @@ export function FramingOutcomeSection({
               title={language === "sv" ? "Epics, Story Ideas och framinghierarki" : "Epics, Story Ideas and framing hierarchy"}
             >
               <div className="space-y-5">
+                <div className="rounded-2xl border border-sky-200 bg-sky-50/45 p-4 text-sm text-sky-950">
+                  <p className="font-medium text-foreground">{language === "sv" ? "Börja enkelt" : "Start simple"}</p>
+                  <p className="mt-2 leading-6 text-muted-foreground">
+                    {language === "sv"
+                      ? "Börja med några få Epics och lätta Story Ideas som ger riktning. Öppna AI-stöd eller hela hierarkin först när du behöver fördjupa."
+                      : "Start with a few Epics and lightweight Story Ideas that give direction. Open AI support or the full hierarchy only when you need to deepen."}
+                  </p>
+                </div>
                 <div className="grid gap-4 xl:grid-cols-2">
                   <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
                     <div className="space-y-1">
@@ -1277,16 +1285,47 @@ export function FramingOutcomeSection({
                     ) : null}
                   </div>
                 </div>
-                <AiAssistantPanel
-                  aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(outcome.aiAccelerationLevel)}
-                  createStoryIdeaAction={createStoryIdeaAction}
-                  initiativeType={outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null}
-                  outcomeId={outcome.id}
-                  runAction={runAgentAction}
-                  scopeKind="story-ideas"
-                  scopeLabel={language === "sv" ? "Story Ideas i Framing" : "Story Ideas in Framing"}
-                />
-                <FramingValueSpineTree
+                <details className="rounded-2xl border border-border/70 bg-muted/10">
+                  <summary className="cursor-pointer list-none px-4 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold text-foreground">{language === "sv" ? "Fördjupa med AI" : "Deepen with AI"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {language === "sv"
+                            ? "Öppna när du vill hitta överlapp, få Story Idea-förslag eller analysera vidare."
+                            : "Open when you want overlap checks, Story Idea suggestions, or deeper analysis."}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                        {language === "sv" ? "Valfritt" : "Optional"}
+                      </span>
+                    </div>
+                  </summary>
+                  <div className="border-t border-border/70 px-4 py-4">
+                    <AiAssistantPanel
+                      aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(outcome.aiAccelerationLevel)}
+                      createStoryIdeaAction={createStoryIdeaAction}
+                      initiativeType={outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null}
+                      outcomeId={outcome.id}
+                      runAction={runAgentAction}
+                      scopeKind="story-ideas"
+                      scopeLabel={language === "sv" ? "Story Ideas i Framing" : "Story Ideas in Framing"}
+                    />
+                  </div>
+                </details>
+                <details className="rounded-2xl border border-border/70 bg-muted/10">
+                  <summary className="cursor-pointer list-none px-4 py-4">
+                    <div>
+                      <p className="text-base font-semibold text-foreground">{language === "sv" ? "Visa nuvarande hierarki" : "View current hierarchy"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "sv"
+                          ? "Öppna för att läsa den aktuella Epic- och Story Idea-strukturen som Design kommer att ärva."
+                          : "Open to read the current Epic and Story Idea structure that Design will inherit."}
+                      </p>
+                    </div>
+                  </summary>
+                  <div className="border-t border-border/70 px-4 py-4">
+                    <FramingValueSpineTree
                   description={
                     language === "sv"
                       ? "Läs den aktiva grenen som en sammanhållen framingbrief med Epics och Story Ideas i den hierarki som Design kommer att ärva."
@@ -1405,7 +1444,9 @@ export function FramingOutcomeSection({
                         })
                       : null
                   }}
-                />
+                    />
+                  </div>
+                </details>
               </div>
             </CollapsibleFramingPanel>
 

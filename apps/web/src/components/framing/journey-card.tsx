@@ -64,7 +64,7 @@ function CoverageBadge({ status }: { status: string }) {
 function StepSummary({ count }: { count: number }) {
   return (
     <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-      {count} detailed step{count === 1 ? "" : "s"}
+      {count} step{count === 1 ? "" : "s"}
     </span>
   );
 }
@@ -128,6 +128,12 @@ export function JourneyCard({
   onMoveStep,
   onRemoveStep
 }: JourneyCardProps) {
+  const optionalDetailCount =
+    (journey.steps.length > 0 ? 1 : 0) +
+    ((journey.painPoints?.length ?? 0) > 0 ? 1 : 0) +
+    ((journey.desiredSupport?.length ?? 0) > 0 ? 1 : 0) +
+    ((journey.linkedEpicIds?.length ?? 0) > 0 || (journey.linkedStoryIdeaIds?.length ?? 0) > 0 || (journey.linkedFigmaRefs?.length ?? 0) > 0 ? 1 : 0);
+
   return (
     <details
       className={`group rounded-[28px] border bg-background shadow-none ${
@@ -138,28 +144,25 @@ export function JourneyCard({
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-              Journey {journey.id}
-            </span>
-            {journey.type ? (
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                {journey.type}
-              </span>
-            ) : null}
-            <StepSummary count={journey.steps.length} />
-            <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} />
             {isFocused ? (
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
                 AI focus
               </span>
             ) : null}
+            {journey.type ? (
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+                {journey.type}
+              </span>
+            ) : null}
+            <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} />
+            {optionalDetailCount > 0 ? <StepSummary count={journey.steps.length} /> : null}
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">{journey.title || "Untitled Journey"}</p>
             <p className="text-sm text-muted-foreground">
-              Primary actor: {journey.primaryActor || "Not captured yet"}
-              {journey.goal ? ` / Goal: ${journey.goal}` : ""}
+              {journey.primaryActor ? `Primary actor: ${journey.primaryActor}` : "Primary actor not captured yet"}
             </p>
+            {journey.goal ? <p className="text-sm text-muted-foreground">Goal: {journey.goal}</p> : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -194,7 +197,7 @@ export function JourneyCard({
 
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-          Describe the Journey at flow level first. Focus on actor, goal, trigger, current friction, and desired support. Add detailed Steps only if they help explain a decision, handoff, or gap.
+          Keep this Journey broad. Describe one meaningful flow with a clear actor, goal, trigger, and current friction before adding any detail.
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -265,17 +268,17 @@ export function JourneyCard({
 
         </div>
 
-        <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10" open={false}>
+        <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10">
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-foreground">Optional detail</p>
+                <p className="text-base font-semibold text-foreground">More detail if needed</p>
                 <p className="text-sm text-muted-foreground">
-                  Add supporting actors, pain points, detailed steps, and manual links only when they add signal.
+                  Add supporting actors, pain points, manual links, steps, or coverage details only when they add signal.
                 </p>
               </div>
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                Expand details
+                {optionalDetailCount > 0 ? `${optionalDetailCount} areas used` : "Optional"}
               </span>
             </div>
           </summary>
@@ -356,18 +359,18 @@ export function JourneyCard({
             <div className="mt-6 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-base font-semibold text-foreground">Detailed Steps</p>
+                  <p className="text-base font-semibold text-foreground">Optional steps</p>
                   <p className="text-sm text-muted-foreground">
-                    Optional. Add only the major steps, decisions, or handoffs that help coverage analysis.
+                    Add only the major handoffs, decisions, or breaks in flow. Most Journeys do not need many steps.
                   </p>
                   <FieldError>{validation?.stepsSummary}</FieldError>
                 </div>
-                <Button onClick={onAddStep} type="button" variant="secondary">Add detailed Step</Button>
+                <Button onClick={onAddStep} type="button" variant="secondary">Add step</Button>
               </div>
 
               {journey.steps.length === 0 ? (
                 <div className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm text-muted-foreground">
-                  No detailed Steps added yet. Keep it this way unless extra flow detail will genuinely help.
+                  No steps added. Leave it like this unless extra flow detail will genuinely help.
                 </div>
               ) : null}
 
@@ -422,45 +425,44 @@ export function JourneyCard({
                 </div>
               ) : null}
             </div>
+            {journey.coverage ? (
+              <Card className="mt-6 border-border/70 bg-background shadow-none">
+                <CardHeader>
+                  <CardTitle className="text-base">Coverage analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <p className="text-muted-foreground">
+                    Coverage suggestions are AI-generated recommendations based on the Journey, its Steps, and the existing Epics and Story Ideas. Review before accepting.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <CoverageBadge status={journey.coverage.status} />
+                  </div>
+                  {journey.coverage.suggestedEpicIds?.length ? (
+                    <p><span className="font-medium text-foreground">Suggested Epic IDs:</span> {journey.coverage.suggestedEpicIds.join(", ")}</p>
+                  ) : null}
+                  {journey.coverage.suggestedStoryIdeaIds?.length ? (
+                    <p><span className="font-medium text-foreground">Suggested Story Idea IDs:</span> {journey.coverage.suggestedStoryIdeaIds.join(", ")}</p>
+                  ) : null}
+                  {journey.coverage.suggestedNewStoryIdeas?.length ? (
+                    <div className="space-y-3">
+                      <p className="font-medium text-foreground">Suggested new Story Ideas</p>
+                      {journey.coverage.suggestedNewStoryIdeas.map((idea) => (
+                        <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={`${idea.title}-${idea.description}`}>
+                          <p className="font-medium text-foreground">{idea.title}</p>
+                          <p className="mt-1 text-muted-foreground">{idea.description}</p>
+                          {idea.valueIntent ? <p className="mt-2"><span className="font-medium text-foreground">Value intent:</span> {idea.valueIntent}</p> : null}
+                          {idea.expectedOutcome ? <p><span className="font-medium text-foreground">Expected outcome:</span> {idea.expectedOutcome}</p> : null}
+                          {idea.confidence !== undefined ? <p><span className="font-medium text-foreground">Confidence:</span> {Math.round(idea.confidence * 100)}%</p> : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {journey.coverage.notes ? <p className="text-muted-foreground">{journey.coverage.notes}</p> : null}
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         </details>
-
-        {journey.coverage ? (
-          <Card className="mt-6 border-border/70 bg-muted/10 shadow-none">
-            <CardHeader>
-              <CardTitle className="text-base">Coverage analysis</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <p className="text-muted-foreground">
-                Coverage suggestions are AI-generated recommendations based on the Journey, its Steps, and the existing Epics and Story Ideas. Review before accepting.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <CoverageBadge status={journey.coverage.status} />
-              </div>
-              {journey.coverage.suggestedEpicIds?.length ? (
-                <p><span className="font-medium text-foreground">Suggested Epic IDs:</span> {journey.coverage.suggestedEpicIds.join(", ")}</p>
-              ) : null}
-              {journey.coverage.suggestedStoryIdeaIds?.length ? (
-                <p><span className="font-medium text-foreground">Suggested Story Idea IDs:</span> {journey.coverage.suggestedStoryIdeaIds.join(", ")}</p>
-              ) : null}
-              {journey.coverage.suggestedNewStoryIdeas?.length ? (
-                <div className="space-y-3">
-                  <p className="font-medium text-foreground">Suggested new Story Ideas</p>
-                  {journey.coverage.suggestedNewStoryIdeas.map((idea) => (
-                    <div className="rounded-2xl border border-border/70 bg-background px-4 py-3" key={`${idea.title}-${idea.description}`}>
-                      <p className="font-medium text-foreground">{idea.title}</p>
-                      <p className="mt-1 text-muted-foreground">{idea.description}</p>
-                      {idea.valueIntent ? <p className="mt-2"><span className="font-medium text-foreground">Value intent:</span> {idea.valueIntent}</p> : null}
-                      {idea.expectedOutcome ? <p><span className="font-medium text-foreground">Expected outcome:</span> {idea.expectedOutcome}</p> : null}
-                      {idea.confidence !== undefined ? <p><span className="font-medium text-foreground">Confidence:</span> {Math.round(idea.confidence * 100)}%</p> : null}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {journey.coverage.notes ? <p className="text-muted-foreground">{journey.coverage.notes}</p> : null}
-            </CardContent>
-          </Card>
-        ) : null}
       </div>
     </details>
   );
