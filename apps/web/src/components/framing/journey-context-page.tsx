@@ -270,7 +270,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>Journey Context</CardTitle>
-          <CardDescription>Optional flow-based context for AI-assisted refinement of Epics and Story Ideas</CardDescription>
+          <CardDescription>
+            Optional context that clarifies the business case and helps downstream AI work with better quality.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -304,9 +306,12 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           </div>
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            <p className="font-medium text-foreground">Use Journey Context only to give direction</p>
+            <p className="font-medium text-foreground">Use Journey Context to clarify the business case</p>
             <p className="mt-2">
-              Keep it broad. Capture a few real flows, actors, goals, triggers, and current friction. Skip screen-by-screen detail unless it adds clear value for analysis or downstream refinement.
+              Describe a few important journeys that make the case easier to understand for people and give downstream AI better context for refinement, design, and build guidance.
+            </p>
+            <p className="mt-3">
+              Focus on who is involved, what they are trying to achieve, what triggers the work, and where today&apos;s friction exists. Keep it broad unless extra detail materially improves analysis.
             </p>
             <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
           </div>
@@ -315,12 +320,12 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             className={`rounded-2xl border px-4 py-4 text-sm ${
               hasUnsavedChanges
                 ? "border-amber-200 bg-amber-50 text-amber-900"
-                : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-border/70 bg-muted/10 text-muted-foreground"
             }`}
           >
             {hasUnsavedChanges
               ? "You have local Journey Context changes that are not saved to the Framing package yet."
-              : "The local Journey Context draft matches the saved Framing package."}
+              : "Journey Context is saved and in sync with the current Framing package."}
           </div>
 
           {flash?.save === "success" ? <FlashBanner message="Journey Context saved to the Framing package." tone="success" /> : null}
@@ -353,7 +358,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             </form>
 
             <p className="text-sm text-muted-foreground">
-              Start with one Journey Context and one broad Journey. Add more only when they clarify a different flow.
+              Start with one important Journey that clarifies the case. Add more only when they represent a meaningfully different flow.
             </p>
           </div>
 
@@ -376,7 +381,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           <div>
             <p className="text-base font-semibold text-foreground">Step-by-step help</p>
             <p className="text-sm text-muted-foreground">
-              Use this when you want to build one Journey at a time. It starts with the Journey itself and helps name the broader context later.
+              Use this when you want help clarifying one Journey at a time for the business case. It starts with the Journey itself and helps name the broader context later.
             </p>
           </div>
           <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
