@@ -150,6 +150,26 @@ function formatDateTime(value: Date | string | null | undefined) {
   return new Date(value).toLocaleString("sv-SE");
 }
 
+function normalizeString(value: unknown, fallback = "") {
+  return typeof value === "string" ? value : fallback;
+}
+
+function normalizeStringArray(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function normalizeRiskProfile(value: unknown): "low" | "medium" | "high" {
+  return value === "low" || value === "medium" || value === "high" ? value : "medium";
+}
+
+function normalizeAiAccelerationLevel(value: unknown): "level_1" | "level_2" | "level_3" {
+  return value === "level_1" || value === "level_2" || value === "level_3" ? value : "level_2";
+}
+
 type DeliveryTypeValue = "AD" | "AT" | "AM";
 
 const deliveryTypeProfiles: Record<
@@ -443,11 +463,35 @@ export function FramingOutcomeSection({
   reviewFramingAction,
   initialReviewFramingState
 }: FramingOutcomeSectionProps) {
-  const { outcome, tollgate, removal } = data;
-  const computedBlockers = getOutcomeFramingBlockers({
-    title: outcome.title,
-    outcomeStatement: outcome.outcomeStatement ?? null,
-    baselineDefinition: outcome.baselineDefinition ?? null,
+  const tollgate = data.tollgate;
+  const removal = data.removal;
+  const outcome = {
+    ...data.outcome,
+    key: normalizeString(data.outcome.key),
+    title: normalizeString(data.outcome.title),
+    problemStatement: typeof data.outcome.problemStatement === "string" ? data.outcome.problemStatement : null,
+    outcomeStatement: typeof data.outcome.outcomeStatement === "string" ? data.outcome.outcomeStatement : null,
+    baselineDefinition: typeof data.outcome.baselineDefinition === "string" ? data.outcome.baselineDefinition : null,
+    baselineSource: typeof data.outcome.baselineSource === "string" ? data.outcome.baselineSource : null,
+    solutionContext: typeof data.outcome.solutionContext === "string" ? data.outcome.solutionContext : null,
+    solutionConstraints: typeof data.outcome.solutionConstraints === "string" ? data.outcome.solutionConstraints : null,
+    dataSensitivity: typeof data.outcome.dataSensitivity === "string" ? data.outcome.dataSensitivity : null,
+    timeframe: typeof data.outcome.timeframe === "string" ? data.outcome.timeframe : null,
+    originType: normalizeString(data.outcome.originType, "native"),
+    createdMode: normalizeString(data.outcome.createdMode, "clean"),
+    lifecycleState: normalizeString(data.outcome.lifecycleState, "active"),
+    riskProfile: normalizeRiskProfile(data.outcome.riskProfile),
+    aiAccelerationLevel: normalizeAiAccelerationLevel(data.outcome.aiAccelerationLevel),
+    epics: Array.isArray(data.outcome.epics) ? data.outcome.epics.filter(Boolean) : [],
+    directionSeeds: Array.isArray(data.outcome.directionSeeds) ? data.outcome.directionSeeds.filter(Boolean) : [],
+    stories: Array.isArray(data.outcome.stories) ? data.outcome.stories.filter(Boolean) : [],
+    journeyContexts: Array.isArray(data.outcome.journeyContexts) ? data.outcome.journeyContexts.filter(Boolean) : []
+  };
+  const computedBlockers = normalizeStringArray(
+    getOutcomeFramingBlockers({
+      title: outcome.title,
+      outcomeStatement: outcome.outcomeStatement ?? null,
+      baselineDefinition: outcome.baselineDefinition ?? null,
     valueOwnerId: outcome.valueOwnerId ?? null,
     aiUsageRole:
       outcome.aiUsageRole === "support" ||
@@ -477,13 +521,17 @@ export function FramingOutcomeSection({
     riskAcceptedByValueOwnerId: outcome.riskAcceptedByValueOwnerId ?? null,
     riskProfile: outcome.riskProfile,
     aiAccelerationLevel: outcome.aiAccelerationLevel,
-    status: outcome.status,
-    epicCount: outcome.epics.length
-  });
+      status: outcome.status,
+      epicCount: outcome.epics.length
+    })
+  );
+  const tollgateBlockers = normalizeStringArray(tollgate?.blockers);
   const blockers =
-    search.blockersFromQuery && search.blockersFromQuery.length > 0
-      ? search.blockersFromQuery
-      : tollgate?.blockers ?? computedBlockers;
+    Array.isArray(search.blockersFromQuery) && search.blockersFromQuery.length > 0
+      ? normalizeStringArray(search.blockersFromQuery)
+      : tollgateBlockers.length > 0
+        ? tollgateBlockers
+        : computedBlockers;
   const statusLabel =
     tollgate?.status === "approved"
       ? language === "sv"
@@ -501,16 +549,23 @@ export function FramingOutcomeSection({
   const workspaceLabel = getWorkspaceLabel(outcome, language);
   const isArchived = outcome.lifecycleState === "archived";
   const framingHref = `/framing?outcomeId=${outcome.id}`;
-  const framingBriefExport = buildFramingBriefExport({
-    outcome,
-    blockers,
-    tollgate
-  });
-  const humanFramingBrief = buildHumanFramingBriefExport({
-    outcome,
-    blockers,
-    tollgate
-  });
+  let framingBriefExport: ReturnType<typeof buildFramingBriefExport> | null = null;
+  let humanFramingBrief: ReturnType<typeof buildHumanFramingBriefExport> | null = null;
+
+  try {
+    framingBriefExport = buildFramingBriefExport({
+      outcome,
+      blockers,
+      tollgate
+    });
+    humanFramingBrief = buildHumanFramingBriefExport({
+      outcome,
+      blockers,
+      tollgate
+    });
+  } catch (error) {
+    console.error("Failed to build Framing export payload", error);
+  }
   const aiFeedback =
     search.aiField && search.aiVerdict && search.aiReason
       ? {
@@ -530,34 +585,36 @@ export function FramingOutcomeSection({
     blastRadiusLevel: outcome.blastRadiusLevel ?? null,
     decisionImpactLevel: outcome.decisionImpactLevel ?? null
   });
-  const aiRiskBlockers = getOutcomeAiAndRiskBlockers({
-    aiUsageRole:
-      outcome.aiUsageRole === "support" ||
-      outcome.aiUsageRole === "generation" ||
-      outcome.aiUsageRole === "validation" ||
-      outcome.aiUsageRole === "decision_support" ||
-      outcome.aiUsageRole === "automation"
-        ? outcome.aiUsageRole
-        : null,
-    aiExecutionPattern:
-      outcome.aiExecutionPattern === "assisted" ||
-      outcome.aiExecutionPattern === "step_by_step" ||
-      outcome.aiExecutionPattern === "orchestrated"
-        ? outcome.aiExecutionPattern
-        : null,
-    aiUsageIntent: outcome.aiUsageIntent ?? null,
-    businessImpactLevel: outcome.businessImpactLevel ?? null,
-    businessImpactRationale: outcome.businessImpactRationale ?? null,
-    dataSensitivityLevel: outcome.dataSensitivityLevel ?? null,
-    dataSensitivityRationale: outcome.dataSensitivityRationale ?? null,
-    blastRadiusLevel: outcome.blastRadiusLevel ?? null,
-    blastRadiusRationale: outcome.blastRadiusRationale ?? null,
-    decisionImpactLevel: outcome.decisionImpactLevel ?? null,
-    decisionImpactRationale: outcome.decisionImpactRationale ?? null,
-    aiLevelJustification: outcome.aiLevelJustification ?? null,
-    riskProfile: outcome.riskProfile,
-    aiAccelerationLevel: outcome.aiAccelerationLevel
-  }).map((reason) => reason.message);
+  const aiRiskBlockers = normalizeStringArray(
+    getOutcomeAiAndRiskBlockers({
+      aiUsageRole:
+        outcome.aiUsageRole === "support" ||
+        outcome.aiUsageRole === "generation" ||
+        outcome.aiUsageRole === "validation" ||
+        outcome.aiUsageRole === "decision_support" ||
+        outcome.aiUsageRole === "automation"
+          ? outcome.aiUsageRole
+          : null,
+      aiExecutionPattern:
+        outcome.aiExecutionPattern === "assisted" ||
+        outcome.aiExecutionPattern === "step_by_step" ||
+        outcome.aiExecutionPattern === "orchestrated"
+          ? outcome.aiExecutionPattern
+          : null,
+      aiUsageIntent: outcome.aiUsageIntent ?? null,
+      businessImpactLevel: outcome.businessImpactLevel ?? null,
+      businessImpactRationale: outcome.businessImpactRationale ?? null,
+      dataSensitivityLevel: outcome.dataSensitivityLevel ?? null,
+      dataSensitivityRationale: outcome.dataSensitivityRationale ?? null,
+      blastRadiusLevel: outcome.blastRadiusLevel ?? null,
+      blastRadiusRationale: outcome.blastRadiusRationale ?? null,
+      decisionImpactLevel: outcome.decisionImpactLevel ?? null,
+      decisionImpactRationale: outcome.decisionImpactRationale ?? null,
+      aiLevelJustification: outcome.aiLevelJustification ?? null,
+      riskProfile: outcome.riskProfile,
+      aiAccelerationLevel: outcome.aiAccelerationLevel
+    }).map((reason) => reason.message)
+  );
   const aiRiskStatusLabel = aiRiskBlockers.length > 0 ? translate(language, "Needs action", "Behöver åtgärd") : translate(language, "Ready for review", "Redo för granskning");
   const aiRiskBadgeClasses =
     aiRiskBlockers.length > 0
@@ -588,7 +645,18 @@ export function FramingOutcomeSection({
   const canCreateStoryIdea = outcome.epics.length > 0 && !isArchived;
   const deliveryTypeValue =
     outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null;
-  const structuredConstraints = parseFramingConstraintBundle(outcome.solutionConstraints ?? null);
+  let structuredConstraints = {
+    generalConstraints: "",
+    uxPrinciples: "",
+    nonFunctionalRequirements: "",
+    additionalRequirements: ""
+  };
+
+  try {
+    structuredConstraints = parseFramingConstraintBundle(outcome.solutionConstraints ?? null);
+  } catch (error) {
+    console.error("Failed to parse Framing constraints", error);
+  }
   const framingCompleteItems = [
     outcome.outcomeStatement?.trim() ? translate(language, "Outcome statement is captured", "Outcome-beskrivning finns") : null,
     outcome.baselineDefinition?.trim() ? translate(language, "Baseline is defined", "Baseline finns") : null,
@@ -1418,13 +1486,26 @@ export function FramingOutcomeSection({
           }
           title={language === "sv" ? "Exportera framingpaket" : "Export framing packages"}
         >
-          <FramingBriefExportPanel
-            aiMarkdown={framingBriefExport.markdown}
-            aiPayload={framingBriefExport.payload}
-            embedded
-            disabled={isArchived}
-            humanBrief={humanFramingBrief}
-          />
+          {framingBriefExport && humanFramingBrief ? (
+            <FramingBriefExportPanel
+              aiMarkdown={framingBriefExport.markdown}
+              aiPayload={framingBriefExport.payload}
+              embedded
+              disabled={isArchived}
+              humanBrief={humanFramingBrief}
+            />
+          ) : (
+            <Card className="border-border/70 bg-muted/10 shadow-none">
+              <CardHeader>
+                <CardTitle>{language === "sv" ? "Export tillfälligt otillgänglig" : "Export temporarily unavailable"}</CardTitle>
+                <CardDescription>
+                  {language === "sv"
+                    ? "Den här framingen innehåller data som den nuvarande exportgeneratorn inte kunde normalisera. Själva Framing-vyn fortsätter ändå att fungera."
+                    : "This Framing contains data that the current export generator could not normalize. The Framing view itself remains available."}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
         </CollapsibleFramingPanel>
       </FramingGuidanceShell>
     </section>
