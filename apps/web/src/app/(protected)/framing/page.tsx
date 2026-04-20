@@ -117,6 +117,30 @@ function SelectedFramingOutcomeErrorCard() {
   );
 }
 
+function SelectedFramingContentErrorCard() {
+  return (
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <CardTitle>
+          <LocalizedText en="Framing content could not be rendered" sv="Framing-innehallet kunde inte renderas" />
+        </CardTitle>
+        <CardDescription>
+          <LocalizedText
+            en="The workspace loaded, but one of the Framing sections hit a server-side rendering problem."
+            sv="Arbetsytan laddades, men en av Framing-sektionerna stotte pa ett serverfel under renderingen."
+          />
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
+        <LocalizedText
+          en="Try the Journey Context subpage or return to the cockpit while we keep this route available."
+          sv="Prova Journey Context-undesidan eller ga tillbaka till cockpit-vyn medan routen fortfarande halls uppe."
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
     try {
@@ -369,6 +393,50 @@ async function SelectedFramingOutcomeSection(props: {
     );
   }
 
+  let content: ReturnType<typeof JourneyContextPage> | ReturnType<typeof FramingOutcomeSection>;
+
+  try {
+    content =
+      props.activeSubpage === "journey-context"
+        ? JourneyContextPage({
+            analyzeAction: analyzeJourneyCoverageAction,
+            data: selectedOutcome.data,
+            flash: props.journeyFlash,
+            saveAction: saveJourneyContextsAction
+          })
+        : FramingOutcomeSection({
+            archiveAction: archiveOutcomeAction,
+            createEpicAction: createEpicFromOutcomeAction,
+            createStoryIdeaAction: createStoryIdeaFromOutcomeAction,
+            data: selectedOutcome.data,
+            embeddedInFraming: true,
+            hardDeleteAction: hardDeleteOutcomeAction,
+            initialReviewFramingState: { status: "idle", message: null, report: null },
+            language: props.language,
+            recordTollgateDecisionAction: recordOutcomeTollgateDecisionAction,
+            restoreAction: restoreOutcomeAction,
+            reviewFramingAction: reviewOutcomeFramingWithAiAction,
+            saveAction: saveOutcomeWorkspaceAction,
+            saveInlineAction: saveOutcomeWorkspaceInlineAction,
+            search: props.search,
+            validateBaselineDefinitionAiAction: validateBaselineDefinitionAiAction,
+            validateOutcomeStatementAiAction: validateOutcomeStatementAiAction
+          });
+  } catch (error) {
+    console.error("Failed to render selected Framing content", error);
+
+    return (
+      <div className="space-y-6">
+        <FramingSubpageNav
+          activeSubpage={props.activeSubpage}
+          journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+          outcomeId={props.outcomeId}
+        />
+        <SelectedFramingContentErrorCard />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <FramingSubpageNav
@@ -376,33 +444,7 @@ async function SelectedFramingOutcomeSection(props: {
         journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
         outcomeId={props.outcomeId}
       />
-      {props.activeSubpage === "journey-context" ? (
-        <JourneyContextPage
-          analyzeAction={analyzeJourneyCoverageAction}
-          data={selectedOutcome.data}
-          flash={props.journeyFlash}
-          saveAction={saveJourneyContextsAction}
-        />
-      ) : (
-        <FramingOutcomeSection
-          archiveAction={archiveOutcomeAction}
-          createEpicAction={createEpicFromOutcomeAction}
-          createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
-          data={selectedOutcome.data}
-          embeddedInFraming
-          hardDeleteAction={hardDeleteOutcomeAction}
-          initialReviewFramingState={{ status: "idle", message: null, report: null }}
-          language={props.language}
-          recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
-          restoreAction={restoreOutcomeAction}
-          reviewFramingAction={reviewOutcomeFramingWithAiAction}
-          saveAction={saveOutcomeWorkspaceAction}
-          saveInlineAction={saveOutcomeWorkspaceInlineAction}
-          search={props.search}
-          validateBaselineDefinitionAiAction={validateBaselineDefinitionAiAction}
-          validateOutcomeStatementAiAction={validateOutcomeStatementAiAction}
-        />
-      )}
+      {content}
     </div>
   );
 }

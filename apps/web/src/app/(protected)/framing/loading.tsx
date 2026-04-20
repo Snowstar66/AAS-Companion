@@ -2,7 +2,13 @@ import { AppShell } from "@/components/layout/app-shell";
 import { getLoadingProjectName } from "@/lib/loading-project";
 
 export default async function FramingLoading() {
-  const projectName = (await getLoadingProjectName()) ?? undefined;
+  let projectName: string | undefined;
+
+  try {
+    projectName = (await getLoadingProjectName()) ?? undefined;
+  } catch {
+    projectName = undefined;
+  }
 
   return (
     <AppShell

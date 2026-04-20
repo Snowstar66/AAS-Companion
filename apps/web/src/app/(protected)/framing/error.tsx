@@ -33,6 +33,7 @@ export default function FramingError({ error, reset }: FramingErrorProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">{error.message}</p>
+          {error.digest ? <p className="text-xs text-muted-foreground">Digest: {error.digest}</p> : null}
           <Button onClick={() => reset()} type="button" variant="secondary">
             Retry route
           </Button>
