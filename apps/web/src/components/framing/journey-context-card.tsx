@@ -58,7 +58,7 @@ export function JourneyContextCard({
   onRemoveStep,
 }: JourneyContextCardProps) {
   const coverageLabel = getCoverageSummaryLabel(context);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [showSharedNote, setShowSharedNote] = useState(false);
 
   return (

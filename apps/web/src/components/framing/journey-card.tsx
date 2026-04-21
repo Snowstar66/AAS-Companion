@@ -99,6 +99,20 @@ function uniqueLabels(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
+function truncateText(value: string | undefined, maxLength: number) {
+  const trimmed = value?.trim() ?? "";
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}
+
 function cleanCoverageNote(value: string | undefined) {
   if (!value) return null;
   return value.replace(/^AI-generated recommendation scaffold based on Journey text overlap with current Epics and Story Ideas\.\s*/i, "").trim() || value;
@@ -192,7 +206,13 @@ function InlineAiCoreSuggestion(props: { suggestion: JourneyCoreSuggestion; onAp
     </div>
   );
 }
-function InlineAiFirstDraftSuggestion(props: { suggestion: JourneyFirstDraftSuggestion; onApply: () => void; onDismiss: () => void }) {
+function InlineAiFirstDraftSuggestion(props: {
+  suggestion: JourneyFirstDraftSuggestion;
+  onApply: () => void;
+  onDismiss: () => void;
+  applyLabel?: string;
+  dismissLabel?: string;
+}) {
   const [copied, setCopied] = useState(false);
   const copyText = [
     `Nuläge: ${props.suggestion.currentState}`,
@@ -210,8 +230,8 @@ function InlineAiFirstDraftSuggestion(props: { suggestion: JourneyFirstDraftSugg
 
   return (
     <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-      <p className="font-medium text-foreground">AI-utkast för resten av journeyn</p>
-      <p className="mt-1 text-sm text-muted-foreground">Det här förslaget fyller i resten av kortet direkt här och i frivillig detalj om du väljer att använda det.</p>
+      <p className="font-medium text-foreground">AI-sammanfattning av journeyn</p>
+      <p className="mt-1 text-sm text-muted-foreground">Det här är den sammanfattade vyn av journeyn. Här ser du riktning, friktion, önskat stöd, breda steg och sannolika kopplingar på ett ställe.</p>
       <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-3 text-sm leading-6 text-foreground">
         {props.suggestion.summary}
       </div>
@@ -272,7 +292,7 @@ function InlineAiFirstDraftSuggestion(props: { suggestion: JourneyFirstDraftSugg
         </div>
       ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button onClick={props.onApply} size="sm" type="button">Använd i kortet</Button>
+        <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Använd i kortet"}</Button>
         <Button
           onClick={async () => {
             await navigator.clipboard.writeText(copyText);
@@ -286,7 +306,7 @@ function InlineAiFirstDraftSuggestion(props: { suggestion: JourneyFirstDraftSugg
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           {copied ? "Kopierat" : "Kopiera"}
         </Button>
-        <Button onClick={props.onDismiss} size="sm" type="button" variant="secondary">Dölj</Button>
+        <Button onClick={props.onDismiss} size="sm" type="button" variant="secondary">{props.dismissLabel ?? "Dölj"}</Button>
       </div>
     </div>
   );
@@ -350,10 +370,10 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   const suggestedStoryIdeaLabels = findReferenceLabels(journey.coverage?.suggestedStoryIdeaIds, availableStoryIdeas);
   const cleanedCoverageNote = cleanCoverageNote(journey.coverage?.notes);
   const [isOpen, setIsOpen] = useState(isFocused);
+  const [showEditor, setShowEditor] = useState(coreMissingCount > 0);
   const [coreSuggestion, setCoreSuggestion] = useState<JourneyCoreSuggestion | null>(null);
   const [currentStateSuggestion, setCurrentStateSuggestion] = useState("");
   const [desiredFutureStateSuggestion, setDesiredFutureStateSuggestion] = useState("");
-  const [firstDraftSuggestion, setFirstDraftSuggestion] = useState<JourneyFirstDraftSuggestion | null>(null);
   const journeyStageLabel = coreMissingCount > 0 ? `${coreMissingCount} kärnfält kvar` : (journey.coverage?.status ?? "unanalysed") === "unanalysed" ? "Redo för analys" : "Analyserad";
 
   useEffect(() => {
@@ -366,7 +386,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     setCoreSuggestion(null);
     setCurrentStateSuggestion("");
     setDesiredFutureStateSuggestion("");
-    setFirstDraftSuggestion(null);
+    setShowEditor(coreMissingCount > 0);
   }, [journey.id]);
 
   const canBuildJourneySummary =
@@ -462,6 +482,8 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       relatedStoryIdeaLabels
     } satisfies JourneyFirstDraftSuggestion;
   }
+
+  const journeyBrief = canBuildJourneySummary ? createFirstDraftSuggestion() : null;
   return (
     <details
       className={`group rounded-[28px] border bg-background shadow-none ${isFocused ? "border-sky-300 ring-2 ring-sky-100" : "border-border/70"}`}
@@ -481,6 +503,31 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
             <p className="text-base font-semibold text-foreground">{normalizeJourneyTitle(journey.title) || "Namnlös journey"}</p>
             <p className="text-sm text-muted-foreground">{journey.primaryActor ? `Huvudaktör: ${journey.primaryActor}` : "Huvudaktör är inte ifylld ännu"}</p>
             {journey.goal ? <p className="text-sm text-muted-foreground">Mål: {journey.goal}</p> : null}
+            {journeyBrief?.summary ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{truncateText(journeyBrief.summary, 220)}</p> : null}
+            {journeyBrief ? (
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Nuläge:</span> {truncateText(journeyBrief.currentState, 120)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Önskat läge:</span> {truncateText(journeyBrief.desiredFutureState, 120)}
+                </p>
+              </div>
+            ) : null}
+            {journeyBrief && (journeyBrief.relatedEpicLabels.length > 0 || journeyBrief.relatedStoryIdeaLabels.length > 0) ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {journeyBrief.relatedEpicLabels.slice(0, 2).map((label) => (
+                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-medium text-sky-800" key={`epic-${label}`}>
+                    {truncateText(label, 48)}
+                  </span>
+                ))}
+                {journeyBrief.relatedStoryIdeaLabels.slice(0, 2).map((label) => (
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-700" key={`story-${label}`}>
+                    {truncateText(label, 48)}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -493,82 +540,133 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">{coreMissingCount > 0 ? "Börja brett. Fyll i titel, aktör, mål och trigger innan du lägger till mer detalj." : "Den här journeyn har grunderna på plats. Lägg bara till mer detalj om det förtydligar caset eller förbättrar analysen."}</div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Titel</span>
-            <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, title: event.target.value })} type="text" value={journey.title} />
-            <FieldHint>Använd ett kort verbdrivet namn för journeyn, till exempel Hantera inkommande ärende.</FieldHint>
-            <FieldError>{validation?.title}</FieldError>
-          </label>
+        {journeyBrief ? (
+          <div className="mt-4 space-y-4">
+            <InlineAiFirstDraftSuggestion
+              applyLabel="Fyll i det som saknas"
+              dismissLabel={showEditor ? "Dölj redigering" : "Redigera direkt"}
+              onApply={() => {
+                onChange({
+                  ...journey,
+                  currentState: hasText(journey.currentState) ? journey.currentState : journeyBrief.currentState,
+                  desiredFutureState: hasText(journey.desiredFutureState) ? journey.desiredFutureState : journeyBrief.desiredFutureState,
+                  painPoints: journey.painPoints?.length ? journey.painPoints : journeyBrief.painPoints,
+                  desiredSupport: journey.desiredSupport?.length ? journey.desiredSupport : journeyBrief.desiredSupport,
+                  steps: journey.steps.length ? journey.steps : journeyBrief.steps
+                });
+              }}
+              onDismiss={() => setShowEditor((current) => !current)}
+              suggestion={journeyBrief}
+            />
 
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Huvudaktör</span>
-            <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, primaryActor: event.target.value })} type="text" value={journey.primaryActor} />
-            <FieldError>{validation?.primaryActor}</FieldError>
-          </label>
-
-          <label className="space-y-2 md:col-span-2">
-            <span className="text-sm font-medium text-foreground">Mål</span>
-            <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, goal: event.target.value })} value={journey.goal} />
-            <FieldHint>Beskriv vad aktören försöker uppnå, inte vilken skärm personen vill till.</FieldHint>
-            <FieldError>{validation?.goal}</FieldError>
-          </label>
-
-          <label className="space-y-2 md:col-span-2">
-            <span className="text-sm font-medium text-foreground">Trigger</span>
-            <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, trigger: event.target.value })} value={journey.trigger} />
-            <FieldHint>Beskriv vad som startar journeyn.</FieldHint>
-            <FieldError>{validation?.trigger}</FieldError>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Nuläge</span>
-            <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, currentState: event.target.value })} value={journey.currentState ?? ""} />
-            <FieldHint>Beskriv hur journeyn fungerar i dag, särskilt friktion eller fragmentering.</FieldHint>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Önskat framtida läge</span>
-            <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, desiredFutureState: event.target.value })} value={journey.desiredFutureState ?? ""} />
-            <FieldHint>Beskriv hur journeyn bör fungera med bättre stöd.</FieldHint>
-          </label>
-        </div>
-
-        <div className="mt-6 rounded-[24px] border border-sky-200/80 bg-sky-50/50 p-4">
-          <div className="space-y-3">
-            <div>
-              <p className="font-medium text-foreground">AI-hjälp direkt i detta kort</p>
-              <p className="mt-1 text-sm text-muted-foreground">Be om den hjälp du vill ha här. Förslaget visas direkt under dina egna formuleringar så att du kan använda eller kopiera det utan att tappa sammanhanget.</p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setShowEditor((current) => !current)} size="sm" type="button" variant={showEditor ? "secondary" : "default"}>
+                {showEditor ? "Dölj redigering" : "Uppdatera journey"}
+              </Button>
+              <Button onClick={() => setCoreSuggestion(buildCoreSuggestion())} size="sm" type="button" variant="secondary">
+                Förtydliga kärntext
+              </Button>
+              <Button onClick={() => setCurrentStateSuggestion(buildCurrentStateSuggestion())} size="sm" type="button" variant="secondary">
+                {hasText(journey.currentState) ? "Förbättra nuläge" : "Skissa nuläge"}
+              </Button>
+              <Button onClick={() => setDesiredFutureStateSuggestion(buildDesiredFutureStateSuggestion())} size="sm" type="button" variant="secondary">
+                {hasText(journey.desiredFutureState) ? "Förbättra önskat läge" : "Skissa önskat läge"}
+              </Button>
             </div>
 
-            {coreMissingCount > 0 ? (
-              <div className="rounded-2xl border border-border/70 bg-white px-4 py-4 text-sm text-muted-foreground">Fyll först i titel, huvudaktör, mål och trigger. När de finns på plats kan du be om AI-hjälp här i samma kort.</div>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => setCoreSuggestion(buildCoreSuggestion())} size="sm" type="button" variant="secondary">Förtydliga kärntext</Button>
-                  <Button onClick={() => setCurrentStateSuggestion(buildCurrentStateSuggestion())} size="sm" type="button" variant="secondary">{hasText(journey.currentState) ? "Förbättra nuläge" : "Skissa nuläge"}</Button>
-                  <Button onClick={() => setDesiredFutureStateSuggestion(buildDesiredFutureStateSuggestion())} size="sm" type="button" variant="secondary">{hasText(journey.desiredFutureState) ? "Förbättra önskat läge" : "Skissa önskat läge"}</Button>
-                  {canBuildJourneySummary ? (
-                    <Button onClick={() => setFirstDraftSuggestion(createFirstDraftSuggestion())} size="sm" type="button" variant="secondary">
-                      {firstDraftSuggestion ? "Uppdatera AI-sammanfattning" : "Skapa AI-sammanfattning"}
-                    </Button>
-                  ) : null}
-                </div>
-
-                {coreSuggestion ? <InlineAiCoreSuggestion onApply={() => { onChange({ ...journey, title: coreSuggestion.title || journey.title, goal: coreSuggestion.goal || journey.goal, trigger: coreSuggestion.trigger || journey.trigger }); setCoreSuggestion(null); }} onDismiss={() => setCoreSuggestion(null)} suggestion={coreSuggestion} /> : null}
-                {currentStateSuggestion ? <InlineAiSuggestion onApply={() => { onChange({ ...journey, currentState: currentStateSuggestion }); setCurrentStateSuggestion(""); }} onDismiss={() => setCurrentStateSuggestion("")} text={currentStateSuggestion} title="AI-förslag för nuläge" /> : null}
-                {desiredFutureStateSuggestion ? <InlineAiSuggestion onApply={() => { onChange({ ...journey, desiredFutureState: desiredFutureStateSuggestion }); setDesiredFutureStateSuggestion(""); }} onDismiss={() => setDesiredFutureStateSuggestion("")} text={desiredFutureStateSuggestion} title="AI-förslag för önskat läge" /> : null}
-                {firstDraftSuggestion ? <InlineAiFirstDraftSuggestion onApply={() => { onChange({ ...journey, currentState: firstDraftSuggestion.currentState, desiredFutureState: firstDraftSuggestion.desiredFutureState, painPoints: journey.painPoints?.length ? journey.painPoints : firstDraftSuggestion.painPoints, desiredSupport: journey.desiredSupport?.length ? journey.desiredSupport : firstDraftSuggestion.desiredSupport, steps: journey.steps.length ? journey.steps : firstDraftSuggestion.steps }); setFirstDraftSuggestion(null); }} onDismiss={() => setFirstDraftSuggestion(null)} suggestion={firstDraftSuggestion} /> : null}
-                {!coreSuggestion && !currentStateSuggestion && !desiredFutureStateSuggestion && !firstDraftSuggestion ? (
-                  <div className="rounded-2xl border border-border/70 bg-white px-4 py-4 text-sm text-muted-foreground">
-                    Välj en AI-hjälp ovan. Om du vill få den tydliga överblicken tillbaka ska du börja med <span className="font-medium text-foreground">Skapa AI-sammanfattning</span>.
-                  </div>
-                ) : null}
-              </>
-            )}
+            {coreSuggestion ? (
+              <InlineAiCoreSuggestion
+                onApply={() => {
+                  onChange({
+                    ...journey,
+                    title: coreSuggestion.title || journey.title,
+                    goal: coreSuggestion.goal || journey.goal,
+                    trigger: coreSuggestion.trigger || journey.trigger
+                  });
+                  setCoreSuggestion(null);
+                }}
+                onDismiss={() => setCoreSuggestion(null)}
+                suggestion={coreSuggestion}
+              />
+            ) : null}
+            {currentStateSuggestion ? (
+              <InlineAiSuggestion
+                onApply={() => {
+                  onChange({ ...journey, currentState: currentStateSuggestion });
+                  setCurrentStateSuggestion("");
+                }}
+                onDismiss={() => setCurrentStateSuggestion("")}
+                text={currentStateSuggestion}
+                title="AI-förslag för nuläge"
+              />
+            ) : null}
+            {desiredFutureStateSuggestion ? (
+              <InlineAiSuggestion
+                onApply={() => {
+                  onChange({ ...journey, desiredFutureState: desiredFutureStateSuggestion });
+                  setDesiredFutureStateSuggestion("");
+                }}
+                onDismiss={() => setDesiredFutureStateSuggestion("")}
+                text={desiredFutureStateSuggestion}
+                title="AI-förslag för önskat läge"
+              />
+            ) : null}
           </div>
-        </div>
+        ) : null}
+
+        {showEditor || !journeyBrief ? (
+          <div className="mt-6 space-y-4 rounded-[24px] border border-border/70 bg-muted/10 p-4">
+            <div>
+              <p className="font-medium text-foreground">{journeyBrief ? "Redigera journey" : "Fyll i journey"}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {journeyBrief
+                  ? "Uppdatera texten direkt här. Sammanfattningen ovan speglar sedan journeyns riktning och detaljer."
+                  : "Fyll i grunderna först. När titel, huvudaktör, mål och trigger finns på plats får du den sammanfattade vyn ovan."}
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Titel</span>
+                <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, title: event.target.value })} type="text" value={journey.title} />
+                <FieldHint>Använd ett kort verbdrivet namn för journeyn, till exempel Hantera inkommande ärende.</FieldHint>
+                <FieldError>{validation?.title}</FieldError>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Huvudaktör</span>
+                <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, primaryActor: event.target.value })} type="text" value={journey.primaryActor} />
+                <FieldError>{validation?.primaryActor}</FieldError>
+              </label>
+
+              <label className="space-y-2 md:col-span-2">
+                <span className="text-sm font-medium text-foreground">Mål</span>
+                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, goal: event.target.value })} value={journey.goal} />
+                <FieldHint>Beskriv vad aktören försöker uppnå, inte vilken skärm personen vill till.</FieldHint>
+                <FieldError>{validation?.goal}</FieldError>
+              </label>
+
+              <label className="space-y-2 md:col-span-2">
+                <span className="text-sm font-medium text-foreground">Trigger</span>
+                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, trigger: event.target.value })} value={journey.trigger} />
+                <FieldHint>Beskriv vad som startar journeyn.</FieldHint>
+                <FieldError>{validation?.trigger}</FieldError>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Nuläge</span>
+                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, currentState: event.target.value })} value={journey.currentState ?? ""} />
+                <FieldHint>Beskriv hur journeyn fungerar i dag, särskilt friktion eller fragmentering.</FieldHint>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Önskat framtida läge</span>
+                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, desiredFutureState: event.target.value })} value={journey.desiredFutureState ?? ""} />
+                <FieldHint>Beskriv hur journeyn bör fungera med bättre stöd.</FieldHint>
+              </label>
+            </div>
+          </div>
+        ) : null}
         <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10">
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
