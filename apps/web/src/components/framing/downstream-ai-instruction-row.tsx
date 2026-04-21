@@ -17,12 +17,6 @@ function optionTone(active: boolean) {
     : "border-border/70 bg-background text-muted-foreground";
 }
 
-function optionGuideTone(active: boolean) {
-  return active
-    ? "border-sky-300 bg-sky-50 text-sky-900"
-    : "border-border/70 bg-muted/10 text-muted-foreground";
-}
-
 export function DownstreamAiInstructionRow({
   preference,
   catalogEntry,
@@ -32,7 +26,6 @@ export function DownstreamAiInstructionRow({
 }: DownstreamAiInstructionRowProps) {
   const showRationale = preference.selectedValue !== recommendedValue || preference.selectedValue === "N/A";
   const options = catalogEntry.allowNa ? (["YES", "NO", "N/A"] as const) : (["YES", "NO"] as const);
-  const selectedMeaning = catalogEntry.meaning[preference.selectedValue];
 
   return (
     <Card className="border-border/70 shadow-none">
@@ -56,7 +49,14 @@ export function DownstreamAiInstructionRow({
               key={option}
             >
               <span className="flex items-center justify-between gap-3">
-                <span className="font-semibold">{option}</span>
+                <span className="flex items-center gap-2 font-semibold">
+                  <span>{option}</span>
+                  {preference.selectedValue === option ? (
+                    <span className="rounded-full border border-sky-200 bg-white/70 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-sky-900">
+                      Aktivt val
+                    </span>
+                  ) : null}
+                </span>
                 <input
                   checked={preference.selectedValue === option}
                   className="h-4 w-4"
@@ -68,26 +68,6 @@ export function DownstreamAiInstructionRow({
               <span className="leading-6">{catalogEntry.meaning[option]}</span>
             </label>
           ))}
-        </div>
-
-        <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-          <p className="text-sm font-medium text-foreground">Vad betyder detta för downstream AI?</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Ditt nuvarande val är <span className="font-medium text-foreground">{preference.selectedValue}</span>. Det innebär:
-            {" "}
-            {selectedMeaning}
-          </p>
-          <div className={`mt-3 grid gap-3 ${options.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
-            {options.map((option) => (
-              <div
-                className={`rounded-2xl border px-4 py-3 text-sm ${optionGuideTone(preference.selectedValue === option)}`}
-                key={`${preference.id}-guide-${option}`}
-              >
-                <p className="font-semibold text-foreground">{option === "YES" ? "Ja" : option === "NO" ? "Nej" : "N/A"}</p>
-                <p className="mt-2 leading-6">{catalogEntry.meaning[option]}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
         {showRationale ? (
