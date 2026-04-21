@@ -259,7 +259,11 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
           {normalizeInitiativeType(data.outcome.deliveryType) ? null : (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Delivery type is not set in Framing Overview, so this page is currently using a fallback initiative type of {deliveryType} for defaults.
+              {t(
+                language,
+                `Delivery type is not set in Framing Overview, so this page is currently using a fallback initiative type of ${deliveryType} for defaults.`,
+                `Initiativtyp är inte satt i Framing Overview, så den här sidan använder just nu fallback-typen ${deliveryType} för standardval.`
+              )}
             </div>
           )}
 
@@ -275,15 +279,27 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Enkel hjälp</CardTitle>
-          <CardDescription>Den här sidan använder rekommenderade standardval, varningar och egna instruktioner. Ingen separat AI-chat behövs här.</CardDescription>
+          <CardTitle>{t(language, "Simple help", "Enkel hjälp")}</CardTitle>
+          <CardDescription>
+            {t(
+              language,
+              "This page uses recommended defaults, warnings, and custom instructions. No separate AI chat is needed here.",
+              "Den här sidan använder rekommenderade standardval, varningar och egna instruktioner. Ingen separat AI-chat behövs här."
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            Börja med standardvalen för {deliveryType}. Ändra bara där du faktiskt vill styra downstream AI i en annan riktning. Lägg sedan till egna instruktioner bara för sådant som verkligen måste bevaras.
+            {t(
+              language,
+              `Start with the recommended defaults for ${deliveryType}. Change only the parts where you actually want to steer downstream AI in another direction. Then add custom instructions only for things that truly must be preserved.`,
+              `Börja med standardvalen för ${deliveryType}. Ändra bara där du faktiskt vill styra downstream AI i en annan riktning. Lägg sedan till egna instruktioner bara för sådant som verkligen måste bevaras.`
+            )}
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button onClick={resetToRecommendedDefaults} type="button" variant="secondary">Återställ rekommenderade val</Button>
+            <Button onClick={resetToRecommendedDefaults} type="button" variant="secondary">
+              {t(language, "Restore recommended defaults", "Återställ rekommenderade val")}
+            </Button>
           </div>
         </CardContent>
       </Card>
