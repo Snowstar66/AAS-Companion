@@ -81,7 +81,7 @@ type FramingApprovalSnapshot = {
 
 export type FramingBriefExportPayload = {
   kind: "framing_brief";
-  version: 5;
+  version: 6;
   handshake: {
     outcome_key: string;
     outcome_title: string;
@@ -164,6 +164,9 @@ export type FramingBriefExportPayload = {
       supporting_actors: string[];
       goal: string;
       trigger: string;
+      narrative: string | null;
+      value_moment: string | null;
+      success_signals: string[];
       current_state: string | null;
       desired_future_state: string | null;
       pain_points: string[];
@@ -460,6 +463,9 @@ function mapJourneyContexts(outcome: FramingBriefOutcome) {
       supporting_actors: journey.supportingActors ?? [],
       goal: journey.goal,
       trigger: journey.trigger,
+      narrative: journey.narrative ?? null,
+      value_moment: journey.valueMoment ?? null,
+      success_signals: journey.successSignals ?? [],
       current_state: journey.currentState ?? null,
       desired_future_state: journey.desiredFutureState ?? null,
       pain_points: journey.painPoints ?? [],
@@ -610,7 +616,7 @@ export function buildFramingBriefExport(input: {
 
   const payload: FramingBriefExportPayload = {
     kind: "framing_brief",
-    version: 5,
+    version: 6,
     handshake: {
       outcome_key: input.outcome.key,
       outcome_title: input.outcome.title,
@@ -787,6 +793,9 @@ export function buildFramingBriefExport(input: {
                   `Supporting actors: ${journey.supporting_actors.length > 0 ? journey.supporting_actors.join(", ") : "None captured"}`,
                   `Goal: ${journey.goal || "Not captured yet"}`,
                   `Trigger: ${journey.trigger || "Not captured yet"}`,
+                  `Journey narrative: ${journey.narrative ?? "Not captured yet"}`,
+                  `Value moment: ${journey.value_moment ?? "Not captured yet"}`,
+                  `Success signals: ${journey.success_signals.length > 0 ? journey.success_signals.join(" | ") : "None captured"}`,
                   `Current state: ${journey.current_state ?? "Not captured yet"}`,
                   `Desired future state: ${journey.desired_future_state ?? "Not captured yet"}`,
                   `Pain points: ${journey.pain_points.length > 0 ? journey.pain_points.join(" | ") : "None captured"}`,
@@ -1012,6 +1021,11 @@ export function buildHumanFramingBriefExport(input: {
                   `  Primary actor: ${journey.primary_actor || "Not captured yet"}`,
                   `  Goal: ${journey.goal || "Not captured yet"}`,
                   `  Trigger: ${journey.trigger || "Not captured yet"}`,
+                  `  Journey narrative: ${journey.narrative ?? "Not captured yet"}`,
+                  `  Value moment: ${journey.value_moment ?? "Not captured yet"}`,
+                  ...(journey.success_signals.length > 0
+                    ? journey.success_signals.map((signal) => `  Success signal: ${signal}`)
+                    : ["  Success signal: Not captured yet"]),
                   `  Coverage: ${journey.coverage?.status ?? "unanalysed"}`,
                   ...(journey.coverage?.suggested_new_story_ideas?.length
                     ? journey.coverage.suggested_new_story_ideas.map(

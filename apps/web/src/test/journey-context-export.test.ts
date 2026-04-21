@@ -20,6 +20,14 @@ describe("journey context export", () => {
           supportingActors: ["Team lead"],
           goal: "Resolve the incoming case safely",
           trigger: "A new case arrives",
+          narrative:
+            "Case worker receives a new case, understands the current handling situation and gets clearer support for safe triage and follow-up in one place.",
+          valueMoment:
+            "The value appears when the case worker no longer needs to combine intake details, follow-up notes and next actions manually.",
+          successSignals: [
+            "Case worker understands what to do next without checking separate notes",
+            "Triage and follow-up are clearer in the same working flow"
+          ],
           currentState: "Manual triage and fragmented follow-up",
           desiredFutureState: "Guided handling with clear support",
           steps: [
@@ -175,14 +183,20 @@ describe("journey context export", () => {
       blockers: []
     });
 
-    expect(exportResult.payload.version).toBe(5);
+    expect(exportResult.payload.version).toBe(6);
     expect(exportResult.payload.journey_contexts).toHaveLength(1);
     expect(exportResult.payload.journey_contexts[0]?.journeys[0]?.coverage?.status).toBe("partially_covered");
+    expect(exportResult.payload.journey_contexts[0]?.journeys[0]?.narrative).toContain("Case worker receives a new case");
+    expect(exportResult.payload.journey_contexts[0]?.journeys[0]?.value_moment).toContain("no longer needs to combine");
+    expect(exportResult.payload.journey_contexts[0]?.journeys[0]?.success_signals).toHaveLength(2);
     expect(exportResult.payload.downstream_ai_instructions?.initiativeType).toBe("AT");
     expect(exportResult.payload.downstream_ai_instructions?.deviations).toHaveLength(1);
     expect(exportResult.markdown).toContain("## Journey Context");
     expect(exportResult.markdown).toContain("## Downstream AI Instructions");
     expect(exportResult.markdown).toContain("Handle incoming case");
+    expect(exportResult.markdown).toContain("Journey narrative:");
+    expect(exportResult.markdown).toContain("Value moment:");
+    expect(exportResult.markdown).toContain("Success signals:");
     expect(exportResult.markdown).toContain("Coverage status: partially_covered");
   });
 
@@ -233,6 +247,6 @@ describe("journey context export", () => {
 
     expect(analyzed.journeys).toHaveLength(1);
     expect(analyzed.journeys[0]?.coverage?.status).not.toBe("unanalysed");
-    expect(analyzed.journeys[0]?.coverage?.notes).toContain("AI-generated recommendation scaffold");
+    expect(analyzed.journeys[0]?.coverage?.notes).toContain("AI-förslag baserat på journeytext");
   });
 });
