@@ -27,6 +27,7 @@ type AiAssistantPanelProps = {
   journeyContextsJson?: string | null;
   downstreamAiInstructionsJson?: string | null;
   epicLabels?: string[];
+  epicOptions?: Array<{ id: string; label: string }>;
   storyIdeaLabels?: string[];
   onApplySuggestion?: (suggestion: FramingAgentSuggestion) => void;
   createStoryIdeaAction?: (formData: FormData) => void | Promise<void>;
@@ -81,6 +82,8 @@ type JourneyDraftTarget = {
   journey: JourneyContext["journeys"][number];
   journeyLabel: string;
 };
+
+type StoryIdeaCandidateSuggestion = Extract<FramingAgentSuggestion, { kind: "story_idea_candidate" }>;
 
 function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -591,6 +594,79 @@ function buildFirstDraftJourneySuggestion(input: {
   };
 }
 
+function stripTrailingPunctuation(value: string) {
+  return value.trim().replace(/[.!?]+$/g, "");
+}
+
+function findEpicLabel(epicId: string | null | undefined, epicOptions: Array<{ id: string; label: string }> | undefined) {
+  if (!epicId || !epicOptions?.length) {
+    return null;
+  }
+
+  return epicOptions.find((option) => option.id === epicId)?.label ?? null;
+}
+
+function buildStoryBehaviorText(suggestion: StoryIdeaCandidateSuggestion) {
+  const outcome = suggestion.storyIdea.expectedOutcome?.trim();
+
+  if (outcome) {
+    return `När storyn är på plats ska ${lowerFirst(stripTrailingPunctuation(outcome))}.`;
+  }
+
+  return `När storyn är på plats ska den stödja ${lowerFirst(stripTrailingPunctuation(suggestion.storyIdea.description))} utan att tappa spårbarhet eller ärvda ramar.`;
+}
+
+function buildStoryConsiderations(
+  suggestion: StoryIdeaCandidateSuggestion,
+  epicOptions: Array<{ id: string; label: string }> | undefined
+) {
+  const items: string[] = [];
+  const suggestedEpicLabel = findEpicLabel(suggestion.storyIdea.suggestedEpicId, epicOptions);
+  const journeyCount = suggestion.storyIdea.basedOnJourneyIds?.length ?? 0;
+  const stepCount = suggestion.storyIdea.basedOnStepIds?.length ?? 0;
+
+  if (suggestedEpicLabel) {
+    items.push(`Placera storyn under ${suggestedEpicLabel} så att den ligger i rätt förmågeområde.`);
+  }
+
+  if (journeyCount > 0) {
+    items.push(
+      journeyCount === 1
+        ? "Behåll en tydlig koppling till den journey som drev fram förslaget."
+        : "Behåll kopplingen till de journeys som tillsammans pekar på samma behov."
+    );
+  }
+
+  if (stepCount > 0) {
+    items.push("Låt storyn lösa ett sammanhållet problem i flödet, inte sprida sig över för många steg.");
+  }
+
+  items.push("Bevara constraints, UX-principer, NFR:er och datakänslighet när storyn förtydligas vidare.");
+  return items;
+}
+
+function buildStoryTestFocus(suggestion: StoryIdeaCandidateSuggestion) {
+  const items: string[] = [];
+  const outcome = suggestion.storyIdea.expectedOutcome?.trim();
+
+  if (outcome) {
+    items.push(`Verifiera att ${lowerFirst(stripTrailingPunctuation(outcome))}.`);
+  } else {
+    items.push("Verifiera att storyn faktiskt ger tydligare stöd eller lägre friktion i det tänkta läget.");
+  }
+
+  if ((suggestion.storyIdea.basedOnJourneyIds?.length ?? 0) > 0) {
+    items.push("Verifiera att den berörda journeyn blir enklare att ta från trigger till önskat läge.");
+  }
+
+  if ((suggestion.storyIdea.basedOnStepIds?.length ?? 0) > 0) {
+    items.push("Verifiera att berörda steg inte längre fastnar i oklar status, manuell samordning eller tappad överlämning.");
+  }
+
+  items.push("Verifiera att storyn fortfarande går att bryta ned vidare utan att bli för bred eller tekniskt låst.");
+  return items;
+}
+
 function suggestionDetails(suggestion: FramingAgentSuggestion) {
   if (suggestion.kind === "rewrite_journey_step") {
     return suggestion.nextStep.description;
@@ -638,6 +714,7 @@ export function AiAssistantPanel({
   journeyContextsJson,
   downstreamAiInstructionsJson,
   epicLabels,
+  epicOptions,
   storyIdeaLabels,
   onApplySuggestion,
   createStoryIdeaAction
@@ -653,6 +730,7 @@ export function AiAssistantPanel({
   const [guidedDraft, setGuidedDraft] = useState("");
   const [skippedPromptKeys, setSkippedPromptKeys] = useState<string[]>([]);
   const [recentlyAppliedFirstDraftJourneyId, setRecentlyAppliedFirstDraftJourneyId] = useState<string | null>(null);
+  const [selectedStorySuggestionId, setSelectedStorySuggestionId] = useState<string | null>(null);
   const [showAdvancedWorkspace, setShowAdvancedWorkspace] = useState(!isCompactSurface);
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
@@ -745,11 +823,18 @@ export function AiAssistantPanel({
       description: "När en journey är tydlig nog kan du använda analys för att jämföra den med Epics och Story Ideas och hitta luckor."
     };
   }, [canGenerateFirstDraft, firstDraftJourneySuggestion, guidedJourneyInterview, journeyFocusOptions.length, scopeKind]);
-  const assistantTitle = scopeKind === "journey-context" ? "AI-hjälp för nästa steg" : "AI Assistant";
+  const assistantTitle =
+    scopeKind === "journey-context"
+      ? "AI-hjälp för nästa steg"
+      : scopeKind === "story-ideas"
+        ? "AI-hjälp för Story Ideas"
+        : "AI Assistant";
   const assistantDescription =
     scopeKind === "journey-context"
       ? "Använd den här rutan för AI-hjälp med den aktuella journeyn. Här kan du svara på en fråga i taget eller låta AI ta fram ett bättre utkast."
-      : framingAgentIntroText;
+      : scopeKind === "story-ideas"
+        ? "Använd AI här när du vill få ett sammanfattat story-utkast, hitta överlapp eller ta fram nya Story Ideas från journeys."
+        : framingAgentIntroText;
   const justAppliedFirstDraft =
     recentlyAppliedFirstDraftJourneyId !== null &&
     journeyDraftTarget?.journey.id === recentlyAppliedFirstDraftJourneyId &&
@@ -758,6 +843,27 @@ export function AiAssistantPanel({
     () => result?.suggestions.filter((suggestion) => !dismissedIds.includes(suggestion.id)) ?? [],
     [dismissedIds, result]
   );
+  const storyIdeaSuggestions = useMemo(
+    () => visibleSuggestions.filter((suggestion): suggestion is StoryIdeaCandidateSuggestion => suggestion.kind === "story_idea_candidate"),
+    [visibleSuggestions]
+  );
+  const selectedStoryIdeaSuggestion =
+    storyIdeaSuggestions.find((suggestion) => suggestion.id === selectedStorySuggestionId) ?? storyIdeaSuggestions[0] ?? null;
+  const nonStoryIdeaSuggestions = useMemo(
+    () => visibleSuggestions.filter((suggestion) => suggestion.kind !== "story_idea_candidate"),
+    [visibleSuggestions]
+  );
+
+  useEffect(() => {
+    if (storyIdeaSuggestions.length === 0) {
+      setSelectedStorySuggestionId(null);
+      return;
+    }
+
+    if (!selectedStorySuggestionId || !storyIdeaSuggestions.some((suggestion) => suggestion.id === selectedStorySuggestionId)) {
+      setSelectedStorySuggestionId(storyIdeaSuggestions[0]?.id ?? null);
+    }
+  }, [selectedStorySuggestionId, storyIdeaSuggestions]);
 
   useEffect(() => {
     try {
@@ -1267,7 +1373,13 @@ export function AiAssistantPanel({
                 <textarea
                   className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => setPrompt(event.target.value)}
-                  placeholder={scopeKind === "journey-context" ? "Be AI förklara, analysera eller förfina de aktuella journeys." : "Ask, analyze, refine, or export against the current Framing package."}
+                  placeholder={
+                    scopeKind === "journey-context"
+                      ? "Be AI förklara, analysera eller förfina de aktuella journeys."
+                      : scopeKind === "story-ideas"
+                        ? "Be AI sammanfatta en möjlig story, hitta överlapp eller föreslå nya Story Ideas."
+                        : "Ask, analyze, refine, or export against the current Framing package."
+                  }
                   value={prompt}
                 />
               </label>
@@ -1319,10 +1431,108 @@ export function AiAssistantPanel({
               </div>
             ) : null}
 
-            {visibleSuggestions.length > 0 ? (
+            {scopeKind === "story-ideas" && selectedStoryIdeaSuggestion ? (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI-brief för Story Idea</p>
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-foreground">Använd detta för att snabbt bedöma om storyn ger rätt riktning</p>
+                      <p className="mt-1 text-sm text-sky-900/85">
+                        Kortet sammanfattar storyn som AI ser den just nu. Om den känns rätt kan du skapa Story Idea direkt härifrån.
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-medium text-sky-800">
+                      {storyIdeaSuggestions.length} utkast
+                    </span>
+                  </div>
+
+                  {storyIdeaSuggestions.length > 1 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {storyIdeaSuggestions.map((suggestion) => (
+                        <Button
+                          key={suggestion.id}
+                          onClick={() => setSelectedStorySuggestionId(suggestion.id)}
+                          type="button"
+                          variant={selectedStoryIdeaSuggestion.id === suggestion.id ? "default" : "secondary"}
+                        >
+                          {suggestion.storyIdea.title}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Story-utkast</p>
+                        <p className="text-lg font-semibold text-foreground">{selectedStoryIdeaSuggestion.storyIdea.title}</p>
+                        <p className="text-sm leading-6 text-muted-foreground">{selectedStoryIdeaSuggestion.description}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {createStoryIdeaAction ? (
+                          <form action={createStoryIdeaAction}>
+                            <input name="outcomeId" type="hidden" value={outcomeId} />
+                            <input
+                              name="quickStoryIdeaEpicId"
+                              type="hidden"
+                              value={selectedStoryIdeaSuggestion.storyIdea.suggestedEpicId ?? ""}
+                            />
+                            <input name="quickStoryIdeaTitle" type="hidden" value={selectedStoryIdeaSuggestion.storyIdea.title} />
+                            <Button type="submit">Skapa Story Idea från utkastet</Button>
+                          </form>
+                        ) : null}
+                        <Button onClick={() => dismissSuggestion(selectedStoryIdeaSuggestion.id)} type="button" variant="secondary">
+                          Avfärda utkastet
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast syfte</p>
+                        <p className="text-sm leading-6 text-foreground">{selectedStoryIdeaSuggestion.storyIdea.description}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast förväntat beteende</p>
+                        <p className="text-sm leading-6 text-foreground">{buildStoryBehaviorText(selectedStoryIdeaSuggestion)}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast användarvärde</p>
+                        <p className="text-sm leading-6 text-foreground">
+                          {selectedStoryIdeaSuggestion.storyIdea.valueIntent?.trim() || selectedStoryIdeaSuggestion.storyIdea.description}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Viktiga hänsyn</p>
+                        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                          {buildStoryConsiderations(selectedStoryIdeaSuggestion, epicOptions).map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast testfokus</p>
+                      <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                        {buildStoryTestFocus(selectedStoryIdeaSuggestion).map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {nonStoryIdeaSuggestions.length > 0 ? (
               <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Föreslagna handlingar</p>
-                {visibleSuggestions.map((suggestion) => (
+                {nonStoryIdeaSuggestions.map((suggestion) => (
                   <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={suggestion.id}>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-2">
@@ -1331,14 +1541,7 @@ export function AiAssistantPanel({
                         <p className="text-sm leading-6 text-foreground">{suggestionDetails(suggestion)}</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {suggestion.kind === "story_idea_candidate" && createStoryIdeaAction ? (
-                          <form action={createStoryIdeaAction}>
-                            <input name="outcomeId" type="hidden" value={outcomeId} />
-                            <input name="quickStoryIdeaEpicId" type="hidden" value={suggestion.storyIdea.suggestedEpicId ?? ""} />
-                            <input name="quickStoryIdeaTitle" type="hidden" value={suggestion.storyIdea.title} />
-                            <Button type="submit">Använd förslag</Button>
-                          </form>
-                        ) : onApplySuggestion ? (
+                        {onApplySuggestion ? (
                           <Button onClick={() => handleApplySuggestion(suggestion)} type="button">
                             Använd förslag
                           </Button>

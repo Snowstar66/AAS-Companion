@@ -187,15 +187,15 @@ export function runStorySuggestionAgent(source: FramingAgentSourceOfTruth): {
       rewriteSuggestions
     },
     suggestions: panelSuggestions,
-    warnings: suggestions.length === 0 ? ["No obvious new Story Idea candidates were found from the current Journey Context."] : [],
+    warnings: suggestions.length === 0 ? ["Inga tydliga nya Story Idea-kandidater hittades utifrån nuvarande Journey Context."] : [],
     toolTrace: [
       coverage.toolTrace[0] ?? {
         tool: "suggestStoryIdeas",
-        summary: "Reused journey coverage analysis while suggesting Story Ideas."
+        summary: "Återanvände journey-täckningsanalysen när Story Ideas-förslag togs fram."
       },
       {
         tool: "suggestStoryIdeas",
-        summary: `Produced ${suggestions.length} Story Idea candidate(s), ${splitCandidates.length} split candidate(s), and ${mergeCandidates.length} merge candidate(s).`
+        summary: `Tog fram ${suggestions.length} Story Idea-kandidat(er), ${splitCandidates.length} split-kandidat(er) och ${mergeCandidates.length} merge-kandidat(er).`
       }
     ]
   };

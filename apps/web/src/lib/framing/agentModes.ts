@@ -18,9 +18,9 @@ export const framingAgentQuickActions: Record<FramingAgentScopeKind, FramingAgen
     { id: "journey-missing-story-ideas", label: "Föreslå saknade Story Ideas", mode: "analyze", prompt: "Föreslå saknade Story Ideas utifrån det aktuella journey-underlaget." }
   ],
   "story-ideas": [
-    { id: "story-overlap", label: "Find overlap between Story Ideas", mode: "analyze", prompt: "Find overlap between the current Story Ideas." },
-    { id: "story-from-journey", label: "Suggest Story Ideas from Journey Context", mode: "analyze", prompt: "Suggest Story Ideas from the current Journey Context." },
-    { id: "story-split-merge", label: "Suggest split/merge candidates", mode: "refine", prompt: "Suggest Story Idea split, merge, or rewrite candidates." }
+    { id: "story-overlap", label: "Hitta överlapp mellan Story Ideas", mode: "analyze", prompt: "Hitta överlapp mellan de aktuella Story Ideas och peka ut sådant som riskerar att beskriva samma värde eller beteende." },
+    { id: "story-from-journey", label: "Föreslå Story Ideas från journeys", mode: "analyze", prompt: "Föreslå Story Ideas utifrån det aktuella Journey Context-underlaget och de luckor som finns i dag." },
+    { id: "story-split-merge", label: "Föreslå split/merge och omskrivningar", mode: "refine", prompt: "Föreslå vilka Story Ideas som bör delas, slås ihop eller skrivas om för att bli tydligare och mer riktade." }
   ],
   "downstream-ai-instructions": [
     { id: "instructions-explain", label: "Explain this setting", mode: "ask", prompt: "Explain the practical meaning of the current Downstream AI Instruction setting." },

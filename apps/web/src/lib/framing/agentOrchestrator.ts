@@ -643,13 +643,13 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
     toolTrace.push(...storyAgent.toolTrace);
 
     if (!message) {
-      message = `I reviewed the Story Ideas against Journey Context and the current Story Idea structure. Found ${storyAgent.result.suggestions.length} Story Idea candidate(s), ${storyAgent.result.splitCandidates?.length ?? 0} split candidate(s), and ${storyAgent.result.mergeCandidates?.length ?? 0} merge candidate(s).`;
+      message = `Jag gick igenom nuvarande Story Ideas mot Journey Context och den befintliga Story Idea-strukturen. Hittade ${storyAgent.result.suggestions.length} Story Idea-kandidat(er), ${storyAgent.result.splitCandidates?.length ?? 0} split-kandidat(er) och ${storyAgent.result.mergeCandidates?.length ?? 0} merge-kandidat(er).`;
     }
 
     if (storyAgent.result.rewriteSuggestions?.length) {
       warnings.push(
         ...storyAgent.result.rewriteSuggestions.map(
-          (rewrite) => `Story Idea ${rewrite.storyIdeaId} needs clearer expected behavior wording.`
+          (rewrite) => `Story Idea ${rewrite.storyIdeaId} behöver tydligare formulering av förväntat beteende.`
         )
       );
     }

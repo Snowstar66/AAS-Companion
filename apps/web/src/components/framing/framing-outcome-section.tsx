@@ -1305,6 +1305,7 @@ export function FramingOutcomeSection({
                     <AiAssistantPanel
                       aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(outcome.aiAccelerationLevel)}
                       createStoryIdeaAction={createStoryIdeaAction}
+                      epicOptions={outcome.epics.map((epic) => ({ id: epic.id, label: `${epic.key} ${epic.title}` }))}
                       initiativeType={outcome.deliveryType === "AD" || outcome.deliveryType === "AT" || outcome.deliveryType === "AM" ? outcome.deliveryType : null}
                       outcomeId={outcome.id}
                       runAction={runAgentAction}
