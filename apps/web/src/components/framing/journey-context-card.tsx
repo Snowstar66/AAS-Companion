@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@aas-companion/ui";
+import { Button } from "@aas-companion/ui";
 import { JourneyCard } from "@/components/framing/journey-card";
 import { getCoverageSummaryLabel, type JourneyContextValidation, type JourneyReferenceOption } from "@/lib/framing/journey-context-ui";
 import type { Journey, JourneyContext } from "@/lib/framing/journeyContextTypes";
@@ -72,9 +72,9 @@ export function JourneyContextCard({
             </span>
           </div>
           <div>
-            <p className="text-base font-semibold text-foreground">Journeys for this outcome</p>
+            <p className="text-base font-semibold text-foreground">Journeys</p>
             <p className="text-sm text-muted-foreground">
-              Put the value in the Journeys below. You normally do not need to name or describe the page-level Journey Context separately.
+              Put the value in the journeys below. Add another one only when it describes a meaningfully different flow.
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{coverageLabel}</p>
           </div>
@@ -82,39 +82,26 @@ export function JourneyContextCard({
       </summary>
 
       <div className="border-t border-border/70 px-5 py-5">
-        <Card className="border-border/70 bg-muted/10 shadow-none">
-          <CardHeader>
-            <CardTitle className="text-base">How to use this page</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Journey Context is mainly the name of this page and export section. In practice, the Journeys are what carry the value.
-            </p>
-            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-              Start with the individual Journeys. If several Journeys together make the business case clearer, that is enough to count as useful Journey Context.
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm text-muted-foreground">
-              Bound automatically to outcome <span className="font-medium text-foreground">{context.outcomeId}</span> and initiative type{" "}
-              <span className="font-medium text-foreground">{context.initiativeType}</span>.
-            </div>
-            <FieldError>{validation?.journeysSummary}</FieldError>
-
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={onAddJourney} type="button">Add Journey</Button>
-              {analyzeAction}
-              <Button onClick={onDelete} type="button" variant="secondary">
-                Clear Journeys
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+          <p className="text-sm text-muted-foreground">
+            Start with one broad journey. Add another only when it helps explain a different actor flow, handoff, or operational situation.
+          </p>
+          <FieldError>{validation?.journeysSummary}</FieldError>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button onClick={onAddJourney} type="button">Add Journey</Button>
+            {analyzeAction}
+            <Button onClick={onDelete} type="button" variant="secondary">
+              Clear Journeys
+            </Button>
+          </div>
+        </div>
 
         <details className="mt-4 rounded-[24px] border border-border/70 bg-muted/10">
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-foreground">Optional page note</p>
-                <p className="text-sm text-muted-foreground">Only use this if all Journeys together need one short shared note.</p>
+                <p className="text-base font-semibold text-foreground">Optional shared note</p>
+                <p className="text-sm text-muted-foreground">Only use this if all journeys together need one short shared note.</p>
               </div>
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
                 Expand

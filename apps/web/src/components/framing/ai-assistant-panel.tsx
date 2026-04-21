@@ -707,6 +707,46 @@ export function AiAssistantPanel({
         : null,
     [epicLabels, focusedJourneyId, initiativeType, mode, outcomeId, rawJourneyContexts, scopeKind, skippedPromptKeys, storyIdeaLabels]
   );
+  const journeyHelpState = useMemo(() => {
+    if (scopeKind !== "journey-context") {
+      return null;
+    }
+
+    if (journeyFocusOptions.length === 0) {
+      return {
+        step: "Step 1 of 3",
+        title: "Start with one broad journey",
+        description: "Use the guided questions to capture one important journey before you worry about analysis or extra detail."
+      };
+    }
+
+    if (guidedJourneyInterview?.target) {
+      return {
+        step: "Step 2 of 3",
+        title: "Clarify one journey at a time",
+        description: "Answer one question at a time here, or write directly in the journey card. The point is to get one journey clear enough to guide the case."
+      };
+    }
+
+    if (canGenerateFirstDraft && firstDraftJourneySuggestion) {
+      return {
+        step: "Step 2 of 3",
+        title: "Generate a broader first draft",
+        description: "The basics are in place. You can now let AI draft the broader current state, desired future state, and a few high-level pain points."
+      };
+    }
+
+    return {
+      step: "Step 3 of 3",
+      title: "Analyze coverage when the journey feels right",
+      description: "When a journey is directionally clear, use analysis to compare it with Epics and Story Ideas and spot gaps."
+    };
+  }, [canGenerateFirstDraft, firstDraftJourneySuggestion, guidedJourneyInterview, journeyFocusOptions.length, scopeKind]);
+  const assistantTitle = scopeKind === "journey-context" ? "AI help for the next step" : "AI Assistant";
+  const assistantDescription =
+    scopeKind === "journey-context"
+      ? "Use this first for step-by-step help with the current journey. Open more AI options only when you want deeper analysis or free prompting."
+      : framingAgentIntroText;
   const visibleSuggestions = useMemo(
     () => result?.suggestions.filter((suggestion) => !dismissedIds.includes(suggestion.id)) ?? [],
     [dismissedIds, result]
@@ -888,23 +928,27 @@ export function AiAssistantPanel({
           <div>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              AI Assistant
+              {assistantTitle}
             </CardTitle>
-            <CardDescription>{framingAgentIntroText}</CardDescription>
+            <CardDescription>{assistantDescription}</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-              Mode: {framingAgentModeLabels[mode]}
-            </span>
             <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
               {initiativeType ?? "Unset"}
             </span>
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
               AI Level {aiLevel}
             </span>
-            <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-              Scope: {scopeLabel}
-            </span>
+            {!isCompactSurface ? (
+              <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
+                Mode: {framingAgentModeLabels[mode]}
+              </span>
+            ) : null}
+            {!isCompactSurface ? (
+              <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
+                Scope: {scopeLabel}
+              </span>
+            ) : null}
             <span
               className={`rounded-full border px-3 py-1 text-xs font-medium ${
                 hasUnsavedChanges
@@ -920,11 +964,22 @@ export function AiAssistantPanel({
       <CardContent className="space-y-5">
         {guidedJourneyInterview ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
+            {journeyHelpState ? (
+              <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">{journeyHelpState.step}</p>
+                <p className="mt-2 text-base font-semibold text-foreground">{journeyHelpState.title}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{journeyHelpState.description}</p>
+                <p className="mt-3 text-sm text-foreground">
+                  You can either answer one question at a time here or edit the journey card directly below.
+                </p>
+              </div>
+            ) : null}
+
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="font-medium text-foreground">Step-by-step journey help</p>
                 <p className="mt-1 text-sm text-sky-900/85">
-                  Start with the journey itself. The broader Journey Context name comes later, once there is enough substance to name.
+                  The AI help here is simple on purpose: one question at a time, focused on the journey that should carry the value.
                 </p>
                 {guidedJourneyInterview.focusedJourneyLabel ? (
                   <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-sky-900/75">
@@ -1024,7 +1079,7 @@ export function AiAssistantPanel({
             {guidedJourneyInterview.target ? (
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Current question</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Next question</p>
                   <p className="mt-2 text-lg font-semibold leading-7 text-foreground">{guidedJourneyInterview.target.question}</p>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">{guidedJourneyInterview.target.helper}</p>
                   <p className="mt-3 text-xs text-sky-900/70">
@@ -1042,7 +1097,7 @@ export function AiAssistantPanel({
                 />
                 {guidedDraft && guidedDraft !== guidedAnswer.trim() ? (
                   <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">AI draft</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Suggested wording</p>
                     <p className="mt-2 text-sm leading-6 text-foreground">{guidedDraft}</p>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">
                       This is a cleaner Journey-style wording suggestion based on your raw answer.
@@ -1055,13 +1110,13 @@ export function AiAssistantPanel({
                     onClick={() => applyGuidedJourneyAnswer(guidedDraft)}
                     type="button"
                   >
-                    Apply AI draft
+                    Use suggested wording
                   </Button>
                   <Button disabled={!guidedAnswer.trim()} onClick={() => applyGuidedJourneyAnswer()} type="button" variant="secondary">
-                    Apply raw answer
+                    Use my wording
                   </Button>
                   <Button onClick={skipGuidedJourneyQuestion} type="button" variant="secondary">
-                    Skip for now
+                    Skip this question
                   </Button>
                   {skippedPromptKeys.length > 0 ? (
                     <Button onClick={() => setSkippedPromptKeys([])} type="button" variant="secondary">
@@ -1097,13 +1152,13 @@ export function AiAssistantPanel({
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">Advanced AI help</p>
+                <p className="font-medium text-foreground">More AI options</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Open this only when you want analysis, freeform prompting, Story Idea suggestions, or export support.
                 </p>
               </div>
               <Button onClick={() => setShowAdvancedWorkspace((current) => !current)} type="button" variant="secondary">
-                {showAdvancedWorkspace ? "Hide advanced AI" : "Show advanced AI"}
+                {showAdvancedWorkspace ? "Hide more AI options" : "Show more AI options"}
               </Button>
             </div>
           </div>
@@ -1121,7 +1176,7 @@ export function AiAssistantPanel({
 
             {quickActions.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Focused actions</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Other AI actions</p>
                 <div className="flex flex-wrap gap-2">
                   {quickActions.map((action) => (
                     <Button
@@ -1146,7 +1201,7 @@ export function AiAssistantPanel({
                 <textarea
                   className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => setPrompt(event.target.value)}
-                  placeholder="Ask, analyze, refine, or export against the current Framing package."
+                  placeholder={scopeKind === "journey-context" ? "Ask the AI to analyze, refine, or explain the current journeys." : "Ask, analyze, refine, or export against the current Framing package."}
                   value={prompt}
                 />
               </label>

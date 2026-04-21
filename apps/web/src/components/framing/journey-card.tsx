@@ -44,6 +44,19 @@ function parseLines(value: string) {
     .filter(Boolean);
 }
 
+function hasText(value: string | null | undefined) {
+  return Boolean(value && value.trim());
+}
+
+function getCoreMissingCount(journey: Journey) {
+  return [
+    hasText(journey.title),
+    hasText(journey.primaryActor),
+    hasText(journey.goal),
+    hasText(journey.trigger)
+  ].filter((entry) => !entry).length;
+}
+
 function CoverageBadge({ status }: { status: string }) {
   const tone =
     status === "covered"
@@ -133,11 +146,18 @@ export function JourneyCard({
     ((journey.painPoints?.length ?? 0) > 0 ? 1 : 0) +
     ((journey.desiredSupport?.length ?? 0) > 0 ? 1 : 0) +
     ((journey.linkedEpicIds?.length ?? 0) > 0 || (journey.linkedStoryIdeaIds?.length ?? 0) > 0 || (journey.linkedFigmaRefs?.length ?? 0) > 0 ? 1 : 0);
+  const coreMissingCount = getCoreMissingCount(journey);
+  const journeyStageLabel =
+    coreMissingCount > 0
+      ? `${coreMissingCount} core field${coreMissingCount === 1 ? "" : "s"} left`
+      : (journey.coverage?.status ?? "unanalysed") === "unanalysed"
+        ? "Ready to analyze"
+        : "Analyzed";
 
   return (
     <details
       className={`group rounded-[28px] border bg-background shadow-none ${
-        isFocused ? "border-emerald-300 ring-2 ring-emerald-100" : "border-border/70"
+        isFocused ? "border-sky-300 ring-2 ring-sky-100" : "border-border/70"
       }`}
       open
     >
@@ -145,17 +165,28 @@ export function JourneyCard({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             {isFocused ? (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
-                AI focus
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+                Working in AI
               </span>
             ) : null}
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                coreMissingCount > 0
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : (journey.coverage?.status ?? "unanalysed") === "unanalysed"
+                    ? "border-sky-200 bg-sky-50 text-sky-800"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}
+            >
+              {journeyStageLabel}
+            </span>
             {journey.type ? (
               <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
                 {journey.type}
               </span>
             ) : null}
-            <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} />
-            {optionalDetailCount > 0 ? <StepSummary count={journey.steps.length} /> : null}
+            {coreMissingCount === 0 ? <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} /> : null}
+            {journey.steps.length > 0 ? <StepSummary count={journey.steps.length} /> : null}
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">{journey.title || "Untitled Journey"}</p>
@@ -177,7 +208,7 @@ export function JourneyCard({
               type="button"
               variant={isFocused ? "default" : "secondary"}
             >
-              {isFocused ? "Focused in AI" : "Focus in AI"}
+              {isFocused ? "Working in AI" : "Work on this"}
             </Button>
           ) : null}
           <Button
@@ -197,7 +228,9 @@ export function JourneyCard({
 
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-          Keep this Journey broad. Describe one meaningful flow with a clear actor, goal, trigger, and current friction before adding any detail.
+          {coreMissingCount > 0
+            ? "Start broad. Fill in title, actor, goal, and trigger before you add detail."
+            : "This journey has the basics in place. Add detail only if it helps clarify the case or improve coverage analysis."}
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">

@@ -34,6 +34,19 @@ function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function hasText(value: string | null | undefined) {
+  return Boolean(value && value.trim());
+}
+
+function getJourneyCoreMissingCount(journey: Journey) {
+  return [
+    hasText(journey.title),
+    hasText(journey.primaryActor),
+    hasText(journey.goal),
+    hasText(journey.trigger)
+  ].filter((entry) => !entry).length;
+}
+
 function createEmptyStep(): JourneyStep {
   return {
     id: createId("step"),
@@ -149,6 +162,42 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
   const allJourneyIds = contexts.flatMap((context) => context.journeys.map((journey) => journey.id));
   const focusedContextId =
     contexts.find((context) => context.journeys.some((journey) => journey.id === focusedJourneyId))?.id ?? contexts[0]?.id ?? null;
+  const allJourneys = contexts.flatMap((context) => context.journeys);
+  const focusedJourney = allJourneys.find((journey) => journey.id === focusedJourneyId) ?? allJourneys[0] ?? null;
+  const readyJourneys = allJourneys.filter((journey) => getJourneyCoreMissingCount(journey) === 0);
+  const analyzedJourneys = allJourneys.filter((journey) => (journey.coverage?.status ?? "unanalysed") !== "unanalysed");
+  const currentFlowStep =
+    allJourneys.length === 0
+      ? {
+          step: "Step 1 of 3",
+          title: "Start with one broad journey",
+          description:
+            "Create one journey that clarifies the business case. Start broad and capture only the actor, goal, trigger, and today's friction.",
+          nextAction: "Click Start Journeys, then describe one important journey."
+        }
+      : focusedJourney && getJourneyCoreMissingCount(focusedJourney) > 0
+        ? {
+            step: "Step 2 of 3",
+            title: "Clarify the current journey",
+            description:
+              "Get one journey into good enough shape before you add detail. Fill in title, primary actor, goal, and trigger first.",
+            nextAction: "Write directly in the journey card, or use the AI help below one question at a time."
+          }
+        : analyzedJourneys.length === 0
+          ? {
+              step: "Step 3 of 3",
+              title: "Check coverage once one journey is clear",
+              description:
+                "When at least one journey has the basics in place, you can compare it with Epics and Story Ideas to find gaps and likely matches.",
+              nextAction: "Run Analyze Journey Coverage when the current journey feels directionally right."
+            }
+          : {
+              step: "Journeys in progress",
+              title: "Refine only where it adds value",
+              description:
+                "You already have usable journeys and at least one coverage pass. Add another journey only if it represents a genuinely different flow.",
+              nextAction: "Tighten wording, analyze another journey, or leave it as-is if it already gives enough direction."
+            };
 
   useEffect(() => {
     if (focusedJourneyId && allJourneyIds.includes(focusedJourneyId)) {
@@ -279,9 +328,6 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
               Outcome {data.outcome.key}
             </span>
-            <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-              {data.outcome.title}
-            </span>
             {initiativeType ? (
               <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
                 {initiativeType}
@@ -290,27 +336,31 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
               {counts.journeyCount} journey{counts.journeyCount === 1 ? "" : "s"}
             </span>
-            {counts.uncoveredJourneyCount > 0 ? (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
-                {counts.uncoveredJourneyCount} uncovered
-              </span>
-            ) : null}
-            {counts.suggestedStoryIdeaCount > 0 ? (
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                {counts.suggestedStoryIdeaCount} suggested Story Ideas
-              </span>
-            ) : null}
           </div>
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            <p className="font-medium text-foreground">Use Journey Context to clarify the business case</p>
+            <p className="font-medium text-foreground">Use journeys to clarify the business case</p>
             <p className="mt-2">
-              Describe a few important journeys that make the case easier to understand for people and give downstream AI better context for refinement, design, and build guidance.
+              Capture a few important journeys only when they make the case clearer and give downstream AI better context for refinement, design, and build guidance.
             </p>
             <p className="mt-3">
-              Treat Journey Context mainly as this page and export section. The actual value should sit in the Journeys: who is involved, what they are trying to achieve, what triggers the work, and where today&apos;s friction exists.
+              The value sits in the journeys themselves: who is involved, what they are trying to achieve, what triggers the work, and where today&apos;s friction exists.
             </p>
             <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
+          </div>
+
+          <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.step}</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">{currentFlowStep.title}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentFlowStep.description}</p>
+            <p className="mt-3 text-sm font-medium text-foreground">Next step: {currentFlowStep.nextAction}</p>
+            {(counts.uncoveredJourneyCount > 0 || counts.suggestedStoryIdeaCount > 0 || readyJourneys.length > 0) ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                {readyJourneys.length > 0 ? `${readyJourneys.length} ready for analysis` : "No journey ready for analysis yet"}
+                {counts.uncoveredJourneyCount > 0 ? ` · ${counts.uncoveredJourneyCount} uncovered journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}` : ""}
+                {counts.suggestedStoryIdeaCount > 0 ? ` · ${counts.suggestedStoryIdeaCount} suggested Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}` : ""}
+              </p>
+            ) : null}
           </div>
 
           <div
@@ -380,10 +430,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
       <details className="rounded-[28px] border border-border/70 bg-background shadow-sm" open={contexts.length === 0}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="text-base font-semibold text-foreground">Step-by-step help</p>
+            <p className="text-base font-semibold text-foreground">Get help with the next step</p>
             <p className="text-sm text-muted-foreground">
-              Use this when you want help clarifying one Journey at a time for the business case. It starts with the Journey itself.
-              You do not need to invent a separate Journey Context name first.
+              Use this when you want the tool to guide you one journey at a time. It starts with the journey itself, not with a separate Journey Context name.
             </p>
           </div>
           <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
