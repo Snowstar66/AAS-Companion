@@ -1,6 +1,6 @@
 "use client";
 
-import type { FramingBriefExportPayload } from "@/lib/framing/framing-brief-export";
+import type { ProfiledFramingAiHandoff } from "@/lib/framing/framing-brief-export";
 
 type ZipEntry = {
   path: string;
@@ -153,25 +153,24 @@ function decodeDataUrl(dataUrl: string) {
 }
 
 export function buildFramingBriefExportPackage(input: {
-  payload: FramingBriefExportPayload;
-  markdown: string;
+  artifact: ProfiledFramingAiHandoff;
 }) {
   const encoder = new TextEncoder();
-  const fileBaseName = input.payload.handshake.outcome_key.toLowerCase();
+  const { artifact } = input;
   const entries: ZipEntry[] = [
     {
-      path: `${fileBaseName}-ai-delivery-handoff.md`,
-      data: encoder.encode(input.markdown)
+      path: artifact.markdownFilename,
+      data: encoder.encode(artifact.markdown)
     },
     {
-      path: `${fileBaseName}-ai-delivery-handoff.json`,
-      data: encoder.encode(JSON.stringify(input.payload, null, 2))
+      path: artifact.jsonFilename,
+      data: encoder.encode(JSON.stringify(artifact.json, null, 2))
     }
   ];
 
   const storyIdeaGroups = [
-    ...input.payload.framing_structure.epics.flatMap((epic) => epic.story_ideas),
-    ...input.payload.framing_structure.unassigned_story_ideas
+    ...artifact.payload.framing_structure.epics.flatMap((epic) => epic.story_ideas),
+    ...artifact.payload.framing_structure.unassigned_story_ideas
   ];
 
   for (const storyIdea of storyIdeaGroups) {
@@ -187,17 +186,24 @@ export function buildFramingBriefExportPackage(input: {
     }
   }
 
+  const guidanceTitle = artifact.profile === "bmad_prepared" ? "BMAD handling rules" : "General handling rules";
   const readme = [
-    "# AI Delivery Handoff Package",
+    `# ${artifact.label} Package`,
     "",
-    `Outcome: ${input.payload.handshake.outcome_key} - ${input.payload.handshake.outcome_title}`,
+    `Outcome: ${artifact.payload.handshake.outcome_key} - ${artifact.payload.handshake.outcome_title}`,
+    `Profile: ${artifact.label}`,
     "",
     "Contents:",
-    `- ${fileBaseName}-ai-delivery-handoff.md`,
-    `- ${fileBaseName}-ai-delivery-handoff.json`,
+    `- ${artifact.markdownFilename}`,
+    `- ${artifact.jsonFilename}`,
     "- ux-sketches/... linked to the correct Story Idea",
     "",
-    "Use the markdown handoff for direct AI transfer, and the JSON plus ux-sketches folder when the next step should preserve structure and visual references together."
+    artifact.description,
+    "",
+    `## ${guidanceTitle}`,
+    ...artifact.json.guidance.map((line) => `- ${line}`),
+    "",
+    "Use the markdown handoff for direct AI transfer. Use the JSON plus ux-sketches folder when the next step should preserve structure, traceability and visual references together."
   ].join("\n");
 
   entries.unshift({
@@ -207,6 +213,6 @@ export function buildFramingBriefExportPackage(input: {
 
   return {
     blob: createStoredZip(entries),
-    filename: `${fileBaseName}-ai-delivery-handoff-package.zip`
+    filename: artifact.packageFilename
   };
 }

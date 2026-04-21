@@ -233,7 +233,7 @@ function DeliveryStoryChildRow({
           <p className="mt-2 text-xs text-muted-foreground">{structureMeta}</p>
           {missingInputs.length > 0 ? (
             <p className="mt-2 text-xs text-amber-900">
-              <span className="font-medium">{t(language, "Needs attention:", "Behöver uppmärksamhet:")}</span> {missingInputs.join(", ")}
+              <span className="font-medium">{t(language, "Delivery gaps to resolve later:", "Deliveryluckor att lösa senare:")}</span> {missingInputs.join(", ")}
             </p>
           ) : null}
         </div>
@@ -744,7 +744,7 @@ function EpicRow({
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design but are not delivery specifications.", "Story Ideas definierar intent, värde och expected behavior. De vägleder design men är inte leveransspecifikationer.")}
+                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design and later AI refinement, while Delivery Stories appear later as execution evidence and build objects.", "Story Ideas definierar intent, värde och expected behavior. De vägleder design och senare AI-förfining, medan Delivery Stories dyker upp senare som execution evidence och buildobjekt.")}
                     </p>
                   </div>
                   {storyIdeaCount === 0 ? (
@@ -777,7 +777,7 @@ function EpicRow({
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea.", "De här Delivery Stories hör till samma epic, men lades till under design eller leverans i stället för att skapas direkt från en Story Idea.")}
+                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea. Keep them as feedback-loop evidence, not as replacements for the original framing.", "De här Delivery Stories hör till samma epic, men lades till under design eller leverans i stället för att skapas direkt från en Story Idea. Behåll dem som feedback-loop-evidens, inte som ersättning för den ursprungliga framingen.")}
                     </p>
                     <div className="mt-4 space-y-3">
                       {additionalDeliveryStories.map((story) => (

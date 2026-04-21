@@ -120,7 +120,7 @@ describe("framing ai agents", () => {
     expect(handover.markdown).toContain("# Design / Build Handover");
     expect(handover.markdown).toContain("## Downstream AI Instructions");
     expect(handover.json).toHaveProperty("aiDeliveryHandoff");
-    expect(bmad.markdown).toContain("# BMAD-friendly Framing Package");
-    expect(bmad.json).toHaveProperty("profile", "bmad-friendly");
+    expect(bmad.markdown).toContain("# BMAD Prepared Framing Package");
+    expect(bmad.json).toHaveProperty("profile", "bmad_prepared");
   });
 });

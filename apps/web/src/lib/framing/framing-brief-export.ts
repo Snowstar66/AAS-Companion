@@ -284,6 +284,25 @@ export type HumanFramingBriefExport = {
   filename: string;
 };
 
+export type FramingAiHandoffProfile = "neutral_governed" | "bmad_prepared";
+
+export type ProfiledFramingAiHandoff = {
+  profile: FramingAiHandoffProfile;
+  label: string;
+  description: string;
+  payload: FramingBriefExportPayload;
+  markdown: string;
+  json: {
+    profile: FramingAiHandoffProfile;
+    intent: string;
+    guidance: string[];
+    source_of_truth: FramingBriefExportPayload;
+  };
+  markdownFilename: string;
+  jsonFilename: string;
+  packageFilename: string;
+};
+
 function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
@@ -674,10 +693,11 @@ export function buildFramingBriefExport(input: {
     },
     next_step_handoff: {
       recommended_use:
-        "Use this Framing package as input for BMAD or another controlled AI tool when you move into design, story refinement or structured delivery planning.",
+        "Use this Framing package as the governed source of truth when you move into design, story refinement or structured delivery planning with BMAD or another AI tool.",
       references: [
         "Treat the customer handshake, baseline and AI/risk posture as the framing source of truth.",
-        "Treat Epics and Story Ideas as directional input for design and delivery refinement, not as fixed implementation steps.",
+        "Treat Epics and Story Ideas as directional input for design and later delivery refinement, not as fixed implementation steps.",
+        "If later steps create Delivery Stories or extra work items, keep them traceable back to this Framing package or record them explicitly as feedback-loop additions.",
         "Use the approval section to understand whether this Framing version is already signed off for Tollgate 1.",
         "Use the UX sketch references where they exist to preserve visual intent in the next step."
       ]
@@ -1062,6 +1082,7 @@ export function buildHumanFramingBriefExport(input: {
     "## Notes for the next conversation",
     "- Treat this brief as framing guidance, not as final implementation detail.",
     "- Preserve the value spine links when you refine Epics and Story Ideas further.",
+    "- If later steps generate Delivery Stories or extra work items, bring them back as traceable feedback-loop evidence instead of replacing the original Framing brief.",
     ...(payload.baseline.warnings.length > 0 ? payload.baseline.warnings.map((warning) => `- Warning: ${warning}`) : []),
     "",
     "## Export metadata",
@@ -1072,5 +1093,80 @@ export function buildHumanFramingBriefExport(input: {
     title: `${key} - ${title}`,
     markdown,
     filename
+  };
+}
+
+function getProfileMetadata(profile: FramingAiHandoffProfile) {
+  if (profile === "bmad_prepared") {
+    return {
+      label: "BMAD Prepared",
+      description:
+        "Prepared for BMAD-style downstream refinement while keeping Framing as the governed source of truth.",
+      intent: "BMAD-prepared governed AI handoff",
+      guidance: [
+        "Start from Outcome, Epics and Story Ideas before creating or refining Delivery Stories.",
+        "Preserve Outcome -> Epic -> Story Idea traceability and extend it forward into Delivery Stories and tests when later steps generate them.",
+        "Do not replace the Framing source of truth with generated delivery artifacts. Bring later delivery evidence back through the feedback loop instead.",
+        "Keep approval context, AI level, constraints, Journey Context and UX references attached through later BMAD steps."
+      ],
+      markdownTitle: "# BMAD Prepared AI Handoff",
+      markdownIntro:
+        "This package is prepared for BMAD-style downstream refinement while keeping the governed Framing package intact as the source of truth.",
+      stemSuffix: "bmad-prepared-framing-handoff"
+    } as const;
+  }
+
+  return {
+    label: "Neutral Governed",
+    description:
+      "General-purpose handoff for AI tools that should inherit the framing structure, governance envelope and traceability rules.",
+    intent: "Neutral governed AI handoff",
+    guidance: [
+      "Treat this Framing package as the source of truth for outcome, scope, constraints, AI level and approval context.",
+      "Use Story Ideas as framing-level intent for refinement. Do not force them into Delivery Story shape too early.",
+      "If later steps create Delivery Stories or extra work items, keep them traceable to the original Story Ideas or record them as explicit feedback-loop additions.",
+      "Carry Journey Context and UX references forward when they clarify user value, but do not overwrite the underlying Framing package."
+    ],
+    markdownTitle: "# Neutral Governed AI Handoff",
+    markdownIntro:
+      "This package is a general-purpose governed handoff for downstream AI tools that should preserve Framing structure, approval context and traceability.",
+    stemSuffix: "neutral-governed-framing-handoff"
+  } as const;
+}
+
+export function buildProfiledFramingAiHandoff(input: {
+  payload: FramingBriefExportPayload;
+  markdown: string;
+  profile: FramingAiHandoffProfile;
+}): ProfiledFramingAiHandoff {
+  const metadata = getProfileMetadata(input.profile);
+  const fileBaseName = input.payload.handshake.outcome_key.toLowerCase();
+  const markdown = [
+    metadata.markdownTitle,
+    "",
+    metadata.markdownIntro,
+    "",
+    "## Handling rules",
+    ...metadata.guidance.map((line) => `- ${line}`),
+    "",
+    "## Structured Framing Payload",
+    input.markdown
+  ].join("\n");
+
+  return {
+    profile: input.profile,
+    label: metadata.label,
+    description: metadata.description,
+    payload: input.payload,
+    markdown,
+    json: {
+      profile: input.profile,
+      intent: metadata.intent,
+      guidance: [...metadata.guidance],
+      source_of_truth: input.payload
+    },
+    markdownFilename: `${fileBaseName}-${metadata.stemSuffix}.md`,
+    jsonFilename: `${fileBaseName}-${metadata.stemSuffix}.json`,
+    packageFilename: `${fileBaseName}-${metadata.stemSuffix}-package.zip`
   };
 }

@@ -5,9 +5,15 @@ import type { FramingAgentSourceOfTruth } from "@/lib/framing/agentTypes";
 export function generateBmadExport(source: FramingAgentSourceOfTruth): DesignHandoverResult {
   const handover = generateDesignHandover(source);
   const markdown = [
-    "# BMAD-friendly Framing Package",
+    "# BMAD Prepared Framing Package",
     "",
     "This profile reformats the current Framing package for BMAD-style downstream usage. It does not change the internal Source of Truth or governance model.",
+    "",
+    "## BMAD handling rules",
+    "- Start from Outcome, Epics and Story Ideas before creating or refining Delivery Stories.",
+    "- Preserve Outcome -> Epic -> Story Idea traceability and extend it forward into Delivery Stories and tests when later steps generate them.",
+    "- Do not replace the original Framing package with generated delivery artifacts. Bring later delivery evidence back through the feedback loop instead.",
+    "- Carry approval context, AI level, Journey Context and UX references through later BMAD steps.",
     "",
     `Outcome: ${source.outcome.key} - ${source.outcome.title}`,
     `Initiative type: ${source.outcome.deliveryType ?? "Not captured yet"}`,
@@ -46,10 +52,15 @@ export function generateBmadExport(source: FramingAgentSourceOfTruth): DesignHan
   ].join("\n");
 
   return {
-    summary: `BMAD-friendly export generated for ${source.outcome.key}.`,
+    summary: `BMAD-prepared export generated for ${source.outcome.key}.`,
     markdown,
     json: {
-      profile: "bmad-friendly",
+      profile: "bmad_prepared",
+      guidance: [
+        "Start from Outcome, Epics and Story Ideas before creating or refining Delivery Stories.",
+        "Preserve Outcome -> Epic -> Story Idea traceability through later BMAD steps.",
+        "Treat generated delivery artifacts as feedback-loop evidence, not as replacements for Framing."
+      ],
       sourceOfTruth: {
         outcomeKey: source.outcome.key,
         initiativeType: source.outcome.deliveryType,

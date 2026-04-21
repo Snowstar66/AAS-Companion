@@ -94,7 +94,7 @@ export function StoryIdeaWorkspace({
     ideaBlockers.length > 0
       ? t("Complete the Story Idea", "Komplettera storyiden")
       : story.outcome.status === "active"
-        ? t("Create or refine Delivery Stories", "Skapa eller forfina Delivery Stories")
+        ? t("Guide later refinement", "Styr senare förfining")
         : t("Review in Framing", "Granska i Framing");
   const nextActionDetail =
     ideaBlockers.length > 0
@@ -104,8 +104,8 @@ export function StoryIdeaWorkspace({
         )
       : story.outcome.status === "active"
         ? t(
-            "This Story Idea already sits inside approved Framing and can now guide design and delivery decomposition.",
-            "Den har Story Idean ligger redan i godkand Framing och kan nu styra design och vidare leveransnedbrytning."
+            "This Story Idea already sits inside approved Framing and can now guide design, decomposition and later delivery evidence without becoming a delivery specification here.",
+            "Den har Story Idean ligger redan i godkand Framing och kan nu styra design, nedbrytning och senare leveransevidens utan att bli en leveransspecifikation har."
           )
         : t(
             "This Story Idea is complete enough for Framing review and Tollgate conversation.",
@@ -246,8 +246,8 @@ export function StoryIdeaWorkspace({
           <SecondaryPanel
             defaultOpen={false}
             description={t(
-              "These delivery details can wait until the story idea is turned into a Delivery Story for later build work.",
-              "De har leveransdetaljerna kan vanta tills storyidean blir en Delivery Story for senare build-arbete."
+              "These delivery details stay optional in Framing. Fill them in when this Story Idea is later promoted or returned through the feedback loop as a Delivery Story.",
+              "De har leveransdetaljerna ar valfria i Framing. Fyll i dem nar Story Idean senare promotas eller kommer tillbaka via feedback-loopen som en Delivery Story."
             )}
             id="story-handoff-inputs"
             title={t("Delivery details later", "Leveransdetaljer senare")}
@@ -263,7 +263,7 @@ export function StoryIdeaWorkspace({
                         : "border-amber-200 bg-amber-50 text-amber-800"
                     }`}
                   >
-                    {readinessFields[0].complete ? t("Ready", "Redo") : t("Missing", "Saknas")}
+                    {readinessFields[0].complete ? t("Ready", "Redo") : t("Later", "Senare")}
                   </span>
                 </div>
                 <textarea
@@ -296,7 +296,7 @@ export function StoryIdeaWorkspace({
                         : "border-amber-200 bg-amber-50 text-amber-800"
                     }`}
                   >
-                    {readinessFields[1].complete ? t("Ready", "Redo") : t("Missing", "Saknas")}
+                    {readinessFields[1].complete ? t("Ready", "Redo") : t("Later", "Senare")}
                   </span>
                 </div>
                 <textarea
@@ -319,7 +319,7 @@ export function StoryIdeaWorkspace({
                         : "border-amber-200 bg-amber-50 text-amber-800"
                     }`}
                   >
-                    {readinessFields[2].complete ? t("Ready", "Redo") : t("Missing", "Saknas")}
+                    {readinessFields[2].complete ? t("Ready", "Redo") : t("Later", "Senare")}
                   </span>
                 </div>
                 <textarea
@@ -359,8 +359,8 @@ export function StoryIdeaWorkspace({
         <SecondaryPanel
           defaultOpen={false}
           description={t(
-            "See how this Story Idea is being realized in delivery without turning the framing view into delivery workflow.",
-            "Se hur den har Story Idean realiseras i leveransen utan att gora framingvyn till ett leveransflode."
+            "See what later design or build work has refined from this Story Idea without turning the framing view into a delivery workflow.",
+            "Se vad senare design- eller buildarbete har forfinat fran den har Story Idean utan att gora framingvyn till ett leveransflode."
           )}
           title={t("Delivery realization", "Leveransrealisering")}
         >
@@ -395,7 +395,7 @@ export function StoryIdeaWorkspace({
           ) : originStoryIdea ? (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
               {t(
-                "This Story Idea has traceability through a linked seed, but no Delivery Stories have been created from it yet.",
+                "This Story Idea has traceability through a linked seed, but no later Delivery Stories or imported delivery evidence have been linked back yet.",
                 "Den här Story Idean har spårbarhet via ett länkat seed, men inga Delivery Stories har ännu skapats från den."
               )}
             </div>
@@ -442,7 +442,7 @@ export function StoryIdeaWorkspace({
         <SecondaryPanel
           defaultOpen={false}
           description={t(
-            "Delivery review only becomes active after the Story Idea is turned into a Delivery Story.",
+            "Delivery review becomes relevant only after later steps create or promote a Delivery Story.",
             "Leveransgranskning blir först aktiv när Story Idean har blivit en Delivery Story."
           )}
           title={t("Delivery review later", "Leveransgranskning senare")}
@@ -451,7 +451,7 @@ export function StoryIdeaWorkspace({
               <p className="font-medium text-foreground">{t("This is still a Story Idea.", "Det här är fortfarande en storyidé.")}</p>
             <p className="mt-2 leading-6">
               {t(
-                "Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build start controls appear after this idea is transformed into a Delivery Story.",
+                "Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build start controls appear after later steps transform this idea into a Delivery Story and return that evidence here.",
                 "Behåll fokus på Value Intent, Expected Behavior och Epic Alignment. Leveransgranskning, build readiness och build-startkontroller visas först när idén har omvandlats till en Delivery Story."
               )}
             </p>

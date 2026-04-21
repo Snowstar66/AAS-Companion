@@ -195,7 +195,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     });
   }
 
-  function resetToRecommendedDefaults() {
+  function resetToSuggestedProfile() {
     setInstructions((current) => ({
       ...createDefaultDownstreamAiInstructions({
         initiativeType: deliveryType,
@@ -211,7 +211,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
         <CardHeader>
           <CardTitle>{t(language, "Downstream AI Instructions", "Downstream AI-instruktioner")}</CardTitle>
           <CardDescription>
-            {t(language, "Configure how downstream AI should interpret and refine this Framing package during later Design and Build steps.", "Styr hur downstream AI ska tolka och förfina detta Framing-paket i senare design- och buildsteg.")}
+            {t(language, "Configure how downstream AI should work with this Framing package during later Design and Build steps without replacing Framing as the source of truth.", "Styr hur downstream AI ska arbeta med detta Framing-paket i senare design- och buildsteg utan att ersätta Framing som source of truth.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -230,7 +230,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
               <p className="mt-2 text-2xl font-semibold text-foreground">{instructions.refinementPreferences.length}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Deviations from defaults", "Avvikelser från standard")}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Overrides from profile", "Avvikelser från profil")}</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{analysis.deviations.length}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
@@ -244,7 +244,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           </div>
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            {t(language, "Use this page to control how downstream AI should refine Epics, Story Ideas, Journey Context, Design, and Build behavior before export. The settings here do not replace the main Framing structure - they guide how AI should work with it.", "Använd sidan för att styra hur downstream AI ska förfina Epics, Story Ideas, Journey Context, Design och Build före export. Valen här ersätter inte Framing-strukturen utan styr hur AI ska arbeta med den.")}
+            {t(language, "Use this page to steer how downstream AI should refine Epics, Story Ideas, Journey Context, Design, and Build behavior before export. The settings here are an accelerator profile - they do not replace the main Framing structure.", "Använd sidan för att styra hur downstream AI ska förfina Epics, Story Ideas, Journey Context, Design och Build före export. Valen här är en acceleratorprofil och ersätter inte den huvudsakliga Framing-strukturen.")}
           </div>
 
           {flash?.save === "success" ? <FlashBanner message={t(language, "Downstream AI Instructions saved to the Framing package.", "Downstream AI-instruktioner sparades i Framing-paketet.")} tone="success" /> : null}
@@ -283,8 +283,8 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           <CardDescription>
             {t(
               language,
-              "This page uses recommended defaults, warnings, and custom instructions. No separate AI chat is needed here.",
-              "Den här sidan använder rekommenderade standardval, varningar och egna instruktioner. Ingen separat AI-chat behövs här."
+              "This page uses a suggested starting profile, warnings, and custom instructions. No separate AI chat is needed here.",
+              "Den här sidan använder en föreslagen startprofil, varningar och egna instruktioner. Ingen separat AI-chat behövs här."
             )}
           </CardDescription>
         </CardHeader>
@@ -292,13 +292,13 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
             {t(
               language,
-              `Start with the recommended defaults for ${deliveryType}. Change only the parts where you actually want to steer downstream AI in another direction. Then add custom instructions only for things that truly must be preserved.`,
-              `Börja med standardvalen för ${deliveryType}. Ändra bara där du faktiskt vill styra downstream AI i en annan riktning. Lägg sedan till egna instruktioner bara för sådant som verkligen måste bevaras.`
+              `Start with the suggested profile for ${deliveryType}. Change only the parts where you genuinely want to steer downstream AI in another direction. Then add custom instructions only for things that truly must survive later refinement.`,
+              `Börja med den föreslagna profilen för ${deliveryType}. Ändra bara där du faktiskt vill styra downstream AI i en annan riktning. Lägg sedan till egna instruktioner bara för sådant som verkligen måste leva vidare i senare förfining.`
             )}
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button onClick={resetToRecommendedDefaults} type="button" variant="secondary">
-              {t(language, "Restore recommended defaults", "Återställ rekommenderade val")}
+            <Button onClick={resetToSuggestedProfile} type="button" variant="secondary">
+              {t(language, "Reset to suggested profile", "Återställ föreslagen profil")}
             </Button>
           </div>
         </CardContent>
@@ -306,7 +306,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>{t(language, "Always-on Controls", "Alltid aktiva styrningar")}</CardTitle>
+          <CardTitle>{t(language, "Governance Envelope", "Governance envelope")}</CardTitle>
           <CardDescription>{t(language, "These controls always apply to downstream AI behavior and are included in export automatically.", "De här styrningarna gäller alltid för downstream AI och följer med automatiskt i exporten.")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-2">
@@ -328,14 +328,14 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>{t(language, "Refinement Preferences", "Förfiningsval")}</CardTitle>
+          <CardTitle>{t(language, "Accelerator Tuning", "Acceleratorstyrning")}</CardTitle>
           <CardDescription>
-            {t(language, "Configure the dimensions where downstream AI should be explicit. Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. N/A does not disable mandatory controls.", "Styr vilka dimensioner downstream AI ska vara tydlig inom. Använd N/A bara när du medvetet vill lämna beslutet öppet för downstream AI. N/A stänger inte av obligatoriska styrningar.")}
+            {t(language, "Tune the dimensions where downstream AI should be more explicit. Keeping the suggested profile is often enough; change values only where you want stronger steering. N/A does not disable mandatory controls.", "Styr de dimensioner där downstream AI ska vara mer explicit. Ofta räcker den föreslagna profilen; ändra bara där du vill ha starkare styrning. N/A stänger inte av obligatoriska styrningar.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
-            {t(language, "N/A helper: Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. N/A does not disable mandatory controls.", "N/A-hjälp: Använd N/A bara när du medvetet vill lämna ett förfiningsbeslut öppet för downstream AI. N/A stänger inte av obligatoriska styrningar.")}
+            {t(language, "N/A helper: Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. This preserves room for later AI reasoning without weakening the governance envelope.", "N/A-hjälp: Använd N/A bara när du medvetet vill lämna ett förfiningsbeslut öppet för downstream AI. Det bevarar utrymme för senare AI-resonemang utan att försvaga governance envelope.")}
           </div>
         </CardContent>
       </Card>
@@ -444,7 +444,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           ))}
 
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <p className="font-medium text-foreground">{t(language, "Deviations from Recommended Defaults", "Avvikelser från rekommenderade standardval")}</p>
+            <p className="font-medium text-foreground">{t(language, "Overrides from Suggested Profile", "Avvikelser från föreslagen profil")}</p>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
               {analysis.generatedGuidance.deviationsSummary.map((line) => (
                 <li key={line}>{line}</li>
