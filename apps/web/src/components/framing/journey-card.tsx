@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@aas-companion/ui";
+import { Button } from "@aas-companion/ui";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
 import type { Journey } from "@/lib/framing/journeyContextTypes";
 import type { JourneyReferenceOption, JourneyValidation } from "@/lib/framing/journey-context-ui";
@@ -393,123 +393,6 @@ function InlineAiCoreSuggestion(props: { suggestion: JourneyCoreSuggestion; onAp
     </div>
   );
 }
-function InlineAiFirstDraftSuggestion(props: {
-  suggestion: JourneyFirstDraftSuggestion;
-  onApply: () => void;
-  onDismiss: () => void;
-  applyLabel?: string;
-  dismissLabel?: string;
-  showApply?: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-      <p className="font-medium text-foreground">Journey-översikt</p>
-      <p className="mt-1 text-sm text-muted-foreground">Det här är den aktuella sammanfattningen av journeyn. Här ser du riktning, friktion, önskat stöd, breda steg och sannolika kopplingar på ett ställe.</p>
-      <p className="mt-2 text-xs leading-5 text-muted-foreground">
-        När du uppdaterar texten i redigeringen nedanför uppdateras översikten här. Om du väljer att lägga in förslag fylls bara tomma delar i.
-      </p>
-      <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-3 text-sm leading-6 text-foreground">
-        {props.suggestion.summary}
-      </div>
-      <div className="mt-3 grid gap-4 md:grid-cols-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Nuläge</p>
-          <p className="mt-2 text-sm leading-6 text-foreground">{props.suggestion.currentState}</p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Önskat läge</p>
-          <p className="mt-2 text-sm leading-6 text-foreground">{props.suggestion.desiredFutureState}</p>
-        </div>
-      </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Problem</p>
-          <ul className="mt-2 space-y-2 text-sm leading-6 text-foreground">{props.suggestion.painPoints.map((item) => <li key={item}>• {item}</li>)}</ul>
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Önskat stöd</p>
-          <ul className="mt-2 space-y-2 text-sm leading-6 text-foreground">{props.suggestion.desiredSupport.map((item) => <li key={item}>• {item}</li>)}</ul>
-        </div>
-      </div>
-      <div className="mt-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Breda steg</p>
-        <ul className="mt-2 space-y-2 text-sm leading-6 text-foreground">
-          {props.suggestion.steps.map((step) => (
-            <li key={step.id}>• <span className="font-medium">{step.title}:</span> {step.description}</li>
-          ))}
-        </ul>
-      </div>
-      {props.suggestion.relatedEpicLabels.length > 0 || props.suggestion.relatedStoryIdeaLabels.length > 0 ? (
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {props.suggestion.relatedEpicLabels.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Troliga Epic-kopplingar</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {props.suggestion.relatedEpicLabels.map((label) => (
-                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800" key={label}>
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {props.suggestion.relatedStoryIdeaLabels.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Troliga Story Idea-kopplingar</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {props.suggestion.relatedStoryIdeaLabels.map((label) => (
-                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800" key={label}>
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-      {props.suggestion.relatedEpicInsights.length > 0 || props.suggestion.relatedStoryIdeaInsights.length > 0 ? (
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {props.suggestion.relatedEpicInsights.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Inspiration från Epics</p>
-              <ul className="mt-2 space-y-2 text-sm leading-6 text-foreground">
-                {props.suggestion.relatedEpicInsights.map((item) => (
-                  <li key={item}>• {item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          {props.suggestion.relatedStoryIdeaInsights.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Inspiration från Story Ideas</p>
-              <ul className="mt-2 space-y-2 text-sm leading-6 text-foreground">
-                {props.suggestion.relatedStoryIdeaInsights.map((item) => (
-                  <li key={item}>• {item}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-      {props.suggestion.suggestedStoryIdeas.length > 0 ? (
-        <div className="mt-4">
-          <InlineStoryIdeaSuggestionList
-            description="Det här är nästa sannolika Story Ideas att överväga om journeyn behöver mer stöd än backloggen redan ger."
-            suggestions={props.suggestion.suggestedStoryIdeas}
-            title="Möjliga saknade Story Ideas"
-          />
-        </div>
-      ) : null}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {props.showApply !== false ? (
-          <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Lägg in förslag i tomma fält"}</Button>
-        ) : null}
-        <Button onClick={props.onDismiss} size="sm" type="button" variant="secondary">{props.dismissLabel ?? "Dölj"}</Button>
-      </div>
-    </div>
-  );
-}
-
 function getCoreMissingCount(journey: Journey) {
   return [hasText(journey.title), hasText(journey.primaryActor), hasText(journey.goal), hasText(journey.trigger)].filter((entry) => !entry).length;
 }
@@ -847,6 +730,20 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   }
 
   const journeyBrief = canBuildJourneySummary ? createFirstDraftSuggestion() : null;
+  const missingStoryIdeaSuggestions = buildMissingStoryIdeaSuggestions();
+  const missingDraftFieldLabels = [
+    !hasText(journey.currentState) ? "Nuläge" : null,
+    !hasText(journey.desiredFutureState) ? "Önskat läge" : null,
+    !((journey.painPoints?.length ?? 0) > 0) ? "Problem" : null,
+    !((journey.desiredSupport?.length ?? 0) > 0) ? "Önskat stöd" : null,
+    journey.steps.length === 0 ? "Steg" : null
+  ].filter((value): value is string => Boolean(value));
+  const hasAiAnalysis =
+    relevantEpicLabels.length > 0 ||
+    relevantStoryIdeaLabels.length > 0 ||
+    Boolean(journey.coverage) ||
+    missingStoryIdeaSuggestions.length > 0 ||
+    hasEmptyDraftSections;
   const displayedNarrative = buildNarrativeSuggestion();
   const displayedValueMoment = buildValueMomentSuggestion();
   const displayedSuccessSignals = buildSuccessSignalsSuggestion();
@@ -874,30 +771,6 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
             <p className="text-sm text-muted-foreground">{journey.primaryActor ? `Huvudaktör: ${journey.primaryActor}` : "Huvudaktör är inte ifylld ännu"}</p>
             {journey.goal ? <p className="text-sm text-muted-foreground">Mål: {journey.goal}</p> : null}
             {displayedNarrative ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{truncateText(displayedNarrative, 220)}</p> : null}
-            {journeyBrief ? (
-              <div className="mt-3 grid gap-2 md:grid-cols-2">
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">Nuläge:</span> {truncateText(journeyBrief.currentState, 120)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">Önskat läge:</span> {truncateText(journeyBrief.desiredFutureState, 120)}
-                </p>
-              </div>
-            ) : null}
-            {journeyBrief && (journeyBrief.relatedEpicLabels.length > 0 || journeyBrief.relatedStoryIdeaLabels.length > 0) ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {journeyBrief.relatedEpicLabels.slice(0, 2).map((label) => (
-                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-medium text-sky-800" key={`epic-${label}`}>
-                    {truncateText(label, 48)}
-                  </span>
-                ))}
-                {journeyBrief.relatedStoryIdeaLabels.slice(0, 2).map((label) => (
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-700" key={`story-${label}`}>
-                    {truncateText(label, 48)}
-                  </span>
-                ))}
-              </div>
-            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -909,29 +782,6 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
 
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">{coreMissingCount > 0 ? "Börja brett. Fyll i titel, aktör, mål och trigger innan du lägger till mer detalj." : "Den här journeyn har grunderna på plats. Lägg bara till mer detalj om det förtydligar caset eller förbättrar analysen."}</div>
-
-        {journeyBrief ? (
-          <div className="mt-4 space-y-4">
-            <InlineAiFirstDraftSuggestion
-              applyLabel="Lägg in förslag i tomma fält"
-              dismissLabel={isEditingCore ? "Dölj redigering" : "Redigera kärnan"}
-              onApply={() => {
-                onChange({
-                  ...journey,
-                  currentState: hasText(journey.currentState) ? journey.currentState : journeyBrief.currentState,
-                  desiredFutureState: hasText(journey.desiredFutureState) ? journey.desiredFutureState : journeyBrief.desiredFutureState,
-                  painPoints: journey.painPoints?.length ? journey.painPoints : journeyBrief.painPoints,
-                  desiredSupport: journey.desiredSupport?.length ? journey.desiredSupport : journeyBrief.desiredSupport,
-                  steps: journey.steps.length ? journey.steps : journeyBrief.steps
-                });
-                setEditingSection("core");
-              }}
-              onDismiss={() => setEditingSection((current) => (current === "core" ? null : "core"))}
-              showApply={hasEmptyDraftSections}
-              suggestion={journeyBrief}
-            />
-          </div>
-        ) : null}
         <div className="mt-6 space-y-4">
           <InlineSectionCard
             actionLabel="Redigera kärnan"
@@ -1020,23 +870,6 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                       Förbättra journeytext
                     </Button>
                   </div>
-                  {relevantStoryIdeaLabels.length > 0 || relevantEpicLabels.length > 0 ? (
-                    <div className="rounded-2xl border border-sky-200/70 bg-sky-50/50 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">AI-stöd från nuvarande backlog</p>
-                      {relevantStoryIdeaLabels.length > 0 ? (
-                        <div className="mt-2">
-                          <p className="text-sm text-muted-foreground">Story Ideas som redan ligger nära journeyn</p>
-                          <CoverageSupportText labels={relevantStoryIdeaLabels} />
-                        </div>
-                      ) : null}
-                      {relevantEpicLabels.length > 0 ? (
-                        <div className="mt-3">
-                          <p className="text-sm text-muted-foreground">Epics som redan ger riktning till journeyn</p>
-                          <CoverageSupportText labels={relevantEpicLabels} />
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
                   {narrativeSuggestion ? (
                     <div className="w-full">
                       <InlineAiSuggestion
@@ -1148,6 +981,104 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
             </div>
           </div>
         </div>
+        {hasAiAnalysis ? (
+          <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10">
+            <summary className="cursor-pointer list-none px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-base font-semibold text-foreground">AI-analys och backlog-kopplingar</p>
+                  <p className="text-sm text-muted-foreground">Öppna bara när du vill se sannolika kopplingar, luckor eller låta AI fylla tomma analysfält.</p>
+                </div>
+                <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {journey.coverage ? "Analyserad" : "Sekundärt"}
+                </span>
+              </div>
+            </summary>
+
+            <div className="space-y-4 border-t border-border/70 px-4 py-4">
+              {journeyBrief && hasEmptyDraftSections ? (
+                <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4 text-sm">
+                  <p className="font-medium text-foreground">Fyll tomma analysfält med AI</p>
+                  <p className="mt-1 leading-6 text-muted-foreground">
+                    AI kan fylla sådant som fortfarande saknas i de sekundära fälten: {missingDraftFieldLabels.join(", ")}.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      onClick={() => {
+                        onChange({
+                          ...journey,
+                          currentState: hasText(journey.currentState) ? journey.currentState : journeyBrief.currentState,
+                          desiredFutureState: hasText(journey.desiredFutureState) ? journey.desiredFutureState : journeyBrief.desiredFutureState,
+                          painPoints: journey.painPoints?.length ? journey.painPoints : journeyBrief.painPoints,
+                          desiredSupport: journey.desiredSupport?.length ? journey.desiredSupport : journeyBrief.desiredSupport,
+                          steps: journey.steps.length ? journey.steps : journeyBrief.steps
+                        });
+                      }}
+                      size="sm"
+                      type="button"
+                    >
+                      Lägg in förslag i tomma fält
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {relevantStoryIdeaLabels.length > 0 || relevantEpicLabels.length > 0 ? (
+                <div className="rounded-2xl border border-border/70 bg-background px-4 py-4">
+                  <p className="font-medium text-foreground">Backlog som redan ligger nära journeyn</p>
+                  {relevantStoryIdeaLabels.length > 0 ? (
+                    <div className="mt-3">
+                      <p className="text-sm text-muted-foreground">Story Ideas som redan ligger nära</p>
+                      <CoverageSupportText labels={relevantStoryIdeaLabels} />
+                    </div>
+                  ) : null}
+                  {relevantEpicLabels.length > 0 ? (
+                    <div className="mt-3">
+                      <p className="text-sm text-muted-foreground">Epics som redan ger riktning</p>
+                      <CoverageSupportText labels={relevantEpicLabels} />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {missingStoryIdeaSuggestions.length > 0 ? (
+                <div className="rounded-2xl border border-border/70 bg-background px-4 py-4">
+                  <InlineStoryIdeaSuggestionList
+                    description="Det här är nästa sannolika Story Ideas att överväga om journeyn behöver mer stöd än backloggen redan ger."
+                    suggestions={missingStoryIdeaSuggestions}
+                    title="Möjliga saknade Story Ideas"
+                  />
+                </div>
+              ) : null}
+
+              {journey.coverage ? (
+                <div className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-foreground">Täckningsanalys</p>
+                    <CoverageBadge status={journey.coverage.status} />
+                  </div>
+                  <p className="mt-2 text-muted-foreground">Det här är AI-förslag om sannolika kopplingar och luckor, inte accepterade sanningar.</p>
+                  {suggestedEpicLabels.length > 0 ? <div className="mt-4"><p className="font-medium text-foreground">Troliga Epic-kopplingar</p><CoverageSupportText labels={suggestedEpicLabels} /></div> : null}
+                  {suggestedStoryIdeaLabels.length > 0 ? <div className="mt-4"><p className="font-medium text-foreground">Troliga Story Idea-kopplingar</p><CoverageSupportText labels={suggestedStoryIdeaLabels} /></div> : null}
+                  {journey.coverage.suggestedNewStoryIdeas?.length ? (
+                    <div className="mt-4 space-y-3">
+                      <p className="font-medium text-foreground">Föreslagna luckor att stänga</p>
+                      {journey.coverage.suggestedNewStoryIdeas.map((idea) => (
+                        <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={`${idea.title}-${idea.description}`}>
+                          <p className="font-medium text-foreground">{idea.title}</p>
+                          <p className="mt-1 text-muted-foreground">{idea.description}</p>
+                          {idea.expectedOutcome ? <p className="mt-2"><span className="font-medium text-foreground">Förväntat utfall:</span> {idea.expectedOutcome}</p> : null}
+                          {idea.confidence !== undefined ? <p><span className="font-medium text-foreground">Säkerhet:</span> {Math.round(idea.confidence * 100)}%</p> : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {cleanedCoverageNote ? <p className="mt-4 text-muted-foreground">{cleanedCoverageNote}</p> : null}
+                </div>
+              ) : null}
+            </div>
+          </details>
+        ) : null}
         <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10">
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1239,36 +1170,6 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
               <MultiSelectLinks helper="Frivilliga Figma- eller referenslänkar när de redan finns i detta Framing-paket." onChange={(nextIds) => onChange({ ...journey, linkedFigmaRefs: nextIds })} options={availableFigmaRefs} selectedIds={journey.linkedFigmaRefs} title="Länkad Figma / referenser" />
               {validation?.linkErrors.length ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{validation.linkErrors.map((message) => <p key={message}>{message}</p>)}</div> : null}
             </div>
-
-            {journey.coverage ? (
-              <Card className="mt-6 border-border/70 bg-background shadow-none">
-                <CardHeader>
-                  <CardTitle className="text-base">Täckningsanalys</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                  <p className="text-muted-foreground">Täckningsanalysen visar sannolika kopplingar till Epics och Story Ideas samt var det fortfarande finns luckor. Det här är AI-förslag, inte accepterade sanningar.</p>
-                  <div className="flex flex-wrap gap-2"><CoverageBadge status={journey.coverage.status} /></div>
-                  {suggestedEpicLabels.length > 0 ? <div><p className="font-medium text-foreground">Troliga Epic-kopplingar</p><CoverageSupportText labels={suggestedEpicLabels} /></div> : null}
-                  {suggestedStoryIdeaLabels.length > 0 ? <div><p className="font-medium text-foreground">Troliga Story Idea-kopplingar</p><CoverageSupportText labels={suggestedStoryIdeaLabels} /></div> : null}
-                  {journey.coverage.suggestedNewStoryIdeas?.length ? (
-                    <div className="space-y-3">
-                      <p className="font-medium text-foreground">Föreslagna luckor att stänga</p>
-                      {journey.coverage.suggestedNewStoryIdeas.map((idea) => (
-                        <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={`${idea.title}-${idea.description}`}>
-                          <p className="font-medium text-foreground">{idea.title}</p>
-                          <p className="mt-1 text-muted-foreground">{idea.description}</p>
-                          {idea.valueIntent ? <p className="mt-2"><span className="font-medium text-foreground">Värdeintention:</span> {idea.valueIntent}</p> : null}
-                          {idea.expectedOutcome ? <p><span className="font-medium text-foreground">Förväntat utfall:</span> {idea.expectedOutcome}</p> : null}
-                          {idea.confidence !== undefined ? <p><span className="font-medium text-foreground">Säkerhet:</span> {Math.round(idea.confidence * 100)}%</p> : null}
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  {!suggestedEpicLabels.length && !suggestedStoryIdeaLabels.length && !(journey.coverage.suggestedNewStoryIdeas?.length ?? 0) ? <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-muted-foreground">Analysen hittade ännu inga tydliga kopplingar. Förtydliga gärna journeyformuleringen eller kör analys igen när Epics och Story Ideas blivit tydligare.</div> : null}
-                  {cleanedCoverageNote ? <p className="text-muted-foreground">{cleanedCoverageNote}</p> : null}
-                </CardContent>
-              </Card>
-            ) : null}
           </div>
         </details>
       </div>
