@@ -427,7 +427,6 @@ async function SelectedFramingOutcomeSection(props: {
           analyzeAction={analyzeJourneyCoverageAction}
           data={selectedOutcome.data}
           flash={props.journeyFlash}
-          runAgentAction={runFramingAgentAction}
           saveAction={saveJourneyContextsAction}
         />
       </div>

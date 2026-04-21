@@ -24,7 +24,6 @@ type JourneyContextCardProps = {
   onUpdateStep: (journeyId: string, stepId: string, updater: (step: Journey["steps"][number]) => Journey["steps"][number]) => void;
   onMoveStep: (journeyId: string, stepId: string, direction: "up" | "down") => void;
   onRemoveStep: (journeyId: string, stepId: string) => void;
-  renderJourneyAssistant?: (journey: Journey) => ReactNode;
 };
 
 function FieldHint({ children }: { children: string }) {
@@ -57,7 +56,6 @@ export function JourneyContextCard({
   onUpdateStep,
   onMoveStep,
   onRemoveStep,
-  renderJourneyAssistant
 }: JourneyContextCardProps) {
   const coverageLabel = getCoverageSummaryLabel(context);
   const [isOpen, setIsOpen] = useState(false);
@@ -153,7 +151,6 @@ export function JourneyContextCard({
               onRemoveStep={(stepId) => onRemoveStep(journey.id, stepId)}
               onUpdateStep={(stepId, updater) => onUpdateStep(journey.id, stepId, updater)}
               validation={validation?.journeys[journey.id]}
-              inlineAssistant={renderJourneyAssistant ? renderJourneyAssistant(journey) : null}
             />
           ))}
         </div>
