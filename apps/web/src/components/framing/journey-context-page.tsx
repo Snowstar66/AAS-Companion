@@ -129,11 +129,19 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
   const [showPageGuidance, setShowPageGuidance] = useState(false);
   const availableEpics: JourneyReferenceOption[] = data.outcome.epics.map((epic) => ({
     id: epic.id,
-    label: `${epic.key} - ${epic.title}`
+    label: `${epic.key} - ${epic.title}`,
+    ...(hasText([epic.purpose, epic.scopeBoundary].filter(hasText).join(" "))
+      ? { description: [epic.purpose, epic.scopeBoundary].filter(hasText).join(" ") }
+      : {}),
+    ...(hasText(epic.purpose) ? { purpose: epic.purpose ?? "" } : {}),
+    ...(hasText(epic.scopeBoundary) ? { scopeBoundary: epic.scopeBoundary ?? "" } : {})
   }));
   const availableStoryIdeas: JourneyReferenceOption[] = data.outcome.directionSeeds.map((seed) => ({
     id: seed.id,
-    label: `${seed.key} - ${seed.title}`
+    label: `${seed.key} - ${seed.title}`,
+    ...(hasText(seed.shortDescription) ? { description: seed.shortDescription ?? "" } : {}),
+    ...(hasText(seed.shortDescription) ? { valueIntent: seed.shortDescription ?? "" } : {}),
+    ...(hasText(seed.expectedBehavior) ? { expectedBehavior: seed.expectedBehavior ?? "" } : {})
   }));
   const availableFigmaRefs: JourneyReferenceOption[] = data.outcome.directionSeeds
     .filter((seed) => seed.uxSketchName || seed.uxSketchDataUrl)

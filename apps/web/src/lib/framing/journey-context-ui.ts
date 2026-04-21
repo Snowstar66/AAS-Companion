@@ -3,6 +3,11 @@ import type { Journey, JourneyContext, JourneyStep } from "@/lib/framing/journey
 export type JourneyReferenceOption = {
   id: string;
   label: string;
+  description?: string;
+  valueIntent?: string;
+  expectedBehavior?: string;
+  purpose?: string;
+  scopeBoundary?: string;
 };
 
 export type JourneyStepValidation = {

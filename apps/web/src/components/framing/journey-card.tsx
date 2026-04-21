@@ -37,7 +37,9 @@ type JourneyFirstDraftSuggestion = {
   desiredSupport: string[];
   steps: Journey["steps"];
   relatedEpicLabels: string[];
+  relatedEpicInsights: string[];
   relatedStoryIdeaLabels: string[];
+  relatedStoryIdeaInsights: string[];
 };
 
 function FieldHint({ children }: { children: string }) {
@@ -97,6 +99,117 @@ function findReferenceLabels(ids: string[] | undefined, options: JourneyReferenc
 
 function uniqueLabels(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
+}
+
+function uniqueReferenceOptions(options: JourneyReferenceOption[]) {
+  const seen = new Set<string>();
+  return options.filter((option) => {
+    if (seen.has(option.id)) {
+      return false;
+    }
+
+    seen.add(option.id);
+    return true;
+  });
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function tokenizeText(value: string) {
+  const stopWords = new Set([
+    "och",
+    "att",
+    "det",
+    "den",
+    "detta",
+    "som",
+    "for",
+    "med",
+    "till",
+    "eller",
+    "the",
+    "and",
+    "for",
+    "with",
+    "from",
+    "this",
+    "that",
+    "then",
+    "har",
+    "ska",
+    "kan",
+    "sig",
+    "sin",
+    "sitt",
+    "vara"
+  ]);
+
+  return Array.from(
+    new Set(
+      normalizeSearchText(value)
+        .split(/[^a-z0-9]+/i)
+        .map((item) => item.trim())
+        .filter((item) => item.length > 2 && !stopWords.has(item))
+    )
+  );
+}
+
+function summarizeReferenceContext(option: JourneyReferenceOption) {
+  return [
+    option.purpose,
+    option.valueIntent,
+    option.expectedBehavior,
+    option.scopeBoundary,
+    option.description
+  ]
+    .map((value) => value?.trim())
+    .filter(Boolean)[0] ?? "";
+}
+
+function rankReferenceOptions(options: JourneyReferenceOption[], journeySearchText: string) {
+  const journeyTokens = tokenizeText(journeySearchText);
+  if (journeyTokens.length === 0) {
+    return [];
+  }
+
+  return options
+    .map((option) => {
+      const optionTokens = tokenizeText(
+        [option.label, option.description, option.valueIntent, option.expectedBehavior, option.purpose, option.scopeBoundary]
+          .filter(Boolean)
+          .join(" ")
+      );
+      const overlapCount = optionTokens.filter((token) => journeyTokens.includes(token)).length;
+      return {
+        option,
+        score: overlapCount
+      };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score)
+    .map((entry) => entry.option);
+}
+
+function pickRelevantReferenceOptions(params: {
+  explicitIds: string[];
+  options: JourneyReferenceOption[];
+  journeySearchText: string;
+  limit: number;
+}) {
+  const explicit = params.explicitIds
+    .map((id) => params.options.find((option) => option.id === id))
+    .filter((option): option is JourneyReferenceOption => Boolean(option));
+  const ranked = rankReferenceOptions(
+    params.options.filter((option) => !params.explicitIds.includes(option.id)),
+    params.journeySearchText
+  );
+
+  return uniqueReferenceOptions([...explicit, ...ranked]).slice(0, params.limit);
 }
 
 function truncateText(value: string | undefined, maxLength: number) {
@@ -291,6 +404,30 @@ function InlineAiFirstDraftSuggestion(props: {
           ) : null}
         </div>
       ) : null}
+      {props.suggestion.relatedEpicInsights.length > 0 || props.suggestion.relatedStoryIdeaInsights.length > 0 ? (
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {props.suggestion.relatedEpicInsights.length > 0 ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Inspiration från Epics</p>
+              <ul className="mt-2 space-y-2 text-sm leading-6 text-foreground">
+                {props.suggestion.relatedEpicInsights.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {props.suggestion.relatedStoryIdeaInsights.length > 0 ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Inspiration från Story Ideas</p>
+              <ul className="mt-2 space-y-2 text-sm leading-6 text-foreground">
+                {props.suggestion.relatedStoryIdeaInsights.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Använd i kortet"}</Button>
         <Button
@@ -394,6 +531,42 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     hasText(journey.primaryActor) &&
     hasText(journey.goal) &&
     hasText(journey.trigger);
+  const journeySearchText = [
+    journey.title,
+    journey.primaryActor,
+    journey.goal,
+    journey.trigger,
+    journey.currentState,
+    journey.desiredFutureState,
+    ...(journey.painPoints ?? []),
+    ...(journey.desiredSupport ?? []),
+    ...journey.steps.flatMap((step) => [step.title, step.description, step.currentPain, step.desiredSupport])
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const relevantEpicOptions = pickRelevantReferenceOptions({
+    explicitIds: uniqueLabels([...(journey.linkedEpicIds ?? []), ...(journey.coverage?.suggestedEpicIds ?? [])]),
+    options: availableEpics,
+    journeySearchText,
+    limit: 2
+  });
+  const relevantStoryIdeaOptions = pickRelevantReferenceOptions({
+    explicitIds: uniqueLabels([...(journey.linkedStoryIdeaIds ?? []), ...(journey.coverage?.suggestedStoryIdeaIds ?? [])]),
+    options: availableStoryIdeas,
+    journeySearchText,
+    limit: 4
+  });
+  const relevantEpicInsights = relevantEpicOptions
+    .map((option) => summarizeReferenceContext(option))
+    .filter(Boolean)
+    .map((item) => ensurePeriod(toSentenceCase(item)));
+  const relevantStoryIdeaInsights = uniqueLabels(
+    relevantStoryIdeaOptions
+      .flatMap((option) => [option.valueIntent, option.expectedBehavior, option.description])
+      .map((value) => value?.trim() ?? "")
+      .filter(Boolean)
+      .map((item) => ensurePeriod(toSentenceCase(item)))
+  ).slice(0, 3);
 
   function buildGoalSuggestion() {
     const normalized = ensurePeriod(toSentenceCase(journey.goal || ""));
@@ -415,14 +588,20 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     const normalized = ensurePeriod(toSentenceCase(journey.currentState || ""));
     if (normalized) return /^(i dag|idag|nu)/i.test(normalized) ? normalized : `I dag ${lowerFirst(normalized)}`;
     if (!hasText(journey.primaryActor) || !hasText(journey.trigger)) return "";
-    return `I dag börjar ${journey.primaryActor.toLowerCase()} ofta när ${lowerFirst(journey.trigger)}, men flödet blir lätt fragmenterat av manuell samordning, begränsad överblick eller oklara överlämningar.`;
+    const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
+    return inspiration
+      ? `I dag börjar ${journey.primaryActor.toLowerCase()} ofta när ${lowerFirst(journey.trigger)}, men flödet blir lätt fragmenterat. Det märks särskilt där stödet ännu inte riktigt lever upp till riktningar som ${lowerFirst(inspiration)}`
+      : `I dag börjar ${journey.primaryActor.toLowerCase()} ofta när ${lowerFirst(journey.trigger)}, men flödet blir lätt fragmenterat av manuell samordning, begränsad överblick eller oklara överlämningar.`;
   }
 
   function buildDesiredFutureStateSuggestion() {
     const normalized = ensurePeriod(toSentenceCase(journey.desiredFutureState || ""));
     if (normalized) return /^(i önskat läge|i framtiden|framåt)/i.test(normalized) ? normalized : `I önskat läge ${lowerFirst(normalized)}`;
     if (!hasText(journey.primaryActor) || !hasText(journey.goal)) return "";
-    return `I önskat läge kan ${journey.primaryActor.toLowerCase()} ${lowerFirst(journey.goal)}, med tydligare status, färre manuella avbrott och smidigare beslut.`;
+    const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
+    return inspiration
+      ? `I önskat läge kan ${journey.primaryActor.toLowerCase()} ${lowerFirst(journey.goal)}, med tydligare status och stöd som bättre speglar riktningar som ${lowerFirst(inspiration)}`
+      : `I önskat läge kan ${journey.primaryActor.toLowerCase()} ${lowerFirst(journey.goal)}, med tydligare status, färre manuella avbrott och smidigare beslut.`;
   }
 
   function createFirstDraftSuggestion() {
@@ -431,14 +610,8 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     const goal = journey.goal.trim();
     const trigger = journey.trigger.trim();
     const title = normalizeJourneyTitle(journey.title) || "journeyn";
-    const relatedEpicLabels = uniqueLabels([
-      ...findReferenceLabels(journey.linkedEpicIds, availableEpics),
-      ...suggestedEpicLabels
-    ]);
-    const relatedStoryIdeaLabels = uniqueLabels([
-      ...findReferenceLabels(journey.linkedStoryIdeaIds, availableStoryIdeas),
-      ...suggestedStoryIdeaLabels
-    ]);
+    const relatedEpicLabels = uniqueLabels(relevantEpicOptions.map((option) => option.label));
+    const relatedStoryIdeaLabels = uniqueLabels(relevantStoryIdeaOptions.map((option) => option.label));
     const currentState = hasText(journey.currentState) ? ensurePeriod(toSentenceCase(journey.currentState ?? "")) : buildCurrentStateSuggestion();
     const desiredFutureState = hasText(journey.desiredFutureState)
       ? ensurePeriod(toSentenceCase(journey.desiredFutureState ?? ""))
@@ -454,11 +627,15 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     const desiredSupport =
       (journey.desiredSupport?.length ?? 0) > 0
         ? journey.desiredSupport ?? []
-        : [
+        : uniqueLabels([
             "Tydlig ingång i flödet med synlig trigger och ansvar.",
             "Stödd framdrift med bättre överblick över status, överlämningar och beslut.",
             `Konsekvent stöd i avslutet så att det blir enklare att ${lowerFirst(goal)} och verifiera resultatet.`
-          ];
+          ].concat(
+            relevantStoryIdeaInsights.slice(0, 2).map(
+              (item) => `Stöd som också ligger nära befintliga Story Ideas: ${lowerFirst(ensurePeriod(item))}`
+            )
+          ));
     const steps =
       journey.steps.length > 0
         ? journey.steps
@@ -471,7 +648,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     return {
       summary:
         relatedEpicLabels.length > 0 || relatedStoryIdeaLabels.length > 0
-          ? `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör både nulägets friktion och vilket stöd som behövs framåt. Den ser dessutom ut att hänga ihop med ${relatedEpicLabels.length > 0 ? `Epics som ${relatedEpicLabels.slice(0, 2).join(" och ")}` : `Story Ideas som ${relatedStoryIdeaLabels.slice(0, 2).join(" och ")}`}.`
+          ? `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör både nulägets friktion och vilket stöd som behövs framåt. Den hämtar också riktning från ${relatedEpicLabels.length > 0 ? `Epics som ${relatedEpicLabels.slice(0, 2).join(" och ")}` : `Story Ideas som ${relatedStoryIdeaLabels.slice(0, 2).join(" och ")}`}${relevantStoryIdeaInsights[0] ? `, särskilt där stödet bör spegla ${lowerFirst(relevantStoryIdeaInsights[0])}` : ""}.`
           : `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör nulägets friktion, vilket framtida stöd som behövs och vilka breda steg som bär värdet i business caset.`,
       currentState,
       desiredFutureState,
@@ -479,7 +656,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       desiredSupport,
       steps,
       relatedEpicLabels,
-      relatedStoryIdeaLabels
+      relatedEpicInsights: relevantEpicInsights,
+      relatedStoryIdeaLabels,
+      relatedStoryIdeaInsights: relevantStoryIdeaInsights
     } satisfies JourneyFirstDraftSuggestion;
   }
 
