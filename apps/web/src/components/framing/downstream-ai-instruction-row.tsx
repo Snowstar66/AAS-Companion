@@ -17,6 +17,12 @@ function optionTone(active: boolean) {
     : "border-border/70 bg-background text-muted-foreground";
 }
 
+function optionGuideTone(active: boolean) {
+  return active
+    ? "border-sky-300 bg-sky-50 text-sky-900"
+    : "border-border/70 bg-muted/10 text-muted-foreground";
+}
+
 export function DownstreamAiInstructionRow({
   preference,
   catalogEntry,
@@ -26,6 +32,7 @@ export function DownstreamAiInstructionRow({
 }: DownstreamAiInstructionRowProps) {
   const showRationale = preference.selectedValue !== recommendedValue || preference.selectedValue === "N/A";
   const options = catalogEntry.allowNa ? (["YES", "NO", "N/A"] as const) : (["YES", "NO"] as const);
+  const selectedMeaning = catalogEntry.meaning[preference.selectedValue];
 
   return (
     <Card className="border-border/70 shadow-none">
@@ -61,6 +68,26 @@ export function DownstreamAiInstructionRow({
               <span className="leading-6">{catalogEntry.meaning[option]}</span>
             </label>
           ))}
+        </div>
+
+        <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+          <p className="text-sm font-medium text-foreground">Vad betyder detta för downstream AI?</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Ditt nuvarande val är <span className="font-medium text-foreground">{preference.selectedValue}</span>. Det innebär:
+            {" "}
+            {selectedMeaning}
+          </p>
+          <div className={`mt-3 grid gap-3 ${options.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
+            {options.map((option) => (
+              <div
+                className={`rounded-2xl border px-4 py-3 text-sm ${optionGuideTone(preference.selectedValue === option)}`}
+                key={`${preference.id}-guide-${option}`}
+              >
+                <p className="font-semibold text-foreground">{option === "YES" ? "Ja" : option === "NO" ? "Nej" : "N/A"}</p>
+                <p className="mt-2 leading-6">{catalogEntry.meaning[option]}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {showRationale ? (
