@@ -43,12 +43,19 @@ export function JourneyStepEditor({
   onRemove
 }: JourneyStepEditorProps) {
   const { language } = useAppChromeLanguage();
+
   return (
     <Card className="border-border/70 bg-background shadow-none">
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div>
           <CardTitle className="text-base">{step.title || t(language, "Untitled step", "Namnlöst steg")}</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">{t(language, "Optional detail for a larger handoff, decision, or break in the flow.", "Frivillig detalj för en större överlämning, ett beslut eller ett avbrott i flödet.")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t(
+              language,
+              "Optional detail for a larger handoff, decision, or break in the flow.",
+              "Frivillig detalj för en större överlämning, ett beslut eller ett avbrott i flödet."
+            )}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={onMoveUp} size="sm" type="button" variant="secondary" disabled={isFirst}>
@@ -92,7 +99,13 @@ export function JourneyStepEditor({
             onChange={(event) => onChange({ ...step, description: event.target.value })}
             value={step.description}
           />
-          <FieldHint>{t(language, "Describe what happens in this step in ordinary business or operational language.", "Beskriv vad som händer i steget med vanligt verksamhets- eller driftsspråk.")}</FieldHint>
+          <FieldHint>
+            {t(
+              language,
+              "Describe what happens in this step in ordinary business or operational language.",
+              "Beskriv vad som händer i steget med vanligt verksamhets- eller driftspråk."
+            )}
+          </FieldHint>
           <FieldError>{validation?.description}</FieldError>
         </label>
 
@@ -126,7 +139,11 @@ export function JourneyStepEditor({
           <span>
             <span className="block font-medium text-foreground">{t(language, "Decision point", "Beslutspunkt")}</span>
             <span className="mt-1 block text-muted-foreground">
-              {t(language, "Turn this on when the step contains an important assessment, choice, approval, or branching point.", "Slå på när steget innehåller en viktig bedömning, ett val, ett godkännande eller en förgrening.")}
+              {t(
+                language,
+                "Turn this on when the step contains an important assessment, choice, approval, or branching point.",
+                "Slå på när steget innehåller en viktig bedömning, ett val, ett godkännande eller en förgrening."
+              )}
             </span>
           </span>
         </label>

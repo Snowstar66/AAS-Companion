@@ -63,7 +63,7 @@ export function JourneyContextCard({
   onRemoveStep,
 }: JourneyContextCardProps) {
   const { language } = useAppChromeLanguage();
-  const coverageLabel = getCoverageSummaryLabel(context);
+  const coverageLabel = getCoverageSummaryLabel(context, language);
   const [isOpen, setIsOpen] = useState(true);
   const [showSharedNote, setShowSharedNote] = useState(false);
 

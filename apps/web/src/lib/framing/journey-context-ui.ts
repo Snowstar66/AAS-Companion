@@ -41,6 +41,10 @@ function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
 
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
 function validateJourneyStep(step: JourneyStep): JourneyStepValidation {
   return {
     title: hasText(step.title) ? undefined : "Stegtitel krävs.",
@@ -65,9 +69,7 @@ export function validateJourney(
     figmaRefs: JourneyReferenceOption[];
   }
 ): JourneyValidation {
-  const steps = Object.fromEntries(
-    journey.steps.map((step) => [step.id, validateJourneyStep(step)] as const)
-  );
+  const steps = Object.fromEntries(journey.steps.map((step) => [step.id, validateJourneyStep(step)] as const));
   const linkErrors: string[] = [];
   const missingEpicIds = missingReferences(journey.linkedEpicIds, references.epics);
   const missingStoryIdeaIds = missingReferences(journey.linkedStoryIdeaIds, references.storyIdeas);
@@ -107,9 +109,7 @@ export function validateJourneyContext(
 ): JourneyContextValidation {
   return {
     journeysSummary: context.journeys.length > 0 ? undefined : "Lägg till minst en Journey här.",
-    journeys: Object.fromEntries(
-      context.journeys.map((journey) => [journey.id, validateJourney(journey, references)] as const)
-    )
+    journeys: Object.fromEntries(context.journeys.map((journey) => [journey.id, validateJourney(journey, references)] as const))
   };
 }
 
@@ -154,16 +154,18 @@ export function getJourneyContextCounts(contexts: JourneyContext[]): JourneyCont
   );
 }
 
-export function getCoverageSummaryLabel(context: JourneyContext) {
+export function getCoverageSummaryLabel(context: JourneyContext, language: "en" | "sv" = "sv") {
   const journeysWithCoverage = context.journeys.filter((journey) => journey.coverage);
 
   if (journeysWithCoverage.length === 0) {
-    return "Ingen täckningsanalys ännu";
+    return t(language, "No coverage analysis yet", "Ingen täckningsanalys ännu");
   }
 
   const uncovered = journeysWithCoverage.filter((journey) => journey.coverage?.status === "uncovered").length;
   const partial = journeysWithCoverage.filter((journey) => journey.coverage?.status === "partially_covered").length;
   const covered = journeysWithCoverage.filter((journey) => journey.coverage?.status === "covered").length;
 
-  return `${covered} täckta, ${partial} delvis täckta, ${uncovered} otäckta`;
+  return language === "sv"
+    ? `${covered} täckta, ${partial} delvis täckta, ${uncovered} otäckta`
+    : `${covered} covered, ${partial} partially covered, ${uncovered} uncovered`;
 }
