@@ -403,6 +403,17 @@ export function HelpPageContent(props: { returnTo: string }) {
           </div>
         </CollapsibleSection>
 
+        <CollapsibleSection accentClassName="border-border/70 bg-background/95" description={content.toolingDescription} title={content.toolingTitle}>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {content.toolingItems.map((item) => (
+              <div className="rounded-2xl border border-border/70 bg-muted/10 p-4" key={item.title}>
+                <p className="font-semibold text-foreground">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </CollapsibleSection>
+
       </div>
     </section>
   );

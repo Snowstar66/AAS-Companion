@@ -26,6 +26,11 @@ type HelpFaqItem = {
   answer: string;
 };
 
+type HelpToolingItem = {
+  title: string;
+  body: string;
+};
+
 type RoleLevelMatrixRow = {
   role: string;
   mandateFocus: string;
@@ -112,6 +117,9 @@ export type HelpContent = {
   compactDiagramTitle: string;
   compactDiagramLabels: [string, string, string, string];
   spineBullets: string[];
+  toolingTitle: string;
+  toolingDescription: string;
+  toolingItems: HelpToolingItem[];
   platformTitle: string;
   platformDescription: string;
   platformNotes: string[];
@@ -416,6 +424,35 @@ export const helpContent: Record<HelpLanguage, HelpContent> = {
       "Story Idea captures intent in Framing. Delivery Story becomes the smallest governed execution unit later.",
       "Test provides evidence that the intended change actually happened."
     ],
+    toolingTitle: "Using Journey Context, Downstream AI Tuning and export",
+    toolingDescription: "What these optional Framing areas are for, when to use them and how the export profiles differ.",
+    toolingItems: [
+      {
+        title: "Journey Context",
+        body:
+          "Journey Context is optional framing support for flows, actors, triggers, current state, desired future state and value moments. Use it when the case is easier to understand through a user or operational journey. It should strengthen Story Ideas and handoff quality, not replace the main Value Spine."
+      },
+      {
+        title: "Downstream AI Tuning",
+        body:
+          "Downstream AI Tuning controls how later AI should inherit Journey Context, constraints, governance and accelerator behavior. Use it to guide later refinement, design and build without rewriting the Framing itself. Think of it as an accelerator profile that follows the export package."
+      },
+      {
+        title: "Neutral Governed export",
+        body:
+          "Use the neutral export when the next step goes to a general AI tool or another structured workflow. It preserves Framing structure, governance envelope and traceability without assuming BMAD-specific decomposition."
+      },
+      {
+        title: "BMAD Prepared export",
+        body:
+          "Use the BMAD export when the next step is BMAD-style refinement, design or delivery planning. It keeps the same governed source of truth, but adds clearer BMAD-oriented handoff guidance so Outcome, Epic, Story Idea and later traceability stay intact."
+      },
+      {
+        title: "UX sketches and Figma references",
+        body:
+          "The real export package can include UX sketch files when they are saved on Story Ideas inside Framing. A plain Figma link is still useful as reference, but it is not the same as an attached sketch file in the downloadable package."
+      }
+    ],
     platformTitle: "How this app is built",
     platformDescription: "A compact explanation of the product assumptions that used to sit in the right rail.",
     platformNotes: [
@@ -676,6 +713,35 @@ export const helpContent: Record<HelpLanguage, HelpContent> = {
       "Epic samlar en meningsfull värdeslice så att scope och riktning förblir begriplig.",
       "Story Idea fångar intention i Framing. Delivery Story blir senare den minsta styrda exekveringsenheten.",
       "Test ger evidens för att den avsedda förändringen faktiskt skedde."
+    ],
+    toolingTitle: "Använda Journey Context, Downstream AI Tuning och export",
+    toolingDescription: "Vad de här frivilliga delarna i Framing är till för, när de hjälper och hur exportprofilerna skiljer sig åt.",
+    toolingItems: [
+      {
+        title: "Journey Context",
+        body:
+          "Journey Context är ett frivilligt stöd i Framing för flöden, aktörer, triggers, nuläge, önskat framtida läge och värdeögonblick. Använd det när caset blir lättare att förstå genom en användarresa eller operativ resa. Det ska stärka Story Ideas och handoff-kvalitet, inte ersätta huvudspåret i Value Spine."
+      },
+      {
+        title: "Downstream AI Tuning",
+        body:
+          "Downstream AI Tuning styr hur senare AI ska ärva Journey Context, constraints, governance och acceleratorbeteende. Använd det för att vägleda senare refinement, design och build utan att skriva om själva Framingen. Tänk på det som en acceleratorprofil som följer med i exportpaketet."
+      },
+      {
+        title: "Neutral Governed-export",
+        body:
+          "Använd den neutrala exporten när nästa steg går till ett allmänt AI-verktyg eller ett annat strukturerat arbetsflöde. Den bevarar Framing-struktur, governance envelope och spårbarhet utan att anta en BMAD-specifik nedbrytning."
+      },
+      {
+        title: "BMAD Prepared-export",
+        body:
+          "Använd BMAD-exporten när nästa steg är BMAD-liknande refinement, design eller leveransplanering. Den behåller samma styrda source of truth, men lägger till tydligare BMAD-anpassad handoff-vägledning så att Outcome, Epic, Story Idea och senare spårbarhet hålls ihop."
+      },
+      {
+        title: "UX-skisser och Figma-referenser",
+        body:
+          "Det riktiga exportpaketet kan innehålla UX-skissfiler när de är sparade på Story Ideas i Framing. En vanlig Figma-länk är fortfarande bra som referens, men det är inte samma sak som en bifogad skissfil i det nedladdningsbara paketet."
+      }
     ],
     platformTitle: "Hur appen är uppbyggd",
     platformDescription: "En kompakt förklaring av produktantaganden som tidigare låg i högerspalten.",

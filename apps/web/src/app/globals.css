@@ -63,6 +63,18 @@ body {
   font-family: var(--font-sans), sans-serif;
 }
 
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="range"]):not([type="file"]),
+textarea,
+select {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="range"]):not([type="file"]):disabled,
+textarea:disabled,
+select:disabled {
+  background-color: color-mix(in oklab, var(--muted) 72%, white 28%) !important;
+}
+
 html[data-navigation-pending="true"] body,
 html[data-navigation-pending="true"] a,
 html[data-navigation-pending="true"] button,
