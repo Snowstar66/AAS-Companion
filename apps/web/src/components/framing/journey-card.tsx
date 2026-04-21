@@ -50,6 +50,34 @@ function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
 
+function findReferenceLabels(ids: string[] | undefined, options: JourneyReferenceOption[]) {
+  return (ids ?? []).map((id) => options.find((option) => option.id === id)?.label ?? id);
+}
+
+function cleanCoverageNote(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  return value.replace(/^AI-generated recommendation scaffold based on Journey text overlap with current Epics and Story Ideas\.\s*/i, "").trim() || value;
+}
+
+function CoverageSupportText({ labels }: { labels: string[] }) {
+  if (labels.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      {labels.map((label) => (
+        <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800" key={label}>
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function getCoreMissingCount(journey: Journey) {
   return [
     hasText(journey.title),
@@ -156,6 +184,9 @@ export function JourneyCard({
     ((journey.desiredSupport?.length ?? 0) > 0 ? 1 : 0) +
     ((journey.linkedEpicIds?.length ?? 0) > 0 || (journey.linkedStoryIdeaIds?.length ?? 0) > 0 || (journey.linkedFigmaRefs?.length ?? 0) > 0 ? 1 : 0);
   const coreMissingCount = getCoreMissingCount(journey);
+  const suggestedEpicLabels = findReferenceLabels(journey.coverage?.suggestedEpicIds, availableEpics);
+  const suggestedStoryIdeaLabels = findReferenceLabels(journey.coverage?.suggestedStoryIdeaIds, availableStoryIdeas);
+  const cleanedCoverageNote = cleanCoverageNote(journey.coverage?.notes);
   const journeyStageLabel =
     coreMissingCount > 0
       ? `${coreMissingCount} kärnfält kvar`
@@ -486,22 +517,28 @@ export function JourneyCard({
                 <CardHeader>
                   <CardTitle className="text-base">Täckningsanalys</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm">
+                <CardContent className="space-y-4 text-sm">
                   <p className="text-muted-foreground">
-                    Täckningsförslag är AI-genererade rekommendationer baserade på journeyn, dess steg och befintliga Epics och Story Ideas. Granska innan du accepterar.
+                    Täckningsanalysen visar sannolika kopplingar till Epics och Story Ideas samt var det fortfarande finns luckor. Det här är AI-förslag, inte accepterade sanningar.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <CoverageBadge status={journey.coverage.status} />
                   </div>
-                  {journey.coverage.suggestedEpicIds?.length ? (
-                    <p><span className="font-medium text-foreground">Föreslagna Epic-ID:n:</span> {journey.coverage.suggestedEpicIds.join(", ")}</p>
+                  {suggestedEpicLabels.length > 0 ? (
+                    <div>
+                      <p className="font-medium text-foreground">Troliga Epic-kopplingar</p>
+                      <CoverageSupportText labels={suggestedEpicLabels} />
+                    </div>
                   ) : null}
-                  {journey.coverage.suggestedStoryIdeaIds?.length ? (
-                    <p><span className="font-medium text-foreground">Föreslagna Story Idea-ID:n:</span> {journey.coverage.suggestedStoryIdeaIds.join(", ")}</p>
+                  {suggestedStoryIdeaLabels.length > 0 ? (
+                    <div>
+                      <p className="font-medium text-foreground">Troliga Story Idea-kopplingar</p>
+                      <CoverageSupportText labels={suggestedStoryIdeaLabels} />
+                    </div>
                   ) : null}
                   {journey.coverage.suggestedNewStoryIdeas?.length ? (
                     <div className="space-y-3">
-                      <p className="font-medium text-foreground">Föreslagna nya Story Ideas</p>
+                      <p className="font-medium text-foreground">Föreslagna luckor att stänga</p>
                       {journey.coverage.suggestedNewStoryIdeas.map((idea) => (
                         <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={`${idea.title}-${idea.description}`}>
                           <p className="font-medium text-foreground">{idea.title}</p>
@@ -513,7 +550,12 @@ export function JourneyCard({
                       ))}
                     </div>
                   ) : null}
-                  {journey.coverage.notes ? <p className="text-muted-foreground">{journey.coverage.notes}</p> : null}
+                  {!suggestedEpicLabels.length && !suggestedStoryIdeaLabels.length && !(journey.coverage.suggestedNewStoryIdeas?.length ?? 0) ? (
+                    <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3 text-muted-foreground">
+                      Analysen hittade ännu inga tydliga kopplingar. Förtydliga gärna journeyformuleringen eller kör analys igen när Epics och Story Ideas blivit tydligare.
+                    </div>
+                  ) : null}
+                  {cleanedCoverageNote ? <p className="text-muted-foreground">{cleanedCoverageNote}</p> : null}
                 </CardContent>
               </Card>
             ) : null}

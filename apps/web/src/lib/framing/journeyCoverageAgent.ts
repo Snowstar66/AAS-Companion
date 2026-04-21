@@ -102,8 +102,8 @@ export function runJourneyCoverageAgent(input: {
       suggestions.push({
         id: buildFramingAgentSuggestionId(["coverage", context.id, journey.id, nextCoverage.status]),
         kind: "apply_journey_coverage",
-        title: `Apply coverage analysis to ${journey.title || journey.id}`,
-        description: "Coverage suggestions are AI-generated recommendations based on Journeys, Steps, Epics, Story Ideas, and inherited constraints. Review before accepting.",
+        title: `Använd täckningsanalys för ${journey.title || journey.id}`,
+        description: "AI-förslag baserade på journeyn, dess steg, Epics, Story Ideas och ärvda ramar. Granska innan du accepterar.",
         contextId: context.id,
         journeyId: journey.id,
         coverage: nextCoverage,
@@ -115,8 +115,8 @@ export function runJourneyCoverageAgent(input: {
         suggestions.push({
           id: buildFramingAgentSuggestionId(["link-epic", context.id, journey.id, epicId]),
           kind: "link_epic_to_journey",
-          title: `Link likely Epic to ${journey.title || journey.id}`,
-          description: "AI suggestion: this Epic looks relevant to the Journey coverage result.",
+          title: `Koppla trolig Epic till ${journey.title || journey.id}`,
+          description: "AI-förslag: den här Epicen ser relevant ut för journeyresultatet.",
           contextId: context.id,
           journeyId: journey.id,
           epicId
@@ -127,8 +127,8 @@ export function runJourneyCoverageAgent(input: {
         suggestions.push({
           id: buildFramingAgentSuggestionId(["link-story", context.id, journey.id, storyIdeaId]),
           kind: "link_story_idea_to_journey",
-          title: `Link likely Story Idea to ${journey.title || journey.id}`,
-          description: "AI suggestion: this Story Idea looks relevant to the Journey coverage result.",
+          title: `Koppla trolig Story Idea till ${journey.title || journey.id}`,
+          description: "AI-förslag: den här Story Idean ser relevant ut för journeyresultatet.",
           contextId: context.id,
           journeyId: journey.id,
           storyIdeaId
@@ -139,7 +139,7 @@ export function runJourneyCoverageAgent(input: {
         suggestions.push({
           id: buildFramingAgentSuggestionId(["story-idea-candidate", journey.id, storyIdea.title]),
           kind: "story_idea_candidate",
-          title: `Create suggested Story Idea: ${storyIdea.title}`,
+          title: `Skapa föreslagen Story Idea: ${storyIdea.title}`,
           description: storyIdea.description,
           storyIdea,
           confidence: storyIdea.confidence ?? null
@@ -155,7 +155,7 @@ export function runJourneyCoverageAgent(input: {
     toolTrace: [
       {
         tool: "analyzeJourneyCoverage",
-        summary: `Analyzed ${matchingContexts.length} Journey Context item(s) across ${coverageResults.length} journey coverage result(s).`
+        summary: `Analyserade ${matchingContexts.length} Journey Context-ytor och tog fram ${coverageResults.length} täckningsresultat.`
       }
     ]
   };

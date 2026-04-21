@@ -627,12 +627,12 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
     warnings.push(...coverage.warnings);
     toolTrace.push(...coverage.toolTrace);
     helperText =
-      "Coverage suggestions are AI-generated recommendations based on Journeys, Steps, Epics, Story Ideas, and inherited constraints. Review before accepting.";
+      "Täckningsförslag är AI-genererade rekommendationer baserade på journeys, steg, Epics, Story Ideas och ärvda ramar. Granska innan du accepterar.";
     if (!message) {
       message =
         coverage.coverageResults.length > 0
-          ? `I analyzed ${coverage.coverageResults.length} Journey coverage result(s) against the current Epics and Story Ideas.`
-          : "No Journey coverage analysis could be produced yet.";
+          ? `Jag analyserade ${coverage.coverageResults.length} journeyresultat mot nuvarande Epics och Story Ideas.`
+          : "Ingen användbar täckningsanalys kunde tas fram ännu.";
     }
   }
 

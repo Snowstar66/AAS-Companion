@@ -47,16 +47,41 @@ const stopWords = new Set([
   "their",
   "this",
   "to",
-  "with"
+  "with",
+  "att",
+  "av",
+  "den",
+  "det",
+  "de",
+  "en",
+  "ett",
+  "för",
+  "från",
+  "hur",
+  "i",
+  "inom",
+  "med",
+  "och",
+  "om",
+  "på",
+  "som",
+  "ska",
+  "till",
+  "utan",
+  "vid"
 ]);
 
 function normalizeText(value: string | null | undefined) {
-  return (value ?? "").trim().toLowerCase();
+  return (value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 }
 
 function tokenize(value: string | null | undefined) {
   return normalizeText(value)
-    .split(/[^a-z0-9]+/i)
+    .split(/[^\p{L}\p{N}]+/u)
     .map((part) => part.trim())
     .filter((part) => part.length >= 3 && !stopWords.has(part));
 }
@@ -74,12 +99,25 @@ function scoreOverlap(sourceTokens: string[], candidateTokens: string[]) {
   return sourceTokens.reduce((score, token) => score + (candidateSet.has(token) ? 1 : 0), 0);
 }
 
+function pickTopIds(matches: Array<{ id: string; score: number }>, limit: number) {
+  const bestScore = matches[0]?.score ?? 0;
+
+  if (bestScore <= 0) {
+    return [];
+  }
+
+  return matches
+    .filter((match) => match.score >= Math.max(2, bestScore - 1))
+    .slice(0, limit)
+    .map((match) => match.id);
+}
+
 function summarizeSupport(matchCount: number, bestStoryScore: number, bestEpicScore: number): JourneyCoverage["status"] {
   if (matchCount === 0 || (bestStoryScore === 0 && bestEpicScore === 0)) {
     return "uncovered";
   }
 
-  if (matchCount >= 3 && bestStoryScore >= 4 && bestEpicScore >= 2) {
+  if ((matchCount >= 2 && bestStoryScore >= 4) || (matchCount >= 1 && bestStoryScore >= 5 && bestEpicScore >= 3)) {
     return "covered";
   }
 
@@ -104,14 +142,25 @@ function toJourneySearchText(journey: Journey) {
   ]);
 }
 
+function cleanJourneyLabel(value: string | null | undefined) {
+  const trimmed = (value ?? "").trim();
+
+  if (!trimmed) {
+    return "journeyn";
+  }
+
+  return trimmed.replace(/^(title|titel)\s*:\s*/i, "").trim() || "journeyn";
+}
+
 function buildSuggestedStoryIdea(journey: Journey, missingStepIds: string[]): SuggestedStoryIdea {
   const focusStep = journey.steps.find((step) => missingStepIds.includes(step.id)) ?? journey.steps[0];
   const valueIntent = journey.desiredSupport?.find((item) => item.trim()) ?? focusStep?.desiredSupport ?? undefined;
   const expectedOutcome = journey.desiredFutureState?.trim() || journey.goal.trim() || undefined;
+  const journeyLabel = cleanJourneyLabel(journey.title);
 
   return {
-    title: `Support ${journey.title.trim() || "journey flow"}`,
-    description: `Create support for ${journey.primaryActor.trim() || "the primary actor"} across the "${journey.title.trim() || "journey"}" flow, especially where current friction blocks progress.`,
+    title: `Stöd för ${journeyLabel}`,
+    description: `Skapa bättre stöd för ${journey.primaryActor.trim() || "huvudaktören"} i ${journeyLabel}, särskilt där dagens friktion bromsar framdriften.`,
     valueIntent,
     expectedOutcome,
     basedOnJourneyIds: [journey.id],
@@ -121,30 +170,43 @@ function buildSuggestedStoryIdea(journey: Journey, missingStepIds: string[]): Su
 }
 
 export function analyzeJourneyCoverage(input: AnalyzeJourneyCoverageInput): JourneyContext {
-  const epicsWithTokens = input.epics.map((epic) => ({
-    ...epic,
-    tokens: uniqueTokens([epic.key, epic.title, epic.purpose, epic.scopeBoundary])
-  }));
   const storyIdeasWithTokens = input.storyIdeas.map((storyIdea) => ({
     ...storyIdea,
     tokens: uniqueTokens([storyIdea.key, storyIdea.title, storyIdea.valueIntent, storyIdea.expectedBehavior])
+  }));
+  const epicTokensById = new Map<string, string[]>();
+
+  for (const storyIdea of storyIdeasWithTokens) {
+    if (!storyIdea.epicId) {
+      continue;
+    }
+
+    const current = epicTokensById.get(storyIdea.epicId) ?? [];
+    epicTokensById.set(storyIdea.epicId, [...new Set([...current, ...storyIdea.tokens])]);
+  }
+
+  const epicsWithTokens = input.epics.map((epic) => ({
+    ...epic,
+    tokens: uniqueTokens([epic.key, epic.title, epic.purpose, epic.scopeBoundary, ...(epicTokensById.get(epic.id) ?? [])])
   }));
 
   return {
     ...input.journeyContext,
     journeys: input.journeyContext.journeys.map((journey) => {
       const journeyTokens = toJourneySearchText(journey);
+      const linkedEpicSet = new Set(journey.linkedEpicIds ?? []);
+      const linkedStoryIdeaSet = new Set(journey.linkedStoryIdeaIds ?? []);
       const rankedEpics = epicsWithTokens
         .map((epic) => ({
           id: epic.id,
-          score: scoreOverlap(journeyTokens, epic.tokens)
+          score: scoreOverlap(journeyTokens, epic.tokens) + (linkedEpicSet.has(epic.id) ? 3 : 0)
         }))
         .filter((epic) => epic.score > 0)
         .sort((left, right) => right.score - left.score);
       const rankedStoryIdeas = storyIdeasWithTokens
         .map((storyIdea) => ({
           id: storyIdea.id,
-          score: scoreOverlap(journeyTokens, storyIdea.tokens)
+          score: scoreOverlap(journeyTokens, storyIdea.tokens) + (linkedStoryIdeaSet.has(storyIdea.id) ? 3 : 0)
         }))
         .filter((storyIdea) => storyIdea.score > 0)
         .sort((left, right) => right.score - left.score);
@@ -156,8 +218,8 @@ export function analyzeJourneyCoverage(input: AnalyzeJourneyCoverageInput): Jour
 
         return strongestStoryScore < 2;
       });
-      const topEpicIds = rankedEpics.slice(0, 3).map((epic) => epic.id);
-      const topStoryIdeaIds = rankedStoryIdeas.slice(0, 4).map((storyIdea) => storyIdea.id);
+      const topEpicIds = pickTopIds(rankedEpics, 3);
+      const topStoryIdeaIds = pickTopIds(rankedStoryIdeas, 4);
       const bestEpicScore = rankedEpics[0]?.score ?? 0;
       const bestStoryScore = rankedStoryIdeas[0]?.score ?? 0;
       const coverageStatus = summarizeSupport(topStoryIdeaIds.length, bestStoryScore, bestEpicScore);
@@ -174,7 +236,7 @@ export function analyzeJourneyCoverage(input: AnalyzeJourneyCoverageInput): Jour
           suggestedStoryIdeaIds: topStoryIdeaIds.length > 0 ? topStoryIdeaIds : undefined,
           suggestedNewStoryIdeas: suggestedNewStoryIdeas.length > 0 ? suggestedNewStoryIdeas : undefined,
           notes:
-            "AI-generated recommendation scaffold based on Journey text overlap with current Epics and Story Ideas. Review before accepting."
+            "AI-förslag baserat på journeytext, steg, nuvarande Story Ideas och tillhörande Epic-spår. Granska innan du accepterar."
         }
       };
     })
