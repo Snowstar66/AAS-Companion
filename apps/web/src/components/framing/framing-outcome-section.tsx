@@ -1285,7 +1285,7 @@ export function FramingOutcomeSection({
                     ) : null}
                   </div>
                 </div>
-                <details className="rounded-2xl border border-border/70 bg-muted/10">
+                <details className="group rounded-2xl border border-border/70 bg-muted/10">
                   <summary className="cursor-pointer list-none px-4 py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -1296,9 +1296,14 @@ export function FramingOutcomeSection({
                             : "Open when you want overlap checks, Story Idea suggestions, or deeper analysis."}
                         </p>
                       </div>
-                      <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                        {language === "sv" ? "Valfritt" : "Optional"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                          {language === "sv" ? "Valfritt" : "Optional"}
+                        </span>
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground">
+                          <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+                        </span>
+                      </div>
                     </div>
                   </summary>
                   <div className="border-t border-border/70 px-4 py-4">
@@ -1314,15 +1319,20 @@ export function FramingOutcomeSection({
                     />
                   </div>
                 </details>
-                <details className="rounded-2xl border border-border/70 bg-muted/10">
+                <details className="group rounded-2xl border border-border/70 bg-muted/10" open>
                   <summary className="cursor-pointer list-none px-4 py-4">
-                    <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
                       <p className="text-base font-semibold text-foreground">{language === "sv" ? "Visa nuvarande hierarki" : "View current hierarchy"}</p>
                       <p className="text-sm text-muted-foreground">
                         {language === "sv"
                           ? "Öppna för att läsa den aktuella Epic- och Story Idea-strukturen som Design kommer att ärva."
                           : "Open to read the current Epic and Story Idea structure that Design will inherit."}
                       </p>
+                      </div>
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground">
+                        <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+                      </span>
                     </div>
                   </summary>
                   <div className="border-t border-border/70 px-4 py-4">
