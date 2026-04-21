@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@aas-companion/ui";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
 import type { Journey } from "@/lib/framing/journeyContextTypes";
@@ -19,6 +20,7 @@ type JourneyCardProps = {
   onUpdateStep: (stepId: string, updater: (step: Journey["steps"][number]) => Journey["steps"][number]) => void;
   onMoveStep: (stepId: string, direction: "up" | "down") => void;
   onRemoveStep: (stepId: string) => void;
+  inlineAssistant?: ReactNode;
 };
 
 function FieldHint({ children }: { children: string }) {
@@ -145,7 +147,8 @@ export function JourneyCard({
   onAddStep,
   onUpdateStep,
   onMoveStep,
-  onRemoveStep
+  onRemoveStep,
+  inlineAssistant
 }: JourneyCardProps) {
   const optionalDetailCount =
     (journey.steps.length > 0 ? 1 : 0) +
@@ -314,6 +317,12 @@ export function JourneyCard({
           </label>
 
         </div>
+
+        {inlineAssistant ? (
+          <div className="mt-6 rounded-[24px] border border-sky-200/80 bg-sky-50/50 p-4">
+            {inlineAssistant}
+          </div>
+        ) : null}
 
         <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10">
           <summary className="cursor-pointer list-none px-4 py-4">

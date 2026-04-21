@@ -28,6 +28,7 @@ type JourneyContextSectionProps = {
   onMoveStep: (contextId: string, journeyId: string, stepId: string, direction: "up" | "down") => void;
   onRemoveStep: (contextId: string, journeyId: string, stepId: string) => void;
   renderAnalyzeAction: (context: JourneyContext) => ReactNode;
+  renderJourneyAssistant?: (journey: Journey) => ReactNode;
 };
 
 export function JourneyContextSection({
@@ -47,7 +48,8 @@ export function JourneyContextSection({
   onUpdateStep,
   onMoveStep,
   onRemoveStep,
-  renderAnalyzeAction
+  renderAnalyzeAction,
+  renderJourneyAssistant
 }: JourneyContextSectionProps) {
   return (
     <div className="space-y-5">
@@ -71,6 +73,7 @@ export function JourneyContextSection({
           onUpdateJourney={(journeyId, updater) => onUpdateJourney(context.id, journeyId, updater)}
           onUpdateStep={(journeyId, stepId, updater) => onUpdateStep(context.id, journeyId, stepId, updater)}
           validation={validations[context.id]}
+          {...(renderJourneyAssistant ? { renderJourneyAssistant } : {})}
         />
       ))}
     </div>

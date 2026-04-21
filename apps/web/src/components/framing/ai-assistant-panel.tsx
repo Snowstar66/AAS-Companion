@@ -16,6 +16,7 @@ type AiAssistantPanelProps = {
   outcomeId: string;
   initiativeType: "AD" | "AT" | "AM" | null;
   aiLevel: 0 | 1 | 2 | 3;
+  embedded?: boolean;
   scopeKind: FramingAgentScopeKind;
   scopeLabel: string;
   scopeEntityId?: string | null;
@@ -626,6 +627,7 @@ export function AiAssistantPanel({
   outcomeId,
   initiativeType,
   aiLevel,
+  embedded = false,
   scopeKind,
   scopeLabel,
   scopeEntityId,
@@ -921,9 +923,10 @@ export function AiAssistantPanel({
     });
   }
 
-  return (
-    <Card className="border-border/70 shadow-sm">
-      <CardHeader>
+  const content = (
+    <>
+      {!embedded ? (
+        <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -960,11 +963,35 @@ export function AiAssistantPanel({
             </span>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-5">
+        </CardHeader>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <Sparkles className="h-4 w-4" />
+                AI-hjälp i denna journey
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Skriv direkt i fälten ovan om du vill. Använd AI-hjälpen här när du vill få en tydligare formulering eller ett första utkast.
+              </p>
+            </div>
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                hasUnsavedChanges
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}
+            >
+              {hasUnsavedChanges ? "Osparat utkast" : "Sparat utkast"}
+            </span>
+          </div>
+        </div>
+      )}
+      <CardContent className={`${embedded ? "px-0 pb-0 pt-4" : ""} space-y-5`}>
         {guidedJourneyInterview ? (
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
-            {journeyHelpState ? (
+            {!embedded && journeyHelpState ? (
               <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">{journeyHelpState.step}</p>
                 <p className="mt-2 text-base font-semibold text-foreground">{journeyHelpState.title}</p>
@@ -977,7 +1004,7 @@ export function AiAssistantPanel({
 
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">Stegvis AI-hjälp för journey</p>
+                <p className="font-medium text-foreground">{embedded ? "AI arbetar med den här journeyn" : "Stegvis AI-hjälp för journey"}</p>
                 <p className="mt-1 text-sm text-sky-900/85">
                   AI-hjälpen sker här i panelen. Du svarar kort, AI föreslår en bättre formulering, och du väljer sedan vad som ska användas.
                 </p>
@@ -1132,7 +1159,7 @@ export function AiAssistantPanel({
               <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
                 <p className="font-medium text-foreground">Kärnan i journeyn är redan fångad.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Nästa naturliga steg är att antingen förtydliga språk eller analysera täckning mot Epics och Story Ideas.
+                  Nästa naturliga steg är att antingen förtydliga språket eller analysera täckning mot Epics och Story Ideas.
                 </p>
               </div>
             ) : guidedJourneyInterview.hasOnlySkippedQuestions ? (
@@ -1355,8 +1382,14 @@ export function AiAssistantPanel({
               </details>
             ) : null}
           </div>
-        ) : null}
+            ) : null}
       </CardContent>
-    </Card>
+    </>
+  );
+
+  return embedded ? (
+    <div className="space-y-5">{content}</div>
+  ) : (
+    <Card className="border-border/70 shadow-sm">{content}</Card>
   );
 }

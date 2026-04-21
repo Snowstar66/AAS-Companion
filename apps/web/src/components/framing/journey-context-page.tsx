@@ -169,7 +169,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
   const currentFlowStep =
     allJourneys.length === 0
       ? {
-          step: "Steg 1 av 3",
+          label: "Just nu",
           title: "Börja med en bred journey",
           description:
             "Skapa en journey som förtydligar business caset. Börja brett och fånga bara aktör, mål, trigger och dagens friktion.",
@@ -177,7 +177,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
         }
       : focusedJourney && getJourneyCoreMissingCount(focusedJourney) > 0
         ? {
-            step: "Steg 2 av 3",
+            label: "Just nu",
             title: "Förtydliga den aktuella journeyn",
             description:
               "Få en journey tillräckligt tydlig innan du lägger till mer detalj. Fyll först i titel, huvudaktör, mål och trigger.",
@@ -185,14 +185,14 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           }
         : analyzedJourneys.length === 0
           ? {
-              step: "Steg 3 av 3",
+              label: "Nästa naturliga steg",
               title: "Kontrollera täckning när en journey är tydlig",
               description:
                 "När minst en journey har grunderna på plats kan du jämföra den med Epics och Story Ideas för att hitta luckor och sannolika kopplingar.",
               nextAction: "Kör Analysera täckning när den aktuella journeyn känns tillräckligt rätt i riktningen."
             }
           : {
-              step: "Journeys pågår",
+              label: "Journeys pågår",
               title: "Förfina bara där det tillför värde",
               description:
                 "Du har redan användbara journeys och minst en täckningsanalys. Lägg bara till en ny journey om den representerar ett genuint annat flöde.",
@@ -350,7 +350,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           </div>
 
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.step}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.label}</p>
             <p className="mt-2 text-lg font-semibold text-foreground">{currentFlowStep.title}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentFlowStep.description}</p>
             <p className="mt-3 text-sm font-medium text-foreground">Nästa steg: {currentFlowStep.nextAction}</p>
@@ -427,38 +427,6 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
         </CardContent>
       </Card>
 
-      <details className="rounded-[28px] border border-border/70 bg-background shadow-sm" open={contexts.length === 0}>
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <p className="text-base font-semibold text-foreground">Få hjälp med nästa steg</p>
-            <p className="text-sm text-muted-foreground">
-              Här använder du AI-hjälpen. Verktyget guidar dig en journey i taget och börjar med själva journeyn, inte med ett separat Journey Context-namn.
-            </p>
-          </div>
-          <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-            {contexts.length === 0 ? "Bra att börja här" : "Valfritt stöd"}
-          </span>
-        </summary>
-        <div className="border-t border-border/70 px-5 py-5">
-          <AiAssistantPanel
-            aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel)}
-            epicLabels={availableEpics.map((option) => option.label)}
-            focusedJourneyId={focusedJourneyId}
-            hasUnsavedChanges={hasUnsavedChanges}
-            initiativeType={initiativeType}
-            journeyContextsJson={serializedContexts}
-            onApplySuggestion={applySuggestion}
-            onFocusJourney={setFocusedJourneyId}
-            outcomeId={data.outcome.id}
-            runAction={runAgentAction}
-            scopeEntityId={focusedContextId}
-            scopeKind="journey-context"
-            scopeLabel="Journey Context"
-            storyIdeaLabels={availableStoryIdeas.map((option) => option.label)}
-          />
-        </div>
-      </details>
-
       {contexts.length === 0 ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
@@ -466,6 +434,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <CardDescription>
               Lägg till en eller flera breda journeys när du vill ge rikare flödeskontext för senare AI-förfining av Epics, Story Ideas, designstöd eller byggstöd.
             </CardDescription>
+            <p className="text-sm text-muted-foreground">
+              AI-hjälpen visas direkt inne i journey-kortet när du har startat din första journey.
+            </p>
           </CardHeader>
         </Card>
       ) : (
@@ -522,6 +493,27 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           }
           onUpdateJourney={updateJourney}
           onUpdateStep={updateStep}
+          renderJourneyAssistant={(journey) =>
+            focusedJourneyId === journey.id ? (
+              <AiAssistantPanel
+                aiLevel={mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel)}
+                embedded
+                epicLabels={availableEpics.map((option) => option.label)}
+                focusedJourneyId={focusedJourneyId}
+                hasUnsavedChanges={hasUnsavedChanges}
+                initiativeType={initiativeType}
+                journeyContextsJson={serializedContexts}
+                onApplySuggestion={applySuggestion}
+                onFocusJourney={setFocusedJourneyId}
+                outcomeId={data.outcome.id}
+                runAction={runAgentAction}
+                scopeEntityId={focusedContextId}
+                scopeKind="journey-context"
+                scopeLabel="Journey Context"
+                storyIdeaLabels={availableStoryIdeas.map((option) => option.label)}
+              />
+            ) : null
+          }
           renderAnalyzeAction={(context) => (
             <form action={analyzeAction}>
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
