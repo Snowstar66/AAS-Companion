@@ -40,6 +40,11 @@ type JourneyFirstDraftSuggestion = {
   relatedEpicInsights: string[];
   relatedStoryIdeaLabels: string[];
   relatedStoryIdeaInsights: string[];
+  suggestedStoryIdeas: Array<{
+    title: string;
+    description: string;
+    source: "coverage" | "heuristic";
+  }>;
 };
 
 type JourneyEditingSection = "core" | "narrative" | "valueMoment" | "success" | "current" | "desired" | "pain" | "support" | null;
@@ -271,6 +276,42 @@ function CoverageSupportText({ labels }: { labels: string[] }) {
   );
 }
 
+function InlineStoryIdeaSuggestionList(props: {
+  title: string;
+  description?: string;
+  suggestions: Array<{
+    title: string;
+    description: string;
+    source: "coverage" | "heuristic";
+  }>;
+}) {
+  if (props.suggestions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">{props.title}</p>
+        {props.description ? <p className="mt-1 text-sm text-muted-foreground">{props.description}</p> : null}
+      </div>
+      <div className="space-y-3">
+        {props.suggestions.map((suggestion) => (
+          <div className="rounded-2xl border border-border/70 bg-background px-4 py-3" key={`${suggestion.source}-${suggestion.title}`}>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium text-foreground">{suggestion.title}</p>
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-800">
+                {suggestion.source === "coverage" ? "från täckningsanalys" : "AI-utkast"}
+              </span>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{suggestion.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function InlineSectionCard(props: {
   title: string;
   description?: string;
@@ -450,6 +491,15 @@ function InlineAiFirstDraftSuggestion(props: {
           ) : null}
         </div>
       ) : null}
+      {props.suggestion.suggestedStoryIdeas.length > 0 ? (
+        <div className="mt-4">
+          <InlineStoryIdeaSuggestionList
+            description="Det här är nästa sannolika Story Ideas att överväga om journeyn behöver mer stöd än backloggen redan ger."
+            suggestions={props.suggestion.suggestedStoryIdeas}
+            title="Möjliga saknade Story Ideas"
+          />
+        </div>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         {props.showApply !== false ? (
           <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Lägg in förslag i tomma fält"}</Button>
@@ -555,6 +605,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     journey.primaryActor,
     journey.goal,
     journey.trigger,
+    journey.narrative,
+    journey.valueMoment,
+    ...(journey.successSignals ?? []),
     journey.currentState,
     journey.desiredFutureState,
     ...(journey.painPoints ?? []),
@@ -579,6 +632,8 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     .map((option) => summarizeReferenceContext(option))
     .filter(Boolean)
     .map((item) => ensurePeriod(toSentenceCase(item)));
+  const relevantEpicLabels = uniqueLabels(relevantEpicOptions.map((option) => option.label));
+  const relevantStoryIdeaLabels = uniqueLabels(relevantStoryIdeaOptions.map((option) => option.label));
   const relevantStoryIdeaInsights = uniqueLabels(
     relevantStoryIdeaOptions
       .flatMap((option) => [option.valueIntent, option.expectedBehavior, option.description])
@@ -687,14 +742,59 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     return uniqueLabels(baseSignals.map((item) => item.trim())).slice(0, 4);
   }
 
+  function buildMissingStoryIdeaSuggestions() {
+    const coverageSuggestions =
+      journey.coverage?.suggestedNewStoryIdeas?.map((idea) => ({
+        title: idea.title,
+        description: idea.description,
+        source: "coverage" as const
+      })) ?? [];
+
+    if (coverageSuggestions.length > 0) {
+      return coverageSuggestions;
+    }
+
+    if (!canBuildJourneySummary) {
+      return [];
+    }
+
+    const title = normalizeJourneyTitle(journey.title) || "journeyn";
+    const actor = journey.primaryActor.trim() || "användaren";
+    const goal = normalizeGoalPhrase(journey.goal);
+    const trigger = normalizeTriggerPhrase(journey.trigger);
+    const firstPainPoint = journey.painPoints?.[0];
+    const firstDesiredSupport = journey.desiredSupport?.[0];
+
+    if (!goal || !trigger) {
+      return [];
+    }
+
+    const fallbackDescriptionParts = [
+      `${actor} behöver bättre stöd att ${lowerFirst(goal)} när ${lowerFirst(trigger)}.`,
+      firstDesiredSupport
+        ? `Storyn bör särskilt hjälpa med ${lowerFirst(stripTrailingPeriod(firstDesiredSupport))}.`
+        : null,
+      !firstDesiredSupport && firstPainPoint
+        ? `Den bör minska friktion där ${lowerFirst(stripTrailingPeriod(firstPainPoint))}.`
+        : null
+    ].filter(Boolean);
+
+    return [
+      {
+        title: `Stöd för ${title}`,
+        description: fallbackDescriptionParts.join(" "),
+        source: "heuristic" as const
+      }
+    ];
+  }
+
   function createFirstDraftSuggestion() {
     if (!canBuildJourneySummary) return null;
     const actor = journey.primaryActor.trim();
     const goal = normalizeGoalPhrase(journey.goal.trim());
     const trigger = normalizeTriggerPhrase(journey.trigger.trim());
     const title = normalizeJourneyTitle(journey.title) || "journeyn";
-    const relatedEpicLabels = uniqueLabels(relevantEpicOptions.map((option) => option.label));
-    const relatedStoryIdeaLabels = uniqueLabels(relevantStoryIdeaOptions.map((option) => option.label));
+    const suggestedStoryIdeas = buildMissingStoryIdeaSuggestions();
     const currentState = hasText(journey.currentState) ? ensurePeriod(toSentenceCase(journey.currentState ?? "")) : buildCurrentStateSuggestion();
     const desiredFutureState = hasText(journey.desiredFutureState)
       ? ensurePeriod(toSentenceCase(journey.desiredFutureState ?? ""))
@@ -730,18 +830,19 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
 
     return {
       summary:
-        relatedEpicLabels.length > 0 || relatedStoryIdeaLabels.length > 0
-          ? `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör både nulägets friktion och vilket stöd som behövs framåt. Den hämtar också riktning från ${relatedEpicLabels.length > 0 ? `Epics som ${relatedEpicLabels.slice(0, 2).join(" och ")}` : `Story Ideas som ${relatedStoryIdeaLabels.slice(0, 2).join(" och ")}`}${relevantStoryIdeaInsights[0] ? `, särskilt där stödet bör spegla ${lowerFirst(relevantStoryIdeaInsights[0])}` : ""}.`
+        relevantEpicLabels.length > 0 || relevantStoryIdeaLabels.length > 0
+          ? `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör både nulägets friktion och vilket stöd som behövs framåt. Den hämtar också riktning från ${relevantEpicLabels.length > 0 ? `Epics som ${relevantEpicLabels.slice(0, 2).join(" och ")}` : `Story Ideas som ${relevantStoryIdeaLabels.slice(0, 2).join(" och ")}`}${relevantStoryIdeaInsights[0] ? `, särskilt där stödet bör spegla ${lowerFirst(relevantStoryIdeaInsights[0])}` : ""}.`
           : `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör nulägets friktion, vilket framtida stöd som behövs och vilka breda steg som bär värdet i business caset.`,
       currentState,
       desiredFutureState,
       painPoints,
       desiredSupport,
       steps,
-      relatedEpicLabels,
+      relatedEpicLabels: relevantEpicLabels,
       relatedEpicInsights: relevantEpicInsights,
-      relatedStoryIdeaLabels,
-      relatedStoryIdeaInsights: relevantStoryIdeaInsights
+      relatedStoryIdeaLabels: relevantStoryIdeaLabels,
+      relatedStoryIdeaInsights: relevantStoryIdeaInsights,
+      suggestedStoryIdeas
     } satisfies JourneyFirstDraftSuggestion;
   }
 
@@ -913,12 +1014,31 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                 </label>
               }
               helper={
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => { setNarrativeSuggestion(buildNarrativeSuggestion()); setEditingSection("narrative"); }} size="sm" type="button" variant="secondary">
-                    Förbättra journeytext
-                  </Button>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => { setNarrativeSuggestion(buildNarrativeSuggestion()); setEditingSection("narrative"); }} size="sm" type="button" variant="secondary">
+                      Förbättra journeytext
+                    </Button>
+                  </div>
+                  {relevantStoryIdeaLabels.length > 0 || relevantEpicLabels.length > 0 ? (
+                    <div className="rounded-2xl border border-sky-200/70 bg-sky-50/50 px-4 py-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">AI-stöd från nuvarande backlog</p>
+                      {relevantStoryIdeaLabels.length > 0 ? (
+                        <div className="mt-2">
+                          <p className="text-sm text-muted-foreground">Story Ideas som redan ligger nära journeyn</p>
+                          <CoverageSupportText labels={relevantStoryIdeaLabels} />
+                        </div>
+                      ) : null}
+                      {relevantEpicLabels.length > 0 ? (
+                        <div className="mt-3">
+                          <p className="text-sm text-muted-foreground">Epics som redan ger riktning till journeyn</p>
+                          <CoverageSupportText labels={relevantEpicLabels} />
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {narrativeSuggestion ? (
-                    <div className="mt-3 w-full">
+                    <div className="w-full">
                       <InlineAiSuggestion
                         onApply={() => {
                           onChange({ ...journey, narrative: narrativeSuggestion });
