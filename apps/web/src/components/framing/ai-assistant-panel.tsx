@@ -720,6 +720,7 @@ export function AiAssistantPanel({
   createStoryIdeaAction
 }: AiAssistantPanelProps) {
   const isCompactSurface = scopeKind === "journey-context" || scopeKind === "story-ideas";
+  const isEmbeddedJourneySurface = embedded && scopeKind === "journey-context";
   const [mode, setMode] = useState<FramingAgentMode>(scopeKind === "export" ? "export" : "ask");
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<Extract<FramingAgentActionResult, { ok: true }> | null>(null);
@@ -731,6 +732,7 @@ export function AiAssistantPanel({
   const [skippedPromptKeys, setSkippedPromptKeys] = useState<string[]>([]);
   const [recentlyAppliedFirstDraftJourneyId, setRecentlyAppliedFirstDraftJourneyId] = useState<string | null>(null);
   const [selectedStorySuggestionId, setSelectedStorySuggestionId] = useState<string | null>(null);
+  const [showCustomPromptComposer, setShowCustomPromptComposer] = useState(false);
   const [showAdvancedWorkspace, setShowAdvancedWorkspace] = useState(!isCompactSurface);
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
@@ -913,10 +915,10 @@ export function AiAssistantPanel({
   }, [guidedAnswer, guidedJourneyInterview?.target]);
 
   useEffect(() => {
-    if (mode !== "ask" || result || prompt.trim()) {
+    if (!isEmbeddedJourneySurface && (mode !== "ask" || result || prompt.trim())) {
       setShowAdvancedWorkspace(true);
     }
-  }, [mode, prompt, result]);
+  }, [isEmbeddedJourneySurface, mode, prompt, result]);
 
   useEffect(() => {
     if (canGenerateFirstDraft) {
@@ -1095,7 +1097,7 @@ export function AiAssistantPanel({
                 AI-hjälp i denna journey
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Skriv direkt i fälten ovan om du vill. Använd AI-hjälpen här när du vill få en tydligare formulering eller ett första utkast.
+                1. Skriv direkt i fälten ovan om du vill. 2. Klicka på en AI-knapp här nedanför när du vill få hjälp med formulering, första utkast eller täckningsanalys.
               </p>
             </div>
             <span
@@ -1126,9 +1128,9 @@ export function AiAssistantPanel({
 
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">{embedded ? "AI arbetar med den här journeyn" : "Stegvis AI-hjälp för journey"}</p>
+                <p className="font-medium text-foreground">{embedded ? "AI hjälper dig i den här journeyn" : "Stegvis AI-hjälp för journey"}</p>
                 <p className="mt-1 text-sm text-sky-900/85">
-                  AI-hjälpen sker här i panelen. Du svarar kort, AI föreslår en bättre formulering, och du väljer sedan vad som ska användas.
+                  Du kan antingen svara på frågan nedan eller klicka på en AI-knapp längre ned. AI svarar alltid här i samma journey-kort.
                 </p>
                 {guidedJourneyInterview.focusedJourneyLabel ? (
                   <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-sky-900/75">
@@ -1320,7 +1322,7 @@ export function AiAssistantPanel({
           </div>
         ) : null}
 
-        {isCompactSurface ? (
+        {!isEmbeddedJourneySurface && isCompactSurface ? (
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -1336,63 +1338,120 @@ export function AiAssistantPanel({
           </div>
         ) : null}
 
-        {(showAdvancedWorkspace || !isCompactSurface) ? (
+        {(isEmbeddedJourneySurface || showAdvancedWorkspace || !isCompactSurface) ? (
           <div className="space-y-5 rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <div className="flex flex-wrap gap-2">
-              {(["ask", "analyze", "refine", "export"] as FramingAgentMode[]).map((entry) => (
-                <Button key={entry} onClick={() => setMode(entry)} type="button" variant={mode === entry ? "default" : "secondary"}>
-                  {framingAgentModeLabels[entry]}
-                </Button>
-              ))}
-            </div>
+            {isEmbeddedJourneySurface ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="font-medium text-foreground">Välj hur du vill få hjälp</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Klicka på ett av alternativen nedan. AI:s svar visas direkt här i samma journey-kort.
+                  </p>
+                </div>
 
-            {quickActions.length > 0 ? (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Andra AI-handlingar</p>
+                {quickActions.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {quickActions.map((action) => (
+                      <Button
+                        key={action.id}
+                        onClick={() => {
+                          setPrompt(action.prompt);
+                          submitAgentRun(action.mode, action.prompt, action.id);
+                        }}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                    <Button onClick={() => setShowCustomPromptComposer((current) => !current)} type="button" variant="secondary">
+                      {showCustomPromptComposer ? "Dölj egen fråga" : "Ställ egen fråga"}
+                    </Button>
+                  </div>
+                ) : null}
+
+                {showCustomPromptComposer ? (
+                  <div className="space-y-3 rounded-2xl border border-border/70 bg-background px-4 py-4">
+                    <label className="space-y-2">
+                      <span className="text-sm font-medium text-foreground">Egen fråga till AI</span>
+                      <textarea
+                        className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                        onChange={(event) => setPrompt(event.target.value)}
+                        placeholder="Beskriv vad du vill ha hjälp med i just den här journeyn."
+                        value={prompt}
+                      />
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        disabled={isPending || !prompt.trim()}
+                        onClick={() => submitAgentRun("ask", prompt)}
+                        type="button"
+                      >
+                        {isPending ? "Kör..." : "Skicka till AI"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <>
                 <div className="flex flex-wrap gap-2">
-                  {quickActions.map((action) => (
-                    <Button
-                      key={action.id}
-                      onClick={() => {
-                        setPrompt(action.prompt);
-                        submitAgentRun(action.mode, action.prompt, action.id);
-                      }}
-                      type="button"
-                      variant="secondary"
-                    >
-                      {action.label}
+                  {(["ask", "analyze", "refine", "export"] as FramingAgentMode[]).map((entry) => (
+                    <Button key={entry} onClick={() => setMode(entry)} type="button" variant={mode === entry ? "default" : "secondary"}>
+                      {framingAgentModeLabels[entry]}
                     </Button>
                   ))}
                 </div>
-              </div>
-            ) : null}
 
-            <div className="space-y-3">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Fråga till AI</span>
-                <textarea
-                  className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
-                  onChange={(event) => setPrompt(event.target.value)}
-                  placeholder={
-                    scopeKind === "journey-context"
-                      ? "Be AI förklara, analysera eller förfina de aktuella journeys."
-                      : scopeKind === "story-ideas"
-                        ? "Be AI sammanfatta en möjlig story, hitta överlapp eller föreslå nya Story Ideas."
-                        : "Ask, analyze, refine, or export against the current Framing package."
-                  }
-                  value={prompt}
-                />
-              </label>
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  disabled={isPending || !prompt.trim()}
-                  onClick={() => submitAgentRun(mode, prompt)}
-                  type="button"
-                >
-                  {isPending ? "Kör..." : "Kör AI"}
-                </Button>
-              </div>
-            </div>
+                {quickActions.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Andra AI-handlingar</p>
+                    <div className="flex flex-wrap gap-2">
+                      {quickActions.map((action) => (
+                        <Button
+                          key={action.id}
+                          onClick={() => {
+                            setPrompt(action.prompt);
+                            submitAgentRun(action.mode, action.prompt, action.id);
+                          }}
+                          type="button"
+                          variant="secondary"
+                        >
+                          {action.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="space-y-3">
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">Fråga till AI</span>
+                    <textarea
+                      className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+                      onChange={(event) => setPrompt(event.target.value)}
+                      placeholder={
+                        scopeKind === "journey-context"
+                          ? "Be AI förklara, analysera eller förfina de aktuella journeys."
+                          : scopeKind === "story-ideas"
+                            ? "Be AI sammanfatta en möjlig story, hitta överlapp eller föreslå nya Story Ideas."
+                            : "Ask, analyze, refine, or export against the current Framing package."
+                      }
+                      value={prompt}
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      disabled={isPending || !prompt.trim()}
+                      onClick={() => submitAgentRun(mode, prompt)}
+                      type="button"
+                    >
+                      {isPending ? "Kör..." : "Kör AI"}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
 
             {result ? (
               <div className="space-y-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
@@ -1593,7 +1652,7 @@ export function AiAssistantPanel({
               </div>
             ) : null}
 
-            {result?.toolTrace.length ? (
+            {!isEmbeddedJourneySurface && result?.toolTrace.length ? (
               <details className="rounded-2xl border border-border/70 bg-background px-4 py-4">
                 <summary className="cursor-pointer text-sm font-medium text-foreground">Tool trace</summary>
                 <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
@@ -1604,7 +1663,7 @@ export function AiAssistantPanel({
               </details>
             ) : null}
 
-            {history.length > 0 ? (
+            {!isEmbeddedJourneySurface && history.length > 0 ? (
               <details className="rounded-2xl border border-border/70 bg-background px-4 py-4">
                 <summary className="cursor-pointer text-sm font-medium text-foreground">Recent conversation history</summary>
                 <div className="mt-3 space-y-3">

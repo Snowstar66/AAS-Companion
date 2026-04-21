@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@aas-companion/ui";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
 import type { Journey } from "@/lib/framing/journeyContextTypes";
@@ -187,6 +187,7 @@ export function JourneyCard({
   const suggestedEpicLabels = findReferenceLabels(journey.coverage?.suggestedEpicIds, availableEpics);
   const suggestedStoryIdeaLabels = findReferenceLabels(journey.coverage?.suggestedStoryIdeaIds, availableStoryIdeas);
   const cleanedCoverageNote = cleanCoverageNote(journey.coverage?.notes);
+  const [isOpen, setIsOpen] = useState(isFocused);
   const journeyStageLabel =
     coreMissingCount > 0
       ? `${coreMissingCount} kärnfält kvar`
@@ -194,19 +195,29 @@ export function JourneyCard({
         ? "Redo för analys"
         : "Analyserad";
 
+  useEffect(() => {
+    if (isFocused) {
+      setIsOpen(true);
+    }
+  }, [isFocused]);
+
   return (
     <details
       className={`group rounded-[28px] border bg-background shadow-none ${
         isFocused ? "border-sky-300 ring-2 ring-sky-100" : "border-border/70"
       }`}
-      open
+      onToggle={(event) => setIsOpen((event.currentTarget as HTMLDetailsElement).open)}
+      open={isOpen}
     >
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
+      <summary
+        className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4"
+        onClick={() => onFocus?.()}
+      >
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             {isFocused ? (
               <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                Aktiv i AI-hjälpen
+                Aktiv nu
               </span>
             ) : null}
             <span
@@ -250,13 +261,14 @@ export function JourneyCard({
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
+                setIsOpen(true);
                 onFocus();
               }}
               size="sm"
               type="button"
               variant={isFocused ? "default" : "secondary"}
             >
-              {isFocused ? "Aktiv i AI-hjälpen" : "Arbeta med denna"}
+              {isFocused ? "Öppen nu" : "Öppna och arbeta"}
             </Button>
           ) : null}
           <Button

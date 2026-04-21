@@ -318,112 +318,125 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
     <div className="space-y-6">
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Journey Context</CardTitle>
-          <CardDescription>
-            Frivillig kontext som förtydligar business caset och hjälper downstream AI att arbeta med högre kvalitet.
-          </CardDescription>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-3">
+              <div>
+                <CardTitle>Journey Context</CardTitle>
+                <CardDescription>
+                  Frivillig kontext som förtydligar business caset och hjälper downstream AI att arbeta med högre kvalitet.
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
+                  Outcome {data.outcome.key}
+                </span>
+                {initiativeType ? (
+                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+                    {initiativeType}
+                  </span>
+                ) : null}
+                <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {counts.journeyCount} journey{counts.journeyCount === 1 ? "" : "s"}
+                </span>
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                    hasUnsavedChanges
+                      ? "border-amber-200 bg-amber-50 text-amber-800"
+                      : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  }`}
+                >
+                  {hasUnsavedChanges ? "Osparat utkast" : "Sparat"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {contexts.length === 0 ? (
+                <Button
+                  disabled={!initiativeType}
+                  onClick={() => {
+                    if (!initiativeType) {
+                      return;
+                    }
+
+                    const nextContext = createEmptyJourneyContext(data.outcome.id, initiativeType);
+                    setContexts([nextContext]);
+                    setFocusedJourneyId(nextContext.journeys[0]?.id ?? null);
+                  }}
+                  type="button"
+                >
+                  Starta journeys
+                </Button>
+              ) : null}
+
+              <form action={saveAction}>
+                <input name="outcomeId" type="hidden" value={data.outcome.id} />
+                <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
+                <Button disabled={!hasUnsavedChanges} type="submit">
+                  Spara journeys
+                </Button>
+              </form>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-              Outcome {data.outcome.key}
-            </span>
-            {initiativeType ? (
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                {initiativeType}
-              </span>
-            ) : null}
-            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-              {counts.journeyCount} journey{counts.journeyCount === 1 ? "" : "s"}
-            </span>
-          </div>
-
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            <p className="font-medium text-foreground">Använd journeys för att förtydliga business caset</p>
-            <p className="mt-2">
-              Lägg till några få viktiga journeys när de gör caset tydligare och ger downstream AI bättre kontext för förfining, design och byggstöd.
-            </p>
-            <p className="mt-3">
-              Värdet sitter i journeys i sig: vem som är involverad, vad de försöker uppnå, vad som triggar arbetet och var dagens friktion finns.
-            </p>
-            <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
-          </div>
-
-          <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.label}</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">{currentFlowStep.title}</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentFlowStep.description}</p>
-            <p className="mt-3 text-sm font-medium text-foreground">Nästa steg: {currentFlowStep.nextAction}</p>
-            {(counts.uncoveredJourneyCount > 0 || counts.suggestedStoryIdeaCount > 0 || readyJourneys.length > 0) ? (
-              <p className="mt-3 text-xs text-muted-foreground">
-                {readyJourneys.length > 0 ? `${readyJourneys.length} redo för analys` : "Ingen journey är redo för analys ännu"}
-                {counts.uncoveredJourneyCount > 0 ? ` · ${counts.uncoveredJourneyCount} otäckt${counts.uncoveredJourneyCount === 1 ? "" : "a"} journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}` : ""}
-                {counts.suggestedStoryIdeaCount > 0 ? ` · ${counts.suggestedStoryIdeaCount} föreslag${counts.suggestedStoryIdeaCount === 1 ? "en" : "na"} Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}` : ""}
-              </p>
-            ) : null}
-          </div>
-
-          <div
-            className={`rounded-2xl border px-4 py-4 text-sm ${
-              hasUnsavedChanges
-                ? "border-amber-200 bg-amber-50 text-amber-900"
-                : "border-border/70 bg-muted/10 text-muted-foreground"
-            }`}
-          >
-            {hasUnsavedChanges
-              ? "Du har lokala Journey-ändringar som ännu inte är sparade i Framing-paketet."
-              : "Journey-sidan är sparad och i synk med det aktuella Framing-paketet."}
-          </div>
-
           {flash?.save === "success" ? <FlashBanner message="Journeys sparades i Framing-paketet." tone="success" /> : null}
           {flash?.analyze === "success" ? <FlashBanner message="Journey-analysen uppdaterades för den valda ytan." tone="success" /> : null}
           {flash?.message && (flash.save === "error" || flash.analyze === "error") ? (
             <FlashBanner message={flash.message} tone="error" />
           ) : null}
 
-          <div className="flex flex-wrap items-center gap-3">
-            {contexts.length === 0 ? (
-              <Button
-                disabled={!initiativeType}
-                onClick={() => {
-                  if (!initiativeType) {
-                    return;
-                  }
+          <details className="rounded-2xl border border-border/70 bg-muted/10">
+            <summary className="cursor-pointer list-none px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Visa vägledning och status</p>
+                  <p className="text-sm text-muted-foreground">Öppna bara när du vill läsa rekommendationer, nuläge och extra information.</p>
+                </div>
+                <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                  Valfritt
+                </span>
+              </div>
+            </summary>
+            <div className="space-y-4 border-t border-border/70 px-4 py-4">
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+                <p className="font-medium text-foreground">Använd journeys för att förtydliga business caset</p>
+                <p className="mt-2">
+                  Lägg till några få viktiga journeys när de gör caset tydligare och ger downstream AI bättre kontext för förfining, design och byggstöd.
+                </p>
+                <p className="mt-3">
+                  Värdet sitter i journeys i sig: vem som är involverad, vad de försöker uppnå, vad som triggar arbetet och var dagens friktion finns.
+                </p>
+                <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
+              </div>
 
-                  const nextContext = createEmptyJourneyContext(data.outcome.id, initiativeType);
-                  setContexts([nextContext]);
-                  setFocusedJourneyId(nextContext.journeys[0]?.id ?? null);
-                }}
-                type="button"
-              >
-                Starta journeys
-              </Button>
-            ) : null}
+              <div className="rounded-2xl border border-border/70 bg-background px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.label}</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{currentFlowStep.title}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentFlowStep.description}</p>
+                <p className="mt-3 text-sm font-medium text-foreground">Nästa steg: {currentFlowStep.nextAction}</p>
+                {(counts.uncoveredJourneyCount > 0 || counts.suggestedStoryIdeaCount > 0 || readyJourneys.length > 0) ? (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    {readyJourneys.length > 0 ? `${readyJourneys.length} redo för analys` : "Ingen journey är redo för analys ännu"}
+                    {counts.uncoveredJourneyCount > 0 ? ` · ${counts.uncoveredJourneyCount} otäckt${counts.uncoveredJourneyCount === 1 ? "" : "a"} journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}` : ""}
+                    {counts.suggestedStoryIdeaCount > 0 ? ` · ${counts.suggestedStoryIdeaCount} föreslag${counts.suggestedStoryIdeaCount === 1 ? "en" : "na"} Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}` : ""}
+                  </p>
+                ) : null}
+              </div>
 
-            <form action={saveAction}>
-              <input name="outcomeId" type="hidden" value={data.outcome.id} />
-              <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
-              <Button disabled={!hasUnsavedChanges} type="submit" variant="secondary">
-                Spara journeys
-              </Button>
-            </form>
+              {!initiativeType ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  Journey-sidan binds automatiskt till aktuellt outcome och dess initiativtyp. Sätt AD, AT eller AM i Framing Overview först.
+                </div>
+              ) : null}
 
-            <p className="text-sm text-muted-foreground">
-              Börja med en viktig journey som förtydligar caset. Lägg bara till fler när de representerar ett meningsfullt annorlunda flöde.
-            </p>
-          </div>
-
-          {!initiativeType ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Journey-sidan binds automatiskt till aktuellt outcome och dess initiativtyp. Sätt AD, AT eller AM i Framing Overview först.
+              {!journeyContextStorageAvailable ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  Journey-sidan är synlig, men databasmigreringen är ännu inte applicerad. Framing-routen laddar ändå, men Journey-ändringar kan inte sparas förrän senaste migreringen körts.
+                </div>
+              ) : null}
             </div>
-          ) : null}
-
-          {!journeyContextStorageAvailable ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Journey-sidan är synlig, men databasmigreringen är ännu inte applicerad. Framing-routen laddar ändå, men Journey-ändringar kan inte sparas förrän senaste migreringen körts.
-            </div>
-          ) : null}
+          </details>
         </CardContent>
       </Card>
 

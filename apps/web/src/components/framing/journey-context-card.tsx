@@ -62,7 +62,7 @@ export function JourneyContextCard({
   const coverageLabel = getCoverageSummaryLabel(context);
 
   return (
-    <details className="group rounded-[28px] border border-border/70 bg-background shadow-sm" open>
+    <details className="group rounded-[28px] border border-border/70 bg-background shadow-sm">
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
