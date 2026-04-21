@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@aas-companion/ui";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
@@ -41,6 +41,8 @@ type JourneyFirstDraftSuggestion = {
   relatedStoryIdeaLabels: string[];
   relatedStoryIdeaInsights: string[];
 };
+
+type JourneyEditingSection = "core" | "current" | "desired" | "pain" | "support" | null;
 
 function FieldHint({ children }: { children: string }) {
   return <p className="text-xs leading-5 text-muted-foreground">{children}</p>;
@@ -269,6 +271,34 @@ function CoverageSupportText({ labels }: { labels: string[] }) {
   );
 }
 
+function InlineSectionCard(props: {
+  title: string;
+  description?: string;
+  actionLabel: string;
+  onToggleEdit: () => void;
+  isEditing: boolean;
+  children: ReactNode;
+  editor: ReactNode;
+  helper?: ReactNode;
+}) {
+  return (
+    <div className="rounded-[24px] border border-border/70 bg-muted/10 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-medium text-foreground">{props.title}</p>
+          {props.description ? <p className="mt-1 text-sm text-muted-foreground">{props.description}</p> : null}
+        </div>
+        <Button onClick={props.onToggleEdit} size="sm" type="button" variant={props.isEditing ? "secondary" : "default"}>
+          {props.isEditing ? "Klar" : props.actionLabel}
+        </Button>
+      </div>
+      <div className="mt-4">{props.children}</div>
+      {props.helper ? <div className="mt-3">{props.helper}</div> : null}
+      {props.isEditing ? <div className="mt-4">{props.editor}</div> : null}
+    </div>
+  );
+}
+
 function InlineAiSuggestion(props: {
   title: string;
   text: string;
@@ -488,7 +518,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   const suggestedStoryIdeaLabels = findReferenceLabels(journey.coverage?.suggestedStoryIdeaIds, availableStoryIdeas);
   const cleanedCoverageNote = cleanCoverageNote(journey.coverage?.notes);
   const [isOpen, setIsOpen] = useState(isFocused);
-  const [showEditor, setShowEditor] = useState(coreMissingCount > 0);
+  const [editingSection, setEditingSection] = useState<JourneyEditingSection>(coreMissingCount > 0 ? "core" : null);
   const [coreSuggestion, setCoreSuggestion] = useState<JourneyCoreSuggestion | null>(null);
   const [currentStateSuggestion, setCurrentStateSuggestion] = useState("");
   const [desiredFutureStateSuggestion, setDesiredFutureStateSuggestion] = useState("");
@@ -510,7 +540,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     setCoreSuggestion(null);
     setCurrentStateSuggestion("");
     setDesiredFutureStateSuggestion("");
-    setShowEditor(coreMissingCount > 0);
+    setEditingSection(coreMissingCount > 0 ? "core" : null);
   }, [journey.id]);
 
   const canBuildJourneySummary =
@@ -651,6 +681,18 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   }
 
   const journeyBrief = canBuildJourneySummary ? createFirstDraftSuggestion() : null;
+  const displayedCurrentState = hasText(journey.currentState) ? journey.currentState : journeyBrief?.currentState ?? "";
+  const displayedDesiredFutureState = hasText(journey.desiredFutureState)
+    ? journey.desiredFutureState
+    : journeyBrief?.desiredFutureState ?? "";
+  const displayedPainPoints = (journey.painPoints?.length ?? 0) > 0 ? journey.painPoints ?? [] : journeyBrief?.painPoints ?? [];
+  const displayedDesiredSupport =
+    (journey.desiredSupport?.length ?? 0) > 0 ? journey.desiredSupport ?? [] : journeyBrief?.desiredSupport ?? [];
+  const isEditingCore = editingSection === "core" || !journeyBrief;
+  const isEditingCurrent = editingSection === "current";
+  const isEditingDesired = editingSection === "desired";
+  const isEditingPain = editingSection === "pain";
+  const isEditingSupport = editingSection === "support";
   return (
     <details
       className={`group rounded-[28px] border bg-background shadow-none ${isFocused ? "border-sky-300 ring-2 ring-sky-100" : "border-border/70"}`}
@@ -711,7 +753,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
           <div className="mt-4 space-y-4">
             <InlineAiFirstDraftSuggestion
               applyLabel="Lägg in förslag i tomma fält"
-              dismissLabel={showEditor ? "Dölj redigering" : "Redigera direkt"}
+              dismissLabel={isEditingCore ? "Dölj redigering" : "Redigera kärnan"}
               onApply={() => {
                 onChange({
                   ...journey,
@@ -721,126 +763,216 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   desiredSupport: journey.desiredSupport?.length ? journey.desiredSupport : journeyBrief.desiredSupport,
                   steps: journey.steps.length ? journey.steps : journeyBrief.steps
                 });
-                setShowEditor(true);
+                setEditingSection("core");
               }}
-              onDismiss={() => setShowEditor((current) => !current)}
+              onDismiss={() => setEditingSection((current) => (current === "core" ? null : "core"))}
               showApply={hasEmptyDraftSections}
               suggestion={journeyBrief}
             />
-
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => setShowEditor((current) => !current)} size="sm" type="button" variant={showEditor ? "secondary" : "default"}>
-                {showEditor ? "Dölj redigering" : "Uppdatera journey"}
-              </Button>
-              <Button onClick={() => setCoreSuggestion(buildCoreSuggestion())} size="sm" type="button" variant="secondary">
-                Förtydliga kärntext
-              </Button>
-              <Button onClick={() => setCurrentStateSuggestion(buildCurrentStateSuggestion())} size="sm" type="button" variant="secondary">
-                {hasText(journey.currentState) ? "Förbättra nuläge" : "Skissa nuläge"}
-              </Button>
-              <Button onClick={() => setDesiredFutureStateSuggestion(buildDesiredFutureStateSuggestion())} size="sm" type="button" variant="secondary">
-                {hasText(journey.desiredFutureState) ? "Förbättra önskat läge" : "Skissa önskat läge"}
-              </Button>
-            </div>
-
-            {coreSuggestion ? (
-              <InlineAiCoreSuggestion
-                onApply={() => {
-                  onChange({
-                    ...journey,
-                    title: coreSuggestion.title || journey.title,
-                    goal: coreSuggestion.goal || journey.goal,
-                    trigger: coreSuggestion.trigger || journey.trigger
-                  });
-                  setShowEditor(true);
-                  setCoreSuggestion(null);
-                }}
-                onDismiss={() => setCoreSuggestion(null)}
-                suggestion={coreSuggestion}
-              />
-            ) : null}
-            {currentStateSuggestion ? (
-              <InlineAiSuggestion
-                onApply={() => {
-                  onChange({ ...journey, currentState: currentStateSuggestion });
-                  setShowEditor(true);
-                  setCurrentStateSuggestion("");
-                }}
-                onDismiss={() => setCurrentStateSuggestion("")}
-                targetLabel="Nuläge"
-                text={currentStateSuggestion}
-                title="AI-förslag för nuläge"
-              />
-            ) : null}
-            {desiredFutureStateSuggestion ? (
-              <InlineAiSuggestion
-                onApply={() => {
-                  onChange({ ...journey, desiredFutureState: desiredFutureStateSuggestion });
-                  setShowEditor(true);
-                  setDesiredFutureStateSuggestion("");
-                }}
-                onDismiss={() => setDesiredFutureStateSuggestion("")}
-                targetLabel="Önskat läge"
-                text={desiredFutureStateSuggestion}
-                title="AI-förslag för önskat läge"
-              />
-            ) : null}
           </div>
         ) : null}
-
-        {showEditor || !journeyBrief ? (
-          <div className="mt-6 space-y-4 rounded-[24px] border border-border/70 bg-muted/10 p-4">
-            <div>
-              <p className="font-medium text-foreground">{journeyBrief ? "Redigera journey" : "Fyll i journey"}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {journeyBrief
-                  ? "Uppdatera texten direkt här. När du använder ett AI-förslag fylls motsvarande fält här, och sammanfattningen ovan speglar sedan journeyns riktning och detaljer."
-                  : "Fyll i grunderna först. När titel, huvudaktör, mål och trigger finns på plats får du den sammanfattade vyn ovan."}
-              </p>
+        <div className="mt-6 space-y-4">
+          <InlineSectionCard
+            actionLabel="Redigera kärnan"
+            description="Här ser du det viktigaste först: titel, aktör, mål och trigger."
+            editor={
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Titel</span>
+                  <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, title: event.target.value })} type="text" value={journey.title} />
+                  <FieldHint>Använd ett kort verbdrivet namn för journeyn.</FieldHint>
+                  <FieldError>{validation?.title}</FieldError>
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Huvudaktör</span>
+                  <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, primaryActor: event.target.value })} type="text" value={journey.primaryActor} />
+                  <FieldError>{validation?.primaryActor}</FieldError>
+                </label>
+                <label className="space-y-2 md:col-span-2">
+                  <span className="text-sm font-medium text-foreground">Mål</span>
+                  <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, goal: event.target.value })} value={journey.goal} />
+                  <FieldHint>Beskriv vad aktören försöker uppnå, inte vilken skärm personen vill till.</FieldHint>
+                  <FieldError>{validation?.goal}</FieldError>
+                </label>
+                <label className="space-y-2 md:col-span-2">
+                  <span className="text-sm font-medium text-foreground">Trigger</span>
+                  <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, trigger: event.target.value })} value={journey.trigger} />
+                  <FieldHint>Beskriv vad som startar journeyn.</FieldHint>
+                  <FieldError>{validation?.trigger}</FieldError>
+                </label>
+              </div>
+            }
+            helper={
+              <>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => { setCoreSuggestion(buildCoreSuggestion()); setEditingSection("core"); }} size="sm" type="button" variant="secondary">
+                    Förtydliga kärntext
+                  </Button>
+                </div>
+                {coreSuggestion ? (
+                  <div className="mt-3">
+                    <InlineAiCoreSuggestion
+                      onApply={() => {
+                        onChange({
+                          ...journey,
+                          title: coreSuggestion.title || journey.title,
+                          goal: coreSuggestion.goal || journey.goal,
+                          trigger: coreSuggestion.trigger || journey.trigger
+                        });
+                        setEditingSection("core");
+                        setCoreSuggestion(null);
+                      }}
+                      onDismiss={() => setCoreSuggestion(null)}
+                      suggestion={coreSuggestion}
+                    />
+                  </div>
+                ) : null}
+              </>
+            }
+            isEditing={isEditingCore}
+            onToggleEdit={() => setEditingSection((current) => (current === "core" ? null : "core"))}
+            title="Kärnan i journeyn"
+          >
+            <div className="grid gap-3 md:grid-cols-2 text-sm">
+              <p><span className="font-medium text-foreground">Titel:</span> {normalizeJourneyTitle(journey.title) || "Inte ifyllt ännu"}</p>
+              <p><span className="font-medium text-foreground">Huvudaktör:</span> {journey.primaryActor || "Inte ifyllt ännu"}</p>
+              <p className="md:col-span-2"><span className="font-medium text-foreground">Mål:</span> {journey.goal || "Inte ifyllt ännu"}</p>
+              <p className="md:col-span-2"><span className="font-medium text-foreground">Trigger:</span> {journey.trigger || "Inte ifyllt ännu"}</p>
             </div>
+          </InlineSectionCard>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Titel</span>
-                <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, title: event.target.value })} type="text" value={journey.title} />
-                <FieldHint>Använd ett kort verbdrivet namn för journeyn, till exempel Hantera inkommande ärende.</FieldHint>
-                <FieldError>{validation?.title}</FieldError>
-              </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <InlineSectionCard
+              actionLabel="Redigera nuläge"
+              description="Beskriv hur det fungerar i dag."
+              editor={
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Nuläge</span>
+                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, currentState: event.target.value })} value={journey.currentState ?? ""} />
+                  <FieldHint>Beskriv hur journeyn fungerar i dag, särskilt friktion eller fragmentering.</FieldHint>
+                </label>
+              }
+              helper={
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => { setCurrentStateSuggestion(buildCurrentStateSuggestion()); setEditingSection("current"); }} size="sm" type="button" variant="secondary">
+                      {hasText(journey.currentState) ? "Förbättra nuläge" : "Skissa nuläge"}
+                    </Button>
+                  </div>
+                  {currentStateSuggestion ? (
+                    <div className="mt-3">
+                      <InlineAiSuggestion
+                        onApply={() => {
+                          onChange({ ...journey, currentState: currentStateSuggestion });
+                          setEditingSection("current");
+                          setCurrentStateSuggestion("");
+                        }}
+                        onDismiss={() => setCurrentStateSuggestion("")}
+                        targetLabel="Nuläge"
+                        text={currentStateSuggestion}
+                        title="AI-förslag för nuläge"
+                      />
+                    </div>
+                  ) : null}
+                </>
+              }
+              isEditing={isEditingCurrent}
+              onToggleEdit={() => setEditingSection((current) => (current === "current" ? null : "current"))}
+              title="Nuläge"
+            >
+              <p className="text-sm leading-6 text-muted-foreground">{displayedCurrentState || "Inte ifyllt ännu"}</p>
+            </InlineSectionCard>
 
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Huvudaktör</span>
-                <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, primaryActor: event.target.value })} type="text" value={journey.primaryActor} />
-                <FieldError>{validation?.primaryActor}</FieldError>
-              </label>
-
-              <label className="space-y-2 md:col-span-2">
-                <span className="text-sm font-medium text-foreground">Mål</span>
-                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, goal: event.target.value })} value={journey.goal} />
-                <FieldHint>Beskriv vad aktören försöker uppnå, inte vilken skärm personen vill till.</FieldHint>
-                <FieldError>{validation?.goal}</FieldError>
-              </label>
-
-              <label className="space-y-2 md:col-span-2">
-                <span className="text-sm font-medium text-foreground">Trigger</span>
-                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, trigger: event.target.value })} value={journey.trigger} />
-                <FieldHint>Beskriv vad som startar journeyn.</FieldHint>
-                <FieldError>{validation?.trigger}</FieldError>
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Nuläge</span>
-                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, currentState: event.target.value })} value={journey.currentState ?? ""} />
-                <FieldHint>Beskriv hur journeyn fungerar i dag, särskilt friktion eller fragmentering.</FieldHint>
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Önskat framtida läge</span>
-                <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, desiredFutureState: event.target.value })} value={journey.desiredFutureState ?? ""} />
-                <FieldHint>Beskriv hur journeyn bör fungera med bättre stöd.</FieldHint>
-              </label>
-            </div>
+            <InlineSectionCard
+              actionLabel="Redigera önskat läge"
+              description="Beskriv hur det bör fungera framåt."
+              editor={
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Önskat framtida läge</span>
+                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, desiredFutureState: event.target.value })} value={journey.desiredFutureState ?? ""} />
+                  <FieldHint>Beskriv hur journeyn bör fungera med bättre stöd.</FieldHint>
+                </label>
+              }
+              helper={
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => { setDesiredFutureStateSuggestion(buildDesiredFutureStateSuggestion()); setEditingSection("desired"); }} size="sm" type="button" variant="secondary">
+                      {hasText(journey.desiredFutureState) ? "Förbättra önskat läge" : "Skissa önskat läge"}
+                    </Button>
+                  </div>
+                  {desiredFutureStateSuggestion ? (
+                    <div className="mt-3">
+                      <InlineAiSuggestion
+                        onApply={() => {
+                          onChange({ ...journey, desiredFutureState: desiredFutureStateSuggestion });
+                          setEditingSection("desired");
+                          setDesiredFutureStateSuggestion("");
+                        }}
+                        onDismiss={() => setDesiredFutureStateSuggestion("")}
+                        targetLabel="Önskat läge"
+                        text={desiredFutureStateSuggestion}
+                        title="AI-förslag för önskat läge"
+                      />
+                    </div>
+                  ) : null}
+                </>
+              }
+              isEditing={isEditingDesired}
+              onToggleEdit={() => setEditingSection((current) => (current === "desired" ? null : "desired"))}
+              title="Önskat läge"
+            >
+              <p className="text-sm leading-6 text-muted-foreground">{displayedDesiredFutureState || "Inte ifyllt ännu"}</p>
+            </InlineSectionCard>
           </div>
-        ) : null}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <InlineSectionCard
+              actionLabel="Redigera problem"
+              description="Lista bara de viktigaste friktionerna."
+              editor={
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Problem</span>
+                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, painPoints: parseLines(event.target.value) })} value={joinLines(journey.painPoints)} />
+                  <FieldHint>Lista bara de viktigaste friktionerna, fördröjningarna, oklarheterna eller riskerna.</FieldHint>
+                </label>
+              }
+              isEditing={isEditingPain}
+              onToggleEdit={() => setEditingSection((current) => (current === "pain" ? null : "pain"))}
+              title="Problem"
+            >
+              {displayedPainPoints.length > 0 ? (
+                <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+                  {displayedPainPoints.map((item) => <li key={item}>• {item}</li>)}
+                </ul>
+              ) : (
+                <p className="text-sm leading-6 text-muted-foreground">Inte ifyllt ännu</p>
+              )}
+            </InlineSectionCard>
+
+            <InlineSectionCard
+              actionLabel="Redigera önskat stöd"
+              description="Beskriv vilket stöd som skulle göra störst skillnad."
+              editor={
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Önskat stöd</span>
+                  <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, desiredSupport: parseLines(event.target.value) })} value={joinLines(journey.desiredSupport)} />
+                  <FieldHint>Beskriv önskat stöd som förmågor eller hjälp, inte detaljerad UI-design.</FieldHint>
+                </label>
+              }
+              isEditing={isEditingSupport}
+              onToggleEdit={() => setEditingSection((current) => (current === "support" ? null : "support"))}
+              title="Önskat stöd"
+            >
+              {displayedDesiredSupport.length > 0 ? (
+                <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+                  {displayedDesiredSupport.map((item) => <li key={item}>• {item}</li>)}
+                </ul>
+              ) : (
+                <p className="text-sm leading-6 text-muted-foreground">Inte ifyllt ännu</p>
+              )}
+            </InlineSectionCard>
+          </div>
+        </div>
         <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10">
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -869,18 +1001,6 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
               <label className="space-y-2">
                 <span className="text-sm font-medium text-foreground">Stödaktörer</span>
                 <textarea className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, supportingActors: parseLines(event.target.value) })} value={joinLines(journey.supportingActors)} />
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Problem</span>
-                <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, painPoints: parseLines(event.target.value) })} value={joinLines(journey.painPoints)} />
-                <FieldHint>Lista bara de viktigaste friktionerna, fördröjningarna, oklarheterna eller riskerna.</FieldHint>
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Önskat stöd</span>
-                <textarea className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary" onChange={(event) => onChange({ ...journey, desiredSupport: parseLines(event.target.value) })} value={joinLines(journey.desiredSupport)} />
-                <FieldHint>Beskriv önskat stöd som förmågor eller hjälp, inte detaljerad UI-design.</FieldHint>
               </label>
 
               <label className="space-y-2">
