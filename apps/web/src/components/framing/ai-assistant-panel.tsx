@@ -652,6 +652,7 @@ export function AiAssistantPanel({
   const [guidedAnswer, setGuidedAnswer] = useState("");
   const [guidedDraft, setGuidedDraft] = useState("");
   const [skippedPromptKeys, setSkippedPromptKeys] = useState<string[]>([]);
+  const [recentlyAppliedFirstDraftJourneyId, setRecentlyAppliedFirstDraftJourneyId] = useState<string | null>(null);
   const [showAdvancedWorkspace, setShowAdvancedWorkspace] = useState(!isCompactSurface);
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
@@ -749,6 +750,10 @@ export function AiAssistantPanel({
     scopeKind === "journey-context"
       ? "Använd den här rutan för AI-hjälp med den aktuella journeyn. Här kan du svara på en fråga i taget eller låta AI ta fram ett bättre utkast."
       : framingAgentIntroText;
+  const justAppliedFirstDraft =
+    recentlyAppliedFirstDraftJourneyId !== null &&
+    journeyDraftTarget?.journey.id === recentlyAppliedFirstDraftJourneyId &&
+    !canGenerateFirstDraft;
   const visibleSuggestions = useMemo(
     () => result?.suggestions.filter((suggestion) => !dismissedIds.includes(suggestion.id)) ?? [],
     [dismissedIds, result]
@@ -807,6 +812,12 @@ export function AiAssistantPanel({
     }
   }, [mode, prompt, result]);
 
+  useEffect(() => {
+    if (canGenerateFirstDraft) {
+      setRecentlyAppliedFirstDraftJourneyId(null);
+    }
+  }, [canGenerateFirstDraft]);
+
   function dismissSuggestion(suggestionId: string) {
     setDismissedIds((current) => (current.includes(suggestionId) ? current : [...current, suggestionId]));
   }
@@ -817,6 +828,11 @@ export function AiAssistantPanel({
     }
 
     onApplySuggestion(suggestion);
+
+    if (suggestion.kind === "rewrite_journey" && firstDraftJourneySuggestion && suggestion.id === firstDraftJourneySuggestion.id) {
+      setRecentlyAppliedFirstDraftJourneyId(suggestion.journeyId);
+    }
+
     dismissSuggestion(suggestion.id);
   }
 
@@ -1019,7 +1035,7 @@ export function AiAssistantPanel({
               </span>
             </div>
 
-            {journeyFocusOptions.length > 0 && onFocusJourney ? (
+            {!embedded && journeyFocusOptions.length > 0 && onFocusJourney ? (
               <div className="mt-4 space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Välj vilken journey AI ska hjälpa med</p>
                 <div className="flex flex-wrap gap-2">
@@ -1052,12 +1068,15 @@ export function AiAssistantPanel({
                     <p className="mt-1 text-sm text-muted-foreground">
                       Kärnan i journeyn finns på plats. Nu kan AI ta fram ett bredare första utkast för resten av flödet.
                     </p>
+                    <p className="mt-2 text-sm text-foreground">
+                      När du använder utkastet fylls fälten i samma journey-kort med nuläge, önskat läge, problem, önskat stöd och breda steg.
+                    </p>
                   </div>
                   <Button
                     onClick={() => handleApplySuggestion(firstDraftJourneySuggestion)}
                     type="button"
                   >
-                    Använd första utkastet
+                    Fyll i journey med detta utkast
                   </Button>
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -1100,6 +1119,23 @@ export function AiAssistantPanel({
                     </ul>
                   </div>
                 ) : null}
+              </div>
+            ) : null}
+
+            {justAppliedFirstDraft ? (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <p className="font-medium text-emerald-950">AI-utkastet är nu infört i denna journey.</p>
+                <p className="mt-2 text-sm text-emerald-900">
+                  Fälten ovan i samma journey-kort har fyllts i med nuläge, önskat läge, problem, önskat stöd och breda steg.
+                </p>
+                <div className="mt-3 rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm text-foreground">
+                  <p>Gör nu så här:</p>
+                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+                    <li>Läs igenom de ifyllda fälten ovan i samma journey-kort.</li>
+                    <li>Justera det som inte stämmer.</li>
+                    <li>Spara journeys när innehållet känns rätt.</li>
+                  </ol>
+                </div>
               </div>
             ) : null}
 
@@ -1155,7 +1191,7 @@ export function AiAssistantPanel({
                   ) : null}
                 </div>
               </div>
-            ) : guidedJourneyInterview.isComplete ? (
+            ) : guidedJourneyInterview.isComplete && !justAppliedFirstDraft ? (
               <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
                 <p className="font-medium text-foreground">Kärnan i journeyn är redan fångad.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
