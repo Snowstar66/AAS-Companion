@@ -1,21 +1,19 @@
 import Link from "next/link";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
-import { useAppChromeLanguage } from "@/components/layout/app-language";
 
 type FramingSubpageNavProps = {
   outcomeId: string;
   activeSubpage: "overview" | "journey-context" | "downstream-ai-instructions";
   journeyContextCount: number;
   customInstructionCount: number;
+  language: "en" | "sv";
 };
 
 function t(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
 }
 
-export function FramingSubpageNav({ outcomeId, activeSubpage, journeyContextCount, customInstructionCount }: FramingSubpageNavProps) {
-  const { language } = useAppChromeLanguage();
-
+export function FramingSubpageNav({ outcomeId, activeSubpage, journeyContextCount, customInstructionCount, language }: FramingSubpageNavProps) {
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>

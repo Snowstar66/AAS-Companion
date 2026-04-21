@@ -421,6 +421,7 @@ async function SelectedFramingOutcomeSection(props: {
           activeSubpage={props.activeSubpage}
           customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
           journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+          language={props.language}
           outcomeId={props.outcomeId}
         />
         <JourneyContextPage
@@ -440,6 +441,7 @@ async function SelectedFramingOutcomeSection(props: {
           activeSubpage={props.activeSubpage}
           customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
           journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+          language={props.language}
           outcomeId={props.outcomeId}
         />
         <DownstreamAiInstructionsPage
@@ -483,6 +485,7 @@ async function SelectedFramingOutcomeSection(props: {
           activeSubpage={props.activeSubpage}
           customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
           journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+          language={props.language}
           outcomeId={props.outcomeId}
         />
         <SelectedFramingContentErrorCard />
@@ -496,6 +499,7 @@ async function SelectedFramingOutcomeSection(props: {
         activeSubpage={props.activeSubpage}
         customInstructionCount={selectedOutcome.data.outcome.downstreamAiInstructions?.customInstructions.length ?? 0}
         journeyContextCount={selectedOutcome.data.outcome.journeyContexts?.length ?? 0}
+        language={props.language}
         outcomeId={props.outcomeId}
       />
       {content}
