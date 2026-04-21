@@ -152,7 +152,7 @@ function buildJourneyFieldLabel(journey: JourneyContext["journeys"][number], ind
     return `"${journey.title.trim()}"`;
   }
 
-  return index === 0 ? "this journey" : `journey ${index + 1}`;
+  return index === 0 ? "den här journeyn" : `journey ${index + 1}`;
 }
 
 function formatReferencePreview(labels: string[] | undefined, max = 3) {
@@ -161,7 +161,7 @@ function formatReferencePreview(labels: string[] | undefined, max = 3) {
   }
 
   const preview = labels.slice(0, max).join(", ");
-  return labels.length > max ? `${preview}, and ${labels.length - max} more` : preview;
+  return labels.length > max ? `${preview}, och ${labels.length - max} till` : preview;
 }
 
 function hasCoreJourneyInputs(journey: JourneyContext["journeys"][number]) {
@@ -183,39 +183,39 @@ function buildGuidedJourneyPrompt(
   switch (input.field) {
     case "journeyTitle":
       return {
-        question: `What should ${input.journeyLabel} be called?`,
-        placeholder: "Example: Handle incoming case",
-        helper: `Use a short verb-driven name that describes the whole flow.${storyIdeaPreview ? ` If relevant, make it broad enough to hold Story Ideas like ${storyIdeaPreview}.` : ""}`
+        question: `Vad ska ${input.journeyLabel} heta?`,
+        placeholder: "Exempel: Inventera förråd",
+        helper: `Använd ett kort verbdrivet namn som beskriver hela flödet.${storyIdeaPreview ? ` Om det passar, gör det tillräckligt brett för Story Ideas som ${storyIdeaPreview}.` : ""}`
       };
     case "primaryActor":
       return {
-        question: `Who is the primary actor in ${input.journeyLabel}?`,
-        placeholder: "Example: Case officer",
-        helper: `Name the main role driving the journey.${epicPreview ? ` Existing Epics include ${epicPreview}, which may help you think about where this actor fits.` : ""}`
+        question: `Vem är huvudaktör i ${input.journeyLabel}?`,
+        placeholder: "Exempel: Privatperson",
+        helper: `Namnge den roll som driver journeyn.${epicPreview ? ` Befintliga Epics som ${epicPreview} kan hjälpa dig att se var aktören passar in.` : ""}`
       };
     case "goal":
       return {
-        question: `What is the primary goal in ${input.journeyLabel}?`,
-        placeholder: "Example: Resolve the case without manual handoffs",
-        helper: `Describe what the actor is trying to achieve, not which screen they need.${storyIdeaPreview ? ` If some Story Ideas already exist, describe the shared outcome they should move: ${storyIdeaPreview}.` : ""}`
+        question: `Vad är huvudmålet i ${input.journeyLabel}?`,
+        placeholder: "Exempel: Få koll på förrådet utan manuell dubbelkoll",
+        helper: `Beskriv vad aktören försöker uppnå, inte vilken skärm personen behöver.${storyIdeaPreview ? ` Om Story Ideas redan finns, beskriv vilket gemensamt utfall de ska bidra till: ${storyIdeaPreview}.` : ""}`
       };
     case "trigger":
       return {
-        question: `What usually triggers ${input.journeyLabel}?`,
-        placeholder: "Example: A new customer case arrives",
-        helper: `Describe what starts the flow.${storyIdeaPreview ? ` You can use existing Story Ideas as clues for what event, request, or handoff usually starts the work.` : ""}`
+        question: `Vad brukar trigga ${input.journeyLabel}?`,
+        placeholder: "Exempel: Månaden närmar sig sitt slut och förrådet behöver kontrolleras",
+        helper: `Beskriv vad som startar flödet.${storyIdeaPreview ? ` Du kan använda befintliga Story Ideas som ledtrådar till vilken händelse, begäran eller överlämning som brukar starta arbetet.` : ""}`
       };
     case "currentState":
       return {
-        question: `How does ${input.journeyLabel} work today?`,
-        placeholder: "Example: Work starts in email, continues in spreadsheets, and often stalls during handoff",
-        helper: `Focus on friction, fragmentation, delays, or ambiguity in the current flow.${storyIdeaPreview ? ` If Story Ideas already exist, explain what is still messy, slow, or unclear around them.` : ""}`
+        question: `Hur fungerar ${input.journeyLabel} i dag?`,
+        placeholder: "Exempel: Jag går runt hemma, tittar i skåp och försöker minnas vad som saknas",
+        helper: `Fokusera på friktion, fragmentering, fördröjningar eller oklarhet i nuvarande flöde.${storyIdeaPreview ? ` Om Story Ideas redan finns, förklara vad som fortfarande är rörigt, långsamt eller oklart runt dem.` : ""}`
       };
     case "desiredFutureState":
       return {
-        question: `How should ${input.journeyLabel} work in the desired future state?`,
-        placeholder: "Example: The actor follows one clear flow with visible status and fewer manual checks",
-        helper: `Describe better support and smoother flow, not detailed UI design.${storyIdeaPreview ? ` If Story Ideas already exist, describe how they should feel together when the journey works well.` : ""}`
+        question: `Hur ska ${input.journeyLabel} fungera i önskat läge?`,
+        placeholder: "Exempel: Jag ser direkt vad som finns, vad som saknas och vad jag behöver fylla på",
+        helper: `Beskriv bättre stöd och smidigare flöde, inte detaljerad UI-design.${storyIdeaPreview ? ` Om Story Ideas redan finns, beskriv hur de ska fungera tillsammans när journeyn fungerar väl.` : ""}`
       };
   }
 }
@@ -420,25 +420,25 @@ function buildGuidedJourneyDraft(input: {
       const normalized = ensurePeriod(toSentenceCase(raw));
       return /\b(actor|user|team|role)\b/i.test(normalized)
         ? normalized
-        : `The primary actor aims to ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+        : `Huvudaktören vill ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
     }
     case "trigger": {
       const normalized = ensurePeriod(toSentenceCase(raw));
       return /^(when|once|if|after|a |an |the )/i.test(normalized)
         ? normalized
-        : `The journey begins when ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+        : `Journeyn börjar när ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
     }
     case "currentState": {
       const normalized = ensurePeriod(toSentenceCase(raw));
-      return /^(today|currently|at the moment)/i.test(normalized)
+      return /^(i dag|idag|nu|för närvarande)/i.test(normalized)
         ? normalized
-        : `Today, ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+        : `I dag ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
     }
     case "desiredFutureState": {
       const normalized = ensurePeriod(toSentenceCase(raw));
-      return /^(in the future|going forward|ideally)/i.test(normalized)
+      return /^(i framtiden|framåt|helst|i önskat läge)/i.test(normalized)
         ? normalized
-        : `In the desired future state, ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
+        : `I önskat läge ${normalized.charAt(0).toLowerCase()}${normalized.slice(1)}`;
     }
   }
 }
@@ -482,8 +482,8 @@ function buildGuidedJourneySuggestion(input: {
   return {
     id: createId("guided-journey-answer"),
     kind: "rewrite_journey_context",
-    title: `Apply answer for ${input.target.field}`,
-    description: "Adds your guided interview answer to the current Journey Context draft.",
+    title: `Använd svar för ${input.target.field}`,
+    description: "Lägger till ditt svar i det aktuella journey-utkastet.",
     contextId: nextContext.id,
     nextContext,
     confidence: 0.95
@@ -511,10 +511,10 @@ function buildFirstDraftJourneySuggestion(input: {
   const title = journey.title.trim();
   const initiativePhrase =
     input.initiativeType === "AT"
-      ? "across current and future ways of working"
+      ? "mellan nuvarande och framtida arbetssätt"
       : input.initiativeType === "AM"
-        ? "with stronger operational continuity"
-        : "with clearer support and less friction";
+        ? "med starkare operativ kontinuitet"
+        : "med tydligare stöd och mindre friktion";
 
   const generatedSteps =
     journey.steps.length > 0
@@ -522,29 +522,29 @@ function buildFirstDraftJourneySuggestion(input: {
       : [
           {
             id: createId("step"),
-            title: `Start ${title || "journey"}`,
+            title: `Starta ${title || "journey"}`,
             actor,
-            description: `${actor} receives or detects the trigger and understands why the journey needs to begin.`,
-            currentPain: "Entry into the flow may be fragmented or unclear.",
-            desiredSupport: "The trigger and next action should be visible immediately.",
+            description: `${actor} uppfattar triggern och förstår varför journeyn behöver starta.`,
+            currentPain: "Ingången i flödet kan vara fragmenterad eller oklar.",
+            desiredSupport: "Triggern och nästa steg bör vara tydliga direkt.",
             decisionPoint: false
           },
           {
             id: createId("step"),
-            title: `Progress ${title || "journey"}`,
+            title: `Driv ${title || "journey"} framåt`,
             actor,
-            description: `${actor} works through the main flow toward ${lowerFirst(goal)} while coordinating any needed handoffs or checks.`,
-            currentPain: "Important progress may depend on manual coordination or hidden status.",
-            desiredSupport: "The flow should guide progress, decisions, and handoffs clearly.",
+            description: `${actor} arbetar sig genom huvudflödet mot att ${lowerFirst(goal)} samtidigt som nödvändiga överlämningar eller kontroller hanteras.`,
+            currentPain: "Viktiga framsteg kan bero på manuell samordning eller dold status.",
+            desiredSupport: "Flödet bör tydligt stötta framdrift, beslut och överlämningar.",
             decisionPoint: true
           },
           {
             id: createId("step"),
-            title: `Complete ${title || "journey"}`,
+            title: `Avsluta ${title || "journey"}`,
             actor,
-            description: `${actor} confirms the outcome, closes the journey, and makes the result visible to the right people.`,
-            currentPain: "Completion and follow-up can be inconsistent or hard to verify.",
-            desiredSupport: "Completion should be explicit, visible, and easy to hand over or audit.",
+            description: `${actor} bekräftar utfallet, avslutar journeyn och gör resultatet synligt för rätt personer.`,
+            currentPain: "Avslut och uppföljning kan vara inkonsekventa eller svåra att verifiera.",
+            desiredSupport: "Avslut bör vara tydligt, synligt och enkelt att lämna över eller följa upp.",
             decisionPoint: false
           }
         ];
@@ -554,26 +554,26 @@ function buildFirstDraftJourneySuggestion(input: {
     currentState:
       journey.currentState && journey.currentState.trim().length > 0
         ? journey.currentState
-        : `Today, ${actor.toLowerCase()} often starts when ${lowerFirst(trigger)} but the flow can become fragmented through manual coordination, limited visibility, or unclear handoffs.`,
+        : `I dag börjar ${actor.toLowerCase()} ofta när ${lowerFirst(trigger)}, men flödet blir lätt fragmenterat av manuell samordning, begränsad överblick eller oklara överlämningar.`,
     desiredFutureState:
       journey.desiredFutureState && journey.desiredFutureState.trim().length > 0
         ? journey.desiredFutureState
-        : `In the desired future state, ${actor.toLowerCase()} can ${lowerFirst(goal)} ${initiativePhrase}, with clearer status, fewer manual interruptions, and smoother decisions.`,
+        : `I önskat läge kan ${actor.toLowerCase()} ${lowerFirst(goal)} ${initiativePhrase}, med tydligare status, färre manuella avbrott och smidigare beslut.`,
     painPoints:
       journey.painPoints && journey.painPoints.length > 0
         ? journey.painPoints
         : [
-            `The flow can start inconsistently when ${lowerFirst(trigger)}.`,
-            "Status, ownership, or next action may become unclear during the journey.",
-            `Manual coordination makes it harder to ${lowerFirst(goal)} predictably.`
+            `Flödet kan starta inkonsekvent när ${lowerFirst(trigger)}.`,
+            "Status, ansvar eller nästa steg kan bli oklart under journeyn.",
+            `Manuell samordning gör det svårare att ${lowerFirst(goal)} på ett förutsägbart sätt.`
           ],
     desiredSupport:
       journey.desiredSupport && journey.desiredSupport.length > 0
         ? journey.desiredSupport
         : [
-            "Clear entry into the flow with visible trigger and ownership.",
-            "Guided progress with better visibility of status, handoffs, and decisions.",
-            `Consistent completion support so ${lowerFirst(goal)} is easier to achieve and verify.`
+            "Tydlig ingång i flödet med synlig trigger och ansvar.",
+            "Stödd framdrift med bättre överblick över status, överlämningar och beslut.",
+            `Konsekvent stöd i avslutet så att det blir enklare att ${lowerFirst(goal)} och verifiera resultatet.`
           ],
     steps: generatedSteps
   };
@@ -581,8 +581,8 @@ function buildFirstDraftJourneySuggestion(input: {
   return {
     id: createId("first-draft-journey"),
     kind: "rewrite_journey",
-    title: `Generate first draft for ${title || "this journey"}`,
-    description: "Creates a broad first Journey draft with flow language, pain points, desired support, and a few high-level steps.",
+    title: `Generera första utkast för ${title || "den här journeyn"}`,
+    description: "Skapar ett första brett journey-utkast med flödesspråk, problem, önskat stöd och några övergripande steg.",
     contextId: context.id,
     journeyId: journey.id,
     nextJourney,
@@ -596,11 +596,11 @@ function suggestionDetails(suggestion: FramingAgentSuggestion) {
   }
 
   if (suggestion.kind === "rewrite_journey") {
-    return suggestion.nextJourney.goal || suggestion.nextJourney.trigger || "Journey rewrite suggestion.";
+    return suggestion.nextJourney.goal || suggestion.nextJourney.trigger || "Förslag på omformulering av journey.";
   }
 
   if (suggestion.kind === "rewrite_journey_context") {
-    return suggestion.nextContext.description || "Journey Context rewrite suggestion.";
+    return suggestion.nextContext.description || "Förslag på uppdatering av journey-underlaget.";
   }
 
   if (suggestion.kind === "apply_journey_coverage") {
@@ -714,38 +714,38 @@ export function AiAssistantPanel({
 
     if (journeyFocusOptions.length === 0) {
       return {
-        step: "Step 1 of 3",
-        title: "Start with one broad journey",
-        description: "Use the guided questions to capture one important journey before you worry about analysis or extra detail."
+        step: "Steg 1 av 3",
+        title: "Börja med en bred journey",
+        description: "Använd frågorna här för att fånga en viktig journey innan du tänker på analys eller extra detalj."
       };
     }
 
     if (guidedJourneyInterview?.target) {
       return {
-        step: "Step 2 of 3",
-        title: "Clarify one journey at a time",
-        description: "Answer one question at a time here, or write directly in the journey card. The point is to get one journey clear enough to guide the case."
+        step: "Steg 2 av 3",
+        title: "Förtydliga en journey i taget",
+        description: "Svara på en fråga i taget här, eller skriv direkt i journey-kortet. Målet är att få en journey tillräckligt tydlig för att guida caset."
       };
     }
 
     if (canGenerateFirstDraft && firstDraftJourneySuggestion) {
       return {
-        step: "Step 2 of 3",
-        title: "Generate a broader first draft",
-        description: "The basics are in place. You can now let AI draft the broader current state, desired future state, and a few high-level pain points."
+        step: "Steg 2 av 3",
+        title: "Generera ett bredare första utkast",
+        description: "Grunderna finns på plats. Nu kan AI hjälpa dig att skissa nuläge, önskat läge och några övergripande problem."
       };
     }
 
     return {
-      step: "Step 3 of 3",
-      title: "Analyze coverage when the journey feels right",
-      description: "When a journey is directionally clear, use analysis to compare it with Epics and Story Ideas and spot gaps."
+      step: "Steg 3 av 3",
+      title: "Analysera täckning när journeyn känns rätt",
+      description: "När en journey är tydlig nog kan du använda analys för att jämföra den med Epics och Story Ideas och hitta luckor."
     };
   }, [canGenerateFirstDraft, firstDraftJourneySuggestion, guidedJourneyInterview, journeyFocusOptions.length, scopeKind]);
-  const assistantTitle = scopeKind === "journey-context" ? "AI help for the next step" : "AI Assistant";
+  const assistantTitle = scopeKind === "journey-context" ? "AI-hjälp för nästa steg" : "AI Assistant";
   const assistantDescription =
     scopeKind === "journey-context"
-      ? "Use this first for step-by-step help with the current journey. Open more AI options only when you want deeper analysis or free prompting."
+      ? "Använd den här rutan för AI-hjälp med den aktuella journeyn. Här kan du svara på en fråga i taget eller låta AI ta fram ett bättre utkast."
       : framingAgentIntroText;
   const visibleSuggestions = useMemo(
     () => result?.suggestions.filter((suggestion) => !dismissedIds.includes(suggestion.id)) ?? [],
@@ -934,7 +934,7 @@ export function AiAssistantPanel({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-              {initiativeType ?? "Unset"}
+              {initiativeType ?? "Ej satt"}
             </span>
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
               AI Level {aiLevel}
@@ -956,7 +956,7 @@ export function AiAssistantPanel({
                   : "border-emerald-200 bg-emerald-50 text-emerald-800"
               }`}
             >
-              {hasUnsavedChanges ? "Unsaved draft" : "Saved draft"}
+              {hasUnsavedChanges ? "Osparat utkast" : "Sparat utkast"}
             </span>
           </div>
         </div>
@@ -970,38 +970,38 @@ export function AiAssistantPanel({
                 <p className="mt-2 text-base font-semibold text-foreground">{journeyHelpState.title}</p>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{journeyHelpState.description}</p>
                 <p className="mt-3 text-sm text-foreground">
-                  You can either answer one question at a time here or edit the journey card directly below.
+                  Så använder du AI här: skriv ett kort svar i rutan nedan och låt sedan AI föreslå en tydligare formulering som du kan använda direkt.
                 </p>
               </div>
             ) : null}
 
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">Step-by-step journey help</p>
+                <p className="font-medium text-foreground">Stegvis AI-hjälp för journey</p>
                 <p className="mt-1 text-sm text-sky-900/85">
-                  The AI help here is simple on purpose: one question at a time, focused on the journey that should carry the value.
+                  AI-hjälpen sker här i panelen. Du svarar kort, AI föreslår en bättre formulering, och du väljer sedan vad som ska användas.
                 </p>
                 {guidedJourneyInterview.focusedJourneyLabel ? (
                   <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-sky-900/75">
-                    Focused on {guidedJourneyInterview.focusedJourneyLabel}
+                    Fokus på {guidedJourneyInterview.focusedJourneyLabel}
                   </p>
                 ) : null}
               </div>
               <span className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-medium text-sky-800">
-                {guidedJourneyInterview.contextCount} context / {guidedJourneyInterview.journeyCount} journey
+                {guidedJourneyInterview.contextCount} yta / {guidedJourneyInterview.journeyCount} journey
               </span>
             </div>
 
             {journeyFocusOptions.length > 0 && onFocusJourney ? (
               <div className="mt-4 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Journey focus</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Välj vilken journey AI ska hjälpa med</p>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     onClick={() => onFocusJourney(null)}
                     type="button"
                     variant={focusedJourneyId ? "secondary" : "default"}
                   >
-                    All journeys
+                    Alla journeys
                   </Button>
                   {journeyFocusOptions.map((option) => (
                     <Button
@@ -1021,31 +1021,31 @@ export function AiAssistantPanel({
               <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-foreground">Generate first draft journey</p>
+                    <p className="font-medium text-foreground">Generera första utkast</p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      The core Journey inputs are in place. You can now generate a broader first draft for the rest of the flow.
+                      Kärnan i journeyn finns på plats. Nu kan AI ta fram ett bredare första utkast för resten av flödet.
                     </p>
                   </div>
                   <Button
                     onClick={() => handleApplySuggestion(firstDraftJourneySuggestion)}
                     type="button"
                   >
-                    Apply first draft
+                    Använd första utkastet
                   </Button>
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft current state</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast nuläge</p>
                     <p className="text-sm leading-6 text-foreground">{firstDraftJourneySuggestion.nextJourney.currentState}</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft desired future state</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast önskat läge</p>
                     <p className="text-sm leading-6 text-foreground">{firstDraftJourneySuggestion.nextJourney.desiredFutureState}</p>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft pain points</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast problem</p>
                     <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                       {(firstDraftJourneySuggestion.nextJourney.painPoints ?? []).map((item) => (
                         <li key={item}>{item}</li>
@@ -1053,7 +1053,7 @@ export function AiAssistantPanel({
                     </ul>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft desired support</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast önskat stöd</p>
                     <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                       {(firstDraftJourneySuggestion.nextJourney.desiredSupport ?? []).map((item) => (
                         <li key={item}>{item}</li>
@@ -1063,7 +1063,7 @@ export function AiAssistantPanel({
                 </div>
                 {firstDraftJourneySuggestion.nextJourney.steps.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Draft broad steps</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast breda steg</p>
                     <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                       {firstDraftJourneySuggestion.nextJourney.steps.map((step) => (
                         <li key={step.id}>
@@ -1079,28 +1079,31 @@ export function AiAssistantPanel({
             {guidedJourneyInterview.target ? (
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Next question</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Nästa fråga</p>
                   <p className="mt-2 text-lg font-semibold leading-7 text-foreground">{guidedJourneyInterview.target.question}</p>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">{guidedJourneyInterview.target.helper}</p>
                   <p className="mt-3 text-xs text-sky-900/70">
-                    Remaining gaps: {guidedJourneyInterview.target.totalMissing}
+                    Kvar att fylla i: {guidedJourneyInterview.target.totalMissing}
                     {guidedJourneyInterview.target.skippedMissing > 0
-                      ? ` / skipped for now: ${guidedJourneyInterview.target.skippedMissing}`
+                      ? ` / hoppade över: ${guidedJourneyInterview.target.skippedMissing}`
                       : ""}
                   </p>
                 </div>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Ditt svar</span>
                 <textarea
                   className="min-h-24 w-full rounded-2xl border border-sky-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-sky-500"
                   onChange={(event) => setGuidedAnswer(event.target.value)}
                   placeholder={guidedJourneyInterview.target.placeholder}
                   value={guidedAnswer}
                 />
+                </label>
                 {guidedDraft && guidedDraft !== guidedAnswer.trim() ? (
                   <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Suggested wording</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">AI-förslag</p>
                     <p className="mt-2 text-sm leading-6 text-foreground">{guidedDraft}</p>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                      This is a cleaner Journey-style wording suggestion based on your raw answer.
+                      Det här är AI:s förslag på en tydligare journey-formulering baserat på ditt svar.
                     </p>
                   </div>
                 ) : null}
@@ -1110,37 +1113,37 @@ export function AiAssistantPanel({
                     onClick={() => applyGuidedJourneyAnswer(guidedDraft)}
                     type="button"
                   >
-                    Use suggested wording
+                    Använd AI-förslaget
                   </Button>
                   <Button disabled={!guidedAnswer.trim()} onClick={() => applyGuidedJourneyAnswer()} type="button" variant="secondary">
-                    Use my wording
+                    Använd min formulering
                   </Button>
                   <Button onClick={skipGuidedJourneyQuestion} type="button" variant="secondary">
-                    Skip this question
+                    Hoppa över frågan
                   </Button>
                   {skippedPromptKeys.length > 0 ? (
                     <Button onClick={() => setSkippedPromptKeys([])} type="button" variant="secondary">
-                      Review skipped questions
+                      Visa hoppade frågor
                     </Button>
                   ) : null}
                 </div>
               </div>
             ) : guidedJourneyInterview.isComplete ? (
               <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                <p className="font-medium text-foreground">The core Journey framing is already captured.</p>
+                <p className="font-medium text-foreground">Kärnan i journeyn är redan fångad.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Move to `Refine` for wording help or `Analyze` for coverage against Epics and Story Ideas.
+                  Nästa naturliga steg är att antingen förtydliga språk eller analysera täckning mot Epics och Story Ideas.
                 </p>
               </div>
             ) : guidedJourneyInterview.hasOnlySkippedQuestions ? (
               <div className="mt-4 rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                <p className="font-medium text-foreground">All remaining guided questions are currently skipped.</p>
+                <p className="font-medium text-foreground">Alla kvarvarande frågor är just nu hoppade över.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Bring them back when you want to continue tightening the Journey description.
+                  Ta tillbaka dem när du vill fortsätta förtydliga journeyn.
                 </p>
                 <div className="mt-3">
                   <Button onClick={() => setSkippedPromptKeys([])} type="button" variant="secondary">
-                    Review skipped questions
+                    Visa hoppade frågor
                   </Button>
                 </div>
               </div>
@@ -1152,13 +1155,13 @@ export function AiAssistantPanel({
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">More AI options</p>
+                <p className="font-medium text-foreground">Fler AI-val</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Open this only when you want analysis, freeform prompting, Story Idea suggestions, or export support.
+                  Öppna detta bara när du vill ha analys, fri promptning, Story Idea-förslag eller exportstöd.
                 </p>
               </div>
               <Button onClick={() => setShowAdvancedWorkspace((current) => !current)} type="button" variant="secondary">
-                {showAdvancedWorkspace ? "Hide more AI options" : "Show more AI options"}
+                {showAdvancedWorkspace ? "Dölj fler AI-val" : "Visa fler AI-val"}
               </Button>
             </div>
           </div>
@@ -1176,7 +1179,7 @@ export function AiAssistantPanel({
 
             {quickActions.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Other AI actions</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Andra AI-handlingar</p>
                 <div className="flex flex-wrap gap-2">
                   {quickActions.map((action) => (
                     <Button
@@ -1197,11 +1200,11 @@ export function AiAssistantPanel({
 
             <div className="space-y-3">
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Prompt</span>
+                <span className="text-sm font-medium text-foreground">Fråga till AI</span>
                 <textarea
                   className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => setPrompt(event.target.value)}
-                  placeholder={scopeKind === "journey-context" ? "Ask the AI to analyze, refine, or explain the current journeys." : "Ask, analyze, refine, or export against the current Framing package."}
+                  placeholder={scopeKind === "journey-context" ? "Be AI förklara, analysera eller förfina de aktuella journeys." : "Ask, analyze, refine, or export against the current Framing package."}
                   value={prompt}
                 />
               </label>
@@ -1211,7 +1214,7 @@ export function AiAssistantPanel({
                   onClick={() => submitAgentRun(mode, prompt)}
                   type="button"
                 >
-                  {isPending ? "Running..." : "Run assistant"}
+                  {isPending ? "Kör..." : "Kör AI"}
                 </Button>
               </div>
             </div>
@@ -1223,7 +1226,7 @@ export function AiAssistantPanel({
                     {result.role}
                   </span>
                   <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-900">
-                    {result.usedLiveAi ? "Live AI planner" : "Structured local planner"}
+                    {result.usedLiveAi ? "Live AI-planerare" : "Strukturerad lokal planerare"}
                   </span>
                 </div>
                 <p>{result.message}</p>
@@ -1233,7 +1236,7 @@ export function AiAssistantPanel({
 
             {result?.followUpQuestions.length ? (
               <div className="rounded-2xl border border-sky-200/80 bg-white px-4 py-4 text-sm text-foreground">
-                <p className="font-medium text-foreground">Follow-up questions</p>
+                <p className="font-medium text-foreground">Följdfrågor</p>
                 <ul className="mt-2 list-disc space-y-2 pl-5 text-muted-foreground">
                   {result.followUpQuestions.map((question) => (
                     <li key={question}>{question}</li>
@@ -1244,7 +1247,7 @@ export function AiAssistantPanel({
 
             {result?.warnings.length ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-                <p className="font-medium">Warnings</p>
+                <p className="font-medium">Varningar</p>
                 <ul className="mt-2 list-disc space-y-2 pl-5">
                   {result.warnings.map((warning) => (
                     <li key={warning}>{warning}</li>
@@ -1255,7 +1258,7 @@ export function AiAssistantPanel({
 
             {visibleSuggestions.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Suggested actions</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Föreslagna handlingar</p>
                 {visibleSuggestions.map((suggestion) => (
                   <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={suggestion.id}>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -1270,15 +1273,15 @@ export function AiAssistantPanel({
                             <input name="outcomeId" type="hidden" value={outcomeId} />
                             <input name="quickStoryIdeaEpicId" type="hidden" value={suggestion.storyIdea.suggestedEpicId ?? ""} />
                             <input name="quickStoryIdeaTitle" type="hidden" value={suggestion.storyIdea.title} />
-                            <Button type="submit">Apply suggestion</Button>
+                            <Button type="submit">Använd förslag</Button>
                           </form>
                         ) : onApplySuggestion ? (
                           <Button onClick={() => handleApplySuggestion(suggestion)} type="button">
-                            Apply suggestion
+                            Använd förslag
                           </Button>
                         ) : null}
                         <Button onClick={() => dismissSuggestion(suggestion.id)} type="button" variant="secondary">
-                          Dismiss
+                          Avfärda
                         </Button>
                       </div>
                     </div>
@@ -1289,7 +1292,7 @@ export function AiAssistantPanel({
 
             {result?.artifacts.length ? (
               <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Generated artifacts</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Genererade underlag</p>
                 {result.artifacts.map((artifact) => (
                   <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={artifact.kind}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1304,7 +1307,7 @@ export function AiAssistantPanel({
                           variant="secondary"
                         >
                           {copiedArtifact === `${artifact.kind}-markdown` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          Copy markdown
+                          Kopiera markdown
                         </Button>
                         <Button
                           onClick={() => handleCopyArtifact(`${artifact.kind}-json`, JSON.stringify(artifact.json, null, 2))}
@@ -1312,7 +1315,7 @@ export function AiAssistantPanel({
                           variant="secondary"
                         >
                           {copiedArtifact === `${artifact.kind}-json` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          Copy JSON
+                          Kopiera JSON
                         </Button>
                       </div>
                     </div>

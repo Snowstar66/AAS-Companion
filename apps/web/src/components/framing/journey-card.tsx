@@ -69,7 +69,13 @@ function CoverageBadge({ status }: { status: string }) {
 
   return (
     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${tone}`}>
-      {status.replaceAll("_", " ")}
+      {status === "covered"
+        ? "täckt"
+        : status === "partially_covered"
+          ? "delvis täckt"
+          : status === "uncovered"
+            ? "otäckt"
+            : "ej analyserad"}
     </span>
   );
 }
@@ -77,7 +83,7 @@ function CoverageBadge({ status }: { status: string }) {
 function StepSummary({ count }: { count: number }) {
   return (
     <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-      {count} step{count === 1 ? "" : "s"}
+      {count} steg
     </span>
   );
 }
@@ -149,10 +155,10 @@ export function JourneyCard({
   const coreMissingCount = getCoreMissingCount(journey);
   const journeyStageLabel =
     coreMissingCount > 0
-      ? `${coreMissingCount} core field${coreMissingCount === 1 ? "" : "s"} left`
+      ? `${coreMissingCount} kärnfält kvar`
       : (journey.coverage?.status ?? "unanalysed") === "unanalysed"
-        ? "Ready to analyze"
-        : "Analyzed";
+        ? "Redo för analys"
+        : "Analyserad";
 
   return (
     <details
@@ -166,7 +172,7 @@ export function JourneyCard({
           <div className="flex flex-wrap items-center gap-2">
             {isFocused ? (
               <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                Working in AI
+                Aktiv i AI-hjälpen
               </span>
             ) : null}
             <span
@@ -182,18 +188,26 @@ export function JourneyCard({
             </span>
             {journey.type ? (
               <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                {journey.type}
+                {journey.type === "business"
+                  ? "verksamhet"
+                  : journey.type === "user"
+                    ? "användare"
+                    : journey.type === "operational"
+                      ? "operativ"
+                      : journey.type === "support"
+                        ? "support"
+                        : "transformation"}
               </span>
             ) : null}
             {coreMissingCount === 0 ? <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} /> : null}
             {journey.steps.length > 0 ? <StepSummary count={journey.steps.length} /> : null}
           </div>
           <div>
-            <p className="text-base font-semibold text-foreground">{journey.title || "Untitled Journey"}</p>
+            <p className="text-base font-semibold text-foreground">{journey.title || "Namnlös journey"}</p>
             <p className="text-sm text-muted-foreground">
-              {journey.primaryActor ? `Primary actor: ${journey.primaryActor}` : "Primary actor not captured yet"}
+              {journey.primaryActor ? `Huvudaktör: ${journey.primaryActor}` : "Huvudaktör är inte ifylld ännu"}
             </p>
-            {journey.goal ? <p className="text-sm text-muted-foreground">Goal: {journey.goal}</p> : null}
+            {journey.goal ? <p className="text-sm text-muted-foreground">Mål: {journey.goal}</p> : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -208,7 +222,7 @@ export function JourneyCard({
               type="button"
               variant={isFocused ? "default" : "secondary"}
             >
-              {isFocused ? "Working in AI" : "Work on this"}
+              {isFocused ? "Aktiv i AI-hjälpen" : "Arbeta med denna"}
             </Button>
           ) : null}
           <Button
@@ -221,7 +235,7 @@ export function JourneyCard({
             type="button"
             variant="secondary"
           >
-            Delete Journey
+            Ta bort journey
           </Button>
         </div>
       </summary>
@@ -229,25 +243,25 @@ export function JourneyCard({
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
           {coreMissingCount > 0
-            ? "Start broad. Fill in title, actor, goal, and trigger before you add detail."
-            : "This journey has the basics in place. Add detail only if it helps clarify the case or improve coverage analysis."}
+            ? "Börja brett. Fyll i titel, aktör, mål och trigger innan du lägger till mer detalj."
+            : "Den här journeyn har grunderna på plats. Lägg bara till mer detalj om det förtydligar caset eller förbättrar analysen."}
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Title</span>
+            <span className="text-sm font-medium text-foreground">Titel</span>
             <input
               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
               onChange={(event) => onChange({ ...journey, title: event.target.value })}
               type="text"
               value={journey.title}
             />
-            <FieldHint>Use a short verb-driven name for the journey, such as Handle incoming case or Resolve production incident.</FieldHint>
+            <FieldHint>Använd ett kort verbdrivet namn för journeyn, till exempel Hantera inkommande ärende.</FieldHint>
             <FieldError>{validation?.title}</FieldError>
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Primary Actor</span>
+            <span className="text-sm font-medium text-foreground">Huvudaktör</span>
             <input
               className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
               onChange={(event) => onChange({ ...journey, primaryActor: event.target.value })}
@@ -258,13 +272,13 @@ export function JourneyCard({
           </label>
 
           <label className="space-y-2 md:col-span-2">
-            <span className="text-sm font-medium text-foreground">Goal</span>
+            <span className="text-sm font-medium text-foreground">Mål</span>
             <textarea
               className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
               onChange={(event) => onChange({ ...journey, goal: event.target.value })}
               value={journey.goal}
             />
-            <FieldHint>Describe what the actor is trying to achieve, not what screen they want.</FieldHint>
+            <FieldHint>Beskriv vad aktören försöker uppnå, inte vilken skärm personen vill till.</FieldHint>
             <FieldError>{validation?.goal}</FieldError>
           </label>
 
@@ -275,28 +289,28 @@ export function JourneyCard({
               onChange={(event) => onChange({ ...journey, trigger: event.target.value })}
               value={journey.trigger}
             />
-            <FieldHint>Describe what starts the journey.</FieldHint>
+            <FieldHint>Beskriv vad som startar journeyn.</FieldHint>
             <FieldError>{validation?.trigger}</FieldError>
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Current State</span>
+            <span className="text-sm font-medium text-foreground">Nuläge</span>
             <textarea
               className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
               onChange={(event) => onChange({ ...journey, currentState: event.target.value })}
               value={journey.currentState ?? ""}
             />
-            <FieldHint>Describe how the journey works today, especially friction or fragmentation.</FieldHint>
+            <FieldHint>Beskriv hur journeyn fungerar i dag, särskilt friktion eller fragmentering.</FieldHint>
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-foreground">Desired Future State</span>
+            <span className="text-sm font-medium text-foreground">Önskat framtida läge</span>
             <textarea
               className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
               onChange={(event) => onChange({ ...journey, desiredFutureState: event.target.value })}
               value={journey.desiredFutureState ?? ""}
             />
-            <FieldHint>Describe how the journey should work with better support.</FieldHint>
+            <FieldHint>Beskriv hur journeyn bör fungera med bättre stöd.</FieldHint>
           </label>
 
         </div>
@@ -305,13 +319,13 @@ export function JourneyCard({
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-foreground">More detail if needed</p>
+                <p className="text-base font-semibold text-foreground">Mer detalj vid behov</p>
                 <p className="text-sm text-muted-foreground">
-                  Add supporting actors, pain points, manual links, steps, or coverage details only when they add signal.
+                  Lägg till stödaktörer, problem, manuella länkar, steg eller analysdetaljer bara när det tillför signal.
                 </p>
               </div>
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                {optionalDetailCount > 0 ? `${optionalDetailCount} areas used` : "Optional"}
+                {optionalDetailCount > 0 ? `${optionalDetailCount} områden används` : "Frivilligt"}
               </span>
             </div>
           </summary>
@@ -319,7 +333,7 @@ export function JourneyCard({
           <div className="border-t border-border/70 px-4 py-4">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Type</span>
+                <span className="text-sm font-medium text-foreground">Typ</span>
                 <select
                   className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                   onChange={(event) =>
@@ -330,17 +344,17 @@ export function JourneyCard({
                   }
                   value={journey.type ?? ""}
                 >
-                  <option value="">Optional</option>
-                  <option value="business">Business</option>
-                  <option value="user">User</option>
-                  <option value="operational">Operational</option>
+                  <option value="">Frivilligt</option>
+                  <option value="business">Verksamhet</option>
+                  <option value="user">Användare</option>
+                  <option value="operational">Operativ</option>
                   <option value="support">Support</option>
                   <option value="transformation">Transformation</option>
                 </select>
               </label>
 
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Supporting Actors</span>
+                <span className="text-sm font-medium text-foreground">Stödaktörer</span>
                 <textarea
                   className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => onChange({ ...journey, supportingActors: parseLines(event.target.value) })}
@@ -349,61 +363,61 @@ export function JourneyCard({
               </label>
 
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Pain Points</span>
+                <span className="text-sm font-medium text-foreground">Problem</span>
                 <textarea
                   className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => onChange({ ...journey, painPoints: parseLines(event.target.value) })}
                   value={joinLines(journey.painPoints)}
                 />
-                <FieldHint>List only the most important frictions, delays, ambiguities, or risks.</FieldHint>
+                <FieldHint>Lista bara de viktigaste friktionerna, fördröjningarna, oklarheterna eller riskerna.</FieldHint>
               </label>
 
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Desired Support</span>
+                <span className="text-sm font-medium text-foreground">Önskat stöd</span>
                 <textarea
                   className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => onChange({ ...journey, desiredSupport: parseLines(event.target.value) })}
                   value={joinLines(journey.desiredSupport)}
                 />
-                <FieldHint>Describe desired support as capabilities or help, not detailed UI design.</FieldHint>
+                <FieldHint>Beskriv önskat stöd som förmågor eller hjälp, inte detaljerad UI-design.</FieldHint>
               </label>
 
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Exceptions</span>
+                <span className="text-sm font-medium text-foreground">Undantag</span>
                 <textarea
                   className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => onChange({ ...journey, exceptions: parseLines(event.target.value) })}
                   value={joinLines(journey.exceptions)}
                 />
-                <FieldHint>Optional. Use when the journey has important variations or failure modes.</FieldHint>
+                <FieldHint>Frivilligt. Använd när journeyn har viktiga variationer eller fellägen.</FieldHint>
               </label>
 
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Notes</span>
+                <span className="text-sm font-medium text-foreground">Noteringar</span>
                 <textarea
                   className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => onChange({ ...journey, notes: event.target.value })}
                   value={journey.notes ?? ""}
                 />
-                <FieldHint>Optional. Add context that may help later refinement.</FieldHint>
+                <FieldHint>Frivilligt. Lägg till kontext som kan hjälpa senare förfining.</FieldHint>
               </label>
             </div>
 
             <div className="mt-6 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-base font-semibold text-foreground">Optional steps</p>
+                  <p className="text-base font-semibold text-foreground">Frivilliga steg</p>
                   <p className="text-sm text-muted-foreground">
-                    Add only the major handoffs, decisions, or breaks in flow. Most Journeys do not need many steps.
+                    Lägg bara till större överlämningar, beslut eller brott i flödet. De flesta journeys behöver inte många steg.
                   </p>
                   <FieldError>{validation?.stepsSummary}</FieldError>
                 </div>
-                <Button onClick={onAddStep} type="button" variant="secondary">Add step</Button>
+                <Button onClick={onAddStep} type="button" variant="secondary">Lägg till steg</Button>
               </div>
 
               {journey.steps.length === 0 ? (
                 <div className="rounded-2xl border border-border/70 bg-background px-4 py-4 text-sm text-muted-foreground">
-                  No steps added. Leave it like this unless extra flow detail will genuinely help.
+                  Inga steg tillagda. Låt det vara så om extra flödesdetalj inte faktiskt hjälper.
                 </div>
               ) : null}
 
@@ -424,31 +438,31 @@ export function JourneyCard({
 
             <div className="mt-6 space-y-4 rounded-[24px] border border-border/70 bg-muted/15 p-4">
               <div>
-                <p className="text-base font-semibold text-foreground">Optional manual links</p>
+                <p className="text-base font-semibold text-foreground">Frivilliga manuella länkar</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Optional. Add links if obvious, but you do not need to manually map everything. AI coverage analysis can suggest likely Epic and Story Idea matches later.
+                  Frivilligt. Lägg till länkar om de är uppenbara, men du behöver inte mappa allt manuellt. AI-analysen kan föreslå sannolika Epic- och Story Idea-kopplingar senare.
                 </p>
               </div>
               <MultiSelectLinks
-                helper="Optional Epic links for obvious alignment."
+                helper="Frivilliga Epic-länkar när kopplingen är uppenbar."
                 onChange={(nextIds) => onChange({ ...journey, linkedEpicIds: nextIds })}
                 options={availableEpics}
                 selectedIds={journey.linkedEpicIds}
-                title="Linked Epics"
+                title="Länkade Epics"
               />
               <MultiSelectLinks
-                helper="Optional Story Idea links for obvious alignment."
+                helper="Frivilliga Story Idea-länkar när kopplingen är uppenbar."
                 onChange={(nextIds) => onChange({ ...journey, linkedStoryIdeaIds: nextIds })}
                 options={availableStoryIdeas}
                 selectedIds={journey.linkedStoryIdeaIds}
-                title="Linked Story Ideas"
+                title="Länkade Story Ideas"
               />
               <MultiSelectLinks
-                helper="Optional Figma or reference links when they already exist in this Framing package."
+                helper="Frivilliga Figma- eller referenslänkar när de redan finns i detta Framing-paket."
                 onChange={(nextIds) => onChange({ ...journey, linkedFigmaRefs: nextIds })}
                 options={availableFigmaRefs}
                 selectedIds={journey.linkedFigmaRefs}
-                title="Linked Figma / References"
+                title="Länkad Figma / referenser"
               />
               {validation?.linkErrors.length ? (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -461,31 +475,31 @@ export function JourneyCard({
             {journey.coverage ? (
               <Card className="mt-6 border-border/70 bg-background shadow-none">
                 <CardHeader>
-                  <CardTitle className="text-base">Coverage analysis</CardTitle>
+                  <CardTitle className="text-base">Täckningsanalys</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   <p className="text-muted-foreground">
-                    Coverage suggestions are AI-generated recommendations based on the Journey, its Steps, and the existing Epics and Story Ideas. Review before accepting.
+                    Täckningsförslag är AI-genererade rekommendationer baserade på journeyn, dess steg och befintliga Epics och Story Ideas. Granska innan du accepterar.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <CoverageBadge status={journey.coverage.status} />
                   </div>
                   {journey.coverage.suggestedEpicIds?.length ? (
-                    <p><span className="font-medium text-foreground">Suggested Epic IDs:</span> {journey.coverage.suggestedEpicIds.join(", ")}</p>
+                    <p><span className="font-medium text-foreground">Föreslagna Epic-ID:n:</span> {journey.coverage.suggestedEpicIds.join(", ")}</p>
                   ) : null}
                   {journey.coverage.suggestedStoryIdeaIds?.length ? (
-                    <p><span className="font-medium text-foreground">Suggested Story Idea IDs:</span> {journey.coverage.suggestedStoryIdeaIds.join(", ")}</p>
+                    <p><span className="font-medium text-foreground">Föreslagna Story Idea-ID:n:</span> {journey.coverage.suggestedStoryIdeaIds.join(", ")}</p>
                   ) : null}
                   {journey.coverage.suggestedNewStoryIdeas?.length ? (
                     <div className="space-y-3">
-                      <p className="font-medium text-foreground">Suggested new Story Ideas</p>
+                      <p className="font-medium text-foreground">Föreslagna nya Story Ideas</p>
                       {journey.coverage.suggestedNewStoryIdeas.map((idea) => (
                         <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={`${idea.title}-${idea.description}`}>
                           <p className="font-medium text-foreground">{idea.title}</p>
                           <p className="mt-1 text-muted-foreground">{idea.description}</p>
-                          {idea.valueIntent ? <p className="mt-2"><span className="font-medium text-foreground">Value intent:</span> {idea.valueIntent}</p> : null}
-                          {idea.expectedOutcome ? <p><span className="font-medium text-foreground">Expected outcome:</span> {idea.expectedOutcome}</p> : null}
-                          {idea.confidence !== undefined ? <p><span className="font-medium text-foreground">Confidence:</span> {Math.round(idea.confidence * 100)}%</p> : null}
+                          {idea.valueIntent ? <p className="mt-2"><span className="font-medium text-foreground">Värdeintention:</span> {idea.valueIntent}</p> : null}
+                          {idea.expectedOutcome ? <p><span className="font-medium text-foreground">Förväntat utfall:</span> {idea.expectedOutcome}</p> : null}
+                          {idea.confidence !== undefined ? <p><span className="font-medium text-foreground">Säkerhet:</span> {Math.round(idea.confidence * 100)}%</p> : null}
                         </div>
                       ))}
                     </div>

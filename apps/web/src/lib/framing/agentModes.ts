@@ -1,10 +1,10 @@
 import type { FramingAgentQuickAction, FramingAgentScopeKind } from "@/lib/framing/agentTypes";
 
 export const framingAgentModeLabels: Record<"ask" | "analyze" | "refine" | "export", string> = {
-  ask: "Ask",
-  analyze: "Analyze",
-  refine: "Refine",
-  export: "Export"
+  ask: "Fråga",
+  analyze: "Analysera",
+  refine: "Förfina",
+  export: "Exportera"
 };
 
 export const framingAgentIntroText =
@@ -12,10 +12,10 @@ export const framingAgentIntroText =
 
 export const framingAgentQuickActions: Record<FramingAgentScopeKind, FramingAgentQuickAction[]> = {
   "journey-context": [
-    { id: "journey-help", label: "Help me describe this Journey", mode: "ask", prompt: "Help me describe this Journey in stronger actor, goal, trigger, and flow language." },
-    { id: "journey-step-wording", label: "Suggest better step wording", mode: "refine", prompt: "Suggest better wording for the current Journey steps and remove UI-specific language where needed." },
-    { id: "journey-coverage", label: "Analyze Journey Coverage", mode: "analyze", prompt: "Analyze Journey Coverage against the current Epics and Story Ideas." },
-    { id: "journey-missing-story-ideas", label: "Suggest missing Story Ideas", mode: "analyze", prompt: "Suggest missing Story Ideas from the current Journey Context." }
+    { id: "journey-help", label: "Hjälp mig beskriva denna journey", mode: "ask", prompt: "Hjälp mig att beskriva denna journey tydligare utifrån aktör, mål, trigger och flöde." },
+    { id: "journey-step-wording", label: "Förbättra formulering av steg", mode: "refine", prompt: "Föreslå bättre formulering för stegen i den aktuella journeyn och ta bort för UI-specifikt språk där det behövs." },
+    { id: "journey-coverage", label: "Analysera täckning", mode: "analyze", prompt: "Analysera journey-täckning mot aktuella Epics och Story Ideas." },
+    { id: "journey-missing-story-ideas", label: "Föreslå saknade Story Ideas", mode: "analyze", prompt: "Föreslå saknade Story Ideas utifrån det aktuella journey-underlaget." }
   ],
   "story-ideas": [
     { id: "story-overlap", label: "Find overlap between Story Ideas", mode: "analyze", prompt: "Find overlap between the current Story Ideas." },

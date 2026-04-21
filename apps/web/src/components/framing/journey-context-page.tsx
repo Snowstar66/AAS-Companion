@@ -98,18 +98,18 @@ function createEmptyJourneyContext(outcomeId: string, initiativeType: JourneyIni
 
 function getInitiativeRecommendation(initiativeType: JourneyInitiativeType | null) {
   if (initiativeType === "AD") {
-    return "Recommended when user flows, role-based experiences, or end-to-end support journeys are important.";
+    return "Rekommenderas när användarflöden, rollbaserade upplevelser eller end-to-end-stöd är viktiga.";
   }
 
   if (initiativeType === "AT") {
-    return "Strongly recommended when transformation affects multiple roles, process continuity, handoffs, or coexistence between current and future ways of working.";
+    return "Rekommenderas starkt när förändringen påverkar flera roller, processkontinuitet, överlämningar eller samspelet mellan nuvarande och framtida arbetssätt.";
   }
 
   if (initiativeType === "AM") {
-    return "Useful when incident, support, operational, or change-related flows need to be understood more clearly.";
+    return "Användbart när incident-, support-, drift- eller förändringsflöden behöver förstås tydligare.";
   }
 
-  return "Set the initiative type in Framing Overview first so Journey Context can inherit the right posture.";
+  return "Sätt initiativtyp i Framing Overview först så att Journey-sidan kan ärva rätt utgångsläge.";
 }
 
 function FlashBanner(props: { tone: "success" | "error"; message: string }) {
@@ -169,34 +169,34 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
   const currentFlowStep =
     allJourneys.length === 0
       ? {
-          step: "Step 1 of 3",
-          title: "Start with one broad journey",
+          step: "Steg 1 av 3",
+          title: "Börja med en bred journey",
           description:
-            "Create one journey that clarifies the business case. Start broad and capture only the actor, goal, trigger, and today's friction.",
-          nextAction: "Click Start Journeys, then describe one important journey."
+            "Skapa en journey som förtydligar business caset. Börja brett och fånga bara aktör, mål, trigger och dagens friktion.",
+          nextAction: "Klicka på Starta journeys och beskriv sedan en viktig journey."
         }
       : focusedJourney && getJourneyCoreMissingCount(focusedJourney) > 0
         ? {
-            step: "Step 2 of 3",
-            title: "Clarify the current journey",
+            step: "Steg 2 av 3",
+            title: "Förtydliga den aktuella journeyn",
             description:
-              "Get one journey into good enough shape before you add detail. Fill in title, primary actor, goal, and trigger first.",
-            nextAction: "Write directly in the journey card, or use the AI help below one question at a time."
+              "Få en journey tillräckligt tydlig innan du lägger till mer detalj. Fyll först i titel, huvudaktör, mål och trigger.",
+            nextAction: "Skriv direkt i journey-kortet eller använd AI-hjälpen nedanför en fråga i taget."
           }
         : analyzedJourneys.length === 0
           ? {
-              step: "Step 3 of 3",
-              title: "Check coverage once one journey is clear",
+              step: "Steg 3 av 3",
+              title: "Kontrollera täckning när en journey är tydlig",
               description:
-                "When at least one journey has the basics in place, you can compare it with Epics and Story Ideas to find gaps and likely matches.",
-              nextAction: "Run Analyze Journey Coverage when the current journey feels directionally right."
+                "När minst en journey har grunderna på plats kan du jämföra den med Epics och Story Ideas för att hitta luckor och sannolika kopplingar.",
+              nextAction: "Kör Analysera täckning när den aktuella journeyn känns tillräckligt rätt i riktningen."
             }
           : {
-              step: "Journeys in progress",
-              title: "Refine only where it adds value",
+              step: "Journeys pågår",
+              title: "Förfina bara där det tillför värde",
               description:
-                "You already have usable journeys and at least one coverage pass. Add another journey only if it represents a genuinely different flow.",
-              nextAction: "Tighten wording, analyze another journey, or leave it as-is if it already gives enough direction."
+                "Du har redan användbara journeys och minst en täckningsanalys. Lägg bara till en ny journey om den representerar ett genuint annat flöde.",
+              nextAction: "Förtydliga formuleringar, analysera en annan journey eller låt det vara om det redan ger tillräcklig riktning."
             };
 
   useEffect(() => {
@@ -320,7 +320,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
         <CardHeader>
           <CardTitle>Journey Context</CardTitle>
           <CardDescription>
-            Optional context that clarifies the business case and helps downstream AI work with better quality.
+            Frivillig kontext som förtydligar business caset och hjälper downstream AI att arbeta med högre kvalitet.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -339,12 +339,12 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
           </div>
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            <p className="font-medium text-foreground">Use journeys to clarify the business case</p>
+            <p className="font-medium text-foreground">Använd journeys för att förtydliga business caset</p>
             <p className="mt-2">
-              Capture a few important journeys only when they make the case clearer and give downstream AI better context for refinement, design, and build guidance.
+              Lägg till några få viktiga journeys när de gör caset tydligare och ger downstream AI bättre kontext för förfining, design och byggstöd.
             </p>
             <p className="mt-3">
-              The value sits in the journeys themselves: who is involved, what they are trying to achieve, what triggers the work, and where today&apos;s friction exists.
+              Värdet sitter i journeys i sig: vem som är involverad, vad de försöker uppnå, vad som triggar arbetet och var dagens friktion finns.
             </p>
             <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
           </div>
@@ -353,12 +353,12 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.step}</p>
             <p className="mt-2 text-lg font-semibold text-foreground">{currentFlowStep.title}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentFlowStep.description}</p>
-            <p className="mt-3 text-sm font-medium text-foreground">Next step: {currentFlowStep.nextAction}</p>
+            <p className="mt-3 text-sm font-medium text-foreground">Nästa steg: {currentFlowStep.nextAction}</p>
             {(counts.uncoveredJourneyCount > 0 || counts.suggestedStoryIdeaCount > 0 || readyJourneys.length > 0) ? (
               <p className="mt-3 text-xs text-muted-foreground">
-                {readyJourneys.length > 0 ? `${readyJourneys.length} ready for analysis` : "No journey ready for analysis yet"}
-                {counts.uncoveredJourneyCount > 0 ? ` · ${counts.uncoveredJourneyCount} uncovered journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}` : ""}
-                {counts.suggestedStoryIdeaCount > 0 ? ` · ${counts.suggestedStoryIdeaCount} suggested Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}` : ""}
+                {readyJourneys.length > 0 ? `${readyJourneys.length} redo för analys` : "Ingen journey är redo för analys ännu"}
+                {counts.uncoveredJourneyCount > 0 ? ` · ${counts.uncoveredJourneyCount} otäckt${counts.uncoveredJourneyCount === 1 ? "" : "a"} journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}` : ""}
+                {counts.suggestedStoryIdeaCount > 0 ? ` · ${counts.suggestedStoryIdeaCount} föreslag${counts.suggestedStoryIdeaCount === 1 ? "en" : "na"} Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}` : ""}
               </p>
             ) : null}
           </div>
@@ -371,12 +371,12 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             }`}
           >
             {hasUnsavedChanges
-              ? "You have local Journey Context changes that are not saved to the Framing package yet."
-              : "Journey Context is saved and in sync with the current Framing package."}
+              ? "Du har lokala Journey-ändringar som ännu inte är sparade i Framing-paketet."
+              : "Journey-sidan är sparad och i synk med det aktuella Framing-paketet."}
           </div>
 
-          {flash?.save === "success" ? <FlashBanner message="Journeys saved to the Framing package." tone="success" /> : null}
-          {flash?.analyze === "success" ? <FlashBanner message="Journey coverage analysis updated for the selected Journey Context." tone="success" /> : null}
+          {flash?.save === "success" ? <FlashBanner message="Journeys sparades i Framing-paketet." tone="success" /> : null}
+          {flash?.analyze === "success" ? <FlashBanner message="Journey-analysen uppdaterades för den valda ytan." tone="success" /> : null}
           {flash?.message && (flash.save === "error" || flash.analyze === "error") ? (
             <FlashBanner message={flash.message} tone="error" />
           ) : null}
@@ -396,7 +396,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
                 }}
                 type="button"
               >
-                Start Journeys
+                Starta journeys
               </Button>
             ) : null}
 
@@ -404,24 +404,24 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
               <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
               <Button disabled={!hasUnsavedChanges} type="submit" variant="secondary">
-                Save Journeys
+                Spara journeys
               </Button>
             </form>
 
             <p className="text-sm text-muted-foreground">
-              Start with one important Journey that clarifies the case. Add more only when they represent a meaningfully different flow.
+              Börja med en viktig journey som förtydligar caset. Lägg bara till fler när de representerar ett meningsfullt annorlunda flöde.
             </p>
           </div>
 
           {!initiativeType ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Journey Context auto-binds to the current outcome and its initiative type. Set AD, AT, or AM in Framing Overview first.
+              Journey-sidan binds automatiskt till aktuellt outcome och dess initiativtyp. Sätt AD, AT eller AM i Framing Overview först.
             </div>
           ) : null}
 
           {!journeyContextStorageAvailable ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Journey Context is visible, but the database migration is not applied yet. The Framing route will still load, but Journey Context changes cannot be saved until the latest migration runs.
+              Journey-sidan är synlig, men databasmigreringen är ännu inte applicerad. Framing-routen laddar ändå, men Journey-ändringar kan inte sparas förrän senaste migreringen körts.
             </div>
           ) : null}
         </CardContent>
@@ -430,13 +430,13 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
       <details className="rounded-[28px] border border-border/70 bg-background shadow-sm" open={contexts.length === 0}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p className="text-base font-semibold text-foreground">Get help with the next step</p>
+            <p className="text-base font-semibold text-foreground">Få hjälp med nästa steg</p>
             <p className="text-sm text-muted-foreground">
-              Use this when you want the tool to guide you one journey at a time. It starts with the journey itself, not with a separate Journey Context name.
+              Här använder du AI-hjälpen. Verktyget guidar dig en journey i taget och börjar med själva journeyn, inte med ett separat Journey Context-namn.
             </p>
           </div>
           <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-            {contexts.length === 0 ? "Recommended to start" : "Optional"}
+            {contexts.length === 0 ? "Bra att börja här" : "Valfritt stöd"}
           </span>
         </summary>
         <div className="border-t border-border/70 px-5 py-5">
@@ -462,9 +462,9 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
       {contexts.length === 0 ? (
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
-            <CardTitle>No Journeys added yet</CardTitle>
+            <CardTitle>Inga journeys tillagda ännu</CardTitle>
             <CardDescription>
-              Add one or more broad Journeys when you want richer flow-based context for later AI refinement of Epics, Story Ideas, design guidance, or build guidance.
+              Lägg till en eller flera breda journeys när du vill ge rikare flödeskontext för senare AI-förfining av Epics, Story Ideas, designstöd eller byggstöd.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -528,7 +528,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
               <input name="journeyContextId" type="hidden" value={context.id} />
               <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
               <Button disabled={journeyContextHasBlockingValidation(validations[context.id])} type="submit" variant="secondary">
-                Analyze Journey Coverage
+                Analysera täckning
               </Button>
             </form>
           )}

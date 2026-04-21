@@ -38,8 +38,8 @@ function hasText(value: string | null | undefined) {
 
 function validateJourneyStep(step: JourneyStep): JourneyStepValidation {
   return {
-    title: hasText(step.title) ? undefined : "Step title is required.",
-    description: hasText(step.description) ? undefined : "Step description is required."
+    title: hasText(step.title) ? undefined : "Stegtitel krävs.",
+    description: hasText(step.description) ? undefined : "Stegbeskrivning krävs."
   };
 }
 
@@ -69,24 +69,24 @@ export function validateJourney(
   const missingFigmaRefs = missingReferences(journey.linkedFigmaRefs, references.figmaRefs);
 
   if (missingEpicIds.length > 0) {
-    linkErrors.push(`Linked Epic references are missing: ${missingEpicIds.join(", ")}.`);
+    linkErrors.push(`Länkade Epic-referenser saknas: ${missingEpicIds.join(", ")}.`);
   }
 
   if (missingStoryIdeaIds.length > 0) {
-    linkErrors.push(`Linked Story Idea references are missing: ${missingStoryIdeaIds.join(", ")}.`);
+    linkErrors.push(`Länkade Story Idea-referenser saknas: ${missingStoryIdeaIds.join(", ")}.`);
   }
 
   if (missingFigmaRefs.length > 0) {
-    linkErrors.push(`Linked Figma references are missing: ${missingFigmaRefs.join(", ")}.`);
+    linkErrors.push(`Länkade Figma-referenser saknas: ${missingFigmaRefs.join(", ")}.`);
   }
 
   return {
-    title: hasText(journey.title) ? undefined : "Journey title is required.",
-    primaryActor: hasText(journey.primaryActor) ? undefined : "Primary Actor is required.",
-    goal: hasText(journey.goal) ? undefined : "Goal is required.",
-    trigger: hasText(journey.trigger) ? undefined : "Trigger is required.",
+    title: hasText(journey.title) ? undefined : "Journey-titel krävs.",
+    primaryActor: hasText(journey.primaryActor) ? undefined : "Huvudaktör krävs.",
+    goal: hasText(journey.goal) ? undefined : "Mål krävs.",
+    trigger: hasText(journey.trigger) ? undefined : "Trigger krävs.",
     stepsSummary:
-      journey.steps.length > 0 ? undefined : "No detailed Steps added yet. That is okay unless you want finer-grained coverage analysis.",
+      journey.steps.length > 0 ? undefined : "Inga steg tillagda ännu. Det är okej om du inte behöver mer detaljerad täckningsanalys.",
     steps,
     linkErrors
   };
@@ -101,7 +101,7 @@ export function validateJourneyContext(
   }
 ): JourneyContextValidation {
   return {
-    journeysSummary: context.journeys.length > 0 ? undefined : "Add at least one Journey to this Journey Context.",
+    journeysSummary: context.journeys.length > 0 ? undefined : "Lägg till minst en Journey här.",
     journeys: Object.fromEntries(
       context.journeys.map((journey) => [journey.id, validateJourney(journey, references)] as const)
     )
@@ -153,12 +153,12 @@ export function getCoverageSummaryLabel(context: JourneyContext) {
   const journeysWithCoverage = context.journeys.filter((journey) => journey.coverage);
 
   if (journeysWithCoverage.length === 0) {
-    return "No coverage analysis yet";
+    return "Ingen täckningsanalys ännu";
   }
 
   const uncovered = journeysWithCoverage.filter((journey) => journey.coverage?.status === "uncovered").length;
   const partial = journeysWithCoverage.filter((journey) => journey.coverage?.status === "partially_covered").length;
   const covered = journeysWithCoverage.filter((journey) => journey.coverage?.status === "covered").length;
 
-  return `${covered} covered, ${partial} partial, ${uncovered} uncovered`;
+  return `${covered} täckta, ${partial} delvis täckta, ${uncovered} otäckta`;
 }

@@ -74,7 +74,7 @@ export function JourneyContextCard({
           <div>
             <p className="text-base font-semibold text-foreground">Journeys</p>
             <p className="text-sm text-muted-foreground">
-              Put the value in the journeys below. Add another one only when it describes a meaningfully different flow.
+              Lägg värdet i journeys nedanför. Lägg bara till en till när den beskriver ett meningsfullt annorlunda flöde.
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{coverageLabel}</p>
           </div>
@@ -84,14 +84,14 @@ export function JourneyContextCard({
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            Start with one broad journey. Add another only when it helps explain a different actor flow, handoff, or operational situation.
+            Börja med en bred journey. Lägg till en till bara när den hjälper till att förklara ett annat aktörsflöde, en annan överlämning eller en annan operativ situation.
           </p>
           <FieldError>{validation?.journeysSummary}</FieldError>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button onClick={onAddJourney} type="button">Add Journey</Button>
+            <Button onClick={onAddJourney} type="button">Lägg till journey</Button>
             {analyzeAction}
             <Button onClick={onDelete} type="button" variant="secondary">
-              Clear Journeys
+              Rensa journeys
             </Button>
           </div>
         </div>
@@ -100,23 +100,23 @@ export function JourneyContextCard({
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-foreground">Optional shared note</p>
-                <p className="text-sm text-muted-foreground">Only use this if all journeys together need one short shared note.</p>
+                <p className="text-base font-semibold text-foreground">Frivillig gemensam notering</p>
+                <p className="text-sm text-muted-foreground">Använd detta bara om alla journeys tillsammans behöver en kort gemensam notering.</p>
               </div>
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                Expand
+                Visa
               </span>
             </div>
           </summary>
           <div className="border-t border-border/70 px-4 py-4">
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Shared note</span>
+              <span className="text-sm font-medium text-foreground">Gemensam notering</span>
               <textarea
                 className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                 onChange={(event) => onChange({ ...context, notes: event.target.value })}
                 value={context.notes ?? ""}
               />
-              <FieldHint>Optional. Most cases can leave this empty and let the Journeys speak for themselves.</FieldHint>
+              <FieldHint>Frivilligt. I de flesta fall kan detta lämnas tomt och låta journeys tala för sig själva.</FieldHint>
             </label>
           </div>
         </details>
