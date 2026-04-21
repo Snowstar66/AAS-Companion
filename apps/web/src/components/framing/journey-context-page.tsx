@@ -131,6 +131,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
   const initialContexts = useMemo(() => data.outcome.journeyContexts ?? [], [data.outcome.journeyContexts]);
   const [contexts, setContexts] = useState<JourneyContext[]>(initialContexts);
   const [focusedJourneyId, setFocusedJourneyId] = useState<string | null>(initialContexts[0]?.journeys[0]?.id ?? null);
+  const [showPageGuidance, setShowPageGuidance] = useState(false);
   const availableEpics: JourneyReferenceOption[] = data.outcome.epics.map((epic) => ({
     id: epic.id,
     label: `${epic.key} - ${epic.title}`
@@ -386,7 +387,11 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
             <FlashBanner message={flash.message} tone="error" />
           ) : null}
 
-          <details className="rounded-2xl border border-border/70 bg-muted/10">
+          <details
+            className="rounded-2xl border border-border/70 bg-muted/10"
+            onToggle={(event) => setShowPageGuidance((event.currentTarget as HTMLDetailsElement).open)}
+            open={showPageGuidance}
+          >
             <summary className="cursor-pointer list-none px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -394,7 +399,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, runAgentAc
                   <p className="text-sm text-muted-foreground">Öppna bara när du vill läsa rekommendationer, nuläge och extra information.</p>
                 </div>
                 <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                  Valfritt
+                  {showPageGuidance ? "Dölj" : "Visa"}
                 </span>
               </div>
             </summary>

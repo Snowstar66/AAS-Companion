@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@aas-companion/ui";
 import { JourneyCard } from "@/components/framing/journey-card";
 import { getCoverageSummaryLabel, type JourneyContextValidation, type JourneyReferenceOption } from "@/lib/framing/journey-context-ui";
@@ -60,9 +60,15 @@ export function JourneyContextCard({
   renderJourneyAssistant
 }: JourneyContextCardProps) {
   const coverageLabel = getCoverageSummaryLabel(context);
+  const [isOpen, setIsOpen] = useState(false);
+  const [showSharedNote, setShowSharedNote] = useState(false);
 
   return (
-    <details className="group rounded-[28px] border border-border/70 bg-background shadow-sm">
+    <details
+      className="group rounded-[28px] border border-border/70 bg-background shadow-sm"
+      onToggle={(event) => setIsOpen((event.currentTarget as HTMLDetailsElement).open)}
+      open={isOpen}
+    >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -81,6 +87,9 @@ export function JourneyContextCard({
             <p className="mt-1 text-sm text-muted-foreground">{coverageLabel}</p>
           </div>
         </div>
+        <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+          {isOpen ? "Dölj" : "Visa"}
+        </span>
       </summary>
 
       <div className="border-t border-border/70 px-5 py-5">
@@ -98,7 +107,11 @@ export function JourneyContextCard({
           </div>
         </div>
 
-        <details className="mt-4 rounded-[24px] border border-border/70 bg-muted/10">
+        <details
+          className="mt-4 rounded-[24px] border border-border/70 bg-muted/10"
+          onToggle={(event) => setShowSharedNote((event.currentTarget as HTMLDetailsElement).open)}
+          open={showSharedNote}
+        >
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -106,7 +119,7 @@ export function JourneyContextCard({
                 <p className="text-sm text-muted-foreground">Använd detta bara om alla journeys tillsammans behöver en kort gemensam notering.</p>
               </div>
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                Visa
+                {showSharedNote ? "Dölj" : "Visa"}
               </span>
             </div>
           </summary>

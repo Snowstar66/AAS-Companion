@@ -256,6 +256,9 @@ export function JourneyCard({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+            {isOpen ? "Dölj" : "Visa"}
+          </span>
           {onFocus ? (
             <Button
               onClick={(event) => {
@@ -268,7 +271,7 @@ export function JourneyCard({
               type="button"
               variant={isFocused ? "default" : "secondary"}
             >
-              {isFocused ? "Öppen nu" : "Öppna och arbeta"}
+              {isFocused ? "Aktiv nu" : "Gör aktiv"}
             </Button>
           ) : null}
           <Button
