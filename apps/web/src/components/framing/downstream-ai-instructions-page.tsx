@@ -5,7 +5,6 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { CustomInstructionsEditor } from "@/components/framing/custom-instructions-editor";
 import { DownstreamAiInstructionSection } from "@/components/framing/downstream-ai-instruction-section";
-import { AiAssistantPanel } from "@/components/framing/ai-assistant-panel";
 import {
   createDefaultDownstreamAiInstructions,
   downstreamPreferenceGroupLabels,
@@ -20,15 +19,13 @@ import type {
   DownstreamPreferenceGroup,
   RefinementPreferenceSelection
 } from "@/lib/framing/downstreamInstructionTypes";
-import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
-import type { FramingAgentSuggestion } from "@/lib/framing/agentTypes";
 
 type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspaceService>>, { ok: true }>["data"];
 
 type DownstreamAiInstructionsPageProps = {
   data: OutcomeWorkspaceData;
   saveAction: (formData: FormData) => void | Promise<void>;
-  runAgentAction: (formData: FormData) => Promise<FramingAgentActionResult>;
+  runAgentAction: (formData: FormData) => Promise<unknown>;
   flash?: {
     save?: "success" | "error" | null;
     message?: string | null;
@@ -72,7 +69,8 @@ function normalizeInitiativeType(value: unknown) {
   return value === "AD" || value === "AT" || value === "AM" ? value : null;
 }
 
-export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction, flash }: DownstreamAiInstructionsPageProps) {
+export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction: _runAgentAction, flash }: DownstreamAiInstructionsPageProps) {
+  void _runAgentAction;
   const deliveryType = normalizeInitiativeType(data.outcome.deliveryType) ?? normalizeInitiativeType(data.outcome.downstreamAiInstructions?.initiativeType) ?? "AD";
   const aiLevel = data.outcome.downstreamAiInstructions?.aiLevel ?? mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel);
   const downstreamAiInstructionsStorageAvailable =
@@ -184,24 +182,14 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction,
     });
   }
 
-  function applySuggestion(suggestion: FramingAgentSuggestion) {
-    if (suggestion.kind === "preference_change") {
-      updatePreference(suggestion.preferenceId, (preference) => ({
-        ...preference,
-        selectedValue: suggestion.suggestedValue,
-        rationale: suggestion.rationale
-      }));
-      return;
-    }
-
-    if (suggestion.kind === "add_custom_instruction") {
-      setInstructions((current) => ({
-        ...current,
+  function resetToRecommendedDefaults() {
+    setInstructions((current) => ({
+      ...createDefaultDownstreamAiInstructions({
         initiativeType: deliveryType,
-        aiLevel,
-        customInstructions: [...current.customInstructions, suggestion.instruction]
-      }));
-    }
+        aiLevel
+      }),
+      customInstructions: current.customInstructions
+    }));
   }
 
   return (
@@ -272,16 +260,20 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction,
         </CardContent>
       </Card>
 
-      <AiAssistantPanel
-        aiLevel={aiLevel}
-        downstreamAiInstructionsJson={serializedInstructions}
-        initiativeType={deliveryType}
-        onApplySuggestion={applySuggestion}
-        outcomeId={data.outcome.id}
-        runAction={runAgentAction}
-        scopeKind="downstream-ai-instructions"
-        scopeLabel="Downstream AI Instructions"
-      />
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>Enkel hjälp</CardTitle>
+          <CardDescription>Den här sidan använder rekommenderade standardval, varningar och egna instruktioner. Ingen separat AI-chat behövs här.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+            Börja med standardvalen för {deliveryType}. Ändra bara där du faktiskt vill styra downstream AI i en annan riktning. Lägg sedan till egna instruktioner bara för sådant som verkligen måste bevaras.
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={resetToRecommendedDefaults} type="button" variant="secondary">Återställ rekommenderade val</Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>

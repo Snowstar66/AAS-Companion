@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@aas-companion/ui";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
 import type { Journey } from "@/lib/framing/journeyContextTypes";
@@ -276,7 +276,6 @@ function InlineAiSuggestion(props: {
   onApply: () => void;
   onDismiss: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
   if (!props.text.trim()) return null;
 
   return (
@@ -293,19 +292,6 @@ function InlineAiSuggestion(props: {
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button onClick={props.onApply} size="sm" type="button">Använd i {props.targetLabel.toLowerCase()}</Button>
-        <Button
-          onClick={async () => {
-            await navigator.clipboard.writeText(props.text);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1500);
-          }}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          {copied ? "Kopierat" : "Kopiera"}
-        </Button>
         <Button onClick={props.onDismiss} size="sm" type="button" variant="secondary">Dölj</Button>
       </div>
     </div>
@@ -313,14 +299,7 @@ function InlineAiSuggestion(props: {
 }
 
 function InlineAiCoreSuggestion(props: { suggestion: JourneyCoreSuggestion; onApply: () => void; onDismiss: () => void }) {
-  const [copied, setCopied] = useState(false);
-  const copyText = [
-    props.suggestion.title ? `Titel: ${props.suggestion.title}` : null,
-    props.suggestion.goal ? `Mål: ${props.suggestion.goal}` : null,
-    props.suggestion.trigger ? `Trigger: ${props.suggestion.trigger}` : null
-  ].filter(Boolean).join("\n");
-
-  if (!copyText.trim()) return null;
+  if (![props.suggestion.title, props.suggestion.goal, props.suggestion.trigger].some(Boolean)) return null;
 
   return (
     <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4 text-sm">
@@ -338,19 +317,6 @@ function InlineAiCoreSuggestion(props: { suggestion: JourneyCoreSuggestion; onAp
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button onClick={props.onApply} size="sm" type="button">Använd i redigeringen</Button>
-        <Button
-          onClick={async () => {
-            await navigator.clipboard.writeText(copyText);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1500);
-          }}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          {copied ? "Kopierat" : "Kopiera"}
-        </Button>
         <Button onClick={props.onDismiss} size="sm" type="button" variant="secondary">Dölj</Button>
       </div>
     </div>
@@ -362,28 +328,14 @@ function InlineAiFirstDraftSuggestion(props: {
   onDismiss: () => void;
   applyLabel?: string;
   dismissLabel?: string;
+  showApply?: boolean;
 }) {
-  const [copied, setCopied] = useState(false);
-  const copyText = [
-    `Nuläge: ${props.suggestion.currentState}`,
-    `Önskat läge: ${props.suggestion.desiredFutureState}`,
-    "",
-    "Problem:",
-    ...props.suggestion.painPoints.map((item) => `- ${item}`),
-    "",
-    "Önskat stöd:",
-    ...props.suggestion.desiredSupport.map((item) => `- ${item}`),
-    "",
-    "Breda steg:",
-    ...props.suggestion.steps.map((step) => `- ${step.title}: ${step.description}`)
-  ].join("\n");
-
   return (
     <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-      <p className="font-medium text-foreground">AI-sammanfattning av journeyn</p>
-      <p className="mt-1 text-sm text-muted-foreground">Det här är den sammanfattade vyn av journeyn. Här ser du riktning, friktion, önskat stöd, breda steg och sannolika kopplingar på ett ställe.</p>
+      <p className="font-medium text-foreground">Journey-översikt</p>
+      <p className="mt-1 text-sm text-muted-foreground">Det här är den aktuella sammanfattningen av journeyn. Här ser du riktning, friktion, önskat stöd, breda steg och sannolika kopplingar på ett ställe.</p>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">
-        När du väljer <span className="font-medium text-foreground">Använd i redigeringen</span> fylls fälten <span className="font-medium text-foreground">Nuläge</span>, <span className="font-medium text-foreground">Önskat läge</span>, <span className="font-medium text-foreground">Problem</span>, <span className="font-medium text-foreground">Önskat stöd</span> och <span className="font-medium text-foreground">Breda steg</span> i redigeringen nedanför.
+        När du uppdaterar texten i redigeringen nedanför uppdateras översikten här. Om du väljer att lägga in förslag fylls bara tomma delar i.
       </p>
       <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-3 text-sm leading-6 text-foreground">
         {props.suggestion.summary}
@@ -469,20 +421,9 @@ function InlineAiFirstDraftSuggestion(props: {
         </div>
       ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Använd i redigeringen"}</Button>
-        <Button
-          onClick={async () => {
-            await navigator.clipboard.writeText(copyText);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 1500);
-          }}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          {copied ? "Kopierat" : "Kopiera"}
-        </Button>
+        {props.showApply !== false ? (
+          <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Lägg in förslag i tomma fält"}</Button>
+        ) : null}
         <Button onClick={props.onDismiss} size="sm" type="button" variant="secondary">{props.dismissLabel ?? "Dölj"}</Button>
       </div>
     </div>
@@ -552,6 +493,12 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   const [currentStateSuggestion, setCurrentStateSuggestion] = useState("");
   const [desiredFutureStateSuggestion, setDesiredFutureStateSuggestion] = useState("");
   const journeyStageLabel = coreMissingCount > 0 ? `${coreMissingCount} kärnfält kvar` : (journey.coverage?.status ?? "unanalysed") === "unanalysed" ? "Redo för analys" : "Analyserad";
+  const hasEmptyDraftSections =
+    !hasText(journey.currentState) ||
+    !hasText(journey.desiredFutureState) ||
+    !((journey.painPoints?.length ?? 0) > 0) ||
+    !((journey.desiredSupport?.length ?? 0) > 0) ||
+    journey.steps.length === 0;
 
   useEffect(() => {
     if (isFocused) {
@@ -763,7 +710,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
         {journeyBrief ? (
           <div className="mt-4 space-y-4">
             <InlineAiFirstDraftSuggestion
-              applyLabel="Fyll i det som saknas"
+              applyLabel="Lägg in förslag i tomma fält"
               dismissLabel={showEditor ? "Dölj redigering" : "Redigera direkt"}
               onApply={() => {
                 onChange({
@@ -777,6 +724,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                 setShowEditor(true);
               }}
               onDismiss={() => setShowEditor((current) => !current)}
+              showApply={hasEmptyDraftSections}
               suggestion={journeyBrief}
             />
 
