@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { CustomInstructionsEditor } from "@/components/framing/custom-instructions-editor";
 import { DownstreamAiInstructionSection } from "@/components/framing/downstream-ai-instruction-section";
 import {
@@ -32,15 +33,26 @@ type DownstreamAiInstructionsPageProps = {
   };
 };
 
-const groupDescriptions: Record<DownstreamPreferenceGroup, string> = {
-  epic: "Configure how downstream AI should shape and decompose Epics before later Design and Build steps.",
-  story: "Control how downstream AI should refine Story Ideas into clearer, more testable, context-aware candidates.",
-  journey: "Control how downstream AI should use Journey Context when it exists and how it should behave when it does not.",
-  design: "Guide how downstream AI should behave in Design while inheriting source-of-truth constraints and guidance.",
-  build: "Guide how downstream AI should behave in Build around traceability, review, testing, release evidence, and rollout."
-};
-
 const groupOrder: DownstreamPreferenceGroup[] = ["epic", "story", "journey", "design", "build"];
+
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+function getGroupDescription(language: "en" | "sv", group: DownstreamPreferenceGroup) {
+  switch (group) {
+    case "epic":
+      return t(language, "Configure how downstream AI should shape and decompose Epics before later Design and Build steps.", "Styr hur downstream AI ska forma och dela upp Epics före senare design- och buildsteg.");
+    case "story":
+      return t(language, "Control how downstream AI should refine Story Ideas into clearer, more testable, context-aware candidates.", "Styr hur downstream AI ska förfina Story Ideas till tydligare, mer testbara och mer kontextmedvetna kandidater.");
+    case "journey":
+      return t(language, "Control how downstream AI should use Journey Context when it exists and how it should behave when it does not.", "Styr hur downstream AI ska använda Journey Context när det finns och hur det ska bete sig när det saknas.");
+    case "design":
+      return t(language, "Guide how downstream AI should behave in Design while inheriting source-of-truth constraints and guidance.", "Styr hur downstream AI ska arbeta i Design samtidigt som det ärver givna ramar och constraints.");
+    case "build":
+      return t(language, "Guide how downstream AI should behave in Build around traceability, review, testing, release evidence, and rollout.", "Styr hur downstream AI ska arbeta i Build kring spårbarhet, granskning, test, releaseunderlag och utrullning.");
+  }
+}
 
 function createId(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -71,6 +83,7 @@ function normalizeInitiativeType(value: unknown) {
 
 export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction: _runAgentAction, flash }: DownstreamAiInstructionsPageProps) {
   void _runAgentAction;
+  const { language } = useAppChromeLanguage();
   const deliveryType = normalizeInitiativeType(data.outcome.deliveryType) ?? normalizeInitiativeType(data.outcome.downstreamAiInstructions?.initiativeType) ?? "AD";
   const aiLevel = data.outcome.downstreamAiInstructions?.aiLevel ?? mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel);
   const downstreamAiInstructionsStorageAvailable =
@@ -196,50 +209,50 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     <div className="space-y-6">
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Downstream AI Instructions</CardTitle>
+          <CardTitle>{t(language, "Downstream AI Instructions", "Downstream AI-instruktioner")}</CardTitle>
           <CardDescription>
-            Configure how downstream AI should interpret and refine this Framing package during later Design and Build steps.
+            {t(language, "Configure how downstream AI should interpret and refine this Framing package during later Design and Build steps.", "Styr hur downstream AI ska tolka och förfina detta Framing-paket i senare design- och buildsteg.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-              Initiative Type: {deliveryType}
+              {t(language, "Initiative Type", "Initiativtyp")}: {deliveryType}
             </span>
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
-              AI Level: {aiLevel}
+              {t(language, "AI Level", "AI-nivå")}: {aiLevel}
             </span>
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Configurable preferences</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Configurable preferences", "Konfigurerbara val")}</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{instructions.refinementPreferences.length}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Deviations from defaults</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Deviations from defaults", "Avvikelser från standard")}</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{analysis.deviations.length}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">N/A selections</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "N/A selections", "N/A-val")}</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{naCount}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Custom instructions</p>
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Custom instructions", "Egna instruktioner")}</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{instructions.customInstructions.length}</p>
             </div>
           </div>
 
           <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            Use this page to control how downstream AI should refine Epics, Story Ideas, Journey Context, Design, and Build behavior before export. The settings here do not replace the main Framing structure - they guide how AI should work with it.
+            {t(language, "Use this page to control how downstream AI should refine Epics, Story Ideas, Journey Context, Design, and Build behavior before export. The settings here do not replace the main Framing structure - they guide how AI should work with it.", "Använd sidan för att styra hur downstream AI ska förfina Epics, Story Ideas, Journey Context, Design och Build före export. Valen här ersätter inte Framing-strukturen utan styr hur AI ska arbeta med den.")}
           </div>
 
-          {flash?.save === "success" ? <FlashBanner message="Downstream AI Instructions saved to the Framing package." tone="success" /> : null}
+          {flash?.save === "success" ? <FlashBanner message={t(language, "Downstream AI Instructions saved to the Framing package.", "Downstream AI-instruktioner sparades i Framing-paketet.")} tone="success" /> : null}
           {flash?.save === "error" && flash.message ? <FlashBanner message={flash.message} tone="error" /> : null}
 
           {!downstreamAiInstructionsStorageAvailable ? (
             <FlashBanner
-              message="Downstream AI Instructions are visible, but the latest database migration is not applied yet. The page still loads, but changes cannot be saved until the migration runs."
+              message={t(language, "Downstream AI Instructions are visible, but the latest database migration is not applied yet. The page still loads, but changes cannot be saved until the migration runs.", "Downstream AI-instruktioner syns, men den senaste databasmigreringen är ännu inte körd. Sidan laddas ändå, men ändringar kan inte sparas förrän migreringen har körts.")}
               tone="error"
             />
           ) : null}
@@ -254,7 +267,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
             <form action={saveAction}>
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
               <input name="downstreamAiInstructionsJson" type="hidden" value={serializedInstructions} />
-              <Button type="submit">Save Downstream AI Instructions</Button>
+              <Button type="submit">{t(language, "Save Downstream AI Instructions", "Spara downstream AI-instruktioner")}</Button>
             </form>
           </div>
         </CardContent>
@@ -277,8 +290,8 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Always-on Controls</CardTitle>
-          <CardDescription>These controls always apply to downstream AI behavior and are included in export automatically.</CardDescription>
+          <CardTitle>{t(language, "Always-on Controls", "Alltid aktiva styrningar")}</CardTitle>
+          <CardDescription>{t(language, "These controls always apply to downstream AI behavior and are included in export automatically.", "De här styrningarna gäller alltid för downstream AI och följer med automatiskt i exporten.")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-2">
           {instructions.mandatoryControls.map((control) => (
@@ -289,7 +302,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{control.description}</p>
                 </div>
                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
-                  Always on
+                  {t(language, "Always on", "Alltid aktiv")}
                 </span>
               </div>
             </div>
@@ -299,21 +312,21 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Refinement Preferences</CardTitle>
+          <CardTitle>{t(language, "Refinement Preferences", "Förfiningsval")}</CardTitle>
           <CardDescription>
-            Configure the dimensions where downstream AI should be explicit. Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. N/A does not disable mandatory controls.
+            {t(language, "Configure the dimensions where downstream AI should be explicit. Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. N/A does not disable mandatory controls.", "Styr vilka dimensioner downstream AI ska vara tydlig inom. Använd N/A bara när du medvetet vill lämna beslutet öppet för downstream AI. N/A stänger inte av obligatoriska styrningar.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
-            N/A helper: Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. N/A does not disable mandatory controls.
+            {t(language, "N/A helper: Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. N/A does not disable mandatory controls.", "N/A-hjälp: Använd N/A bara när du medvetet vill lämna ett förfiningsbeslut öppet för downstream AI. N/A stänger inte av obligatoriska styrningar.")}
           </div>
         </CardContent>
       </Card>
 
       {groupOrder.map((group) => (
         <DownstreamAiInstructionSection
-          description={groupDescriptions[group]}
+          description={getGroupDescription(language, group)}
           initiativeType={deliveryType}
           key={group}
           onChangeRationale={(preferenceId, value) =>
@@ -361,13 +374,13 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Warnings / Validation Notes</CardTitle>
-          <CardDescription>Review validation issues and warnings before exporting the Framing package downstream.</CardDescription>
+          <CardTitle>{t(language, "Warnings / Validation Notes", "Varningar / valideringsnoteringar")}</CardTitle>
+          <CardDescription>{t(language, "Review validation issues and warnings before exporting the Framing package downstream.", "Granska valideringsproblem och varningar innan Framing-paketet exporteras vidare.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {analysis.hardIssues.length > 0 ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-900">
-              <p className="font-medium">Hard validation issues</p>
+              <p className="font-medium">{t(language, "Hard validation issues", "Hårda valideringsproblem")}</p>
               <ul className="mt-2 list-disc space-y-2 pl-5">
                 {analysis.hardIssues.map((issue) => (
                   <li key={issue}>{issue}</li>
@@ -378,7 +391,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
           {analysis.warnings.length > 0 ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-              <p className="font-medium">Warnings</p>
+              <p className="font-medium">{t(language, "Warnings", "Varningar")}</p>
               <ul className="mt-2 list-disc space-y-2 pl-5">
                 {analysis.warnings.map((warning) => (
                   <li key={warning}>{warning}</li>
@@ -389,7 +402,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
           {analysis.hardIssues.length === 0 && analysis.warnings.length === 0 ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-              No active warnings or hard validation issues right now.
+              {t(language, "No active warnings or hard validation issues right now.", "Inga aktiva varningar eller hårda valideringsproblem just nu.")}
             </div>
           ) : null}
         </CardContent>
@@ -397,9 +410,9 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>Generated Downstream Guidance</CardTitle>
+          <CardTitle>{t(language, "Generated Downstream Guidance", "Genererad downstream-vägledning")}</CardTitle>
           <CardDescription>
-            This is the structured guidance package that will be included in export when Downstream AI Instructions are present.
+            {t(language, "This is the structured guidance package that will be included in export when Downstream AI Instructions are present.", "Det här är det strukturerade vägledningspaket som följer med i export när Downstream AI-instruktioner finns.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -415,7 +428,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           ))}
 
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <p className="font-medium text-foreground">Deviations from Recommended Defaults</p>
+            <p className="font-medium text-foreground">{t(language, "Deviations from Recommended Defaults", "Avvikelser från rekommenderade standardval")}</p>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
               {analysis.generatedGuidance.deviationsSummary.map((line) => (
                 <li key={line}>{line}</li>
@@ -424,19 +437,19 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           </div>
 
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <p className="font-medium text-foreground">Custom Instruction Appendix</p>
+            <p className="font-medium text-foreground">{t(language, "Custom Instruction Appendix", "Bilaga med egna instruktioner")}</p>
             {analysis.generatedGuidance.customInstructionAppendix.length > 0 ? (
               <div className="mt-3 space-y-3">
                 {analysis.generatedGuidance.customInstructionAppendix.map((instruction) => (
                   <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={`${instruction.priority}-${instruction.title}`}>
-                    <p className="font-medium text-foreground">{instruction.title || "Untitled instruction"}</p>
+                    <p className="font-medium text-foreground">{instruction.title || t(language, "Untitled instruction", "Namnlös instruktion")}</p>
                     <p className="mt-1 text-sm text-muted-foreground">{instruction.category} · {instruction.priority}</p>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{instruction.body || "No body captured yet."}</p>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{instruction.body || t(language, "No body captured yet.", "Ingen brödtext fångad ännu.")}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-3 text-sm text-muted-foreground">No custom instructions added.</p>
+              <p className="mt-3 text-sm text-muted-foreground">{t(language, "No custom instructions added.", "Inga egna instruktioner tillagda.")}</p>
             )}
           </div>
         </CardContent>
@@ -447,10 +460,11 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           <form action={saveAction}>
             <input name="outcomeId" type="hidden" value={data.outcome.id} />
             <input name="downstreamAiInstructionsJson" type="hidden" value={serializedInstructions} />
-            <Button type="submit">Save Downstream AI Instructions</Button>
+            <Button type="submit">{t(language, "Save Downstream AI Instructions", "Spara downstream AI-instruktioner")}</Button>
           </form>
         </CardContent>
       </Card>
     </div>
   );
 }
+

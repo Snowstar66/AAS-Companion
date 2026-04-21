@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { JourneyContextSection } from "@/components/framing/journey-context-section";
 import {
   getJourneyContextCounts,
@@ -31,6 +32,10 @@ function createId(prefix: string) {
 
 function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
+}
+
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
 }
 
 function getJourneyCoreMissingCount(journey: Journey) {
@@ -94,7 +99,7 @@ function createEmptyJourneyContext(outcomeId: string, initiativeType: JourneyIni
   };
 }
 
-function getInitiativeRecommendation(initiativeType: JourneyInitiativeType | null) {
+function getInitiativeRecommendation(language: "en" | "sv", initiativeType: JourneyInitiativeType | null) {
   if (initiativeType === "AD") {
     return "Rekommenderas när användarflöden, rollbaserade upplevelser eller end-to-end-stöd är viktiga.";
   }
@@ -120,6 +125,7 @@ function FlashBanner(props: { tone: "success" | "error"; message: string }) {
 }
 
 export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: JourneyContextPageProps) {
+  const { language } = useAppChromeLanguage();
   const journeyContextStorageAvailable =
     (data.outcome as { journeyContextsStorageAvailable?: boolean }).journeyContextsStorageAvailable !== false;
   const initiativeType =
@@ -174,34 +180,34 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
   const currentFlowStep =
     allJourneys.length === 0
       ? {
-          label: "Just nu",
-          title: "Börja med en bred journey",
+          label: t(language, "Right now", "Just nu"),
+          title: t(language, "Start with one broad journey", "Börja med en bred journey"),
           description:
-            "Skapa en journey som förtydligar business caset. Börja brett och fånga bara aktör, mål, trigger och dagens friktion.",
-          nextAction: "Klicka på Starta journeys och beskriv sedan en viktig journey."
+            t(language, "Create a journey that clarifies the business case. Start broad and capture only actor, goal, trigger, and today's friction.", "Skapa en journey som förtydligar business caset. Börja brett och fånga bara aktör, mål, trigger och dagens friktion."),
+          nextAction: t(language, "Click Start journeys and then describe one important journey.", "Klicka på Starta journeys och beskriv sedan en viktig journey.")
         }
       : focusedJourney && getJourneyCoreMissingCount(focusedJourney) > 0
         ? {
-            label: "Just nu",
-            title: "Förtydliga den aktuella journeyn",
+            label: t(language, "Right now", "Just nu"),
+            title: t(language, "Clarify the current journey", "Förtydliga den aktuella journeyn"),
             description:
-              "Få en journey tillräckligt tydlig innan du lägger till mer detalj. Fyll först i titel, huvudaktör, mål och trigger.",
-            nextAction: "Skriv direkt i journey-kortet och använd AI-hjälpen direkt i samma kort när du vill få bättre formuleringar eller ett första utkast."
+              t(language, "Make one journey clear enough before adding more detail. Start with title, primary actor, goal, and trigger.", "Få en journey tillräckligt tydlig innan du lägger till mer detalj. Fyll först i titel, huvudaktör, mål och trigger."),
+            nextAction: t(language, "Write directly in the journey card and use the AI help in the same card when you want better wording or a first draft.", "Skriv direkt i journey-kortet och använd AI-hjälpen direkt i samma kort när du vill få bättre formuleringar eller ett första utkast.")
           }
         : analyzedJourneys.length === 0
           ? {
-              label: "Nästa naturliga steg",
-              title: "Kontrollera täckning när en journey är tydlig",
+              label: t(language, "Next natural step", "Nästa naturliga steg"),
+              title: t(language, "Check coverage when a journey is clear", "Kontrollera täckning när en journey är tydlig"),
               description:
-                "När minst en journey har grunderna på plats kan du jämföra den med Epics och Story Ideas för att hitta luckor och sannolika kopplingar.",
-              nextAction: "Kör Analysera täckning när den aktuella journeyn känns tillräckligt rätt i riktningen."
+                t(language, "When at least one journey has the basics in place, you can compare it with Epics and Story Ideas to find gaps and likely links.", "När minst en journey har grunderna på plats kan du jämföra den med Epics och Story Ideas för att hitta luckor och sannolika kopplingar."),
+              nextAction: t(language, "Run Analyze coverage when the current journey feels clear enough in direction.", "Kör Analysera täckning när den aktuella journeyn känns tillräckligt rätt i riktningen.")
             }
           : {
-              label: "Journeys pågår",
-              title: "Förfina bara där det tillför värde",
+              label: t(language, "Journeys in progress", "Journeys pågår"),
+              title: t(language, "Refine only where it adds value", "Förfina bara där det tillför värde"),
               description:
-                "Du har redan användbara journeys och minst en täckningsanalys. Lägg bara till en ny journey om den representerar ett genuint annat flöde.",
-              nextAction: "Förtydliga formuleringar, analysera en annan journey eller låt det vara om det redan ger tillräcklig riktning."
+                t(language, "You already have useful journeys and at least one coverage analysis. Add a new journey only if it represents a genuinely different flow.", "Du har redan användbara journeys och minst en täckningsanalys. Lägg bara till en ny journey om den representerar ett genuint annat flöde."),
+              nextAction: t(language, "Refine wording, analyze another journey, or leave it as-is if it already provides enough direction.", "Förtydliga formuleringar, analysera en annan journey eller låt det vara om det redan ger tillräcklig riktning.")
             };
 
   useEffect(() => {
@@ -278,7 +284,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-3">
               <div>
-                <CardTitle>Journey Context</CardTitle>
+                <CardTitle>{t(language, "Journey Context", "Journey Context")}</CardTitle>
                 <CardDescription>
                   Frivillig kontext som förtydligar business caset och hjälper downstream AI att arbeta med högre kvalitet.
                 </CardDescription>
@@ -293,7 +299,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                   </span>
                 ) : null}
                 <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {counts.journeyCount} journey{counts.journeyCount === 1 ? "" : "s"}
+                  {counts.journeyCount} {t(language, counts.journeyCount === 1 ? "journey" : "journeys", counts.journeyCount === 1 ? "journey" : "journeys")}
                 </span>
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-medium ${
@@ -302,7 +308,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                       : "border-emerald-200 bg-emerald-50 text-emerald-800"
                   }`}
                 >
-                  {hasUnsavedChanges ? "Osparat utkast" : "Sparat"}
+                  {hasUnsavedChanges ? t(language, "Unsaved draft", "Osparat utkast") : t(language, "Saved", "Sparat")}
                 </span>
               </div>
             </div>
@@ -322,7 +328,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                   }}
                   type="button"
                 >
-                  Starta journeys
+                  {t(language, "Start journeys", "Starta journeys")}
                 </Button>
               ) : null}
 
@@ -330,14 +336,14 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                 <input name="outcomeId" type="hidden" value={data.outcome.id} />
                 <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
                 <Button disabled={!hasUnsavedChanges} type="submit">
-                  Spara journeys
+                  {t(language, "Save journeys", "Spara journeys")}
                 </Button>
               </form>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {flash?.save === "success" ? <FlashBanner message="Journeys sparades i Framing-paketet." tone="success" /> : null}
+          {flash?.save === "success" ? <FlashBanner message={t(language, "Journeys were saved in the Framing package.", "Journeys sparades i Framing-paketet.")} tone="success" /> : null}
           {flash?.analyze === "success" ? <FlashBanner message="Journey-analysen uppdaterades för den valda ytan." tone="success" /> : null}
           {flash?.message && (flash.save === "error" || flash.analyze === "error") ? (
             <FlashBanner message={flash.message} tone="error" />
@@ -368,7 +374,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                 <p className="mt-3">
                   Värdet sitter i journeys i sig: vem som är involverad, vad de försöker uppnå, vad som triggar arbetet och var dagens friktion finns.
                 </p>
-                <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(initiativeType)}</p>
+                <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(language, initiativeType)}</p>
               </div>
 
               <div className="rounded-2xl border border-border/70 bg-background px-4 py-4">
@@ -483,3 +489,4 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
     </div>
   );
 }
+

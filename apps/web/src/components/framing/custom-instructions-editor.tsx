@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import type { CustomInstruction, CustomInstructionCategory, CustomInstructionPriority } from "@/lib/framing/downstreamInstructionTypes";
 
 type CustomInstructionsEditorProps = {
@@ -14,6 +15,10 @@ type CustomInstructionsEditorProps = {
 const categories: CustomInstructionCategory[] = ["General", "Epic", "Story", "Journey", "Design", "Build"];
 const priorities: CustomInstructionPriority[] = ["High", "Normal"];
 
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
 export function CustomInstructionsEditor({
   instructions,
   onAdd,
@@ -21,24 +26,36 @@ export function CustomInstructionsEditor({
   onDelete,
   onMove
 }: CustomInstructionsEditorProps) {
+  const { language } = useAppChromeLanguage();
+
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
-        <CardTitle>Custom Instructions</CardTitle>
+        <CardTitle>{t(language, "Custom Instructions", "Egna instruktioner")}</CardTitle>
         <CardDescription>
-          Use Custom Instructions for anything important that downstream AI must preserve and that is not captured well enough by the structured preferences above.
+          {t(
+            language,
+            "Use Custom Instructions for anything important that downstream AI must preserve and that is not captured well enough by the structured preferences above.",
+            "Använd egna instruktioner för sådant som downstream AI måste bevara och som inte fångas tillräckligt väl av de strukturerade valen ovan."
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-          When priority is High, the instruction is shown more prominently and ordered earlier in generated outputs.
+          {t(
+            language,
+            "When priority is High, the instruction is shown more prominently and ordered earlier in generated outputs.",
+            "När prioriteten är High visas instruktionen mer tydligt och tidigare i genererade resultat."
+          )}
         </div>
 
-        <Button onClick={onAdd} type="button">Add Custom Instruction</Button>
+        <Button onClick={onAdd} type="button">
+          {t(language, "Add Custom Instruction", "Lägg till egen instruktion")}
+        </Button>
 
         {instructions.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 px-4 py-6 text-sm text-muted-foreground">
-            No custom instructions added yet.
+            {t(language, "No custom instructions added yet.", "Inga egna instruktioner tillagda ännu.")}
           </div>
         ) : null}
 
@@ -50,12 +67,16 @@ export function CustomInstructionsEditor({
             <CardContent className="space-y-4 pt-6">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                 <div className="space-y-1">
-                  <p className="text-base font-semibold text-foreground">{instruction.title || `Instruction ${index + 1}`}</p>
-                  <p className="text-sm text-muted-foreground">{instruction.category} · {instruction.priority}</p>
+                  <p className="text-base font-semibold text-foreground">
+                    {instruction.title || `${t(language, "Instruction", "Instruktion")} ${index + 1}`}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {instruction.category} · {instruction.priority}
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button disabled={index === 0} onClick={() => onMove(instruction.id, "up")} size="sm" type="button" variant="secondary">
-                    Move Up
+                    {t(language, "Move Up", "Flytta upp")}
                   </Button>
                   <Button
                     disabled={index === instructions.length - 1}
@@ -64,17 +85,17 @@ export function CustomInstructionsEditor({
                     type="button"
                     variant="secondary"
                   >
-                    Move Down
+                    {t(language, "Move Down", "Flytta ned")}
                   </Button>
                   <Button onClick={() => onDelete(instruction.id)} size="sm" type="button" variant="secondary">
-                    Delete
+                    {t(language, "Delete", "Ta bort")}
                   </Button>
                 </div>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_180px]">
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Title</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Title", "Titel")}</span>
                   <input
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                     onChange={(event) => onChange(instruction.id, { ...instruction, title: event.target.value })}
@@ -83,7 +104,7 @@ export function CustomInstructionsEditor({
                   />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Category</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Category", "Kategori")}</span>
                   <select
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                     onChange={(event) =>
@@ -102,7 +123,7 @@ export function CustomInstructionsEditor({
                   </select>
                 </label>
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Priority</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Priority", "Prioritet")}</span>
                   <select
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                     onChange={(event) =>
@@ -123,7 +144,7 @@ export function CustomInstructionsEditor({
               </div>
 
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Instruction body</span>
+                <span className="text-sm font-medium text-foreground">{t(language, "Instruction body", "Instruktionstext")}</span>
                 <textarea
                   className="min-h-32 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                   onChange={(event) => onChange(instruction.id, { ...instruction, body: event.target.value })}

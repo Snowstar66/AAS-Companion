@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState, type ReactNode } from "react";
 import { Button } from "@aas-companion/ui";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { JourneyCard } from "@/components/framing/journey-card";
 import { getCoverageSummaryLabel, type JourneyContextValidation, type JourneyReferenceOption } from "@/lib/framing/journey-context-ui";
 import type { Journey, JourneyContext } from "@/lib/framing/journeyContextTypes";
@@ -38,6 +39,10 @@ function FieldError({ children }: { children: string | undefined }) {
   return <p className="text-xs font-medium text-amber-700">{children}</p>;
 }
 
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
 export function JourneyContextCard({
   context,
   validation,
@@ -57,6 +62,7 @@ export function JourneyContextCard({
   onMoveStep,
   onRemoveStep,
 }: JourneyContextCardProps) {
+  const { language } = useAppChromeLanguage();
   const coverageLabel = getCoverageSummaryLabel(context);
   const [isOpen, setIsOpen] = useState(true);
   const [showSharedNote, setShowSharedNote] = useState(false);
@@ -74,33 +80,33 @@ export function JourneyContextCard({
               {context.initiativeType}
             </span>
             <span className="rounded-full border border-border/70 bg-muted/15 px-3 py-1 text-xs font-medium text-muted-foreground">
-              {context.journeys.length} journey{context.journeys.length === 1 ? "" : "s"}
+              {context.journeys.length} {t(language, context.journeys.length === 1 ? "journey" : "journeys", context.journeys.length === 1 ? "journey" : "journeys")}
             </span>
           </div>
           <div>
-            <p className="text-base font-semibold text-foreground">Journeys</p>
+            <p className="text-base font-semibold text-foreground">{t(language, "Journeys", "Journeys")}</p>
             <p className="text-sm text-muted-foreground">
-              Lägg värdet i journeys nedanför. Lägg bara till en till när den beskriver ett meningsfullt annorlunda flöde.
+              {t(language, "Put the value in the journeys below. Only add another when it describes a meaningfully different flow.", "Lägg värdet i journeys nedanför. Lägg bara till en till när den beskriver ett meningsfullt annorlunda flöde.")}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{coverageLabel}</p>
           </div>
         </div>
         <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-          {isOpen ? "Dölj" : "Visa"}
+          {isOpen ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}
         </span>
       </summary>
 
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            Börja med en bred journey. Lägg till en till bara när den hjälper till att förklara ett annat aktörsflöde, en annan överlämning eller en annan operativ situation.
+            {t(language, "Start with one broad journey. Add another only when it helps explain a different actor flow, handoff, or operational situation.", "Börja med en bred journey. Lägg till en till bara när den hjälper till att förklara ett annat aktörsflöde, en annan överlämning eller en annan operativ situation.")}
           </p>
           <FieldError>{validation?.journeysSummary}</FieldError>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button onClick={onAddJourney} type="button">Lägg till journey</Button>
+            <Button onClick={onAddJourney} type="button">{t(language, "Add journey", "Lägg till journey")}</Button>
             {analyzeAction}
             <Button onClick={onDelete} type="button" variant="secondary">
-              Rensa journeys
+              {t(language, "Clear journeys", "Rensa journeys")}
             </Button>
           </div>
         </div>
@@ -113,23 +119,23 @@ export function JourneyContextCard({
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-foreground">Frivillig gemensam notering</p>
-                <p className="text-sm text-muted-foreground">Använd detta bara om alla journeys tillsammans behöver en kort gemensam notering.</p>
+                <p className="text-base font-semibold text-foreground">{t(language, "Optional shared note", "Frivillig gemensam notering")}</p>
+                <p className="text-sm text-muted-foreground">{t(language, "Use this only if all journeys together need one short shared note.", "Använd detta bara om alla journeys tillsammans behöver en kort gemensam notering.")}</p>
               </div>
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                {showSharedNote ? "Dölj" : "Visa"}
+                {showSharedNote ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}
               </span>
             </div>
           </summary>
           <div className="border-t border-border/70 px-4 py-4">
             <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">Gemensam notering</span>
+              <span className="text-sm font-medium text-foreground">{t(language, "Shared note", "Gemensam notering")}</span>
               <textarea
                 className="min-h-20 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                 onChange={(event) => onChange({ ...context, notes: event.target.value })}
                 value={context.notes ?? ""}
               />
-              <FieldHint>Frivilligt. I de flesta fall kan detta lämnas tomt och låta journeys tala för sig själva.</FieldHint>
+              <FieldHint>{t(language, "Optional. In most cases this can stay empty and let the journeys speak for themselves.", "Frivilligt. I de flesta fall kan detta lämnas tomt och låta journeys tala för sig själva.")}</FieldHint>
             </label>
           </div>
         </details>
@@ -158,3 +164,4 @@ export function JourneyContextCard({
     </details>
   );
 }
+

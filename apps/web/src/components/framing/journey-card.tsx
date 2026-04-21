@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
 import type { Journey } from "@/lib/framing/journeyContextTypes";
 import type { JourneyReferenceOption, JourneyValidation } from "@/lib/framing/journey-context-ui";
@@ -48,6 +49,10 @@ type JourneyFirstDraftSuggestion = {
 };
 
 type JourneyEditingSection = "core" | "narrative" | "valueMoment" | "success" | "current" | "desired" | "pain" | "support" | null;
+
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
 
 function FieldHint({ children }: { children: string }) {
   return <p className="text-xs leading-5 text-muted-foreground">{children}</p>;
@@ -445,6 +450,7 @@ function MultiSelectLinks(props: { title: string; helper: string; options: Journ
 }
 
 export function JourneyCard({ journey, validation, availableEpics, availableStoryIdeas, availableFigmaRefs, isFocused, onFocus, onChange, onRemove, onAddStep, onUpdateStep, onMoveStep, onRemoveStep }: JourneyCardProps) {
+  const { language } = useAppChromeLanguage();
   const optionalDetailCount = (journey.steps.length > 0 ? 1 : 0) + ((journey.painPoints?.length ?? 0) > 0 ? 1 : 0) + ((journey.desiredSupport?.length ?? 0) > 0 ? 1 : 0) + ((journey.linkedEpicIds?.length ?? 0) > 0 || (journey.linkedStoryIdeaIds?.length ?? 0) > 0 || (journey.linkedFigmaRefs?.length ?? 0) > 0 ? 1 : 0);
   const coreMissingCount = getCoreMissingCount(journey);
   const suggestedEpicLabels = findReferenceLabels(journey.coverage?.suggestedEpicIds, availableEpics);
@@ -456,7 +462,12 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   const [narrativeSuggestion, setNarrativeSuggestion] = useState("");
   const [valueMomentSuggestion, setValueMomentSuggestion] = useState("");
   const [successSignalsSuggestion, setSuccessSignalsSuggestion] = useState<string[]>([]);
-  const journeyStageLabel = coreMissingCount > 0 ? `${coreMissingCount} kärnfält kvar` : (journey.coverage?.status ?? "unanalysed") === "unanalysed" ? "Redo för analys" : "Analyserad";
+  const journeyStageLabel =
+    coreMissingCount > 0
+      ? t(language, `${coreMissingCount} core fields left`, `${coreMissingCount} kärnfält kvar`)
+      : (journey.coverage?.status ?? "unanalysed") === "unanalysed"
+        ? t(language, "Ready for analysis", "Redo för analys")
+        : t(language, "Analysed", "Analyserad");
   const hasEmptyDraftSections =
     !hasText(journey.currentState) ||
     !hasText(journey.desiredFutureState) ||
@@ -732,10 +743,10 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   const journeyBrief = canBuildJourneySummary ? createFirstDraftSuggestion() : null;
   const missingStoryIdeaSuggestions = buildMissingStoryIdeaSuggestions();
   const missingDraftFieldLabels = [
-    !hasText(journey.currentState) ? "Nuläge" : null,
-    !hasText(journey.desiredFutureState) ? "Önskat läge" : null,
-    !((journey.painPoints?.length ?? 0) > 0) ? "Problem" : null,
-    !((journey.desiredSupport?.length ?? 0) > 0) ? "Önskat stöd" : null,
+    !hasText(journey.currentState) ? t(language, "Current state", "Nuläge") : null,
+    !hasText(journey.desiredFutureState) ? t(language, "Desired state", "Önskat läge") : null,
+    !((journey.painPoints?.length ?? 0) > 0) ? t(language, "Problems", "Problem") : null,
+    !((journey.desiredSupport?.length ?? 0) > 0) ? t(language, "Desired support", "Önskat stöd") : null,
     journey.steps.length === 0 ? "Steg" : null
   ].filter((value): value is string => Boolean(value));
   const hasAiAnalysis =
@@ -762,20 +773,20 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
           <div className="flex flex-wrap items-center gap-2">
             {isFocused ? <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">Aktiv nu</span> : null}
             <span className={`rounded-full border px-3 py-1 text-xs font-medium ${coreMissingCount > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : (journey.coverage?.status ?? "unanalysed") === "unanalysed" ? "border-sky-200 bg-sky-50 text-sky-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{journeyStageLabel}</span>
-            {journey.type ? <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">{journey.type === "business" ? "verksamhet" : journey.type === "user" ? "användare" : journey.type === "operational" ? "operativ" : journey.type === "support" ? "support" : "transformation"}</span> : null}
+            {journey.type ? <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">{journey.type === "business" ? t(language, "business", "verksamhet") : journey.type === "user" ? t(language, "user", "användare") : journey.type === "operational" ? t(language, "operational", "operativ") : journey.type === "support" ? t(language, "support", "support") : t(language, "transformation", "transformation")}</span> : null}
             {coreMissingCount === 0 ? <CoverageBadge status={journey.coverage?.status ?? "unanalysed"} /> : null}
             {journey.steps.length > 0 ? <StepSummary count={journey.steps.length} /> : null}
           </div>
           <div>
-            <p className="text-base font-semibold text-foreground">{normalizeJourneyTitle(journey.title) || "Namnlös journey"}</p>
-            <p className="text-sm text-muted-foreground">{journey.primaryActor ? `Huvudaktör: ${journey.primaryActor}` : "Huvudaktör är inte ifylld ännu"}</p>
+            <p className="text-base font-semibold text-foreground">{normalizeJourneyTitle(journey.title) || t(language, "Untitled journey", "Namnlös journey")}</p>
+            <p className="text-sm text-muted-foreground">{journey.primaryActor ? `Huvudaktör: ${journey.primaryActor}` : t(language, "Primary actor not filled in yet", "Huvudaktör är inte ifylld ännu")}</p>
             {journey.goal ? <p className="text-sm text-muted-foreground">Mål: {journey.goal}</p> : null}
             {displayedNarrative ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{truncateText(displayedNarrative, 220)}</p> : null}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{isOpen ? "Dölj" : "Visa"}</span>
-          {onFocus ? <Button onClick={(event) => { event.preventDefault(); event.stopPropagation(); setIsOpen(true); onFocus(); }} size="sm" type="button" variant={isFocused ? "default" : "secondary"}>{isFocused ? "Aktiv nu" : "Gör aktiv"}</Button> : null}
+          <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{isOpen ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}</span>
+          {onFocus ? <Button onClick={(event) => { event.preventDefault(); event.stopPropagation(); setIsOpen(true); onFocus(); }} size="sm" type="button" variant={isFocused ? "default" : "secondary"}>{isFocused ? t(language, "Active now", "Aktiv nu") : t(language, "Make active", "Gör aktiv")}</Button> : null}
           <Button onClick={(event) => { event.preventDefault(); event.stopPropagation(); onRemove(); }} size="sm" type="button" variant="secondary">Ta bort journey</Button>
         </div>
       </summary>
@@ -784,8 +795,8 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">{coreMissingCount > 0 ? "Börja brett. Fyll i titel, aktör, mål och trigger innan du lägger till mer detalj." : "Den här journeyn har grunderna på plats. Lägg bara till mer detalj om det förtydligar caset eller förbättrar analysen."}</div>
         <div className="mt-6 space-y-4">
           <InlineSectionCard
-            actionLabel="Redigera kärnan"
-            description="Här ser du det viktigaste först: titel, aktör, mål och trigger."
+            actionLabel={t(language, "Edit core", "Redigera kärnan")}
+            description={t(language, "This shows the most important pieces first: title, actor, goal, and trigger.", "Här ser du det viktigaste först: titel, aktör, mål och trigger.")}
             editor={
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="space-y-2">
@@ -842,20 +853,20 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
             }
             isEditing={isEditingCore}
             onToggleEdit={() => setEditingSection((current) => (current === "core" ? null : "core"))}
-            title="Kärnan i journeyn"
+            title={t(language, "Journey core", "Kärnan i journeyn")}
           >
             <div className="grid gap-3 md:grid-cols-2 text-sm">
-              <p><span className="font-medium text-foreground">Titel:</span> {normalizeJourneyTitle(journey.title) || "Inte ifyllt ännu"}</p>
-              <p><span className="font-medium text-foreground">Huvudaktör:</span> {journey.primaryActor || "Inte ifyllt ännu"}</p>
-              <p className="md:col-span-2"><span className="font-medium text-foreground">Mål:</span> {journey.goal || "Inte ifyllt ännu"}</p>
-              <p className="md:col-span-2"><span className="font-medium text-foreground">Trigger:</span> {journey.trigger || "Inte ifyllt ännu"}</p>
+              <p><span className="font-medium text-foreground">Titel:</span> {normalizeJourneyTitle(journey.title) || t(language, "Not filled in yet", "Inte ifyllt ännu")}</p>
+              <p><span className="font-medium text-foreground">Huvudaktör:</span> {journey.primaryActor || t(language, "Not filled in yet", "Inte ifyllt ännu")}</p>
+              <p className="md:col-span-2"><span className="font-medium text-foreground">Mål:</span> {journey.goal || t(language, "Not filled in yet", "Inte ifyllt ännu")}</p>
+              <p className="md:col-span-2"><span className="font-medium text-foreground">Trigger:</span> {journey.trigger || t(language, "Not filled in yet", "Inte ifyllt ännu")}</p>
             </div>
           </InlineSectionCard>
 
           <div className="grid gap-4">
             <InlineSectionCard
-              actionLabel="Redigera journeytext"
-              description="Beskriv journeyen som ett kort sammanhängande narrativ i samma stil som ett business case-flöde."
+              actionLabel={t(language, "Edit journey text", "Redigera journeytext")}
+              description={t(language, "Describe the journey as a short connected narrative in the style of a business-case flow.", "Beskriv journeyen som ett kort sammanhängande narrativ i samma stil som ett business case-flöde.")}
               editor={
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">Journey-beskrivning</span>
@@ -879,9 +890,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                           setNarrativeSuggestion("");
                         }}
                         onDismiss={() => setNarrativeSuggestion("")}
-                        targetLabel="Journey-beskrivning"
+                        targetLabel={t(language, "Journey description", "Journey-beskrivning")}
                         text={narrativeSuggestion}
-                        title="AI-förslag för journeytext"
+                        title={t(language, "AI suggestion for journey text", "AI-förslag för journeytext")}
                       />
                     </div>
                   ) : null}
@@ -889,15 +900,15 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
               }
               isEditing={isEditingNarrative}
               onToggleEdit={() => setEditingSection((current) => (current === "narrative" ? null : "narrative"))}
-              title="Journey-beskrivning"
+              title={t(language, "Journey description", "Journey-beskrivning")}
             >
-              <p className="text-sm leading-6 text-muted-foreground">{displayedNarrative || "Inte ifyllt ännu"}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{displayedNarrative || t(language, "Not filled in yet", "Inte ifyllt ännu")}</p>
             </InlineSectionCard>
 
             <div className="grid gap-4 md:grid-cols-2">
               <InlineSectionCard
-                actionLabel="Redigera värdeögonblick"
-                description="Beskriv när det verkliga värdet uppstår för användaren."
+                actionLabel={t(language, "Edit value moment", "Redigera värdeögonblick")}
+                description={t(language, "Describe when the real value appears for the user.", "Beskriv när det verkliga värdet uppstår för användaren.")}
                 editor={
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">Värdeögonblick</span>
@@ -919,9 +930,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                             setValueMomentSuggestion("");
                           }}
                           onDismiss={() => setValueMomentSuggestion("")}
-                          targetLabel="Värdeögonblick"
+                          targetLabel={t(language, "Value moment", "Värdeögonblick")}
                           text={valueMomentSuggestion}
-                          title="AI-förslag för värdeögonblick"
+                          title={t(language, "AI suggestion for value moment", "AI-förslag för värdeögonblick")}
                         />
                       </div>
                     ) : null}
@@ -929,14 +940,14 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                 }
                 isEditing={isEditingValueMoment}
                 onToggleEdit={() => setEditingSection((current) => (current === "valueMoment" ? null : "valueMoment"))}
-                title="Värdeögonblick"
+                title={t(language, "Value moment", "Värdeögonblick")}
               >
-                <p className="text-sm leading-6 text-muted-foreground">{displayedValueMoment || "Inte ifyllt ännu"}</p>
+                <p className="text-sm leading-6 text-muted-foreground">{displayedValueMoment || t(language, "Not filled in yet", "Inte ifyllt ännu")}</p>
               </InlineSectionCard>
 
               <InlineSectionCard
-                actionLabel="Redigera lyckat utfall"
-                description="Beskriv vad som är sant när journeyen fungerar väl."
+                actionLabel={t(language, "Edit successful outcome", "Redigera lyckat utfall")}
+                description={t(language, "Describe what is true when the journey works well.", "Beskriv vad som är sant när journeyen fungerar väl.")}
                 editor={
                   <label className="space-y-2">
                     <span className="text-sm font-medium text-foreground">När journeyen lyckas...</span>
@@ -958,9 +969,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                             setSuccessSignalsSuggestion([]);
                           }}
                           onDismiss={() => setSuccessSignalsSuggestion([])}
-                          targetLabel="När journeyen lyckas"
+                          targetLabel={t(language, "When the journey succeeds", "När journeyen lyckas")}
                           text={successSignalsSuggestion.map((item) => `- ${item}`).join("\n")}
-                          title="AI-förslag för lyckat utfall"
+                          title={t(language, "AI suggestion for successful outcome", "AI-förslag för lyckat utfall")}
                         />
                       </div>
                     ) : null}
@@ -968,7 +979,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                 }
                 isEditing={isEditingSuccess}
                 onToggleEdit={() => setEditingSection((current) => (current === "success" ? null : "success"))}
-                title="När journeyen lyckas"
+                title={t(language, "When the journey succeeds", "När journeyen lyckas")}
               >
                 {displayedSuccessSignals.length > 0 ? (
                   <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
@@ -990,7 +1001,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   <p className="text-sm text-muted-foreground">Öppna bara när du vill se sannolika kopplingar, luckor eller låta AI fylla tomma analysfält.</p>
                 </div>
                 <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {journey.coverage ? "Analyserad" : "Sekundärt"}
+                  {journey.coverage ? "Analyserad" : t(language, "Secondary", "Sekundärt")}
                 </span>
               </div>
             </summary>
@@ -1046,7 +1057,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   <InlineStoryIdeaSuggestionList
                     description="Det här är nästa sannolika Story Ideas att överväga om journeyn behöver mer stöd än backloggen redan ger."
                     suggestions={missingStoryIdeaSuggestions}
-                    title="Möjliga saknade Story Ideas"
+                    title={t(language, "Possible missing Story Ideas", "Möjliga saknade Story Ideas")}
                   />
                 </div>
               ) : null}
@@ -1086,7 +1097,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                 <p className="text-base font-semibold text-foreground">Mer detalj vid behov</p>
                 <p className="text-sm text-muted-foreground">Lägg till stödaktörer, problem, manuella länkar, steg eller analysdetaljer bara när det tillför signal.</p>
               </div>
-              <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{optionalDetailCount > 0 ? `${optionalDetailCount} områden används` : "Frivilligt"}</span>
+              <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{optionalDetailCount > 0 ? t(language, `${optionalDetailCount} areas in use`, `${optionalDetailCount} områden används`) : t(language, "Optional", "Frivilligt")}</span>
             </div>
           </summary>
 
@@ -1165,9 +1176,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                 <p className="text-base font-semibold text-foreground">Frivilliga manuella länkar</p>
                 <p className="mt-1 text-sm text-muted-foreground">Frivilligt. Lägg till länkar om de är uppenbara, men du behöver inte mappa allt manuellt. AI-analysen kan föreslå sannolika Epic- och Story Idea-kopplingar senare.</p>
               </div>
-              <MultiSelectLinks helper="Frivilliga Epic-länkar när kopplingen är uppenbar." onChange={(nextIds) => onChange({ ...journey, linkedEpicIds: nextIds })} options={availableEpics} selectedIds={journey.linkedEpicIds} title="Länkade Epics" />
-              <MultiSelectLinks helper="Frivilliga Story Idea-länkar när kopplingen är uppenbar." onChange={(nextIds) => onChange({ ...journey, linkedStoryIdeaIds: nextIds })} options={availableStoryIdeas} selectedIds={journey.linkedStoryIdeaIds} title="Länkade Story Ideas" />
-              <MultiSelectLinks helper="Frivilliga Figma- eller referenslänkar när de redan finns i detta Framing-paket." onChange={(nextIds) => onChange({ ...journey, linkedFigmaRefs: nextIds })} options={availableFigmaRefs} selectedIds={journey.linkedFigmaRefs} title="Länkad Figma / referenser" />
+              <MultiSelectLinks helper="Frivilliga Epic-länkar när kopplingen är uppenbar." onChange={(nextIds) => onChange({ ...journey, linkedEpicIds: nextIds })} options={availableEpics} selectedIds={journey.linkedEpicIds} title={t(language, "Linked Epics", "Länkade Epics")} />
+              <MultiSelectLinks helper="Frivilliga Story Idea-länkar när kopplingen är uppenbar." onChange={(nextIds) => onChange({ ...journey, linkedStoryIdeaIds: nextIds })} options={availableStoryIdeas} selectedIds={journey.linkedStoryIdeaIds} title={t(language, "Linked Story Ideas", "Länkade Story Ideas")} />
+              <MultiSelectLinks helper="Frivilliga Figma- eller referenslänkar när de redan finns i detta Framing-paket." onChange={(nextIds) => onChange({ ...journey, linkedFigmaRefs: nextIds })} options={availableFigmaRefs} selectedIds={journey.linkedFigmaRefs} title={t(language, "Linked Figma / references", "Länkad Figma / referenser")} />
               {validation?.linkErrors.length ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{validation.linkErrors.map((message) => <p key={message}>{message}</p>)}</div> : null}
             </div>
           </div>
@@ -1176,3 +1187,4 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     </details>
   );
 }
+
