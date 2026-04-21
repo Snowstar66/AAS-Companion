@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Check, Copy, Sparkles } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
-import { framingAgentIntroText, framingAgentModeLabels, framingAgentQuickActions } from "@/lib/framing/agentModes";
+import {
+  buildDefaultFramingAgentPrompt,
+  framingAgentIntroText,
+  framingAgentModeLabels,
+  framingAgentQuickActions
+} from "@/lib/framing/agentModes";
 import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
 import type { JourneyContext, JourneyInitiativeType } from "@/lib/framing/journeyContextTypes";
 import type {
@@ -721,8 +726,9 @@ export function AiAssistantPanel({
 }: AiAssistantPanelProps) {
   const isCompactSurface = scopeKind === "journey-context" || scopeKind === "story-ideas";
   const isEmbeddedJourneySurface = embedded && scopeKind === "journey-context";
-  const [mode, setMode] = useState<FramingAgentMode>(scopeKind === "export" ? "export" : "ask");
-  const [prompt, setPrompt] = useState("");
+  const initialMode: FramingAgentMode = scopeKind === "export" ? "export" : "ask";
+  const [mode, setMode] = useState<FramingAgentMode>(initialMode);
+  const [prompt, setPrompt] = useState(() => buildDefaultFramingAgentPrompt(scopeKind, initialMode));
   const [result, setResult] = useState<Extract<FramingAgentActionResult, { ok: true }> | null>(null);
   const [history, setHistory] = useState<ConversationEntry[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
@@ -736,6 +742,13 @@ export function AiAssistantPanel({
   const [showAdvancedWorkspace, setShowAdvancedWorkspace] = useState(!isCompactSurface);
   const [isPending, startTransition] = useTransition();
   const quickActions = framingAgentQuickActions[scopeKind] ?? [];
+
+  useEffect(() => {
+    const nextInitialMode: FramingAgentMode = scopeKind === "export" ? "export" : "ask";
+    setMode(nextInitialMode);
+    setPrompt(buildDefaultFramingAgentPrompt(scopeKind, nextInitialMode));
+  }, [scopeKind]);
+
   const rawJourneyContexts = useMemo(() => parseJourneyContextsJson(journeyContextsJson), [journeyContextsJson]);
   const journeyFocusOptions = useMemo(() => buildJourneyFocusOptions(rawJourneyContexts), [rawJourneyContexts]);
   const journeyDraftTarget = useMemo(
@@ -1074,6 +1087,11 @@ export function AiAssistantPanel({
         ...current
       ]);
     });
+  }
+
+  function applyMode(nextMode: FramingAgentMode) {
+    setMode(nextMode);
+    setPrompt(buildDefaultFramingAgentPrompt(scopeKind, nextMode));
   }
 
   const content = (
@@ -1439,7 +1457,7 @@ export function AiAssistantPanel({
               <>
                 <div className="flex flex-wrap gap-2">
                   {(["ask", "analyze", "refine", "export"] as FramingAgentMode[]).map((entry) => (
-                    <Button key={entry} onClick={() => setMode(entry)} type="button" variant={mode === entry ? "default" : "secondary"}>
+                    <Button key={entry} onClick={() => applyMode(entry)} type="button" variant={mode === entry ? "default" : "secondary"}>
                       {framingAgentModeLabels[entry]}
                     </Button>
                   ))}

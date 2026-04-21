@@ -1,4 +1,4 @@
-import type { FramingAgentQuickAction, FramingAgentScopeKind } from "@/lib/framing/agentTypes";
+import type { FramingAgentMode, FramingAgentQuickAction, FramingAgentScopeKind } from "@/lib/framing/agentTypes";
 
 export const framingAgentModeLabels: Record<"ask" | "analyze" | "refine" | "export", string> = {
   ask: "Fråga",
@@ -35,3 +35,83 @@ export const framingAgentQuickActions: Record<FramingAgentScopeKind, FramingAgen
   ],
   "full-framing": []
 };
+
+export function buildDefaultFramingAgentPrompt(scopeKind: FramingAgentScopeKind, mode: FramingAgentMode) {
+  if (scopeKind === "journey-context") {
+    if (mode === "ask") {
+      return "Help me understand what is still unclear in the current journey and what I should clarify next.";
+    }
+
+    if (mode === "analyze") {
+      return "Analyze the current journey against the linked Epics and Story Ideas. Show gaps, overlaps and what should be corrected next.";
+    }
+
+    if (mode === "refine") {
+      return "Refine the wording of the current journey so the actor, goal, trigger and flow are clearer without becoming too UI-specific.";
+    }
+
+    return "Preview how this journey context would appear in a downstream handoff and highlight anything important that would be lost.";
+  }
+
+  if (scopeKind === "story-ideas") {
+    if (mode === "ask") {
+      return "Help me understand whether the current Story Ideas are clear enough and what kind of story guidance is still missing.";
+    }
+
+    if (mode === "analyze") {
+      return "Analyze the current Story Ideas for overlap, missing coverage and unclear intent. Return a practical fix list.";
+    }
+
+    if (mode === "refine") {
+      return "Refine the current Story Ideas so their value intent and expected behavior are clearer without turning them into Delivery Stories.";
+    }
+
+    return "Preview how the current Story Ideas would appear in a downstream handoff and point out anything that may be lost.";
+  }
+
+  if (scopeKind === "downstream-ai-instructions") {
+    if (mode === "ask") {
+      return "Explain what the current Downstream AI Instructions mean in practice for later design and build work.";
+    }
+
+    if (mode === "analyze") {
+      return "Analyze the current Downstream AI Instructions and warn about weak combinations, over-constraint or missing guidance.";
+    }
+
+    if (mode === "refine") {
+      return "Suggest a clearer downstream AI profile for this initiative type and AI level while preserving the current governance envelope.";
+    }
+
+    return "Preview how the current Downstream AI Instructions will be carried into a downstream handoff package.";
+  }
+
+  if (scopeKind === "export") {
+    if (mode === "ask") {
+      return "Explain which export path I should use, what will be included, and what I should check before the final handoff.";
+    }
+
+    if (mode === "analyze") {
+      return "Analyze the current handoff for missing inheritance from constraints, UX principles, NFRs, Journey Context and Downstream AI Instructions. Return a clear fix list before export.";
+    }
+
+    if (mode === "refine") {
+      return "Suggest what should be improved in the current Framing package so the eventual export becomes clearer, safer and more traceable.";
+    }
+
+    return "Preview a downstream handoff package from the current Framing and highlight anything important that would be lost before the real export.";
+  }
+
+  if (mode === "ask") {
+    return "Help me understand what is strongest, weakest or still unclear in the current Framing package.";
+  }
+
+  if (mode === "analyze") {
+    return "Analyze the current Framing package for gaps, weak inheritance, missing scope clarity and traceability risks. Return a practical fix list.";
+  }
+
+  if (mode === "refine") {
+    return "Suggest how to improve the current Framing package so it becomes clearer, more coherent and easier to hand off to later AI steps.";
+  }
+
+  return "Preview how the current Framing package would be handed off downstream and point out anything critical that may be lost.";
+}
