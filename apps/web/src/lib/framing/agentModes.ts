@@ -29,9 +29,9 @@ export const framingAgentQuickActions: Record<FramingAgentScopeKind, FramingAgen
     { id: "instructions-custom", label: "Suggest custom instructions", mode: "refine", prompt: "Suggest clear custom instructions for downstream AI based on the current Framing package." }
   ],
   export: [
-    { id: "export-design-handover", label: "Generate Design Handover", mode: "export", prompt: "Generate a downstream Design and Build handover package from the current Framing package." },
-    { id: "export-bmad", label: "Generate BMAD-friendly export", mode: "export", prompt: "Generate a BMAD-friendly export profile from the current Framing package." },
-    { id: "export-inheritance-review", label: "Review export for missing inheritance", mode: "analyze", prompt: "Review the export for missing inheritance from constraints, UX principles, NFRs, Journey Context, and Downstream AI Instructions." }
+    { id: "export-design-handover", label: "Preview Design Handover", mode: "export", prompt: "Preview a downstream Design and Build handover package from the current Framing package." },
+    { id: "export-bmad", label: "Preview BMAD export", mode: "export", prompt: "Preview a BMAD-prepared export profile from the current Framing package." },
+    { id: "export-inheritance-review", label: "Analyze handoff completeness", mode: "analyze", prompt: "Analyze the current handoff for missing inheritance from constraints, UX principles, NFRs, Journey Context, and Downstream AI Instructions. Return clear fix guidance before export." }
   ],
   "full-framing": []
 };

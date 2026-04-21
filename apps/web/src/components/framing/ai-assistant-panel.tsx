@@ -837,6 +837,35 @@ export function AiAssistantPanel({
       : scopeKind === "story-ideas"
         ? "Använd AI här när du vill få ett sammanfattat story-utkast, hitta överlapp eller ta fram nya Story Ideas från journeys."
         : framingAgentIntroText;
+  const isExportScope = scopeKind === "export";
+  const currentModeLabel =
+    isExportScope && mode === "export"
+      ? "Preview export"
+      : framingAgentModeLabels[mode];
+  const promptLabel = isExportScope ? "FrÃ¥ga eller instruktion till AI" : "FrÃ¥ga till AI";
+  const promptPlaceholder =
+    scopeKind === "journey-context"
+      ? "Be AI fÃ¶rklara, analysera eller fÃ¶rfina de aktuella journeys."
+      : scopeKind === "story-ideas"
+        ? "Be AI sammanfatta en mÃ¶jlig story, hitta Ã¶verlapp eller fÃ¶reslÃ¥ nya Story Ideas."
+        : isExportScope
+          ? "Be AI previewa ett handoff-underlag, analysera exportluckor eller fÃ¶reslÃ¥ vad som ska rÃ¤ttas innan verklig export."
+          : "Ask, analyze, refine, or export against the current Framing package.";
+  void promptLabel;
+  void promptPlaceholder;
+  const assistantTitleDisplay = isExportScope ? "AI export preview" : assistantTitle;
+  const assistantDescriptionDisplay = isExportScope
+    ? "Use this area to preview handoff artifacts and analyze what is missing before you use the real export panel for downloads."
+    : assistantDescription;
+  const promptLabelDisplay = isExportScope ? "AI prompt or instruction" : "Ask AI";
+  const promptPlaceholderDisplay =
+    scopeKind === "journey-context"
+      ? "Ask AI to explain, analyze or refine the current journeys."
+      : scopeKind === "story-ideas"
+        ? "Ask AI to summarize a possible story, find overlap or propose new Story Ideas."
+        : isExportScope
+          ? "Ask AI to preview a handoff artifact, analyze export gaps or suggest what to fix before real export."
+          : "Ask, analyze, refine, or export against the current Framing package.";
   const justAppliedFirstDraft =
     recentlyAppliedFirstDraftJourneyId !== null &&
     journeyDraftTarget?.journey.id === recentlyAppliedFirstDraftJourneyId &&
@@ -1055,9 +1084,9 @@ export function AiAssistantPanel({
           <div>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              {assistantTitle}
+              {assistantTitleDisplay}
             </CardTitle>
-            <CardDescription>{assistantDescription}</CardDescription>
+            <CardDescription>{assistantDescriptionDisplay}</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
@@ -1068,7 +1097,7 @@ export function AiAssistantPanel({
             </span>
             {!isCompactSurface ? (
               <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-                Mode: {framingAgentModeLabels[mode]}
+                Mode: {currentModeLabel}
               </span>
             ) : null}
             {!isCompactSurface ? (
@@ -1340,6 +1369,19 @@ export function AiAssistantPanel({
 
         {(isEmbeddedJourneySurface || showAdvancedWorkspace || !isCompactSurface) ? (
           <div className="space-y-5 rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+            {isExportScope ? (
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
+                <p className="font-medium text-foreground">Use this area for preview and review, not the final download.</p>
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sky-900/90">
+                  <li><span className="font-medium">Ask</span> when you want a clarification about the handoff.</li>
+                  <li><span className="font-medium">Analyze</span> when you want a fix list before export.</li>
+                  <li><span className="font-medium">Refine</span> when you want help improving the framing before export.</li>
+                  <li><span className="font-medium">Export</span> when you want a preview artifact, not the real download package.</li>
+                  <li>Use the separate export panel for real <span className="font-medium">Neutral Governed</span> and <span className="font-medium">BMAD Prepared</span> downloads.</li>
+                  <li>UX sketch files are only included in the real export package when they are saved on Story Ideas inside Framing.</li>
+                </ul>
+              </div>
+            ) : null}
             {isEmbeddedJourneySurface ? (
               <div className="space-y-4">
                 <div>
@@ -1426,17 +1468,11 @@ export function AiAssistantPanel({
 
                 <div className="space-y-3">
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">Fråga till AI</span>
+                    <span className="text-sm font-medium text-foreground">{promptLabelDisplay}</span>
                     <textarea
                       className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                       onChange={(event) => setPrompt(event.target.value)}
-                      placeholder={
-                        scopeKind === "journey-context"
-                          ? "Be AI förklara, analysera eller förfina de aktuella journeys."
-                          : scopeKind === "story-ideas"
-                            ? "Be AI sammanfatta en möjlig story, hitta överlapp eller föreslå nya Story Ideas."
-                            : "Ask, analyze, refine, or export against the current Framing package."
-                      }
+                      placeholder={promptPlaceholderDisplay}
                       value={prompt}
                     />
                   </label>
@@ -1481,7 +1517,12 @@ export function AiAssistantPanel({
 
             {result?.warnings.length ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-                <p className="font-medium">Varningar</p>
+                <p className="font-medium">{isExportScope ? "Warnings and fix list" : "Varningar"}</p>
+                {isExportScope ? (
+                  <p className="mt-2 text-sm text-amber-900">
+                    Correct these items in the source Framing package before you export the final downloadable handoff.
+                  </p>
+                ) : null}
                 <ul className="mt-2 list-disc space-y-2 pl-5">
                   {result.warnings.map((warning) => (
                     <li key={warning}>{warning}</li>
@@ -1617,13 +1658,20 @@ export function AiAssistantPanel({
 
             {result?.artifacts.length ? (
               <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Genererade underlag</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {isExportScope ? "Preview generated handoff" : "Genererade underlag"}
+                </p>
                 {result.artifacts.map((artifact) => (
                   <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={artifact.kind}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="font-medium text-foreground">{artifact.title}</p>
                         <p className="mt-1 text-sm text-muted-foreground">{artifact.summary}</p>
+                        {isExportScope ? (
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Preview only. Use the export panel for the real downloadable package and attached UX sketch files.
+                          </p>
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <Button

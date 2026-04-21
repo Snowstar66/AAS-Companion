@@ -679,6 +679,8 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
   }
 
   if (input.scope.kind === "export") {
+    const isInheritanceReview = input.quickActionId === "export-inheritance-review" || input.mode === "analyze";
+
     if (!artifacts.some((artifact) => artifact.kind === "design_handover") && input.quickActionId !== "export-bmad") {
       const handover = generateDesignHandover(source);
       artifacts.push({
@@ -702,11 +704,14 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
     }
 
     warnings.push(...collectFramingAgentWarnings(source));
-    helperText =
-      "The export inherits the current Framing package, including Journey Context and Downstream AI Instructions when present.";
+    helperText = isInheritanceReview
+      ? "Use the warnings below as a concrete fix list before you export. Correct the source fields in Framing, Journey Context, Value Spine or Downstream AI Instructions, then run the review again."
+      : "This is a preview of the handoff artifact. Use the export panel for the real downloadable packages, including BMAD Prepared / Neutral Governed downloads and any attached UX sketch files.";
     message =
       message ||
-      `I prepared ${artifacts.length} export artifact(s) from the current Framing package and checked the inheritance chain for missing source inputs.`;
+      (isInheritanceReview
+        ? "I reviewed the current handoff for missing inheritance and highlighted what should be corrected before export."
+        : `I prepared ${artifacts.length} export preview artifact(s) from the current Framing package and checked the inheritance chain for missing source inputs.`);
   }
 
   if (!message) {
