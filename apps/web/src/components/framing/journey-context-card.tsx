@@ -1,10 +1,15 @@
-﻿"use client";
+"use client";
 
+import { ChevronDown } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { JourneyCard } from "@/components/framing/journey-card";
-import { getCoverageSummaryLabel, type JourneyContextValidation, type JourneyReferenceOption } from "@/lib/framing/journey-context-ui";
+import {
+  getCoverageSummaryLabel,
+  type JourneyContextValidation,
+  type JourneyReferenceOption
+} from "@/lib/framing/journey-context-ui";
 import type { Journey, JourneyContext } from "@/lib/framing/journeyContextTypes";
 
 type JourneyContextCardProps = {
@@ -22,7 +27,11 @@ type JourneyContextCardProps = {
   onUpdateJourney: (journeyId: string, updater: (journey: Journey) => Journey) => void;
   onRemoveJourney: (journeyId: string) => void;
   onAddStep: (journeyId: string) => void;
-  onUpdateStep: (journeyId: string, stepId: string, updater: (step: Journey["steps"][number]) => Journey["steps"][number]) => void;
+  onUpdateStep: (
+    journeyId: string,
+    stepId: string,
+    updater: (step: Journey["steps"][number]) => Journey["steps"][number]
+  ) => void;
   onMoveStep: (journeyId: string, stepId: string, direction: "up" | "down") => void;
   onRemoveStep: (journeyId: string, stepId: string) => void;
 };
@@ -41,6 +50,24 @@ function FieldError({ children }: { children: string | undefined }) {
 
 function t(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
+}
+
+function hasText(value: string | null | undefined) {
+  return Boolean(value && value.trim());
+}
+
+function truncateText(value: string | null | undefined, maxLength: number) {
+  const trimmed = value?.trim() ?? "";
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`;
 }
 
 export function JourneyContextCard({
@@ -66,6 +93,18 @@ export function JourneyContextCard({
   const coverageLabel = getCoverageSummaryLabel(context, language);
   const [isOpen, setIsOpen] = useState(true);
   const [showSharedNote, setShowSharedNote] = useState(false);
+  const previewJourney =
+    context.journeys.find((journey) => journey.id === focusedJourneyId) ??
+    context.journeys[0] ??
+    null;
+  const previewNarrative = truncateText(
+    previewJourney?.narrative ||
+      previewJourney?.currentState ||
+      previewJourney?.valueMoment ||
+      previewJourney?.goal ||
+      "",
+    220
+  );
 
   return (
     <details
@@ -74,38 +113,74 @@ export function JourneyContextCard({
       open={isOpen}
     >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
               {context.initiativeType}
             </span>
             <span className="rounded-full border border-border/70 bg-muted/15 px-3 py-1 text-xs font-medium text-muted-foreground">
-              {context.journeys.length} {t(language, context.journeys.length === 1 ? "journey" : "journeys", context.journeys.length === 1 ? "journey" : "journeys")}
+              {context.journeys.length}{" "}
+              {t(
+                language,
+                context.journeys.length === 1 ? "journey" : "journeys",
+                context.journeys.length === 1 ? "journey" : "journeys"
+              )}
             </span>
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">{t(language, "Journeys", "Journeys")}</p>
             <p className="text-sm text-muted-foreground">
-              {t(language, "Put the value in the journeys below. Only add another when it describes a meaningfully different flow.", "Lägg värdet i journeys nedanför. Lägg bara till en till när den beskriver ett meningsfullt annorlunda flöde.")}
+              {t(
+                language,
+                "Put the value in the journeys below. Only add another when it describes a meaningfully different flow.",
+                "Lägg värdet i journeys nedanför. Lägg bara till en till när den beskriver ett meningsfullt annorlunda flöde."
+              )}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">{coverageLabel}</p>
+            {!isOpen && previewJourney ? (
+              <div className="mt-3 space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  {previewJourney.title || t(language, "Untitled journey", "Namnlös journey")}
+                </p>
+                {hasText(previewJourney.primaryActor) ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t(language, "Primary actor", "Huvudaktör")}: {previewJourney.primaryActor}
+                  </p>
+                ) : null}
+                {hasText(previewJourney.goal) ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t(language, "Goal", "Mål")}: {previewJourney.goal}
+                  </p>
+                ) : null}
+                {previewNarrative ? (
+                  <p className="pt-1 text-sm leading-6 text-muted-foreground">{previewNarrative}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
-        <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-          {isOpen ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}
+        <span className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground">
+          <span>{isOpen ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}</span>
+          <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
         </span>
       </summary>
 
       <div className="border-t border-border/70 px-5 py-5">
         <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            {t(language, "Start with one broad journey. Add another only when it helps explain a different actor flow, handoff, or operational situation.", "Börja med en bred journey. Lägg till en till bara när den hjälper till att förklara ett annat aktörsflöde, en annan överlämning eller en annan operativ situation.")}
+            {t(
+              language,
+              "Start with one broad journey. Add another only when it helps explain a different actor flow, handoff, or operational situation.",
+              "Börja med en bred journey. Lägg till en till bara när den hjälper till att förklara ett annat aktörsflöde, en annan överlämning eller en annan operativ situation."
+            )}
           </p>
           <FieldError>{validation?.journeysSummary}</FieldError>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button onClick={onAddJourney} type="button">{t(language, "Add journey", "Lägg till journey")}</Button>
+            <Button className="h-10 rounded-full px-4" onClick={onAddJourney} type="button">
+              {t(language, "Add journey", "Lägg till journey")}
+            </Button>
             {analyzeAction}
-            <Button onClick={onDelete} type="button" variant="secondary">
+            <Button className="h-10 rounded-full px-4" onClick={onDelete} type="button" variant="secondary">
               {t(language, "Clear journeys", "Rensa journeys")}
             </Button>
           </div>
@@ -119,11 +194,20 @@ export function JourneyContextCard({
           <summary className="cursor-pointer list-none px-4 py-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-foreground">{t(language, "Optional shared note", "Frivillig gemensam notering")}</p>
-                <p className="text-sm text-muted-foreground">{t(language, "Use this only if all journeys together need one short shared note.", "Använd detta bara om alla journeys tillsammans behöver en kort gemensam notering.")}</p>
+                <p className="text-base font-semibold text-foreground">
+                  {t(language, "Optional shared note", "Frivillig gemensam notering")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t(
+                    language,
+                    "Use this only if all journeys together need one short shared note.",
+                    "Använd detta bara om alla journeys tillsammans behöver en kort gemensam notering."
+                  )}
+                </p>
               </div>
-              <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                {showSharedNote ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}
+              <span className="inline-flex h-9 items-center gap-2 rounded-full border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground">
+                <span>{showSharedNote ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}</span>
+                <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
               </span>
             </div>
           </summary>
@@ -135,7 +219,13 @@ export function JourneyContextCard({
                 onChange={(event) => onChange({ ...context, notes: event.target.value })}
                 value={context.notes ?? ""}
               />
-              <FieldHint>{t(language, "Optional. In most cases this can stay empty and let the journeys speak for themselves.", "Frivilligt. I de flesta fall kan detta lämnas tomt och låta journeys tala för sig själva.")}</FieldHint>
+              <FieldHint>
+                {t(
+                  language,
+                  "Optional. In most cases this can stay empty and let the journeys speak for themselves.",
+                  "Frivilligt. I de flesta fall kan detta lämnas tomt och låta journeys tala för sig själva."
+                )}
+              </FieldHint>
             </label>
           </div>
         </details>
@@ -164,4 +254,3 @@ export function JourneyContextCard({
     </details>
   );
 }
-

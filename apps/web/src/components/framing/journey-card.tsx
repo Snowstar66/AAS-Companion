@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
@@ -892,7 +892,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       open={isOpen}
     >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4" onClick={() => onFocus?.()}>
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             {isFocused ? <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">{t(language, "Active now", "Aktiv nu")}</span> : null}
             <span className={`rounded-full border px-3 py-1 text-xs font-medium ${coreMissingCount > 0 ? "border-amber-200 bg-amber-50 text-amber-800" : (journey.coverage?.status ?? "unanalysed") === "unanalysed" ? "border-sky-200 bg-sky-50 text-sky-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>{journeyStageLabel}</span>
@@ -907,10 +907,31 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
             {displayedNarrative ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{truncateText(displayedNarrative, 220)}</p> : null}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">{isOpen ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}</span>
-          {onFocus ? <Button onClick={(event) => { event.preventDefault(); event.stopPropagation(); setIsOpen(true); onFocus(); }} size="sm" type="button" variant={isFocused ? "default" : "secondary"}>{isFocused ? t(language, "Active now", "Aktiv nu") : t(language, "Make active", "Gör aktiv")}</Button> : null}
-          <Button onClick={(event) => { event.preventDefault(); event.stopPropagation(); onRemove(); }} size="sm" type="button" variant="secondary">{t(language, "Remove journey", "Ta bort journey")}</Button>
+        <div className="flex shrink-0 items-center gap-2 self-start">
+          <span className="inline-flex h-9 items-center gap-2 rounded-full border border-border/70 bg-background px-3 text-xs font-medium text-muted-foreground">
+            <span>{isOpen ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}</span>
+            <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+          </span>
+          {onFocus && !isFocused ? (
+            <Button
+              className="h-9 whitespace-nowrap rounded-full px-4"
+              onClick={(event) => { event.preventDefault(); event.stopPropagation(); setIsOpen(true); onFocus(); }}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              {t(language, "Make active", "Gör aktiv")}
+            </Button>
+          ) : null}
+          <Button
+            className="h-9 whitespace-nowrap rounded-full px-4"
+            onClick={(event) => { event.preventDefault(); event.stopPropagation(); onRemove(); }}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            {t(language, "Remove journey", "Ta bort journey")}
+          </Button>
         </div>
       </summary>
 

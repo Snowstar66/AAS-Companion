@@ -547,7 +547,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
               <input name="journeyContextId" type="hidden" value={context.id} />
               <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
-              <Button disabled={journeyContextHasBlockingValidation(validations[context.id])} type="submit" variant="secondary">
+              <Button className="h-10 rounded-full px-4" disabled={journeyContextHasBlockingValidation(validations[context.id])} type="submit" variant="secondary">
                 {t(language, "Analyze coverage", "Analysera täckning")}
               </Button>
             </form>
