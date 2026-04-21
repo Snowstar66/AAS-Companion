@@ -83,6 +83,10 @@ function lowerFirst(value: string) {
   return trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
 }
 
+function stripTrailingPeriod(value: string) {
+  return value.trim().replace(/[.!?]+$/g, "");
+}
+
 function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
@@ -231,6 +235,27 @@ function cleanCoverageNote(value: string | undefined) {
   return value.replace(/^AI-generated recommendation scaffold based on Journey text overlap with current Epics and Story Ideas\.\s*/i, "").trim() || value;
 }
 
+function normalizeGoalPhrase(value: string) {
+  const trimmed = stripTrailingPeriod(value);
+  if (!trimmed) return "";
+
+  return trimmed
+    .replace(/^huvudaktören vill\s+/i, "")
+    .replace(/^aktören vill\s+/i, "")
+    .replace(/^jag vill\s+/i, "")
+    .replace(/^vill\s+/i, "");
+}
+
+function normalizeTriggerPhrase(value: string) {
+  const trimmed = stripTrailingPeriod(value);
+  if (!trimmed) return "";
+
+  return trimmed
+    .replace(/^journeyn börjar när\s+/i, "")
+    .replace(/^börjar när\s+/i, "")
+    .replace(/^när\s+/i, "");
+}
+
 function CoverageSupportText({ labels }: { labels: string[] }) {
   if (labels.length === 0) return null;
   return (
@@ -244,7 +269,13 @@ function CoverageSupportText({ labels }: { labels: string[] }) {
   );
 }
 
-function InlineAiSuggestion(props: { title: string; text: string; onApply: () => void; onDismiss: () => void }) {
+function InlineAiSuggestion(props: {
+  title: string;
+  text: string;
+  targetLabel: string;
+  onApply: () => void;
+  onDismiss: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   if (!props.text.trim()) return null;
 
@@ -254,11 +285,14 @@ function InlineAiSuggestion(props: { title: string; text: string; onApply: () =>
         <Sparkles className="mt-0.5 h-4 w-4 text-sky-900" />
         <div className="space-y-2">
           <p className="font-medium text-foreground">{props.title}</p>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Om du använder förslaget skrivs det direkt in i fältet <span className="font-medium text-foreground">{props.targetLabel}</span> i redigeringen nedanför.
+          </p>
           <p className="leading-6 text-foreground">{props.text}</p>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button onClick={props.onApply} size="sm" type="button">Använd förslag</Button>
+        <Button onClick={props.onApply} size="sm" type="button">Använd i {props.targetLabel.toLowerCase()}</Button>
         <Button
           onClick={async () => {
             await navigator.clipboard.writeText(props.text);
@@ -294,13 +328,16 @@ function InlineAiCoreSuggestion(props: { suggestion: JourneyCoreSuggestion; onAp
         <Sparkles className="mt-0.5 h-4 w-4 text-sky-900" />
         <div className="space-y-3">
           <p className="font-medium text-foreground">AI-förslag för titel, mål och trigger</p>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Om du använder förslaget uppdateras fälten <span className="font-medium text-foreground">Titel</span>, <span className="font-medium text-foreground">Mål</span> och <span className="font-medium text-foreground">Trigger</span> direkt i redigeringen nedanför.
+          </p>
           {props.suggestion.title ? <div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Titel</p><p className="mt-1 leading-6 text-foreground">{props.suggestion.title}</p></div> : null}
           {props.suggestion.goal ? <div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Mål</p><p className="mt-1 leading-6 text-foreground">{props.suggestion.goal}</p></div> : null}
           {props.suggestion.trigger ? <div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Trigger</p><p className="mt-1 leading-6 text-foreground">{props.suggestion.trigger}</p></div> : null}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button onClick={props.onApply} size="sm" type="button">Använd i kortet</Button>
+        <Button onClick={props.onApply} size="sm" type="button">Använd i redigeringen</Button>
         <Button
           onClick={async () => {
             await navigator.clipboard.writeText(copyText);
@@ -345,6 +382,9 @@ function InlineAiFirstDraftSuggestion(props: {
     <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
       <p className="font-medium text-foreground">AI-sammanfattning av journeyn</p>
       <p className="mt-1 text-sm text-muted-foreground">Det här är den sammanfattade vyn av journeyn. Här ser du riktning, friktion, önskat stöd, breda steg och sannolika kopplingar på ett ställe.</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+        När du väljer <span className="font-medium text-foreground">Använd i redigeringen</span> fylls fälten <span className="font-medium text-foreground">Nuläge</span>, <span className="font-medium text-foreground">Önskat läge</span>, <span className="font-medium text-foreground">Problem</span>, <span className="font-medium text-foreground">Önskat stöd</span> och <span className="font-medium text-foreground">Breda steg</span> i redigeringen nedanför.
+      </p>
       <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-3 text-sm leading-6 text-foreground">
         {props.suggestion.summary}
       </div>
@@ -429,7 +469,7 @@ function InlineAiFirstDraftSuggestion(props: {
         </div>
       ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Använd i kortet"}</Button>
+        <Button onClick={props.onApply} size="sm" type="button">{props.applyLabel ?? "Använd i redigeringen"}</Button>
         <Button
           onClick={async () => {
             await navigator.clipboard.writeText(copyText);
@@ -569,15 +609,16 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   ).slice(0, 3);
 
   function buildGoalSuggestion() {
-    const normalized = ensurePeriod(toSentenceCase(journey.goal || ""));
+    const normalized = normalizeGoalPhrase(journey.goal || "");
     if (!normalized) return "";
-    return /\baktören\b/i.test(normalized) ? normalized : `Huvudaktören vill ${lowerFirst(normalized)}`;
+    const actor = journey.primaryActor.trim();
+    return ensurePeriod(actor ? `${actor} vill ${lowerFirst(normalized)}` : `Aktören vill ${lowerFirst(normalized)}`);
   }
 
   function buildTriggerSuggestion() {
-    const normalized = ensurePeriod(toSentenceCase(journey.trigger || ""));
+    const normalized = normalizeTriggerPhrase(journey.trigger || "");
     if (!normalized) return "";
-    return /^journeyn börjar när/i.test(normalized) ? normalized : `Journeyn börjar när ${lowerFirst(normalized)}`;
+    return ensurePeriod(`Journeyn börjar när ${lowerFirst(normalized)}`);
   }
 
   function buildCoreSuggestion() {
@@ -590,7 +631,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     if (!hasText(journey.primaryActor) || !hasText(journey.trigger)) return "";
     const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
     return inspiration
-      ? `I dag börjar ${journey.primaryActor.toLowerCase()} ofta när ${lowerFirst(journey.trigger)}, men flödet blir lätt fragmenterat. Det märks särskilt där stödet ännu inte riktigt lever upp till riktningar som ${lowerFirst(inspiration)}`
+      ? ensurePeriod(`I dag börjar ${journey.primaryActor.toLowerCase()} ofta när ${lowerFirst(journey.trigger)}, men flödet blir lätt fragmenterat. Det märks särskilt där stödet ännu inte riktigt lever upp till riktningar som ${lowerFirst(inspiration)}`)
       : `I dag börjar ${journey.primaryActor.toLowerCase()} ofta när ${lowerFirst(journey.trigger)}, men flödet blir lätt fragmenterat av manuell samordning, begränsad överblick eller oklara överlämningar.`;
   }
 
@@ -600,15 +641,15 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     if (!hasText(journey.primaryActor) || !hasText(journey.goal)) return "";
     const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
     return inspiration
-      ? `I önskat läge kan ${journey.primaryActor.toLowerCase()} ${lowerFirst(journey.goal)}, med tydligare status och stöd som bättre speglar riktningar som ${lowerFirst(inspiration)}`
+      ? ensurePeriod(`I önskat läge kan ${journey.primaryActor.toLowerCase()} ${lowerFirst(normalizeGoalPhrase(journey.goal))}, med tydligare status och stöd som bättre speglar riktningar som ${lowerFirst(inspiration)}`)
       : `I önskat läge kan ${journey.primaryActor.toLowerCase()} ${lowerFirst(journey.goal)}, med tydligare status, färre manuella avbrott och smidigare beslut.`;
   }
 
   function createFirstDraftSuggestion() {
     if (!canBuildJourneySummary) return null;
     const actor = journey.primaryActor.trim();
-    const goal = journey.goal.trim();
-    const trigger = journey.trigger.trim();
+    const goal = normalizeGoalPhrase(journey.goal.trim());
+    const trigger = normalizeTriggerPhrase(journey.trigger.trim());
     const title = normalizeJourneyTitle(journey.title) || "journeyn";
     const relatedEpicLabels = uniqueLabels(relevantEpicOptions.map((option) => option.label));
     const relatedStoryIdeaLabels = uniqueLabels(relevantStoryIdeaOptions.map((option) => option.label));
@@ -733,6 +774,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   desiredSupport: journey.desiredSupport?.length ? journey.desiredSupport : journeyBrief.desiredSupport,
                   steps: journey.steps.length ? journey.steps : journeyBrief.steps
                 });
+                setShowEditor(true);
               }}
               onDismiss={() => setShowEditor((current) => !current)}
               suggestion={journeyBrief}
@@ -762,6 +804,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                     goal: coreSuggestion.goal || journey.goal,
                     trigger: coreSuggestion.trigger || journey.trigger
                   });
+                  setShowEditor(true);
                   setCoreSuggestion(null);
                 }}
                 onDismiss={() => setCoreSuggestion(null)}
@@ -772,9 +815,11 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
               <InlineAiSuggestion
                 onApply={() => {
                   onChange({ ...journey, currentState: currentStateSuggestion });
+                  setShowEditor(true);
                   setCurrentStateSuggestion("");
                 }}
                 onDismiss={() => setCurrentStateSuggestion("")}
+                targetLabel="Nuläge"
                 text={currentStateSuggestion}
                 title="AI-förslag för nuläge"
               />
@@ -783,9 +828,11 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
               <InlineAiSuggestion
                 onApply={() => {
                   onChange({ ...journey, desiredFutureState: desiredFutureStateSuggestion });
+                  setShowEditor(true);
                   setDesiredFutureStateSuggestion("");
                 }}
                 onDismiss={() => setDesiredFutureStateSuggestion("")}
+                targetLabel="Önskat läge"
                 text={desiredFutureStateSuggestion}
                 title="AI-förslag för önskat läge"
               />
@@ -799,7 +846,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
               <p className="font-medium text-foreground">{journeyBrief ? "Redigera journey" : "Fyll i journey"}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {journeyBrief
-                  ? "Uppdatera texten direkt här. Sammanfattningen ovan speglar sedan journeyns riktning och detaljer."
+                  ? "Uppdatera texten direkt här. När du använder ett AI-förslag fylls motsvarande fält här, och sammanfattningen ovan speglar sedan journeyns riktning och detaljer."
                   : "Fyll i grunderna först. När titel, huvudaktör, mål och trigger finns på plats får du den sammanfattade vyn ovan."}
               </p>
             </div>
