@@ -52,6 +52,22 @@ function whyThisMatters(
   }
 }
 
+function recommendedWhy(
+  group: RefinementPreferenceCatalogEntry["group"],
+  option: "YES" | "NO" | "N/A"
+) {
+  switch (option) {
+    case "YES":
+      return `Rekommenderat eftersom det normalt ger mer konsekvent ${downstreamEffectLabel(group)}.`;
+    case "NO":
+      return `Rekommenderat eftersom det normalt lämnar mer frihet i ${downstreamEffectLabel(group)}.`;
+    case "N/A":
+      return `Rekommenderat eftersom det normalt är bäst att låta downstream AI avgöra detta i ${downstreamEffectLabel(group)}.`;
+    default:
+      return "";
+  }
+}
+
 export function DownstreamAiInstructionRow({
   preference,
   catalogEntry,
@@ -70,9 +86,14 @@ export function DownstreamAiInstructionRow({
             <p className="text-base font-semibold text-foreground">{catalogEntry.id} · {preference.title}</p>
             <p className="text-sm leading-6 text-muted-foreground">{preference.description ?? catalogEntry.description}</p>
           </div>
-          <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-            Recommended: {recommendedValue}
-          </span>
+          <div className="space-y-2 xl:max-w-xs xl:text-right">
+            <span className="inline-flex rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
+              Recommended: {recommendedValue}
+            </span>
+            <p className="text-xs leading-5 text-muted-foreground">
+              {recommendedWhy(catalogEntry.group, recommendedValue)}
+            </p>
+          </div>
         </div>
 
         <div className="grid gap-3 lg:grid-cols-3">
