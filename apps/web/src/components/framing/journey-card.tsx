@@ -30,11 +30,14 @@ type JourneyCoreSuggestion = {
 };
 
 type JourneyFirstDraftSuggestion = {
+  summary: string;
   currentState: string;
   desiredFutureState: string;
   painPoints: string[];
   desiredSupport: string[];
   steps: Journey["steps"];
+  relatedEpicLabels: string[];
+  relatedStoryIdeaLabels: string[];
 };
 
 function FieldHint({ children }: { children: string }) {
@@ -90,6 +93,10 @@ function normalizeJourneyTitle(value: string) {
 
 function findReferenceLabels(ids: string[] | undefined, options: JourneyReferenceOption[]) {
   return (ids ?? []).map((id) => options.find((option) => option.id === id)?.label ?? id);
+}
+
+function uniqueLabels(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
 }
 
 function cleanCoverageNote(value: string | undefined) {
@@ -205,6 +212,9 @@ function InlineAiFirstDraftSuggestion(props: { suggestion: JourneyFirstDraftSugg
     <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
       <p className="font-medium text-foreground">AI-utkast för resten av journeyn</p>
       <p className="mt-1 text-sm text-muted-foreground">Det här förslaget fyller i resten av kortet direkt här och i frivillig detalj om du väljer att använda det.</p>
+      <div className="mt-3 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-3 text-sm leading-6 text-foreground">
+        {props.suggestion.summary}
+      </div>
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Nuläge</p>
@@ -233,6 +243,34 @@ function InlineAiFirstDraftSuggestion(props: { suggestion: JourneyFirstDraftSugg
           ))}
         </ul>
       </div>
+      {props.suggestion.relatedEpicLabels.length > 0 || props.suggestion.relatedStoryIdeaLabels.length > 0 ? (
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {props.suggestion.relatedEpicLabels.length > 0 ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Troliga Epic-kopplingar</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {props.suggestion.relatedEpicLabels.map((label) => (
+                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800" key={label}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {props.suggestion.relatedStoryIdeaLabels.length > 0 ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Troliga Story Idea-kopplingar</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {props.suggestion.relatedStoryIdeaLabels.map((label) => (
+                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800" key={label}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <Button onClick={props.onApply} size="sm" type="button">Använd i kortet</Button>
         <Button
@@ -331,7 +369,11 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     setFirstDraftSuggestion(null);
   }, [journey.id]);
 
-  const canGenerateFirstDraft = hasText(journey.title) && hasText(journey.primaryActor) && hasText(journey.goal) && hasText(journey.trigger) && (!hasText(journey.currentState) || !hasText(journey.desiredFutureState) || (journey.painPoints?.length ?? 0) === 0 || (journey.desiredSupport?.length ?? 0) === 0 || journey.steps.length === 0);
+  const canBuildJourneySummary =
+    hasText(journey.title) &&
+    hasText(journey.primaryActor) &&
+    hasText(journey.goal) &&
+    hasText(journey.trigger);
 
   function buildGoalSuggestion() {
     const normalized = ensurePeriod(toSentenceCase(journey.goal || ""));
@@ -364,21 +406,60 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   }
 
   function createFirstDraftSuggestion() {
-    if (!canGenerateFirstDraft) return null;
+    if (!canBuildJourneySummary) return null;
     const actor = journey.primaryActor.trim();
     const goal = journey.goal.trim();
     const trigger = journey.trigger.trim();
     const title = normalizeJourneyTitle(journey.title) || "journeyn";
+    const relatedEpicLabels = uniqueLabels([
+      ...findReferenceLabels(journey.linkedEpicIds, availableEpics),
+      ...suggestedEpicLabels
+    ]);
+    const relatedStoryIdeaLabels = uniqueLabels([
+      ...findReferenceLabels(journey.linkedStoryIdeaIds, availableStoryIdeas),
+      ...suggestedStoryIdeaLabels
+    ]);
+    const currentState = hasText(journey.currentState) ? ensurePeriod(toSentenceCase(journey.currentState ?? "")) : buildCurrentStateSuggestion();
+    const desiredFutureState = hasText(journey.desiredFutureState)
+      ? ensurePeriod(toSentenceCase(journey.desiredFutureState ?? ""))
+      : buildDesiredFutureStateSuggestion();
+    const painPoints =
+      (journey.painPoints?.length ?? 0) > 0
+        ? journey.painPoints ?? []
+        : [
+            `Flödet kan starta inkonsekvent när ${lowerFirst(trigger)}.`,
+            "Status, ansvar eller nästa steg kan bli oklart under journeyn.",
+            `Manuell samordning gör det svårare att ${lowerFirst(goal)} på ett förutsägbart sätt.`
+          ];
+    const desiredSupport =
+      (journey.desiredSupport?.length ?? 0) > 0
+        ? journey.desiredSupport ?? []
+        : [
+            "Tydlig ingång i flödet med synlig trigger och ansvar.",
+            "Stödd framdrift med bättre överblick över status, överlämningar och beslut.",
+            `Konsekvent stöd i avslutet så att det blir enklare att ${lowerFirst(goal)} och verifiera resultatet.`
+          ];
+    const steps =
+      journey.steps.length > 0
+        ? journey.steps
+        : [
+            { id: `step-${journey.id}-1`, title: `Starta ${title}`, actor, description: `${actor} uppfattar triggern och förstår varför journeyn behöver starta.`, currentPain: "Ingången i flödet kan vara fragmenterad eller oklar.", desiredSupport: "Triggern och nästa steg bör vara tydliga direkt.", decisionPoint: false },
+            { id: `step-${journey.id}-2`, title: `Driv ${title} framåt`, actor, description: `${actor} arbetar sig genom huvudflödet mot att ${lowerFirst(goal)} samtidigt som nödvändiga överlämningar eller kontroller hanteras.`, currentPain: "Viktiga framsteg kan bero på manuell samordning eller dold status.", desiredSupport: "Flödet bör tydligt stötta framdrift, beslut och överlämningar.", decisionPoint: true },
+            { id: `step-${journey.id}-3`, title: `Avsluta ${title}`, actor, description: `${actor} bekräftar utfallet, avslutar journeyn och gör resultatet synligt för rätt personer.`, currentPain: "Avslut och uppföljning kan vara inkonsekventa eller svåra att verifiera.", desiredSupport: "Avslut bör vara tydligt, synligt och enkelt att lämna över eller följa upp.", decisionPoint: false }
+          ];
+
     return {
-      currentState: buildCurrentStateSuggestion(),
-      desiredFutureState: buildDesiredFutureStateSuggestion(),
-      painPoints: [`Flödet kan starta inkonsekvent när ${lowerFirst(trigger)}.`, "Status, ansvar eller nästa steg kan bli oklart under journeyn.", `Manuell samordning gör det svårare att ${lowerFirst(goal)} på ett förutsägbart sätt.`],
-      desiredSupport: ["Tydlig ingång i flödet med synlig trigger och ansvar.", "Stödd framdrift med bättre överblick över status, överlämningar och beslut.", `Konsekvent stöd i avslutet så att det blir enklare att ${lowerFirst(goal)} och verifiera resultatet.`],
-      steps: journey.steps.length > 0 ? journey.steps : [
-        { id: `step-${journey.id}-1`, title: `Starta ${title}`, actor, description: `${actor} uppfattar triggern och förstår varför journeyn behöver starta.`, currentPain: "Ingången i flödet kan vara fragmenterad eller oklar.", desiredSupport: "Triggern och nästa steg bör vara tydliga direkt.", decisionPoint: false },
-        { id: `step-${journey.id}-2`, title: `Driv ${title} framåt`, actor, description: `${actor} arbetar sig genom huvudflödet mot att ${lowerFirst(goal)} samtidigt som nödvändiga överlämningar eller kontroller hanteras.`, currentPain: "Viktiga framsteg kan bero på manuell samordning eller dold status.", desiredSupport: "Flödet bör tydligt stötta framdrift, beslut och överlämningar.", decisionPoint: true },
-        { id: `step-${journey.id}-3`, title: `Avsluta ${title}`, actor, description: `${actor} bekräftar utfallet, avslutar journeyn och gör resultatet synligt för rätt personer.`, currentPain: "Avslut och uppföljning kan vara inkonsekventa eller svåra att verifiera.", desiredSupport: "Avslut bör vara tydligt, synligt och enkelt att lämna över eller följa upp.", decisionPoint: false }
-      ]
+      summary:
+        relatedEpicLabels.length > 0 || relatedStoryIdeaLabels.length > 0
+          ? `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör både nulägets friktion och vilket stöd som behövs framåt. Den ser dessutom ut att hänga ihop med ${relatedEpicLabels.length > 0 ? `Epics som ${relatedEpicLabels.slice(0, 2).join(" och ")}` : `Story Ideas som ${relatedStoryIdeaLabels.slice(0, 2).join(" och ")}`}.`
+          : `${actor} behöver kunna ${lowerFirst(goal)} när ${lowerFirst(trigger)}. Den här journeyn tydliggör nulägets friktion, vilket framtida stöd som behövs och vilka breda steg som bär värdet i business caset.`,
+      currentState,
+      desiredFutureState,
+      painPoints,
+      desiredSupport,
+      steps,
+      relatedEpicLabels,
+      relatedStoryIdeaLabels
     } satisfies JourneyFirstDraftSuggestion;
   }
   return (
@@ -468,14 +549,22 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   <Button onClick={() => setCoreSuggestion(buildCoreSuggestion())} size="sm" type="button" variant="secondary">Förtydliga kärntext</Button>
                   <Button onClick={() => setCurrentStateSuggestion(buildCurrentStateSuggestion())} size="sm" type="button" variant="secondary">{hasText(journey.currentState) ? "Förbättra nuläge" : "Skissa nuläge"}</Button>
                   <Button onClick={() => setDesiredFutureStateSuggestion(buildDesiredFutureStateSuggestion())} size="sm" type="button" variant="secondary">{hasText(journey.desiredFutureState) ? "Förbättra önskat läge" : "Skissa önskat läge"}</Button>
-                  {canGenerateFirstDraft ? <Button onClick={() => setFirstDraftSuggestion(createFirstDraftSuggestion())} size="sm" type="button" variant="secondary">Generera första utkast</Button> : null}
+                  {canBuildJourneySummary ? (
+                    <Button onClick={() => setFirstDraftSuggestion(createFirstDraftSuggestion())} size="sm" type="button" variant="secondary">
+                      {firstDraftSuggestion ? "Uppdatera AI-sammanfattning" : "Skapa AI-sammanfattning"}
+                    </Button>
+                  ) : null}
                 </div>
 
                 {coreSuggestion ? <InlineAiCoreSuggestion onApply={() => { onChange({ ...journey, title: coreSuggestion.title || journey.title, goal: coreSuggestion.goal || journey.goal, trigger: coreSuggestion.trigger || journey.trigger }); setCoreSuggestion(null); }} onDismiss={() => setCoreSuggestion(null)} suggestion={coreSuggestion} /> : null}
                 {currentStateSuggestion ? <InlineAiSuggestion onApply={() => { onChange({ ...journey, currentState: currentStateSuggestion }); setCurrentStateSuggestion(""); }} onDismiss={() => setCurrentStateSuggestion("")} text={currentStateSuggestion} title="AI-förslag för nuläge" /> : null}
                 {desiredFutureStateSuggestion ? <InlineAiSuggestion onApply={() => { onChange({ ...journey, desiredFutureState: desiredFutureStateSuggestion }); setDesiredFutureStateSuggestion(""); }} onDismiss={() => setDesiredFutureStateSuggestion("")} text={desiredFutureStateSuggestion} title="AI-förslag för önskat läge" /> : null}
                 {firstDraftSuggestion ? <InlineAiFirstDraftSuggestion onApply={() => { onChange({ ...journey, currentState: firstDraftSuggestion.currentState, desiredFutureState: firstDraftSuggestion.desiredFutureState, painPoints: journey.painPoints?.length ? journey.painPoints : firstDraftSuggestion.painPoints, desiredSupport: journey.desiredSupport?.length ? journey.desiredSupport : firstDraftSuggestion.desiredSupport, steps: journey.steps.length ? journey.steps : firstDraftSuggestion.steps }); setFirstDraftSuggestion(null); }} onDismiss={() => setFirstDraftSuggestion(null)} suggestion={firstDraftSuggestion} /> : null}
-                {!coreSuggestion && !currentStateSuggestion && !desiredFutureStateSuggestion && !firstDraftSuggestion ? <div className="rounded-2xl border border-border/70 bg-white px-4 py-4 text-sm text-muted-foreground">Välj en AI-hjälp ovan. Svaret visas direkt här i samma kort, precis under texten du redan har skrivit.</div> : null}
+                {!coreSuggestion && !currentStateSuggestion && !desiredFutureStateSuggestion && !firstDraftSuggestion ? (
+                  <div className="rounded-2xl border border-border/70 bg-white px-4 py-4 text-sm text-muted-foreground">
+                    Välj en AI-hjälp ovan. Om du vill få den tydliga överblicken tillbaka ska du börja med <span className="font-medium text-foreground">Skapa AI-sammanfattning</span>.
+                  </div>
+                ) : null}
               </>
             )}
           </div>
