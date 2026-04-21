@@ -17,6 +17,41 @@ function optionTone(active: boolean) {
     : "border-border/70 bg-background text-muted-foreground";
 }
 
+function downstreamEffectLabel(group: RefinementPreferenceCatalogEntry["group"]) {
+  switch (group) {
+    case "epic":
+      return "senare Epic-förfining";
+    case "story":
+      return "senare Story Idea-förfining";
+    case "journey":
+      return "hur Journey Context används längre nedströms";
+    case "design":
+      return "senare designbeslut";
+    case "build":
+      return "senare build- och leveransarbete";
+    default:
+      return "senare downstream AI-arbete";
+  }
+}
+
+function whyThisMatters(
+  group: RefinementPreferenceCatalogEntry["group"],
+  option: "YES" | "NO" | "N/A"
+) {
+  const effectArea = downstreamEffectLabel(group);
+
+  switch (option) {
+    case "YES":
+      return `Leder till att downstream AI behandlar detta som en tydlig styrsignal i ${effectArea}. Det ger mer konsekventa beslut, men mindre frihet att avvika.`;
+    case "NO":
+      return `Leder till att downstream AI inte behöver prioritera detta i ${effectArea}. Det ger större frihet, men också större risk för mindre konsekvent struktur.`;
+    case "N/A":
+      return `Leder till att downstream AI avgör detta från fall till fall i ${effectArea}. Det ger flexibilitet, men gör utfallet mindre förutsägbart.`;
+    default:
+      return "";
+  }
+}
+
 export function DownstreamAiInstructionRow({
   preference,
   catalogEntry,
@@ -66,6 +101,9 @@ export function DownstreamAiInstructionRow({
                 />
               </span>
               <span className="leading-6">{catalogEntry.meaning[option]}</span>
+              <span className="text-xs leading-5 text-muted-foreground">
+                Varför det spelar roll: {whyThisMatters(catalogEntry.group, option)}
+              </span>
             </label>
           ))}
         </div>
