@@ -129,7 +129,7 @@ export function DirectionSeedWorkspace({
     ideaBlockers.length > 0
       ? t("Complete the Story Idea", "Fardigstall storyiden")
       : outcome.status === "active"
-        ? t("Create or refine Delivery Stories", "Skapa eller forfina Delivery Stories")
+        ? t("Guide later refinement", "Styr senare forfining")
         : t("Review in Framing", "Granska i Framing");
   const nextActionDetail =
     ideaBlockers.length > 0
@@ -139,8 +139,8 @@ export function DirectionSeedWorkspace({
         )
       : outcome.status === "active"
         ? t(
-            "This Story Idea already sits inside approved Framing and can now guide design and delivery decomposition.",
-            "Den här storyidén ligger redan i godkänd Framing och kan nu styra design och vidare nedbrytning mot leverans."
+            "This Story Idea already sits inside approved Framing and can now guide design and downstream AI refinement.",
+            "Den har storyiden ligger redan i godkand Framing och kan nu styra design och downstream AI-forfining."
           )
         : t(
             "This Story Idea is complete enough for Framing review and Tollgate conversation.",
@@ -282,10 +282,10 @@ export function DirectionSeedWorkspace({
                 icon={<ArrowRight className="h-4 w-4" />}
                 label={
                   derivedDeliveryStories.length > 0
-                    ? t("Create another Delivery Story", "Skapa en till Delivery Story")
-                    : t("Create Delivery Story", "Skapa Delivery Story")
+                    ? t("Create another linked delivery record", "Skapa en till lankad leveranspost")
+                    : t("Create linked delivery record", "Skapa lankad leveranspost")
                 }
-                pendingLabel={t("Creating Delivery Story...", "Skapar Delivery Story...")}
+                pendingLabel={t("Creating linked delivery record...", "Skapar lankad leveranspost...")}
                 variant="secondary"
               />
             ) : null}
@@ -301,11 +301,12 @@ export function DirectionSeedWorkspace({
 
       <div className="space-y-6">
         <SecondaryPanel
+          defaultOpen={false}
           description={t(
-            "See how this Story Idea is being realized in delivery without turning the framing view into delivery workflow.",
-            "Se hur storyiden realiseras i leverans utan att framing-vyn forvandlas till leveransworkflow."
+            "See what later design or build work has returned to this Story Idea as traceable evidence, without turning the framing view into delivery workflow.",
+            "Se vad senare design- eller buildarbete har fort tillbaka till den har storyiden som sparbar evidens, utan att gora framing-vyn till leveransworkflow."
           )}
-          title={t("Delivery realization", "Leveransrealisering")}
+          title={t("Returned delivery evidence", "Aterford leveransevidens")}
         >
           {derivedDeliveryStories.length > 0 ? (
             <div className="space-y-3">
@@ -313,7 +314,7 @@ export function DirectionSeedWorkspace({
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/45 p-4 text-sm" key={deliveryStory.id}>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Delivery Story", "Delivery Story")}</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Delivery evidence", "Leveransevidens")}</p>
                       <p className="mt-2 font-semibold text-foreground">
                         {deliveryStory.key} {deliveryStory.title}
                       </p>

@@ -25,21 +25,21 @@ export function getReadinessFieldStatus(story: {
       label: "Acceptance criteria",
       href: "#story-acceptance-criteria",
       complete: story.acceptanceCriteria.length > 0,
-      help: "Optional in Framing. Add at least one checkable outcome if this later becomes a Delivery Story."
+      help: "Optional in Framing. Add this only when returned delivery evidence needs a checkable outcome recorded back here."
     },
     {
       key: "test-definition",
       label: "Test Definition",
       href: "#story-test-definition",
       complete: Boolean(story.testDefinition?.trim()),
-      help: "Optional in Framing. Describe how the Story will be verified when later delivery work is prepared."
+      help: "Optional in Framing. Use this only when later delivery evidence needs a verification path captured back here."
     },
     {
       key: "definition-of-done",
       label: "Definition of Done",
       href: "#story-definition-of-done",
       complete: story.definitionOfDone.length > 0,
-      help: "Optional in Framing. List the minimum conditions for done when this later becomes delivery work."
+      help: "Optional in Framing. Capture this only if later delivery evidence needs minimum done conditions linked back here."
     },
     {
       key: "ai-level",

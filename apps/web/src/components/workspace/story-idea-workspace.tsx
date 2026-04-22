@@ -246,11 +246,11 @@ export function StoryIdeaWorkspace({
           <SecondaryPanel
             defaultOpen={false}
             description={t(
-              "These delivery details stay optional in Framing. Fill them in when this Story Idea is later promoted or returned through the feedback loop as a Delivery Story.",
-              "De har leveransdetaljerna ar valfria i Framing. Fyll i dem nar Story Idean senare promotas eller kommer tillbaka via feedback-loopen som en Delivery Story."
+              "These fields are not part of core Framing. Use them only when later delivery evidence needs to be traced back to this Story Idea.",
+              "De har falten ar inte en del av karna i Framing. Anvand dem bara nar senare leveransevidens behover sparas tillbaka till den har Story Idean."
             )}
             id="story-handoff-inputs"
-            title={t("Delivery details later", "Leveransdetaljer senare")}
+            title={t("Returned delivery traceability", "Aterford leveranssparbarhet")}
           >
             <div className="grid gap-4">
               <label className="space-y-2" id="story-acceptance-criteria">
@@ -349,42 +349,44 @@ export function StoryIdeaWorkspace({
             <Button asChild className="gap-2" variant="secondary">
               <Link href={`/framing?outcomeId=${story.outcomeId}`}>{t("Open current Framing", "Öppna aktuell Framing")}</Link>
             </Button>
-            {deliveryViewHref ? (
-              <Button asChild className="gap-2" variant="secondary">
-                <Link href={deliveryViewHref}>{t("Open Delivery Story view", "Öppna Delivery Story-vy")}</Link>
-              </Button>
-            ) : null}
           </div>
         </form>
         <SecondaryPanel
           defaultOpen={false}
           description={t(
-            "See what later design or build work has refined from this Story Idea without turning the framing view into a delivery workflow.",
-            "Se vad senare design- eller buildarbete har forfinat fran den har Story Idean utan att gora framingvyn till ett leveransflode."
+            "See what later design or build work has returned to this Story Idea as traceable evidence, without turning the framing view into a delivery workflow.",
+            "Se vad senare design- eller buildarbete har fort tillbaka till den har Story Idean som sparbar evidens, utan att gora framingvyn till ett leveransflode."
           )}
-          title={t("Delivery realization", "Leveransrealisering")}
+          title={t("Returned delivery evidence", "Aterford leveransevidens")}
         >
+          {deliveryViewHref ? (
+            <div className="mb-4">
+              <Button asChild className="gap-2" variant="secondary">
+                <Link href={deliveryViewHref}>{t("Open linked delivery evidence", "Oppna lankad leveransevidens")}</Link>
+              </Button>
+            </div>
+          ) : null}
           {derivedDeliveryStories.length > 0 ? (
             <div className="space-y-3">
               {derivedDeliveryStories.map((deliveryStory) => (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/45 p-4 text-sm" key={deliveryStory.id}>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Delivery Story", "Leveransstory")}</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("Delivery evidence", "Leveransevidens")}</p>
                       <p className="mt-2 font-semibold text-foreground">
                         {deliveryStory.key} {deliveryStory.title}
                       </p>
                       <p className="mt-2 leading-6 text-muted-foreground">
                         {deliveryStory.valueIntent?.trim() ||
                           t(
-                            "This Delivery Story still needs a clearer value intent.",
-                            "Den här Delivery Storyn behöver fortfarande ett tydligare value intent."
+                            "This returned delivery record still needs a clearer value intent.",
+                            "Den har aterforda leveransposten behover fortfarande ett tydligare value intent."
                           )}
                       </p>
                     </div>
                     <Button asChild className="gap-2" size="sm" variant="secondary">
                       <Link href={`/stories/${deliveryStory.id}`}>
-                        {t("Open Delivery Story", "Öppna leveransstory")}
+                        {t("Open evidence record", "Oppna evidenspost")}
                         <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -401,7 +403,7 @@ export function StoryIdeaWorkspace({
             </div>
           ) : (
             <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
-              {t("No Delivery Stories are linked to this Story Idea yet.", "Inga Delivery Stories är länkade till den här Story Idean ännu.")}
+              {t("No returned delivery evidence is linked to this Story Idea yet.", "Ingen aterford leveransevidens ar lankad till den har Story Idean an.")}
             </div>
           )}
         </SecondaryPanel>
@@ -442,22 +444,22 @@ export function StoryIdeaWorkspace({
         <SecondaryPanel
           defaultOpen={false}
           description={t(
-            "Delivery review becomes relevant only after later steps create or promote a Delivery Story.",
-            "Leveransgranskning blir först aktiv när Story Idean har blivit en Delivery Story."
+            "These controls matter only if later work brings delivery evidence back here.",
+            "De har kontrollerna blir relevanta forst om senare arbete for tillbaka leveransevidens hit."
           )}
-          title={t("Delivery review later", "Leveransgranskning senare")}
+          title={t("Later delivery context", "Senare leveranskontext")}
         >
           <div className="rounded-2xl border border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">{t("This is still a Story Idea.", "Det här är fortfarande en storyidé.")}</p>
             <p className="mt-2 leading-6">
               {t(
-                "Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review, build readiness and build start controls appear after later steps transform this idea into a Delivery Story and return that evidence here.",
-                "Behåll fokus på Value Intent, Expected Behavior och Epic Alignment. Leveransgranskning, build readiness och build-startkontroller visas först när idén har omvandlats till en Delivery Story."
+                "Keep the focus on Value Intent, Expected Behavior and Epic Alignment. Delivery review and execution controls belong in later tool stacks and only show up here again when traceable evidence comes back.",
+                "Behall fokus pa Value Intent, Expected Behavior och Epic Alignment. Leveransgranskning och exekveringskontroller hor hemma i senare verktygsstackar och visas bara har igen nar sparbar evidens kommer tillbaka."
               )}
             </p>
             {blockers.length > 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">
-                {t("Current future delivery blockers", "Nuvarande framtida leveransblockerare")}: {blockers.join(" ")}
+                {t("Later delivery blockers", "Senare leveransblockerare")}: {blockers.join(" ")}
               </p>
             ) : null}
           </div>

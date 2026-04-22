@@ -204,7 +204,7 @@ describe("Value Spine page", () => {
 
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
-    expect(screen.getByText("Additional Delivery Stories")).toBeDefined();
+    expect(screen.getByText("Additional feedback-loop evidence")).toBeDefined();
     expect(screen.getByText("Extra delivery scope")).toBeDefined();
     expect(screen.getByText(/Additional in this Epic/i)).toBeDefined();
   });

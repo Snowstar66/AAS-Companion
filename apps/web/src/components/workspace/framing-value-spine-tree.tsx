@@ -206,7 +206,7 @@ function DeliveryStoryChildRow({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Delivery Story", "Delivery Story")}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Delivery evidence", "Leveransevidens")}</p>
             <h6 className="text-sm font-semibold text-foreground">{story.key}</h6>
             <span
               className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
@@ -221,7 +221,7 @@ function DeliveryStoryChildRow({
           <p className="mt-2 text-sm font-semibold text-foreground">{story.title}</p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">{t(language, "Value intent:", "Value intent:")}</span>{" "}
-            {story.valueIntent?.trim() || t(language, "This Delivery Story still needs a clearer value intent.", "Den här delivery storyn behöver fortfarande ett tydligare value intent.")}
+            {story.valueIntent?.trim() || t(language, "This returned delivery record still needs a clearer value intent.", "Den har aterforda leveransposten behover fortfarande ett tydligare value intent.")}
           </p>
           <p className="mt-2 text-sm text-foreground">
             <span className="font-medium">{t(language, "Delivery description:", "Leveransbeskrivning:")}</span> {deliveryDescription}
@@ -240,7 +240,7 @@ function DeliveryStoryChildRow({
         <div className="flex flex-wrap gap-2">
           <Button asChild size="sm" variant="secondary">
             <Link href={story.href}>
-              {t(language, "Open Delivery Story", "Öppna Delivery Story")}
+              {t(language, "Open evidence record", "Oppna evidenspost")}
               <ArrowRight className="ml-2 h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -421,7 +421,7 @@ function DirectionSeedRow({
             </span>
           </div>
           <p className="text-sm leading-6 text-muted-foreground">
-            {t(language, "These Delivery Stories realize this Story Idea in design and build.", "De här Delivery Stories realiserar den här Story Idean i design och build.")}
+            {t(language, "These linked records show what later design or build work refined from this Story Idea.", "De har lankade posterna visar vad senare design- eller buildarbete forfinade fran den har Story Idean.")}
           </p>
           <div className="space-y-3">
             {derivedStories.map((story) => (
@@ -431,7 +431,7 @@ function DirectionSeedRow({
         </div>
       ) : (
         <div className="mt-4 rounded-2xl border border-dashed border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
-          {t(language, "No Delivery Stories have been created from this Story Idea yet.", "Inga Delivery Stories har skapats från den här Story Idean ännu.")}
+          {t(language, "No returned delivery evidence is linked to this Story Idea yet.", "Ingen aterford leveransevidens ar lankad till den har Story Idean an.")}
         </div>
       )}
     </div>
@@ -744,7 +744,7 @@ function EpicRow({
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design and later AI refinement, while Delivery Stories appear later as execution evidence and build objects.", "Story Ideas definierar intent, värde och expected behavior. De vägleder design och senare AI-förfining, medan Delivery Stories dyker upp senare som execution evidence och buildobjekt.")}
+                      {t(language, "Story Ideas define intent, value and expected behavior. They guide design and later AI refinement, while returned delivery evidence stays secondary and traceability-focused.", "Story Ideas definierar intent, varde och expected behavior. De vagleder design och senare AI-forfining, medan aterford leveransevidens ar sekundar och fokuserad pa sparbarhet.")}
                     </p>
                   </div>
                   {storyIdeaCount === 0 ? (
@@ -770,14 +770,14 @@ function EpicRow({
                   <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        {t(language, "Additional Delivery Stories", "Ytterligare Delivery Stories")}
+                        {t(language, "Additional feedback-loop evidence", "Ytterligare feedback-loop-evidens")}
                       </p>
                       <span className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-[11px] font-medium text-amber-900">
                         {additionalDeliveryStories.length}
                       </span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {t(language, "These Delivery Stories belong to the same Epic, but were added during design or delivery rather than directly created from one Story Idea. Keep them as feedback-loop evidence, not as replacements for the original framing.", "De här Delivery Stories hör till samma epic, men lades till under design eller leverans i stället för att skapas direkt från en Story Idea. Behåll dem som feedback-loop-evidens, inte som ersättning för den ursprungliga framingen.")}
+                      {t(language, "These records belong to the same Epic, but were added later during design or delivery. Keep them as feedback-loop evidence, not as replacements for the original framing.", "De har posterna hor till samma epic, men lades till senare under design eller leverans. Behall dem som feedback-loop-evidens, inte som ersattning for den ursprungliga framingen.")}
                     </p>
                     <div className="mt-4 space-y-3">
                       {additionalDeliveryStories.map((story) => (
