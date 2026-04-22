@@ -868,14 +868,11 @@ export function FramingOutcomeSection({
         <form action={saveAction} className="space-y-6">
       <input name="outcomeId" type="hidden" value={outcome.id} />
             <input name="returnPath" type="hidden" value={returnPath} />
-            <Card className="overflow-hidden border-sky-300/80 bg-[linear-gradient(180deg,rgba(239,246,255,0.9),rgba(255,255,255,1))] shadow-[0_18px_44px_-30px_rgba(14,116,144,0.45)]">
-              <CardHeader className="gap-3 border-b border-sky-100/80 bg-white/70">
+            <Card className="overflow-hidden border-sky-300/80 bg-[linear-gradient(180deg,rgba(239,246,255,0.72),rgba(255,255,255,1))] shadow-[0_18px_44px_-30px_rgba(14,116,144,0.45)]">
+              <CardHeader className="gap-3 border-b border-sky-100/80 bg-white/75">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center rounded-full border border-sky-950 bg-sky-950 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-sm">
-                    {language === "sv" ? "Börja här" : "Start here"}
-                  </span>
                   <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">
-                    {language === "sv" ? "Kundens handshake" : "Customer handshake"}
+                    {language === "sv" ? "Framing-handshake" : "Framing handshake"}
                   </span>
                 </div>
                 <CardTitle>{language === "sv" ? "Affärscase" : "Business case"}</CardTitle>
@@ -885,16 +882,16 @@ export function FramingOutcomeSection({
                   </span>
                   <span className="mt-2 block text-sky-900/80">
                     {language === "sv"
-                      ? "Fånga det som måste vara sant innan Framing lämnas vidare till Design och nästa AI-stack."
-                      : "Capture what must be true before Framing is handed off to Design and the next AI stack."}
+                      ? "Fånga det som måste vara sant i framingen innan Framing lämnas vidare till Design och nästa AI-stack."
+                      : "Capture what must be true in the framing before Framing is handed off to Design and the next AI stack."}
                   </span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-5 bg-white/85 xl:grid-cols-2">
+              <CardContent className="grid gap-5 bg-slate-50/82 xl:grid-cols-2">
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Titel" : "Title"}</span>
                   <input
-                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="h-11 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.title}
                     disabled={isArchived}
                     name="title"
@@ -929,7 +926,7 @@ export function FramingOutcomeSection({
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Tidsram" : "Timeframe"}</span>
                   <input
-                    className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="h-11 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.timeframe ?? ""}
                     disabled={isArchived}
                     name="timeframe"
@@ -962,7 +959,7 @@ export function FramingOutcomeSection({
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Problemformulering" : "Problem statement"}</span>
                   <textarea
-                    className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.problemStatement ?? ""}
                     disabled={isArchived}
                     name="problemStatement"
@@ -993,7 +990,7 @@ export function FramingOutcomeSection({
                     validateAction={validateOutcomeStatementAiAction}
                   />
                 </div>
-                <div className="xl:col-span-2 rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <div className="xl:col-span-2 rounded-2xl border border-border/70 bg-white/90 p-4">
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground">
                       {language === "sv" ? "Lösningskontext och constraints" : "Solution context and constraints"}
@@ -1006,7 +1003,7 @@ export function FramingOutcomeSection({
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Lösningskontext" : "Solution context"}</span>
                   <textarea
-                    className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.solutionContext ?? ""}
                     disabled={isArchived}
                     name="solutionContext"
@@ -1021,7 +1018,7 @@ export function FramingOutcomeSection({
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Constraints" : "Constraints"}</span>
                   <textarea
-                    className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.generalConstraints}
                     disabled={isArchived}
                     name="generalSolutionConstraints"
@@ -1038,7 +1035,7 @@ export function FramingOutcomeSection({
                     {language === "sv" ? "UX-principer" : "UX principles"}
                   </span>
                   <textarea
-                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="min-h-24 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.uxPrinciples}
                     disabled={isArchived}
                     name="uxPrinciples"
@@ -1057,7 +1054,7 @@ export function FramingOutcomeSection({
                     {language === "sv" ? "Non-functional requirements" : "Non-functional requirements"}
                   </span>
                   <textarea
-                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="min-h-24 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.nonFunctionalRequirements}
                     disabled={isArchived}
                     name="nonFunctionalRequirements"
@@ -1077,7 +1074,7 @@ export function FramingOutcomeSection({
                     {language === "sv" ? "Ytterligare krav" : "Additional requirements"}
                   </span>
                   <textarea
-                    className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="min-h-24 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.additionalRequirements}
                     disabled={isArchived}
                     name="additionalRequirements"
@@ -1094,7 +1091,7 @@ export function FramingOutcomeSection({
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Datakänslighet" : "Data sensitivity"}</span>
                   <textarea
-                    className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                    className="min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.dataSensitivity ?? ""}
                     disabled={isArchived}
                     name="dataSensitivity"
