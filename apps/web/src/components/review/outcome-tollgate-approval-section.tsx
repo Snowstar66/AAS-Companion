@@ -62,6 +62,11 @@ export async function OutcomeTollgateApprovalSection(props: {
     return (
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">
+              <LocalizedText en="Framing handshake" sv="Framing-handshake" />
+            </span>
+          </div>
           <CardTitle>
             <LocalizedText en="Tollgate follow-up is unavailable" sv="Tollgate-uppfoljning ar inte tillganglig" />
           </CardTitle>

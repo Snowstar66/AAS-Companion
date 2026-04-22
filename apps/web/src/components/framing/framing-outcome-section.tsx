@@ -870,11 +870,6 @@ export function FramingOutcomeSection({
             <input name="returnPath" type="hidden" value={returnPath} />
             <Card className="overflow-hidden border-sky-300/80 bg-[linear-gradient(180deg,rgba(239,246,255,0.72),rgba(255,255,255,1))] shadow-[0_18px_44px_-30px_rgba(14,116,144,0.45)]">
               <CardHeader className="gap-3 border-b border-sky-100/80 bg-white/75">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">
-                    {language === "sv" ? "Framing-handshake" : "Framing handshake"}
-                  </span>
-                </div>
                 <CardTitle>{language === "sv" ? "Affärscase" : "Business case"}</CardTitle>
                 <CardDescription className="max-w-3xl leading-7">
                   <span className="block">
@@ -1792,6 +1787,11 @@ export async function DeferredOutcomeTollgateSection(props: {
     <>
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">
+              <LocalizedText en="Framing handshake" sv="Framing-handshake" />
+            </span>
+          </div>
           <CardTitle>
             <LocalizedText en="Tollgate 1 approval" sv="Tollgate 1-godkännande" />
           </CardTitle>
