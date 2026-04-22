@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
@@ -343,9 +344,14 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
         </CardHeader>
         <CardContent>
           <details className="group rounded-2xl border border-border/70 bg-background shadow-sm">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-medium text-foreground marker:hidden">
-              <span>{t(language, "Open advanced tuning", "Öppna avancerad tuning")}</span>
-              <span className="text-xs text-muted-foreground">{t(language, "Overrides, custom instructions and export guidance", "Avvikelser, egna instruktioner och exportvägledning")}</span>
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl bg-white px-4 py-4 text-sm font-medium text-foreground marker:hidden">
+              <div className="min-w-0">
+                <span>{t(language, "Open advanced tuning", "Öppna avancerad tuning")}</span>
+                <p className="mt-1 text-xs text-muted-foreground">{t(language, "Overrides, custom instructions and export guidance", "Avvikelser, egna instruktioner och exportvägledning")}</p>
+              </div>
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
+              </span>
             </summary>
             <div className="space-y-6 border-t border-border/70 px-4 py-4">
               <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">

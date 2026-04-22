@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Check, Copy, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Copy, Sparkles } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import {
   buildDefaultFramingAgentPrompt,
@@ -1694,6 +1694,7 @@ export function AiAssistantPanel({
                       <div className="flex flex-wrap gap-2">
                         <Button
                           onClick={() => handleCopyArtifact(`${artifact.kind}-markdown`, artifact.markdown)}
+                          size="sm"
                           type="button"
                           variant="secondary"
                         >
@@ -1702,6 +1703,7 @@ export function AiAssistantPanel({
                         </Button>
                         <Button
                           onClick={() => handleCopyArtifact(`${artifact.kind}-json`, JSON.stringify(artifact.json, null, 2))}
+                          size="sm"
                           type="button"
                           variant="secondary"
                         >
@@ -1719,9 +1721,14 @@ export function AiAssistantPanel({
             ) : null}
 
             {!isEmbeddedJourneySurface && result?.toolTrace.length ? (
-              <details className="rounded-2xl border border-border/70 bg-background px-4 py-4">
-                <summary className="cursor-pointer text-sm font-medium text-foreground">Tool trace</summary>
-                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+              <details className="group rounded-2xl border border-border/70 bg-background shadow-sm">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-medium text-foreground">
+                  <span>Tool trace</span>
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
+                  </span>
+                </summary>
+                <ul className="border-t border-border/70 px-4 py-4 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                   {result.toolTrace.map((entry, index) => (
                     <li key={`${entry.tool}-${index}`}>{entry.tool}: {entry.summary}</li>
                   ))}
@@ -1730,9 +1737,14 @@ export function AiAssistantPanel({
             ) : null}
 
             {!isEmbeddedJourneySurface && history.length > 0 ? (
-              <details className="rounded-2xl border border-border/70 bg-background px-4 py-4">
-                <summary className="cursor-pointer text-sm font-medium text-foreground">Recent conversation history</summary>
-                <div className="mt-3 space-y-3">
+              <details className="group rounded-2xl border border-border/70 bg-background shadow-sm">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-medium text-foreground">
+                  <span>Recent conversation history</span>
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
+                  </span>
+                </summary>
+                <div className="space-y-3 border-t border-border/70 px-4 py-4">
                   {history.slice(0, 5).map((entry) => (
                     <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={entry.id}>
                       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">

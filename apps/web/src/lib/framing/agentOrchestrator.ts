@@ -51,6 +51,10 @@ function dedupeStrings(values: string[]) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function dedupeArtifactsByKind(artifacts: FramingAgentRunResult["artifacts"]) {
+  return [...new Map(artifacts.map((artifact) => [artifact.kind, artifact] as const)).values()];
+}
+
 function normalizeDeliveryType(value: unknown): "AD" | "AT" | "AM" | null {
   return value === "AD" || value === "AT" || value === "AM" ? value : null;
 }
@@ -712,6 +716,10 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
       (isInheritanceReview
         ? "I reviewed the current handoff for missing inheritance and highlighted what should be corrected before export."
         : `I prepared ${artifacts.length} export preview artifact(s) from the current Framing package and checked the inheritance chain for missing source inputs.`);
+
+    if (isInheritanceReview) {
+      artifacts.length = 0;
+    }
   }
 
   if (!message) {
@@ -733,7 +741,7 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
     warnings: dedupeStrings(warnings),
     helperText,
     suggestions: dedupeById(suggestions),
-    artifacts,
+    artifacts: dedupeArtifactsByKind(artifacts),
     toolTrace,
     plannedToolCalls
   };

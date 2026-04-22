@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
@@ -375,7 +376,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
           ) : null}
 
           <details
-            className="rounded-2xl border border-border/70 bg-muted/10"
+            className="group rounded-2xl border border-border/70 bg-muted/10"
             onToggle={(event) => setShowPageGuidance((event.currentTarget as HTMLDetailsElement).open)}
             open={showPageGuidance}
           >
@@ -391,9 +392,14 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                     )}
                   </p>
                 </div>
-                <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {showPageGuidance ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full border border-border/70 bg-white px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                    {showPageGuidance ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}
+                  </span>
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
+                  </span>
+                </div>
               </div>
             </summary>
             <div className="space-y-4 border-t border-border/70 px-4 py-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Download } from "lucide-react";
+import { Check, ChevronDown, Copy, Download } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import {
   buildProfiledFramingAiHandoff,
@@ -139,6 +139,7 @@ export function FramingBriefExportPanel({
                           className="gap-2"
                           disabled={disabled}
                           onClick={() => handleCopy(artifact.markdown, `${artifact.profile}_markdown`)}
+                          size="sm"
                           type="button"
                         >
                           {copied === `${artifact.profile}_markdown` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -148,6 +149,7 @@ export function FramingBriefExportPanel({
                           className="gap-2"
                           disabled={disabled}
                           onClick={() => handleCopy(profileJson, `${artifact.profile}_json`)}
+                          size="sm"
                           type="button"
                           variant="secondary"
                         >
@@ -158,6 +160,7 @@ export function FramingBriefExportPanel({
                           className="gap-2"
                           disabled={disabled}
                           onClick={() => handleDownload(artifact.markdown, artifact.markdownFilename, "text/markdown;charset=utf-8")}
+                          size="sm"
                           type="button"
                           variant="secondary"
                         >
@@ -168,6 +171,7 @@ export function FramingBriefExportPanel({
                           className="gap-2"
                           disabled={disabled}
                           onClick={() => handleDownload(profileJson, artifact.jsonFilename, "application/json")}
+                          size="sm"
                           type="button"
                           variant="secondary"
                         >
@@ -175,8 +179,13 @@ export function FramingBriefExportPanel({
                           Download JSON
                         </Button>
                       </div>
-                      <details className="rounded-2xl border border-border/70 bg-muted/10">
-                        <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-foreground">Open previews</summary>
+                      <details className="group rounded-2xl border border-border/70 bg-muted/10">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 text-sm font-medium text-foreground">
+                          <span>Open previews</span>
+                          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
+                            <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
+                          </span>
+                        </summary>
                         <div className="space-y-4 border-t border-border/70 px-4 py-4">
                           <Card className="border-border/70 bg-background shadow-none">
                             <CardHeader>
