@@ -68,19 +68,19 @@ export function FramingBriefExportPanel({
   const content = (
     <>
       <CardHeader>
-        <CardTitle>Export framing packages</CardTitle>
+        <CardTitle>Export framing handoff</CardTitle>
         <CardDescription>
-          Export one human-readable Framing Brief plus two AI handoff profiles. Both AI profiles stay grounded in the same Outcome, approval context and value spine.
+          Choose one human-readable brief and one AI handoff profile. Both AI exports stay grounded in the same Outcome, approval context and value spine.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
           <p className="font-medium">How to use this export</p>
           <p className="mt-2">
-            Use the Framing Brief when you want a compact human handoff or decision document. Use the Neutral Governed profile for
-            general AI tools that should preserve Framing structure and traceability. Use the BMAD Prepared profile when BMAD-style
-            refinement should start from the same source of truth with clearer adapter guidance. The zip packages include Story Idea
-            images as real files alongside the structured handoff.
+            Use the Framing Brief when you want a compact human handoff or decision document. Use Neutral Governed for general AI
+            tools that should preserve Framing structure and traceability. Use BMAD Prepared when BMAD-style refinement should start
+            from the same source of truth with clearer adapter guidance. The zip packages include Story Idea images as real files
+            alongside the structured handoff.
           </p>
           {disabled ? <p className="mt-2">Restore the Outcome first if you want to update the framing before exporting again.</p> : null}
         </div>
@@ -117,7 +117,7 @@ export function FramingBriefExportPanel({
           <Card className="border-border/70 bg-muted/10 shadow-none">
             <CardHeader>
               <CardTitle>AI Handoff Profiles</CardTitle>
-              <CardDescription>Choose the profile that best matches the next tool while keeping Framing as the governed source of truth.</CardDescription>
+              <CardDescription>Start by downloading one package. Open previews only when you need to inspect the exact markdown or JSON.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {[neutralArtifact, bmadArtifact].map((artifact) => {
@@ -131,6 +131,10 @@ export function FramingBriefExportPanel({
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                        <Button className="gap-2" disabled={disabled} onClick={() => handlePackageDownload(artifact)} type="button">
+                          <Download className="h-4 w-4" />
+                          Download {artifact.label} Package
+                        </Button>
                         <Button
                           className="gap-2"
                           disabled={disabled}
@@ -149,10 +153,6 @@ export function FramingBriefExportPanel({
                         >
                           {copied === `${artifact.profile}_json` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                           Copy {artifact.label} JSON
-                        </Button>
-                        <Button className="gap-2" disabled={disabled} onClick={() => handlePackageDownload(artifact)} type="button">
-                          <Download className="h-4 w-4" />
-                          Download {artifact.label} Package
                         </Button>
                         <Button
                           className="gap-2"
@@ -175,19 +175,24 @@ export function FramingBriefExportPanel({
                           Download JSON
                         </Button>
                       </div>
-                      <Card className="border-border/70 bg-background shadow-none">
-                        <CardHeader>
-                          <CardTitle>Markdown preview</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <pre className="max-h-[220px] overflow-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-background p-4 text-sm text-foreground">
-                            <code>{artifact.markdown}</code>
+                      <details className="rounded-2xl border border-border/70 bg-muted/10">
+                        <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-foreground">Open previews</summary>
+                        <div className="space-y-4 border-t border-border/70 px-4 py-4">
+                          <Card className="border-border/70 bg-background shadow-none">
+                            <CardHeader>
+                              <CardTitle>Markdown preview</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <pre className="max-h-[220px] overflow-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-background p-4 text-sm text-foreground">
+                                <code>{artifact.markdown}</code>
+                              </pre>
+                            </CardContent>
+                          </Card>
+                          <pre className="max-h-[360px] overflow-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">
+                            <code>{profileJson}</code>
                           </pre>
-                        </CardContent>
-                      </Card>
-                      <pre className="max-h-[360px] overflow-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">
-                        <code>{profileJson}</code>
-                      </pre>
+                        </div>
+                      </details>
                     </CardContent>
                   </Card>
                 );

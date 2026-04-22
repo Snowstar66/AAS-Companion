@@ -209,9 +209,13 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     <div className="space-y-6">
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>{t(language, "Downstream AI Instructions", "Downstream AI-instruktioner")}</CardTitle>
+          <CardTitle>{t(language, "Downstream AI Tuning", "Downstream AI-tuning")}</CardTitle>
           <CardDescription>
-            {t(language, "Configure how downstream AI should work with this Framing package during later Design and Build steps without replacing Framing as the source of truth.", "Styr hur downstream AI ska arbeta med detta Framing-paket i senare design- och buildsteg utan att ersätta Framing som source of truth.")}
+            {t(
+              language,
+              "Optional AI architect controls for the exported handoff. Defaults already follow the Framing package; open this only when you need stronger steering for the next AI tool stack.",
+              "Frivilliga AI-arkitektkontroller för det exporterade handoff-paketet. Standardvalen följer redan Framing-paketet; öppna detta bara när du behöver starkare styrning för nästa AI-tool-stack."
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -224,27 +228,27 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
             </span>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-4">
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Configurable preferences", "Konfigurerbara val")}</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{instructions.refinementPreferences.length}</p>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+              <p className="font-medium">{t(language, "What belongs here", "Det här hör hemma här")}</p>
+              <p className="mt-2">
+                {t(
+                  language,
+                  "Use this page to shape the exported AI handoff when an AI architect wants stronger control over later refinement, design or build behavior.",
+                  "Använd sidan för att forma det exporterade AI-handoffet när en AI-arkitekt vill ha starkare kontroll över senare refinement-, design- eller buildbeteende."
+                )}
+              </p>
             </div>
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Overrides from profile", "Avvikelser från profil")}</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{analysis.deviations.length}</p>
+            <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">{t(language, "Current profile summary", "Sammanfattning av nuvarande profil")}</p>
+              <p className="mt-2">
+                {t(
+                  language,
+                  `${analysis.deviations.length} override(s), ${instructions.customInstructions.length} custom instruction(s), ${naCount} N/A selection(s). Keep the defaults unless you intentionally want the next AI stack to behave differently.`,
+                  `${analysis.deviations.length} avvikelse(r), ${instructions.customInstructions.length} egen instruktion(er), ${naCount} N/A-val. Behåll standardvalen om du inte medvetet vill att nästa AI-stack ska bete sig annorlunda.`
+                )}
+              </p>
             </div>
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "N/A selections", "N/A-val")}</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{naCount}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Custom instructions", "Egna instruktioner")}</p>
-              <p className="mt-2 text-2xl font-semibold text-foreground">{instructions.customInstructions.length}</p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
-            {t(language, "Use this page to steer how downstream AI should refine Epics, Story Ideas, Journey Context, Design, and Build behavior before export. The settings here are an accelerator profile - they do not replace the main Framing structure.", "Använd sidan för att styra hur downstream AI ska förfina Epics, Story Ideas, Journey Context, Design och Build före export. Valen här är en acceleratorprofil och ersätter inte den huvudsakliga Framing-strukturen.")}
           </div>
 
           {flash?.save === "success" ? <FlashBanner message={t(language, "Downstream AI Instructions saved to the Framing package.", "Downstream AI-instruktioner sparades i Framing-paketet.")} tone="success" /> : null}
@@ -271,7 +275,7 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
             <form action={saveAction}>
               <input name="outcomeId" type="hidden" value={data.outcome.id} />
               <input name="downstreamAiInstructionsJson" type="hidden" value={serializedInstructions} />
-              <Button type="submit">{t(language, "Save Downstream AI Instructions", "Spara downstream AI-instruktioner")}</Button>
+              <Button type="submit">{t(language, "Save Downstream AI Tuning", "Spara downstream AI-tuning")}</Button>
             </form>
           </div>
         </CardContent>
@@ -328,65 +332,123 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
-          <CardTitle>{t(language, "Accelerator Tuning", "Acceleratorstyrning")}</CardTitle>
+          <CardTitle>{t(language, "AI Architect Controls", "AI-arkitektkontroller")}</CardTitle>
           <CardDescription>
-            {t(language, "Tune the dimensions where downstream AI should be more explicit. Keeping the suggested profile is often enough; change values only where you want stronger steering. N/A does not disable mandatory controls.", "Styr de dimensioner där downstream AI ska vara mer explicit. Ofta räcker den föreslagna profilen; ändra bara där du vill ha starkare styrning. N/A stänger inte av obligatoriska styrningar.")}
+            {t(
+              language,
+              "Advanced controls for explicit overrides, custom instructions and generated handoff guidance. Leave this closed if the suggested profile is already good enough.",
+              "Avancerade kontroller för explicita avvikelser, egna instruktioner och genererad handoff-vägledning. Låt denna vara stängd om den föreslagna profilen redan är tillräckligt bra."
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
-            {t(language, "N/A helper: Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. This preserves room for later AI reasoning without weakening the governance envelope.", "N/A-hjälp: Använd N/A bara när du medvetet vill lämna ett förfiningsbeslut öppet för downstream AI. Det bevarar utrymme för senare AI-resonemang utan att försvaga governance envelope.")}
-          </div>
+          <details className="group rounded-2xl border border-border/70 bg-background shadow-sm">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-medium text-foreground marker:hidden">
+              <span>{t(language, "Open advanced tuning", "Öppna avancerad tuning")}</span>
+              <span className="text-xs text-muted-foreground">{t(language, "Overrides, custom instructions and export guidance", "Avvikelser, egna instruktioner och exportvägledning")}</span>
+            </summary>
+            <div className="space-y-6 border-t border-border/70 px-4 py-4">
+              <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4 text-sm text-muted-foreground">
+                {t(language, "N/A helper: Use N/A only when you intentionally want to leave a refinement decision open for downstream AI. This preserves room for later AI reasoning without weakening the governance envelope.", "N/A-hjälp: Använd N/A bara när du medvetet vill lämna ett förfiningsbeslut öppet för downstream AI. Det bevarar utrymme för senare AI-resonemang utan att försvaga governance envelope.")}
+              </div>
+
+              {groupOrder.map((group) => (
+                <DownstreamAiInstructionSection
+                  description={getGroupDescription(language, group)}
+                  initiativeType={deliveryType}
+                  key={group}
+                  onChangeRationale={(preferenceId, value) =>
+                    updatePreference(preferenceId, (preference) => ({
+                      ...preference,
+                      rationale: value
+                    }))
+                  }
+                  onChangeSelection={(preferenceId, value) =>
+                    updatePreference(preferenceId, (preference) => ({
+                      ...preference,
+                      selectedValue: value,
+                      rationale:
+                        value === seededRefinementPreferenceCatalog.find((entry) => entry.id === preferenceId)?.defaultByMode[deliveryType]
+                          ? ""
+                          : preference.rationale ?? ""
+                    }))
+                  }
+                  rows={groupedPreferences[group]}
+                  title={downstreamPreferenceGroupLabels[group]}
+                />
+              ))}
+
+              <CustomInstructionsEditor
+                instructions={instructions.customInstructions}
+                onAdd={() =>
+                  setInstructions((current) => ({
+                    ...current,
+                    initiativeType: deliveryType,
+                    aiLevel,
+                    customInstructions: [...current.customInstructions, createEmptyCustomInstruction()]
+                  }))
+                }
+                onChange={updateCustomInstruction}
+                onDelete={(instructionId) =>
+                  setInstructions((current) => ({
+                    ...current,
+                    initiativeType: deliveryType,
+                    aiLevel,
+                    customInstructions: current.customInstructions.filter((instruction) => instruction.id !== instructionId)
+                  }))
+                }
+                onMove={moveCustomInstruction}
+              />
+
+              <div className="space-y-5">
+                <div>
+                  <p className="font-medium text-foreground">{t(language, "Generated export guidance", "Genererad exportvägledning")}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t(language, "This structured package follows the export automatically when Downstream AI Tuning is present.", "Det här strukturerade paketet följer automatiskt med exporten när Downstream AI-tuning finns.")}
+                  </p>
+                </div>
+
+                {generatedGuideSections.map(([title, lines]) => (
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4" key={title}>
+                    <p className="font-medium text-foreground">{title}</p>
+                    <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+                      {lines.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+
+                <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+                  <p className="font-medium text-foreground">{t(language, "Overrides from Suggested Profile", "Avvikelser från föreslagen profil")}</p>
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
+                    {analysis.generatedGuidance.deviationsSummary.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+                  <p className="font-medium text-foreground">{t(language, "Custom Instruction Appendix", "Bilaga med egna instruktioner")}</p>
+                  {analysis.generatedGuidance.customInstructionAppendix.length > 0 ? (
+                    <div className="mt-3 space-y-3">
+                      {analysis.generatedGuidance.customInstructionAppendix.map((instruction) => (
+                        <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={`${instruction.priority}-${instruction.title}`}>
+                          <p className="font-medium text-foreground">{instruction.title || t(language, "Untitled instruction", "Namnlös instruktion")}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{instruction.category} · {instruction.priority}</p>
+                          <p className="mt-3 text-sm leading-6 text-muted-foreground">{instruction.body || t(language, "No body captured yet.", "Ingen brödtext fångad ännu.")}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-muted-foreground">{t(language, "No custom instructions added.", "Inga egna instruktioner tillagda.")}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </details>
         </CardContent>
       </Card>
-
-      {groupOrder.map((group) => (
-        <DownstreamAiInstructionSection
-          description={getGroupDescription(language, group)}
-          initiativeType={deliveryType}
-          key={group}
-          onChangeRationale={(preferenceId, value) =>
-            updatePreference(preferenceId, (preference) => ({
-              ...preference,
-              rationale: value
-            }))
-          }
-          onChangeSelection={(preferenceId, value) =>
-            updatePreference(preferenceId, (preference) => ({
-              ...preference,
-              selectedValue: value,
-              rationale:
-                value === seededRefinementPreferenceCatalog.find((entry) => entry.id === preferenceId)?.defaultByMode[deliveryType]
-                  ? ""
-                  : preference.rationale ?? ""
-            }))
-          }
-          rows={groupedPreferences[group]}
-          title={downstreamPreferenceGroupLabels[group]}
-        />
-      ))}
-
-      <CustomInstructionsEditor
-        instructions={instructions.customInstructions}
-        onAdd={() =>
-          setInstructions((current) => ({
-            ...current,
-            initiativeType: deliveryType,
-            aiLevel,
-            customInstructions: [...current.customInstructions, createEmptyCustomInstruction()]
-          }))
-        }
-        onChange={updateCustomInstruction}
-        onDelete={(instructionId) =>
-          setInstructions((current) => ({
-            ...current,
-            initiativeType: deliveryType,
-            aiLevel,
-            customInstructions: current.customInstructions.filter((instruction) => instruction.id !== instructionId)
-          }))
-        }
-        onMove={moveCustomInstruction}
-      />
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
@@ -425,58 +487,11 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
       </Card>
 
       <Card className="border-border/70 shadow-sm">
-        <CardHeader>
-          <CardTitle>{t(language, "Generated Downstream Guidance", "Genererad downstream-vägledning")}</CardTitle>
-          <CardDescription>
-            {t(language, "This is the structured guidance package that will be included in export when Downstream AI Instructions are present.", "Det här är det strukturerade vägledningspaket som följer med i export när Downstream AI-instruktioner finns.")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {generatedGuideSections.map(([title, lines]) => (
-            <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4" key={title}>
-              <p className="font-medium text-foreground">{title}</p>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
-                {lines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <p className="font-medium text-foreground">{t(language, "Overrides from Suggested Profile", "Avvikelser från föreslagen profil")}</p>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted-foreground">
-              {analysis.generatedGuidance.deviationsSummary.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
-            <p className="font-medium text-foreground">{t(language, "Custom Instruction Appendix", "Bilaga med egna instruktioner")}</p>
-            {analysis.generatedGuidance.customInstructionAppendix.length > 0 ? (
-              <div className="mt-3 space-y-3">
-                {analysis.generatedGuidance.customInstructionAppendix.map((instruction) => (
-                  <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={`${instruction.priority}-${instruction.title}`}>
-                    <p className="font-medium text-foreground">{instruction.title || t(language, "Untitled instruction", "Namnlös instruktion")}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{instruction.category} · {instruction.priority}</p>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{instruction.body || t(language, "No body captured yet.", "Ingen brödtext fångad ännu.")}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-3 text-sm text-muted-foreground">{t(language, "No custom instructions added.", "Inga egna instruktioner tillagda.")}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border/70 shadow-sm">
         <CardContent className="flex flex-wrap gap-3 pt-6">
           <form action={saveAction}>
             <input name="outcomeId" type="hidden" value={data.outcome.id} />
             <input name="downstreamAiInstructionsJson" type="hidden" value={serializedInstructions} />
-            <Button type="submit">{t(language, "Save Downstream AI Instructions", "Spara downstream AI-instruktioner")}</Button>
+            <Button type="submit">{t(language, "Save Downstream AI Tuning", "Spara downstream AI-tuning")}</Button>
           </form>
         </CardContent>
       </Card>

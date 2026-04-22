@@ -21,8 +21,8 @@ export function FramingSubpageNav({ outcomeId, activeSubpage, journeyContextCoun
         <CardDescription>
           {t(
             language,
-            "Journey Context and Downstream AI Instructions are optional Framing subpages. The main delivery spine still stays Outcome, Epic, Story, Test.",
-            "Journey Context och Downstream AI-instruktioner är frivilliga undersidor i Framing. Huvudspåret för leverans är fortfarande Outcome, Epic, Story, Test."
+            "Use Framing Overview as the main source of truth. Journey Context and Downstream AI Tuning are optional layers that strengthen handoff quality when they are actually needed.",
+            "Använd Framing Overview som huvudsaklig source of truth. Journey Context och Downstream AI-tuning är frivilliga lager som stärker handoff-kvaliteten när de faktiskt behövs."
           )}
         </CardDescription>
       </CardHeader>
@@ -32,12 +32,14 @@ export function FramingSubpageNav({ outcomeId, activeSubpage, journeyContextCoun
         </Button>
         <Button asChild variant={activeSubpage === "journey-context" ? "default" : "secondary"}>
           <Link href={`/framing?outcomeId=${outcomeId}&subpage=journey-context`}>
-            {t(language, "Journey Context", "Journey Context")}{journeyContextCount > 0 ? ` (${journeyContextCount})` : ""}
+            {t(language, "Journey Context", "Journey Context")}
+            {journeyContextCount > 0 ? ` (${journeyContextCount})` : ""}
           </Link>
         </Button>
         <Button asChild variant={activeSubpage === "downstream-ai-instructions" ? "default" : "secondary"}>
           <Link href={`/framing?outcomeId=${outcomeId}&subpage=downstream-ai-instructions`}>
-            {t(language, "Downstream AI Instructions", "Downstream AI-instruktioner")}{customInstructionCount > 0 ? ` (${customInstructionCount})` : ""}
+            {t(language, "Downstream AI Tuning", "Downstream AI-tuning")}
+            {customInstructionCount > 0 ? ` (${customInstructionCount})` : ""}
           </Link>
         </Button>
       </CardContent>
