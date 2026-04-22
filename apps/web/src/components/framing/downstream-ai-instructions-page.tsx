@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
+import { FramingPackagePageHero } from "@/components/framing/framing-package-page-hero";
 import { CustomInstructionsEditor } from "@/components/framing/custom-instructions-editor";
 import { DownstreamAiInstructionSection } from "@/components/framing/downstream-ai-instruction-section";
 import {
@@ -208,27 +209,36 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
   return (
     <div className="space-y-6">
-      <Card className="border-border/70 shadow-sm">
-        <CardHeader>
-          <CardTitle>{t(language, "Downstream AI Tuning", "Downstream AI-tuning")}</CardTitle>
-          <CardDescription>
-            {t(
-              language,
-              "Optional AI architect controls for the exported handoff. Defaults already follow the Framing package; open this only when you need stronger steering for the next AI tool stack.",
-              "Frivilliga AI-arkitektkontroller för det exporterade handoff-paketet. Standardvalen följer redan Framing-paketet; öppna detta bara när du behöver starkare styrning för nästa AI-tool-stack."
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
+      <FramingPackagePageHero
+        actions={
+          <form action={saveAction}>
+            <input name="outcomeId" type="hidden" value={data.outcome.id} />
+            <input name="downstreamAiInstructionsJson" type="hidden" value={serializedInstructions} />
+            <Button type="submit">{t(language, "Save Downstream AI Tuning", "Spara downstream AI-tuning")}</Button>
+          </form>
+        }
+        badge={t(language, "Downstream AI Tuning", "Downstream AI-tuning")}
+        chips={
+          <>
+            <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
               {t(language, "Initiative Type", "Initiativtyp")}: {deliveryType}
             </span>
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
               {t(language, "AI Level", "AI-nivå")}: {aiLevel}
             </span>
-          </div>
-
+            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+              {instructions.customInstructions.length} {t(language, instructions.customInstructions.length === 1 ? "custom instruction" : "custom instructions", instructions.customInstructions.length === 1 ? "egen instruktion" : "egna instruktioner")}
+            </span>
+          </>
+        }
+        description={t(
+          language,
+          "Optional AI architect controls for the exported handoff. Defaults already follow the Framing package; open this only when you need stronger steering for the next AI tool stack.",
+          "Frivilliga AI-arkitektkontroller för det exporterade handoff-paketet. Standardvalen följer redan Framing-paketet; öppna detta bara när du behöver starkare styrning för nästa AI-tool-stack."
+        )}
+        title={t(language, "Downstream AI Tuning", "Downstream AI-tuning")}
+      >
+        <div className="space-y-5">
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
               <p className="font-medium">{t(language, "What belongs here", "Det här hör hemma här")}</p>
@@ -272,15 +282,8 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
             </div>
           )}
 
-          <div className="flex flex-wrap gap-3">
-            <form action={saveAction}>
-              <input name="outcomeId" type="hidden" value={data.outcome.id} />
-              <input name="downstreamAiInstructionsJson" type="hidden" value={serializedInstructions} />
-              <Button type="submit">{t(language, "Save Downstream AI Tuning", "Spara downstream AI-tuning")}</Button>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </FramingPackagePageHero>
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>

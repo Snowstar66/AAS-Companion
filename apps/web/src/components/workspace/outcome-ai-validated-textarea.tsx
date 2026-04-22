@@ -198,16 +198,8 @@ export function OutcomeAiValidatedTextarea({
   }
 
   return (
-    <label className="space-y-2">
-      <span className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        {!disabled ? (
-          <Button className="gap-2" disabled={isPending} onClick={handleValidate} size="sm" type="button" variant="secondary">
-            <Sparkles className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
-            {isPending ? t(language, "Validating...", "Validerar...") : t(language, "AI validate", "AI-validera")}
-          </Button>
-        ) : null}
-      </span>
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-foreground">{label}</label>
       <textarea
         className={`${minHeightClassName} w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30`}
         disabled={disabled}
@@ -216,6 +208,14 @@ export function OutcomeAiValidatedTextarea({
         ref={textareaRef}
         value={value}
       />
+      {!disabled ? (
+        <div className="flex justify-end">
+          <Button className="gap-2" disabled={isPending} onClick={handleValidate} size="sm" type="button" variant="secondary">
+            <Sparkles className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+            {isPending ? t(language, "Validating...", "Validerar...") : t(language, "AI validate", "AI-validera")}
+          </Button>
+        </div>
+      ) : null}
       {guidance}
       <OutcomeFieldAiFeedback error={error} feedback={feedback} field={field} />
       {saveError ? <p className="text-sm text-red-700">{saveError}</p> : null}
@@ -237,6 +237,6 @@ export function OutcomeAiValidatedTextarea({
           </Button>
         </div>
       ) : null}
-    </label>
+    </div>
   );
 }

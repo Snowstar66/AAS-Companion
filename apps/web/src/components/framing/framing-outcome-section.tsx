@@ -802,7 +802,7 @@ export function FramingOutcomeSection({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-5 border-t border-sky-100/80 bg-white/80">
+        <CardContent className="grid gap-5 bg-white/80">
           <WorkspaceStatusSummary
             blockerEmptyText={
               language === "sv" ? "Inga varningar eller rekommendationer syns just nu." : "No warnings or recommendations are visible right now."
@@ -1245,12 +1245,12 @@ export function FramingOutcomeSection({
                       </label>
                       {!isArchived ? (
                         <PendingFormButton
-                          className="min-w-[220px] justify-center gap-2 self-start"
+                          className="min-w-[152px] justify-center gap-2 self-start"
                           formAction={createEpicAction}
                           icon={<ArrowRight className="h-4 w-4" />}
                           label={language === "sv" ? "Skapa Epic" : "Create Epic"}
                           pendingLabel={language === "sv" ? "Skapar Epic..." : "Creating Epic..."}
-                          size="lg"
+                          size="sm"
                         />
                       ) : (
                         <p className="text-sm text-muted-foreground">
@@ -1288,7 +1288,7 @@ export function FramingOutcomeSection({
                         </p>
                       </div>
                       <div className="space-y-4">
-                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] lg:items-end">
+                        <div className="grid gap-3">
                           <label className="space-y-2">
                             <span className="text-sm font-medium text-foreground">
                               {language === "sv" ? "Story Idea-titel" : "Story idea title"}
@@ -1318,13 +1318,13 @@ export function FramingOutcomeSection({
                           </label>
                         </div>
                         <PendingFormButton
-                          className="min-w-[220px] justify-center gap-2 self-start"
+                          className="min-w-[164px] justify-center gap-2 self-start"
                           disabled={!canCreateStoryIdea}
                           formAction={createStoryIdeaAction}
                           icon={<ArrowRight className="h-4 w-4" />}
                           label={language === "sv" ? "Skapa Story Idea" : "Create Story Idea"}
                           pendingLabel={language === "sv" ? "Skapar Story Idea..." : "Creating Story Idea..."}
-                          size="lg"
+                          size="sm"
                         />
                       </div>
                     </div>

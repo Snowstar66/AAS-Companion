@@ -1,26 +1,101 @@
 import type { FramingAgentMode, FramingAgentQuickAction, FramingAgentScopeKind } from "@/lib/framing/agentTypes";
 
 export const framingAgentModeLabels: Record<"ask" | "analyze" | "refine" | "export", string> = {
-  ask: "Fråga",
-  analyze: "Analysera",
-  refine: "Förfina",
-  export: "Exportera"
+  ask: "Ask",
+  analyze: "Analyze",
+  refine: "Refine",
+  export: "Export"
 };
+
+export function getFramingAgentModeLabel(language: "en" | "sv", mode: FramingAgentMode) {
+  if (language === "sv") {
+    if (mode === "ask") return "Fråga";
+    if (mode === "analyze") return "Analysera";
+    if (mode === "refine") return "Förfina";
+    return "Exportera";
+  }
+
+  return framingAgentModeLabels[mode];
+}
+
+export function getLocalizedQuickActionLabel(
+  language: "en" | "sv",
+  actionId: string,
+  fallbackLabel: string
+) {
+  if (language === "en") {
+    switch (actionId) {
+      case "journey-help":
+        return "Help me describe this journey";
+      case "journey-step-wording":
+        return "Improve step wording";
+      case "journey-coverage":
+        return "Analyze coverage";
+      case "journey-missing-story-ideas":
+        return "Suggest missing Story Ideas";
+      case "story-overlap":
+        return "Find overlap between Story Ideas";
+      case "story-from-journey":
+        return "Suggest Story Ideas from journeys";
+      case "story-split-merge":
+        return "Suggest split/merge and rewrites";
+      default:
+        return fallbackLabel;
+    }
+  }
+
+  return fallbackLabel;
+}
 
 export const framingAgentIntroText =
   "Use AI to clarify, analyze, refine, and export the current Framing package without losing traceability or design constraints.";
 
 export const framingAgentQuickActions: Record<FramingAgentScopeKind, FramingAgentQuickAction[]> = {
   "journey-context": [
-    { id: "journey-help", label: "Hjälp mig beskriva denna journey", mode: "ask", prompt: "Hjälp mig att beskriva denna journey tydligare utifrån aktör, mål, trigger och flöde." },
-    { id: "journey-step-wording", label: "Förbättra formulering av steg", mode: "refine", prompt: "Föreslå bättre formulering för stegen i den aktuella journeyn och ta bort för UI-specifikt språk där det behövs." },
-    { id: "journey-coverage", label: "Analysera täckning", mode: "analyze", prompt: "Analysera journey-täckning mot aktuella Epics och Story Ideas." },
-    { id: "journey-missing-story-ideas", label: "Föreslå saknade Story Ideas", mode: "analyze", prompt: "Föreslå saknade Story Ideas utifrån det aktuella journey-underlaget." }
+    {
+      id: "journey-help",
+      label: "Hjälp mig beskriva denna journey",
+      mode: "ask",
+      prompt: "Hjälp mig att beskriva denna journey tydligare utifrån aktör, mål, trigger och flöde."
+    },
+    {
+      id: "journey-step-wording",
+      label: "Förbättra formulering av steg",
+      mode: "refine",
+      prompt: "Föreslå bättre formulering för stegen i den aktuella journeyn och ta bort för UI-specifikt språk där det behövs."
+    },
+    {
+      id: "journey-coverage",
+      label: "Analysera täckning",
+      mode: "analyze",
+      prompt: "Analysera journey-täckning mot aktuella Epics och Story Ideas."
+    },
+    {
+      id: "journey-missing-story-ideas",
+      label: "Föreslå saknade Story Ideas",
+      mode: "analyze",
+      prompt: "Föreslå saknade Story Ideas utifrån det aktuella journey-underlaget."
+    }
   ],
   "story-ideas": [
-    { id: "story-overlap", label: "Hitta överlapp mellan Story Ideas", mode: "analyze", prompt: "Hitta överlapp mellan de aktuella Story Ideas och peka ut sådant som riskerar att beskriva samma värde eller beteende." },
-    { id: "story-from-journey", label: "Föreslå Story Ideas från journeys", mode: "analyze", prompt: "Föreslå Story Ideas utifrån det aktuella Journey Context-underlaget och de luckor som finns i dag." },
-    { id: "story-split-merge", label: "Föreslå split/merge och omskrivningar", mode: "refine", prompt: "Föreslå vilka Story Ideas som bör delas, slås ihop eller skrivas om för att bli tydligare och mer riktade." }
+    {
+      id: "story-overlap",
+      label: "Hitta överlapp mellan Story Ideas",
+      mode: "analyze",
+      prompt: "Hitta överlapp mellan de aktuella Story Ideas och peka ut sådant som riskerar att beskriva samma värde eller beteende."
+    },
+    {
+      id: "story-from-journey",
+      label: "Föreslå Story Ideas från journeys",
+      mode: "analyze",
+      prompt: "Föreslå Story Ideas utifrån det aktuella Journey Context-underlaget och de luckor som finns i dag."
+    },
+    {
+      id: "story-split-merge",
+      label: "Föreslå split/merge och omskrivningar",
+      mode: "refine",
+      prompt: "Föreslå vilka Story Ideas som bör delas, slås ihop eller skrivas om för att bli tydligare och mer riktade."
+    }
   ],
   "downstream-ai-instructions": [
     { id: "instructions-explain", label: "Explain this setting", mode: "ask", prompt: "Explain the practical meaning of the current Downstream AI Instruction setting." },

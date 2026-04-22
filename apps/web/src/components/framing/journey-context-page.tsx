@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { Button, Card, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
+import { FramingPackagePageHero } from "@/components/framing/framing-package-page-hero";
 import { JourneyContextSection } from "@/components/framing/journey-context-section";
 import {
   getJourneyContextCounts,
@@ -296,74 +297,69 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
 
   return (
     <div className="space-y-6">
-      <Card className="border-border/70 shadow-sm">
-        <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-3">
-              <div>
-                <CardTitle>{t(language, "Journey Context", "Journey Context")}</CardTitle>
-                <CardDescription>
-                  {t(
-                    language,
-                    "Optional context that clarifies the business case and helps downstream AI work with higher quality.",
-                    "Frivillig kontext som förtydligar business caset och hjälper downstream AI att arbeta med högre kvalitet."
-                  )}
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {t(language, "Outcome", "Utfall")} {data.outcome.key}
-                </span>
-                {initiativeType ? (
-                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800">
-                    {initiativeType}
-                  </span>
-                ) : null}
-                <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {counts.journeyCount} {t(language, counts.journeyCount === 1 ? "journey" : "journeys", counts.journeyCount === 1 ? "journey" : "journeys")}
-                </span>
-                <span
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    hasUnsavedChanges
-                      ? "border-amber-200 bg-amber-50 text-amber-800"
-                      : "border-emerald-200 bg-emerald-50 text-emerald-800"
-                  }`}
-                >
-                  {hasUnsavedChanges ? t(language, "Unsaved draft", "Osparat utkast") : t(language, "Saved", "Sparat")}
-                </span>
-              </div>
-            </div>
+      <FramingPackagePageHero
+        actions={
+          <>
+            {contexts.length === 0 ? (
+              <Button
+                disabled={!initiativeType}
+                onClick={() => {
+                  if (!initiativeType) {
+                    return;
+                  }
 
-            <div className="flex flex-wrap items-center gap-3">
-              {contexts.length === 0 ? (
-                <Button
-                  disabled={!initiativeType}
-                  onClick={() => {
-                    if (!initiativeType) {
-                      return;
-                    }
+                  const nextContext = createEmptyJourneyContext(data.outcome.id, initiativeType);
+                  setContexts([nextContext]);
+                  setFocusedJourneyId(nextContext.journeys[0]?.id ?? null);
+                }}
+                type="button"
+              >
+                {t(language, "Start journeys", "Starta journeys")}
+              </Button>
+            ) : null}
 
-                    const nextContext = createEmptyJourneyContext(data.outcome.id, initiativeType);
-                    setContexts([nextContext]);
-                    setFocusedJourneyId(nextContext.journeys[0]?.id ?? null);
-                  }}
-                  type="button"
-                >
-                  {t(language, "Start journeys", "Starta journeys")}
-                </Button>
-              ) : null}
-
-              <form action={saveAction}>
-                <input name="outcomeId" type="hidden" value={data.outcome.id} />
-                <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
-                <Button disabled={!hasUnsavedChanges} type="submit">
-                  {t(language, "Save journeys", "Spara journeys")}
-                </Button>
-              </form>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <form action={saveAction}>
+              <input name="outcomeId" type="hidden" value={data.outcome.id} />
+              <input name="journeyContextsJson" type="hidden" value={serializedContexts} />
+              <Button disabled={!hasUnsavedChanges} type="submit">
+                {t(language, "Save journeys", "Spara journeys")}
+              </Button>
+            </form>
+          </>
+        }
+        badge={t(language, "Journey Context", "Journey Context")}
+        chips={
+          <>
+            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+              {t(language, "Outcome", "Utfall")} {data.outcome.key}
+            </span>
+            {initiativeType ? (
+              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
+                {initiativeType}
+              </span>
+            ) : null}
+            <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+              {counts.journeyCount} {t(language, counts.journeyCount === 1 ? "journey" : "journeys", counts.journeyCount === 1 ? "journey" : "journeys")}
+            </span>
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                hasUnsavedChanges
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}
+            >
+              {hasUnsavedChanges ? t(language, "Unsaved draft", "Osparat utkast") : t(language, "Saved", "Sparat")}
+            </span>
+          </>
+        }
+        description={t(
+          language,
+          "Optional context that clarifies the business case and helps downstream AI work with higher quality.",
+          "Frivillig kontext som förtydligar business caset och hjälper downstream AI att arbeta med högre kvalitet."
+        )}
+        title={t(language, "Journey Context", "Journey Context")}
+      >
+        <div className="space-y-4">
           {flash?.save === "success" ? <FlashBanner message={t(language, "Journeys were saved in the Framing package.", "Journeys sparades i Framing-paketet.")} tone="success" /> : null}
           {flash?.analyze === "success" ? (
             <FlashBanner
@@ -490,8 +486,8 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
               ) : null}
             </div>
           </details>
-        </CardContent>
-      </Card>
+        </div>
+      </FramingPackagePageHero>
 
       {contexts.length === 0 ? (
         <Card className="border-border/70 shadow-sm">

@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Check, ChevronDown, Copy, Sparkles } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
+import { useAppChromeLanguage } from "@/components/layout/app-language";
 import {
   buildDefaultFramingAgentPrompt,
   framingAgentIntroText,
-  framingAgentModeLabels,
-  framingAgentQuickActions
+  framingAgentQuickActions,
+  getFramingAgentModeLabel,
+  getLocalizedQuickActionLabel
 } from "@/lib/framing/agentModes";
 import type { FramingAgentActionResult } from "@/lib/framing/agentStructuredOutputs";
 import type { JourneyContext, JourneyInitiativeType } from "@/lib/framing/journeyContextTypes";
@@ -37,6 +39,10 @@ type AiAssistantPanelProps = {
   onApplySuggestion?: (suggestion: FramingAgentSuggestion) => void;
   createStoryIdeaAction?: (formData: FormData) => void | Promise<void>;
 };
+
+function t(language: "en" | "sv", en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
 
 type ConversationEntry = {
   id: string;
@@ -724,6 +730,7 @@ export function AiAssistantPanel({
   onApplySuggestion,
   createStoryIdeaAction
 }: AiAssistantPanelProps) {
+  const { language } = useAppChromeLanguage();
   const isCompactSurface = scopeKind === "journey-context" || scopeKind === "story-ideas";
   const isEmbeddedJourneySurface = embedded && scopeKind === "journey-context";
   const initialMode: FramingAgentMode = scopeKind === "export" ? "export" : "ask";
@@ -853,8 +860,8 @@ export function AiAssistantPanel({
   const isExportScope = scopeKind === "export";
   const currentModeLabel =
     isExportScope && mode === "export"
-      ? "Preview export"
-      : framingAgentModeLabels[mode];
+      ? t(language, "Preview export", "Förhandsgranska export")
+      : getFramingAgentModeLabel(language, mode);
   const promptLabel = isExportScope ? "FrÃ¥ga eller instruktion till AI" : "FrÃ¥ga till AI";
   const promptPlaceholder =
     scopeKind === "journey-context"
@@ -870,7 +877,9 @@ export function AiAssistantPanel({
   const assistantDescriptionDisplay = isExportScope
     ? "Use this area to preview handoff artifacts and analyze what is missing before you use the real export panel for downloads."
     : assistantDescription;
-  const promptLabelDisplay = isExportScope ? "AI prompt or instruction" : "Ask AI";
+  const promptLabelDisplay = isExportScope
+    ? t(language, "AI prompt or instruction", "AI-prompt eller instruktion")
+    : t(language, "Ask AI", "Fråga AI");
   const promptPlaceholderDisplay =
     scopeKind === "journey-context"
       ? "Ask AI to explain, analyze or refine the current journeys."
@@ -1130,7 +1139,7 @@ export function AiAssistantPanel({
                   : "border-emerald-200 bg-emerald-50 text-emerald-800"
               }`}
             >
-              {hasUnsavedChanges ? "Osparat utkast" : "Sparat utkast"}
+              {hasUnsavedChanges ? t(language, "Unsaved draft", "Osparat utkast") : t(language, "Saved draft", "Sparat utkast")}
             </span>
           </div>
         </div>
@@ -1141,10 +1150,14 @@ export function AiAssistantPanel({
             <div>
               <p className="flex items-center gap-2 text-base font-semibold text-foreground">
                 <Sparkles className="h-4 w-4" />
-                AI-hjälp i denna journey
+                {t(language, "AI help in this journey", "AI-hjälp i denna journey")}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                1. Skriv direkt i fälten ovan om du vill. 2. Klicka på en AI-knapp här nedanför när du vill få hjälp med formulering, första utkast eller täckningsanalys.
+                {t(
+                  language,
+                  "1. Write directly in the fields above if you want. 2. Click an AI button below when you want help with wording, a first draft, or coverage analysis.",
+                  "1. Skriv direkt i fälten ovan om du vill. 2. Klicka på en AI-knapp här nedanför när du vill få hjälp med formulering, första utkast eller täckningsanalys."
+                )}
               </p>
             </div>
             <span
@@ -1154,7 +1167,7 @@ export function AiAssistantPanel({
                   : "border-emerald-200 bg-emerald-50 text-emerald-800"
               }`}
             >
-              {hasUnsavedChanges ? "Osparat utkast" : "Sparat utkast"}
+              {hasUnsavedChanges ? t(language, "Unsaved draft", "Osparat utkast") : t(language, "Saved draft", "Sparat utkast")}
             </span>
           </div>
         </div>
@@ -1175,7 +1188,11 @@ export function AiAssistantPanel({
 
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">{embedded ? "AI hjälper dig i den här journeyn" : "Stegvis AI-hjälp för journey"}</p>
+                <p className="font-medium text-foreground">
+                  {embedded
+                    ? t(language, "AI helps you in this journey", "AI hjälper dig i den här journeyn")
+                    : t(language, "Step-by-step AI help for the journey", "Stegvis AI-hjälp för journey")}
+                </p>
                 <p className="mt-1 text-sm text-sky-900/85">
                   Du kan antingen svara på frågan nedan eller klicka på en AI-knapp längre ned. AI svarar alltid här i samma journey-kort.
                 </p>
@@ -1373,13 +1390,13 @@ export function AiAssistantPanel({
           <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-foreground">Fler AI-val</p>
+                <p className="font-medium text-foreground">{t(language, "More AI options", "Fler AI-val")}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Öppna detta bara när du vill ha analys, fri promptning, Story Idea-förslag eller exportstöd.
+                  {t(language, "Open this only when you want analysis, free prompting, Story Idea suggestions or export support.", "Öppna detta bara när du vill ha analys, fri promptning, Story Idea-förslag eller exportstöd.")}
                 </p>
               </div>
               <Button onClick={() => setShowAdvancedWorkspace((current) => !current)} type="button" variant="secondary">
-                {showAdvancedWorkspace ? "Dölj fler AI-val" : "Visa fler AI-val"}
+                {showAdvancedWorkspace ? t(language, "Hide more AI options", "Dölj fler AI-val") : t(language, "Show more AI options", "Visa fler AI-val")}
               </Button>
             </div>
           </div>
@@ -1403,9 +1420,13 @@ export function AiAssistantPanel({
             {isEmbeddedJourneySurface ? (
               <div className="space-y-4">
                 <div>
-                  <p className="font-medium text-foreground">Välj hur du vill få hjälp</p>
+                  <p className="font-medium text-foreground">{t(language, "Choose how you want help", "Välj hur du vill få hjälp")}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Klicka på ett av alternativen nedan. AI:s svar visas direkt här i samma journey-kort.
+                    {t(
+                      language,
+                      "Click one of the options below. The AI response appears directly here in the same journey card.",
+                      "Klicka på ett av alternativen nedan. AI:s svar visas direkt här i samma journey-kort."
+                    )}
                   </p>
                 </div>
 
@@ -1421,11 +1442,13 @@ export function AiAssistantPanel({
                         type="button"
                         variant="secondary"
                       >
-                        {action.label}
+                        {getLocalizedQuickActionLabel(language, action.id, action.label)}
                       </Button>
                     ))}
                     <Button onClick={() => setShowCustomPromptComposer((current) => !current)} type="button" variant="secondary">
-                      {showCustomPromptComposer ? "Dölj egen fråga" : "Ställ egen fråga"}
+                      {showCustomPromptComposer
+                        ? t(language, "Hide custom prompt", "Dölj egen fråga")
+                        : t(language, "Ask a custom question", "Ställ egen fråga")}
                     </Button>
                   </div>
                 ) : null}
@@ -1433,11 +1456,17 @@ export function AiAssistantPanel({
                 {showCustomPromptComposer ? (
                   <div className="space-y-3 rounded-2xl border border-border/70 bg-background px-4 py-4">
                     <label className="space-y-2">
-                      <span className="text-sm font-medium text-foreground">Egen fråga till AI</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {t(language, "Custom AI prompt", "Egen fråga till AI")}
+                      </span>
                       <textarea
                         className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                         onChange={(event) => setPrompt(event.target.value)}
-                        placeholder="Beskriv vad du vill ha hjälp med i just den här journeyn."
+                        placeholder={t(
+                          language,
+                          "Describe what you want help with in this specific journey.",
+                          "Beskriv vad du vill ha hjälp med i just den här journeyn."
+                        )}
                         value={prompt}
                       />
                     </label>
@@ -1447,7 +1476,7 @@ export function AiAssistantPanel({
                         onClick={() => submitAgentRun("ask", prompt)}
                         type="button"
                       >
-                        {isPending ? "Kör..." : "Skicka till AI"}
+                        {isPending ? t(language, "Running...", "Kör...") : t(language, "Send to AI", "Skicka till AI")}
                       </Button>
                     </div>
                   </div>
@@ -1458,14 +1487,16 @@ export function AiAssistantPanel({
                 <div className="flex flex-wrap gap-2">
                   {(["ask", "analyze", "refine", "export"] as FramingAgentMode[]).map((entry) => (
                     <Button key={entry} onClick={() => applyMode(entry)} type="button" variant={mode === entry ? "default" : "secondary"}>
-                      {framingAgentModeLabels[entry]}
+                      {getFramingAgentModeLabel(language, entry)}
                     </Button>
                   ))}
                 </div>
 
                 {quickActions.length > 0 ? (
                   <div className="space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Andra AI-handlingar</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      {t(language, "Other AI actions", "Andra AI-handlingar")}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {quickActions.map((action) => (
                         <Button
@@ -1477,7 +1508,7 @@ export function AiAssistantPanel({
                           type="button"
                           variant="secondary"
                         >
-                          {action.label}
+                          {getLocalizedQuickActionLabel(language, action.id, action.label)}
                         </Button>
                       ))}
                     </div>
@@ -1500,7 +1531,7 @@ export function AiAssistantPanel({
                       onClick={() => submitAgentRun(mode, prompt)}
                       type="button"
                     >
-                      {isPending ? "Kör..." : "Kör AI"}
+                      {isPending ? t(language, "Running...", "Kör...") : t(language, "Run AI", "Kör AI")}
                     </Button>
                   </div>
                 </div>
@@ -1514,7 +1545,9 @@ export function AiAssistantPanel({
                     {result.role}
                   </span>
                   <span className="rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-900">
-                    {result.usedLiveAi ? "Live AI-planerare" : "Strukturerad lokal planerare"}
+                    {result.usedLiveAi
+                      ? t(language, "Live AI planner", "Live AI-planerare")
+                      : t(language, "Structured local planner", "Strukturerad lokal planerare")}
                   </span>
                 </div>
                 <p>{result.message}</p>
@@ -1524,7 +1557,7 @@ export function AiAssistantPanel({
 
             {result?.followUpQuestions.length ? (
               <div className="rounded-2xl border border-sky-200/80 bg-white px-4 py-4 text-sm text-foreground">
-                <p className="font-medium text-foreground">Följdfrågor</p>
+                <p className="font-medium text-foreground">{t(language, "Follow-up questions", "Följdfrågor")}</p>
                 <ul className="mt-2 list-disc space-y-2 pl-5 text-muted-foreground">
                   {result.followUpQuestions.map((question) => (
                     <li key={question}>{question}</li>
@@ -1535,7 +1568,9 @@ export function AiAssistantPanel({
 
             {result?.warnings.length ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950">
-                <p className="font-medium">{isExportScope ? "Warnings and fix list" : "Varningar"}</p>
+                <p className="font-medium">
+                  {isExportScope ? t(language, "Warnings and fix list", "Varningar och fixlista") : t(language, "Warnings", "Varningar")}
+                </p>
                 {isExportScope ? (
                   <p className="mt-2 text-sm text-amber-900">
                     Correct these items in the source Framing package before you export the final downloadable handoff.
@@ -1677,7 +1712,7 @@ export function AiAssistantPanel({
             {result?.artifacts.length ? (
               <div className="space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  {isExportScope ? "Preview generated handoff" : "Genererade underlag"}
+                  {isExportScope ? t(language, "Preview generated handoff", "Förhandsgranska genererat handoff") : t(language, "Generated artifacts", "Genererade underlag")}
                 </p>
                 {result.artifacts.map((artifact) => (
                   <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={artifact.kind}>
@@ -1699,7 +1734,7 @@ export function AiAssistantPanel({
                           variant="secondary"
                         >
                           {copiedArtifact === `${artifact.kind}-markdown` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          Kopiera markdown
+                          {t(language, "Copy markdown", "Kopiera markdown")}
                         </Button>
                         <Button
                           onClick={() => handleCopyArtifact(`${artifact.kind}-json`, JSON.stringify(artifact.json, null, 2))}
@@ -1708,7 +1743,7 @@ export function AiAssistantPanel({
                           variant="secondary"
                         >
                           {copiedArtifact === `${artifact.kind}-json` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          Kopiera JSON
+                          {t(language, "Copy JSON", "Kopiera JSON")}
                         </Button>
                       </div>
                     </div>
@@ -1728,7 +1763,7 @@ export function AiAssistantPanel({
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
                   </span>
                 </summary>
-                <ul className="border-t border-border/70 px-4 py-4 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                <ul className="px-4 py-4 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                   {result.toolTrace.map((entry, index) => (
                     <li key={`${entry.tool}-${index}`}>{entry.tool}: {entry.summary}</li>
                   ))}
@@ -1744,11 +1779,11 @@ export function AiAssistantPanel({
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
                   </span>
                 </summary>
-                <div className="space-y-3 border-t border-border/70 px-4 py-4">
+                <div className="space-y-3 px-4 py-4">
                   {history.slice(0, 5).map((entry) => (
                     <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-3" key={entry.id}>
                       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                        {framingAgentModeLabels[entry.mode]} / {new Date(entry.createdAt).toLocaleString("sv-SE")}
+                        {getFramingAgentModeLabel(language, entry.mode)} / {new Date(entry.createdAt).toLocaleString(language === "sv" ? "sv-SE" : "en-GB")}
                       </p>
                       <p className="mt-2 text-sm font-medium text-foreground">{entry.prompt}</p>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{entry.message}</p>
