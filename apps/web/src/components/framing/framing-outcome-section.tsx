@@ -429,10 +429,20 @@ function CollapsibleFramingPanel(props: {
   defaultOpen?: boolean | undefined;
   badge?: ReactNode;
   teaser?: ReactNode;
+  tone?: "default" | "featured";
   children: ReactNode;
 }) {
+  const featured = props.tone === "featured";
+
   return (
-    <details className="group rounded-2xl border border-border/70 bg-background shadow-sm" open={props.defaultOpen}>
+    <details
+      className={
+        featured
+          ? "group rounded-2xl border border-sky-300/80 bg-[linear-gradient(180deg,rgba(247,250,255,0.96),rgba(255,255,255,0.98))] shadow-sm"
+          : "group rounded-2xl border border-border/70 bg-background shadow-sm"
+      }
+      open={props.defaultOpen}
+    >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
         <div className="min-w-0">
           <h3 className="font-semibold text-foreground">{props.title}</h3>
@@ -1157,7 +1167,13 @@ export function FramingOutcomeSection({
             </CollapsibleFramingPanel>
 
             <CollapsibleFramingPanel
+              badge={
+                <span className="inline-flex items-center rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-900 shadow-sm">
+                  {language === "sv" ? "K\u00E4rnstruktur" : "Core framing"}
+                </span>
+              }
               description={<DeliveryTypeGuidanceText slot="structureDescription" />}
+              tone="featured"
               teaser={<p className="leading-6 text-muted-foreground">{structureTeaser.join(" · ")}</p>}
               title={language === "sv" ? "Epics, Story Ideas och framinghierarki" : "Epics, Story Ideas and framing hierarchy"}
             >
@@ -1171,14 +1187,14 @@ export function FramingOutcomeSection({
                   </p>
                 </div>
                 <div className="grid gap-4 xl:grid-cols-2">
-                  <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+                  <div className="rounded-3xl border border-slate-300/80 bg-white p-5 shadow-sm">
                     <div className="space-y-1">
                       <p className="font-medium text-foreground">{language === "sv" ? "Skapa Epic snabbt" : "Quick create Epic"}</p>
                       <p className="text-sm leading-6 text-muted-foreground">
                         <DeliveryTypeGuidanceText slot="quickEpicDescription" />
                       </p>
                     </div>
-                    <div className="mt-3 space-y-3">
+                    <div className="mt-4 space-y-4">
                       <label className="space-y-2">
                         <span className="text-sm font-medium text-foreground">{language === "sv" ? "Epic-titel" : "Epic title"}</span>
                         <input
@@ -1191,11 +1207,12 @@ export function FramingOutcomeSection({
                       </label>
                       {!isArchived ? (
                         <PendingFormButton
-                          className="gap-2 self-start px-5"
+                          className="min-w-[220px] justify-center gap-2 self-start"
                           formAction={createEpicAction}
                           icon={<ArrowRight className="h-4 w-4" />}
                           label={language === "sv" ? "Skapa Epic" : "Create Epic"}
                           pendingLabel={language === "sv" ? "Skapar Epic..." : "Creating Epic..."}
+                          size="lg"
                         />
                       ) : (
                         <p className="text-sm text-muted-foreground">
@@ -1222,7 +1239,7 @@ export function FramingOutcomeSection({
                       </p>
                     </div>
                   ) : null}
-                  <div className="rounded-2xl border border-sky-200 bg-sky-50/45 p-4">
+                  <div className="rounded-3xl border border-slate-300/80 bg-white p-5 shadow-sm">
                     <div className="space-y-3">
                       <div className="space-y-1">
                         <p className="font-medium text-foreground">
@@ -1232,7 +1249,7 @@ export function FramingOutcomeSection({
                           <DeliveryTypeGuidanceText slot="quickStoryIdeaDescription" />
                         </p>
                       </div>
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] lg:items-end">
                           <label className="space-y-2">
                             <span className="text-sm font-medium text-foreground">
@@ -1263,12 +1280,13 @@ export function FramingOutcomeSection({
                           </label>
                         </div>
                         <PendingFormButton
-                          className="gap-2 self-start px-5"
+                          className="min-w-[220px] justify-center gap-2 self-start"
                           disabled={!canCreateStoryIdea}
                           formAction={createStoryIdeaAction}
                           icon={<ArrowRight className="h-4 w-4" />}
                           label={language === "sv" ? "Skapa Story Idea" : "Create Story Idea"}
                           pendingLabel={language === "sv" ? "Skapar Story Idea..." : "Creating Story Idea..."}
+                          size="lg"
                         />
                       </div>
                     </div>

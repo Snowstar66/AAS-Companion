@@ -56,13 +56,13 @@ function localizeRoleTitle(language: "en" | "sv", roleType: string, roleTitle: s
   const byTitle: Record<string, string> = {
     "project sponsor": "Projektsponsor",
     "executive sponsor": "Projektsponsor",
-    "domain owner": "DomÃ¤nÃ¤gare",
-    "product owner": "ProduktÃ¤gare",
-    "value owner": "VÃ¤rdeÃ¤gare",
-    "risk owner": "RiskÃ¤gare",
-    "solution architect": "LÃ¶sningsarkitekt",
+    "domain owner": "Dom\u00E4n\u00E4gare",
+    "product owner": "Produkt\u00E4gare",
+    "value owner": "V\u00E4rde\u00E4gare",
+    "risk owner": "Risk\u00E4gare",
+    "solution architect": "L\u00F6sningsarkitekt",
     "customer architect": "Kundarkitekt",
-    "supplier architect": "LeverantÃ¶rsarkitekt",
+    "supplier architect": "Leverant\u00F6rsarkitekt",
     "ai delivery lead": "AI-leveransledare",
     "ai delivery architect": "AI-leveransarkitekt",
     "ai quality assurance lead": "AI-kvalitetsansvarig",
@@ -74,10 +74,10 @@ function localizeRoleTitle(language: "en" | "sv", roleType: string, roleTitle: s
 
   const byRoleType: Record<string, string> = {
     customer_sponsor: "Projektsponsor",
-    customer_domain_owner: "DomÃ¤nÃ¤gare",
-    value_owner: "VÃ¤rdeÃ¤gare",
-    risk_owner: "RiskÃ¤gare",
-    architect: "LÃ¶sningsarkitekt",
+    customer_domain_owner: "Dom\u00E4n\u00E4gare",
+    value_owner: "V\u00E4rde\u00E4gare",
+    risk_owner: "Risk\u00E4gare",
+    architect: "L\u00F6sningsarkitekt",
     aida: "AI-leveransledare",
     aqa: "AI-kvalitetsansvarig",
     delivery_lead: "Leveransledare",
@@ -109,22 +109,22 @@ function localizeMandateNotes(
   const normalized = mandateNotes.trim();
   const byText: Record<string, string> = {
     "Owns sponsorship, budget direction, and tollgate progression for the pilot.":
-      "Ã„ger sponsorskap, budgetinriktning och tollgate-framdrift fÃ¶r piloten.",
+      "\u00C4ger sponsorskap, budgetinriktning och tollgate-framdrift f\u00F6r piloten.",
     "Owns domain rules for mushroom records, user workflows, and find data semantics.":
-      "Ã„ger domÃ¤nregler fÃ¶r svampregister, anvÃ¤ndarflÃ¶den och semantiken i sÃ¶kdata.",
+      "\u00C4ger dom\u00E4nregler f\u00F6r svampregister, anv\u00E4ndarfl\u00F6den och semantiken i s\u00F6kdata.",
     "Owns business value, prioritization, and acceptance of the mushroom-finding app pilot.":
-      "Ã„ger affÃ¤rsvÃ¤rde, prioritering och acceptans fÃ¶r pilotversionen av svampappen.",
+      "\u00C4ger aff\u00E4rsv\u00E4rde, prioritering och acceptans f\u00F6r pilotversionen av svampappen.",
     "Owns practical AI-assisted delivery setup and governed usage constraints.":
-      "Ã„ger praktisk AI-assisterad leveranssetup och styrda anvÃ¤ndningsramar.",
+      "\u00C4ger praktisk AI-assisterad leveranssetup och styrda anv\u00E4ndningsramar.",
     "Reviews AI-assisted output quality, traceability, and build readiness.":
-      "Granskar kvaliteten pÃ¥ AI-assisterad output, spÃ¥rbarhet och build readiness.",
+      "Granskar kvaliteten p\u00E5 AI-assisterad output, sp\u00E5rbarhet och build readiness.",
     "Owns application architecture, data design, and architecture review decisions.":
-      "Ã„ger applikationsarkitektur, datadesign och beslut i arkitekturgranskningar.",
+      "\u00C4ger applikationsarkitektur, datadesign och beslut i arkitekturgranskningar.",
     "Owns delivery planning, sequencing, and escalations on the supplier side.":
-      "Ã„ger leveransplanering, sekvensering och eskaleringar pÃ¥ leverantÃ¶rssidan.",
-    "Owns business value.": "Ã„ger affÃ¤rsvÃ¤rdet.",
-    "Owns delivery coordination.": "Ã„ger leveranskoordineringen.",
-    "Owns architecture review.": "Ã„ger arkitekturgranskningen."
+      "\u00C4ger leveransplanering, sekvensering och eskaleringar p\u00E5 leverant\u00F6rssidan.",
+    "Owns business value.": "\u00C4ger aff\u00E4rsv\u00E4rdet.",
+    "Owns delivery coordination.": "\u00C4ger leveranskoordineringen.",
+    "Owns architecture review.": "\u00C4ger arkitekturgranskningen."
   };
 
   if (byText[normalized]) {
@@ -133,10 +133,10 @@ function localizeMandateNotes(
 
   const roleNameByType: Record<string, string> = {
     customer_sponsor: "Projektsponsor",
-    customer_domain_owner: "DomÃ¤nÃ¤gare",
-    value_owner: "VÃ¤rdeÃ¤gare",
-    risk_owner: "RiskÃ¤gare",
-    architect: "LÃ¶sningsarkitekt",
+    customer_domain_owner: "Dom\u00E4n\u00E4gare",
+    value_owner: "V\u00E4rde\u00E4gare",
+    risk_owner: "Risk\u00E4gare",
+    architect: "L\u00F6sningsarkitekt",
     aida: "AI-leveransledare",
     aqa: "AI-kvalitetsansvarig",
     delivery_lead: "Leveransledare",
@@ -146,7 +146,7 @@ function localizeMandateNotes(
   const generatedPrefix = `${roleTitleForSeed(roleType, roleNameByType)} is a seeded AAS runtime role for `;
   if (normalized.startsWith(generatedPrefix) && normalized.endsWith(".")) {
     const organizationName = normalized.slice(generatedPrefix.length, -1);
-    return `${roleNameByType[roleType] ?? formatLabel(roleType)} Ã¤r en seedad AAS-runtime-roll fÃ¶r ${organizationName}.`;
+    return `${roleNameByType[roleType] ?? formatLabel(roleType)} \u00E4r en seedad AAS-runtime-roll f\u00F6r ${organizationName}.`;
   }
 
   return mandateNotes;
@@ -205,7 +205,7 @@ function PeopleGroup(props: {
           {t(
             props.language,
             "Compact role list. Expand only the role you want to inspect or edit.",
-            "Kompakt rollista. Expandera bara den roll du vill granska eller Ã¤ndra."
+            "Kompakt rollista. Expandera bara den roll du vill granska eller \u00E4ndra."
           )}
         </CardDescription>
       </CardHeader>
@@ -215,7 +215,7 @@ function PeopleGroup(props: {
             {t(
               props.language,
               "No roles have been added for this side yet.",
-              "Inga roller har lagts till fÃ¶r den hÃ¤r sidan Ã¤nnu."
+              "Inga roller har lagts till f\u00F6r den h\u00E4r sidan \u00E4nnu."
             )}
           </div>
         ) : (
@@ -250,7 +250,7 @@ function PeopleGroup(props: {
                     </p>
                     <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
                       {localizeMandateNotes(props.language, person.roleType, person.mandateNotes) ||
-                        t(props.language, "No mandate notes recorded yet.", "Inga mandatnoteringar registrerade Ã¤nnu.")}
+                        t(props.language, "No mandate notes recorded yet.", "Inga mandatnoteringar registrerade \u00E4nnu.")}
                     </p>
                   </div>
                 </div>
@@ -262,7 +262,7 @@ function PeopleGroup(props: {
                   <ReturnInputs params={props.returnParams} />
                   <input name="id" type="hidden" value={person.id} />
                   <label className="space-y-2">
-                    <span className="text-sm font-medium text-foreground">{t(props.language, "Full name", "FullstÃ¤ndigt namn")}</span>
+                    <span className="text-sm font-medium text-foreground">{t(props.language, "Full name", "Fullst\u00E4ndigt namn")}</span>
                     <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" defaultValue={person.fullName} name="fullName" type="text" />
                   </label>
                   <label className="space-y-2">
@@ -345,7 +345,7 @@ export function GovernanceDirectoryView({
                 {t(
                   language,
                   "Customer and supplier roles stay grouped, compact and easy to scan.",
-                  "Kund- och leverantÃ¶rsroller hÃ¥lls grupperade, kompakta och lÃ¤ttÃ¶verskÃ¥dliga."
+                  "Kund- och leverant\u00F6rsroller h\u00E5lls grupperade, kompakta och l\u00E4tt\u00F6versk\u00E5dliga."
                 )}
               </CardDescription>
             </div>
@@ -355,12 +355,12 @@ export function GovernanceDirectoryView({
           <details className="group rounded-2xl border border-border/70 bg-muted/10">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4">
               <div>
-                <p className="font-medium text-foreground">{t(language, "Add role", "LÃ¤gg till roll")}</p>
+                <p className="font-medium text-foreground">{t(language, "Add role", "L\u00E4gg till roll")}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {t(
                     language,
                     "Create a named customer or supplier role only when needed.",
-                    "Skapa en namngiven kund- eller leverantÃ¶rsroll bara nÃ¤r det behÃ¶vs."
+                    "Skapa en namngiven kund- eller leverant\u00F6rsroll bara n\u00E4r det beh\u00F6vs."
                   )}
                 </p>
               </div>
@@ -373,7 +373,7 @@ export function GovernanceDirectoryView({
               <form action={createAction} className="grid gap-4 lg:grid-cols-2">
                 <ReturnInputs params={returnParams} />
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">{t(language, "Full name", "FullstÃ¤ndigt namn")}</span>
+                  <span className="text-sm font-medium text-foreground">{t(language, "Full name", "Fullst\u00E4ndigt namn")}</span>
                   <input className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary" name="fullName" type="text" />
                 </label>
                 <label className="space-y-2">
@@ -433,7 +433,7 @@ export function GovernanceDirectoryView({
 
       <div className="grid gap-6 2xl:grid-cols-2">
         <PeopleGroup label={t(language, "Customer", "Kund")} language={language} people={customerPeople} returnParams={returnParams} tone="customer" updateAction={updateAction} />
-        <PeopleGroup label={t(language, "Supplier", "LeverantÃ¶r")} language={language} people={supplierPeople} returnParams={returnParams} tone="supplier" updateAction={updateAction} />
+        <PeopleGroup label={t(language, "Supplier", "Leverant\u00F6r")} language={language} people={supplierPeople} returnParams={returnParams} tone="supplier" updateAction={updateAction} />
       </div>
     </div>
   );

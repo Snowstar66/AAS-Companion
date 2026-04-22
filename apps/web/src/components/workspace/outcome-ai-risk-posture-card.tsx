@@ -186,6 +186,50 @@ function getStatusTone(blockerCount: number, derivedRisk: RiskLevel | null, aiLe
   };
 }
 
+function getRecommendedAccelerationGuidance(language: "en" | "sv", risk: RiskLevel | null) {
+  if (risk === "high") {
+    return {
+      label: t(language, "Prefer Level 1 or tightly controlled Level 2", "Föredra nivå 1 eller strikt styrd nivå 2"),
+      detail: t(
+        language,
+        "High-risk work should normally stay close to direct human control. Level 3 only fits in unusually strong governance setups.",
+        "Högriskarbete bör normalt ligga nära direkt mänsklig kontroll. Nivå 3 passar bara i ovanligt starka governance-upplägg."
+      )
+    };
+  }
+
+  if (risk === "medium") {
+    return {
+      label: t(language, "Level 2 is usually the right default", "Nivå 2 är oftast rätt standardval"),
+      detail: t(
+        language,
+        "Medium risk usually benefits from structured acceleration with human review between steps. Level 3 should only be used when orchestration adds clear value.",
+        "Medelrisk gynnas oftast av strukturerad acceleration med mänsklig granskning mellan stegen. Nivå 3 bör bara användas när orkestrering ger tydligt värde."
+      )
+    };
+  }
+
+  if (risk === "low") {
+    return {
+      label: t(language, "Level 2 is often suitable, Level 3 can be justified", "Nivå 2 passar ofta, nivå 3 kan vara motiverad"),
+      detail: t(
+        language,
+        "Low-risk work still needs traceability, but it gives more room to automate parts of refinement, design, build or test when governance remains explicit.",
+        "Lågriskarbete behöver fortfarande spårbarhet, men ger större utrymme att automatisera delar av refinement, design, build eller test när governance fortsatt är tydlig."
+      )
+    };
+  }
+
+  return {
+    label: t(language, "Classify risk first to get an acceleration recommendation", "Klassificera risk först för att få en accelerationsrekommendation"),
+    detail: t(
+      language,
+      "The recommendation becomes useful when all four risk dimensions are set.",
+      "Rekommendationen blir användbar när alla fyra riskdimensioner är satta."
+    )
+  };
+}
+
 function StepCard(props: {
   title: string;
   description: string;
@@ -428,6 +472,10 @@ export function OutcomeAiRiskPostureCard({
       : t(language, "AI and risk posture is complete. Continue into Epics and Story Ideas or move into Tollgate 1 approval.", "AI- och riskpositionen är komplett. Fortsätt till Epics och Story Ideas eller gå vidare till Tollgate 1-godkännande.")));
 
   const statusTone = getStatusTone(blockers.length, derivedRisk, aiLevel);
+  const accelerationGuidance = useMemo(
+    () => getRecommendedAccelerationGuidance(language, derivedRisk),
+    [derivedRisk, language]
+  );
   const riskDimensionGuidance = {
     businessImpact: {
       rationaleTip: t(
@@ -476,7 +524,7 @@ export function OutcomeAiRiskPostureCard({
         <input name="aiAccelerationLevel" type="hidden" value={aiLevel} />
         <input name="riskProfile" type="hidden" value={derivedRisk ?? defaultRiskProfile} />
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_320px]">
           <div className="rounded-3xl border border-sky-200 bg-[linear-gradient(135deg,rgba(239,246,255,0.94),rgba(255,255,255,0.94))] p-5">
             <div className="flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-sky-950">
@@ -491,6 +539,20 @@ export function OutcomeAiRiskPostureCard({
             <p className="framing-guidance-copy mt-4 text-sm leading-6 text-slate-700">
               {t(language, "Keep this at framing level. Capture how AI will be used, what risk exists and what control model is needed. Do not name tools, models or technical solution design here.", "Håll detta på framingnivå. Fånga hur AI ska användas, vilken risk som finns och vilken kontrollmodell som behövs. Nämn inte verktyg, modeller eller teknisk lösningsdesign här.")}
             </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-sky-200/80 bg-white/85 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Selected AI Level", "Vald AI-nivå")}</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{formatAiLevel(aiLevel)}</p>
+              </div>
+              <div className="rounded-2xl border border-sky-200/80 bg-white/85 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Derived risk profile", "Härledd riskprofil")}</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{formatRiskLevel(derivedRisk, language)}</p>
+              </div>
+              <div className="rounded-2xl border border-sky-200/80 bg-white/85 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Recommended acceleration", "Rekommenderad acceleration")}</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">{accelerationGuidance.label}</p>
+              </div>
+            </div>
           </div>
 
           <div className="rounded-3xl border border-border/70 bg-muted/10 p-5">
@@ -655,8 +717,15 @@ export function OutcomeAiRiskPostureCard({
               </p>
             </div>
           </div>
-          <div className="framing-guidance-copy rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
-            {getAiLevelLifecycleExample(aiLevel, language)}
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
+            <div className="framing-guidance-copy rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
+              {getAiLevelLifecycleExample(aiLevel, language)}
+            </div>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900/80">{t(language, "AI acceleration recommendation", "AI-accelerationsrekommendation")}</p>
+              <p className="mt-2 text-base font-semibold text-sky-950">{accelerationGuidance.label}</p>
+              <p className="mt-2 text-sm leading-6 text-sky-950/85">{accelerationGuidance.detail}</p>
+            </div>
           </div>
 
           <label className="mt-4 block space-y-2">
@@ -672,7 +741,7 @@ export function OutcomeAiRiskPostureCard({
           </label>
         </StepCard>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_320px]">
           <div className="rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Blockers", "Blockerare")}</p>
             {blockers.length > 0 ? (

@@ -376,25 +376,33 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
           ) : null}
 
           <details
-            className="group rounded-2xl border border-border/70 bg-muted/10"
+            className="group rounded-2xl border border-border/70 bg-background shadow-sm"
             onToggle={(event) => setShowPageGuidance((event.currentTarget as HTMLDetailsElement).open)}
             open={showPageGuidance}
           >
             <summary className="cursor-pointer list-none px-4 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{t(language, "Show guidance and status", "Visa vägledning och status")}</p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-800">
+                      {t(language, "Optional", "Valfritt")}
+                    </span>
+                    <p className="text-sm font-semibold text-foreground">{t(language, "Guidance and current status", "Vägledning och nuläge")}</p>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {t(
                       language,
-                      "Open only when you want recommendations, current state, and extra information.",
-                      "Öppna bara när du vill läsa rekommendationer, nuläge och extra information."
+                      "Open for usage advice, the current focus, and quick readiness signals before you refine more journeys.",
+                      "Öppna för råd om användning, aktuellt fokus och snabba readiness-signaler innan du förfinar fler journeys."
                     )}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full border border-border/70 bg-white px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-                    {showPageGuidance ? t(language, "Hide", "Dölj") : t(language, "Show", "Visa")}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-border/70 bg-muted/10 px-3 py-1 text-xs font-medium text-muted-foreground">
+                    {counts.journeyCount} {t(language, counts.journeyCount === 1 ? "journey" : "journeys", counts.journeyCount === 1 ? "journey" : "journeys")}
+                  </span>
+                  <span className="rounded-full border border-border/70 bg-muted/10 px-3 py-1 text-xs font-medium text-muted-foreground">
+                    {readyJourneys.length} {t(language, "ready", "redo")}
                   </span>
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
@@ -402,7 +410,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                 </div>
               </div>
             </summary>
-            <div className="space-y-4 border-t border-border/70 px-4 py-4">
+            <div className="grid gap-4 border-t border-border/70 px-4 py-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
               <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
                 <p className="font-medium text-foreground">{t(language, "Use journeys to clarify the business case", "Använd journeys för att förtydliga business caset")}</p>
                 <p className="mt-2">
@@ -422,36 +430,47 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
                 <p className="mt-3 text-sky-900/85">{getInitiativeRecommendation(language, initiativeType)}</p>
               </div>
 
-              <div className="rounded-2xl border border-border/70 bg-background px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.label}</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{currentFlowStep.title}</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentFlowStep.description}</p>
-                <p className="mt-3 text-sm font-medium text-foreground">{t(language, "Next step:", "Nästa steg:")} {currentFlowStep.nextAction}</p>
-                {(counts.uncoveredJourneyCount > 0 || counts.suggestedStoryIdeaCount > 0 || readyJourneys.length > 0) ? (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    {readyJourneys.length > 0
-                      ? t(
-                          language,
-                          `${readyJourneys.length} ready for analysis`,
-                          `${readyJourneys.length} redo för analys`
-                        )
-                      : t(language, "No journey is ready for analysis yet", "Ingen journey är redo för analys ännu")}
-                    {counts.uncoveredJourneyCount > 0
-                      ? language === "sv"
-                        ? ` · ${counts.uncoveredJourneyCount} otäckt${counts.uncoveredJourneyCount === 1 ? "" : "a"} journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}`
-                        : ` · ${counts.uncoveredJourneyCount} uncovered journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}`
-                      : ""}
-                    {counts.suggestedStoryIdeaCount > 0
-                      ? language === "sv"
-                        ? ` · ${counts.suggestedStoryIdeaCount} föreslag${counts.suggestedStoryIdeaCount === 1 ? "en" : "na"} Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}`
-                        : ` · ${counts.suggestedStoryIdeaCount} suggested Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}`
-                      : ""}
-                  </p>
-                ) : null}
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-border/70 bg-background px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{currentFlowStep.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">{currentFlowStep.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{currentFlowStep.description}</p>
+                  <p className="mt-3 text-sm font-medium text-foreground">{t(language, "Next step:", "Nästa steg:")} {currentFlowStep.nextAction}</p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t(language, "Coverage status", "Täckningsstatus")}</p>
+                    <p className="mt-2 text-sm font-semibold text-foreground">
+                      {readyJourneys.length > 0
+                        ? t(language, `${readyJourneys.length} ready for analysis`, `${readyJourneys.length} redo för analys`)
+                        : t(language, "No journey is ready for analysis yet", "Ingen journey är redo för analys ännu")}
+                    </p>
+                    {(counts.uncoveredJourneyCount > 0 || counts.suggestedStoryIdeaCount > 0) ? (
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                        {counts.uncoveredJourneyCount > 0
+                          ? language === "sv"
+                            ? `${counts.uncoveredJourneyCount} otäckt${counts.uncoveredJourneyCount === 1 ? "" : "a"} journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}`
+                            : `${counts.uncoveredJourneyCount} uncovered journey${counts.uncoveredJourneyCount === 1 ? "" : "s"}`
+                          : ""}
+                        {counts.uncoveredJourneyCount > 0 && counts.suggestedStoryIdeaCount > 0 ? " · " : ""}
+                        {counts.suggestedStoryIdeaCount > 0
+                          ? language === "sv"
+                            ? `${counts.suggestedStoryIdeaCount} föreslag${counts.suggestedStoryIdeaCount === 1 ? "en" : "na"} Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}`
+                            : `${counts.suggestedStoryIdeaCount} suggested Story Idea${counts.suggestedStoryIdeaCount === 1 ? "" : "s"}`
+                          : ""}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-muted/10 px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">{t(language, "Initiative fit", "Initiativpassform")}</p>
+                    <p className="mt-2 text-sm leading-6 text-foreground">{getInitiativeRecommendation(language, initiativeType)}</p>
+                  </div>
+                </div>
               </div>
 
               {!initiativeType ? (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="xl:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                   {t(
                     language,
                     "The Journey page is automatically bound to the current outcome and its initiative type. Set AD, AT, or AM in Framing Overview first.",
@@ -461,7 +480,7 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
               ) : null}
 
               {!journeyContextStorageAvailable ? (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="xl:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                   {t(
                     language,
                     "The Journey page is visible, but the database migration has not been applied yet. The Framing route still loads, but Journey changes cannot be saved until the latest migration has run.",
