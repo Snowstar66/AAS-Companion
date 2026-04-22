@@ -774,9 +774,12 @@ export function FramingOutcomeSection({
         </div>
       ) : null}
 
-      <Card className="border-border/70 shadow-sm">
-        <CardHeader>
+      <Card className="overflow-hidden border-sky-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,255,255,1))] shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
+        <CardHeader className="gap-4">
           <div className="space-y-4">
+            <div className="inline-flex items-center rounded-full border border-sky-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-900 shadow-sm">
+              {language === "sv" ? "Framing Overview" : "Framing Overview"}
+            </div>
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
                 {outcome.key}
@@ -799,7 +802,7 @@ export function FramingOutcomeSection({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid gap-5 border-t border-sky-100/80 bg-white/80">
           <WorkspaceStatusSummary
             blockerEmptyText={
               language === "sv" ? "Inga varningar eller rekommendationer syns just nu." : "No warnings or recommendations are visible right now."
@@ -819,7 +822,7 @@ export function FramingOutcomeSection({
 
       {!embeddedInFraming ? (
         <>
-          <Card className="border-border/70 shadow-sm">
+          <Card className="border-border/70 bg-muted/10 shadow-sm">
             <CardHeader>
               <CardTitle>{language === "sv" ? "Casets ursprung" : "Case provenance"}</CardTitle>
               <CardDescription>
@@ -865,14 +868,29 @@ export function FramingOutcomeSection({
         <form action={saveAction} className="space-y-6">
       <input name="outcomeId" type="hidden" value={outcome.id} />
             <input name="returnPath" type="hidden" value={returnPath} />
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
+            <Card className="overflow-hidden border-sky-300/80 bg-[linear-gradient(180deg,rgba(239,246,255,0.9),rgba(255,255,255,1))] shadow-[0_18px_44px_-30px_rgba(14,116,144,0.45)]">
+              <CardHeader className="gap-3 border-b border-sky-100/80 bg-white/70">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center rounded-full border border-sky-950 bg-sky-950 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-sm">
+                    {language === "sv" ? "Börja här" : "Start here"}
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-900">
+                    {language === "sv" ? "Kundens handshake" : "Customer handshake"}
+                  </span>
+                </div>
                 <CardTitle>{language === "sv" ? "Affärscase" : "Business case"}</CardTitle>
-                <CardDescription>
-                  <DeliveryTypeGuidanceText slot="businessCaseDescription" />
+                <CardDescription className="max-w-3xl leading-7">
+                  <span className="block">
+                    <DeliveryTypeGuidanceText slot="businessCaseDescription" />
+                  </span>
+                  <span className="mt-2 block text-sky-900/80">
+                    {language === "sv"
+                      ? "Fånga det som måste vara sant innan Framing lämnas vidare till Design och nästa AI-stack."
+                      : "Capture what must be true before Framing is handed off to Design and the next AI stack."}
+                  </span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-5 xl:grid-cols-2">
+              <CardContent className="grid gap-5 bg-white/85 xl:grid-cols-2">
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Titel" : "Title"}</span>
                   <input
