@@ -438,15 +438,15 @@ function CollapsibleFramingPanel(props: {
     <details
       className={
         featured
-          ? "group rounded-2xl border border-sky-300/80 bg-[linear-gradient(180deg,rgba(247,250,255,0.96),rgba(255,255,255,0.98))] shadow-sm"
+          ? "group overflow-hidden rounded-3xl border border-sky-500/90 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(255,255,255,1))] shadow-[0_16px_36px_-24px_rgba(14,116,144,0.55)] ring-1 ring-sky-200/90"
           : "group rounded-2xl border border-border/70 bg-background shadow-sm"
       }
       open={props.defaultOpen}
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5">
+      <summary className={featured ? "flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-6" : "flex cursor-pointer list-none items-center justify-between gap-3 px-6 py-5"}>
         <div className="min-w-0">
-          <h3 className="font-semibold text-foreground">{props.title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{props.description}</p>
+          <h3 className={featured ? "text-lg font-semibold text-slate-950" : "font-semibold text-foreground"}>{props.title}</h3>
+          <p className={featured ? "mt-1 text-sm text-slate-600" : "mt-1 text-sm text-muted-foreground"}>{props.description}</p>
           {props.teaser ? <div className="mt-3 text-sm text-foreground">{props.teaser}</div> : null}
         </div>
         <div className="flex shrink-0 items-center gap-3">
@@ -1168,13 +1168,33 @@ export function FramingOutcomeSection({
 
             <CollapsibleFramingPanel
               badge={
-                <span className="inline-flex items-center rounded-full border border-sky-300 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-900 shadow-sm">
+                <span className="inline-flex items-center rounded-full border border-sky-950 bg-sky-950 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white shadow-sm">
                   {language === "sv" ? "K\u00E4rnstruktur" : "Core framing"}
                 </span>
               }
               description={<DeliveryTypeGuidanceText slot="structureDescription" />}
               tone="featured"
-              teaser={<p className="leading-6 text-muted-foreground">{structureTeaser.join(" · ")}</p>}
+              teaser={
+                <div className="rounded-2xl border border-sky-300/90 bg-white/95 p-4 shadow-sm">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-950 shadow-sm">
+                      {outcome.epics.length} Epics
+                    </span>
+                    <span className="rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-950 shadow-sm">
+                      {outcome.directionSeeds.length} Story Ideas
+                    </span>
+                    <span className="rounded-full border border-sky-400 bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-950 shadow-sm">
+                      {language === "sv" ? "Design ärver härifrån" : "Design inherits from here"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-medium text-slate-900">
+                    {language === "sv"
+                      ? "Det här är den centrala strukturen för Framing. Det är härifrån Design och senare AI-förfining ska ärva riktning."
+                      : "This is the central Framing structure. Design and later AI refinement should inherit direction from here."}
+                  </p>
+                  <p className="mt-2 leading-6 text-slate-600">{structureTeaser.join(" · ")}</p>
+                </div>
+              }
               title={language === "sv" ? "Epics, Story Ideas och framinghierarki" : "Epics, Story Ideas and framing hierarchy"}
             >
               <div className="space-y-5">
@@ -1629,10 +1649,10 @@ export async function DeferredOutcomeTollgateSection(props: {
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>
-            <LocalizedText en="Tollgate follow-up is unavailable" sv="Tollgate-uppfÃ¶ljning Ã¤r inte tillgÃ¤nglig" />
+            <LocalizedText en="Tollgate follow-up is unavailable" sv="Tollgate-uppföljning är inte tillgänglig" />
           </CardTitle>
           <CardDescription>
-            <LocalizedText en="The Tollgate workspace hit a server-side loading problem." sv="Tollgate-arbetsytan stÃ¶tte pÃ¥ ett serverfel vid inlÃ¤sning." />
+            <LocalizedText en="The Tollgate workspace hit a server-side loading problem." sv="Tollgate-arbetsytan stötte på ett serverfel vid inläsning." />
           </CardDescription>
         </CardHeader>
       </Card>

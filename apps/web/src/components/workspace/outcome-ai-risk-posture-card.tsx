@@ -476,6 +476,9 @@ export function OutcomeAiRiskPostureCard({
     () => getRecommendedAccelerationGuidance(language, derivedRisk),
     [derivedRisk, language]
   );
+  const recommendedPattern =
+    derivedRisk === "high" ? "assisted" : derivedRisk === "medium" || derivedRisk === "low" ? "step_by_step" : null;
+  const recommendedLevel = recommendedPattern ? deriveAiLevelFromExecutionPattern(recommendedPattern) : null;
   const riskDimensionGuidance = {
     businessImpact: {
       rationaleTip: t(
@@ -541,7 +544,7 @@ export function OutcomeAiRiskPostureCard({
             </p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-sky-200/80 bg-white/85 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Selected AI Level", "Vald AI-nivå")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Current AI level", "Aktuell AI-nivå")}</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">{formatAiLevel(aiLevel)}</p>
               </div>
               <div className="rounded-2xl border border-sky-200/80 bg-white/85 p-4">
@@ -564,7 +567,7 @@ export function OutcomeAiRiskPostureCard({
                 <p className="mt-2 text-lg font-semibold text-foreground">{formatRiskLevel(derivedRisk, language)}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Selected AI Level", "Vald AI-nivå")}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Current AI level", "Aktuell AI-nivå")}</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">{formatAiLevel(aiLevel)}</p>
               </div>
             </div>
@@ -572,31 +575,10 @@ export function OutcomeAiRiskPostureCard({
         </div>
 
         <StepCard
-          title={t(language, "Step 1 - Determine execution pattern and AI level", "Steg 1 - Bestäm exekveringsmönster och AI-nivå")}
-          description={t(language, "Choose the AAS execution pattern first. The AI Acceleration Level is then derived automatically from that pattern.", "Välj först AAS-exekveringsmönster. AI-accelerationsnivån härleds sedan automatiskt från det mönstret.")}
+          title={t(language, "Step 1 - Describe intended AI use", "Steg 1 - Beskriv avsedd AI-användning")}
+          description={t(language, "Capture how AI is expected to help across framing, refinement, design, build or test. Confirm the actual acceleration choice only after the risk posture is clear.", "Beskriv hur AI förväntas hjälpa över framing, refinement, design, build eller test. Bekräfta det faktiska accelerationsvalet först när riskbilden är tydlig.")}
         >
-          <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-foreground">{t(language, "Execution pattern", "Exekveringsmönster")}</span>
-              <select
-                className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
-                defaultValue={aiExecutionPattern ?? ""}
-                disabled={disabled}
-                name="aiExecutionPattern"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setAiExecutionPattern(
-                    value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null
-                  );
-                }}
-              >
-                <option value="">{t(language, "Select execution pattern", "Välj exekveringsmönster")}</option>
-                <option value="assisted">{t(language, "Assisted delivery", "Assisterad leverans")}</option>
-                <option value="step_by_step">{t(language, "Structured acceleration", "Strukturerad acceleration")}</option>
-                <option value="orchestrated">{t(language, "Orchestrated agentic delivery", "Orkestrerad agentisk leverans")}</option>
-              </select>
-              <InlineFieldGuidance guidance={t(language, "Choose how AI will actually execute work: interactive support, one step at a time with human review, or orchestrated multi-step flow.", "Välj hur AI faktiskt ska utföra arbetet: interaktivt stöd, ett steg i taget med mänsklig granskning eller ett orkestrerat fler-stegsflöde.")} />
-            </label>
+          <div className="grid gap-4">
             <label className="space-y-2">
               <span className="text-sm font-medium text-foreground">{t(language, "Expected AI use across lifecycle", "Förväntad AI-användning över livscykeln")}</span>
               <textarea
@@ -611,9 +593,10 @@ export function OutcomeAiRiskPostureCard({
             </label>
           </div>
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 text-sm leading-6 text-sky-950">
-            <p className="font-semibold">{formatExecutionPattern(aiExecutionPattern, language)} {"->"} {formatAiLevel(aiLevel)}</p>
-            <p className="framing-guidance-copy mt-2">{getExecutionPatternGuidance(aiExecutionPattern, language)}</p>
-            <p className="framing-guidance-copy mt-3">{getAiLevelLifecycleExample(aiLevel, language)}</p>
+            <p className="font-semibold">{t(language, "Keep the intent broad at this stage", "Håll intenten bred i detta steg")}</p>
+            <p className="framing-guidance-copy mt-2">
+              {t(language, "Use this field to explain what AI should help with. Confirm the actual acceleration choice only after the risk posture is clear.", "Använd detta fält för att förklara vad AI ska hjälpa till med. Bekräfta det faktiska accelerationsvalet först när riskpositionen är tydlig.")}
+            </p>
           </div>
         </StepCard>
 
@@ -697,10 +680,10 @@ export function OutcomeAiRiskPostureCard({
         </StepCard>
 
         <StepCard
-          title={t(language, "Step 4 and 5 - Determine overall risk and assess governance fit", "Steg 4 och 5 - Bestäm total risk och bedöm governance-passform")}
-          description={t(language, "Overall risk must equal the highest classified dimension. Then check whether the derived AI level has the right governance for that risk.", "Total risk måste motsvara den högst klassificerade dimensionen. Kontrollera sedan om den härledda AI-nivån har rätt governance för den risken.")}
+          title={t(language, "Step 4 and 5 - Confirm risk and choose AI acceleration", "Steg 4 och 5 - Bekräfta risk och välj AI-acceleration")}
+          description={t(language, "Overall risk must equal the highest classified dimension. Use the recommendation below, then choose the acceleration pattern that best fits the intended control model.", "Total risk måste motsvara den högst klassificerade dimensionen. Använd rekommendationen nedan och välj sedan den accelerationsmodell som bäst passar önskad kontrollnivå.")}
         >
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="rounded-2xl border border-border/70 bg-background p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Overall risk rule</p>
               <p className="mt-2 text-sm leading-6 text-foreground">
@@ -709,26 +692,64 @@ export function OutcomeAiRiskPostureCard({
               <p className="mt-4 text-lg font-semibold text-foreground">{formatRiskLevel(derivedRisk, language)}</p>
             </div>
 
-            <div className="rounded-2xl border border-border/70 bg-background p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Selected AI level", "Vald AI-nivå")}</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">{formatAiLevel(aiLevel)}</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {t(language, "The AI level is derived from the execution pattern in Step 1 and then checked here against the risk posture.", "AI-nivån härleds från exekveringsmönstret i steg 1 och kontrolleras sedan här mot riskpositionen.")}
-              </p>
-            </div>
-          </div>
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
-            <div className="framing-guidance-copy rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
-              {getAiLevelLifecycleExample(aiLevel, language)}
-            </div>
             <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900/80">{t(language, "AI acceleration recommendation", "AI-accelerationsrekommendation")}</p>
-              <p className="mt-2 text-base font-semibold text-sky-950">{accelerationGuidance.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-900/80">{t(language, "Recommended default", "Rekommenderat standardval")}</p>
+              <p className="mt-2 text-base font-semibold text-sky-950">
+                {recommendedPattern && recommendedLevel
+                  ? `${formatExecutionPattern(recommendedPattern, language)} -> ${formatAiLevel(recommendedLevel)}`
+                  : accelerationGuidance.label}
+              </p>
               <p className="mt-2 text-sm leading-6 text-sky-950/85">{accelerationGuidance.detail}</p>
             </div>
           </div>
+          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="framing-guidance-copy rounded-2xl border border-border/70 bg-muted/10 p-4 text-sm leading-6 text-foreground">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {t(language, "Lifecycle fit", "Passform över livscykeln")}
+              </p>
+              <p className="mt-3">{getAiLevelLifecycleExample(aiLevel, language)}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {t(language, "Confirm AI acceleration", "Bekräfta AI-acceleration")}
+              </p>
+              <label className="mt-4 block space-y-2">
+                <span className="text-sm font-medium text-foreground">{t(language, "Execution pattern", "Exekveringsmönster")}</span>
+                <select
+                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+                  defaultValue={aiExecutionPattern ?? ""}
+                  disabled={disabled}
+                  name="aiExecutionPattern"
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setAiExecutionPattern(
+                      value === "assisted" || value === "step_by_step" || value === "orchestrated" ? value : null
+                    );
+                  }}
+                >
+                  <option value="">{t(language, "Select execution pattern", "Välj exekveringsmönster")}</option>
+                  <option value="assisted">{t(language, "Assisted delivery", "Assisterad leverans")}</option>
+                  <option value="step_by_step">{t(language, "Structured acceleration", "Strukturerad acceleration")}</option>
+                  <option value="orchestrated">{t(language, "Orchestrated agentic delivery", "Orkestrerad agentisk leverans")}</option>
+                </select>
+                <InlineFieldGuidance guidance={t(language, "Choose how AI should execute the later work: direct human support, one governed step at a time, or orchestrated multi-step flow.", "Välj hur AI ska exekvera det senare arbetet: direkt mänskligt stöd, ett styrt steg i taget eller ett orkestrerat fler-stegsflöde.")} />
+              </label>
+              <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Selected acceleration fit", "Vald accelerationspassform")}</p>
+                <p className="mt-2 text-base font-semibold text-foreground">
+                  {formatExecutionPattern(aiExecutionPattern, language)} {"->"} {formatAiLevel(aiLevel)}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{getExecutionPatternGuidance(aiExecutionPattern, language)}</p>
+                {recommendedPattern && aiExecutionPattern && recommendedPattern !== aiExecutionPattern ? (
+                  <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-950">
+                    {t(language, "This differs from the current default recommendation. Keep the rationale explicit if you choose a more or less aggressive acceleration pattern.", "Detta avviker från nuvarande standardrekommendation. Håll motiveringen tydlig om du väljer en mer eller mindre aggressiv accelerationsmodell.")}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </div>
 
-          <label className="mt-4 block space-y-2">
+          {aiLevel === "level_3" ? <label className="mt-4 block space-y-2">
             <span className="text-sm font-medium text-foreground">{t(language, "Level 3 governance justification", "Governance-motivering för nivå 3")}</span>
             <textarea
               className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
@@ -738,7 +759,7 @@ export function OutcomeAiRiskPostureCard({
               onChange={(event) => setAiLevelJustification(event.target.value)}
               placeholder={t(language, "If Level 3 is selected, explain the governance and control rationale briefly.", "Om nivå 3 är vald, förklara kort governance- och kontrollmotiveringen.")}
             />
-          </label>
+          </label> : null}
         </StepCard>
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_320px]">
