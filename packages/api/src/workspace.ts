@@ -539,6 +539,7 @@ export async function analyzeOutcomeJourneyCoverageService(input: {
 
 export async function validateOutcomeFieldWithAiService(input: {
   organizationId: string;
+  outcomeId?: string | null;
   field: "outcome_statement" | "baseline_definition";
   deliveryType?: "AD" | "AT" | "AM" | null;
   title?: string | null;
@@ -546,19 +547,50 @@ export async function validateOutcomeFieldWithAiService(input: {
   outcomeStatement?: string | null;
   baselineDefinition?: string | null;
   baselineSource?: string | null;
+  solutionContext?: string | null;
+  solutionConstraints?: string | null;
+  dataSensitivity?: string | null;
   timeframe?: string | null;
+  aiAccelerationLevel?: "level_1" | "level_2" | "level_3";
+  riskProfile?: "low" | "medium" | "high";
 }) {
   return withDevTiming("api.validateOutcomeFieldWithAiService", async () => {
     try {
+      const snapshot = input.outcomeId
+        ? await getOutcomeWorkspaceSnapshot(input.organizationId, input.outcomeId)
+        : null;
+      const snapshotDeliveryType =
+        snapshot?.outcome.deliveryType === "AD" || snapshot?.outcome.deliveryType === "AT" || snapshot?.outcome.deliveryType === "AM"
+          ? snapshot.outcome.deliveryType
+          : null;
       const result = await validateOutcomeFieldWithAi({
         field: input.field,
-        deliveryType: input.deliveryType ?? null,
-        title: input.title ?? null,
-        problemStatement: input.problemStatement ?? null,
-        outcomeStatement: input.outcomeStatement ?? null,
-        baselineDefinition: input.baselineDefinition ?? null,
-        baselineSource: input.baselineSource ?? null,
-        timeframe: input.timeframe ?? null
+        deliveryType: input.deliveryType ?? snapshotDeliveryType,
+        title: input.title ?? snapshot?.outcome.title ?? null,
+        problemStatement: input.problemStatement ?? snapshot?.outcome.problemStatement ?? null,
+        outcomeStatement: input.outcomeStatement ?? snapshot?.outcome.outcomeStatement ?? null,
+        baselineDefinition: input.baselineDefinition ?? snapshot?.outcome.baselineDefinition ?? null,
+        baselineSource: input.baselineSource ?? snapshot?.outcome.baselineSource ?? null,
+        solutionContext: input.solutionContext ?? snapshot?.outcome.solutionContext ?? null,
+        solutionConstraints: input.solutionConstraints ?? snapshot?.outcome.solutionConstraints ?? null,
+        dataSensitivity: input.dataSensitivity ?? snapshot?.outcome.dataSensitivity ?? null,
+        timeframe: input.timeframe ?? snapshot?.outcome.timeframe ?? null,
+        aiAccelerationLevel: input.aiAccelerationLevel ?? snapshot?.outcome.aiAccelerationLevel ?? "level_2",
+        riskProfile: input.riskProfile ?? snapshot?.outcome.riskProfile ?? "medium",
+        epics: snapshot?.outcome.epics.map((epic) => ({
+          key: epic.key,
+          title: epic.title,
+          purpose: epic.purpose ?? null,
+          scopeBoundary: epic.scopeBoundary ?? null
+        })) ?? [],
+        directionSeeds: snapshot?.outcome.directionSeeds.map((seed) => ({
+          key: seed.key,
+          title: seed.title,
+          epicKey: snapshot?.outcome.epics.find((epic) => epic.id === seed.epicId)?.key ?? null,
+          shortDescription: seed.shortDescription ?? null,
+          expectedBehavior: seed.expectedBehavior ?? null
+        })) ?? [],
+        journeyContexts: snapshot?.outcome.journeyContexts ?? []
       });
 
       return success(result);

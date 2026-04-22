@@ -241,8 +241,10 @@ async function validateOutcomeFieldAiAction(
   field: "outcome_statement" | "baseline_definition"
 ) : Promise<OutcomeFieldAiActionState> {
   const session = await requireActiveProjectSession();
+  const outcomeId = String(formData.get("outcomeId") ?? "");
   const result = await validateOutcomeFieldWithAiService({
     organizationId: session.organization.organizationId,
+    outcomeId,
     field,
     deliveryType: (String(formData.get("deliveryType") ?? "") as "AD" | "AT" | "AM") || null,
     title: String(formData.get("title") ?? "") || null,
@@ -250,7 +252,13 @@ async function validateOutcomeFieldAiAction(
     outcomeStatement: String(formData.get("outcomeStatement") ?? "") || null,
     baselineDefinition: String(formData.get("baselineDefinition") ?? "") || null,
     baselineSource: String(formData.get("baselineSource") ?? "") || null,
-    timeframe: String(formData.get("timeframe") ?? "") || null
+    solutionContext: String(formData.get("solutionContext") ?? "") || null,
+    solutionConstraints: readStructuredSolutionConstraints(formData),
+    dataSensitivity: String(formData.get("dataSensitivity") ?? "") || null,
+    timeframe: String(formData.get("timeframe") ?? "") || null,
+    aiAccelerationLevel:
+      (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2",
+    riskProfile: (String(formData.get("riskProfile") ?? "medium") as "low" | "medium" | "high") ?? "medium"
   });
 
   if (!result.ok) {

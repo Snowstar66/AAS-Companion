@@ -223,6 +223,58 @@ function countOperationalSignals(value: string) {
   return patterns.reduce((count, pattern) => count + (pattern.test(value) ? 1 : 0), 0);
 }
 
+function truncateText(value: string | null | undefined, maxLength: number) {
+  const trimmed = value?.trim() ?? "";
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}
+
+function buildFramingSignalSummary(input: {
+  epics?: Array<{ key: string; title: string; purpose?: string | null; scopeBoundary?: string | null }>;
+  directionSeeds?: Array<{
+    key: string;
+    title: string;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
+  }>;
+  journeyContexts?: JourneyContext[];
+}) {
+  return {
+    epics: (input.epics ?? []).slice(0, 8).map((epic) => ({
+      key: epic.key,
+      title: epic.title,
+      purpose: truncateText(epic.purpose, 120),
+      scopeBoundary: truncateText(epic.scopeBoundary, 120)
+    })),
+    storyIdeas: (input.directionSeeds ?? []).slice(0, 12).map((seed) => ({
+      key: seed.key,
+      title: seed.title,
+      epicKey: seed.epicKey ?? null,
+      shortDescription: truncateText(seed.shortDescription, 120),
+      expectedBehavior: truncateText(seed.expectedBehavior, 120)
+    })),
+    journeys: (input.journeyContexts ?? []).slice(0, 5).flatMap((context) =>
+      context.journeys.slice(0, 4).map((journey) => ({
+        contextTitle: context.title || context.id,
+        journeyTitle: journey.title || journey.id,
+        primaryActor: journey.primaryActor ?? null,
+        goal: truncateText(journey.goal, 120),
+        currentState: truncateText(journey.currentState, 120),
+        desiredFutureState: truncateText(journey.desiredFutureState, 120)
+      }))
+    )
+  };
+}
+
 function buildConservativeFieldSuggestion(input: {
   field: "outcome_statement" | "baseline_definition";
   deliveryType?: DeliveryType | null;
@@ -1106,11 +1158,26 @@ function buildPrompt(input: {
   outcomeStatement?: string | null;
   baselineDefinition?: string | null;
   baselineSource?: string | null;
+  solutionContext?: string | null;
+  solutionConstraints?: string | null;
+  dataSensitivity?: string | null;
   timeframe?: string | null;
+  aiAccelerationLevel?: "level_1" | "level_2" | "level_3";
+  riskProfile?: "low" | "medium" | "high";
+  epics?: Array<{ key: string; title: string; purpose?: string | null; scopeBoundary?: string | null }>;
+  directionSeeds?: Array<{
+    key: string;
+    title: string;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
+  }>;
+  journeyContexts?: JourneyContext[];
 }) {
   const deliveryType = normalizeDeliveryType(input.deliveryType);
   const validationReference = buildValidationReferenceContext(deliveryType);
   const fieldText = input.field === "outcome_statement" ? input.outcomeStatement : input.baselineDefinition;
+  const framingSignals = buildFramingSignalSummary(input);
   const payload = {
     field: input.field,
     deliveryType,
@@ -1119,8 +1186,14 @@ function buildPrompt(input: {
     outcomeStatement: input.outcomeStatement ?? null,
     baselineDefinition: input.baselineDefinition ?? null,
     baselineSource: input.baselineSource ?? null,
+    solutionContext: input.solutionContext ?? null,
+    solutionConstraints: input.solutionConstraints ?? null,
+    dataSensitivity: input.dataSensitivity ?? null,
     timeframe: input.timeframe ?? null,
-    fieldText: fieldText ?? null
+    aiAccelerationLevel: input.aiAccelerationLevel ?? null,
+    riskProfile: input.riskProfile ?? null,
+    fieldText: fieldText ?? null,
+    framingSignals
   };
 
   return `
@@ -1133,6 +1206,21 @@ General rules:
 - If the field text is empty but the surrounding context is sufficient, propose a conservative starting draft in suggestedRewrite.
 - Keep rationale short and concrete.
 - Apply the delivery type rules strictly when the project type is provided.
+- Evaluate the field in the context of the whole current Framing package, not in isolation.
+- Use the surrounding Framing signals to judge whether the field is aligned, specific enough, and useful for later AI handoff.
+
+When checking context, consider:
+- the Problem Statement
+- the paired Outcome/Baseline field
+- Solution Context and Constraints when present
+- Data Sensitivity, risk profile, and chosen AI acceleration level
+- the existing Epics, Story Ideas, and Journeys when present
+
+Reasonableness checks:
+- outcome_statement should move the case toward a meaningful effect that fits the problem, baseline, and current scope.
+- baseline_definition should describe the current reality that the outcome is trying to improve, not repeat the desired future.
+- If Epics, Story Ideas, or Journeys suggest a different direction than the field text, call that out.
+- If the field is acceptable on its own but weakly aligned with the current Framing package, use verdict "unclear" or "needs_revision" as appropriate.
 
 Field guidance:
 - outcome_statement: should describe a desired effect or result, not implementation work, deliverables, or a project task.
@@ -1405,12 +1493,31 @@ function applyDeterministicFieldValidationAdjustments(
     outcomeStatement?: string | null;
     baselineDefinition?: string | null;
     baselineSource?: string | null;
+    solutionContext?: string | null;
+    solutionConstraints?: string | null;
+    dataSensitivity?: string | null;
+    epics?: Array<{ key: string; title: string; purpose?: string | null; scopeBoundary?: string | null }>;
+    directionSeeds?: Array<{
+      key: string;
+      title: string;
+      epicKey?: string | null;
+      shortDescription?: string | null;
+      expectedBehavior?: string | null;
+    }>;
+    journeyContexts?: JourneyContext[];
   },
   result: OutcomeFieldAiValidation
 ) {
   const deliveryType = normalizeDeliveryType(input.deliveryType);
   const fieldText =
     input.field === "outcome_statement" ? input.outcomeStatement?.trim() ?? "" : input.baselineDefinition?.trim() ?? "";
+  const framingSignalsPresent =
+    Boolean(input.solutionContext?.trim()) ||
+    Boolean(input.solutionConstraints?.trim()) ||
+    Boolean(input.dataSensitivity?.trim()) ||
+    (input.epics?.length ?? 0) > 0 ||
+    (input.directionSeeds?.length ?? 0) > 0 ||
+    (input.journeyContexts?.length ?? 0) > 0;
 
   if (input.field === "outcome_statement" && !fieldText) {
     result.verdict = "needs_revision";
@@ -1451,6 +1558,30 @@ function applyDeterministicFieldValidationAdjustments(
     result.suggestedRewrite ??= buildConservativeFieldSuggestion(input);
   }
 
+  if (
+    input.field === "outcome_statement" &&
+    framingSignalsPresent &&
+    result.verdict === "good" &&
+    !input.problemStatement?.trim()
+  ) {
+    result.verdict = "unclear";
+    result.confidence = result.confidence === "high" ? "medium" : result.confidence;
+    result.rationale =
+      "The outcome statement is plausible, but the current Framing still lacks enough problem context to confirm that it is the right effect to optimize for.";
+  }
+
+  if (
+    input.field === "baseline_definition" &&
+    framingSignalsPresent &&
+    result.verdict === "good" &&
+    !input.baselineSource?.trim()
+  ) {
+    result.verdict = "unclear";
+    result.confidence = result.confidence === "high" ? "medium" : result.confidence;
+    result.rationale =
+      "The baseline definition is usable, but it is still weaker than it should be because the evidence source is missing.";
+  }
+
   return result;
 }
 
@@ -1462,7 +1593,21 @@ export async function validateOutcomeFieldWithAi(input: {
   outcomeStatement?: string | null;
   baselineDefinition?: string | null;
   baselineSource?: string | null;
+  solutionContext?: string | null;
+  solutionConstraints?: string | null;
+  dataSensitivity?: string | null;
   timeframe?: string | null;
+  aiAccelerationLevel?: "level_1" | "level_2" | "level_3";
+  riskProfile?: "low" | "medium" | "high";
+  epics?: Array<{ key: string; title: string; purpose?: string | null; scopeBoundary?: string | null }>;
+  directionSeeds?: Array<{
+    key: string;
+    title: string;
+    epicKey?: string | null;
+    shortDescription?: string | null;
+    expectedBehavior?: string | null;
+  }>;
+  journeyContexts?: JourneyContext[];
 }) {
   const env = readRequiredLlmEnv();
   const response = await fetch(new URL("responses", env.endpoint), {
