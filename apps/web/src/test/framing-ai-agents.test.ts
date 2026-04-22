@@ -107,9 +107,14 @@ function createSource(): FramingAgentSourceOfTruth {
 describe("framing ai agents", () => {
   it("generates structured story suggestions from journey context", () => {
     const result = runStorySuggestionAgent(createSource());
+    const firstSuggestion = result.result.suggestions[0];
+    const firstPanelSuggestion = result.suggestions.find((suggestion) => suggestion.kind === "story_idea_candidate");
 
     expect(result.result.suggestions.length).toBeGreaterThan(0);
     expect(result.suggestions.some((suggestion) => suggestion.kind === "story_idea_candidate")).toBe(true);
+    expect(firstSuggestion?.valueIntent).toContain("Reduce intake lead time and improve traceability.");
+    expect(firstSuggestion?.description).toContain("current lead time is 5 days and handoffs are manual.");
+    expect(firstPanelSuggestion?.description).toContain("current problem, outcome, baseline");
   });
 
   it("generates design and bmad handover artifacts", () => {

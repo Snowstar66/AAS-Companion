@@ -8,12 +8,44 @@ import {
   type FramingAgentToolTrace
 } from "@/lib/framing/agentTypes";
 
+function hasText(value: string | null | undefined) {
+  return Boolean(value && value.trim());
+}
+
 function tokenize(value: string) {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9\s]+/g, " ")
     .split(/\s+/)
     .filter((token) => token.length > 2);
+}
+
+function truncateText(value: string | null | undefined, maxLength: number) {
+  const trimmed = value?.trim() ?? "";
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}
+
+function stripTrailingPeriod(value: string) {
+  return value.trim().replace(/[.!?]+$/g, "");
+}
+
+function lowerFirst(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
 }
 
 function overlapScore(left: string, right: string) {
@@ -35,6 +67,48 @@ function overlapScore(left: string, right: string) {
   return overlap / Math.max(leftTokens.size, rightTokens.size);
 }
 
+function buildStorySuggestionReason(source: FramingAgentSourceOfTruth, storyTitle: string, basedOnJourneyIds: string[]) {
+  const journeys = source.journeyContexts
+    .flatMap((context) => context.journeys)
+    .filter((journey) => basedOnJourneyIds.includes(journey.id));
+  const linkedEpicKeys = Array.from(
+    new Set(
+      journeys.flatMap((journey) =>
+        (journey.linkedEpicIds ?? [])
+          .map((epicId) => source.epics.find((epic) => epic.id === epicId)?.key)
+          .filter((value): value is string => Boolean(value))
+      )
+    )
+  );
+  const linkedStoryIdeaKeys = Array.from(
+    new Set(
+      journeys.flatMap((journey) =>
+        (journey.linkedStoryIdeaIds ?? [])
+          .map((storyIdeaId) => source.storyIdeas.find((storyIdea) => storyIdea.id === storyIdeaId)?.key)
+          .filter((value): value is string => Boolean(value))
+      )
+    )
+  );
+
+  const notes = [
+    hasText(source.outcome.problemStatement)
+      ? `Problem context: ${truncateText(source.outcome.problemStatement, 120)}`
+      : "",
+    hasText(source.outcome.outcomeStatement)
+      ? `Target outcome: ${truncateText(source.outcome.outcomeStatement, 120)}`
+      : "",
+    hasText(source.outcome.baselineDefinition)
+      ? `Baseline to improve: ${truncateText(source.outcome.baselineDefinition, 120)}`
+      : "",
+    linkedEpicKeys.length > 0 ? `Likely epic fit: ${linkedEpicKeys.join(", ")}` : "",
+    linkedStoryIdeaKeys.length > 0 ? `Already related Story Ideas: ${linkedStoryIdeaKeys.join(", ")}` : ""
+  ].filter(Boolean);
+
+  return notes.length > 0
+    ? `${storyTitle} was suggested after checking the journey against the current problem, outcome, baseline, Epics, and Story Ideas. ${notes.join(" | ")}.`
+    : `${storyTitle} was suggested after checking the journey against the current Framing signals.`;
+}
+
 function pickSuggestedEpicId(
   source: FramingAgentSourceOfTruth,
   text: string,
@@ -47,7 +121,10 @@ function pickSuggestedEpicId(
   const sorted = source.epics
     .map((epic) => ({
       id: epic.id,
-      score: overlapScore(`${epic.key} ${epic.title} ${epic.purpose ?? ""} ${epic.scopeBoundary ?? ""}`, text)
+      score: overlapScore(
+        `${epic.key} ${epic.title} ${epic.purpose ?? ""} ${epic.scopeBoundary ?? ""} ${source.outcome.outcomeStatement ?? ""}`,
+        text
+      )
     }))
     .sort((left, right) => right.score - left.score);
 
@@ -56,6 +133,7 @@ function pickSuggestedEpicId(
 
 function buildStoryIdeaFromJourney(input: {
   source: FramingAgentSourceOfTruth;
+  journeyTitle?: string | null;
   title: string;
   description: string;
   basedOnJourneyIds: string[];
@@ -64,16 +142,34 @@ function buildStoryIdeaFromJourney(input: {
   confidence?: number | null;
   suggestedEpicId?: string | null;
 }): SuggestedStoryIdea & { suggestedEpicId?: string | null } {
+  const journeyLabel = input.journeyTitle?.trim() || "the journey";
+  const baselineGap = hasText(input.source.outcome.baselineDefinition)
+    ? ` Improve on today's baseline where ${lowerFirst(stripTrailingPeriod(input.source.outcome.baselineDefinition ?? ""))}.`
+    : "";
+  const expectedOutcome =
+    input.expectedOutcome?.trim() ||
+    input.source.outcome.outcomeStatement?.trim() ||
+    `Help ${journeyLabel.toLowerCase()} move toward the intended outcome without losing traceability.`;
+  const contextualDescription = [
+    input.description.trim(),
+    hasText(input.source.outcome.problemStatement)
+      ? `Address the current problem where ${lowerFirst(stripTrailingPeriod(input.source.outcome.problemStatement ?? ""))}.`
+      : "",
+    baselineGap
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return {
     title: input.title,
-    description: input.description,
-    valueIntent: input.description,
-    expectedOutcome: input.expectedOutcome ?? undefined,
+    description: contextualDescription,
+    valueIntent: input.source.outcome.outcomeStatement?.trim() || input.description,
+    expectedOutcome,
     basedOnJourneyIds: input.basedOnJourneyIds,
     basedOnStepIds: input.basedOnStepIds,
     confidence: input.confidence ?? undefined,
     suggestedEpicId:
-      input.suggestedEpicId ?? pickSuggestedEpicId(input.source, `${input.title} ${input.description}`)
+      input.suggestedEpicId ?? pickSuggestedEpicId(input.source, `${input.title} ${input.description} ${expectedOutcome}`)
   };
 }
 
@@ -100,8 +196,27 @@ export function runStorySuggestionAgent(source: FramingAgentSourceOfTruth): {
 
   for (const suggestion of coverage.suggestions) {
     if (suggestion.kind === "story_idea_candidate") {
-      suggestions.push(suggestion.storyIdea);
-      panelSuggestions.push(suggestion);
+      const matchingJourney = source.journeyContexts
+        .flatMap((context) => context.journeys)
+        .find((journey) => (suggestion.storyIdea.basedOnJourneyIds ?? []).includes(journey.id));
+      const contextualStoryIdea = buildStoryIdeaFromJourney({
+        source,
+        journeyTitle: matchingJourney?.title ?? null,
+        title: suggestion.storyIdea.title,
+        description: suggestion.storyIdea.description,
+        basedOnJourneyIds: suggestion.storyIdea.basedOnJourneyIds ?? [],
+        basedOnStepIds: suggestion.storyIdea.basedOnStepIds ?? [],
+        expectedOutcome: suggestion.storyIdea.expectedOutcome ?? null,
+        confidence: suggestion.storyIdea.confidence ?? null,
+        suggestedEpicId: suggestion.storyIdea.suggestedEpicId ?? null
+      });
+
+      suggestions.push(contextualStoryIdea);
+      panelSuggestions.push({
+        ...suggestion,
+        description: buildStorySuggestionReason(source, contextualStoryIdea.title, contextualStoryIdea.basedOnJourneyIds ?? []),
+        storyIdea: contextualStoryIdea
+      });
     }
   }
 
@@ -117,6 +232,7 @@ export function runStorySuggestionAgent(source: FramingAgentSourceOfTruth): {
 
       const generated = buildStoryIdeaFromJourney({
         source,
+        journeyTitle: journey.title,
         title: journey.title ? `${journey.title}` : `Support ${journey.primaryActor || "core flow"}`,
         description:
           journey.desiredSupport?.[0] ??
@@ -134,7 +250,7 @@ export function runStorySuggestionAgent(source: FramingAgentSourceOfTruth): {
         id: buildFramingAgentSuggestionId(["journey-story-suggestion", context.id, journey.id, generated.title]),
         kind: "story_idea_candidate",
         title: `Create Story Idea for ${journey.title || journey.id}`,
-        description: generated.description,
+        description: buildStorySuggestionReason(source, generated.title, generated.basedOnJourneyIds ?? []),
         storyIdea: generated,
         confidence: generated.confidence ?? null
       });
@@ -187,15 +303,18 @@ export function runStorySuggestionAgent(source: FramingAgentSourceOfTruth): {
       rewriteSuggestions
     },
     suggestions: panelSuggestions,
-    warnings: suggestions.length === 0 ? ["Inga tydliga nya Story Idea-kandidater hittades utifrån nuvarande Journey Context."] : [],
+    warnings:
+      suggestions.length === 0
+        ? ["No clear new Story Idea candidates were found from the current Journey Context."]
+        : [],
     toolTrace: [
       coverage.toolTrace[0] ?? {
         tool: "suggestStoryIdeas",
-        summary: "Återanvände journey-täckningsanalysen när Story Ideas-förslag togs fram."
+        summary: "Reused journey coverage analysis while generating Story Idea suggestions."
       },
       {
         tool: "suggestStoryIdeas",
-        summary: `Tog fram ${suggestions.length} Story Idea-kandidat(er), ${splitCandidates.length} split-kandidat(er) och ${mergeCandidates.length} merge-kandidat(er).`
+        summary: `Generated ${suggestions.length} Story Idea candidate(s), ${splitCandidates.length} split candidate(s), and ${mergeCandidates.length} merge candidate(s).`
       }
     ]
   };

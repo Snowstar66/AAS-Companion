@@ -43,6 +43,61 @@ function hasText(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
 
+function tokenize(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]+/g, " ")
+    .split(/\s+/)
+    .filter((token) => token.length > 2);
+}
+
+function overlapScore(left: string, right: string) {
+  const leftTokens = new Set(tokenize(left));
+  const rightTokens = new Set(tokenize(right));
+
+  if (leftTokens.size === 0 || rightTokens.size === 0) {
+    return 0;
+  }
+
+  let overlap = 0;
+
+  for (const token of leftTokens) {
+    if (rightTokens.has(token)) {
+      overlap += 1;
+    }
+  }
+
+  return overlap / Math.max(leftTokens.size, rightTokens.size);
+}
+
+function truncateText(value: string | null | undefined, maxLength: number) {
+  const trimmed = value?.trim() ?? "";
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}
+
+function lowerFirst(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.charAt(0).toLowerCase() + trimmed.slice(1);
+}
+
+function formatKeyList(values: string[]) {
+  return values.filter(Boolean).join(", ");
+}
+
 function dedupeById<T extends { id: string }>(items: T[]) {
   return [...new Map(items.map((item) => [item.id, item] as const)).values()];
 }
@@ -137,6 +192,14 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
   const questions: string[] = [];
   const warnings: string[] = [];
   const uiSpecificPattern = /\b(screen|page|button|tab|modal|dropdown|field|click|ui)\b/i;
+  const outcomeSignals = [
+    source.outcome.problemStatement ?? "",
+    source.outcome.outcomeStatement ?? "",
+    source.outcome.baselineDefinition ?? "",
+    source.outcome.solutionContext ?? ""
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (contexts.length === 0) {
     const starterContextId = `journey-context-${source.outcome.id}`;
@@ -209,6 +272,43 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
         title: journey.title,
         index: journeyIndex
       });
+      const journeyText = [
+        journey.title ?? "",
+        journey.primaryActor ?? "",
+        journey.goal ?? "",
+        journey.trigger ?? "",
+        journey.currentState ?? "",
+        journey.desiredFutureState ?? "",
+        (journey.desiredSupport ?? []).join(" "),
+        journey.steps.map((step) => `${step.title ?? ""} ${step.description ?? ""}`).join(" ")
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const alignmentScore = overlapScore(journeyText, outcomeSignals);
+      const relevantEpics = source.epics.filter((epic) => {
+        if ((journey.linkedEpicIds ?? []).includes(epic.id)) {
+          return true;
+        }
+
+        return (
+          overlapScore(
+            journeyText,
+            `${epic.key} ${epic.title} ${epic.purpose ?? ""} ${epic.scopeBoundary ?? ""}`
+          ) >= 0.16
+        );
+      });
+      const relevantStoryIdeas = source.storyIdeas.filter((storyIdea) => {
+        if ((journey.linkedStoryIdeaIds ?? []).includes(storyIdea.id)) {
+          return true;
+        }
+
+        return (
+          overlapScore(
+            journeyText,
+            `${storyIdea.key} ${storyIdea.title} ${storyIdea.shortDescription ?? ""} ${storyIdea.expectedBehavior ?? ""}`
+          ) >= 0.16
+        );
+      });
 
       if (journey.steps.length > 5) {
         warnings.push(
@@ -229,11 +329,49 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
       }
 
       if (!hasText(journey.currentState)) {
-        questions.push(`How does ${journeyLabel} work today, especially where it is fragmented or slow?`);
+        questions.push(
+          hasText(source.outcome.baselineDefinition)
+            ? `How does ${journeyLabel} work today, especially in the current baseline where ${lowerFirst(source.outcome.baselineDefinition ?? "")}?`
+            : `How does ${journeyLabel} work today, especially where it is fragmented or slow?`
+        );
       }
 
       if (!hasText(journey.desiredFutureState)) {
-        questions.push(`How should ${journeyLabel} feel or work in the desired future state?`);
+        questions.push(
+          hasText(source.outcome.outcomeStatement)
+            ? `How should ${journeyLabel} work in the desired future state so it clearly supports this outcome: ${lowerFirst(source.outcome.outcomeStatement ?? "")}?`
+            : `How should ${journeyLabel} feel or work in the desired future state?`
+        );
+      }
+
+      if (alignmentScore < 0.08 && hasText(outcomeSignals)) {
+        warnings.push(
+          `${journeyLabel} does not yet read as clearly connected to the current problem, outcome, or baseline. Make the actor goal and desired support more explicit.`
+        );
+        questions.push(
+          hasText(source.outcome.problemStatement)
+            ? `Which part of the current problem does ${journeyLabel} actually address: ${lowerFirst(truncateText(source.outcome.problemStatement, 120))}?`
+            : `Which part of the current Framing problem does ${journeyLabel} actually address?`
+        );
+      }
+
+      if (source.epics.length > 0 && relevantEpics.length === 0) {
+        warnings.push(`${journeyLabel} is not clearly anchored to any Epic yet.`);
+        questions.push(`Which Epic should inherit ${journeyLabel}, or does Framing need a new Epic for it?`);
+      }
+
+      if (source.storyIdeas.length > 0 && relevantStoryIdeas.length === 0) {
+        warnings.push(`${journeyLabel} is not clearly supported by any current Story Idea yet.`);
+      }
+
+      if (relevantEpics.length > 0 && !(journey.linkedEpicIds ?? []).length) {
+        questions.push(`Should ${journeyLabel} be linked to ${formatKeyList(relevantEpics.map((epic) => epic.key))}?`);
+      }
+
+      if (relevantStoryIdeas.length > 0 && !(journey.linkedStoryIdeaIds ?? []).length) {
+        questions.push(
+          `Should ${journeyLabel} inherit support from ${formatKeyList(relevantStoryIdeas.map((storyIdea) => storyIdea.key))}?`
+        );
       }
 
       for (const step of journey.steps) {
@@ -250,6 +388,12 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
             ? `${step.actor || journey.primaryActor} ${step.title ? step.title.toLowerCase() : "performs this step"}`
             : step.title || "The actor completes this step",
           journey.goal ? `to move toward ${journey.goal.toLowerCase()}.` : "within the journey flow.",
+          hasText(source.outcome.outcomeStatement)
+            ? `Outcome link: ${truncateText(source.outcome.outcomeStatement, 110)}.`
+            : "",
+          hasText(source.outcome.baselineDefinition)
+            ? `Current baseline: ${truncateText(source.outcome.baselineDefinition, 110)}.`
+            : "",
           step.currentPain ? `Current pain: ${step.currentPain}.` : "",
           step.desiredSupport ? `Desired support: ${step.desiredSupport}.` : ""
         ]
@@ -291,15 +435,20 @@ function buildJourneyRefinementSuggestions(source: FramingAgentSourceOfTruth, co
   return {
     message:
       suggestions.length > 0
-        ? `I found ${suggestions.length} refinement suggestion(s) to make the Journey language more actor-, flow-, and support-oriented.${questions.length > 0 ? ` Follow-up questions: ${questions.slice(0, 3).join(" ")}` : ""}`
-        : "The current Journey Context reads fairly well. The next best step is usually coverage analysis or explicit link cleanup.",
+        ? `I found ${suggestions.length} refinement suggestion(s) after checking each Journey against the current problem, outcome, baseline, Epics, and Story Ideas.${questions.length > 0 ? ` Follow-up questions: ${questions.slice(0, 3).join(" ")}` : ""}`
+        : "The current Journey Context reads fairly well against the current problem, outcome, baseline, Epics, and Story Ideas. The next best step is usually coverage analysis or explicit link cleanup.",
     suggestions,
     questions: dedupeStrings(questions),
     warnings,
     helperText:
-      "Journey Context is optional. Use it when you want to describe role-based, user, operational, or transformation flows that can help later AI refinement.",
+      "Journey Context is optional. When you use AI refinement here, it now checks the Journey against the current problem, outcome, baseline, Epics, Story Ideas, and inherited Framing constraints before suggesting changes.",
     toolCalls: [{ tool: "getJourneyContext" as const }],
-    toolTrace: [{ tool: "getJourneyContext" as const, summary: `Reviewed ${contexts.length} Journey Context item(s) for wording quality.` }]
+    toolTrace: [
+      {
+        tool: "getJourneyContext" as const,
+        summary: `Reviewed ${contexts.length} Journey Context item(s) against wording quality plus the current problem, outcome, baseline, Epics, and Story Ideas.`
+      }
+    ]
   };
 }
 
@@ -493,7 +642,14 @@ async function selectToolCallsWithLiveAi(input: {
       key: input.source.outcome.key,
       title: input.source.outcome.title,
       initiativeType: input.source.outcome.deliveryType,
-      aiLevel: input.source.outcome.aiLevel
+      aiLevel: input.source.outcome.aiLevel,
+      problemStatement: truncateText(input.source.outcome.problemStatement, 240),
+      outcomeStatement: truncateText(input.source.outcome.outcomeStatement, 240),
+      baselineDefinition: truncateText(input.source.outcome.baselineDefinition, 220),
+      baselineSource: truncateText(input.source.outcome.baselineSource, 140),
+      solutionContext: truncateText(input.source.outcome.solutionContext, 220),
+      dataSensitivity: truncateText(input.source.outcome.dataSensitivity, 140),
+      riskProfile: input.source.outcome.riskProfile
     },
     counts: {
       epics: input.source.epics.length,
@@ -501,8 +657,39 @@ async function selectToolCallsWithLiveAi(input: {
       journeyContexts: input.source.journeyContexts.length,
       customInstructions: input.source.downstreamAiInstructions?.customInstructions.length ?? 0
     },
-    journeyContextTitles: input.source.journeyContexts.map((context) => context.title || context.id),
-    storyIdeaTitles: input.source.storyIdeas.slice(0, 12).map((storyIdea) => `${storyIdea.key} ${storyIdea.title}`),
+    epics: input.source.epics.slice(0, 8).map((epic) => ({
+      key: epic.key,
+      title: epic.title,
+      purpose: truncateText(epic.purpose, 160),
+      scopeBoundary: truncateText(epic.scopeBoundary, 160)
+    })),
+    storyIdeas: input.source.storyIdeas.slice(0, 12).map((storyIdea) => ({
+      key: storyIdea.key,
+      title: storyIdea.title,
+      epicKey: storyIdea.epicKey,
+      shortDescription: truncateText(storyIdea.shortDescription, 160),
+      expectedBehavior: truncateText(storyIdea.expectedBehavior, 160)
+    })),
+    journeys: input.source.journeyContexts.slice(0, 6).flatMap((context) =>
+      context.journeys.slice(0, 4).map((journey) => ({
+        contextTitle: context.title || context.id,
+        journeyTitle: journey.title || journey.id,
+        primaryActor: journey.primaryActor,
+        goal: truncateText(journey.goal, 140),
+        trigger: truncateText(journey.trigger, 140),
+        currentState: truncateText(journey.currentState, 160),
+        desiredFutureState: truncateText(journey.desiredFutureState, 160),
+        linkedEpicIds: journey.linkedEpicIds,
+        linkedStoryIdeaIds: journey.linkedStoryIdeaIds
+      }))
+    ),
+    downstreamAi: input.source.downstreamAiInstructions
+      ? {
+          initiativeType: input.source.downstreamAiInstructions.initiativeType,
+          aiLevel: input.source.downstreamAiInstructions.aiLevel,
+          customInstructions: input.source.downstreamAiInstructions.customInstructions.slice(0, 6)
+        }
+      : null,
     warnings: collectFramingAgentWarnings(input.source)
   };
   const toolCatalog = Object.entries(framingAgentToolDescriptions).map(([tool, description]) => ({
@@ -631,12 +818,12 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
     warnings.push(...coverage.warnings);
     toolTrace.push(...coverage.toolTrace);
     helperText =
-      "Täckningsförslag är AI-genererade rekommendationer baserade på journeys, steg, Epics, Story Ideas och ärvda ramar. Granska innan du accepterar.";
+      "Coverage suggestions are AI-generated recommendations based on Journeys, Steps, Epics, Story Ideas, and inherited Framing signals. Review them before you accept them.";
     if (!message) {
       message =
         coverage.coverageResults.length > 0
-          ? `Jag analyserade ${coverage.coverageResults.length} journeyresultat mot nuvarande Epics och Story Ideas.`
-          : "Ingen användbar täckningsanalys kunde tas fram ännu.";
+          ? `I analyzed ${coverage.coverageResults.length} Journey result(s) against the current Epics, Story Ideas, and inherited Framing signals.`
+          : "No useful coverage analysis could be produced yet.";
     }
   }
 
@@ -647,13 +834,13 @@ export async function runFramingAgentOrchestrator(input: RunFramingAgentInput): 
     toolTrace.push(...storyAgent.toolTrace);
 
     if (!message) {
-      message = `Jag gick igenom nuvarande Story Ideas mot Journey Context och den befintliga Story Idea-strukturen. Hittade ${storyAgent.result.suggestions.length} Story Idea-kandidat(er), ${storyAgent.result.splitCandidates?.length ?? 0} split-kandidat(er) och ${storyAgent.result.mergeCandidates?.length ?? 0} merge-kandidat(er).`;
+      message = `I checked the current Story Ideas against Journey Context, outcome, baseline, and the existing Story Idea structure. I found ${storyAgent.result.suggestions.length} Story Idea candidate(s), ${storyAgent.result.splitCandidates?.length ?? 0} split candidate(s), and ${storyAgent.result.mergeCandidates?.length ?? 0} merge candidate(s).`;
     }
 
     if (storyAgent.result.rewriteSuggestions?.length) {
       warnings.push(
         ...storyAgent.result.rewriteSuggestions.map(
-          (rewrite) => `Story Idea ${rewrite.storyIdeaId} behöver tydligare formulering av förväntat beteende.`
+          (rewrite) => `Story Idea ${rewrite.storyIdeaId} needs a clearer expected behavior statement.`
         )
       );
     }
