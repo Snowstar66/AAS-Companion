@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 import type { OutcomeFieldAiActionState } from "@/app/(protected)/outcomes/[outcomeId]/actions";
+import { hasMeaningfulTextChange } from "@/lib/ai/meaningful-change";
 import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
 
 type OutcomeAiValidatedTextareaProps = {
@@ -63,6 +64,7 @@ export function OutcomeAiValidatedTextarea({
   const { language } = useAppChromeLanguage();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [value, setValue] = useState(initialValue);
+  const [validatedValueSnapshot, setValidatedValueSnapshot] = useState(initialValue);
   const [result, setResult] = useState<OutcomeFieldAiActionState | null>(
     initialError
       ? {
@@ -88,6 +90,7 @@ export function OutcomeAiValidatedTextarea({
 
   useEffect(() => {
     setValue(initialValue);
+    setValidatedValueSnapshot(initialValue);
   }, [initialValue]);
 
   useEffect(() => {
@@ -122,6 +125,24 @@ export function OutcomeAiValidatedTextarea({
         }
       : null;
   const error = result?.status === "error" ? result.error : null;
+  const hasMeaningfulSuggestion = Boolean(
+    feedback?.suggestedRewrite && hasMeaningfulTextChange(validatedValueSnapshot, feedback.suggestedRewrite)
+  );
+  const feedbackForDisplay =
+    feedback && !hasMeaningfulSuggestion
+      ? {
+          ...feedback,
+          suggestedRewrite: null
+        }
+      : feedback;
+  const noMeaningfulSuggestion =
+    feedback?.suggestedRewrite && !hasMeaningfulSuggestion
+      ? t(
+          language,
+          "AI reviewed the field but did not find a meaningfully better rewrite from the current Framing context. Review the rationale and revise manually if needed.",
+          "AI granskade fältet men hittade ingen meningsfullt bättre omskrivning utifrån nuvarande Framing-kontext. Läs motiveringen och justera manuellt vid behov."
+        )
+      : null;
 
   function handleValidate() {
     const form = textareaRef.current?.closest("form");
@@ -130,6 +151,7 @@ export function OutcomeAiValidatedTextarea({
     }
 
     const formData = new FormData(form);
+    setValidatedValueSnapshot(value);
 
     startTransition(async () => {
       try {
@@ -217,10 +239,15 @@ export function OutcomeAiValidatedTextarea({
         </div>
       ) : null}
       {guidance}
-      <OutcomeFieldAiFeedback error={error} feedback={feedback} field={field} />
+      <OutcomeFieldAiFeedback error={error} feedback={feedbackForDisplay} field={field} />
+      {noMeaningfulSuggestion ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+          {noMeaningfulSuggestion}
+        </div>
+      ) : null}
       {saveError ? <p className="text-sm text-red-700">{saveError}</p> : null}
       {saveMessage ? <p className="text-sm text-emerald-700">{saveMessage}</p> : null}
-      {feedback?.suggestedRewrite ? (
+      {feedback?.suggestedRewrite && hasMeaningfulSuggestion ? (
         <div className="flex flex-wrap gap-2">
           <Button
             className="gap-2"

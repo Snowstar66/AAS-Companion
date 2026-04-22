@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
+import { hasMeaningfulTextChange } from "@/lib/ai/meaningful-change";
 import { OutcomeFieldAiFeedback } from "@/components/workspace/outcome-field-ai-feedback";
 
 type StoryIdeaExpectedBehaviorAiActionState =
@@ -47,14 +48,44 @@ export function StoryIdeaAiValidatedTextarea({
   const { language } = useAppChromeLanguage();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [value, setValue] = useState(initialValue);
+  const [validatedValueSnapshot, setValidatedValueSnapshot] = useState(initialValue);
   const [result, setResult] = useState<StoryIdeaExpectedBehaviorAiActionState | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isSaving, startSavingTransition] = useTransition();
+  const feedback =
+    result?.status === "success"
+      ? {
+          field: result.field,
+          verdict: result.verdict,
+          confidence: result.confidence,
+          rationale: result.rationale,
+          suggestedRewrite: result.suggestedRewrite
+        }
+      : null;
+  const hasMeaningfulSuggestion = Boolean(
+    feedback?.suggestedRewrite && hasMeaningfulTextChange(validatedValueSnapshot, feedback.suggestedRewrite)
+  );
+  const feedbackForDisplay =
+    feedback && !hasMeaningfulSuggestion
+      ? {
+          ...feedback,
+          suggestedRewrite: null
+        }
+      : feedback;
+  const noMeaningfulSuggestion =
+    feedback?.suggestedRewrite && !hasMeaningfulSuggestion
+      ? t(
+          language,
+          "AI reviewed the field but did not find a meaningfully better rewrite from the current Framing context. Review the rationale and revise manually if needed.",
+          "AI granskade fältet men hittade ingen meningsfullt bättre omskrivning utifrån nuvarande Framing-kontext. Läs motiveringen och justera manuellt vid behov."
+        )
+      : null;
 
   useEffect(() => {
     setValue(initialValue);
+    setValidatedValueSnapshot(initialValue);
   }, [initialValue]);
 
   function handleValidate() {
@@ -64,6 +95,7 @@ export function StoryIdeaAiValidatedTextarea({
     }
 
     const formData = new FormData(form);
+    setValidatedValueSnapshot(value);
 
     startTransition(async () => {
       try {
@@ -148,24 +180,15 @@ export function StoryIdeaAiValidatedTextarea({
           </Button>
         </div>
       ) : null}
-      <OutcomeFieldAiFeedback
-        error={result?.status === "error" ? result.error : null}
-        feedback={
-          result?.status === "success"
-            ? {
-                field: result.field,
-                verdict: result.verdict,
-                confidence: result.confidence,
-                rationale: result.rationale,
-                suggestedRewrite: result.suggestedRewrite
-              }
-            : null
-        }
-        field="story_expected_behavior"
-      />
+      <OutcomeFieldAiFeedback error={result?.status === "error" ? result.error : null} feedback={feedbackForDisplay} field="story_expected_behavior" />
+      {noMeaningfulSuggestion ? (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+          {noMeaningfulSuggestion}
+        </div>
+      ) : null}
       {saveError ? <p className="text-sm text-red-700">{saveError}</p> : null}
       {saveMessage ? <p className="text-sm text-emerald-700">{saveMessage}</p> : null}
-      {result?.status === "success" && result.suggestedRewrite ? (
+      {result?.status === "success" && result.suggestedRewrite && hasMeaningfulSuggestion ? (
         <div className="flex flex-wrap gap-2">
           <Button
             className="gap-2"

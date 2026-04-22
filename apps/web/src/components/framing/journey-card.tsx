@@ -5,6 +5,7 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
+import { hasMeaningfulListChange, hasMeaningfulTextChange } from "@/lib/ai/meaningful-change";
 import type { Journey } from "@/lib/framing/journeyContextTypes";
 import type { JourneyReferenceOption, JourneyValidation } from "@/lib/framing/journey-context-ui";
 
@@ -385,6 +386,14 @@ function InlineAiSuggestion(props: {
   );
 }
 
+function InlineAiNoImprovementNotice(props: { message: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+      {props.message}
+    </div>
+  );
+}
+
 function InlineAiCoreSuggestion(props: { suggestion: JourneyCoreSuggestion; onApply: () => void; onDismiss: () => void }) {
   const { language } = useAppChromeLanguage();
 
@@ -494,6 +503,10 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   const [narrativeSuggestion, setNarrativeSuggestion] = useState("");
   const [valueMomentSuggestion, setValueMomentSuggestion] = useState("");
   const [successSignalsSuggestion, setSuccessSignalsSuggestion] = useState<string[]>([]);
+  const [coreSuggestionInfo, setCoreSuggestionInfo] = useState<string | null>(null);
+  const [narrativeSuggestionInfo, setNarrativeSuggestionInfo] = useState<string | null>(null);
+  const [valueMomentSuggestionInfo, setValueMomentSuggestionInfo] = useState<string | null>(null);
+  const [successSignalsSuggestionInfo, setSuccessSignalsSuggestionInfo] = useState<string | null>(null);
   const journeyStageLabel =
     coreMissingCount > 0
       ? t(language, `${coreMissingCount} core fields left`, `${coreMissingCount} kärnfält kvar`)
@@ -518,8 +531,20 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     setNarrativeSuggestion("");
     setValueMomentSuggestion("");
     setSuccessSignalsSuggestion([]);
+    setCoreSuggestionInfo(null);
+    setNarrativeSuggestionInfo(null);
+    setValueMomentSuggestionInfo(null);
+    setSuccessSignalsSuggestionInfo(null);
     setEditingSection(coreMissingCount > 0 ? "core" : null);
   }, [journey.id]);
+
+  function buildNoImprovementMessage(targetLabel: string) {
+    return t(
+      language,
+      `AI could not find a meaningfully better suggestion for ${targetLabel} from the current Framing context. Refine the surrounding Outcome, Baseline, Story Ideas, or Journey details first if you want a stronger suggestion.`,
+      `AI hittade ingen meningsfullt bättre förbättring för ${targetLabel} utifrån nuvarande Framing-kontext. Förfina gärna Outcome, Baseline, Story Ideas eller Journey-detaljerna först om du vill få ett starkare förslag.`
+    );
+  }
 
   const canBuildJourneySummary =
     hasText(journey.title) &&
@@ -983,10 +1008,33 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
             helper={
               <>
                 <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => { setCoreSuggestion(buildCoreSuggestion()); setEditingSection("core"); }} size="sm" type="button" variant="secondary">
+                  <Button
+                    onClick={() => {
+                      const nextSuggestion = buildCoreSuggestion();
+                      const hasCoreImprovement =
+                        hasMeaningfulTextChange(journey.title, nextSuggestion.title) ||
+                        hasMeaningfulTextChange(journey.goal, nextSuggestion.goal) ||
+                        hasMeaningfulTextChange(journey.trigger, nextSuggestion.trigger);
+
+                      if (!hasCoreImprovement) {
+                        setCoreSuggestion(null);
+                        setCoreSuggestionInfo(buildNoImprovementMessage(t(language, "journey core", "journeykärnan")));
+                        setEditingSection("core");
+                        return;
+                      }
+
+                      setCoreSuggestionInfo(null);
+                      setCoreSuggestion(nextSuggestion);
+                      setEditingSection("core");
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
                     {t(language, "Clarify the core text", "Förtydliga kärntext")}
                   </Button>
                 </div>
+                {coreSuggestionInfo ? <InlineAiNoImprovementNotice message={coreSuggestionInfo} /> : null}
                 {coreSuggestion ? (
                   <div className="mt-3">
                     <InlineAiCoreSuggestion
@@ -1030,13 +1078,31 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   <FieldHint>{t(language, "Describe the user's situation, today's way of working, the future support, and how the flow changes.", "Beskriv användarens situation, dagens arbetssätt, det framtida stödet och hur flödet förändras.")}</FieldHint>
                 </label>
               }
-              helper={
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => { setNarrativeSuggestion(buildNarrativeSuggestion()); setEditingSection("narrative"); }} size="sm" type="button" variant="secondary">
-                      {t(language, "Improve journey text", "Förbättra journeytext")}
-                    </Button>
-                  </div>
+                helper={
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={() => {
+                          const nextSuggestion = buildNarrativeSuggestion();
+                          if (!hasMeaningfulTextChange(journey.narrative, nextSuggestion)) {
+                            setNarrativeSuggestion("");
+                            setNarrativeSuggestionInfo(buildNoImprovementMessage(t(language, "journey text", "journeytexten")));
+                            setEditingSection("narrative");
+                            return;
+                          }
+
+                          setNarrativeSuggestionInfo(null);
+                          setNarrativeSuggestion(nextSuggestion);
+                          setEditingSection("narrative");
+                        }}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        {t(language, "Improve journey text", "Förbättra journeytext")}
+                      </Button>
+                    </div>
+                    {narrativeSuggestionInfo ? <InlineAiNoImprovementNotice message={narrativeSuggestionInfo} /> : null}
                   {narrativeSuggestion ? (
                     <div className="w-full">
                       <InlineAiSuggestion
@@ -1073,12 +1139,32 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   </label>
                 }
                 helper={
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => { setValueMomentSuggestion(buildValueMomentSuggestion()); setEditingSection("valueMoment"); }} size="sm" type="button" variant="secondary">
-                      {t(language, "Suggest value moment", "Föreslå värdeögonblick")}
-                    </Button>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={() => {
+                          const nextSuggestion = buildValueMomentSuggestion();
+                          if (!hasMeaningfulTextChange(journey.valueMoment, nextSuggestion)) {
+                            setValueMomentSuggestion("");
+                            setValueMomentSuggestionInfo(buildNoImprovementMessage(t(language, "value moment", "värdeögonblicket")));
+                            setEditingSection("valueMoment");
+                            return;
+                          }
+
+                          setValueMomentSuggestionInfo(null);
+                          setValueMomentSuggestion(nextSuggestion);
+                          setEditingSection("valueMoment");
+                        }}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        {t(language, "Suggest value moment", "Föreslå värdeögonblick")}
+                      </Button>
+                    </div>
+                    {valueMomentSuggestionInfo ? <InlineAiNoImprovementNotice message={valueMomentSuggestionInfo} /> : null}
                     {valueMomentSuggestion ? (
-                      <div className="mt-3 w-full">
+                      <div className="w-full">
                         <InlineAiSuggestion
                           onApply={() => {
                             onChange({ ...journey, valueMoment: valueMomentSuggestion });
@@ -1112,12 +1198,32 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                   </label>
                 }
                 helper={
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => { setSuccessSignalsSuggestion(buildSuccessSignalsSuggestion()); setEditingSection("success"); }} size="sm" type="button" variant="secondary">
-                      {t(language, "Suggest successful outcome", "Föreslå lyckat utfall")}
-                    </Button>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={() => {
+                          const nextSuggestion = buildSuccessSignalsSuggestion();
+                          if (!hasMeaningfulListChange(journey.successSignals, nextSuggestion)) {
+                            setSuccessSignalsSuggestion([]);
+                            setSuccessSignalsSuggestionInfo(buildNoImprovementMessage(t(language, "successful outcome", "lyckat utfall")));
+                            setEditingSection("success");
+                            return;
+                          }
+
+                          setSuccessSignalsSuggestionInfo(null);
+                          setSuccessSignalsSuggestion(nextSuggestion);
+                          setEditingSection("success");
+                        }}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        {t(language, "Suggest successful outcome", "Föreslå lyckat utfall")}
+                      </Button>
+                    </div>
+                    {successSignalsSuggestionInfo ? <InlineAiNoImprovementNotice message={successSignalsSuggestionInfo} /> : null}
                     {successSignalsSuggestion.length > 0 ? (
-                      <div className="mt-3 w-full">
+                      <div className="w-full">
                         <InlineAiSuggestion
                           onApply={() => {
                             onChange({ ...journey, successSignals: successSignalsSuggestion });

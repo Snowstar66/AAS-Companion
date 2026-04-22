@@ -1224,7 +1224,7 @@ export function FramingOutcomeSection({
                         <DeliveryTypeGuidanceText slot="quickEpicDescription" />
                       </p>
                     </div>
-                    <div className="mt-4 space-y-4">
+                    <div className="mt-4 space-y-5">
                       <label className="space-y-2">
                         <span className="text-sm font-medium text-foreground">{language === "sv" ? "Epic-titel" : "Epic title"}</span>
                         <input
@@ -1237,7 +1237,7 @@ export function FramingOutcomeSection({
                       </label>
                       {!isArchived ? (
                         <PendingFormButton
-                          className="min-w-[152px] justify-center gap-2 self-start"
+                          className="mt-1 min-w-[152px] justify-center gap-2 self-start"
                           formAction={createEpicAction}
                           icon={<ArrowRight className="h-4 w-4" />}
                           label={language === "sv" ? "Skapa Epic" : "Create Epic"}
@@ -1279,7 +1279,7 @@ export function FramingOutcomeSection({
                           <DeliveryTypeGuidanceText slot="quickStoryIdeaDescription" />
                         </p>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-5">
                         <div className="grid gap-3">
                           <label className="space-y-2">
                             <span className="text-sm font-medium text-foreground">
@@ -1310,7 +1310,7 @@ export function FramingOutcomeSection({
                           </label>
                         </div>
                         <PendingFormButton
-                          className="min-w-[164px] justify-center gap-2 self-start"
+                          className="mt-1 min-w-[164px] justify-center gap-2 self-start"
                           disabled={!canCreateStoryIdea}
                           formAction={createStoryIdeaAction}
                           icon={<ArrowRight className="h-4 w-4" />}
