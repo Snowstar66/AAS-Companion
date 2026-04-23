@@ -7,8 +7,6 @@ import {
   BriefcaseBusiness,
   CircleHelp,
   Compass,
-  Eye,
-  EyeOff,
   FileSearch,
   Inbox,
   LayoutDashboard,
@@ -160,12 +158,11 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
               </div>
             </Link>
           ) : null}
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex shrink-0 items-center gap-1">
-                <button
-                  aria-label="Switch app language to English"
-                  aria-pressed={language === "en"}
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
+            <div className="flex items-center justify-center gap-1">
+              <button
+                aria-label="Switch app language to English"
+                aria-pressed={language === "en"}
                 className={`inline-flex h-8 w-12 items-center justify-center rounded-xl text-sm transition ${
                   language === "en"
                     ? "border border-white/30 bg-white/10 text-white shadow-sm"
@@ -186,21 +183,37 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                 }`}
                 onClick={() => setLanguage("sv")}
                 type="button"
-                >
-                  <FlagIcon className="h-4 w-6" country="se" />
-                </button>
-                </div>
-              </div>
+              >
+                <FlagIcon className="h-4 w-6" country="se" />
+              </button>
+            </div>
+            <div className="mt-3 flex justify-center">
               <button
-                className="mt-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-center text-xs font-medium leading-4 text-slate-300 transition hover:bg-white/8 hover:text-white"
+                className="inline-flex min-h-11 items-center justify-center gap-3 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-center text-xs font-medium leading-4 text-slate-200 transition hover:bg-white/10 hover:text-white"
                 onClick={() => setGuidanceVisible((current) => !current)}
                 type="button"
               >
-                {guidanceVisible ? <EyeOff className="h-3.5 w-3.5 shrink-0" /> : <Eye className="h-3.5 w-3.5 shrink-0" />}
-                <span className="whitespace-normal break-words">
+                <span className="whitespace-normal">
                   {guidanceVisible ? content.hideGuidance : content.showGuidance}
                 </span>
+                <span
+                  aria-hidden="true"
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition ${
+                    guidanceVisible
+                      ? "border-sky-300/80 bg-sky-400/25"
+                      : "border-white/15 bg-white/10"
+                  }`}
+                >
+                  <span
+                    className={`absolute h-4.5 w-4.5 rounded-full shadow-sm transition-transform ${
+                      guidanceVisible
+                        ? "translate-x-[22px] bg-sky-200"
+                        : "translate-x-[3px] bg-white/90"
+                    }`}
+                  />
+                </span>
               </button>
+            </div>
           </div>
         </div>
       </div>
