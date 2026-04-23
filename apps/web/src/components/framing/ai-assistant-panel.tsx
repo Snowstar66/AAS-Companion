@@ -1635,17 +1635,25 @@ export function AiAssistantPanel({
 
             {scopeKind === "story-ideas" && selectedStoryIdeaSuggestion ? (
               <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI-brief för Story Idea</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t(language, "AI brief for Story Idea", "AI-brief för Story Idea")}
+                </p>
                 <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-medium text-foreground">Använd detta för att snabbt bedöma om storyn ger rätt riktning</p>
+                      <p className="font-medium text-foreground">
+                        {t(language, "Use this to quickly judge whether the story points in the right direction.", "Använd detta för att snabbt bedöma om storyn ger rätt riktning.")}
+                      </p>
                       <p className="mt-1 text-sm text-sky-900/85">
-                        Kortet sammanfattar storyn som AI ser den just nu. Om den känns rätt kan du skapa Story Idea direkt härifrån.
+                        {t(
+                          language,
+                          "This card summarizes the story as AI understands it right now. If it feels right, you can create the Story Idea directly from here.",
+                          "Kortet sammanfattar storyn så som AI uppfattar den just nu. Om den känns rätt kan du skapa Story Idea direkt härifrån."
+                        )}
                       </p>
                     </div>
                     <span className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-medium text-sky-800">
-                      {storyIdeaSuggestions.length} utkast
+                      {language === "sv" ? `${storyIdeaSuggestions.length} utkast` : `${storyIdeaSuggestions.length} drafts`}
                     </span>
                   </div>
 
@@ -1681,35 +1689,45 @@ export function AiAssistantPanel({
                               value={selectedStoryIdeaSuggestion.storyIdea.suggestedEpicId ?? ""}
                             />
                             <input name="quickStoryIdeaTitle" type="hidden" value={selectedStoryIdeaSuggestion.storyIdea.title} />
-                            <Button type="submit">Skapa Story Idea från utkastet</Button>
+                            <Button type="submit">
+                              {t(language, "Create Story Idea from draft", "Skapa Story Idea från utkastet")}
+                            </Button>
                           </form>
                         ) : null}
                         <Button onClick={() => dismissSuggestion(selectedStoryIdeaSuggestion.id)} type="button" variant="secondary">
-                          Avfärda utkastet
+                          {t(language, "Dismiss draft", "Avfärda utkastet")}
                         </Button>
                       </div>
                     </div>
 
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast syfte</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">
+                          {t(language, "Draft purpose", "Utkast syfte")}
+                        </p>
                         <p className="text-sm leading-6 text-foreground">{selectedStoryIdeaSuggestion.storyIdea.description}</p>
                       </div>
                       <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast förväntat beteende</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">
+                          {t(language, "Draft expected behavior", "Utkast förväntat beteende")}
+                        </p>
                         <p className="text-sm leading-6 text-foreground">{buildStoryBehaviorText(selectedStoryIdeaSuggestion, language)}</p>
                       </div>
                     </div>
 
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast användarvärde</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">
+                          {t(language, "Draft user value", "Utkast användarvärde")}
+                        </p>
                         <p className="text-sm leading-6 text-foreground">
                           {selectedStoryIdeaSuggestion.storyIdea.valueIntent?.trim() || selectedStoryIdeaSuggestion.storyIdea.description}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Viktiga hänsyn</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">
+                          {t(language, "Important considerations", "Viktiga hänsyn")}
+                        </p>
                         <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                           {buildStoryConsiderations(selectedStoryIdeaSuggestion, epicOptions, language).map((item) => (
                             <li key={item}>{item}</li>
@@ -1719,7 +1737,9 @@ export function AiAssistantPanel({
                     </div>
 
                     <div className="mt-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast testfokus</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">
+                        {t(language, "Draft test focus", "Utkast testfokus")}
+                      </p>
                       <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
                         {buildStoryTestFocus(selectedStoryIdeaSuggestion, language).map((item) => (
                           <li key={item}>{item}</li>
@@ -1733,7 +1753,9 @@ export function AiAssistantPanel({
 
             {nonStoryIdeaSuggestions.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Föreslagna handlingar</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t(language, "Suggested actions", "Föreslagna handlingar")}
+                </p>
                 {nonStoryIdeaSuggestions.map((suggestion) => (
                   <div className="rounded-2xl border border-border/70 bg-background px-4 py-4" key={suggestion.id}>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -1807,7 +1829,7 @@ export function AiAssistantPanel({
             {!isEmbeddedJourneySurface && result?.toolTrace.length ? (
               <details className="group rounded-2xl border border-border/70 bg-background shadow-sm">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-medium text-foreground">
-                  <span>Tool trace</span>
+                  <span>{t(language, "Tool trace", "Verktygsspår")}</span>
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
                   </span>
@@ -1823,7 +1845,7 @@ export function AiAssistantPanel({
             {!isEmbeddedJourneySurface && history.length > 0 ? (
               <details className="group rounded-2xl border border-border/70 bg-background shadow-sm">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-sm font-medium text-foreground">
-                  <span>Recent conversation history</span>
+                  <span>{t(language, "Recent conversation history", "Senaste konversationshistorik")}</span>
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-white shadow-sm">
                     <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
                   </span>
