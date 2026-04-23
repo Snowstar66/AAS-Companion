@@ -84,3 +84,7 @@ export function InlineFieldGuidance({ guidance }: { guidance: string }) {
     </div>
   );
 }
+
+export function FieldPromptHint({ text }: { text: ReactNode }) {
+  return <div className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-sm leading-6 text-slate-600">{text}</div>;
+}

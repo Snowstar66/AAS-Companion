@@ -280,7 +280,11 @@ function getDeliveryTypeContextualGuidance(value: DeliveryTypeValue | null | und
       `${profile.governanceNeeds} This person should be able to defend the case if challenged by both business and delivery.`,
       `${profile.governanceNeeds} Den personen ska kunna försvara caset om både verksamhet och leverans utmanar det.`
     ),
-    problemDescription: `${profile.problemDefinition} ${profile.commonFailure}`,
+    problemDescription: tr(
+      language,
+      `${profile.problemDefinition} Avoid the common trap of ${profile.commonFailure.toLowerCase()}`,
+      `${profile.problemDefinition} Undvik den vanliga fällan att ${profile.commonFailure.toLowerCase()}`
+    ),
     outcomeDescription: tr(
       language,
       `${profile.outcomeType} A good statement makes the effect visible without naming the build. Example: ${profile.outcomeExample}`,

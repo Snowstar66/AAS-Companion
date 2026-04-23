@@ -15,6 +15,7 @@ type OutcomeAiValidatedTextareaProps = {
   initialValue: string;
   disabled?: boolean;
   guidance?: ReactNode;
+  promptHint?: ReactNode;
   minHeightClassName?: string;
   validateAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   saveAction?: (formData: FormData) => Promise<{ status: "success" | "error"; message: string }>;
@@ -55,6 +56,7 @@ export function OutcomeAiValidatedTextarea({
   initialValue,
   disabled = false,
   guidance,
+  promptHint,
   minHeightClassName = "min-h-28",
   validateAction,
   saveAction,
@@ -223,6 +225,7 @@ export function OutcomeAiValidatedTextarea({
     <div className="space-y-2">
       <label className="block text-sm font-medium text-foreground">{label}</label>
       {guidance}
+      {promptHint}
       <textarea
         className={`${minHeightClassName} w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30`}
         disabled={disabled}

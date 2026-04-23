@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Bot, CheckCircle2, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
-import { InlineFieldGuidance } from "@/components/shared/context-help";
+import { FieldPromptHint, InlineFieldGuidance } from "@/components/shared/context-help";
 import { formatAiLevelLabel } from "@/lib/help/aas-help";
 
 type RiskLevel = "low" | "medium" | "high";
@@ -581,6 +581,8 @@ export function OutcomeAiRiskPostureCard({
           <div className="grid gap-4">
             <label className="space-y-2">
               <span className="text-sm font-medium text-foreground">{t(language, "Expected AI use across lifecycle", "Förväntad AI-användning över livscykeln")}</span>
+              <InlineFieldGuidance guidance={t(language, "Describe how AI is expected to support the BMAD flow across framing, refinement, design, build or test at the selected acceleration level. Keep it broad, operational and non-technical.", "Beskriv hur AI förväntas stödja BMAD-flödet över framing, refinement, design, build eller test på vald accelerationsnivå. Håll det brett, operativt och icke-tekniskt.")} />
+              <FieldPromptHint text={getAiUsageIntentPlaceholder(aiLevel, language)} />
               <textarea
                 className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                 defaultValue={defaultAiUsageIntent ?? ""}
@@ -589,7 +591,6 @@ export function OutcomeAiRiskPostureCard({
                 onChange={(event) => setAiUsageIntent(event.target.value)}
                 placeholder={getAiUsageIntentPlaceholder(aiLevel, language)}
               />
-              <InlineFieldGuidance guidance={t(language, "Describe how AI is expected to support the BMAD flow across framing, refinement, design, build or test at the selected acceleration level. Keep it broad, operational and non-technical.", "Beskriv hur AI förväntas stödja BMAD-flödet över framing, refinement, design, build eller test på vald accelerationsnivå. Håll det brett, operativt och icke-tekniskt.")} />
             </label>
           </div>
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 text-sm leading-6 text-sky-950">
@@ -715,6 +716,7 @@ export function OutcomeAiRiskPostureCard({
               </p>
               <label className="mt-4 block space-y-2">
                 <span className="text-sm font-medium text-foreground">{t(language, "Execution pattern", "Exekveringsmönster")}</span>
+                <InlineFieldGuidance guidance={t(language, "Choose how AI should execute the later work: direct human support, one governed step at a time, or orchestrated multi-step flow.", "Välj hur AI ska exekvera det senare arbetet: direkt mänskligt stöd, ett styrt steg i taget eller ett orkestrerat fler-stegsflöde.")} />
                 <select
                   className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                   defaultValue={aiExecutionPattern ?? ""}
@@ -732,7 +734,6 @@ export function OutcomeAiRiskPostureCard({
                   <option value="step_by_step">{t(language, "Structured acceleration", "Strukturerad acceleration")}</option>
                   <option value="orchestrated">{t(language, "Orchestrated agentic delivery", "Orkestrerad agentisk leverans")}</option>
                 </select>
-                <InlineFieldGuidance guidance={t(language, "Choose how AI should execute the later work: direct human support, one governed step at a time, or orchestrated multi-step flow.", "Välj hur AI ska exekvera det senare arbetet: direkt mänskligt stöd, ett styrt steg i taget eller ett orkestrerat fler-stegsflöde.")} />
               </label>
               <div className="mt-4 rounded-2xl border border-border/70 bg-muted/10 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Selected acceleration fit", "Vald accelerationspassform")}</p>
@@ -751,6 +752,7 @@ export function OutcomeAiRiskPostureCard({
 
           {aiLevel === "level_3" ? <label className="mt-4 block space-y-2">
             <span className="text-sm font-medium text-foreground">{t(language, "Level 3 governance justification", "Governance-motivering för nivå 3")}</span>
+            <FieldPromptHint text={t(language, "If Level 3 is selected, explain the governance and control rationale briefly.", "Om nivå 3 är vald, förklara kort governance- och kontrollmotiveringen.")} />
             <textarea
               className="min-h-24 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
               defaultValue={defaultAiLevelJustification ?? ""}
