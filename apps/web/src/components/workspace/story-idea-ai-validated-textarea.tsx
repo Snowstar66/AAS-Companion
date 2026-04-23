@@ -79,7 +79,7 @@ export function StoryIdeaAiValidatedTextarea({
       ? t(
           language,
           "AI reviewed the field but did not find a meaningfully better rewrite from the current Framing context. Review the rationale and revise manually if needed.",
-          "AI granskade fältet men hittade ingen meningsfullt bättre omskrivning utifrån nuvarande Framing-kontext. Läs motiveringen och justera manuellt vid behov."
+          "AI granskade fältet men hittade ingen tydligt bättre omskrivning utifrån nuvarande Framing-kontext. Läs motiveringen och justera manuellt vid behov."
         )
       : null;
 
@@ -155,7 +155,7 @@ export function StoryIdeaAiValidatedTextarea({
         setSaveMessage(saveResult.message);
         setSaveError(null);
       } catch (error) {
-        setSaveError(error instanceof Error ? error.message : t(language, "Suggestion could not be saved.", "Forslaget kunde inte sparas."));
+        setSaveError(error instanceof Error ? error.message : t(language, "Suggestion could not be saved.", "Förslaget kunde inte sparas."));
         setSaveMessage(null);
       }
     });
@@ -198,10 +198,10 @@ export function StoryIdeaAiValidatedTextarea({
             type="button"
             variant="default"
           >
-            {isSaving ? t(language, "Applying and saving...", "Tillampar och sparar...") : t(language, "Use suggestion and save", "Anvand forslag och spara")}
+            {isSaving ? t(language, "Applying and saving...", "Tillämpar och sparar...") : t(language, "Use suggestion and save", "Använd förslag och spara")}
           </Button>
           <Button className="gap-2" disabled={isSaving} onClick={applySuggestion} size="sm" type="button" variant="secondary">
-            {t(language, "Use suggestion in editor", "Anvand forslag i editorn")}
+            {t(language, "Use suggestion in editor", "Använd förslag i editorn")}
           </Button>
         </div>
       ) : null}

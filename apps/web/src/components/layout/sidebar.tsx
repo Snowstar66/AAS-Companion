@@ -160,11 +160,12 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
               </div>
             </Link>
           ) : null}
-          <div className="flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
-            <div className="flex items-center gap-1">
-              <button
-                aria-label="Switch app language to English"
-                aria-pressed={language === "en"}
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex shrink-0 items-center gap-1">
+                <button
+                  aria-label="Switch app language to English"
+                  aria-pressed={language === "en"}
                 className={`inline-flex h-8 w-12 items-center justify-center rounded-xl text-sm transition ${
                   language === "en"
                     ? "border border-white/30 bg-white/10 text-white shadow-sm"
@@ -185,20 +186,21 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
                 }`}
                 onClick={() => setLanguage("sv")}
                 type="button"
+                >
+                  <FlagIcon className="h-4 w-6" country="se" />
+                </button>
+                </div>
+              </div>
+              <button
+                className="mt-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-center text-xs font-medium leading-4 text-slate-300 transition hover:bg-white/8 hover:text-white"
+                onClick={() => setGuidanceVisible((current) => !current)}
+                type="button"
               >
-                <FlagIcon className="h-4 w-6" country="se" />
+                {guidanceVisible ? <EyeOff className="h-3.5 w-3.5 shrink-0" /> : <Eye className="h-3.5 w-3.5 shrink-0" />}
+                <span className="whitespace-normal break-words">
+                  {guidanceVisible ? content.hideGuidance : content.showGuidance}
+                </span>
               </button>
-            </div>
-            <button
-              className="inline-flex min-h-10 max-w-[132px] items-center justify-center gap-2 rounded-xl px-3 py-2 text-center text-xs font-medium leading-4 text-slate-300 transition hover:bg-white/8 hover:text-white"
-              onClick={() => setGuidanceVisible((current) => !current)}
-              type="button"
-            >
-              {guidanceVisible ? <EyeOff className="h-3.5 w-3.5 shrink-0" /> : <Eye className="h-3.5 w-3.5 shrink-0" />}
-              <span className="whitespace-normal break-words">
-                {guidanceVisible ? content.hideGuidance : content.showGuidance}
-              </span>
-            </button>
           </div>
         </div>
       </div>

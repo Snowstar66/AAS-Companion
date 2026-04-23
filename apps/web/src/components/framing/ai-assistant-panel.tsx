@@ -617,19 +617,24 @@ function findEpicLabel(epicId: string | null | undefined, epicOptions: Array<{ i
   return epicOptions.find((option) => option.id === epicId)?.label ?? null;
 }
 
-function buildStoryBehaviorText(suggestion: StoryIdeaCandidateSuggestion) {
+function buildStoryBehaviorText(suggestion: StoryIdeaCandidateSuggestion, language: "en" | "sv") {
   const outcome = suggestion.storyIdea.expectedOutcome?.trim();
 
   if (outcome) {
-    return `När storyn är på plats ska ${lowerFirst(stripTrailingPunctuation(outcome))}.`;
+    return language === "sv"
+      ? `När storyn är på plats ska ${lowerFirst(stripTrailingPunctuation(outcome))}.`
+      : `When the story is in place it should ${lowerFirst(stripTrailingPunctuation(outcome))}.`;
   }
 
-  return `När storyn är på plats ska den stödja ${lowerFirst(stripTrailingPunctuation(suggestion.storyIdea.description))} utan att tappa spårbarhet eller ärvda ramar.`;
+  return language === "sv"
+    ? `När storyn är på plats ska den stödja ${lowerFirst(stripTrailingPunctuation(suggestion.storyIdea.description))} utan att tappa spårbarhet eller ärvda ramar.`
+    : `When the story is in place it should support ${lowerFirst(stripTrailingPunctuation(suggestion.storyIdea.description))} without losing traceability or inherited constraints.`;
 }
 
 function buildStoryConsiderations(
   suggestion: StoryIdeaCandidateSuggestion,
-  epicOptions: Array<{ id: string; label: string }> | undefined
+  epicOptions: Array<{ id: string; label: string }> | undefined,
+  language: "en" | "sv"
 ) {
   const items: string[] = [];
   const suggestedEpicLabel = findEpicLabel(suggestion.storyIdea.suggestedEpicId, epicOptions);
@@ -637,70 +642,108 @@ function buildStoryConsiderations(
   const stepCount = suggestion.storyIdea.basedOnStepIds?.length ?? 0;
 
   if (suggestedEpicLabel) {
-    items.push(`Placera storyn under ${suggestedEpicLabel} så att den ligger i rätt förmågeområde.`);
+    items.push(
+      language === "sv"
+        ? `Placera storyn under ${suggestedEpicLabel} så att den ligger i rätt förmågeområde.`
+        : `Place the story under ${suggestedEpicLabel} so it stays within the right capability area.`
+    );
   }
 
   if (journeyCount > 0) {
     items.push(
       journeyCount === 1
-        ? "Behåll en tydlig koppling till den journey som drev fram förslaget."
-        : "Behåll kopplingen till de journeys som tillsammans pekar på samma behov."
+        ? language === "sv"
+          ? "Behåll en tydlig koppling till den journey som drev fram förslaget."
+          : "Keep a clear link to the journey that drove this suggestion."
+        : language === "sv"
+          ? "Behåll kopplingen till de journeys som tillsammans pekar på samma behov."
+          : "Keep the link to the journeys that together point to the same need."
     );
   }
 
   if (stepCount > 0) {
-    items.push("Låt storyn lösa ett sammanhållet problem i flödet, inte sprida sig över för många steg.");
+    items.push(
+      language === "sv"
+        ? "Låt storyn lösa ett sammanhållet problem i flödet i stället för att sprida sig över för många steg."
+        : "Let the story solve one coherent problem in the flow instead of spreading across too many steps."
+    );
   }
 
-  items.push("Bevara constraints, UX-principer, NFR:er och datakänslighet när storyn förtydligas vidare.");
+  items.push(
+    language === "sv"
+      ? "Bevara constraints, UX-principer, NFR:er och datakänslighet när storyn förtydligas vidare."
+      : "Preserve constraints, UX principles, NFRs, and data sensitivity as the story is refined further."
+  );
   return items;
 }
 
-function buildStoryTestFocus(suggestion: StoryIdeaCandidateSuggestion) {
+function buildStoryTestFocus(suggestion: StoryIdeaCandidateSuggestion, language: "en" | "sv") {
   const items: string[] = [];
   const outcome = suggestion.storyIdea.expectedOutcome?.trim();
 
   if (outcome) {
-    items.push(`Verifiera att ${lowerFirst(stripTrailingPunctuation(outcome))}.`);
+    items.push(
+      language === "sv"
+        ? `Verifiera att ${lowerFirst(stripTrailingPunctuation(outcome))}.`
+        : `Verify that ${lowerFirst(stripTrailingPunctuation(outcome))}.`
+    );
   } else {
-    items.push("Verifiera att storyn faktiskt ger tydligare stöd eller lägre friktion i det tänkta läget.");
+    items.push(
+      language === "sv"
+        ? "Verifiera att storyn faktiskt ger tydligare stöd eller lägre friktion i det tänkta läget."
+        : "Verify that the story actually creates clearer support or lower friction in the intended situation."
+    );
   }
 
   if ((suggestion.storyIdea.basedOnJourneyIds?.length ?? 0) > 0) {
-    items.push("Verifiera att den berörda journeyn blir enklare att ta från trigger till önskat läge.");
+    items.push(
+      language === "sv"
+        ? "Verifiera att den berörda journeyn blir enklare att ta från trigger till önskat läge."
+        : "Verify that the affected journey becomes easier to take from trigger to desired future state."
+    );
   }
 
   if ((suggestion.storyIdea.basedOnStepIds?.length ?? 0) > 0) {
-    items.push("Verifiera att berörda steg inte längre fastnar i oklar status, manuell samordning eller tappad överlämning.");
+    items.push(
+      language === "sv"
+        ? "Verifiera att berörda steg inte längre fastnar i oklar status, manuell samordning eller tappad överlämning."
+        : "Verify that affected steps no longer stall because of unclear status, manual coordination, or lost handoffs."
+    );
   }
 
-  items.push("Verifiera att storyn fortfarande går att bryta ned vidare utan att bli för bred eller tekniskt låst.");
+  items.push(
+    language === "sv"
+      ? "Verifiera att storyn fortfarande går att bryta ned vidare utan att bli för bred eller tekniskt låst."
+      : "Verify that the story can still be broken down further without becoming too broad or technically locked in."
+  );
   return items;
 }
 
-function suggestionDetails(suggestion: FramingAgentSuggestion) {
+function suggestionDetails(suggestion: FramingAgentSuggestion, language: "en" | "sv") {
   if (suggestion.kind === "rewrite_journey_step") {
     return suggestion.nextStep.description;
   }
 
   if (suggestion.kind === "rewrite_journey") {
-    return suggestion.nextJourney.goal || suggestion.nextJourney.trigger || "Förslag på omformulering av journey.";
+    return suggestion.nextJourney.goal || suggestion.nextJourney.trigger || t(language, "Suggested journey rewrite.", "Förslag på omformulering av journey.");
   }
 
   if (suggestion.kind === "rewrite_journey_context") {
-    return suggestion.nextContext.description || "Förslag på uppdatering av journey-underlaget.";
+    return suggestion.nextContext.description || t(language, "Suggested update to Journey Context.", "Förslag på uppdatering av journey-underlaget.");
   }
 
   if (suggestion.kind === "apply_journey_coverage") {
-    return `Status: ${suggestion.coverage.status}`;
+    return `${t(language, "Status", "Status")}: ${suggestion.coverage.status}`;
   }
 
   if (suggestion.kind === "story_idea_candidate") {
-    return `${suggestion.storyIdea.description}${suggestion.storyIdea.suggestedEpicId ? ` Recommended Epic: ${suggestion.storyIdea.suggestedEpicId}.` : ""}`;
+    return `${suggestion.storyIdea.description}${suggestion.storyIdea.suggestedEpicId ? language === "sv" ? ` Rekommenderad Epic: ${suggestion.storyIdea.suggestedEpicId}.` : ` Recommended Epic: ${suggestion.storyIdea.suggestedEpicId}.` : ""}`;
   }
 
   if (suggestion.kind === "preference_change") {
-    return `Suggested value: ${suggestion.suggestedValue}. ${suggestion.rationale}`;
+    return language === "sv"
+      ? `Föreslaget värde: ${suggestion.suggestedValue}. ${suggestion.rationale}`
+      : `Suggested value: ${suggestion.suggestedValue}. ${suggestion.rationale}`;
   }
 
   if (suggestion.kind === "add_custom_instruction") {
@@ -1335,10 +1378,16 @@ export function AiAssistantPanel({
                 </label>
                 {guidedDraft && guidedDraft !== guidedAnswer.trim() ? (
                   <div className="rounded-2xl border border-sky-200 bg-white px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">AI-förslag</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">
+                      {t(language, "AI suggestion", "AI-förslag")}
+                    </p>
                     <p className="mt-2 text-sm leading-6 text-foreground">{guidedDraft}</p>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                      Det här är AI:s förslag på en tydligare journey-formulering baserat på ditt svar.
+                      {t(
+                        language,
+                        "This is AI's suggestion for a clearer journey formulation based on your answer.",
+                        "Det här är AI:s förslag på en tydligare journey-formulering utifrån ditt svar."
+                      )}
                     </p>
                   </div>
                 ) : null}
@@ -1348,17 +1397,17 @@ export function AiAssistantPanel({
                     onClick={() => applyGuidedJourneyAnswer(guidedDraft)}
                     type="button"
                   >
-                    Använd AI-förslaget
+                    {t(language, "Use AI suggestion", "Använd AI-förslaget")}
                   </Button>
                   <Button disabled={!guidedAnswer.trim()} onClick={() => applyGuidedJourneyAnswer()} type="button" variant="secondary">
-                    Använd min formulering
+                    {t(language, "Use my wording", "Använd min formulering")}
                   </Button>
                   <Button onClick={skipGuidedJourneyQuestion} type="button" variant="secondary">
-                    Hoppa över frågan
+                    {t(language, "Skip question", "Hoppa över frågan")}
                   </Button>
                   {skippedPromptKeys.length > 0 ? (
                     <Button onClick={() => setSkippedPromptKeys([])} type="button" variant="secondary">
-                      Visa hoppade frågor
+                      {t(language, "Show skipped questions", "Visa hoppade frågor")}
                     </Button>
                   ) : null}
                 </div>
@@ -1648,7 +1697,7 @@ export function AiAssistantPanel({
                       </div>
                       <div className="space-y-2">
                         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast förväntat beteende</p>
-                        <p className="text-sm leading-6 text-foreground">{buildStoryBehaviorText(selectedStoryIdeaSuggestion)}</p>
+                        <p className="text-sm leading-6 text-foreground">{buildStoryBehaviorText(selectedStoryIdeaSuggestion, language)}</p>
                       </div>
                     </div>
 
@@ -1662,7 +1711,7 @@ export function AiAssistantPanel({
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Viktiga hänsyn</p>
                         <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-                          {buildStoryConsiderations(selectedStoryIdeaSuggestion, epicOptions).map((item) => (
+                          {buildStoryConsiderations(selectedStoryIdeaSuggestion, epicOptions, language).map((item) => (
                             <li key={item}>{item}</li>
                           ))}
                         </ul>
@@ -1672,7 +1721,7 @@ export function AiAssistantPanel({
                     <div className="mt-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-900/75">Utkast testfokus</p>
                       <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-                        {buildStoryTestFocus(selectedStoryIdeaSuggestion).map((item) => (
+                        {buildStoryTestFocus(selectedStoryIdeaSuggestion, language).map((item) => (
                           <li key={item}>{item}</li>
                         ))}
                       </ul>
@@ -1691,18 +1740,18 @@ export function AiAssistantPanel({
                       <div className="space-y-2">
                         <p className="font-medium text-foreground">{suggestion.title}</p>
                         <p className="text-sm leading-6 text-muted-foreground">{suggestion.description}</p>
-                        <p className="text-sm leading-6 text-foreground">{suggestionDetails(suggestion)}</p>
+                        <p className="text-sm leading-6 text-foreground">{suggestionDetails(suggestion, language)}</p>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {onApplySuggestion ? (
-                          <Button onClick={() => handleApplySuggestion(suggestion)} type="button">
-                            Använd förslag
+                        <div className="flex flex-wrap gap-2">
+                          {onApplySuggestion ? (
+                            <Button onClick={() => handleApplySuggestion(suggestion)} type="button">
+                              {t(language, "Use suggestion", "Använd förslag")}
+                            </Button>
+                          ) : null}
+                          <Button onClick={() => dismissSuggestion(suggestion.id)} type="button" variant="secondary">
+                            {t(language, "Dismiss", "Avfärda")}
                           </Button>
-                        ) : null}
-                        <Button onClick={() => dismissSuggestion(suggestion.id)} type="button" variant="secondary">
-                          Avfärda
-                        </Button>
-                      </div>
+                        </div>
                     </div>
                   </div>
                 ))}

@@ -1084,22 +1084,22 @@ export function FramingOutcomeSection({
               </CardContent>
             </Card>
 
-            <Card className="border-border/70 shadow-sm">
-              <CardHeader>
-                <CardTitle>{language === "sv" ? "Baseline" : "Baseline"}</CardTitle>
-                <CardDescription>
-                  <DeliveryTypeGuidanceText slot="baselineCardDescription" />
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-5 xl:grid-cols-2">
-                <OutcomeAiValidatedTextarea
-                  disabled={isArchived}
-                  field="baseline_definition"
-                  guidance={
-                    <>
-                      <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition", language)} />
-                    </>
-                  }
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle>{language === "sv" ? "Baseline" : "Baseline"}</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-5 xl:grid-cols-2">
+                  <OutcomeAiValidatedTextarea
+                    disabled={isArchived}
+                    field="baseline_definition"
+                    guidance={
+                      <>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          <DeliveryTypeGuidanceText slot="baselineCardDescription" />
+                        </p>
+                        <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_definition", language)} />
+                      </>
+                    }
                   initialError={search.aiField === "baseline_definition" ? search.aiError ?? null : null}
                   initialFeedback={search.aiField === "baseline_definition" ? aiFeedback : null}
                   initialValue={draftBaselineDefinition}
@@ -1107,11 +1107,11 @@ export function FramingOutcomeSection({
                   name="baselineDefinition"
                   saveAction={saveInlineAction}
                   validateAction={validateBaselineDefinitionAiAction}
-                />
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">{language === "sv" ? "Baselinekälla" : "Baseline source"}</span>
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="baselineSourceDescription" />
+                  />
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-foreground">{language === "sv" ? "Baselinekälla" : "Baseline source"}</span>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      <DeliveryTypeGuidanceText slot="baselineSourceDescription" />
                   </p>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source", language)} />
                   <textarea

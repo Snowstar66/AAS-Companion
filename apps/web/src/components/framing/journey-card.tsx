@@ -616,7 +616,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     return t(
       language,
       `AI could not find a meaningfully better suggestion for ${targetLabel} from the current Framing context. Refine the surrounding Outcome, Baseline, Story Ideas, or Journey details first if you want a stronger suggestion.`,
-      `AI hittade ingen meningsfullt bättre förbättring för ${targetLabel} utifrån nuvarande Framing-kontext. Förfina gärna Outcome, Baseline, Story Ideas eller Journey-detaljerna först om du vill få ett starkare förslag.`
+      `AI hittade ingen tydligt bättre förbättring för ${targetLabel} utifrån nuvarande Framing-kontext. Förfina gärna Outcome, Baseline, Story Ideas eller Journey-detaljerna först om du vill få ett starkare förslag.`
     );
   }
 
