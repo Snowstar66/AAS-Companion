@@ -774,29 +774,12 @@ export function FramingOutcomeSection({
         </div>
       ) : null}
 
-      <Card className="overflow-hidden border-sky-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,255,255,1))] shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
-        <CardHeader className="gap-4">
-          <div className="space-y-4">
-            <div className="inline-flex items-center rounded-full border border-sky-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-900 shadow-sm">
-              {language === "sv" ? "Framing Overview" : "Framing Overview"}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
-                {outcome.key}
-              </span>
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
-                {language === "sv" ? "Ursprung" : "Origin"}: {originLabel}
-              </span>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                {language === "sv" ? "Projektläge" : "Project mode"}: {workspaceLabel}
-              </span>
-              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusTone === "approved" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : statusTone === "ready_for_review" ? "border-sky-200 bg-sky-50 text-sky-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
-                {language === "sv" ? "Status" : "Status"}: {statusLabel}
-              </span>
-            </div>
-            <div className="space-y-2">
-              <CardTitle className="text-2xl sm:text-3xl">{outcome.title}</CardTitle>
-              <CardDescription className="max-w-4xl text-sm leading-7 sm:text-base">
+        <Card className="overflow-hidden border-sky-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,255,255,1))] shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
+          <CardHeader className="gap-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <CardTitle className="text-2xl sm:text-3xl">{outcome.title}</CardTitle>
+                <CardDescription className="max-w-4xl text-sm leading-7 sm:text-base">
                 {getOriginSummary(outcome.originType, language)}
               </CardDescription>
             </div>

@@ -166,6 +166,6 @@ export function getCoverageSummaryLabel(context: JourneyContext, language: "en" 
   const covered = journeysWithCoverage.filter((journey) => journey.coverage?.status === "covered").length;
 
   return language === "sv"
-    ? `${covered} täckta, ${partial} delvis täckta, ${uncovered} otäckta`
-    : `${covered} covered, ${partial} partially covered, ${uncovered} uncovered`;
+    ? `Täckningsanalys: ${covered} täckta, ${partial} delvis täckta, ${uncovered} otäckta`
+    : `Coverage analysis: ${covered} covered, ${partial} partially covered, ${uncovered} uncovered`;
 }

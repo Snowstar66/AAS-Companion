@@ -52,7 +52,6 @@ function CompactProjectCount(props: { label: string; value: number | string }) {
 function ProjectToneCard(props: {
   active?: boolean | undefined;
   title: string;
-  slug: string;
   counts: {
     outcomes: number;
     epics: number;
@@ -92,9 +91,6 @@ function ProjectToneCard(props: {
                 {props.copy.currentProjectPill}
               </span>
             ) : null}
-            <span className="inline-flex rounded-full border border-border/70 bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              {props.slug}
-            </span>
           </div>
           <p className="text-sm leading-6 text-muted-foreground">
             {props.active ? props.copy.activeProjectCardDescription : props.copy.inactiveProjectCardDescription}
@@ -254,7 +250,6 @@ export function HomeProjectAccess(props: HomeProjectAccessProps) {
                   key={project.organizationId}
                   openProjectAction={props.openProjectAction}
                   organizationId={project.organizationId}
-                  slug={project.organizationSlug}
                   title={project.organizationName}
                 />
               ))}

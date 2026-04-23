@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, FolderKanban } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 
@@ -194,14 +194,10 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
     <>
       <div className="rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(246,248,252,0.94))] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              <FolderKanban className="h-3.5 w-3.5 text-primary" />
-              {hasActiveProject ? copy.badgeActive : copy.badgeInactive}
-            </div>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                {hasActiveProject ? copy.titleActive : copy.titleInactive}
+            <div className="space-y-4">
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                  {hasActiveProject ? copy.titleActive : copy.titleInactive}
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
                 {hasActiveProject ? copy.bodyActive : copy.bodyInactive}

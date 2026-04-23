@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 
 type FramingPackagePageHeroProps = {
-  badge: ReactNode;
+  badge?: ReactNode;
   title: ReactNode;
   description: ReactNode;
   chips?: ReactNode;
@@ -12,7 +12,7 @@ type FramingPackagePageHeroProps = {
 };
 
 export function FramingPackagePageHero({
-  badge,
+  badge = null,
   title,
   description,
   chips = null,
@@ -33,15 +33,17 @@ export function FramingPackagePageHero({
       <CardHeader className={isCompact ? "gap-3 p-5" : "gap-4"}>
         <div className={`flex flex-col ${isCompact ? "gap-3" : "gap-4"} lg:flex-row lg:items-start lg:justify-between`}>
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
-            <div
-              className={
-                isCompact
-                  ? "inline-flex items-center rounded-full border border-border/70 bg-muted/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-                  : "inline-flex items-center rounded-full border border-sky-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-900 shadow-sm"
-              }
-            >
-              {badge}
-            </div>
+            {badge ? (
+              <div
+                className={
+                  isCompact
+                    ? "inline-flex items-center rounded-full border border-border/70 bg-muted/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                    : "inline-flex items-center rounded-full border border-sky-200 bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-900 shadow-sm"
+                }
+              >
+                {badge}
+              </div>
+            ) : null}
             {chips ? <div className={`flex flex-wrap ${isCompact ? "gap-1.5" : "gap-2"}`}>{chips}</div> : null}
             <div className={isCompact ? "space-y-1.5" : "space-y-2"}>
               <CardTitle className={isCompact ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl"}>{title}</CardTitle>

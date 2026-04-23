@@ -23,21 +23,7 @@ export function FramingSubpageNav({
 }: FramingSubpageNavProps) {
   return (
     <FramingPackagePageHero
-      badge={t(language, "Framing package navigation", "Navigering i Framing-paketet")}
       tone="compact"
-      chips={
-        <>
-          <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-            {t(language, "Linked package", "Kopplat paket")}
-          </span>
-          <span className="rounded-full border border-sky-200/70 bg-sky-50/70 px-2.5 py-1 text-[11px] font-medium text-sky-800">
-            {t(language, "Main source of truth", "Huvudsaklig source of truth")}
-          </span>
-          <span className="rounded-full border border-emerald-200/70 bg-emerald-50/70 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
-            {t(language, "Optional layers available", "Frivilliga lager tillgängliga")}
-          </span>
-        </>
-      }
       description={t(
         language,
         "Use Framing Overview as the main source of truth. Journey Context and Downstream AI Tuning are optional layers that strengthen handoff quality when they are actually needed.",

@@ -363,7 +363,11 @@ export function JourneyContextPage({ data, saveAction, analyzeAction, flash }: J
           {flash?.save === "success" ? <FlashBanner message={t(language, "Journeys were saved in the Framing package.", "Journeys sparades i Framing-paketet.")} tone="success" /> : null}
           {flash?.analyze === "success" ? (
             <FlashBanner
-              message={t(language, "The journey analysis was updated for the selected area.", "Journey-analysen uppdaterades för den valda ytan.")}
+              message={t(
+                language,
+                "Coverage analysis was updated. Open the journey cards below to review links, gaps, and suggested Story Ideas.",
+                "Täckningsanalysen uppdaterades. Öppna journey-korten nedan för att granska kopplingar, luckor och föreslagna Story Ideas."
+              )}
               tone="success"
             />
           ) : null}

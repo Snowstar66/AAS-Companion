@@ -104,6 +104,32 @@ function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function detectDominantLanguage(value: string): "sv" | "en" | "unknown" {
+  const sample = normalizeWhitespace(value).toLowerCase();
+  if (!sample) return "unknown";
+
+  const swedishMarkers = (sample.match(/[åäö]/g) ?? []).length +
+    (sample.match(/\b(och|att|som|det|den|för|med|utan|ska|kan|inte|önskat|stöd|flöde|användaren|dag|läge)\b/g) ?? []).length;
+  const englishMarkers = (sample.match(/\b(and|the|with|that|this|today|support|flow|should|goal|desired|state|user|can|not)\b/g) ?? []).length;
+
+  if (swedishMarkers === 0 && englishMarkers === 0) return "unknown";
+  if (swedishMarkers >= englishMarkers + 2) return "sv";
+  if (englishMarkers >= swedishMarkers + 2) return "en";
+  return "unknown";
+}
+
+function keepLanguageAlignedSentences(value: string, language: "en" | "sv") {
+  return splitSentences(value).filter((sentence) => {
+    const detected = detectDominantLanguage(sentence);
+    return detected === "unknown" || detected === language;
+  });
+}
+
+function sanitizeTextForLanguage(value: string | null | undefined, language: "en" | "sv") {
+  if (!value) return "";
+  return finalizeParagraph(keepLanguageAlignedSentences(value, language));
+}
+
 function splitSentences(value: string) {
   return value
     .replace(/\r\n/g, "\n")
@@ -539,6 +565,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   const suggestedStoryIdeaLabels = findReferenceLabels(journey.coverage?.suggestedStoryIdeaIds, availableStoryIdeas);
   const cleanedCoverageNote = cleanCoverageNote(journey.coverage?.notes);
   const [isOpen, setIsOpen] = useState(isFocused);
+  const [isAiAnalysisOpen, setIsAiAnalysisOpen] = useState(Boolean(journey.coverage));
   const [editingSection, setEditingSection] = useState<JourneyEditingSection>(coreMissingCount > 0 ? "core" : null);
   const [coreSuggestion, setCoreSuggestion] = useState<JourneyCoreSuggestion | null>(null);
   const [narrativeSuggestion, setNarrativeSuggestion] = useState("");
@@ -566,6 +593,12 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       setIsOpen(true);
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    if (journey.coverage) {
+      setIsAiAnalysisOpen(true);
+    }
+  }, [journey.coverage]);
 
   useEffect(() => {
     setCoreSuggestion(null);
@@ -620,19 +653,27 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     journeySearchText,
     limit: 4
   });
-  const relevantEpicInsights = relevantEpicOptions
-    .map((option) => summarizeReferenceContext(option))
-    .filter(Boolean)
-    .map((item) => ensurePeriod(toSentenceCase(item)));
-  const relevantEpicLabels = uniqueLabels(relevantEpicOptions.map((option) => option.label));
+    const relevantEpicInsights = relevantEpicOptions
+      .map((option) => summarizeReferenceContext(option))
+      .filter(Boolean)
+      .map((item) => ensurePeriod(toSentenceCase(item)));
+    const relevantEpicLabels = uniqueLabels(relevantEpicOptions.map((option) => option.label));
   const relevantStoryIdeaLabels = uniqueLabels(relevantStoryIdeaOptions.map((option) => option.label));
   const relevantStoryIdeaInsights = uniqueLabels(
     relevantStoryIdeaOptions
       .flatMap((option) => [option.valueIntent, option.expectedBehavior, option.description])
       .map((value) => value?.trim() ?? "")
       .filter(Boolean)
-      .map((item) => ensurePeriod(toSentenceCase(item)))
-  ).slice(0, 3);
+        .map((item) => ensurePeriod(toSentenceCase(item)))
+    ).slice(0, 3);
+    const languageAlignedEpicInsights = relevantEpicInsights.filter((item) => {
+      const detected = detectDominantLanguage(item);
+      return detected === "unknown" || detected === language;
+    });
+    const languageAlignedStoryIdeaInsights = relevantStoryIdeaInsights.filter((item) => {
+      const detected = detectDominantLanguage(item);
+      return detected === "unknown" || detected === language;
+    });
 
   function buildGoalSuggestion() {
     const normalized = normalizeGoalPhrase(journey.goal || "");
@@ -664,7 +705,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   }
 
   function buildCurrentStateSuggestion() {
-    const normalized = ensurePeriod(toSentenceCase(journey.currentState || ""));
+    const normalized = sanitizeTextForLanguage(journey.currentState, language);
     if (normalized) {
       if (language === "sv") {
         return finalizeSentence(/^(i dag|idag|nu)/i.test(normalized) ? normalized : `I dag ${lowerFirst(normalized)}`);
@@ -672,7 +713,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       return finalizeSentence(/^(today|currently|now)/i.test(normalized) ? normalized : `Today ${lowerFirst(normalized)}`);
     }
     if (!hasText(journey.primaryActor) || !hasText(journey.trigger)) return "";
-    const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
+    const inspiration = languageAlignedStoryIdeaInsights[0] ?? languageAlignedEpicInsights[0] ?? "";
     if (language === "sv") {
       return inspiration
         ? ensurePeriod(`I dag börjar ${journey.primaryActor.toLowerCase()} ofta när ${lowerFirst(journey.trigger)}, men flödet blir lätt fragmenterat. Det märks särskilt där stödet ännu inte riktigt lever upp till riktningar som ${lowerFirst(inspiration)}`)
@@ -684,7 +725,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   }
 
   function buildDesiredFutureStateSuggestion() {
-    const normalized = ensurePeriod(toSentenceCase(journey.desiredFutureState || ""));
+    const normalized = sanitizeTextForLanguage(journey.desiredFutureState, language);
     if (normalized) {
       if (language === "sv") {
         return finalizeSentence(/^(i önskat läge|i framtiden|framåt)/i.test(normalized) ? normalized : `I önskat läge ${lowerFirst(normalized)}`);
@@ -692,7 +733,7 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       return finalizeSentence(/^(in the desired state|in the future|going forward)/i.test(normalized) ? normalized : `In the desired state ${lowerFirst(normalized)}`);
     }
     if (!hasText(journey.primaryActor) || !hasText(journey.goal)) return "";
-    const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
+    const inspiration = languageAlignedStoryIdeaInsights[0] ?? languageAlignedEpicInsights[0] ?? "";
     if (language === "sv") {
       return inspiration
         ? ensurePeriod(`I önskat läge kan ${journey.primaryActor.toLowerCase()} ${lowerFirst(normalizeGoalPhrase(journey.goal))}, med tydligare status och stöd som bättre speglar riktningar som ${lowerFirst(inspiration)}`)
@@ -709,16 +750,14 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     const trigger = normalizeTriggerPhrase(journey.trigger);
     const currentState = buildCurrentStateSuggestion();
     const desiredFuture = buildDesiredFutureStateSuggestion();
-    const storySupport = relevantStoryIdeaInsights[0]
+    const storySupport = languageAlignedStoryIdeaInsights[0]
       ? language === "sv"
-        ? `Stödet bör särskilt hjälpa där ${lowerFirst(relevantStoryIdeaInsights[0])}`
-        : `The support should help especially where ${lowerFirst(relevantStoryIdeaInsights[0])}`
+        ? `Stödet bör särskilt hjälpa där ${lowerFirst(languageAlignedStoryIdeaInsights[0])}`
+        : `The support should help especially where ${lowerFirst(languageAlignedStoryIdeaInsights[0])}`
       : "";
 
     if (!goal || !trigger) {
-      return hasText(journey.narrative)
-        ? finalizeParagraph(splitSentences(journey.narrative ?? ""))
-        : "";
+      return sanitizeTextForLanguage(journey.narrative, language);
     }
 
     const rewrittenNarrative = finalizeParagraph([
@@ -745,16 +784,14 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     const goal = normalizeGoalPhrase(journey.goal);
 
     if (!goal) {
-      return hasText(journey.valueMoment)
-        ? finalizeParagraph(splitSentences(journey.valueMoment ?? ""))
-        : "";
+      return sanitizeTextForLanguage(journey.valueMoment, language);
     }
 
     return finalizeParagraph([
       language === "sv"
         ? `Det tydligaste värdet uppstår när ${actor.toLowerCase()} inte längre behöver hålla ihop arbetet manuellt utan kan ${lowerFirst(goal)} direkt i stödet`
         : `The clearest value appears when ${actor.toLowerCase()} no longer needs to hold the work together manually and can ${lowerFirst(goal)} directly in the support`,
-      hasText(journey.valueMoment) ? journey.valueMoment ?? "" : ""
+      sanitizeTextForLanguage(journey.valueMoment, language)
     ]);
   }
 
@@ -776,6 +813,10 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
 
     const polishedExistingSignals =
       (journey.successSignals ?? [])
+        .filter((item) => {
+          const detected = detectDominantLanguage(item);
+          return detected === "unknown" || detected === language;
+        })
         .map((item) => stripTrailingPeriod(normalizeWhitespace(item)))
         .filter(Boolean)
         .map((item) => item.charAt(0).toLowerCase() + item.slice(1)) ?? [];
@@ -1018,6 +1059,21 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
                 "Den här journeyn har grunderna på plats. Lägg bara till mer detalj om det förtydligar caset eller förbättrar analysen."
               )}
         </div>
+        {journey.coverage ? (
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium">{t(language, "Coverage analysis updated", "Täckningsanalysen är uppdaterad")}</p>
+              <CoverageBadge status={journey.coverage.status} />
+            </div>
+            <p className="mt-2 leading-6">
+              {t(
+                language,
+                "Open AI analysis and backlog links below to review likely Epic links, Story Idea links, and suggested gaps.",
+                "Öppna AI-analys och backlog-kopplingar nedan för att granska troliga Epic-kopplingar, Story Idea-kopplingar och föreslagna luckor."
+              )}
+            </p>
+          </div>
+        ) : null}
         <div className="mt-6 space-y-4">
           <InlineSectionCard
             actionLabel={t(language, "Edit core", "Redigera kärnan")}
@@ -1299,15 +1355,19 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
           </div>
         </div>
         {hasAiAnalysis ? (
-          <details className="mt-6 rounded-[24px] border border-border/70 bg-muted/10">
+          <details
+            className="mt-6 rounded-[24px] border border-border/70 bg-muted/10"
+            onToggle={(event) => setIsAiAnalysisOpen((event.currentTarget as HTMLDetailsElement).open)}
+            open={isAiAnalysisOpen}
+          >
             <summary className="cursor-pointer list-none px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-base font-semibold text-foreground">{t(language, "AI analysis and backlog links", "AI-analys och backlog-kopplingar")}</p>
                   <p className="text-sm text-muted-foreground">{t(language, "Open only when you want to see likely links, gaps, or let AI fill empty analysis fields.", "Öppna bara när du vill se sannolika kopplingar, luckor eller låta AI fylla tomma analysfält.")}</p>
                 </div>
-                <span className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {journey.coverage ? t(language, "Analysed", "Analyserad") : t(language, "Secondary", "Sekundärt")}
+                <span className={`rounded-full border px-3 py-1 text-xs font-medium ${journey.coverage ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-border/70 bg-background text-muted-foreground"}`}>
+                  {journey.coverage ? t(language, "Coverage ready", "Täckning klar") : t(language, "Secondary", "Sekundärt")}
                 </span>
               </div>
             </summary>
