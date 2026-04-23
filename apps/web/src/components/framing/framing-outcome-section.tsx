@@ -1937,7 +1937,7 @@ export async function DeferredOutcomeTollgateSection(props: {
               className="rounded-2xl border border-border/70 bg-background px-4 py-4 shadow-sm"
               key={`${action.decisionKind}:${action.roleType}:${action.organizationSide}`}
             >
-              <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto] lg:items-start">
+              <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-foreground">{action.label}</p>
@@ -1973,16 +1973,6 @@ export async function DeferredOutcomeTollgateSection(props: {
                     <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">{translate(language, "Pending approval", "Väntar på godkännande")}</p>
                   )}
                 </div>
-
-                <span
-                  className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${
-                    completedRecord
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : "border-amber-200 bg-amber-50 text-amber-800"
-                  }`}
-                >
-                  {completedRecord ? translate(language, "Approved", "Godkänd") : translate(language, "Pending", "Väntar")}
-                </span>
               </div>
 
               {!completedRecord && !props.isArchived ? (

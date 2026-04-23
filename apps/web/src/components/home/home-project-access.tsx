@@ -86,11 +86,6 @@ function ProjectToneCard(props: {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-base font-semibold text-foreground">{props.title}</p>
-            {props.active ? (
-              <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800">
-                {props.copy.currentProjectPill}
-              </span>
-            ) : null}
           </div>
           <p className="text-sm leading-6 text-muted-foreground">
             {props.active ? props.copy.activeProjectCardDescription : props.copy.inactiveProjectCardDescription}

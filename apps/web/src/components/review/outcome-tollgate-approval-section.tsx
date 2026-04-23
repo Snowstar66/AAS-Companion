@@ -335,7 +335,7 @@ export async function OutcomeTollgateApprovalSection(props: {
               className="rounded-2xl border border-border/70 bg-background px-4 py-4 shadow-sm"
               key={`${action.decisionKind}:${action.roleType}:${action.organizationSide}`}
             >
-              <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_auto] lg:items-start">
+              <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-start">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-foreground">{action.label}</p>
@@ -375,16 +375,6 @@ export async function OutcomeTollgateApprovalSection(props: {
                     </p>
                   )}
                 </div>
-
-                <span
-                  className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${
-                    completedRecord
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                      : "border-amber-200 bg-amber-50 text-amber-800"
-                  }`}
-                >
-                  {completedRecord ? (language === "sv" ? "Godkand" : "Approved") : (language === "sv" ? "Vantar" : "Pending")}
-                </span>
               </div>
 
               {!completedRecord && !props.isArchived ? (
