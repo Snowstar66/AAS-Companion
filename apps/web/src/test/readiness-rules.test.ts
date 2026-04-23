@@ -153,17 +153,26 @@ describe("M1 readiness rules", () => {
   it("formats execution contract markdown from typed contract data", () => {
     const markdown = executionContractToMarkdown({
       outcome_id: "outcome-1",
+      outcome_title: "Outcome title",
+      outcome_statement: "Outcome statement",
       epic_id: "epic-1",
+      epic_title: "Epic title",
       story_id: "story-1",
       story_key: "M1-STORY-008",
+      story_title: "Story title",
+      value_intent: "Value intent",
+      expected_behavior: "Expected behavior",
       ai_level: "level_2",
+      ai_usage_scope: ["Drafting"],
+      framing_version: 12,
       acceptance_criteria: ["Preview shows required fields"],
       test_definition: "Run smoke coverage",
       definition_of_done: ["Preview can be copied"]
     });
 
-    expect(markdown).toContain("# Execution Contract");
+    expect(markdown).toContain("# Build Start Package");
     expect(markdown).toContain("Story Key: M1-STORY-008");
+    expect(markdown).toContain("Outcome Title: Outcome title");
     expect(markdown).toContain("## Test Definition");
   });
 

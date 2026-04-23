@@ -1027,10 +1027,18 @@ export async function previewExecutionContractService(input: {
 
     const contract = executionContractSchema.parse({
       outcome_id: snapshot.story.outcomeId,
+      outcome_title: snapshot.story.outcome.title,
+      outcome_statement: snapshot.story.outcome.outcomeStatement ?? null,
       epic_id: snapshot.story.epicId,
+      epic_title: snapshot.story.epic.title,
       story_id: snapshot.story.id,
       story_key: snapshot.story.key,
+      story_title: snapshot.story.title,
+      value_intent: snapshot.story.valueIntent,
+      expected_behavior: snapshot.story.expectedBehavior ?? null,
       ai_level: snapshot.story.aiAccelerationLevel,
+      ai_usage_scope: snapshot.story.aiUsageScope,
+      framing_version: snapshot.story.outcome.framingVersion ?? null,
       acceptance_criteria: snapshot.story.acceptanceCriteria,
       test_definition: snapshot.story.testDefinition,
       definition_of_done: snapshot.story.definitionOfDone

@@ -33,6 +33,18 @@ export function ExecutionContractPreview({ contract, markdown }: ExecutionContra
 
   return (
     <div className="space-y-6">
+      <Card className="border-sky-200 bg-sky-50/60 shadow-sm">
+        <CardHeader>
+          <CardTitle>Thin execution package</CardTitle>
+          <CardDescription>
+            This package inherits from the governed Framing handoff and carries the minimum build-start contract for the next AI tool stack.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm leading-6 text-sky-950">
+          Use the governed Framing export when the next tool needs full context, scope, constraints, journeys, or richer handoff guidance.
+        </CardContent>
+      </Card>
+
       <div className="flex flex-col gap-3 sm:flex-row">
         <Button className="gap-2" onClick={() => handleCopy(json, "json")} type="button">
           {copied === "json" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -66,7 +78,7 @@ export function ExecutionContractPreview({ contract, markdown }: ExecutionContra
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>JSON preview</CardTitle>
-            <CardDescription>Machine-usable build package generated from persisted Story data.</CardDescription>
+            <CardDescription>Machine-usable build-start package with traceability back to Framing.</CardDescription>
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto rounded-2xl border border-border/70 bg-slate-950 p-4 text-sm text-slate-100">
@@ -78,7 +90,7 @@ export function ExecutionContractPreview({ contract, markdown }: ExecutionContra
         <Card className="border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>Markdown preview</CardTitle>
-            <CardDescription>Human-readable build package for review or copy/paste into tooling.</CardDescription>
+            <CardDescription>Human-readable build-start package for review or copy/paste into the next AI tool stack.</CardDescription>
           </CardHeader>
           <CardContent>
             <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border border-border/70 bg-muted/20 p-4 text-sm text-foreground">

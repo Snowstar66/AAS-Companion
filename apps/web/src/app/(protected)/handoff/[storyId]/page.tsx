@@ -75,11 +75,11 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(57,86,122,0.16),_transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <FileJson2 className="h-3.5 w-3.5 text-primary" />
-            Build package preview
+            Build start package
           </div>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">{storyResult.data.story.key}</h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-            Governed build package preview built from the persisted Story, Outcome, and Epic records.
+            This package inherits from the governed Framing handoff and carries the minimum build-start contract for the next AI tool stack.
           </p>
           {storyResult.data.story.originType === "imported" ? (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -94,6 +94,54 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
             </div>
           ) : null}
         </div>
+
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader>
+            <CardTitle>Inherited from Framing</CardTitle>
+            <CardDescription>This build-start package remains traceable back to the governed Framing source of truth.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Outcome</p>
+              <p className="mt-2 font-medium text-foreground">{storyResult.data.story.outcome.title}</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {storyResult.data.story.outcome.outcomeStatement ?? "Outcome statement is not captured yet."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Epic</p>
+              <p className="mt-2 font-medium text-foreground">{storyResult.data.story.epic.title}</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {storyResult.data.story.epic.purpose ?? "Epic purpose is not captured yet."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Story</p>
+              <p className="mt-2 font-medium text-foreground">{storyResult.data.story.title}</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {storyResult.data.story.expectedBehavior ?? "Expected behavior is not captured yet."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Framing version</p>
+              <p className="mt-2 text-base font-semibold text-foreground">
+                {storyResult.data.story.outcome.framingVersion ?? "Not captured"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI level</p>
+              <p className="mt-2 text-base font-semibold text-foreground">{storyResult.data.story.aiAccelerationLevel}</p>
+            </div>
+            <div className="rounded-2xl border border-border/70 bg-background p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">AI usage scope</p>
+              <p className="mt-2 text-sm leading-6 text-foreground">
+                {storyResult.data.story.aiUsageScope.length > 0
+                  ? storyResult.data.story.aiUsageScope.join(", ")
+                  : "Not captured"}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {!previewResult.ok ? (
           <Card className="border-border/70 shadow-sm">
@@ -143,8 +191,8 @@ export default async function HandoffPage({ params, searchParams }: HandoffPageP
                   </p>
                   <p className="mt-2 leading-6 text-muted-foreground">
                     {storyResult.data.story.status === "in_progress"
-                      ? "This Delivery Story has already moved into build. Reuse the package whenever the delivery team needs it again."
-                      : "The package below is ready. Export it, then record build start so the Story moves from planning into active implementation."}
+                      ? "This Delivery Story has already moved into build. Reuse the start package whenever the delivery team or next AI tool stack needs it again."
+                      : "The build-start package below is ready. Export it, then record build start so the Story moves from planning into active implementation."}
                   </p>
                 </div>
                 {storyResult.data.story.status === "in_progress" ? (

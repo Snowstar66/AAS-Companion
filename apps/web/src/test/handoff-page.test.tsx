@@ -29,8 +29,9 @@ vi.mock("@aas-companion/api", async () => {
           title: "Scoped native Story",
           storyType: "outcome_delivery",
           valueIntent: "Keep Story work inside the active Framing branch.",
+          expectedBehavior: "The build start package keeps traceability back to the framing branch.",
           acceptanceCriteria: ["The package is visible"],
-          aiUsageScope: [],
+          aiUsageScope: ["Drafting", "Code generation"],
           aiAccelerationLevel: "level_2",
           testDefinition: "Smoke plus regression plan",
           definitionOfDone: ["Reviewed by delivery"],
@@ -50,6 +51,8 @@ vi.mock("@aas-companion/api", async () => {
             id: "outcome-native-1",
             key: "OUT-010",
             title: "Scoped native Framing",
+            outcomeStatement: "Keep branch intent and implementation traceability aligned.",
+            framingVersion: 52,
             lifecycleState: "active"
           },
           epic: {
@@ -69,15 +72,23 @@ vi.mock("@aas-companion/api", async () => {
       data: {
         contract: {
           outcome_id: "outcome-native-1",
+          outcome_title: "Scoped native Framing",
+          outcome_statement: "Keep branch intent and implementation traceability aligned.",
           epic_id: "epic-native-1",
+          epic_title: "Scoped native Epic",
           story_id: "story-native-1",
           story_key: "STR-010",
+          story_title: "Scoped native Story",
+          value_intent: "Keep Story work inside the active Framing branch.",
+          expected_behavior: "The build start package keeps traceability back to the framing branch.",
           ai_level: "level_2",
+          ai_usage_scope: ["Drafting", "Code generation"],
+          framing_version: 52,
           acceptance_criteria: ["The package is visible"],
           test_definition: "Smoke plus regression plan",
           definition_of_done: ["Reviewed by delivery"]
         },
-        markdown: "# Execution Contract"
+        markdown: "# Build Start Package"
       }
     }))
   };
@@ -92,6 +103,7 @@ describe("Handoff page", () => {
     render(await HandoffPage({ params: Promise.resolve({ storyId: "story-native-1" }) }));
 
     expect(screen.getByText("Start build")).toBeDefined();
+    expect(screen.getByText("Inherited from Framing")).toBeDefined();
     expect(screen.getByRole("button", { name: "Mark build started" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Download JSON" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Download Markdown" })).toBeDefined();
