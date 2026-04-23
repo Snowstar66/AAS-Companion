@@ -5,7 +5,7 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
 import { JourneyStepEditor } from "@/components/framing/journey-step-editor";
-import { hasMeaningfulListChange, hasMeaningfulTextChange } from "@/lib/ai/meaningful-change";
+import { hasMeaningfulListChange, hasMeaningfulTextChange, normalizeComparableText } from "@/lib/ai/meaningful-change";
 import type { Journey } from "@/lib/framing/journeyContextTypes";
 import type { JourneyReferenceOption, JourneyValidation } from "@/lib/framing/journey-context-ui";
 
@@ -98,6 +98,47 @@ function lowerFirst(value: string) {
 
 function stripTrailingPeriod(value: string) {
   return value.trim().replace(/[.!?]+$/g, "");
+}
+
+function normalizeWhitespace(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function splitSentences(value: string) {
+  return value
+    .replace(/\r\n/g, "\n")
+    .split(/(?<=[.!?])\s+/)
+    .map((item) => normalizeWhitespace(item))
+    .filter(Boolean);
+}
+
+function dedupeSentences(values: string[]) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    const key = normalizeComparableText(value);
+    if (!key || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(value);
+  }
+
+  return result;
+}
+
+function finalizeSentence(value: string) {
+  return ensurePeriod(toSentenceCase(normalizeWhitespace(value)));
+}
+
+function finalizeParagraph(values: string[]) {
+  return dedupeSentences(
+    values
+      .map((value) => finalizeSentence(value))
+      .filter(Boolean)
+  ).join(" ");
 }
 
 function hasText(value: string | null | undefined) {
@@ -626,9 +667,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     const normalized = ensurePeriod(toSentenceCase(journey.currentState || ""));
     if (normalized) {
       if (language === "sv") {
-        return /^(i dag|idag|nu)/i.test(normalized) ? normalized : `I dag ${lowerFirst(normalized)}`;
+        return finalizeSentence(/^(i dag|idag|nu)/i.test(normalized) ? normalized : `I dag ${lowerFirst(normalized)}`);
       }
-      return /^(today|currently|now)/i.test(normalized) ? normalized : `Today ${lowerFirst(normalized)}`;
+      return finalizeSentence(/^(today|currently|now)/i.test(normalized) ? normalized : `Today ${lowerFirst(normalized)}`);
     }
     if (!hasText(journey.primaryActor) || !hasText(journey.trigger)) return "";
     const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
@@ -646,9 +687,9 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
     const normalized = ensurePeriod(toSentenceCase(journey.desiredFutureState || ""));
     if (normalized) {
       if (language === "sv") {
-        return /^(i önskat läge|i framtiden|framåt)/i.test(normalized) ? normalized : `I önskat läge ${lowerFirst(normalized)}`;
+        return finalizeSentence(/^(i önskat läge|i framtiden|framåt)/i.test(normalized) ? normalized : `I önskat läge ${lowerFirst(normalized)}`);
       }
-      return /^(in the desired state|in the future|going forward)/i.test(normalized) ? normalized : `In the desired state ${lowerFirst(normalized)}`;
+      return finalizeSentence(/^(in the desired state|in the future|going forward)/i.test(normalized) ? normalized : `In the desired state ${lowerFirst(normalized)}`);
     }
     if (!hasText(journey.primaryActor) || !hasText(journey.goal)) return "";
     const inspiration = relevantStoryIdeaInsights[0] ?? relevantEpicInsights[0] ?? "";
@@ -663,10 +704,6 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
   }
 
   function buildNarrativeSuggestion() {
-    if (hasText(journey.narrative)) {
-      return ensurePeriod(journey.narrative ?? "");
-    }
-
     const actor = journey.primaryActor.trim() || t(language, "The user", "Användaren");
     const goal = normalizeGoalPhrase(journey.goal);
     const trigger = normalizeTriggerPhrase(journey.trigger);
@@ -679,48 +716,49 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       : "";
 
     if (!goal || !trigger) {
-      return "";
+      return hasText(journey.narrative)
+        ? finalizeParagraph(splitSentences(journey.narrative ?? ""))
+        : "";
     }
 
-    return [
+    const rewrittenNarrative = finalizeParagraph([
       language === "sv"
-        ? `${actor} arbetar i ett flöde där behovet uppstår när ${lowerFirst(trigger)}.`
-        : `${actor} works in a flow where the need arises when ${lowerFirst(trigger)}.`,
+        ? `${actor} arbetar i ett flöde där behovet uppstår när ${lowerFirst(trigger)}`
+        : `${actor} works in a flow where the need arises when ${lowerFirst(trigger)}`,
       currentState,
       language === "sv"
-        ? `${actor} ska kunna ${lowerFirst(goal)} med tydligare stöd i det framtida flödet.`
-        : `${actor} should be able to ${lowerFirst(goal)} with clearer support in the future flow.`,
+        ? `Målet är att ${actor.toLowerCase()} ska kunna ${lowerFirst(goal)} med tydligare stöd i flödet`
+        : `The goal is that ${actor.toLowerCase()} can ${lowerFirst(goal)} with clearer support in the flow`,
       desiredFuture,
       storySupport
-    ]
-      .filter(Boolean)
-      .join(" ");
+    ]);
+
+    if (!hasText(journey.narrative)) {
+      return rewrittenNarrative;
+    }
+
+    return rewrittenNarrative;
   }
 
   function buildValueMomentSuggestion() {
-    if (hasText(journey.valueMoment)) {
-      return ensurePeriod(journey.valueMoment ?? "");
-    }
-
     const actor = journey.primaryActor.trim() || t(language, "the user", "användaren");
     const goal = normalizeGoalPhrase(journey.goal);
 
     if (!goal) {
-      return "";
+      return hasText(journey.valueMoment)
+        ? finalizeParagraph(splitSentences(journey.valueMoment ?? ""))
+        : "";
     }
 
-    return ensurePeriod(
+    return finalizeParagraph([
       language === "sv"
-        ? `Det avgörande värdeögonblicket är när ${actor.toLowerCase()} inte längre behöver hålla ihop arbetet manuellt, utan kan ${lowerFirst(goal)} direkt med stöd av systemet`
-        : `The decisive value moment is when ${actor.toLowerCase()} no longer needs to hold the work together manually, but can ${lowerFirst(goal)} directly with support from the system`
-    );
+        ? `Det tydligaste värdet uppstår när ${actor.toLowerCase()} inte längre behöver hålla ihop arbetet manuellt utan kan ${lowerFirst(goal)} direkt i stödet`
+        : `The clearest value appears when ${actor.toLowerCase()} no longer needs to hold the work together manually and can ${lowerFirst(goal)} directly in the support`,
+      hasText(journey.valueMoment) ? journey.valueMoment ?? "" : ""
+    ]);
   }
 
   function buildSuccessSignalsSuggestion() {
-    if ((journey.successSignals?.length ?? 0) > 0) {
-      return journey.successSignals ?? [];
-    }
-
     const actor = journey.primaryActor.trim() || t(language, "the user", "användaren");
     const baseSignals = [
       t(language, "understood what needs to be done without losing the overview", "förstått vad som behöver göras utan att tappa överblicken"),
@@ -736,7 +774,13 @@ export function JourneyCard({ journey, validation, availableEpics, availableStor
       );
     }
 
-    return uniqueLabels(baseSignals.map((item) => item.trim())).slice(0, 4);
+    const polishedExistingSignals =
+      (journey.successSignals ?? [])
+        .map((item) => stripTrailingPeriod(normalizeWhitespace(item)))
+        .filter(Boolean)
+        .map((item) => item.charAt(0).toLowerCase() + item.slice(1)) ?? [];
+
+    return uniqueLabels([...baseSignals, ...polishedExistingSignals].map((item) => item.trim())).slice(0, 4);
   }
 
   function buildMissingStoryIdeaSuggestions() {
