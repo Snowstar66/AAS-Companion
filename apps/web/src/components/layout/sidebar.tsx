@@ -190,12 +190,14 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
               </button>
             </div>
             <button
-              className="inline-flex items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-medium text-slate-300 transition hover:bg-white/8 hover:text-white"
+              className="inline-flex min-h-10 max-w-[132px] items-center justify-center gap-2 rounded-xl px-3 py-2 text-center text-xs font-medium leading-4 text-slate-300 transition hover:bg-white/8 hover:text-white"
               onClick={() => setGuidanceVisible((current) => !current)}
               type="button"
             >
-              {guidanceVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              {guidanceVisible ? content.hideGuidance : content.showGuidance}
+              {guidanceVisible ? <EyeOff className="h-3.5 w-3.5 shrink-0" /> : <Eye className="h-3.5 w-3.5 shrink-0" />}
+              <span className="whitespace-normal break-words">
+                {guidanceVisible ? content.hideGuidance : content.showGuidance}
+              </span>
             </button>
           </div>
         </div>
