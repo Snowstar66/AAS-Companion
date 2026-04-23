@@ -222,6 +222,7 @@ export function OutcomeAiValidatedTextarea({
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-foreground">{label}</label>
+      {guidance}
       <textarea
         className={`${minHeightClassName} w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30`}
         disabled={disabled}
@@ -238,7 +239,6 @@ export function OutcomeAiValidatedTextarea({
           </Button>
         </div>
       ) : null}
-      {guidance}
       <OutcomeFieldAiFeedback error={error} feedback={feedbackForDisplay} field={field} />
       {noMeaningfulSuggestion ? (
         <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">

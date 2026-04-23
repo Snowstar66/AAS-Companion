@@ -75,5 +75,12 @@ export function ContextHelp({ pattern, className, summaryLabel = "Open help", de
 }
 
 export function InlineFieldGuidance({ guidance }: { guidance: string }) {
-  return <p className="framing-inline-guidance text-sm leading-6 text-muted-foreground">{guidance}</p>;
+  return (
+    <div className="framing-inline-guidance rounded-2xl border border-sky-200/80 bg-sky-50/70 px-4 py-3 text-sm leading-6 text-sky-950">
+      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-900/70">
+        <LocalizedText en="Keep in mind" sv="Kom ihåg" />
+      </span>
+      <p className="mt-1">{guidance}</p>
+    </div>
+  );
 }

@@ -907,19 +907,20 @@ export function FramingOutcomeSection({
                     </label>
                     <LiveDeliveryTypeHelpCard />
                   </div>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    <DeliveryTypeHelperText />
+                  </p>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type", language)} />
                   <DeliveryTypeSelect
                     defaultValue={outcome.deliveryType ?? ""}
                     disabled={isArchived}
                     id="outcome-delivery-type"
                     name="deliveryType"
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeHelperText />
-                  </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.delivery_type", language)} />
                 </div>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Tidsram" : "Timeframe"}</span>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe", language)} />
                   <input
                     className="h-11 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.timeframe ?? ""}
@@ -927,10 +928,10 @@ export function FramingOutcomeSection({
                     name="timeframe"
                     type="text"
                   />
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.timeframe", language)} />
                 </label>
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Värdeägare" : "Value owner"}</span>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner", language)} />
                   <Suspense
                     fallback={
                       <ValueOwnerFieldFallback
@@ -949,20 +950,19 @@ export function FramingOutcomeSection({
                       organizationId={outcome.organizationId}
                     />
                   </Suspense>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner", language)} />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Problemformulering" : "Problem statement"}</span>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    <DeliveryTypeGuidanceText slot="problemDescription" />
+                  </p>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.problem", language)} />
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.problemStatement ?? ""}
                     disabled={isArchived}
                     name="problemStatement"
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="problemDescription" />
-                  </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.problem", language)} />
                 </label>
                 <div className="xl:col-span-2">
                   <OutcomeAiValidatedTextarea
@@ -1127,16 +1127,16 @@ export function FramingOutcomeSection({
                 />
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Baselinekälla" : "Baseline source"}</span>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    <DeliveryTypeGuidanceText slot="baselineSourceDescription" />
+                  </p>
+                  <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source", language)} />
                   <textarea
                     className="min-h-28 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={outcome.baselineSource ?? ""}
                     disabled={isArchived}
                     name="baselineSource"
                   />
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    <DeliveryTypeGuidanceText slot="baselineSourceDescription" />
-                  </p>
-                  <InlineFieldGuidance guidance={getInlineGuidance("framing.baseline_source", language)} />
                 </label>
               </CardContent>
             </Card>
