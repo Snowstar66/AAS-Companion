@@ -135,7 +135,31 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
     }
 
     const allItems = result.data.map((candidate) => parseReviewCandidate(candidate));
-    const items = allItems.filter((candidate) => candidate.reviewStatus !== "promoted" && candidate.reviewStatus !== "rejected");
+    const items: typeof allItems = [];
+    const summary = {
+      total: allItems.length,
+      pending: 0,
+      followUpNeeded: 0,
+      rejected: 0,
+      promoted: 0
+    };
+
+    for (const item of allItems) {
+      if (item.reviewStatus === "pending") {
+        summary.pending += 1;
+      } else if (item.reviewStatus === "follow_up_needed") {
+        summary.followUpNeeded += 1;
+      } else if (item.reviewStatus === "rejected") {
+        summary.rejected += 1;
+      } else if (item.reviewStatus === "promoted") {
+        summary.promoted += 1;
+      }
+
+      if (item.reviewStatus !== "promoted" && item.reviewStatus !== "rejected") {
+        items.push(item);
+      }
+    }
+
     const selectedCandidate =
       selectedCandidateResult && selectedCandidateResult.ok && selectedCandidateResult.data
         ? parseReviewCandidate(selectedCandidateResult.data)
@@ -162,11 +186,11 @@ export async function loadArtifactReviewQueue(selectedCandidateId?: string) {
           }))
         : [],
       summary: {
-        total: allItems.length,
-        pending: allItems.filter((item) => item.reviewStatus === "pending").length,
-        followUpNeeded: allItems.filter((item) => item.reviewStatus === "follow_up_needed").length,
-        rejected: allItems.filter((item) => item.reviewStatus === "rejected").length,
-        promoted: allItems.filter((item) => item.reviewStatus === "promoted").length
+        total: summary.total,
+        pending: summary.pending,
+        followUpNeeded: summary.followUpNeeded,
+        rejected: summary.rejected,
+        promoted: summary.promoted
       },
       message:
         items.length > 0

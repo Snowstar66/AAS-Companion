@@ -1,10 +1,11 @@
 import {
   appendActivityEvent,
   getDirectionSeedById,
+  getDirectionSeedBySourceStoryId,
   listPartyRoleEntries,
   listOrganizationUsers,
-  listDirectionSeeds,
   listStoriesByDirectionSeedId,
+  getOutcomeTollgateReviewSnapshot,
   getOutcomeWorkspaceSnapshot,
   reviewOutcomeFramingWithAi,
   getStoryWorkspaceSnapshot,
@@ -281,7 +282,7 @@ export async function getOrganizationValueOwnersService(organizationId: string) 
 
 export async function getOutcomeTollgateReviewService(organizationId: string, outcomeId: string) {
   return withDevTiming("api.getOutcomeTollgateReviewService", async () => {
-    const snapshot = await getOutcomeWorkspaceSnapshot(organizationId, outcomeId);
+    const snapshot = await getOutcomeTollgateReviewSnapshot(organizationId, outcomeId);
 
     if (!snapshot) {
       return failure({
@@ -296,7 +297,7 @@ export async function getOutcomeTollgateReviewService(organizationId: string, ou
         ...snapshot.outcome,
         aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
         aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
-        epicCount: snapshot.outcome.epics.length
+        epicCount: snapshot.outcome.epicCount
       }).reasons.map((reason) => reason.message);
 
     const tollgateReview = await getTollgateReviewWorkspaceService({
@@ -797,9 +798,7 @@ export async function getStoryWorkspaceService(organizationId: string, storyId: 
 
       const relatedSeed = snapshot.story.sourceDirectionSeedId
         ? linkedSeed
-        : (await listDirectionSeeds(organizationId, { includeArchived: true })).find(
-            (seed) => seed.sourceStoryId === snapshot.story.id
-          ) ?? null;
+        : await getDirectionSeedBySourceStoryId(organizationId, snapshot.story.id);
 
       derivedDeliveryStories = relatedSeed
         ? await listStoriesByDirectionSeedId(organizationId, relatedSeed.id)

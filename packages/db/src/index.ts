@@ -68,6 +68,7 @@ export {
   createOutcome,
   getPreferredFramingOutcomeId,
   getOutcomeById,
+  getOutcomeTollgateReviewSnapshot,
   getOutcomeWorkspaceSnapshot,
   listOutcomeReferences,
   listOutcomeCockpitEntries,
@@ -85,6 +86,7 @@ export {
 export {
   createDirectionSeed,
   getDirectionSeedById,
+  getDirectionSeedBySourceStoryId,
   listDirectionSeeds,
   updateDirectionSeed
 } from "./repositories/direction-seed-repository";

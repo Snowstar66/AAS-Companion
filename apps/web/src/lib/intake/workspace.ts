@@ -179,11 +179,12 @@ export async function loadArtifactIntakeWorkspace(
           activeImportWorkCount: unresolvedUnmappedCount + unresolvedCarryForwardCount
         };
       });
+      const fileNameById = new Map(files.map((file) => [file.id, file.fileName]));
       const candidates = (artifactSession.candidates ?? []).map((candidate) => ({
         ...candidate,
         source: {
           fileId: candidate.fileId,
-          fileName: files.find((file) => file.id === candidate.fileId)?.fileName ?? candidate.sourceSectionTitle,
+          fileName: fileNameById.get(candidate.fileId) ?? candidate.sourceSectionTitle,
           sectionId: candidate.sourceSectionId,
           sectionTitle: candidate.sourceSectionTitle,
           sectionMarker: candidate.sourceSectionMarker,
@@ -208,22 +209,44 @@ export async function loadArtifactIntakeWorkspace(
               issueDispositions: {},
               reviewStatus: "pending" as const
             }));
-      const rejectedCandidates = candidates.filter((candidate) => candidate.reviewStatus === "rejected");
-      const promotedCandidates = candidates.filter((candidate) => candidate.reviewStatus === "promoted");
+      const candidateCountsByFileId = new Map<string, number>();
+      const activeCandidateCountsByFileId = new Map<string, number>();
+      const clearedCandidateCountsByFileId = new Map<string, number>();
+      let rejectedCandidateCount = 0;
+      let promotedCandidateCount = 0;
+
+      for (const candidate of candidates) {
+        candidateCountsByFileId.set(candidate.fileId, (candidateCountsByFileId.get(candidate.fileId) ?? 0) + 1);
+
+        if (isActiveImportCandidate(candidate)) {
+          activeCandidateCountsByFileId.set(candidate.fileId, (activeCandidateCountsByFileId.get(candidate.fileId) ?? 0) + 1);
+          continue;
+        }
+
+        if (candidate.reviewStatus === "rejected") {
+          rejectedCandidateCount += 1;
+          clearedCandidateCountsByFileId.set(candidate.fileId, (clearedCandidateCountsByFileId.get(candidate.fileId) ?? 0) + 1);
+          continue;
+        }
+
+        if (candidate.reviewStatus === "promoted") {
+          promotedCandidateCount += 1;
+          clearedCandidateCountsByFileId.set(candidate.fileId, (clearedCandidateCountsByFileId.get(candidate.fileId) ?? 0) + 1);
+        }
+      }
+
       const filesWithActiveWork = files.map((file) => {
-        const fileCandidates = candidates.filter((candidate) => candidate.fileId === file.id);
-        const activeFileCandidates = activeCandidates.filter((candidate) => candidate.fileId === file.id);
-        const clearedFileCandidates = fileCandidates.filter(
-          (candidate) => candidate.reviewStatus === "rejected" || candidate.reviewStatus === "promoted"
-        );
+        const fileCandidateCount = candidateCountsByFileId.get(file.id) ?? 0;
+        const activeFileCandidateCount = activeCandidateCountsByFileId.get(file.id) ?? 0;
+        const clearedFileCandidateCount = clearedCandidateCountsByFileId.get(file.id) ?? 0;
         const allPersistedFileCandidatesCleared =
-          fileCandidates.length > 0 && clearedFileCandidates.length === fileCandidates.length;
+          fileCandidateCount > 0 && clearedFileCandidateCount === fileCandidateCount;
 
         return {
           ...file,
           activeImportWorkCount: allPersistedFileCandidatesCleared
             ? 0
-            : file.activeImportWorkCount + activeFileCandidates.length
+            : file.activeImportWorkCount + activeFileCandidateCount
         };
       });
       const activeImportWorkCount = filesWithActiveWork.reduce((count, file) => count + file.activeImportWorkCount, 0);
@@ -243,9 +266,9 @@ export async function loadArtifactIntakeWorkspace(
         pendingReviewCount: activeCandidates.filter((candidate) =>
           candidate.reviewStatus === "pending" || candidate.reviewStatus === "follow_up_needed"
         ).length,
-        rejectedCandidateCount: rejectedCandidates.length,
-        promotedCandidateCount: promotedCandidates.length,
-        clearedCandidateCount: rejectedCandidates.length + promotedCandidates.length,
+        rejectedCandidateCount,
+        promotedCandidateCount,
+        clearedCandidateCount: rejectedCandidateCount + promotedCandidateCount,
         activeImportWorkCount,
         unmappedSectionCount: mappedArtifacts?.unmappedSections.length ?? 0
       };

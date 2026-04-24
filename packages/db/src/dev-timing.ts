@@ -1,4 +1,4 @@
-const DEV_TIMING_ENABLED = process.env.NODE_ENV !== "production";
+const DEV_TIMING_ENABLED = process.env.AAS_PERF_LOGS === "1" || process.env.NODE_ENV !== "production";
 
 export function logDevTiming(label: string, startedAt: number, details?: string) {
   if (!DEV_TIMING_ENABLED) {

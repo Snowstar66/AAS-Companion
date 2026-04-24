@@ -36,6 +36,18 @@ export async function getDirectionSeedById(organizationId: string, id: string) {
   });
 }
 
+export async function getDirectionSeedBySourceStoryId(organizationId: string, sourceStoryId: string) {
+  return prisma.directionSeed.findFirst({
+    where: {
+      organizationId,
+      sourceStoryId
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+}
+
 export async function createDirectionSeed(input: unknown, db: Prisma.TransactionClient | typeof prisma = prisma) {
   const parsed = directionSeedCreateInputSchema.parse(input);
   const provenance = resolveGovernedObjectProvenance(parsed);

@@ -431,6 +431,91 @@ export async function getOutcomeById(organizationId: string, id: string) {
   });
 }
 
+export async function getOutcomeTollgateReviewSnapshot(organizationId: string, id: string) {
+  return withDevTiming("db.getOutcomeTollgateReviewSnapshot", async () => {
+    const [outcome, tollgate] = await Promise.all([
+      prisma.outcome.findFirst({
+        where: {
+          organizationId,
+          id
+        },
+        select: {
+          id: true,
+          title: true,
+          framingVersion: true,
+          outcomeStatement: true,
+          baselineDefinition: true,
+          valueOwnerId: true,
+          riskProfile: true,
+          aiAccelerationLevel: true,
+          status: true,
+          lifecycleState: true,
+          aiUsageRole: true,
+          aiExecutionPattern: true,
+          aiUsageIntent: true,
+          businessImpactLevel: true,
+          businessImpactRationale: true,
+          dataSensitivityLevel: true,
+          dataSensitivityRationale: true,
+          blastRadiusLevel: true,
+          blastRadiusRationale: true,
+          decisionImpactLevel: true,
+          decisionImpactRationale: true,
+          aiLevelJustification: true,
+          riskAcceptedAt: true,
+          riskAcceptedByValueOwnerId: true,
+          epics: {
+            select: {
+              lifecycleState: true
+            }
+          }
+        }
+      }),
+      prisma.tollgate.findFirst({
+        where: {
+          organizationId,
+          entityType: "outcome",
+          entityId: id,
+          tollgateType: "tg1_baseline"
+        },
+        select: {
+          id: true,
+          organizationId: true,
+          entityType: true,
+          entityId: true,
+          tollgateType: true,
+          status: true,
+          blockers: true,
+          approverRoles: true,
+          submissionVersion: true,
+          approvedVersion: true,
+          approvalSnapshot: true,
+          decidedBy: true,
+          decidedAt: true,
+          comments: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      })
+    ]);
+
+    if (!outcome) {
+      return null;
+    }
+
+    const relatedLifecycleState = outcome.lifecycleState === "archived" ? "archived" : "active";
+    const epicCount = outcome.epics.filter((epic) => epic.lifecycleState === relatedLifecycleState).length;
+
+    return {
+      outcome: {
+        ...outcome,
+        epicCount
+      },
+      tollgate
+    };
+  }, `organizationId=${organizationId} outcomeId=${id}`);
+}
+
 export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: string) {
   return withDevTiming("db.getOutcomeWorkspaceSnapshot", async () => {
     const outcomePromise = async () => {
@@ -511,7 +596,22 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
     }
 
     const relatedLifecycleState = outcome.lifecycleState === "archived" ? "archived" : "active";
+    const scopedDirectionSeeds = outcome.directionSeeds.filter((seed) => seed.lifecycleState === relatedLifecycleState);
     const scopedStories = outcome.stories.filter((story) => story.lifecycleState === relatedLifecycleState);
+    const directionSeedsByEpicId = new Map<string, typeof scopedDirectionSeeds>();
+    const storiesByEpicId = new Map<string, typeof scopedStories>();
+
+    for (const seed of scopedDirectionSeeds) {
+      const existing = directionSeedsByEpicId.get(seed.epicId) ?? [];
+      existing.push(seed);
+      directionSeedsByEpicId.set(seed.epicId, existing);
+    }
+
+    for (const story of scopedStories) {
+      const existing = storiesByEpicId.get(story.epicId) ?? [];
+      existing.push(story);
+      storiesByEpicId.set(story.epicId, existing);
+    }
 
     return {
       outcome: {
@@ -532,11 +632,11 @@ export async function getOutcomeWorkspaceSnapshot(organizationId: string, id: st
           .map((epic) =>
             withEpicShape({
               ...epic,
-              directionSeeds: outcome.directionSeeds.filter((seed) => seed.epicId === epic.id && seed.lifecycleState === relatedLifecycleState),
-              stories: scopedStories.filter((story) => story.epicId === epic.id)
+              directionSeeds: directionSeedsByEpicId.get(epic.id) ?? [],
+              stories: storiesByEpicId.get(epic.id) ?? []
             })
           ),
-        directionSeeds: outcome.directionSeeds.filter((seed) => seed.lifecycleState === relatedLifecycleState),
+        directionSeeds: scopedDirectionSeeds,
         stories: scopedStories
       },
       tollgate,

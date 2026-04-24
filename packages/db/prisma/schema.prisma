@@ -510,6 +510,7 @@ model DirectionSeed {
   @@unique([organizationId, key])
   @@index([organizationId, outcomeId, lifecycleState])
   @@index([organizationId, epicId, lifecycleState])
+  @@index([organizationId, sourceStoryId])
   @@index([organizationId, originType])
   @@index([organizationId, lifecycleState])
   @@index([organizationId, createdAt])

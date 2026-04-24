@@ -21,7 +21,7 @@ function normalizeStructuredSectionHeadings(source: string) {
 
   for (const heading of Object.values(SECTION_LABELS)) {
     const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(`(^|\\n)\\s*#+\\s*${escapedHeading}\\s*(?=\\n|$)`, "gi");
+    const pattern = new RegExp(`(^|\\n)\\s*#+\\s*(?:#+\\s*)*${escapedHeading}\\s*(?=\\n|$)`, "gi");
     normalized = normalized.replace(pattern, (_match, prefix: string) => `${prefix}## ${heading}`);
   }
 

@@ -16,8 +16,12 @@ import type {
   ReviewOutcomeFramingAiActionState,
   reviewOutcomeFramingWithAiAction
 } from "@/app/(protected)/outcomes/[outcomeId]/actions";
-import { FramingBriefExportPanel } from "@/components/framing/framing-brief-export-panel";
-import { AiAssistantPanel } from "@/components/framing/ai-assistant-panel";
+import {
+  AiAssistantPanel,
+  FramingBriefExportPanel,
+  OutcomeAiReviewDialog,
+  OutcomeAiRiskPostureCard
+} from "@/components/framing/framing-lazy-panels";
 import {
   DeliveryTypeGuidanceProvider,
   DeliveryTypeGuidanceText,
@@ -30,12 +34,10 @@ import { FramingGuidanceShell } from "@/components/framing/framing-guidance-shel
 import { InlineFieldGuidance } from "@/components/shared/context-help";
 import { LocalizedText } from "@/components/shared/localized-text";
 import { PendingFormButton } from "@/components/shared/pending-form-button";
-import { OutcomeAiReviewDialog } from "@/components/workspace/outcome-ai-review-dialog";
 import { OutcomeAiValidatedTextarea } from "@/components/workspace/outcome-ai-validated-textarea";
 import { FramingContextCard } from "@/components/workspace/framing-context-card";
 import { FramingValueSpineTree } from "@/components/workspace/framing-value-spine-tree";
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
-import { OutcomeAiRiskPostureCard } from "@/components/workspace/outcome-ai-risk-posture-card";
 import { WorkspaceStatusSummary } from "@/components/workspace/story-workspace-shared";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 import { getCachedOrganizationValueOwnersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
@@ -643,13 +645,30 @@ export function FramingOutcomeSection({
     seedsByEpicId.set(seed.epicId, existing);
   }
 
+  const storiesByEpicId = new Map<string, typeof outcome.stories>();
+
+  for (const story of outcome.stories) {
+    const existing = storiesByEpicId.get(story.epicId) ?? [];
+    existing.push(story);
+    storiesByEpicId.set(story.epicId, existing);
+  }
+
+  const mappedSourceStoryIdsByEpicId = new Map<string, Set<string>>();
+
+  for (const [epicId, seeds] of seedsByEpicId) {
+    mappedSourceStoryIdsByEpicId.set(
+      epicId,
+      new Set(seeds.map((seed) => seed.sourceStoryId).filter((value): value is string => Boolean(value)))
+    );
+  }
+
   const legacyStoryIdeas = outcome.stories.filter((story) => {
     if (story.sourceDirectionSeedId) {
       return false;
     }
 
     const epicSeeds = seedsByEpicId.get(story.epicId) ?? [];
-    const mappedSourceStoryIds = new Set(epicSeeds.map((seed) => seed.sourceStoryId).filter(Boolean));
+    const mappedSourceStoryIds = mappedSourceStoryIdsByEpicId.get(story.epicId) ?? new Set<string>();
     const hasExplicitStoryIdeas = epicSeeds.length > 0;
 
     return !hasExplicitStoryIdeas
@@ -1394,78 +1413,83 @@ export function FramingOutcomeSection({
                         : "Create Story Ideas from the relevant Epic so the hierarchy stays scoped to this Framing."
                   }
                   mode="framing"
-                  epics={outcome.epics.map((epic) => ({
-                    id: epic.id,
-                    key: epic.key,
-                    title: epic.title,
-                    href: `/epics/${epic.id}`,
-                    isCurrent: false,
-                    scopeBoundary: epic.scopeBoundary ?? null,
-                    purpose: epic.purpose ?? null,
-                    originType: epic.originType,
-                    lifecycleState: epic.lifecycleState,
-                    importedReadinessState: epic.importedReadinessState ?? null,
-                    lineageHref:
-                      epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                        ? buildOriginIntakeHref({
-                            candidateId: epic.lineageSourceId,
-                            entityId: epic.id,
-                            entityType: "epic"
-                          })
-                        : null,
-                    directionSeeds: outcome.directionSeeds
-                      .filter((seed) => seed.epicId === epic.id)
-                      .map((seed) => ({
-                        id: seed.id,
-                        key: seed.key,
-                        title: seed.title,
-                        href: `/story-ideas/${seed.id}`,
-                        isCurrent: false,
-                        shortDescription: seed.shortDescription ?? null,
-                        expectedBehavior: seed.expectedBehavior ?? null,
-                        uxSketchName: seed.uxSketchName ?? null,
-                        uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
-                        sourceStoryId: seed.sourceStoryId ?? null,
-                        originType: seed.originType,
-                        lifecycleState: seed.lifecycleState,
-                        importedReadinessState: seed.importedReadinessState ?? null,
-                        lineageHref:
-                          seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                            ? buildOriginIntakeHref({
-                                candidateId: seed.lineageSourceId,
-                                entityId: seed.id,
-                                entityType: "direction_seed"
-                              })
-                            : null
-                      })),
-                    stories: outcome.stories
-                      .filter((story) => story.epicId === epic.id)
-                      .map((story) => ({
-                        id: story.id,
-                        key: story.key,
-                        title: story.title,
-                        href: story.sourceDirectionSeedId ? `/stories/${story.id}` : `/story-ideas/${story.id}`,
-                        isCurrent: false,
-                        sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
-                        valueIntent: story.valueIntent ?? null,
-                        expectedBehavior: story.expectedBehavior ?? null,
-                        testDefinition: story.testDefinition ?? null,
-                        acceptanceCriteria: story.acceptanceCriteria,
-                        definitionOfDone: story.definitionOfDone,
-                        status: story.status,
-                        originType: story.originType,
-                        lifecycleState: story.lifecycleState,
-                        importedReadinessState: story.importedReadinessState ?? null,
-                        lineageHref:
-                          story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                            ? buildOriginIntakeHref({
-                                candidateId: story.lineageSourceId,
-                                entityId: story.id,
-                                entityType: "story"
-                              })
-                            : null
-                      }))
-                  }))}
+                  epics={outcome.epics.map((epic) => {
+                    const mappedSourceStoryIds = mappedSourceStoryIdsByEpicId.get(epic.id) ?? new Set<string>();
+
+                    return {
+                      id: epic.id,
+                      key: epic.key,
+                      title: epic.title,
+                      href: `/epics/${epic.id}`,
+                      isCurrent: false,
+                      scopeBoundary: epic.scopeBoundary ?? null,
+                      purpose: epic.purpose ?? null,
+                      originType: epic.originType,
+                      lifecycleState: epic.lifecycleState,
+                      importedReadinessState: epic.importedReadinessState ?? null,
+                      lineageHref:
+                        epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
+                          ? buildOriginIntakeHref({
+                              candidateId: epic.lineageSourceId,
+                              entityId: epic.id,
+                              entityType: "epic"
+                            })
+                          : null,
+                      directionSeeds: (seedsByEpicId.get(epic.id) ?? [])
+                        .map((seed) => ({
+                          id: seed.id,
+                          key: seed.key,
+                          title: seed.title,
+                          href: `/story-ideas/${seed.id}`,
+                          isCurrent: false,
+                          shortDescription: seed.shortDescription ?? null,
+                          expectedBehavior: seed.expectedBehavior ?? null,
+                          uxSketchName: seed.uxSketchName ?? null,
+                          uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
+                          sourceStoryId: seed.sourceStoryId ?? null,
+                          originType: seed.originType,
+                          lifecycleState: seed.lifecycleState,
+                          importedReadinessState: seed.importedReadinessState ?? null,
+                          lineageHref:
+                            seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
+                              ? buildOriginIntakeHref({
+                                  candidateId: seed.lineageSourceId,
+                                  entityId: seed.id,
+                                  entityType: "direction_seed"
+                                })
+                              : null
+                        })),
+                      stories: (storiesByEpicId.get(epic.id) ?? [])
+                        .map((story) => ({
+                          id: story.id,
+                          key: story.key,
+                          title: story.title,
+                          href:
+                            story.sourceDirectionSeedId || isLikelyDeliveryStory(story, mappedSourceStoryIds)
+                              ? `/stories/${story.id}`
+                              : `/story-ideas/${story.id}`,
+                          isCurrent: false,
+                          sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
+                          valueIntent: story.valueIntent ?? null,
+                          expectedBehavior: story.expectedBehavior ?? null,
+                          testDefinition: story.testDefinition ?? null,
+                          acceptanceCriteria: story.acceptanceCriteria,
+                          definitionOfDone: story.definitionOfDone,
+                          status: story.status,
+                          originType: story.originType,
+                          lifecycleState: story.lifecycleState,
+                          importedReadinessState: story.importedReadinessState ?? null,
+                          lineageHref:
+                            story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                              ? buildOriginIntakeHref({
+                                  candidateId: story.lineageSourceId,
+                                  entityId: story.id,
+                                  entityType: "story"
+                                })
+                              : null
+                        }))
+                    };
+                  })}
                   outcome={{
                     id: outcome.id,
                     key: outcome.key,
