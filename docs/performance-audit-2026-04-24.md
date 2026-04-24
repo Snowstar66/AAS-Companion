@@ -241,3 +241,12 @@ Implemented after the initial bundle/data-shape pass:
 3. Approval-document snapshot generation still loads the full outcome workspace snapshot, but only on the approval path where the full document payload is actually needed.
 4. Sign-off person validation now fetches the selected active party role directly instead of loading the full active project role list.
 5. Tollgate review action composition now groups active people and signoff records once, avoiding repeated per-requirement scans.
+
+## Implemented fast framing authoring slice
+
+Focused on the paths Pontus called out: Framing approval, Create Epic, and Create Story Idea.
+
+1. Native Epic creation now loads only existing Epic keys instead of all Epic records.
+2. Native Story Idea creation now loads only existing Direction Seed keys instead of all Story Idea records.
+3. Delivery Story creation from a Story Idea now loads only existing Story keys and a linked-story count instead of full story lists.
+4. The new key-only lookups keep the same `EPC-###`, `SEED-###`, and `STR-###` key behavior while reducing DB payload size on hot create actions.

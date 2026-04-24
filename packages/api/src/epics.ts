@@ -1,4 +1,5 @@
 import {
+  countStoriesByDirectionSeedId,
   createStory,
   createDirectionSeed,
   getArtifactCandidateById,
@@ -7,11 +8,11 @@ import {
   getEpicById,
   getEpicWorkspaceSnapshot,
   getOutcomeById,
-  listDirectionSeeds,
+  listDirectionSeedKeys,
   listEpicReferences,
-  listEpics,
+  listEpicKeys,
   listStoriesByDirectionSeedId,
-  listStories,
+  listStoryKeys,
   validateStoryExpectedBehaviorWithAi,
   updateEpic
 } from "@aas-companion/db";
@@ -205,8 +206,8 @@ export async function createNativeEpicFromOutcomeService(input: {
     });
   }
 
-  const epics = await listEpics(input.organizationId, { includeArchived: true });
-  const key = buildNextKey(epics.map((epic) => epic.key), "EPC");
+  const epicKeys = await listEpicKeys(input.organizationId);
+  const key = buildNextKey(epicKeys.map((epic) => epic.key), "EPC");
 
   try {
     return success(
@@ -249,8 +250,8 @@ export async function createNativeDirectionSeedFromEpicService(input: {
     });
   }
 
-  const directionSeeds = await listDirectionSeeds(input.organizationId, { includeArchived: true });
-  const key = buildNextKey(directionSeeds.map((seed) => seed.key), "SEED");
+  const directionSeedKeys = await listDirectionSeedKeys(input.organizationId);
+  const key = buildNextKey(directionSeedKeys.map((seed) => seed.key), "SEED");
 
   return success(
     await createDirectionSeed({
@@ -329,10 +330,10 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
     });
   }
 
-  const [outcome, stories, linkedStories] = await Promise.all([
+  const [outcome, storyKeys, linkedStoryCount] = await Promise.all([
     getOutcomeById(input.organizationId, seed.outcomeId),
-    listStories(input.organizationId, { includeArchived: true }),
-    listStoriesByDirectionSeedId(input.organizationId, seed.id)
+    listStoryKeys(input.organizationId),
+    countStoriesByDirectionSeedId(input.organizationId, seed.id)
   ]);
 
   if (!outcome) {
@@ -406,7 +407,7 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
     sourceImportDraftRecord?.testNotes?.filter(Boolean).join("\n").trim() ||
     fallbackTestDefinition ||
     null;
-  const key = buildNextKey(stories.map((story) => story.key), "STR");
+  const key = buildNextKey(storyKeys.map((story) => story.key), "STR");
   const createdStory = await createStory({
     organizationId: input.organizationId,
     outcomeId: seed.outcomeId,
@@ -440,7 +441,7 @@ export async function createDeliveryStoryFromDirectionSeedService(input: {
   return success({
     story: createdStory,
     created: true,
-    existingLinkedStoryCount: linkedStories.length
+    existingLinkedStoryCount: linkedStoryCount
   });
 }
 

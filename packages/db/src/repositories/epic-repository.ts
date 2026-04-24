@@ -92,6 +92,20 @@ export async function listEpics(organizationId: string, options?: { includeArchi
   return epics.map((epic) => withEpicShape(epic));
 }
 
+export async function listEpicKeys(organizationId: string) {
+  return prisma.epic.findMany({
+    where: {
+      organizationId,
+      key: {
+        startsWith: "EPC-"
+      }
+    },
+    select: {
+      key: true
+    }
+  });
+}
+
 export async function listEpicReferences(organizationId: string, options?: { includeArchived?: boolean }) {
   const where: Prisma.EpicWhereInput = {
     organizationId

@@ -27,6 +27,20 @@ export async function listDirectionSeeds(organizationId: string, options?: { inc
   });
 }
 
+export async function listDirectionSeedKeys(organizationId: string) {
+  return prisma.directionSeed.findMany({
+    where: {
+      organizationId,
+      key: {
+        startsWith: "SEED-"
+      }
+    },
+    select: {
+      key: true
+    }
+  });
+}
+
 export async function getDirectionSeedById(organizationId: string, id: string) {
   return prisma.directionSeed.findFirst({
     where: {

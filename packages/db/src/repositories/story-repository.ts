@@ -27,11 +27,34 @@ export async function listStories(organizationId: string, options?: { includeArc
   });
 }
 
+export async function listStoryKeys(organizationId: string) {
+  return prisma.story.findMany({
+    where: {
+      organizationId,
+      key: {
+        startsWith: "STR-"
+      }
+    },
+    select: {
+      key: true
+    }
+  });
+}
+
 export async function getStoryById(organizationId: string, id: string) {
   return prisma.story.findFirst({
     where: {
       organizationId,
       id
+    }
+  });
+}
+
+export async function countStoriesByDirectionSeedId(organizationId: string, directionSeedId: string) {
+  return prisma.story.count({
+    where: {
+      organizationId,
+      sourceDirectionSeedId: directionSeedId
     }
   });
 }

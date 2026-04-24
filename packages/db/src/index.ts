@@ -88,6 +88,7 @@ export {
   createDirectionSeed,
   getDirectionSeedById,
   getDirectionSeedBySourceStoryId,
+  listDirectionSeedKeys,
   listDirectionSeeds,
   updateDirectionSeed
 } from "./repositories/direction-seed-repository";
@@ -95,14 +96,17 @@ export {
   createEpic,
   getEpicById,
   getEpicWorkspaceSnapshot,
+  listEpicKeys,
   listEpicReferences,
   listEpics,
   updateEpic
 } from "./repositories/epic-repository";
 export {
+  countStoriesByDirectionSeedId,
   createStory,
   getStoryById,
   getStoryWorkspaceSnapshot,
+  listStoryKeys,
   listStoriesByDirectionSeedId,
   listStories,
   updateStory
