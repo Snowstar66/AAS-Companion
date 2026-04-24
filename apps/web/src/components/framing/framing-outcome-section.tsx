@@ -1566,6 +1566,7 @@ export function FramingOutcomeSection({
             isArchived={isArchived}
             outcomeId={outcome.id}
             recordTollgateDecisionAction={recordTollgateDecisionAction}
+            returnPath={returnPath}
           />
         </Suspense>
 
