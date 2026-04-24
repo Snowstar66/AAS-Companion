@@ -92,6 +92,15 @@ function parseDecisionKey(value: string) {
   };
 }
 
+function revalidateOutcomeFramingViews(organizationId: string, outcomeId: string) {
+  revalidateFramingCockpitCache(organizationId);
+  revalidateOutcomeWorkspaceCache(organizationId, outcomeId);
+  revalidateOutcomeTollgateReviewCache(organizationId, outcomeId);
+  revalidatePath(`/outcomes/${outcomeId}`);
+  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
+  revalidatePath("/framing");
+}
+
 export async function saveOutcomeWorkspaceAction(formData: FormData) {
   const session = await requireActiveProjectSession();
   const outcomeId = String(formData.get("outcomeId") ?? "");
@@ -129,13 +138,7 @@ export async function saveOutcomeWorkspaceAction(formData: FormData) {
       (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/outcomes/${outcomeId}`);
-  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
-  revalidatePath("/framing");
-  revalidatePath("/");
+  revalidateOutcomeFramingViews(session.organization.organizationId, outcomeId);
 
   if (!result.ok) {
     redirect(
@@ -200,13 +203,7 @@ export async function saveOutcomeWorkspaceInlineAction(formData: FormData): Prom
       (String(formData.get("aiAccelerationLevel") ?? "level_2") as "level_1" | "level_2" | "level_3") ?? "level_2"
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/outcomes/${outcomeId}`);
-  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
-  revalidatePath("/framing");
-  revalidatePath("/");
+  revalidateOutcomeFramingViews(session.organization.organizationId, outcomeId);
 
   if (!result.ok) {
     return {
@@ -416,13 +413,7 @@ export async function submitOutcomeTollgateAction(formData: FormData) {
     comments
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/outcomes/${outcomeId}`);
-  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
-  revalidatePath("/framing");
-  revalidatePath("/");
+  revalidateOutcomeFramingViews(session.organization.organizationId, outcomeId);
 
   if (!result.ok) {
     redirect(buildOutcomeReturnRedirect({
@@ -480,15 +471,8 @@ export async function recordOutcomeTollgateDecisionAction(formData: FormData) {
     createdBy: session.userId
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/outcomes/${outcomeId}`);
-  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
-  revalidatePath("/framing");
-  revalidatePath("/workspace");
+  revalidateOutcomeFramingViews(session.organization.organizationId, outcomeId);
   revalidatePath("/review");
-  revalidatePath("/");
 
   if (!result.ok) {
     redirect(buildOutcomeReturnRedirect({
@@ -521,14 +505,7 @@ export async function createEpicFromOutcomeAction(formData: FormData) {
     title
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/outcomes/${outcomeId}`);
-  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
-  revalidatePath("/framing");
-  revalidatePath("/workspace");
-  revalidatePath("/");
+  revalidateOutcomeFramingViews(session.organization.organizationId, outcomeId);
 
   if (!result.ok) {
     redirect(
@@ -555,14 +532,7 @@ export async function createStoryIdeaFromOutcomeAction(formData: FormData) {
     title
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/outcomes/${outcomeId}`);
-  revalidatePath(`/outcomes/${outcomeId}/approval-document`);
-  revalidatePath("/framing");
-  revalidatePath("/workspace");
-  revalidatePath("/");
+  revalidateOutcomeFramingViews(session.organization.organizationId, outcomeId);
 
   if (!result.ok) {
     redirect(

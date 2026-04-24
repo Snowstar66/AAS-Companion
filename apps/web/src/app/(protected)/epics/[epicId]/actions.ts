@@ -30,6 +30,27 @@ function requireExplicitConfirmation(formData: FormData) {
   return String(formData.get("confirmAction") ?? "") === "yes";
 }
 
+function revalidateEpicFramingViews(input: {
+  organizationId: string;
+  outcomeId: string;
+  epicId: string;
+  revalidateTollgateReview?: boolean;
+}) {
+  revalidateFramingCockpitCache(input.organizationId);
+  revalidatePath(`/epics/${input.epicId}`);
+
+  if (input.outcomeId) {
+    revalidateOutcomeWorkspaceCache(input.organizationId, input.outcomeId);
+
+    if (input.revalidateTollgateReview ?? true) {
+      revalidateOutcomeTollgateReviewCache(input.organizationId, input.outcomeId);
+    }
+
+    revalidatePath(`/outcomes/${input.outcomeId}`);
+    revalidatePath("/framing");
+  }
+}
+
 export type StoryExpectedBehaviorAiActionState =
   | {
       status: "success";
@@ -101,17 +122,11 @@ export async function saveEpicWorkspaceAction(formData: FormData) {
     riskNote: String(formData.get("riskNote") ?? "") || null
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/epics/${epicId}`);
-  if (outcomeId) {
-    revalidatePath(`/outcomes/${outcomeId}`);
-    revalidatePath("/framing");
-  }
-  revalidatePath("/workspace");
-  revalidatePath("/stories");
-  revalidatePath("/");
+  revalidateEpicFramingViews({
+    organizationId: session.organization.organizationId,
+    outcomeId,
+    epicId
+  });
 
   if (!result.ok) {
     redirect(
@@ -139,17 +154,11 @@ export async function createDirectionSeedFromEpicAction(formData: FormData) {
     actorId: session.userId
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/epics/${epicId}`);
-  if (outcomeId) {
-    revalidatePath(`/outcomes/${outcomeId}`);
-    revalidatePath("/framing");
-  }
-  revalidatePath("/stories");
-  revalidatePath("/workspace");
-  revalidatePath("/");
+  revalidateEpicFramingViews({
+    organizationId: session.organization.organizationId,
+    outcomeId,
+    epicId
+  });
 
   if (!result.ok) {
     redirect(
@@ -190,9 +199,7 @@ export async function createDeliveryStoryFromDirectionSeedAction(formData: FormD
   revalidateFramingCockpitCache(session.organization.organizationId);
   revalidatePath(`/epics/${epicId}`);
   revalidatePath("/framing");
-  revalidatePath("/workspace");
   revalidatePath("/stories");
-  revalidatePath("/");
 
   if (!result.ok) {
     redirect(
@@ -221,16 +228,11 @@ export async function saveDirectionSeedAction(formData: FormData) {
     expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidateOutcomeTollgateReviewCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/epics/${epicId}`);
-  if (outcomeId) {
-    revalidatePath(`/outcomes/${outcomeId}`);
-    revalidatePath("/framing");
-  }
-  revalidatePath("/workspace");
-  revalidatePath("/");
+  revalidateEpicFramingViews({
+    organizationId: session.organization.organizationId,
+    outcomeId,
+    epicId
+  });
 
   if (!result.ok) {
     redirect(
@@ -263,15 +265,12 @@ export async function saveDirectionSeedInlineAction(formData: FormData): Promise
     expectedBehavior: String(formData.get("expectedBehavior") ?? "") || null
   });
 
-  revalidateFramingCockpitCache(session.organization.organizationId);
-  revalidateOutcomeWorkspaceCache(session.organization.organizationId, outcomeId);
-  revalidatePath(`/epics/${epicId}`);
-  if (outcomeId) {
-    revalidatePath(`/outcomes/${outcomeId}`);
-    revalidatePath("/framing");
-  }
-  revalidatePath("/workspace");
-  revalidatePath("/");
+  revalidateEpicFramingViews({
+    organizationId: session.organization.organizationId,
+    outcomeId,
+    epicId,
+    revalidateTollgateReview: false
+  });
 
   if (!result.ok) {
     return {

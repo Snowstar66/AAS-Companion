@@ -233,7 +233,6 @@ export async function saveStoryIdeaSeedWorkspaceAction(formData: FormData) {
   revalidatePath(`/epics/${epicId}`);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
-  revalidatePath("/workspace");
 
   if (!result.ok) {
     redirect(
@@ -295,7 +294,6 @@ export async function saveLegacyStoryIdeaWorkspaceAction(formData: FormData) {
     revalidatePath(`/outcomes/${outcomeId}`);
     revalidatePath("/framing");
   }
-  revalidatePath("/workspace");
 
   if (!result.ok) {
     redirect(
@@ -347,7 +345,6 @@ export async function saveStoryIdeaSeedWorkspaceInlineAction(
   revalidatePath(`/epics/${epicId}`);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
-  revalidatePath("/workspace");
 
   if (!result.ok) {
     return {
@@ -406,7 +403,6 @@ export async function saveLegacyStoryIdeaWorkspaceInlineAction(
     revalidatePath(`/outcomes/${outcomeId}`);
     revalidatePath("/framing");
   }
-  revalidatePath("/workspace");
 
   if (!result.ok) {
     return {
@@ -439,9 +435,7 @@ export async function createDeliveryStoryFromStoryIdeaSeedAction(formData: FormD
   revalidatePath(`/epics/${epicId}`);
   revalidatePath(`/outcomes/${outcomeId}`);
   revalidatePath("/framing");
-  revalidatePath("/workspace");
   revalidatePath("/stories");
-  revalidatePath("/");
 
   if (!result.ok) {
     redirect(

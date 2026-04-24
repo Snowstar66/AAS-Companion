@@ -250,3 +250,18 @@ Focused on the paths Pontus called out: Framing approval, Create Epic, and Creat
 2. Native Story Idea creation now loads only existing Direction Seed keys instead of all Story Idea records.
 3. Delivery Story creation from a Story Idea now loads only existing Story keys and a linked-story count instead of full story lists.
 4. The new key-only lookups keep the same `EPC-###`, `SEED-###`, and `STR-###` key behavior while reducing DB payload size on hot create actions.
+
+## Implemented targeted invalidation slice
+
+Focused on the low-hanging cache cost in the same fast authoring paths.
+
+1. Kept the existing auth/project guards because they are already request-cached through `react.cache` and are not the main repeated cost.
+2. Added small shared revalidation helpers for Outcome and Epic framing actions so the hot paths invalidate the same focused surfaces consistently.
+3. Removed broad `/`, `/workspace`, and unrelated `/stories` invalidations from common Framing save/create flows:
+   - save Outcome framing;
+   - submit/record Tollgate 1 approval;
+   - create Epic from Outcome;
+   - create Story Idea from Outcome/Epic;
+   - save Story Idea;
+   - create Delivery Story from a Story Idea.
+4. Kept targeted invalidation for `/framing`, the current Outcome/Epic/Story Idea route, approval-document route, and `/review` where approval decisions need it.
