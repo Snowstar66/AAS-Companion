@@ -687,7 +687,7 @@ export async function submitOutcomeTollgateService(input: {
   actorId?: string | null;
   comments?: string | null;
 }) {
-  const snapshot = await getOutcomeWorkspaceSnapshot(input.organizationId, input.outcomeId);
+  const snapshot = await getOutcomeTollgateReviewSnapshot(input.organizationId, input.outcomeId);
 
   if (!snapshot) {
     return failure({
@@ -700,7 +700,7 @@ export async function submitOutcomeTollgateService(input: {
     ...snapshot.outcome,
     aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
     aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
-    epicCount: snapshot.outcome.epics.length
+    epicCount: snapshot.outcome.epicCount
   });
   const blockers = readiness.reasons.map((reason) => reason.message);
   const isReady = readiness.state === "ready";

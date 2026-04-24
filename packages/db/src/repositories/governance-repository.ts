@@ -161,6 +161,20 @@ export async function listPartyRoleEntries(organizationId: string, options?: { i
   }, `organizationId=${organizationId}`);
 }
 
+export async function getPartyRoleEntryById(organizationId: string, id: string) {
+  return withDevTiming("db.getPartyRoleEntryById", async () => {
+    const entry = await prisma.partyRoleEntry.findFirst({
+      where: {
+        organizationId,
+        id,
+        isActive: true
+      }
+    });
+
+    return entry ? partyRoleEntryRecordSchema.parse(entry) : null;
+  }, `organizationId=${organizationId} partyRoleEntryId=${id}`);
+}
+
 export async function createPartyRoleEntry(input: unknown, db: DbClient = prisma) {
   const parsed = partyRoleEntryCreateInputSchema.parse(input);
 

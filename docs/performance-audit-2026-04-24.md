@@ -231,3 +231,13 @@ Targeted test verification:
 - `pnpm test -- src/test/framing-cockpit.test.tsx`
 - `pnpm test -- src/test/review-queue-page.test.tsx`
 - `pnpm test -- src/test/artifact-intake-helpers.test.ts`
+
+## Implemented DB round-trip optimization slice
+
+Implemented after the initial bundle/data-shape pass:
+
+1. `submitOutcomeTollgateService` now uses the slim tollgate review snapshot instead of the full outcome workspace snapshot.
+2. `recordTollgateDecisionService` now uses the slim tollgate review snapshot to refresh outcome readiness/version state before sign-off decisions.
+3. Approval-document snapshot generation still loads the full outcome workspace snapshot, but only on the approval path where the full document payload is actually needed.
+4. Sign-off person validation now fetches the selected active party role directly instead of loading the full active project role list.
+5. Tollgate review action composition now groups active people and signoff records once, avoiding repeated per-requirement scans.

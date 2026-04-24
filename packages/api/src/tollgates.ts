@@ -1,6 +1,8 @@
 import {
   createSignoffRecord,
+  getOutcomeTollgateReviewSnapshot,
   getOutcomeWorkspaceSnapshot,
+  getPartyRoleEntryById,
   getStoryById,
   getTollgate,
   listPartyRoleEntries,
@@ -316,29 +318,40 @@ export async function getTollgateReviewWorkspaceService(input: {
       tollgateType: input.tollgateType,
       aiAccelerationLevel: input.aiAccelerationLevel
     });
+    const activePeopleByRequirement = new Map<string, typeof people>();
+    const signoffsByRequirement = new Map<string, typeof relevantSignoffRecords>();
+
+    for (const person of people) {
+      if (!person.isActive) {
+        continue;
+      }
+
+      const key = `${person.roleType}:${person.organizationSide}`;
+      const existing = activePeopleByRequirement.get(key) ?? [];
+      existing.push(person);
+      activePeopleByRequirement.set(key, existing);
+    }
+
+    for (const record of relevantSignoffRecords) {
+      const key = `${record.decisionKind}:${record.requiredRoleType}:${record.organizationSide}`;
+      const existing = signoffsByRequirement.get(key) ?? [];
+      existing.push(record);
+      signoffsByRequirement.set(key, existing);
+    }
+
     const buildActions = (
       requirements: typeof profile.reviewRequirements | typeof profile.approvalRequirements
     ) =>
       requirements.map((requirement) => {
-        const assignedPeople = people
-          .filter(
-            (person) =>
-              person.isActive &&
-              person.roleType === requirement.roleType &&
-              person.organizationSide === requirement.organizationSide
-          )
+        const assignedPeople = (activePeopleByRequirement.get(`${requirement.roleType}:${requirement.organizationSide}`) ?? [])
           .map((person) => ({
             partyRoleEntryId: person.id,
             fullName: person.fullName,
             email: person.email,
             roleTitle: person.roleTitle
           }));
-        const relatedRecords = relevantSignoffRecords.filter(
-          (record) =>
-            record.decisionKind === requirement.decisionKind &&
-            record.requiredRoleType === requirement.roleType &&
-            record.organizationSide === requirement.organizationSide
-        );
+        const relatedRecords =
+          signoffsByRequirement.get(`${requirement.decisionKind}:${requirement.roleType}:${requirement.organizationSide}`) ?? [];
         const completedRecords = relatedRecords.filter((record) => record.decisionStatus === "approved");
         const blockedReasons = [
           ...(assignedPeople.length === 0
@@ -435,7 +448,7 @@ export async function recordTollgateDecisionService(input: unknown) {
   let tollgate = await getTollgate(parsed.data.organizationId, parsed.data.entityType, parsed.data.entityId, tollgateType);
 
   if (parsed.data.entityType === "outcome" && tollgateType === "tg1_baseline") {
-    const snapshot = await getOutcomeWorkspaceSnapshot(parsed.data.organizationId, parsed.data.entityId);
+    const snapshot = await getOutcomeTollgateReviewSnapshot(parsed.data.organizationId, parsed.data.entityId);
 
     if (!snapshot) {
       return failure({
@@ -448,7 +461,7 @@ export async function recordTollgateDecisionService(input: unknown) {
       ...snapshot.outcome,
       aiUsageRole: normalizeAiUsageRole(snapshot.outcome.aiUsageRole),
       aiExecutionPattern: normalizeAiExecutionPattern(snapshot.outcome.aiExecutionPattern),
-      epicCount: snapshot.outcome.epics.length
+      epicCount: snapshot.outcome.epicCount
     }).reasons.map((reason) => reason.message);
     const currentSubmissionVersion = snapshot.outcome.framingVersion;
     const currentApproverRoles = mapFramingApproverRolesToMembershipRoles(profile.approvalRequirements);
@@ -510,8 +523,7 @@ export async function recordTollgateDecisionService(input: unknown) {
     });
   }
 
-  const projectPeople = await listPartyRoleEntries(parsed.data.organizationId);
-  const selectedPerson = projectPeople.find((person) => person.id === parsed.data.actualPartyRoleEntryId && person.isActive);
+  const selectedPerson = await getPartyRoleEntryById(parsed.data.organizationId, parsed.data.actualPartyRoleEntryId);
 
   if (!selectedPerson) {
     return failure({

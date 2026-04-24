@@ -3,6 +3,7 @@ import { recordTollgateDecisionService } from "@aas-companion/api";
 
 const dbMocks = vi.hoisted(() => ({
   createSignoffRecord: vi.fn(),
+  getPartyRoleEntryById: vi.fn(),
   getStoryById: vi.fn(),
   getTollgate: vi.fn(),
   listPartyRoleEntries: vi.fn(),
@@ -51,6 +52,28 @@ describe("recordTollgateDecisionService", () => {
         roleTitle: "Delivery Lead"
       }
     ]);
+    dbMocks.getPartyRoleEntryById.mockImplementation(async (_organizationId: string, id: string) =>
+      [
+        {
+          id: "party-aqa",
+          isActive: true,
+          roleType: "aqa",
+          organizationSide: "supplier",
+          fullName: "AQA Reviewer",
+          email: "aqa@example.com",
+          roleTitle: "AQA"
+        },
+        {
+          id: "party-dl",
+          isActive: true,
+          roleType: "delivery_lead",
+          organizationSide: "supplier",
+          fullName: "Delivery Lead",
+          email: "delivery@example.com",
+          roleTitle: "Delivery Lead"
+        }
+      ].find((person) => person.id === id) ?? null
+    );
     dbMocks.upsertTollgate.mockImplementation(async (input) => ({
       id: "tg-story-1",
       ...input
