@@ -104,6 +104,39 @@ const profileVisualGrammar: Record<UxProfileKey, string[]> = {
   ]
 };
 
+const profileSignatureComponents: Record<UxProfileKey, string[]> = {
+  "enterprise-control-plane": [
+    "Approval matrix for comparing owners, evidence, risk, and approval state.",
+    "Audit trail rail beside forms and review screens.",
+    "Readiness scorecard for tollgate, release, or portfolio decisions."
+  ],
+  "operational-workflow": [
+    "Queue lane board for repeated work across New, In progress, Blocked, and Done.",
+    "SLA task card with due time, owner, blocker, and next action.",
+    "Handoff checklist before moving work between roles, teams, or lifecycle states."
+  ],
+  "customer-portal": [
+    "Status timeline that explains progress in customer-facing language.",
+    "Input request card for uploads, approvals, and questions with one clear next step.",
+    "Message thread with context, response expectations, and plain-language support."
+  ],
+  "creative-workspace": [
+    "Canvas note cluster for ideas, user quotes, risks, and AI suggestions.",
+    "Source tray for interviews, research, uploaded material, and AI synthesis.",
+    "Decision frame for turning exploration into a clear direction or next experiment."
+  ],
+  "knowledge-hub": [
+    "Search command bar as the main entry point.",
+    "Verified source card showing confidence, owner, freshness, and match reason.",
+    "Article reading pane with anchors, related content, provenance, and next reading paths."
+  ],
+  "minimal-utility": [
+    "Single input panel for the one task that drives the experience.",
+    "Immediate result panel with result, reason, and one next action.",
+    "Inline history strip only when previous runs help repeat the task faster."
+  ]
+};
+
 const surfaceOptions: Array<Option<TargetSurfaceKey>> = [
   {
     key: "responsive-web",
@@ -225,6 +258,7 @@ function buildExportedUxPrinciples(
   customInstructions: string
 ) {
   const visualGrammar = profileVisualGrammar[profile.key] ?? [];
+  const signatureComponents = profileSignatureComponents[profile.key] ?? [];
   const sections = [
     "UX direction",
     `UX profile: ${profile.label} (${profile.key})`,
@@ -237,6 +271,9 @@ function buildExportedUxPrinciples(
     "Downstream AI visual grammar:",
     "The selected UX profile must materially change layout, components, density, navigation, and status treatment. Do not collapse this into a generic SaaS card UI.",
     ...visualGrammar.map((rule) => `- ${rule}`),
+    "",
+    "Signature components to prefer when relevant:",
+    ...signatureComponents.map((component) => `- ${component}`),
     "",
     "Surface guidance:",
     surface.guidance,

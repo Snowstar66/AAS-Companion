@@ -43,6 +43,11 @@ const profiles: Array<{
   sampleNav: string[];
   sampleWork: string[];
   statusLabel: string;
+  signatureComponents: Array<{
+    name: string;
+    role: string;
+    usage: string;
+  }>;
   visualGrammar: string[];
   instruction: string;
 }> = [
@@ -59,6 +64,23 @@ const profiles: Array<{
     sampleNav: ["Dashboard", "Framing", "Review", "Governance"],
     sampleWork: ["Outcome readiness", "Tollgate status", "Owner action list"],
     statusLabel: "Ready for approval",
+    signatureComponents: [
+      {
+        name: "Approval matrix",
+        role: "Decision table",
+        usage: "Use for governance-heavy screens where owners, evidence, risk, and approval state must be compared."
+      },
+      {
+        name: "Audit trail rail",
+        role: "Right-side context",
+        usage: "Use beside forms and review screens to keep version, reviewer, timestamp, and decision history visible."
+      },
+      {
+        name: "Readiness scorecard",
+        role: "Status dashboard",
+        usage: "Use when multiple criteria must be scanned before a tollgate, release, or portfolio decision."
+      }
+    ],
     visualGrammar: [
       "Use dense control-plane layouts with compact rectangular cards, tables, right rails, and persistent navigation.",
       "Prefer squared or small-radius controls, clear borders, muted surfaces, and high information density.",
@@ -80,6 +102,23 @@ const profiles: Array<{
     sampleNav: ["Queue", "In progress", "Blocked", "Done"],
     sampleWork: ["Next task", "SLA risk", "Handoff checklist"],
     statusLabel: "3 tasks due",
+    signatureComponents: [
+      {
+        name: "Queue lane board",
+        role: "Primary workspace",
+        usage: "Use when the user processes repeated work items across New, In progress, Blocked, and Done states."
+      },
+      {
+        name: "SLA task card",
+        role: "Operational card",
+        usage: "Use for each work item so due time, owner, blocker, and next action are visible without opening details."
+      },
+      {
+        name: "Handoff checklist",
+        role: "Completion control",
+        usage: "Use before moving work between roles, teams, or lifecycle states."
+      }
+    ],
     visualGrammar: [
       "Use queue/lane layouts, stacked task cards, checklist rows, compact state chips, and visible due-time pressure.",
       "Make primary actions short and repeated; keep escalation and handoff controls close to the work item.",
@@ -101,6 +140,23 @@ const profiles: Array<{
     sampleNav: ["Overview", "Documents", "Messages", "Approvals"],
     sampleWork: ["Project status", "Required input", "Latest decision"],
     statusLabel: "Input requested",
+    signatureComponents: [
+      {
+        name: "Status timeline",
+        role: "Customer progress",
+        usage: "Use to explain where the customer is in the process and what has happened so far."
+      },
+      {
+        name: "Input request card",
+        role: "Customer action",
+        usage: "Use for document uploads, approvals, and questions where the customer needs one clear next step."
+      },
+      {
+        name: "Message thread",
+        role: "Trust surface",
+        usage: "Use when customer communication needs context, plain language, and visible response expectations."
+      }
+    ],
     visualGrammar: [
       "Use spacious customer-facing panels, friendly rounded cards, plain-language status summaries, and obvious next steps.",
       "Avoid internal terms; put documents, messages, approvals, and support actions in language a customer would understand.",
@@ -122,6 +178,23 @@ const profiles: Array<{
     sampleNav: ["Canvas", "Sources", "Drafts", "Review"],
     sampleWork: ["Idea cluster", "AI suggestion", "Draft direction"],
     statusLabel: "Draft evolving",
+    signatureComponents: [
+      {
+        name: "Canvas note cluster",
+        role: "Exploration space",
+        usage: "Use for ideas, user quotes, risks, and AI suggestions that need to be compared before structure hardens."
+      },
+      {
+        name: "Source tray",
+        role: "Evidence shelf",
+        usage: "Use to keep interviews, research, uploaded material, and AI synthesis visible while drafting."
+      },
+      {
+        name: "Decision frame",
+        role: "Synthesis component",
+        usage: "Use when turning messy exploration into a clear direction, assumption, or next experiment."
+      }
+    ],
     visualGrammar: [
       "Use canvas-like layouts, flexible clusters, note cards, source trays, and provisional states that invite iteration.",
       "Allow visual comparison and synthesis before structure hardens; comments and AI suggestions should feel easy to rearrange.",
@@ -143,6 +216,23 @@ const profiles: Array<{
     sampleNav: ["Search", "Guides", "Policies", "Updates"],
     sampleWork: ["Recommended guide", "Policy match", "Recent update"],
     statusLabel: "Verified source",
+    signatureComponents: [
+      {
+        name: "Search command bar",
+        role: "Primary entry",
+        usage: "Use as the main starting point for finding policies, guides, examples, and decisions."
+      },
+      {
+        name: "Verified source card",
+        role: "Search result",
+        usage: "Use to show source confidence, owner, freshness, and why the result matches the query."
+      },
+      {
+        name: "Article reading pane",
+        role: "Knowledge detail",
+        usage: "Use for long-form guidance with anchors, related content, provenance, and next reading paths."
+      }
+    ],
     visualGrammar: [
       "Use search-first layouts, readable article cards, topic navigation, source confidence, and related-content paths.",
       "Prioritize reading comfort, provenance, taxonomy, and skim-friendly document structure.",
@@ -164,6 +254,23 @@ const profiles: Array<{
     sampleNav: ["Input", "Result", "History"],
     sampleWork: ["Primary input", "Computed result", "Save action"],
     statusLabel: "Ready",
+    signatureComponents: [
+      {
+        name: "Single input panel",
+        role: "Primary task",
+        usage: "Use when one form or value drives the whole experience."
+      },
+      {
+        name: "Immediate result panel",
+        role: "Feedback surface",
+        usage: "Use to show the result, reason, and one next action without sending the user elsewhere."
+      },
+      {
+        name: "Inline history strip",
+        role: "Lightweight memory",
+        usage: "Use only when previous runs or saved outputs help repeat the task faster."
+      }
+    ],
     visualGrammar: [
       "Use a centered single-purpose layout with minimal navigation, one primary input path, and one obvious result.",
       "Remove decorative chrome, secondary panels, and unrelated links unless they directly support completion.",
@@ -798,6 +905,22 @@ function ComponentReference({
       <CardContent>
         <div className={`space-y-4 border p-4 ${treatment.shellClass} ${profileTreatment.sectionClass}`}>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{treatment.description}</p>
+          <div className={`grid gap-3 ${surface === "mobile-app" ? "grid-cols-1" : "lg:grid-cols-3"}`}>
+            {profile.signatureComponents.map((component, index) => (
+              <div className={`border p-4 ${index === 0 ? profileTreatment.companionClass : profileTreatment.controlCardClass}`} key={component.name}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className={profileTreatment.labelClass}>{component.role}</p>
+                    <h3 className="mt-2 text-base font-semibold text-foreground">{component.name}</h3>
+                  </div>
+                  <span className={`shrink-0 px-2.5 py-1 text-[11px] font-semibold ${profileTreatment.statusShape} ${color.accent}`}>
+                    {index === 0 ? "Primary" : "Pattern"}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{component.usage}</p>
+              </div>
+            ))}
+          </div>
           <div className={gridClass}>
             <div className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
               <p className={profileTreatment.labelClass}>Actions</p>
