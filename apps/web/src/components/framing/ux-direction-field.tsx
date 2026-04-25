@@ -1,0 +1,366 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { ExternalLink, Palette } from "lucide-react";
+import { Button } from "@aas-companion/ui";
+
+type Language = "en" | "sv";
+
+type Option<T extends string> = {
+  key: T;
+  label: string;
+  summary: string;
+  guidance: string;
+};
+
+type UxProfileKey =
+  | "enterprise-control-plane"
+  | "operational-workflow"
+  | "customer-portal"
+  | "creative-workspace"
+  | "knowledge-hub"
+  | "minimal-utility";
+
+type TargetSurfaceKey = "responsive-web" | "desktop-web" | "mobile-app" | "omnichannel";
+
+type ColorSchemaKey = "nordic-blue" | "forest-green" | "warm-amber" | "violet-studio" | "graphite";
+
+const profileOptions: Array<Option<UxProfileKey>> = [
+  {
+    key: "enterprise-control-plane",
+    label: "Enterprise control plane",
+    summary: "Dense, governed, auditable work surface.",
+    guidance:
+      "Prioritize dashboard density, strong hierarchy, audit-ready status, table/list scanning, durable navigation, and clear ownership of decisions."
+  },
+  {
+    key: "operational-workflow",
+    label: "Operational workflow tool",
+    summary: "Fast queues, handoffs, and repeated actions.",
+    guidance:
+      "Prioritize queues, task states, handoff clarity, exception handling, keyboard-friendly actions, and low-latency decision loops."
+  },
+  {
+    key: "customer-portal",
+    label: "Customer portal",
+    summary: "External-facing progress, trust, and self-service.",
+    guidance:
+      "Prioritize plain-language status, next-best actions, document/message flows, trust-building summaries, and low-friction input collection."
+  },
+  {
+    key: "creative-workspace",
+    label: "Creative workspace",
+    summary: "Exploratory canvas for synthesis and iteration.",
+    guidance:
+      "Prioritize flexible grouping, visual comparison, lightweight capture, iteration history, comments, and room for emerging structure."
+  },
+  {
+    key: "knowledge-hub",
+    label: "Knowledge hub",
+    summary: "Findability, learning paths, and reusable context.",
+    guidance:
+      "Prioritize search, taxonomy, related content, provenance, reading comfort, progressive disclosure, and contribution quality."
+  },
+  {
+    key: "minimal-utility",
+    label: "Minimal utility",
+    summary: "One focused job with minimal chrome.",
+    guidance:
+      "Prioritize a single primary path, short forms, explicit confirmation, compact controls, low setup cost, and fast completion."
+  }
+];
+
+const surfaceOptions: Array<Option<TargetSurfaceKey>> = [
+  {
+    key: "responsive-web",
+    label: "Responsive web app",
+    summary: "Works across desktop and mobile browsers.",
+    guidance:
+      "Design from responsive web constraints with clear desktop density and a readable mobile layout for core review and input tasks."
+  },
+  {
+    key: "desktop-web",
+    label: "Desktop web app",
+    summary: "Optimized for broad screens and heavy workflows.",
+    guidance:
+      "Optimize for desktop productivity with multi-column layouts, visible context, shortcuts where useful, and high scan density."
+  },
+  {
+    key: "mobile-app",
+    label: "Mobile app",
+    summary: "Small-screen, touch-first, field-friendly experience.",
+    guidance:
+      "Optimize for touch targets, one-handed flows, offline/poor-network tolerance where relevant, and concise step-by-step interaction."
+  },
+  {
+    key: "omnichannel",
+    label: "Omnichannel",
+    summary: "Consistent journeys across web, mobile, and service touchpoints.",
+    guidance:
+      "Define a shared journey model across channels with consistent terminology, state, notifications, permissions, and handoff behavior."
+  }
+];
+
+const colorOptions: Array<Option<ColorSchemaKey>> = [
+  {
+    key: "nordic-blue",
+    label: "Nordic blue",
+    summary: "Calm, precise, professional.",
+    guidance:
+      "Use cool blues with clean neutrals, restrained accents, high contrast, and a calm professional tone."
+  },
+  {
+    key: "forest-green",
+    label: "Forest green",
+    summary: "Grounded, sustainable, reassuring.",
+    guidance:
+      "Use grounded greens with neutral surfaces, visible success states, and a trustworthy operations-oriented tone."
+  },
+  {
+    key: "warm-amber",
+    label: "Warm amber",
+    summary: "Human, clear, approachable.",
+    guidance:
+      "Use warm amber accents sparingly with light neutral surfaces, friendly calls to action, and accessible warning/status contrast."
+  },
+  {
+    key: "violet-studio",
+    label: "Violet studio",
+    summary: "Inventive, premium, expressive.",
+    guidance:
+      "Use violet accents for creativity and selection states while keeping functional surfaces readable and not overly decorative."
+  },
+  {
+    key: "graphite",
+    label: "Graphite",
+    summary: "Serious, focused, low-noise.",
+    guidance:
+      "Use graphite neutrals with crisp borders, limited accent color, strong focus states, and a quiet expert-tool feel."
+  }
+];
+
+const defaultProfile = "enterprise-control-plane";
+const defaultSurface = "responsive-web";
+const defaultColor = "nordic-blue";
+
+function translate(language: Language, en: string, sv: string) {
+  return language === "sv" ? sv : en;
+}
+
+function findOption<T extends string>(options: Array<Option<T>>, value: string | null, fallback: T): Option<T> {
+  const fallbackOption = options.find((option) => option.key === fallback) ?? options[0]!;
+  if (!value) return fallbackOption;
+
+  const normalized = value.toLowerCase();
+  return (
+    options.find(
+      (option) =>
+        normalized.includes(option.key.toLowerCase()) || normalized.includes(option.label.toLowerCase())
+    ) ?? fallbackOption
+  );
+}
+
+function readLabeledValue(value: string, label: string) {
+  const match = value.match(new RegExp(`^${label}:\\s*(.+)$`, "im"));
+  return match?.[1]?.trim() ?? null;
+}
+
+function readAdditionalInstructions(value: string) {
+  const match = value.match(/Additional UX instructions:\s*([\s\S]*)$/i);
+  return match?.[1]?.trim() ?? "";
+}
+
+function parseInitialValue(value: string) {
+  const hasStructuredDirection = /UX profile:/i.test(value);
+  const profile = findOption(profileOptions, readLabeledValue(value, "UX profile"), defaultProfile);
+  const surface = findOption(surfaceOptions, readLabeledValue(value, "Target surface"), defaultSurface);
+  const color = findOption(colorOptions, readLabeledValue(value, "Color schema"), defaultColor);
+
+  return {
+    profile: profile.key,
+    surface: surface.key,
+    color: color.key,
+    customInstructions: hasStructuredDirection ? readAdditionalInstructions(value) : value.trim()
+  };
+}
+
+function buildExportedUxPrinciples(
+  profile: Option<UxProfileKey>,
+  surface: Option<TargetSurfaceKey>,
+  color: Option<ColorSchemaKey>,
+  customInstructions: string
+) {
+  const sections = [
+    "UX direction",
+    `UX profile: ${profile.label} (${profile.key})`,
+    `Target surface: ${surface.label} (${surface.key})`,
+    `Color schema: ${color.label} (${color.key})`,
+    "",
+    "Core UX guidance:",
+    profile.guidance,
+    "",
+    "Surface guidance:",
+    surface.guidance,
+    "",
+    "Color guidance:",
+    color.guidance
+  ];
+
+  const trimmedInstructions = customInstructions.trim();
+  if (trimmedInstructions.length > 0) {
+    sections.push("", "Additional UX instructions:", trimmedInstructions);
+  }
+
+  return sections.join("\n");
+}
+
+function SelectField<T extends string>({
+  disabled,
+  label,
+  options,
+  value,
+  onChange
+}: {
+  disabled?: boolean | undefined;
+  label: string;
+  options: Array<Option<T>>;
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  const selected = options.find((option) => option.key === value) ?? options[0]!;
+
+  return (
+    <label className="space-y-2">
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+      <select
+        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-medium text-slate-950 outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+        disabled={disabled}
+        value={value}
+        onChange={(event) => onChange(event.target.value as T)}
+      >
+        {options.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <p className="text-xs leading-5 text-muted-foreground">{selected.summary}</p>
+    </label>
+  );
+}
+
+export function UxDirectionField({
+  disabled,
+  initialValue,
+  language
+}: {
+  disabled?: boolean | undefined;
+  initialValue: string;
+  language: Language;
+}) {
+  const initial = useMemo(() => parseInitialValue(initialValue), [initialValue]);
+  const [profileKey, setProfileKey] = useState<UxProfileKey>(initial.profile);
+  const [surfaceKey, setSurfaceKey] = useState<TargetSurfaceKey>(initial.surface);
+  const [colorKey, setColorKey] = useState<ColorSchemaKey>(initial.color);
+  const [customInstructions, setCustomInstructions] = useState(initial.customInstructions);
+
+  const selectedProfile = profileOptions.find((option) => option.key === profileKey) ?? profileOptions[0]!;
+  const selectedSurface = surfaceOptions.find((option) => option.key === surfaceKey) ?? surfaceOptions[0]!;
+  const selectedColor = colorOptions.find((option) => option.key === colorKey) ?? colorOptions[0]!;
+
+  const exportedUxPrinciples = buildExportedUxPrinciples(
+    selectedProfile,
+    selectedSurface,
+    selectedColor,
+    customInstructions
+  );
+  const previewHref = `/framing/ux-preview?profile=${profileKey}&surface=${surfaceKey}&color=${colorKey}`;
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-violet-200 bg-violet-50/80 p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-sm font-semibold text-violet-950">
+              <Palette className="h-4 w-4 shrink-0 text-violet-700" />
+              {translate(language, "UX direction", "UX-riktning")}
+            </div>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-violet-950/75">
+              {translate(
+                language,
+                "Choose profile, target surface, and color schema. The generated UX principles are saved with the framing export.",
+                "Valj profil, malyta och fargschema. Den genererade UX-riktningen sparas i framing-exporten."
+              )}
+            </p>
+          </div>
+          <Button
+            asChild
+            className="shrink-0 border-violet-300 bg-white text-violet-950 hover:border-violet-400 hover:bg-violet-100"
+            size="sm"
+            variant="secondary"
+          >
+            <Link href={previewHref}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {translate(language, "Preview selected direction", "Forhandsgranska valet")}
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <SelectField
+          disabled={disabled}
+          label={translate(language, "UX profile", "UX-profil")}
+          options={profileOptions}
+          value={profileKey}
+          onChange={setProfileKey}
+        />
+        <SelectField
+          disabled={disabled}
+          label={translate(language, "Target surface", "Malyta")}
+          options={surfaceOptions}
+          value={surfaceKey}
+          onChange={setSurfaceKey}
+        />
+        <SelectField
+          disabled={disabled}
+          label={translate(language, "Color schema", "Fargschema")}
+          options={colorOptions}
+          value={colorKey}
+          onChange={setColorKey}
+        />
+      </div>
+
+      <label className="block space-y-2">
+        <span className="text-sm font-medium text-foreground">
+          {translate(language, "Additional UX instructions", "Ytterligare UX-instruktioner")}
+        </span>
+        <textarea
+          className="min-h-24 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
+          disabled={disabled}
+          placeholder={translate(
+            language,
+            "Add brand constraints, accessibility needs, component preferences, tone, references, or things the downstream designer must avoid.",
+            "Lagg till varumarkeskrav, tillganglighetsbehov, komponentpreferenser, ton, referenser eller sadant downstream-designern ska undvika."
+          )}
+          value={customInstructions}
+          onChange={(event) => setCustomInstructions(event.target.value)}
+        />
+      </label>
+
+      <label className="block space-y-2">
+        <span className="text-sm font-medium text-foreground">
+          {translate(language, "Exported UX principles", "Exporterade UX-principer")}
+        </span>
+        <textarea
+          className="min-h-44 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 font-mono text-xs leading-5 text-slate-700 outline-none disabled:cursor-not-allowed disabled:bg-muted/30"
+          disabled={disabled}
+          name="uxPrinciples"
+          readOnly
+          value={exportedUxPrinciples}
+        />
+      </label>
+    </div>
+  );
+}
