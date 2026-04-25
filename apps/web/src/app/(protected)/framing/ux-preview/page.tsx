@@ -342,6 +342,26 @@ function ReferencePreview(props: {
 }
 
 function DesktopReference({ dense, profile }: { dense: boolean; profile: (typeof profiles)[number] }) {
+  if (profile.key === "operational-workflow") {
+    return <WorkflowReference profile={profile} />;
+  }
+
+  if (profile.key === "customer-portal") {
+    return <PortalReference profile={profile} />;
+  }
+
+  if (profile.key === "creative-workspace") {
+    return <CreativeReference profile={profile} />;
+  }
+
+  if (profile.key === "knowledge-hub") {
+    return <KnowledgeReference profile={profile} />;
+  }
+
+  if (profile.key === "minimal-utility") {
+    return <UtilityReference profile={profile} />;
+  }
+
   return (
     <div className={`rounded-[28px] border ${profile.border} ${profile.tint} p-4`}>
       <div className={`grid gap-4 ${dense ? "lg:grid-cols-[180px_minmax(0,1fr)_220px]" : "lg:grid-cols-[200px_minmax(0,1fr)]"}`}>
@@ -393,6 +413,168 @@ function DesktopReference({ dense, profile }: { dense: boolean; profile: (typeof
             ))}
           </div>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function WorkflowReference({ profile }: { profile: (typeof profiles)[number] }) {
+  const columns = [
+    { title: "New", items: ["Validate intake", "Assign owner"] },
+    { title: "In progress", items: ["Resolve blocker", "Prepare handoff"] },
+    { title: "Done", items: ["Approval recorded"] }
+  ];
+
+  return (
+    <div className={`rounded-[28px] border ${profile.border} bg-emerald-50 p-4`}>
+      <div className="rounded-3xl border border-emerald-200 bg-white/95 p-4 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Operations queue</p>
+            <h2 className="mt-2 text-xl font-semibold text-foreground">Work moves left to right</h2>
+          </div>
+          <Button size="sm">Start next task</Button>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {columns.map((column) => (
+            <div className="min-h-56 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3" key={column.title}>
+              <p className="text-sm font-semibold text-emerald-950">{column.title}</p>
+              <div className="mt-3 space-y-3">
+                {column.items.map((item) => (
+                  <div className="rounded-2xl border border-emerald-200 bg-white p-3 text-sm shadow-sm" key={item}>
+                    <p className="font-medium text-foreground">{item}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Owner, due date, and next action visible.</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PortalReference({ profile }: { profile: (typeof profiles)[number] }) {
+  return (
+    <div className={`rounded-[28px] border ${profile.border} bg-cyan-50 p-4`}>
+      <div className="overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-sm">
+        <div className="border-b border-cyan-100 bg-white px-5 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-cyan-950">Customer workspace</p>
+              <p className="mt-1 text-sm text-muted-foreground">Plain-language status, documents, messages, approvals.</p>
+            </div>
+            <div className="flex gap-2 text-sm">
+              {profile.sampleNav.map((item) => (
+                <span className="rounded-full border border-cyan-200 px-3 py-1 text-cyan-950" key={item}>{item}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="rounded-3xl bg-cyan-700 p-6 text-white">
+            <p className="text-sm font-medium text-cyan-100">Current status</p>
+            <h2 className="mt-3 text-2xl font-semibold">Input requested from customer</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-cyan-50">A friendly summary explains what is needed, why it matters, and when the team will respond.</p>
+          </div>
+          <div className="space-y-3">
+            {["Upload document", "Review decision", "Message team"].map((item) => (
+              <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm font-medium text-cyan-950" key={item}>{item}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreativeReference({ profile }: { profile: (typeof profiles)[number] }) {
+  return (
+    <div className={`rounded-[28px] border ${profile.border} bg-violet-50 p-4`}>
+      <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="rounded-3xl border border-violet-200 bg-white/90 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Sources</p>
+          <div className="mt-4 space-y-3">
+            {["Interview notes", "AI synthesis", "Draft brief"].map((item) => (
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-3 text-sm" key={item}>{item}</div>
+            ))}
+          </div>
+        </div>
+        <div className="min-h-80 rounded-3xl border border-violet-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-violet-950">Exploration canvas</p>
+            <Button size="sm" variant="secondary">Turn into decision</Button>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {["Idea cluster", "Open question", "Promising direction", "Risk to test", "User quote", "Next draft"].map((item, index) => (
+              <div
+                className={`min-h-28 rotate-0 rounded-2xl border p-4 text-sm shadow-sm ${
+                  index % 3 === 0 ? "border-amber-200 bg-amber-50" : index % 3 === 1 ? "border-violet-200 bg-violet-50" : "border-sky-200 bg-sky-50"
+                }`}
+                key={item}
+              >
+                <p className="font-medium text-foreground">{item}</p>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">Flexible thinking space before structure hardens.</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KnowledgeReference({ profile }: { profile: (typeof profiles)[number] }) {
+  return (
+    <div className={`rounded-[28px] border ${profile.border} bg-indigo-50 p-4`}>
+      <div className="rounded-3xl border border-indigo-200 bg-white p-5 shadow-sm">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">Knowledge hub</p>
+          <h2 className="mt-2 text-2xl font-semibold text-foreground">Find trusted guidance fast</h2>
+          <div className="mt-5 rounded-full border border-indigo-200 bg-indigo-50 px-5 py-3 text-left text-sm text-muted-foreground">
+            Search policies, guides, decisions, and examples
+          </div>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="space-y-2">
+            {profile.sampleNav.map((item) => (
+              <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-950" key={item}>{item}</div>
+            ))}
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {["Recommended guide", "Verified policy", "Related decision", "Recent update"].map((item) => (
+              <div className="rounded-2xl border border-border/70 bg-background p-4" key={item}>
+                <p className="font-medium text-foreground">{item}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">Scannable content with source confidence and next reading path.</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UtilityReference({ profile }: { profile: (typeof profiles)[number] }) {
+  return (
+    <div className={`rounded-[28px] border ${profile.border} bg-slate-50 p-4`}>
+      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Single purpose tool</p>
+        <h2 className="mt-2 text-2xl font-semibold text-foreground">Calculate readiness</h2>
+        <div className="mt-5 space-y-4">
+          {["Input value", "Threshold", "Decision rule"].map((item) => (
+            <label className="block space-y-2" key={item}>
+              <span className="text-sm font-medium text-foreground">{item}</span>
+              <div className="h-11 rounded-2xl border border-slate-300 bg-white" />
+            </label>
+          ))}
+        </div>
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-semibold text-foreground">Result: Ready</p>
+          <p className="mt-1 text-sm text-muted-foreground">One result, one primary action, very little chrome.</p>
+        </div>
+        <Button className="mt-5 w-full">Save result</Button>
       </div>
     </div>
   );

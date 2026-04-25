@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, CircleHelp, Clock3, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, CircleAlert, CircleCheckBig, CircleHelp, Clock3, Palette, ShieldCheck } from "lucide-react";
 import { type getOutcomeWorkspaceService } from "@aas-companion/api";
 import {
   deriveOutcomeRiskProfile,
@@ -83,6 +83,36 @@ type FramingOutcomeSectionProps = {
   reviewFramingAction: typeof reviewOutcomeFramingWithAiAction;
   initialReviewFramingState: ReviewOutcomeFramingAiActionState;
 };
+
+function UxDirectionPreviewInline({ language }: { language: "en" | "sv" }) {
+  return (
+    <div className="rounded-2xl border border-violet-200 bg-violet-50/80 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold text-violet-950">
+            <Palette className="h-4 w-4 shrink-0 text-violet-700" />
+            {language === "sv" ? "UX-riktning och stilprofiler" : "UX direction and style profiles"}
+          </div>
+          <p className="mt-2 text-sm leading-6 text-violet-950/75">
+            {language === "sv"
+              ? "Forhandsgranska olika UX-profiler innan du skriver principerna som ska folja med downstream."
+              : "Preview different UX profiles before writing the principles that should travel downstream."}
+          </p>
+        </div>
+        <Button
+          asChild
+          className="shrink-0 border-violet-300 bg-white text-violet-950 hover:border-violet-400 hover:bg-violet-100"
+          size="sm"
+          variant="secondary"
+        >
+          <Link href="/framing/ux-preview">
+            {language === "sv" ? "Forhandsgranska UX-profiler" : "Preview UX profiles"}
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function translate(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
@@ -1027,10 +1057,11 @@ export function FramingOutcomeSection({
                   />
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.solution_constraints", language)} />
                 </label>
-                <label className="space-y-2 xl:col-span-2">
+                <div className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">
                     {language === "sv" ? "UX-principer" : "UX principles"}
                   </span>
+                  <UxDirectionPreviewInline language={language} />
                   <textarea
                     className="min-h-24 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:bg-muted/30"
                     defaultValue={structuredConstraints.uxPrinciples}
@@ -1045,7 +1076,7 @@ export function FramingOutcomeSection({
                   <p className="text-sm leading-6 text-muted-foreground">
                     <DeliveryTypeGuidanceText slot="uxDescription" />
                   </p>
-                </label>
+                </div>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">
                     {language === "sv" ? "Non-functional requirements" : "Non-functional requirements"}

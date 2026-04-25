@@ -148,37 +148,6 @@ function SelectedFramingContentErrorCard() {
   );
 }
 
-function FramingUxPreviewCard() {
-  return (
-    <Card className="border-violet-200 bg-[linear-gradient(135deg,rgba(245,243,255,0.98),rgba(255,255,255,0.96))] shadow-sm">
-      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">
-            <LocalizedText en="New UX Direction Preview" sv="Ny UX Direction Preview" />
-          </p>
-          <p className="mt-2 text-base font-semibold text-foreground">
-            <LocalizedText
-              en="Compare reference styles before you choose what to send downstream."
-              sv="Jamfor referensstilar innan du valjer vad som ska skickas downstream."
-            />
-          </p>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            <LocalizedText
-              en="Start here to see Enterprise control plane, Workflow, Customer portal, Creative workspace, Knowledge hub, and Minimal utility previews."
-              sv="Borja har for att se previews for Enterprise control plane, Workflow, Customer portal, Creative workspace, Knowledge hub och Minimal utility."
-            />
-          </p>
-        </div>
-        <Button asChild className="shrink-0 border-violet-300 bg-white text-violet-900 hover:border-violet-400 hover:bg-violet-50" variant="secondary">
-          <Link href="/framing/ux-preview">
-            <LocalizedText en="Preview UX profiles" sv="Forhandsgranska UX-profiler" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
 export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
     try {
@@ -235,7 +204,6 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
               state: cockpit.state
             }}
           />
-          <FramingUxPreviewCard />
           {cockpit.state === "unavailable" ? (
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
