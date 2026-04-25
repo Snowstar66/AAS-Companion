@@ -442,7 +442,7 @@ export default async function UxDirectionPreviewPage({ searchParams }: UxPreview
               </CardHeader>
               <CardContent className="space-y-5">
                 <ReferencePreview color={activeColor} profile={activeProfile} surface={activeSurface.key} />
-                <ComponentReference color={activeColor} />
+                <ComponentReference color={activeColor} profile={activeProfile} surface={activeSurface.key} />
 
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                   <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
@@ -485,47 +485,259 @@ function ReferencePreview(props: {
   return <DesktopReference color={props.color} dense={props.surface === "desktop-web"} profile={props.profile} />;
 }
 
-function ComponentReference({ color }: { color: (typeof colorSchemas)[number] }) {
+const componentExamples: Record<
+  UxProfileKey,
+  {
+    title: string;
+    description: string;
+    primaryAction: string;
+    secondaryAction: string;
+    selectLabel: string;
+    selectOptions: string[];
+    fieldLabel: string;
+    fieldValue: string;
+    statusLabel: string;
+    guidance: string;
+    companionTitle: string;
+    companionBody: string;
+  }
+> = {
+  "enterprise-control-plane": {
+    title: "Governed control components",
+    description: "Compact controls for decisions, status, ownership, and auditability.",
+    primaryAction: "Approve gate",
+    secondaryAction: "Request review",
+    selectLabel: "Risk posture",
+    selectOptions: ["Controlled", "Needs review", "Blocked"],
+    fieldLabel: "Decision owner",
+    fieldValue: "Value owner",
+    statusLabel: "Audit ready",
+    guidance: "Show owner, version, evidence, and decision state close to every primary action.",
+    companionTitle: "Audit card",
+    companionBody: "Version, reviewer, timestamp, and evidence remain visible."
+  },
+  "operational-workflow": {
+    title: "Workflow action components",
+    description: "Fast controls for queues, repeated actions, exceptions, and handoffs.",
+    primaryAction: "Start task",
+    secondaryAction: "Escalate",
+    selectLabel: "Queue lane",
+    selectOptions: ["New", "In progress", "Blocked"],
+    fieldLabel: "SLA note",
+    fieldValue: "2h remaining",
+    statusLabel: "Due soon",
+    guidance: "Make the next action, blocker, due time, and assignee visible without opening another view.",
+    companionTitle: "Queue card",
+    companionBody: "Small cards carry owner, due date, blocker, and the next available action."
+  },
+  "customer-portal": {
+    title: "Customer-facing components",
+    description: "Friendly controls for status, documents, messages, and low-friction approvals.",
+    primaryAction: "Send update",
+    secondaryAction: "Ask question",
+    selectLabel: "Customer view",
+    selectOptions: ["Overview", "Documents", "Messages"],
+    fieldLabel: "Message subject",
+    fieldValue: "Input needed",
+    statusLabel: "Waiting for customer",
+    guidance: "Use plain language, avoid internal jargon, and explain what happens after each action.",
+    companionTitle: "Next step card",
+    companionBody: "One clear request, why it matters, and when the team will respond."
+  },
+  "creative-workspace": {
+    title: "Creative workspace components",
+    description: "Flexible pieces for capture, synthesis, comments, and turning exploration into decisions.",
+    primaryAction: "Create draft",
+    secondaryAction: "Add note",
+    selectLabel: "Canvas mode",
+    selectOptions: ["Explore", "Cluster", "Decide"],
+    fieldLabel: "Idea prompt",
+    fieldValue: "What might be true?",
+    statusLabel: "Draft evolving",
+    guidance: "Components should feel movable and provisional, with easy paths from notes to decisions.",
+    companionTitle: "Canvas note",
+    companionBody: "Ideas, quotes, risks, and AI suggestions can sit side by side before being structured."
+  },
+  "knowledge-hub": {
+    title: "Knowledge components",
+    description: "Search-first controls for guidance, policies, provenance, and reusable context.",
+    primaryAction: "Open guide",
+    secondaryAction: "Save source",
+    selectLabel: "Content type",
+    selectOptions: ["Guide", "Policy", "Decision"],
+    fieldLabel: "Search query",
+    fieldValue: "approval rules",
+    statusLabel: "Verified source",
+    guidance: "Emphasize search, source confidence, related material, and readable long-form content.",
+    companionTitle: "Source card",
+    companionBody: "Each result shows topic, confidence, owner, and the next useful reading path."
+  },
+  "minimal-utility": {
+    title: "Minimal utility components",
+    description: "Reduced controls for one clear job, immediate feedback, and fast completion.",
+    primaryAction: "Run check",
+    secondaryAction: "Reset",
+    selectLabel: "Mode",
+    selectOptions: ["Simple", "Advanced", "History"],
+    fieldLabel: "Input value",
+    fieldValue: "42",
+    statusLabel: "Ready",
+    guidance: "Hide chrome, keep one primary action, and show a direct result without extra navigation.",
+    companionTitle: "Result card",
+    companionBody: "The result, reason, and single next action are the whole interface."
+  }
+};
+
+const surfaceTreatments: Record<
+  TargetSurfaceKey,
+  {
+    title: string;
+    description: string;
+    shellClass: string;
+    gridClass: string;
+    controlRadius: string;
+    buttonClass: string;
+    inputClass: string;
+    statusClass: string;
+    companionClass: string;
+  }
+> = {
+  "responsive-web": {
+    title: "Responsive component set",
+    description: "Balanced controls that can collapse from desktop to mobile browser.",
+    shellClass: "",
+    gridClass: "grid gap-4 md:grid-cols-2 xl:grid-cols-4",
+    controlRadius: "rounded-2xl",
+    buttonClass: "h-11 rounded-2xl px-4",
+    inputClass: "h-11 rounded-2xl px-3",
+    statusClass: "rounded-2xl px-3 py-2",
+    companionClass: "rounded-2xl"
+  },
+  "desktop-web": {
+    title: "Desktop-dense component set",
+    description: "Tighter controls, side-by-side fields, and more visible operational context.",
+    shellClass: "border-l-4",
+    gridClass: "grid gap-3 lg:grid-cols-[1.1fr_1fr_1fr_1.2fr]",
+    controlRadius: "rounded-xl",
+    buttonClass: "h-9 rounded-xl px-3",
+    inputClass: "h-9 rounded-xl px-3",
+    statusClass: "rounded-xl px-3 py-2",
+    companionClass: "rounded-xl"
+  },
+  "mobile-app": {
+    title: "Mobile-first component set",
+    description: "Stacked, thumb-friendly controls with one primary action in focus.",
+    shellClass: "mx-auto max-w-[390px]",
+    gridClass: "grid gap-3",
+    controlRadius: "rounded-[24px]",
+    buttonClass: "h-12 rounded-[22px] px-4",
+    inputClass: "h-12 rounded-[20px] px-4",
+    statusClass: "rounded-[20px] px-4 py-3",
+    companionClass: "rounded-[24px]"
+  },
+  omnichannel: {
+    title: "Omnichannel component set",
+    description: "The same state expressed for workspace, mobile touchpoint, and customer update.",
+    shellClass: "",
+    gridClass: "grid gap-4 lg:grid-cols-[1fr_0.8fr_0.8fr]",
+    controlRadius: "rounded-2xl",
+    buttonClass: "h-11 rounded-2xl px-4",
+    inputClass: "h-11 rounded-2xl px-3",
+    statusClass: "rounded-2xl px-3 py-2",
+    companionClass: "rounded-2xl"
+  }
+};
+
+function ComponentReference({
+  color,
+  profile,
+  surface
+}: {
+  color: (typeof colorSchemas)[number];
+  profile: (typeof profiles)[number];
+  surface: TargetSurfaceKey;
+}) {
+  const example = componentExamples[profile.key];
+  const treatment = surfaceTreatments[surface];
+  const secondaryPanel =
+    profile.key === "creative-workspace"
+      ? "border-amber-200 bg-amber-50"
+      : profile.key === "minimal-utility"
+        ? "border-slate-200 bg-white"
+        : color.chip;
+
   return (
     <Card className={`border ${color.border} ${color.panel} shadow-sm`}>
       <CardHeader className="pb-4">
-        <CardTitle>Component examples</CardTitle>
-        <CardDescription>Basic UI elements rendered with the selected color schema.</CardDescription>
+        <CardTitle>{example.title}</CardTitle>
+        <CardDescription>
+          {treatment.title}. {example.description}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 lg:grid-cols-4">
-          <div className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Buttons</p>
-            <button className={`h-11 rounded-full px-4 text-sm font-medium shadow-sm ${color.primaryButton}`} type="button">
-              Primary action
-            </button>
-            <button className={`h-11 rounded-full border px-4 text-sm font-medium shadow-sm ${color.secondaryButton}`} type="button">
-              Secondary
-            </button>
+        <div className={`space-y-4 ${treatment.shellClass}`}>
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{treatment.description}</p>
+          <div className={treatment.gridClass}>
+            <div className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Actions</p>
+              <button className={`${treatment.buttonClass} w-full text-sm font-medium shadow-sm ${color.primaryButton}`} type="button">
+                {example.primaryAction}
+              </button>
+              <button className={`${treatment.buttonClass} w-full border text-sm font-medium shadow-sm ${color.secondaryButton}`} type="button">
+                {example.secondaryAction}
+              </button>
+            </div>
+
+            <label className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{example.selectLabel}</span>
+              <select className={`${treatment.inputClass} w-full border ${color.border} bg-white text-sm outline-none`}>
+                {example.selectOptions.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+              <p className="text-xs leading-5 text-muted-foreground">Options follow the chosen profile vocabulary.</p>
+            </label>
+
+            <label className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{example.fieldLabel}</span>
+              <input
+                className={`${treatment.inputClass} w-full border ${color.border} bg-white text-sm outline-none`}
+                defaultValue={example.fieldValue}
+              />
+              <p className="text-xs leading-5 text-muted-foreground">
+                {surface === "mobile-app" ? "Large touch target." : surface === "desktop-web" ? "Compact scan target." : "Responsive field rhythm."}
+              </p>
+            </label>
+
+            <div className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Status and guidance</p>
+              <span className={`inline-flex border text-xs font-semibold ${treatment.statusClass} ${color.chip}`}>{example.statusLabel}</span>
+              <div className={`border text-sm leading-6 ${treatment.statusClass} ${secondaryPanel}`}>{example.guidance}</div>
+            </div>
           </div>
-          <label className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Dropdown</span>
-            <select className={`h-11 w-full rounded-2xl border ${color.border} bg-white px-3 text-sm outline-none`}>
-              <option>{color.label}</option>
-              <option>Strict customer style</option>
-              <option>Default product style</option>
-            </select>
-          </label>
-          <label className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Input</span>
-            <input className={`h-11 w-full rounded-2xl border ${color.border} bg-white px-3 text-sm outline-none`} defaultValue="UX direction note" />
-          </label>
-          <div className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Status</p>
-            <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${color.chip}`}>Ready for downstream</span>
-            <div className={`rounded-2xl border p-3 text-sm ${color.chip}`}>Inline guidance follows this palette.</div>
+
+          <div className={`border ${color.border} bg-white/90 p-4 ${treatment.companionClass}`}>
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${color.accentText}`}>{profile.shortLabel} pattern</p>
+                <h3 className="mt-2 text-base font-semibold text-foreground">{example.companionTitle}</h3>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{example.companionBody}</p>
+              </div>
+              <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${color.accent}`}>{color.label}</span>
+            </div>
+            <div className={`mt-4 grid gap-3 ${surface === "mobile-app" ? "grid-cols-1" : "md:grid-cols-3"}`}>
+              {profile.sampleWork.map((item) => (
+                <div className={`border p-3 text-sm font-medium ${treatment.companionClass} ${color.chip}`} key={item}>
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
-
 function DesktopReference({
   color,
   dense,
