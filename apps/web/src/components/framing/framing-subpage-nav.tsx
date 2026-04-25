@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Palette } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 import { FramingPackagePageHero } from "@/components/framing/framing-package-page-hero";
 
@@ -45,6 +46,17 @@ export function FramingSubpageNav({
           <Link href={`/framing?outcomeId=${outcomeId}&subpage=downstream-ai-instructions`}>
             {t(language, "Downstream AI Tuning", "Downstream AI-tuning")}
             {customInstructionCount > 0 ? ` (${customInstructionCount})` : ""}
+          </Link>
+        </Button>
+        <Button
+          asChild
+          className="border-violet-300 bg-violet-50 text-violet-950 hover:border-violet-400 hover:bg-violet-100"
+          size="sm"
+          variant="secondary"
+        >
+          <Link href="/framing/ux-preview">
+            <Palette className="h-4 w-4" />
+            {t(language, "Preview UX profiles", "Forhandsgranska UX-profiler")}
           </Link>
         </Button>
       </div>
