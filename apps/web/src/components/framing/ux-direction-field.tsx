@@ -71,6 +71,39 @@ const profileOptions: Array<Option<UxProfileKey>> = [
   }
 ];
 
+const profileVisualGrammar: Record<UxProfileKey, string[]> = {
+  "enterprise-control-plane": [
+    "Use dense control-plane layouts with compact rectangular cards, tables, right rails, and persistent navigation.",
+    "Prefer squared or small-radius controls, clear borders, muted surfaces, and high information density.",
+    "Place owner, status, evidence, version, and governance action together so the decision context is never hidden."
+  ],
+  "operational-workflow": [
+    "Use queue/lane layouts, stacked task cards, checklist rows, compact state chips, and visible due-time pressure.",
+    "Make primary actions short and repeated; keep escalation and handoff controls close to the work item.",
+    "Favor operational rhythm over decoration: columns, lanes, progress, blockers, owner, next action."
+  ],
+  "customer-portal": [
+    "Use spacious customer-facing panels, friendly rounded cards, plain-language status summaries, and obvious next steps.",
+    "Avoid internal terms; put documents, messages, approvals, and support actions in language a customer would understand.",
+    "Prefer reassurance, progress, and clarity over dense admin controls."
+  ],
+  "creative-workspace": [
+    "Use canvas-like layouts, flexible clusters, note cards, source trays, and provisional states that invite iteration.",
+    "Allow visual comparison and synthesis before structure hardens; comments and AI suggestions should feel easy to rearrange.",
+    "Use more whitespace and looser grouping than an operational tool."
+  ],
+  "knowledge-hub": [
+    "Use search-first layouts, readable article cards, topic navigation, source confidence, and related-content paths.",
+    "Prioritize reading comfort, provenance, taxonomy, and skim-friendly document structure.",
+    "Avoid dashboard clutter unless it directly improves findability."
+  ],
+  "minimal-utility": [
+    "Use a centered single-purpose layout with minimal navigation, one primary input path, and one obvious result.",
+    "Remove decorative chrome, secondary panels, and unrelated links unless they directly support completion.",
+    "Prefer sparse surfaces, direct labels, immediate feedback, and one dominant action."
+  ]
+};
+
 const surfaceOptions: Array<Option<TargetSurfaceKey>> = [
   {
     key: "responsive-web",
@@ -191,6 +224,7 @@ function buildExportedUxPrinciples(
   color: Option<ColorSchemaKey>,
   customInstructions: string
 ) {
+  const visualGrammar = profileVisualGrammar[profile.key] ?? [];
   const sections = [
     "UX direction",
     `UX profile: ${profile.label} (${profile.key})`,
@@ -199,6 +233,10 @@ function buildExportedUxPrinciples(
     "",
     "Core UX guidance:",
     profile.guidance,
+    "",
+    "Downstream AI visual grammar:",
+    "The selected UX profile must materially change layout, components, density, navigation, and status treatment. Do not collapse this into a generic SaaS card UI.",
+    ...visualGrammar.map((rule) => `- ${rule}`),
     "",
     "Surface guidance:",
     surface.guidance,

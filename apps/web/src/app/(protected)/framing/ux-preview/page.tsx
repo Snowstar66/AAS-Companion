@@ -43,6 +43,7 @@ const profiles: Array<{
   sampleNav: string[];
   sampleWork: string[];
   statusLabel: string;
+  visualGrammar: string[];
   instruction: string;
 }> = [
   {
@@ -58,6 +59,11 @@ const profiles: Array<{
     sampleNav: ["Dashboard", "Framing", "Review", "Governance"],
     sampleWork: ["Outcome readiness", "Tollgate status", "Owner action list"],
     statusLabel: "Ready for approval",
+    visualGrammar: [
+      "Use dense control-plane layouts with compact rectangular cards, tables, right rails, and persistent navigation.",
+      "Prefer squared or small-radius controls, clear borders, muted surfaces, and high information density.",
+      "Place owner, status, evidence, version, and governance action together so the decision context is never hidden."
+    ],
     instruction:
       "Use a calm enterprise SaaS control-plane UX with compact workspaces, clear status/readiness signals, persistent navigation, and governance-aware actions."
   },
@@ -74,6 +80,11 @@ const profiles: Array<{
     sampleNav: ["Queue", "In progress", "Blocked", "Done"],
     sampleWork: ["Next task", "SLA risk", "Handoff checklist"],
     statusLabel: "3 tasks due",
+    visualGrammar: [
+      "Use queue/lane layouts, stacked task cards, checklist rows, compact state chips, and visible due-time pressure.",
+      "Make primary actions short and repeated; keep escalation and handoff controls close to the work item.",
+      "Favor operational rhythm over decoration: columns, lanes, progress, blockers, owner, next action."
+    ],
     instruction:
       "Use an operational workflow UX with strong task hierarchy, queue visibility, checklist states, escalation points, and fast repeated actions."
   },
@@ -90,6 +101,11 @@ const profiles: Array<{
     sampleNav: ["Overview", "Documents", "Messages", "Approvals"],
     sampleWork: ["Project status", "Required input", "Latest decision"],
     statusLabel: "Input requested",
+    visualGrammar: [
+      "Use spacious customer-facing panels, friendly rounded cards, plain-language status summaries, and obvious next steps.",
+      "Avoid internal terms; put documents, messages, approvals, and support actions in language a customer would understand.",
+      "Prefer reassurance, progress, and clarity over dense admin controls."
+    ],
     instruction:
       "Use a customer portal UX with plain-language status, confidence-building summaries, transparent next steps, and minimal internal jargon."
   },
@@ -106,6 +122,11 @@ const profiles: Array<{
     sampleNav: ["Canvas", "Sources", "Drafts", "Review"],
     sampleWork: ["Idea cluster", "AI suggestion", "Draft direction"],
     statusLabel: "Draft evolving",
+    visualGrammar: [
+      "Use canvas-like layouts, flexible clusters, note cards, source trays, and provisional states that invite iteration.",
+      "Allow visual comparison and synthesis before structure hardens; comments and AI suggestions should feel easy to rearrange.",
+      "Use more whitespace and looser grouping than an operational tool."
+    ],
     instruction:
       "Use a creative workspace UX with generous thinking space, visible sources, lightweight structure, and clear ways to turn exploration into decisions."
   },
@@ -122,6 +143,11 @@ const profiles: Array<{
     sampleNav: ["Search", "Guides", "Policies", "Updates"],
     sampleWork: ["Recommended guide", "Policy match", "Recent update"],
     statusLabel: "Verified source",
+    visualGrammar: [
+      "Use search-first layouts, readable article cards, topic navigation, source confidence, and related-content paths.",
+      "Prioritize reading comfort, provenance, taxonomy, and skim-friendly document structure.",
+      "Avoid dashboard clutter unless it directly improves findability."
+    ],
     instruction:
       "Use a knowledge hub UX with strong search, scannable content structure, source confidence, topic navigation, and clear reading paths."
   },
@@ -138,6 +164,11 @@ const profiles: Array<{
     sampleNav: ["Input", "Result", "History"],
     sampleWork: ["Primary input", "Computed result", "Save action"],
     statusLabel: "Ready",
+    visualGrammar: [
+      "Use a centered single-purpose layout with minimal navigation, one primary input path, and one obvious result.",
+      "Remove decorative chrome, secondary panels, and unrelated links unless they directly support completion.",
+      "Prefer sparse surfaces, direct labels, immediate feedback, and one dominant action."
+    ],
     instruction:
       "Use a minimal utility UX with one obvious primary task, reduced navigation, direct inputs, immediate feedback, and minimal decorative structure."
   }
@@ -458,6 +489,13 @@ export default async function UxDirectionPreviewPage({ searchParams }: UxPreview
                   <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Resolved downstream instruction</p>
                     <p className="mt-3 text-sm leading-6 text-foreground">{activeProfile.instruction}</p>
+                    <div className="mt-4 space-y-2">
+                      {activeProfile.visualGrammar.map((rule) => (
+                        <p className="rounded-xl border border-border/70 bg-background px-3 py-2 text-xs leading-5 text-muted-foreground" key={rule}>
+                          {rule}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -588,6 +626,87 @@ const componentExamples: Record<
   }
 };
 
+const profileTreatments: Record<
+  UxProfileKey,
+  {
+    sectionClass: string;
+    controlCardClass: string;
+    companionClass: string;
+    sampleCardClass: string;
+    labelClass: string;
+    buttonShape: string;
+    inputShape: string;
+    statusShape: string;
+    gridOverride?: string;
+  }
+> = {
+  "enterprise-control-plane": {
+    sectionClass: "rounded-lg border-slate-300 bg-white shadow-none",
+    controlCardClass: "rounded-lg border-slate-300 bg-slate-50 p-3 shadow-none",
+    companionClass: "rounded-lg border-l-4 border-slate-400 bg-white p-4 shadow-none",
+    sampleCardClass: "rounded-md border-slate-300 bg-white px-3 py-2",
+    labelClass: "text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600",
+    buttonShape: "rounded-md",
+    inputShape: "rounded-md",
+    statusShape: "rounded-md",
+    gridOverride: "grid gap-3 lg:grid-cols-[0.9fr_1fr_1fr_1.3fr]"
+  },
+  "operational-workflow": {
+    sectionClass: "rounded-2xl border-emerald-300 bg-emerald-50 shadow-sm",
+    controlCardClass: "rounded-xl border-emerald-200 bg-white p-3 shadow-sm",
+    companionClass: "rounded-xl border-emerald-300 bg-white p-4 shadow-sm",
+    sampleCardClass: "rounded-lg border-emerald-200 bg-white px-3 py-2 before:mr-2 before:inline-block before:h-2 before:w-2 before:rounded-full before:bg-emerald-600",
+    labelClass: "text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800",
+    buttonShape: "rounded-lg",
+    inputShape: "rounded-lg",
+    statusShape: "rounded-lg",
+    gridOverride: "grid gap-3 md:grid-cols-2 xl:grid-cols-4"
+  },
+  "customer-portal": {
+    sectionClass: "rounded-[32px] border-cyan-100 bg-white shadow-[0_24px_80px_rgba(8,145,178,0.14)]",
+    controlCardClass: "rounded-[28px] border-cyan-100 bg-white p-5 shadow-sm",
+    companionClass: "rounded-[28px] border-cyan-100 bg-cyan-50 p-5 shadow-sm",
+    sampleCardClass: "rounded-full border-cyan-200 bg-white px-4 py-2",
+    labelClass: "text-xs font-semibold text-cyan-900",
+    buttonShape: "rounded-full",
+    inputShape: "rounded-2xl",
+    statusShape: "rounded-full"
+  },
+  "creative-workspace": {
+    sectionClass: "rounded-[30px] border-dashed border-violet-300 bg-violet-50 shadow-sm",
+    controlCardClass: "rounded-[26px] border-violet-200 bg-white p-4 shadow-sm",
+    companionClass: "rounded-[30px] border-dashed border-violet-300 bg-white p-5 shadow-sm",
+    sampleCardClass: "rounded-2xl border-amber-200 bg-amber-50 px-4 py-3 shadow-sm odd:-rotate-1 even:rotate-1",
+    labelClass: "text-xs font-semibold text-violet-900",
+    buttonShape: "rounded-[20px]",
+    inputShape: "rounded-[22px]",
+    statusShape: "rounded-[20px]",
+    gridOverride: "grid gap-4 lg:grid-cols-[0.9fr_1fr_1fr_1.1fr]"
+  },
+  "knowledge-hub": {
+    sectionClass: "rounded-2xl border-indigo-200 bg-white shadow-sm",
+    controlCardClass: "rounded-xl border-indigo-100 bg-white p-4 shadow-sm",
+    companionClass: "rounded-xl border-indigo-200 bg-white p-5 shadow-sm",
+    sampleCardClass: "rounded-xl border-indigo-100 bg-indigo-50 px-4 py-3",
+    labelClass: "text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-800",
+    buttonShape: "rounded-xl",
+    inputShape: "rounded-full",
+    statusShape: "rounded-xl",
+    gridOverride: "grid gap-4 lg:grid-cols-[0.8fr_1.3fr_1fr_1fr]"
+  },
+  "minimal-utility": {
+    sectionClass: "mx-auto max-w-2xl rounded-xl border-slate-200 bg-white shadow-none",
+    controlCardClass: "rounded-xl border-slate-200 bg-white p-4 shadow-none",
+    companionClass: "rounded-xl border-slate-200 bg-slate-50 p-4 shadow-none",
+    sampleCardClass: "rounded-lg border-slate-200 bg-white px-3 py-2",
+    labelClass: "text-xs font-medium text-slate-700",
+    buttonShape: "rounded-lg",
+    inputShape: "rounded-lg",
+    statusShape: "rounded-lg",
+    gridOverride: "grid gap-3"
+  }
+};
+
 const surfaceTreatments: Record<
   TargetSurfaceKey,
   {
@@ -659,6 +778,8 @@ function ComponentReference({
 }) {
   const example = componentExamples[profile.key];
   const treatment = surfaceTreatments[surface];
+  const profileTreatment = profileTreatments[profile.key];
+  const gridClass = surface === "mobile-app" ? treatment.gridClass : profileTreatment.gridOverride ?? treatment.gridClass;
   const secondaryPanel =
     profile.key === "creative-workspace"
       ? "border-amber-200 bg-amber-50"
@@ -675,22 +796,22 @@ function ComponentReference({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className={`space-y-4 ${treatment.shellClass}`}>
+        <div className={`space-y-4 border p-4 ${treatment.shellClass} ${profileTreatment.sectionClass}`}>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{treatment.description}</p>
-          <div className={treatment.gridClass}>
-            <div className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Actions</p>
-              <button className={`${treatment.buttonClass} w-full text-sm font-medium shadow-sm ${color.primaryButton}`} type="button">
+          <div className={gridClass}>
+            <div className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
+              <p className={profileTreatment.labelClass}>Actions</p>
+              <button className={`${treatment.buttonClass} ${profileTreatment.buttonShape} w-full text-sm font-medium shadow-sm ${color.primaryButton}`} type="button">
                 {example.primaryAction}
               </button>
-              <button className={`${treatment.buttonClass} w-full border text-sm font-medium shadow-sm ${color.secondaryButton}`} type="button">
+              <button className={`${treatment.buttonClass} ${profileTreatment.buttonShape} w-full border text-sm font-medium shadow-sm ${color.secondaryButton}`} type="button">
                 {example.secondaryAction}
               </button>
             </div>
 
-            <label className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{example.selectLabel}</span>
-              <select className={`${treatment.inputClass} w-full border ${color.border} bg-white text-sm outline-none`}>
+            <label className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
+              <span className={profileTreatment.labelClass}>{example.selectLabel}</span>
+              <select className={`${treatment.inputClass} ${profileTreatment.inputShape} w-full border ${color.border} bg-white text-sm outline-none`}>
                 {example.selectOptions.map((option) => (
                   <option key={option}>{option}</option>
                 ))}
@@ -698,10 +819,10 @@ function ComponentReference({
               <p className="text-xs leading-5 text-muted-foreground">Options follow the chosen profile vocabulary.</p>
             </label>
 
-            <label className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{example.fieldLabel}</span>
+            <label className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
+              <span className={profileTreatment.labelClass}>{example.fieldLabel}</span>
               <input
-                className={`${treatment.inputClass} w-full border ${color.border} bg-white text-sm outline-none`}
+                className={`${treatment.inputClass} ${profileTreatment.inputShape} w-full border ${color.border} bg-white text-sm outline-none`}
                 defaultValue={example.fieldValue}
               />
               <p className="text-xs leading-5 text-muted-foreground">
@@ -709,29 +830,36 @@ function ComponentReference({
               </p>
             </label>
 
-            <div className={`space-y-3 border border-border/70 bg-white/90 p-4 ${treatment.controlRadius}`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Status and guidance</p>
-              <span className={`inline-flex border text-xs font-semibold ${treatment.statusClass} ${color.chip}`}>{example.statusLabel}</span>
-              <div className={`border text-sm leading-6 ${treatment.statusClass} ${secondaryPanel}`}>{example.guidance}</div>
+            <div className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
+              <p className={profileTreatment.labelClass}>Status and guidance</p>
+              <span className={`inline-flex border text-xs font-semibold ${treatment.statusClass} ${profileTreatment.statusShape} ${color.chip}`}>{example.statusLabel}</span>
+              <div className={`border text-sm leading-6 ${treatment.statusClass} ${profileTreatment.statusShape} ${secondaryPanel}`}>{example.guidance}</div>
             </div>
           </div>
 
-          <div className={`border ${color.border} bg-white/90 p-4 ${treatment.companionClass}`}>
+          <div className={`border ${color.border} ${profileTreatment.companionClass}`}>
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
-                <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${color.accentText}`}>{profile.shortLabel} pattern</p>
+                <p className={profileTreatment.labelClass}>{profile.shortLabel} pattern</p>
                 <h3 className="mt-2 text-base font-semibold text-foreground">{example.companionTitle}</h3>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{example.companionBody}</p>
               </div>
-              <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${color.accent}`}>{color.label}</span>
+              <span className={`shrink-0 px-3 py-1 text-xs font-semibold ${profileTreatment.statusShape} ${color.accent}`}>{color.label}</span>
             </div>
             <div className={`mt-4 grid gap-3 ${surface === "mobile-app" ? "grid-cols-1" : "md:grid-cols-3"}`}>
               {profile.sampleWork.map((item) => (
-                <div className={`border p-3 text-sm font-medium ${treatment.companionClass} ${color.chip}`} key={item}>
+                <div className={`border text-sm font-medium ${profileTreatment.sampleCardClass}`} key={item}>
                   {item}
                 </div>
               ))}
             </div>
+          </div>
+          <div className={`grid gap-2 ${profile.key === "minimal-utility" ? "hidden" : "md:grid-cols-3"}`}>
+            {profile.visualGrammar.map((rule) => (
+              <p className={`border text-xs leading-5 text-muted-foreground ${profileTreatment.sampleCardClass}`} key={rule}>
+                {rule}
+              </p>
+            ))}
           </div>
         </div>
       </CardContent>
