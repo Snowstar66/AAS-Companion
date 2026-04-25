@@ -26,6 +26,8 @@ type TargetSurfaceKey = "responsive-web" | "desktop-web" | "mobile-app" | "omnic
 
 type ColorSchemaKey = "nordic-blue" | "forest-green" | "warm-amber" | "violet-studio" | "graphite";
 
+type StyleAuthorityKey = "aas-suggested-style" | "customer-style-first" | "strict-customer-design-system";
+
 const profileOptions: Array<Option<UxProfileKey>> = [
   {
     key: "enterprise-control-plane",
@@ -206,9 +208,34 @@ const colorOptions: Array<Option<ColorSchemaKey>> = [
   }
 ];
 
+const styleAuthorityOptions: Array<Option<StyleAuthorityKey>> = [
+  {
+    key: "aas-suggested-style",
+    label: "AAS suggested style",
+    summary: "Use the selected UX profile, surface, and color schema as the primary design direction.",
+    guidance:
+      "The selected AAS UX direction is the primary source unless explicit customer UX rules are added in the additional instructions."
+  },
+  {
+    key: "customer-style-first",
+    label: "Customer style first",
+    summary: "Customer UX rules override the AAS style; AAS fills gaps.",
+    guidance:
+      "Customer UX rules, brand, design system, Figma references, accessibility standards, and component conventions take priority. Use the selected AAS profile only to fill gaps."
+  },
+  {
+    key: "strict-customer-design-system",
+    label: "Strict customer design system",
+    summary: "Follow the customer design system; AAS only guides structure where compatible.",
+    guidance:
+      "Treat the customer design system as mandatory. Ignore any selected AAS profile, color, component, radius, spacing, or tone rule that conflicts with customer UX rules."
+  }
+];
+
 const defaultProfile = "enterprise-control-plane";
 const defaultSurface = "responsive-web";
 const defaultColor = "nordic-blue";
+const defaultStyleAuthority = "aas-suggested-style";
 
 function translate(language: Language, en: string, sv: string) {
   return language === "sv" ? sv : en;
@@ -242,11 +269,17 @@ function parseInitialValue(value: string) {
   const profile = findOption(profileOptions, readLabeledValue(value, "UX profile"), defaultProfile);
   const surface = findOption(surfaceOptions, readLabeledValue(value, "Target surface"), defaultSurface);
   const color = findOption(colorOptions, readLabeledValue(value, "Color schema"), defaultColor);
+  const styleAuthority = findOption(
+    styleAuthorityOptions,
+    readLabeledValue(value, "Style authority"),
+    defaultStyleAuthority
+  );
 
   return {
     profile: profile.key,
     surface: surface.key,
     color: color.key,
+    styleAuthority: styleAuthority.key,
     customInstructions: hasStructuredDirection ? readAdditionalInstructions(value) : value.trim()
   };
 }
@@ -255,6 +288,7 @@ function buildExportedUxPrinciples(
   profile: Option<UxProfileKey>,
   surface: Option<TargetSurfaceKey>,
   color: Option<ColorSchemaKey>,
+  styleAuthority: Option<StyleAuthorityKey>,
   customInstructions: string
 ) {
   const visualGrammar = profileVisualGrammar[profile.key] ?? [];
@@ -264,6 +298,11 @@ function buildExportedUxPrinciples(
     `UX profile: ${profile.label} (${profile.key})`,
     `Target surface: ${surface.label} (${surface.key})`,
     `Color schema: ${color.label} (${color.key})`,
+    `Style authority: ${styleAuthority.label} (${styleAuthority.key})`,
+    "",
+    "Style priority:",
+    styleAuthority.guidance,
+    "If customer UX rules are supplied, downstream AI must explicitly resolve conflicts using this style authority before applying AAS profile, color, or signature component guidance.",
     "",
     "Core UX guidance:",
     profile.guidance,
@@ -339,16 +378,20 @@ export function UxDirectionField({
   const [profileKey, setProfileKey] = useState<UxProfileKey>(initial.profile);
   const [surfaceKey, setSurfaceKey] = useState<TargetSurfaceKey>(initial.surface);
   const [colorKey, setColorKey] = useState<ColorSchemaKey>(initial.color);
+  const [styleAuthorityKey, setStyleAuthorityKey] = useState<StyleAuthorityKey>(initial.styleAuthority);
   const [customInstructions, setCustomInstructions] = useState(initial.customInstructions);
 
   const selectedProfile = profileOptions.find((option) => option.key === profileKey) ?? profileOptions[0]!;
   const selectedSurface = surfaceOptions.find((option) => option.key === surfaceKey) ?? surfaceOptions[0]!;
   const selectedColor = colorOptions.find((option) => option.key === colorKey) ?? colorOptions[0]!;
+  const selectedStyleAuthority =
+    styleAuthorityOptions.find((option) => option.key === styleAuthorityKey) ?? styleAuthorityOptions[0]!;
 
   const exportedUxPrinciples = buildExportedUxPrinciples(
     selectedProfile,
     selectedSurface,
     selectedColor,
+    selectedStyleAuthority,
     customInstructions
   );
   const previewHref = `/framing/ux-preview?profile=${profileKey}&surface=${surfaceKey}&color=${colorKey}`;
@@ -365,8 +408,8 @@ export function UxDirectionField({
             <p className="mt-2 max-w-3xl text-sm leading-6 text-violet-950/75">
               {translate(
                 language,
-                "Choose profile, target surface, and color schema. The generated UX principles are saved with the framing export.",
-                "Valj profil, malyta och fargschema. Den genererade UX-riktningen sparas i framing-exporten."
+                "Choose profile, target surface, color schema, and whether customer UX rules override the AAS style. The generated UX principles are saved with the framing export.",
+                "Valj profil, malyta, fargschema och om kundens UX-regler ska overrida AAS-stilen. Den genererade UX-riktningen sparas i framing-exporten."
               )}
             </p>
           </div>
@@ -384,7 +427,7 @@ export function UxDirectionField({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SelectField
           disabled={disabled}
           label={translate(language, "UX profile", "UX-profil")}
@@ -406,6 +449,13 @@ export function UxDirectionField({
           value={colorKey}
           onChange={setColorKey}
         />
+        <SelectField
+          disabled={disabled}
+          label={translate(language, "Style authority", "Stilstyrning")}
+          options={styleAuthorityOptions}
+          value={styleAuthorityKey}
+          onChange={setStyleAuthorityKey}
+        />
       </div>
 
       <label className="block space-y-2">
@@ -417,8 +467,8 @@ export function UxDirectionField({
           disabled={disabled}
           placeholder={translate(
             language,
-            "Add brand constraints, accessibility needs, component preferences, tone, references, or things the downstream designer must avoid.",
-            "Lagg till varumarkeskrav, tillganglighetsbehov, komponentpreferenser, ton, referenser eller sadant downstream-designern ska undvika."
+            "Add customer UX rules, design system/Figma references, brand constraints, accessibility needs, component preferences, tone, or things the downstream designer must avoid.",
+            "Lagg till kundens UX-regler, design system-/Figma-referenser, varumarkeskrav, tillganglighetsbehov, komponentpreferenser, ton eller sadant downstream-designern ska undvika."
           )}
           value={customInstructions}
           onChange={(event) => setCustomInstructions(event.target.value)}
