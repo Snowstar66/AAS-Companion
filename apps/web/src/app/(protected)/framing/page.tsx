@@ -148,6 +148,31 @@ function SelectedFramingContentErrorCard() {
   );
 }
 
+function FramingUxPreviewCard() {
+  return (
+    <Card className="border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,252,0.94))] shadow-sm">
+      <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <LocalizedText en="UX Direction" sv="UX-riktning" />
+          </p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            <LocalizedText
+              en="Preview reference styles before the UX direction is sent downstream."
+              sv="Forhandsgranska referensstilar innan UX-riktningen skickas downstream."
+            />
+          </p>
+        </div>
+        <Button asChild className="shrink-0" variant="secondary">
+          <Link href="/framing/ux-preview">
+            <LocalizedText en="Preview UX profiles" sv="Forhandsgranska UX-profiler" />
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function FramingPage({ searchParams }: FramingPageProps) {
   return withDevTiming("web.page.framing", async () => {
     try {
@@ -204,6 +229,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
               state: cockpit.state
             }}
           />
+          <FramingUxPreviewCard />
           {cockpit.state === "unavailable" ? (
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
