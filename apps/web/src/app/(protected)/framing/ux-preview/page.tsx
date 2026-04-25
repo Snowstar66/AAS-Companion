@@ -7,6 +7,7 @@ import {
   FileText,
   LayoutDashboard,
   MonitorSmartphone,
+  Palette,
   PenTool,
   Smartphone,
   Workflow
@@ -23,6 +24,7 @@ type UxProfileKey =
   | "minimal-utility";
 
 type TargetSurfaceKey = "responsive-web" | "desktop-web" | "mobile-app" | "omnichannel";
+type ColorSchemaKey = "nordic-blue" | "forest-green" | "warm-amber" | "violet-studio" | "graphite";
 
 type UxPreviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -173,6 +175,104 @@ const surfaces: Array<{
   }
 ];
 
+const colorSchemas: Array<{
+  key: ColorSchemaKey;
+  label: string;
+  description: string;
+  accent: string;
+  accentText: string;
+  tint: string;
+  border: string;
+  panel: string;
+  nav: string;
+  navActive: string;
+  primaryButton: string;
+  secondaryButton: string;
+  chip: string;
+  swatches: string[];
+}> = [
+  {
+    key: "nordic-blue",
+    label: "Nordic blue",
+    description: "Cool, calm SaaS default with strong control-plane readability.",
+    accent: "bg-sky-700 text-white",
+    accentText: "text-sky-800",
+    tint: "bg-sky-50",
+    border: "border-sky-200",
+    panel: "bg-[linear-gradient(180deg,rgba(240,249,255,0.96),rgba(255,255,255,0.98))]",
+    nav: "bg-[#102033] text-slate-50",
+    navActive: "bg-white text-slate-950",
+    primaryButton: "bg-sky-700 text-white",
+    secondaryButton: "border-sky-200 bg-white text-sky-950",
+    chip: "border-sky-200 bg-sky-50 text-sky-950",
+    swatches: ["bg-[#102033]", "bg-sky-700", "bg-sky-100", "bg-white"]
+  },
+  {
+    key: "forest-green",
+    label: "Forest green",
+    description: "Operational, grounded, good for workflow and field-service tools.",
+    accent: "bg-emerald-700 text-white",
+    accentText: "text-emerald-800",
+    tint: "bg-emerald-50",
+    border: "border-emerald-200",
+    panel: "bg-[linear-gradient(180deg,rgba(236,253,245,0.96),rgba(255,255,255,0.98))]",
+    nav: "bg-[#123126] text-emerald-50",
+    navActive: "bg-emerald-50 text-emerald-950",
+    primaryButton: "bg-emerald-700 text-white",
+    secondaryButton: "border-emerald-200 bg-white text-emerald-950",
+    chip: "border-emerald-200 bg-emerald-50 text-emerald-950",
+    swatches: ["bg-[#123126]", "bg-emerald-700", "bg-emerald-100", "bg-white"]
+  },
+  {
+    key: "warm-amber",
+    label: "Warm amber",
+    description: "Human, service-oriented, useful when trust and guidance matter.",
+    accent: "bg-amber-700 text-white",
+    accentText: "text-amber-800",
+    tint: "bg-amber-50",
+    border: "border-amber-200",
+    panel: "bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))]",
+    nav: "bg-[#332412] text-amber-50",
+    navActive: "bg-amber-50 text-amber-950",
+    primaryButton: "bg-amber-700 text-white",
+    secondaryButton: "border-amber-200 bg-white text-amber-950",
+    chip: "border-amber-200 bg-amber-50 text-amber-950",
+    swatches: ["bg-[#332412]", "bg-amber-700", "bg-amber-100", "bg-white"]
+  },
+  {
+    key: "violet-studio",
+    label: "Violet studio",
+    description: "Exploratory and AI-forward without becoming playful or decorative.",
+    accent: "bg-violet-700 text-white",
+    accentText: "text-violet-800",
+    tint: "bg-violet-50",
+    border: "border-violet-200",
+    panel: "bg-[linear-gradient(180deg,rgba(245,243,255,0.96),rgba(255,255,255,0.98))]",
+    nav: "bg-[#261a3f] text-violet-50",
+    navActive: "bg-violet-50 text-violet-950",
+    primaryButton: "bg-violet-700 text-white",
+    secondaryButton: "border-violet-200 bg-white text-violet-950",
+    chip: "border-violet-200 bg-violet-50 text-violet-950",
+    swatches: ["bg-[#261a3f]", "bg-violet-700", "bg-violet-100", "bg-white"]
+  },
+  {
+    key: "graphite",
+    label: "Graphite",
+    description: "Neutral, dense, and quiet for admin tools and strict customer brands.",
+    accent: "bg-slate-800 text-white",
+    accentText: "text-slate-800",
+    tint: "bg-slate-50",
+    border: "border-slate-200",
+    panel: "bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(255,255,255,0.98))]",
+    nav: "bg-slate-950 text-slate-50",
+    navActive: "bg-white text-slate-950",
+    primaryButton: "bg-slate-900 text-white",
+    secondaryButton: "border-slate-300 bg-white text-slate-950",
+    chip: "border-slate-300 bg-slate-50 text-slate-950",
+    swatches: ["bg-slate-950", "bg-slate-800", "bg-slate-200", "bg-white"]
+  }
+];
+
 function getParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -185,14 +285,19 @@ function getActiveSurface(value: string | undefined) {
   return surfaces.find((surface) => surface.key === value) ?? surfaces[0]!;
 }
 
-function buildHref(profile: UxProfileKey, surface: TargetSurfaceKey) {
-  return `/framing/ux-preview?profile=${profile}&surface=${surface}`;
+function getActiveColorSchema(value: string | undefined) {
+  return colorSchemas.find((schema) => schema.key === value) ?? colorSchemas[0]!;
+}
+
+function buildHref(profile: UxProfileKey, surface: TargetSurfaceKey, color: ColorSchemaKey) {
+  return `/framing/ux-preview?profile=${profile}&surface=${surface}&color=${color}`;
 }
 
 export default async function UxDirectionPreviewPage({ searchParams }: UxPreviewPageProps) {
   const query = searchParams ? await searchParams : {};
   const activeProfile = getActiveProfile(getParamValue(query.profile));
   const activeSurface = getActiveSurface(getParamValue(query.surface));
+  const activeColor = getActiveColorSchema(getParamValue(query.color));
   const ActiveProfileIcon = activeProfile.icon;
 
   return (
@@ -241,7 +346,7 @@ export default async function UxDirectionPreviewPage({ searchParams }: UxPreview
                       key={profile.key}
                       variant="secondary"
                     >
-                      <Link href={buildHref(profile.key, activeSurface.key)}>
+                      <Link href={buildHref(profile.key, activeSurface.key, activeColor.key)}>
                         <Icon className="h-4 w-4 shrink-0" />
                         <span>{profile.label}</span>
                       </Link>
@@ -269,9 +374,43 @@ export default async function UxDirectionPreviewPage({ searchParams }: UxPreview
                       key={surface.key}
                       variant="secondary"
                     >
-                      <Link href={buildHref(activeProfile.key, surface.key)}>
+                      <Link href={buildHref(activeProfile.key, surface.key, activeColor.key)}>
                         <Icon className="h-4 w-4 shrink-0" />
                         <span>{surface.label}</span>
+                      </Link>
+                    </Button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 shadow-sm">
+              <CardHeader>
+                <CardTitle>Color schema</CardTitle>
+                <CardDescription>Choose the visual palette independently from the UX model.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {colorSchemas.map((schema) => {
+                  const active = schema.key === activeColor.key;
+                  return (
+                    <Button
+                      asChild
+                      className={`h-auto w-full justify-start whitespace-normal rounded-2xl px-3 py-3 text-left ${
+                        active ? "border-primary bg-secondary text-foreground" : ""
+                      }`}
+                      key={schema.key}
+                      variant="secondary"
+                    >
+                      <Link href={buildHref(activeProfile.key, activeSurface.key, schema.key)}>
+                        <Palette className="h-4 w-4 shrink-0" />
+                        <span className="min-w-0">
+                          <span className="block">{schema.label}</span>
+                          <span className="mt-2 flex gap-1">
+                            {schema.swatches.map((swatch) => (
+                              <span className={`h-3 w-6 rounded-full border border-black/10 ${swatch}`} key={swatch} />
+                            ))}
+                          </span>
+                        </span>
                       </Link>
                     </Button>
                   );
@@ -281,11 +420,11 @@ export default async function UxDirectionPreviewPage({ searchParams }: UxPreview
           </aside>
 
           <main className="space-y-5">
-            <Card className={`border ${activeProfile.border} shadow-sm`}>
+            <Card className={`border ${activeColor.border} shadow-sm`}>
               <CardHeader className="pb-4">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${activeProfile.accent}`}>
+                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${activeColor.accent}`}>
                       <ActiveProfileIcon className="h-3.5 w-3.5" />
                       {activeProfile.shortLabel}
                     </div>
@@ -295,11 +434,15 @@ export default async function UxDirectionPreviewPage({ searchParams }: UxPreview
                   <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm">
                     <p className="font-medium text-foreground">{activeSurface.label}</p>
                     <p className="mt-1 max-w-xs leading-6 text-muted-foreground">{activeSurface.description}</p>
+                    <p className={`mt-3 text-xs font-semibold uppercase tracking-[0.18em] ${activeColor.accentText}`}>
+                      {activeColor.label}
+                    </p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
-                <ReferencePreview profile={activeProfile} surface={activeSurface.key} />
+                <ReferencePreview color={activeColor} profile={activeProfile} surface={activeSurface.key} />
+                <ComponentReference color={activeColor} />
 
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                   <div className="rounded-2xl border border-border/70 bg-muted/15 p-4">
@@ -327,49 +470,99 @@ export default async function UxDirectionPreviewPage({ searchParams }: UxPreview
 }
 
 function ReferencePreview(props: {
+  color: (typeof colorSchemas)[number];
   profile: (typeof profiles)[number];
   surface: TargetSurfaceKey;
 }) {
   if (props.surface === "mobile-app") {
-    return <MobileReference profile={props.profile} />;
+    return <MobileReference color={props.color} profile={props.profile} />;
   }
 
   if (props.surface === "omnichannel") {
-    return <OmnichannelReference profile={props.profile} />;
+    return <OmnichannelReference color={props.color} profile={props.profile} />;
   }
 
-  return <DesktopReference dense={props.surface === "desktop-web"} profile={props.profile} />;
+  return <DesktopReference color={props.color} dense={props.surface === "desktop-web"} profile={props.profile} />;
 }
 
-function DesktopReference({ dense, profile }: { dense: boolean; profile: (typeof profiles)[number] }) {
+function ComponentReference({ color }: { color: (typeof colorSchemas)[number] }) {
+  return (
+    <Card className={`border ${color.border} ${color.panel} shadow-sm`}>
+      <CardHeader className="pb-4">
+        <CardTitle>Component examples</CardTitle>
+        <CardDescription>Basic UI elements rendered with the selected color schema.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 lg:grid-cols-4">
+          <div className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Buttons</p>
+            <button className={`h-11 rounded-full px-4 text-sm font-medium shadow-sm ${color.primaryButton}`} type="button">
+              Primary action
+            </button>
+            <button className={`h-11 rounded-full border px-4 text-sm font-medium shadow-sm ${color.secondaryButton}`} type="button">
+              Secondary
+            </button>
+          </div>
+          <label className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Dropdown</span>
+            <select className={`h-11 w-full rounded-2xl border ${color.border} bg-white px-3 text-sm outline-none`}>
+              <option>{color.label}</option>
+              <option>Strict customer style</option>
+              <option>Default product style</option>
+            </select>
+          </label>
+          <label className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Input</span>
+            <input className={`h-11 w-full rounded-2xl border ${color.border} bg-white px-3 text-sm outline-none`} defaultValue="UX direction note" />
+          </label>
+          <div className="space-y-3 rounded-2xl border border-border/70 bg-white/90 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Status</p>
+            <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${color.chip}`}>Ready for downstream</span>
+            <div className={`rounded-2xl border p-3 text-sm ${color.chip}`}>Inline guidance follows this palette.</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DesktopReference({
+  color,
+  dense,
+  profile
+}: {
+  color: (typeof colorSchemas)[number];
+  dense: boolean;
+  profile: (typeof profiles)[number];
+}) {
   if (profile.key === "operational-workflow") {
-    return <WorkflowReference profile={profile} />;
+    return <WorkflowReference color={color} />;
   }
 
   if (profile.key === "customer-portal") {
-    return <PortalReference profile={profile} />;
+    return <PortalReference color={color} profile={profile} />;
   }
 
   if (profile.key === "creative-workspace") {
-    return <CreativeReference profile={profile} />;
+    return <CreativeReference color={color} />;
   }
 
   if (profile.key === "knowledge-hub") {
-    return <KnowledgeReference profile={profile} />;
+    return <KnowledgeReference color={color} profile={profile} />;
   }
 
   if (profile.key === "minimal-utility") {
-    return <UtilityReference profile={profile} />;
+    return <UtilityReference color={color} />;
   }
 
   return (
-    <div className={`rounded-[28px] border ${profile.border} ${profile.tint} p-4`}>
+    <div className={`rounded-[28px] border ${color.border} ${color.tint} p-4`}>
       <div className={`grid gap-4 ${dense ? "lg:grid-cols-[180px_minmax(0,1fr)_220px]" : "lg:grid-cols-[200px_minmax(0,1fr)]"}`}>
-        <div className="rounded-3xl bg-[#102033] p-4 text-slate-50">
+        <div className={`rounded-3xl p-4 ${color.nav}`}>
           <p className="text-sm font-semibold">Reference app</p>
           <div className="mt-5 space-y-2">
             {profile.sampleNav.map((item, index) => (
-              <div className={`rounded-2xl px-3 py-2 text-sm ${index === 0 ? "bg-white text-slate-950" : "bg-white/8 text-slate-200"}`} key={item}>
+              <div className={`rounded-2xl px-3 py-2 text-sm ${index === 0 ? color.navActive : "bg-white/8 text-current"}`} key={item}>
                 {item}
               </div>
             ))}
@@ -381,7 +574,7 @@ function DesktopReference({ dense, profile }: { dense: boolean; profile: (typeof
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Primary workspace</p>
               <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground">{profile.sampleWork[0]}</h2>
             </div>
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${profile.accent}`}>{profile.statusLabel}</span>
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${color.accent}`}>{profile.statusLabel}</span>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             {profile.sampleWork.map((item) => (
@@ -418,7 +611,7 @@ function DesktopReference({ dense, profile }: { dense: boolean; profile: (typeof
   );
 }
 
-function WorkflowReference({ profile }: { profile: (typeof profiles)[number] }) {
+function WorkflowReference({ color }: { color: (typeof colorSchemas)[number] }) {
   const columns = [
     { title: "New", items: ["Validate intake", "Assign owner"] },
     { title: "In progress", items: ["Resolve blocker", "Prepare handoff"] },
@@ -426,22 +619,22 @@ function WorkflowReference({ profile }: { profile: (typeof profiles)[number] }) 
   ];
 
   return (
-    <div className={`rounded-[28px] border ${profile.border} bg-emerald-50 p-4`}>
-      <div className="rounded-3xl border border-emerald-200 bg-white/95 p-4 shadow-sm">
+    <div className={`rounded-[28px] border ${color.border} ${color.tint} p-4`}>
+      <div className={`rounded-3xl border ${color.border} bg-white/95 p-4 shadow-sm`}>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Operations queue</p>
+            <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${color.accentText}`}>Operations queue</p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">Work moves left to right</h2>
           </div>
-          <Button size="sm">Start next task</Button>
+          <button className={`h-9 rounded-full px-3 text-sm font-medium ${color.primaryButton}`} type="button">Start next task</button>
         </div>
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           {columns.map((column) => (
-            <div className="min-h-56 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3" key={column.title}>
-              <p className="text-sm font-semibold text-emerald-950">{column.title}</p>
+            <div className={`min-h-56 rounded-2xl border ${color.border} ${color.tint} p-3`} key={column.title}>
+              <p className={`text-sm font-semibold ${color.accentText}`}>{column.title}</p>
               <div className="mt-3 space-y-3">
                 {column.items.map((item) => (
-                  <div className="rounded-2xl border border-emerald-200 bg-white p-3 text-sm shadow-sm" key={item}>
+                  <div className={`rounded-2xl border ${color.border} bg-white p-3 text-sm shadow-sm`} key={item}>
                     <p className="font-medium text-foreground">{item}</p>
                     <p className="mt-1 text-xs text-muted-foreground">Owner, due date, and next action visible.</p>
                   </div>
@@ -455,11 +648,11 @@ function WorkflowReference({ profile }: { profile: (typeof profiles)[number] }) 
   );
 }
 
-function PortalReference({ profile }: { profile: (typeof profiles)[number] }) {
+function PortalReference({ color, profile }: { color: (typeof colorSchemas)[number]; profile: (typeof profiles)[number] }) {
   return (
-    <div className={`rounded-[28px] border ${profile.border} bg-cyan-50 p-4`}>
-      <div className="overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-sm">
-        <div className="border-b border-cyan-100 bg-white px-5 py-4">
+    <div className={`rounded-[28px] border ${color.border} ${color.tint} p-4`}>
+      <div className={`overflow-hidden rounded-3xl border ${color.border} bg-white shadow-sm`}>
+        <div className={`border-b ${color.border} bg-white px-5 py-4`}>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-semibold text-cyan-950">Customer workspace</p>
@@ -467,20 +660,20 @@ function PortalReference({ profile }: { profile: (typeof profiles)[number] }) {
             </div>
             <div className="flex gap-2 text-sm">
               {profile.sampleNav.map((item) => (
-                <span className="rounded-full border border-cyan-200 px-3 py-1 text-cyan-950" key={item}>{item}</span>
+                <span className={`rounded-full border px-3 py-1 ${color.chip}`} key={item}>{item}</span>
               ))}
             </div>
           </div>
         </div>
         <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <div className="rounded-3xl bg-cyan-700 p-6 text-white">
-            <p className="text-sm font-medium text-cyan-100">Current status</p>
+          <div className={`rounded-3xl p-6 ${color.accent}`}>
+            <p className="text-sm font-medium opacity-80">Current status</p>
             <h2 className="mt-3 text-2xl font-semibold">Input requested from customer</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-cyan-50">A friendly summary explains what is needed, why it matters, and when the team will respond.</p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 opacity-90">A friendly summary explains what is needed, why it matters, and when the team will respond.</p>
           </div>
           <div className="space-y-3">
             {["Upload document", "Review decision", "Message team"].map((item) => (
-              <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm font-medium text-cyan-950" key={item}>{item}</div>
+              <div className={`rounded-2xl border p-4 text-sm font-medium ${color.chip}`} key={item}>{item}</div>
             ))}
           </div>
         </div>
@@ -489,22 +682,22 @@ function PortalReference({ profile }: { profile: (typeof profiles)[number] }) {
   );
 }
 
-function CreativeReference({ profile }: { profile: (typeof profiles)[number] }) {
+function CreativeReference({ color }: { color: (typeof colorSchemas)[number] }) {
   return (
-    <div className={`rounded-[28px] border ${profile.border} bg-violet-50 p-4`}>
+    <div className={`rounded-[28px] border ${color.border} ${color.tint} p-4`}>
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <div className="rounded-3xl border border-violet-200 bg-white/90 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Sources</p>
+        <div className={`rounded-3xl border ${color.border} bg-white/90 p-4 shadow-sm`}>
+          <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${color.accentText}`}>Sources</p>
           <div className="mt-4 space-y-3">
             {["Interview notes", "AI synthesis", "Draft brief"].map((item) => (
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-3 text-sm" key={item}>{item}</div>
+              <div className={`rounded-2xl border p-3 text-sm ${color.chip}`} key={item}>{item}</div>
             ))}
           </div>
         </div>
-        <div className="min-h-80 rounded-3xl border border-violet-200 bg-white p-5 shadow-sm">
+        <div className={`min-h-80 rounded-3xl border ${color.border} bg-white p-5 shadow-sm`}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-violet-950">Exploration canvas</p>
-            <Button size="sm" variant="secondary">Turn into decision</Button>
+            <p className={`text-sm font-semibold ${color.accentText}`}>Exploration canvas</p>
+            <button className={`h-9 rounded-full border px-3 text-sm font-medium ${color.secondaryButton}`} type="button">Turn into decision</button>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {["Idea cluster", "Open question", "Promising direction", "Risk to test", "User quote", "Next draft"].map((item, index) => (
@@ -525,21 +718,21 @@ function CreativeReference({ profile }: { profile: (typeof profiles)[number] }) 
   );
 }
 
-function KnowledgeReference({ profile }: { profile: (typeof profiles)[number] }) {
+function KnowledgeReference({ color, profile }: { color: (typeof colorSchemas)[number]; profile: (typeof profiles)[number] }) {
   return (
-    <div className={`rounded-[28px] border ${profile.border} bg-indigo-50 p-4`}>
-      <div className="rounded-3xl border border-indigo-200 bg-white p-5 shadow-sm">
+    <div className={`rounded-[28px] border ${color.border} ${color.tint} p-4`}>
+      <div className={`rounded-3xl border ${color.border} bg-white p-5 shadow-sm`}>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">Knowledge hub</p>
+          <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${color.accentText}`}>Knowledge hub</p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">Find trusted guidance fast</h2>
-          <div className="mt-5 rounded-full border border-indigo-200 bg-indigo-50 px-5 py-3 text-left text-sm text-muted-foreground">
+          <div className={`mt-5 rounded-full border px-5 py-3 text-left text-sm ${color.chip}`}>
             Search policies, guides, decisions, and examples
           </div>
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
           <div className="space-y-2">
             {profile.sampleNav.map((item) => (
-              <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-950" key={item}>{item}</div>
+              <div className={`rounded-2xl border px-4 py-3 text-sm font-medium ${color.chip}`} key={item}>{item}</div>
             ))}
           </div>
           <div className="grid gap-3 md:grid-cols-2">
@@ -556,62 +749,62 @@ function KnowledgeReference({ profile }: { profile: (typeof profiles)[number] })
   );
 }
 
-function UtilityReference({ profile }: { profile: (typeof profiles)[number] }) {
+function UtilityReference({ color }: { color: (typeof colorSchemas)[number] }) {
   return (
-    <div className={`rounded-[28px] border ${profile.border} bg-slate-50 p-4`}>
-      <div className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Single purpose tool</p>
+    <div className={`rounded-[28px] border ${color.border} ${color.tint} p-4`}>
+      <div className={`mx-auto max-w-xl rounded-3xl border ${color.border} bg-white p-6 shadow-sm`}>
+        <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${color.accentText}`}>Single purpose tool</p>
         <h2 className="mt-2 text-2xl font-semibold text-foreground">Calculate readiness</h2>
         <div className="mt-5 space-y-4">
           {["Input value", "Threshold", "Decision rule"].map((item) => (
             <label className="block space-y-2" key={item}>
               <span className="text-sm font-medium text-foreground">{item}</span>
-              <div className="h-11 rounded-2xl border border-slate-300 bg-white" />
+              <div className={`h-11 rounded-2xl border ${color.border} bg-white`} />
             </label>
           ))}
         </div>
-        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className={`mt-5 rounded-2xl border p-4 ${color.chip}`}>
           <p className="text-sm font-semibold text-foreground">Result: Ready</p>
           <p className="mt-1 text-sm text-muted-foreground">One result, one primary action, very little chrome.</p>
         </div>
-        <Button className="mt-5 w-full">Save result</Button>
+        <button className={`mt-5 h-11 w-full rounded-full text-sm font-medium ${color.primaryButton}`} type="button">Save result</button>
       </div>
     </div>
   );
 }
 
-function MobileReference({ profile }: { profile: (typeof profiles)[number] }) {
+function MobileReference({ color, profile }: { color: (typeof colorSchemas)[number]; profile: (typeof profiles)[number] }) {
   return (
-    <div className={`flex justify-center rounded-[28px] border ${profile.border} ${profile.tint} p-5`}>
-      <div className="w-full max-w-[360px] rounded-[32px] border border-slate-300 bg-slate-950 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.22)]">
+    <div className={`flex justify-center rounded-[28px] border ${color.border} ${color.tint} p-5`}>
+      <div className={`w-full max-w-[360px] rounded-[32px] border ${color.border} ${color.nav} p-3 shadow-[0_24px_80px_rgba(15,23,42,0.22)]`}>
         <div className="rounded-[26px] bg-background p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-foreground">{profile.shortLabel}</p>
-            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${profile.accent}`}>{profile.statusLabel}</span>
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${color.accent}`}>{profile.statusLabel}</span>
           </div>
           <div className="mt-5 space-y-3">
             {profile.sampleWork.map((item) => (
-              <div className="rounded-2xl border border-border/70 bg-muted/20 p-4" key={item}>
+              <div className={`rounded-2xl border ${color.border} ${color.tint} p-4`} key={item}>
                 <p className="text-sm font-medium text-foreground">{item}</p>
                 <p className="mt-2 text-xs leading-5 text-muted-foreground">Mobile preview keeps one clear action in focus.</p>
               </div>
             ))}
           </div>
-          <Button className="mt-5 w-full">Continue</Button>
+          <button className={`mt-5 h-11 w-full rounded-full text-sm font-medium ${color.primaryButton}`} type="button">Continue</button>
         </div>
       </div>
     </div>
   );
 }
 
-function OmnichannelReference({ profile }: { profile: (typeof profiles)[number] }) {
+function OmnichannelReference({ color, profile }: { color: (typeof colorSchemas)[number]; profile: (typeof profiles)[number] }) {
   return (
-    <div className={`rounded-[28px] border ${profile.border} ${profile.tint} p-4`}>
+    <div className={`rounded-[28px] border ${color.border} ${color.tint} p-4`}>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
-        <DesktopReference dense={false} profile={profile} />
+        <DesktopReference color={color} dense={false} profile={profile} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <MiniChannel title="Mobile touchpoint" profile={profile} icon={Smartphone} />
-          <MiniChannel title="Customer update" profile={profile} icon={Compass} />
+          <MiniChannel color={color} title="Mobile touchpoint" profile={profile} icon={Smartphone} />
+          <MiniChannel color={color} title="Customer update" profile={profile} icon={Compass} />
         </div>
       </div>
     </div>
@@ -619,24 +812,26 @@ function OmnichannelReference({ profile }: { profile: (typeof profiles)[number] 
 }
 
 function MiniChannel({
+  color,
   icon: Icon,
   profile,
   title
 }: {
+  color: (typeof colorSchemas)[number];
   icon: typeof Smartphone;
   profile: (typeof profiles)[number];
   title: string;
 }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/95 p-4 shadow-sm">
+    <div className={`rounded-3xl border ${color.border} bg-background/95 p-4 shadow-sm`}>
       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <Icon className="h-4 w-4 text-primary" />
+        <Icon className={`h-4 w-4 ${color.accentText}`} />
         {title}
       </div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">
         The same UX direction is translated to this channel without creating a second design style.
       </p>
-      <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${profile.accent}`}>{profile.statusLabel}</span>
+      <span className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${color.accent}`}>{profile.statusLabel}</span>
     </div>
   );
 }
