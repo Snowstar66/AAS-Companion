@@ -273,6 +273,7 @@ function buildExportedUxPrinciples(
     ...visualGrammar.map((rule) => `- ${rule}`),
     "",
     "Signature components to prefer when relevant:",
+    "Use these as primary building blocks before generic button/select/input examples. Generic controls should support the signature component, not define the experience.",
     ...signatureComponents.map((component) => `- ${component}`),
     "",
     "Surface guidance:",

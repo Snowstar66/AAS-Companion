@@ -886,13 +886,6 @@ function ComponentReference({
   const example = componentExamples[profile.key];
   const treatment = surfaceTreatments[surface];
   const profileTreatment = profileTreatments[profile.key];
-  const gridClass = surface === "mobile-app" ? treatment.gridClass : profileTreatment.gridOverride ?? treatment.gridClass;
-  const secondaryPanel =
-    profile.key === "creative-workspace"
-      ? "border-amber-200 bg-amber-50"
-      : profile.key === "minimal-utility"
-        ? "border-slate-200 bg-white"
-        : color.chip;
 
   return (
     <Card className={`border ${color.border} ${color.panel} shadow-sm`}>
@@ -921,44 +914,7 @@ function ComponentReference({
               </div>
             ))}
           </div>
-          <div className={gridClass}>
-            <div className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
-              <p className={profileTreatment.labelClass}>Actions</p>
-              <button className={`${treatment.buttonClass} ${profileTreatment.buttonShape} w-full text-sm font-medium shadow-sm ${color.primaryButton}`} type="button">
-                {example.primaryAction}
-              </button>
-              <button className={`${treatment.buttonClass} ${profileTreatment.buttonShape} w-full border text-sm font-medium shadow-sm ${color.secondaryButton}`} type="button">
-                {example.secondaryAction}
-              </button>
-            </div>
-
-            <label className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
-              <span className={profileTreatment.labelClass}>{example.selectLabel}</span>
-              <select className={`${treatment.inputClass} ${profileTreatment.inputShape} w-full border ${color.border} bg-white text-sm outline-none`}>
-                {example.selectOptions.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-              <p className="text-xs leading-5 text-muted-foreground">Options follow the chosen profile vocabulary.</p>
-            </label>
-
-            <label className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
-              <span className={profileTreatment.labelClass}>{example.fieldLabel}</span>
-              <input
-                className={`${treatment.inputClass} ${profileTreatment.inputShape} w-full border ${color.border} bg-white text-sm outline-none`}
-                defaultValue={example.fieldValue}
-              />
-              <p className="text-xs leading-5 text-muted-foreground">
-                {surface === "mobile-app" ? "Large touch target." : surface === "desktop-web" ? "Compact scan target." : "Responsive field rhythm."}
-              </p>
-            </label>
-
-            <div className={`space-y-3 border ${profileTreatment.controlCardClass}`}>
-              <p className={profileTreatment.labelClass}>Status and guidance</p>
-              <span className={`inline-flex border text-xs font-semibold ${treatment.statusClass} ${profileTreatment.statusShape} ${color.chip}`}>{example.statusLabel}</span>
-              <div className={`border text-sm leading-6 ${treatment.statusClass} ${profileTreatment.statusShape} ${secondaryPanel}`}>{example.guidance}</div>
-            </div>
-          </div>
+          <SignatureWorkbench color={color} profile={profile} profileTreatment={profileTreatment} surface={surface} />
 
           <div className={`border ${color.border} ${profileTreatment.companionClass}`}>
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -989,6 +945,282 @@ function ComponentReference({
     </Card>
   );
 }
+
+type ProfileTreatment = (typeof profileTreatments)[UxProfileKey];
+
+function SignatureWorkbench({
+  color,
+  profile,
+  profileTreatment,
+  surface
+}: {
+  color: (typeof colorSchemas)[number];
+  profile: (typeof profiles)[number];
+  profileTreatment: ProfileTreatment;
+  surface: TargetSurfaceKey;
+}) {
+  if (profile.key === "enterprise-control-plane") {
+    return <EnterpriseSignature color={color} profileTreatment={profileTreatment} surface={surface} />;
+  }
+
+  if (profile.key === "operational-workflow") {
+    return <WorkflowSignature color={color} profileTreatment={profileTreatment} surface={surface} />;
+  }
+
+  if (profile.key === "customer-portal") {
+    return <PortalSignature profileTreatment={profileTreatment} surface={surface} />;
+  }
+
+  if (profile.key === "creative-workspace") {
+    return <CreativeSignature color={color} profileTreatment={profileTreatment} surface={surface} />;
+  }
+
+  if (profile.key === "knowledge-hub") {
+    return <KnowledgeSignature profileTreatment={profileTreatment} surface={surface} />;
+  }
+
+  return <UtilitySignature color={color} profileTreatment={profileTreatment} surface={surface} />;
+}
+
+function EnterpriseSignature({
+  color,
+  profileTreatment,
+  surface
+}: {
+  color: (typeof colorSchemas)[number];
+  profileTreatment: ProfileTreatment;
+  surface: TargetSurfaceKey;
+}) {
+  const compact = surface === "mobile-app";
+
+  return (
+    <div className={`grid gap-3 ${compact ? "grid-cols-1" : "lg:grid-cols-[minmax(0,1.5fr)_260px]"}`}>
+      <div className={`border ${profileTreatment.companionClass}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className={profileTreatment.labelClass}>Approval matrix</p>
+            <h3 className="mt-2 text-lg font-semibold text-foreground">Tollgate decision readiness</h3>
+          </div>
+          <span className={`px-3 py-1 text-xs font-semibold ${profileTreatment.statusShape} ${color.accent}`}>3/4 ready</span>
+        </div>
+        <div className="mt-4 overflow-hidden rounded-lg border border-slate-300">
+          {[
+            ["Outcome", "Owner", "Evidence", "Approved"],
+            ["Value case", "Anna", "Strong", "Yes"],
+            ["Risk posture", "Mikael", "Medium", "Review"],
+            ["Scope", "Nora", "Strong", "Yes"]
+          ].map((row, index) => (
+            <div className={`grid grid-cols-4 gap-2 px-3 py-2 text-xs ${index === 0 ? "bg-slate-100 font-semibold text-slate-700" : "border-t border-slate-200 bg-white"}`} key={row.join("-")}>
+              {row.map((cell) => (
+                <span className="truncate" key={cell}>{cell}</span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={`border ${profileTreatment.controlCardClass}`}>
+        <p className={profileTreatment.labelClass}>Audit trail rail</p>
+        <div className="mt-4 space-y-3">
+          {["v4 submitted", "AI review passed", "Pontus requested approval"].map((item) => (
+            <div className="border-l-2 border-slate-300 pl-3 text-sm" key={item}>
+              <p className="font-medium text-foreground">{item}</p>
+              <p className="text-xs text-muted-foreground">Timestamp and actor visible</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkflowSignature({
+  color,
+  profileTreatment,
+  surface
+}: {
+  color: (typeof colorSchemas)[number];
+  profileTreatment: ProfileTreatment;
+  surface: TargetSurfaceKey;
+}) {
+  const columns = surface === "mobile-app" ? ["Next", "Blocked"] : ["New", "In progress", "Blocked"];
+
+  return (
+    <div className={`grid gap-3 ${surface === "mobile-app" ? "grid-cols-1" : "lg:grid-cols-3"}`}>
+      {columns.map((column, index) => (
+        <div className={`min-h-48 border ${profileTreatment.controlCardClass}`} key={column}>
+          <div className="flex items-center justify-between">
+            <p className={profileTreatment.labelClass}>{column}</p>
+            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${index === 2 ? "bg-red-50 text-red-700" : color.chip}`}>{index + 1}</span>
+          </div>
+          <div className="mt-4 space-y-3">
+            {["Validate intake", "Assign owner"].map((item) => (
+              <div className={`border p-3 ${profileTreatment.sampleCardClass}`} key={`${column}-${item}`}>
+                <p className="font-medium text-foreground">{item}</p>
+                <p className="mt-1 text-xs text-muted-foreground">SLA 2h - owner visible - next action ready</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PortalSignature({
+  profileTreatment,
+  surface
+}: {
+  profileTreatment: ProfileTreatment;
+  surface: TargetSurfaceKey;
+}) {
+  return (
+    <div className={`grid gap-4 ${surface === "mobile-app" ? "grid-cols-1" : "lg:grid-cols-[0.9fr_1.1fr_0.9fr]"}`}>
+      <div className={`border ${profileTreatment.controlCardClass}`}>
+        <p className={profileTreatment.labelClass}>Status timeline</p>
+        <div className="mt-4 space-y-4">
+          {["Request received", "Team reviewed", "Your input needed"].map((item, index) => (
+            <div className="flex gap-3" key={item}>
+              <span className={`mt-1 h-3 w-3 rounded-full ${index === 2 ? "bg-cyan-700" : "bg-cyan-200"}`} />
+              <div>
+                <p className="text-sm font-medium text-foreground">{item}</p>
+                <p className="text-xs text-muted-foreground">{index === 2 ? "Upload the missing file to continue." : "Completed and visible to customer."}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={`border ${profileTreatment.companionClass}`}>
+        <p className={profileTreatment.labelClass}>Input request card</p>
+        <h3 className="mt-2 text-lg font-semibold text-foreground">We need one document from you</h3>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">A plain-language explanation says why the document matters and what happens next.</p>
+        <div className="mt-4 rounded-2xl border border-dashed border-cyan-300 bg-white p-5 text-center text-sm font-medium text-cyan-900">
+          Drop file here or choose upload
+        </div>
+      </div>
+      <div className={`border ${profileTreatment.controlCardClass}`}>
+        <p className={profileTreatment.labelClass}>Message thread</p>
+        <div className="mt-4 space-y-3">
+          {["Customer question", "Team reply", "Next response by Friday"].map((item) => (
+            <div className={`px-3 py-2 text-sm ${profileTreatment.sampleCardClass}`} key={item}>{item}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CreativeSignature({
+  color,
+  profileTreatment,
+  surface
+}: {
+  color: (typeof colorSchemas)[number];
+  profileTreatment: ProfileTreatment;
+  surface: TargetSurfaceKey;
+}) {
+  return (
+    <div className={`grid gap-4 ${surface === "mobile-app" ? "grid-cols-1" : "lg:grid-cols-[220px_minmax(0,1fr)]"}`}>
+      <div className={`border ${profileTreatment.controlCardClass}`}>
+        <p className={profileTreatment.labelClass}>Source tray</p>
+        <div className="mt-4 space-y-3">
+          {["Interview clip", "AI synthesis", "Market note"].map((item) => (
+            <div className={`border ${profileTreatment.sampleCardClass}`} key={item}>{item}</div>
+          ))}
+        </div>
+      </div>
+      <div className={`min-h-72 border ${profileTreatment.companionClass}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className={profileTreatment.labelClass}>Canvas note cluster</p>
+            <h3 className="mt-2 text-lg font-semibold text-foreground">Explore before deciding</h3>
+          </div>
+          <span className={`px-3 py-1 text-xs font-semibold ${profileTreatment.statusShape} ${color.accent}`}>Draft</span>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {["User quote", "Open risk", "Promising angle", "AI idea", "Decision frame", "Next experiment"].map((item, index) => (
+            <div
+              className={`min-h-24 border p-3 text-sm shadow-sm ${index % 2 === 0 ? "rotate-1 border-amber-200 bg-amber-50" : "-rotate-1 border-violet-200 bg-violet-50"}`}
+              key={item}
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KnowledgeSignature({
+  profileTreatment,
+  surface
+}: {
+  profileTreatment: ProfileTreatment;
+  surface: TargetSurfaceKey;
+}) {
+  return (
+    <div className={`grid gap-4 ${surface === "mobile-app" ? "grid-cols-1" : "lg:grid-cols-[minmax(0,1fr)_280px]"}`}>
+      <div className={`border ${profileTreatment.companionClass}`}>
+        <p className={profileTreatment.labelClass}>Search command bar</p>
+        <div className="mt-4 rounded-full border border-indigo-200 bg-white px-5 py-3 text-sm text-slate-700">
+          Search policies, guides, decisions...
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {["Verified source card", "Related decision", "Recommended guide", "Recent update"].map((item) => (
+            <div className={`border ${profileTreatment.sampleCardClass}`} key={item}>
+              <p className="font-medium text-foreground">{item}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Confidence, owner, freshness, match reason.</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={`border ${profileTreatment.controlCardClass}`}>
+        <p className={profileTreatment.labelClass}>Article reading pane</p>
+        <h3 className="mt-3 text-base font-semibold text-foreground">Approval rules</h3>
+        <div className="mt-4 space-y-2">
+          <div className="h-2 rounded-full bg-indigo-100" />
+          <div className="h-2 w-4/5 rounded-full bg-indigo-100" />
+          <div className="h-2 w-2/3 rounded-full bg-indigo-100" />
+        </div>
+        <div className={`mt-4 border ${profileTreatment.sampleCardClass}`}>Related: Tollgate checklist</div>
+      </div>
+    </div>
+  );
+}
+
+function UtilitySignature({
+  color,
+  profileTreatment,
+  surface
+}: {
+  color: (typeof colorSchemas)[number];
+  profileTreatment: ProfileTreatment;
+  surface: TargetSurfaceKey;
+}) {
+  return (
+    <div className={`grid gap-4 ${surface === "mobile-app" ? "grid-cols-1" : "lg:grid-cols-[1fr_1fr]"}`}>
+      <div className={`border ${profileTreatment.controlCardClass}`}>
+        <p className={profileTreatment.labelClass}>Single input panel</p>
+        <label className="mt-4 block space-y-2">
+          <span className="text-sm font-medium text-foreground">Readiness threshold</span>
+          <input className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm" defaultValue="80%" />
+        </label>
+        <button className={`mt-4 h-11 w-full rounded-lg text-sm font-medium ${color.primaryButton}`} type="button">Run check</button>
+      </div>
+      <div className={`border ${profileTreatment.companionClass}`}>
+        <p className={profileTreatment.labelClass}>Immediate result panel</p>
+        <h3 className="mt-3 text-2xl font-semibold text-foreground">Ready</h3>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">The result, reason, and single next action are visible without extra navigation.</p>
+        <div className="mt-4 flex gap-2 text-xs">
+          {["Last run", "Saved", "Copy result"].map((item) => (
+            <span className="rounded-lg border border-slate-200 bg-white px-2 py-1" key={item}>{item}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DesktopReference({
   color,
   dense,
