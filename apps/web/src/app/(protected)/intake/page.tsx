@@ -321,8 +321,8 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                 <LocalizedText
-                  en="Upload text or markdown delivery artifacts, inspect the full imported source, review structured candidates, and correct them before promotion. Import always starts with AI-assisted interpretation and falls back to the built-in parser automatically when the AI response is incomplete."
-                  sv="Ladda upp text- eller markdownunderlag, granska hela den importerade källan, gå igenom strukturerade kandidater och rätta dem innan promotion. Import startar alltid med AI-stödd tolkning och faller automatiskt tillbaka till den inbyggda parsern när AI-svaret är ofullständigt."
+                  en="Upload text, markdown, or JSON delivery artifacts, inspect the full imported source, review structured candidates, and correct them before promotion. Import always starts with AI-assisted interpretation and falls back to the built-in parser automatically when the AI response is incomplete."
+                  sv="Ladda upp text-, markdown- eller JSON-underlag, granska hela den importerade källan, gå igenom strukturerade kandidater och rätta dem innan promotion. Import startar alltid med AI-stödd tolkning och faller automatiskt tillbaka till den inbyggda parsern när AI-svaret är ofullständigt."
                 />
               </p>
             </div>
@@ -377,12 +377,14 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <LocalizedText
                 en={
                   <>
-                    Supported extensions: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong>, and{" "}
-                    <strong>.txt</strong>. Uploads are grouped into a persisted import session for {workspace.organizationName}.
+                    Supported extensions: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong>,{" "}
+                    <strong>.txt</strong>, and <strong>.json</strong>. Uploads are grouped into a persisted import session
+                    for {workspace.organizationName}.
                   </>
                 }
                 sv={
                   <>
+                    JSON stöds också via <strong>.json</strong>.{" "}
                     Stödda filändelser: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong> och{" "}
                     <strong>.txt</strong>. Uppladdningar grupperas i en sparad importsession för {workspace.organizationName}.
                   </>
@@ -440,7 +442,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
                   <LocalizedText en="Artifact files" sv="Importfiler" />
                 </span>
                 <input
-                  accept=".md,.mdx,.markdown,.txt,text/markdown,text/plain"
+                  accept=".md,.mdx,.markdown,.txt,.json,text/markdown,text/plain,application/json"
                   className="block w-full rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-6 text-sm text-muted-foreground file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:opacity-90"
                   multiple
                   name="files"

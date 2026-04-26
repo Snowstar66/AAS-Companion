@@ -45,7 +45,7 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
         artifactIntakeRejectedFileSchema.parse({
           fileName: file.fileName,
           mimeType: file.mimeType ?? null,
-          reason: "Only text and markdown files (.md, .mdx, .markdown, .txt) are supported in Import."
+          reason: "Only text, markdown, and JSON files (.md, .mdx, .markdown, .txt, .json) are supported in Import."
         })
       );
       continue;
@@ -56,7 +56,7 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
         artifactIntakeRejectedFileSchema.parse({
           fileName: file.fileName,
           mimeType: file.mimeType ?? null,
-          reason: "Uploaded text or markdown files must contain content before intake can continue."
+          reason: "Uploaded text, markdown, or JSON files must contain content before intake can continue."
         })
       );
       continue;
@@ -127,7 +127,7 @@ export async function createArtifactIntakeSessionService(input: {
   if (input.files.length === 0) {
     return failure({
       code: "artifact_files_required",
-      message: "Select one or more text or markdown files before creating an intake session."
+      message: "Select one or more text, markdown, or JSON files before creating an intake session."
     });
   }
 

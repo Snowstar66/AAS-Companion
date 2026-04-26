@@ -24,7 +24,9 @@ describe("artifact intake helpers", () => {
   it("accepts markdown-based artifact files", () => {
     expect(isSupportedArtifactFile("story-pack.md")).toBe(true);
     expect(isSupportedArtifactFile("epic-pack.MDX")).toBe(true);
+    expect(isSupportedArtifactFile("framing-package.json")).toBe(true);
     expect(getArtifactFileExtension("brief.markdown")).toBe(".markdown");
+    expect(getArtifactFileExtension("framing-package.JSON")).toBe(".json");
   });
 
   it("rejects unsupported artifact file types", () => {
@@ -321,6 +323,155 @@ describe("artifact intake helpers", () => {
       "log includes prompt id and model version",
       "history is linked to story id and release"
     ]);
+  });
+
+  it("parses AAS Framing Import Package JSON into outcome, epic, story idea, and carry-forward candidates", () => {
+    const content = JSON.stringify(
+      {
+        schema_version: "1.0",
+        document_type: "AAS Framing Import Package",
+        product_name: "SalesCapacity",
+        version: "0.3",
+        language: "sv-SE",
+        aas_context: {
+          phase: "Framing",
+          target_next_phase: "Design",
+          domain: "Application Development",
+          ai_acceleration_level: 2,
+          risk_profile: "Medium",
+          human_mandate: "Human approves planning and risk decisions.",
+          governance_requirements: ["AI Risk Ledger ska finnas for Level 2."]
+        },
+        problem_statement: {
+          id: "SC-PS1",
+          text: "Current capacity planning is hard to overview.",
+          current_baseline: "Excel-based monthly planning.",
+          impact_areas: ["Hard to see future capacity gaps."],
+          baseline_sources: [
+            {
+              id: "SC-BS1",
+              name: "Capacity baseline",
+              format: "Excel",
+              description: "Employment rate and allocation per month."
+            }
+          ]
+        },
+        outcomes: [
+          {
+            id: "SC-O1",
+            title: "Shared capacity overview",
+            statement: "Replace Excel planning with a shared, traceable capacity overview.",
+            baseline: "Excel-based monthly planning.",
+            target_effects: ["Reduce manual planning work."],
+            measurement_candidates: ["Planning cycle time before and after import."]
+          }
+        ],
+        scope: {
+          mvp_in_scope: ["Import monthly allocation from Excel."],
+          mvp_out_of_scope: ["Full HR integration."]
+        },
+        configuration_defaults: {
+          planning_unit: "FTE",
+          calculation_granularity: "Week",
+          reporting_granularity: "Month",
+          forecast_horizon_months: "6-12",
+          team_status_thresholds: [{ status: "Balanced", range: "80-100%", color: "Green" }],
+          flag_levels: [{ id: "INFO", label: "Info", icon: "info" }]
+        },
+        data_model_candidates: {
+          employee: ["employee_id", "name"],
+          team: ["team_id", "team_name"]
+        },
+        simplified_reference_data: {
+          roles: [{ code: "DL", label: "Delivery lead" }]
+        },
+        epics: [
+          {
+            id: "SC-E01",
+            outcome_id: "SC-O1",
+            title: "Import and capacity baseline",
+            purpose: "Establish a verifiable baseline from existing files.",
+            scope: "Import, validation, and initial baseline.",
+            risk_note: "Bad import can create a wrong baseline.",
+            story_ideas: [
+              {
+                id: "SC-E01-SI01",
+                title: "Import monthly allocation",
+                value_intent: "Create the first baseline without manual re-entry.",
+                expected_behavior: "User can import monthly allocation and review validation issues.",
+                ai_acceleration_level: 2,
+                ai_usage_scope: ["CONTENT", "DESIGN"],
+                candidate_test_ideas: ["Import stops when names are missing."]
+              }
+            ]
+          }
+        ],
+        journey_contexts: [
+          {
+            id: "SC-J01",
+            title: "Planner creates baseline",
+            primary_actor: "Planner",
+            downstream_traceability: "Creates baseline for later reporting."
+          }
+        ],
+        initial_ai_risk_ledger: [
+          {
+            id: "SC-AIR-01",
+            risk: "Bad import creates wrong baseline.",
+            mitigation: "Validation and manual review.",
+            owner_role: "Planner",
+            status: "Open"
+          }
+        ],
+        tollgate_1_readiness: {
+          remaining_decisions: ["Value Owner needs to be assigned."]
+        }
+      },
+      null,
+      2
+    );
+
+    const parsed = parseMarkdownArtifact("file-aas-json-1", "sales_capacity_framing.json", content);
+    const mapping = mapParsedArtifactsToAasCandidates({
+      files: [
+        {
+          id: "file-aas-json-1",
+          fileName: "sales_capacity_framing.json",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ],
+      importIntent: "framing"
+    });
+
+    expect(parsed.classification.sourceType).toBe("mixed_markdown_bundle");
+    expect(parsed.classification.confidence).toBe("high");
+
+    const outcomeCandidate = mapping.candidates.find((candidate) => candidate.type === "outcome");
+    const epicCandidate = mapping.candidates.find((candidate) => candidate.type === "epic");
+    const storyCandidate = mapping.candidates.find((candidate) => candidate.type === "story");
+
+    expect(outcomeCandidate?.draftRecord?.key).toBe("SC-O1");
+    expect(outcomeCandidate?.draftRecord?.problemStatement).toContain("Current capacity planning is hard to overview.");
+    expect(epicCandidate?.draftRecord?.key).toBe("SC-E01");
+    expect(epicCandidate?.relationshipState).toBe("mapped");
+    expect(storyCandidate?.draftRecord?.key).toBe("SC-E01-SI01");
+    expect(storyCandidate?.draftRecord?.valueIntent).toBe("Create the first baseline without manual re-entry.");
+    expect(storyCandidate?.draftRecord?.expectedBehavior).toBe(
+      "User can import monthly allocation and review validation issues."
+    );
+    expect(storyCandidate?.draftRecord?.acceptanceCriteria).toEqual([]);
+    expect(storyCandidate?.draftRecord?.testDefinition).toBeNull();
+    expect(storyCandidate?.relationshipState).toBe("mapped");
+    expect(mapping.carryForwardItems.map((item) => item.title)).toEqual(
+      expect.arrayContaining([
+        "Additional requirements - MVP scope",
+        "Configuration and planning constraints",
+        "Data model constraints",
+        "Journey context design input",
+        "AI governance and risk constraints"
+      ])
+    );
   });
 
   it("maps structured story spec files into one story candidate instead of fragmented outcome-like candidates", () => {

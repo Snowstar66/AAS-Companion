@@ -17,7 +17,7 @@ import {
   storyTypeSchema
 } from "./enums";
 
-export const supportedArtifactExtensions = [".md", ".mdx", ".markdown", ".txt"] as const;
+export const supportedArtifactExtensions = [".md", ".mdx", ".markdown", ".txt", ".json"] as const;
 
 export const artifactIntakeProcessingModeSchema = z.enum(["deterministic", "ai_assisted"]);
 
@@ -451,6 +451,89 @@ function getJsonObject(record: JsonArtifactRecord, key: string) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonArtifactRecord) : null;
 }
 
+function getJsonStringFromKeys(record: JsonArtifactRecord | null | undefined, keys: string[]) {
+  if (!record) {
+    return "";
+  }
+
+  for (const key of keys) {
+    const value = getJsonString(record, key);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+function getJsonStringArrayFromKeys(record: JsonArtifactRecord | null | undefined, keys: string[]) {
+  if (!record) {
+    return [];
+  }
+
+  for (const key of keys) {
+    const values = getJsonStringArray(record, key);
+
+    if (values.length > 0) {
+      return values;
+    }
+  }
+
+  return [];
+}
+
+function stringifyJsonScalar(value: unknown) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  return "";
+}
+
+function getJsonDisplayValue(record: JsonArtifactRecord | null | undefined, key: string) {
+  if (!record) {
+    return "";
+  }
+
+  const value = record[key];
+
+  if (Array.isArray(value)) {
+    const scalarValues = value.map((entry) => stringifyJsonScalar(entry)).filter(Boolean);
+    return scalarValues.length > 0 ? scalarValues.join(" | ") : "";
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value as JsonArtifactRecord)
+      .map(([entryKey, entryValue]) => {
+        const scalarValue = stringifyJsonScalar(entryValue);
+        return scalarValue ? `${entryKey}: ${scalarValue}` : "";
+      })
+      .filter(Boolean)
+      .join(" | ");
+  }
+
+  return stringifyJsonScalar(value);
+}
+
+function buildJsonBulletLines(label: string, values: string[]) {
+  const normalizedValues = values.map((value) => value.trim()).filter(Boolean);
+
+  if (normalizedValues.length === 0) {
+    return [];
+  }
+
+  return [label, ...normalizedValues.map((value) => `- ${value}`)];
+}
+
 function joinTaggedValues(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean).join(" | ");
 }
@@ -559,6 +642,23 @@ function detectStructuredJsonArtifactType(document: JsonArtifactRecord) {
   const outcomes = getJsonObjectArray(document, "outcomes");
   const epics = getJsonObjectArray(document, "epics");
   const stories = getJsonObjectArray(document, "stories");
+  const documentType = getJsonString(document, "document_type").toLowerCase();
+  const hasNestedStoryIdeas = epics.some((epic) => getJsonObjectArray(epic, "story_ideas").length > 0);
+
+  if (
+    documentType === "aas framing import package" ||
+    (getJsonObject(document, "aas_context") &&
+      getJsonObject(document, "problem_statement") &&
+      outcomes.length > 0 &&
+      epics.length > 0 &&
+      hasNestedStoryIdeas)
+  ) {
+    return {
+      sourceType: "mixed_markdown_bundle" as const,
+      confidence: "high" as const,
+      rationale: "Detected an AAS Framing Import Package with Outcome, Epic, Story Idea, governance, and risk records."
+    };
+  }
 
   if (outcomes.length > 0 && (epics.length > 0 || stories.length > 0)) {
     return {
@@ -749,6 +849,322 @@ export function classifyArtifactSource(fileName: string, content: string): Artif
   };
 }
 
+function isAasFramingImportPackage(document: JsonArtifactRecord) {
+  const documentType = getJsonString(document, "document_type").toLowerCase();
+
+  if (documentType === "aas framing import package") {
+    return true;
+  }
+
+  const aasContext = getJsonObject(document, "aas_context");
+
+  return Boolean(
+    aasContext &&
+      getJsonString(aasContext, "phase").toLowerCase() === "framing" &&
+      getJsonObject(document, "problem_statement") &&
+      getJsonObjectArray(document, "outcomes").length > 0 &&
+      getJsonObjectArray(document, "epics").some((epic) => getJsonObjectArray(epic, "story_ideas").length > 0)
+  );
+}
+
+function parseAasFramingJsonArtifact(
+  fileId: string,
+  fileName: string,
+  content: string,
+  document: JsonArtifactRecord,
+  classification: ArtifactSourceClassification
+): ArtifactParseResult {
+  const sections: ArtifactParseResult["sections"] = [];
+  const aasContext = getJsonObject(document, "aas_context");
+  const problemStatement = getJsonObject(document, "problem_statement");
+  const scope = getJsonObject(document, "scope");
+  const configurationDefaults = getJsonObject(document, "configuration_defaults");
+  const dataModelCandidates = getJsonObject(document, "data_model_candidates");
+  const referenceData = getJsonObject(document, "simplified_reference_data");
+  const tollgateReadiness = getJsonObject(document, "tollgate_1_readiness");
+  const outcomes = getJsonObjectArray(document, "outcomes");
+  const epics = getJsonObjectArray(document, "epics");
+  const journeyContexts = getJsonObjectArray(document, "journey_contexts");
+  const aiRiskLedger = getJsonObjectArray(document, "initial_ai_risk_ledger");
+  const defaultOutcomeId = getJsonStringFromKeys(outcomes[0], ["id", "outcome_id"]);
+  const baselineSourceSummary = problemStatement
+    ? getJsonObjectArray(problemStatement, "baseline_sources")
+        .map((source) => joinTaggedValues([getJsonString(source, "name"), getJsonString(source, "format")]))
+        .filter(Boolean)
+    : [];
+
+  const packageSection = buildJsonSection({
+    fileId,
+    fileName,
+    content,
+    sectionId: "json-aas-framing-package",
+    title: getJsonString(document, "product_name") || "AAS Framing Import Package",
+    marker: "AAS Framing Import Package",
+    anchorNeedle: "\"document_type\"",
+    bodyLines: [
+      `Package Type: ${getJsonString(document, "document_type") || "AAS Framing Import Package"}`,
+      `Product: ${getJsonString(document, "product_name") || fileName}`,
+      `Version: ${getJsonString(document, "version") || "Not set"}`,
+      `Language: ${getJsonString(document, "language") || "Not set"}`,
+      aasContext ? `Phase: ${getJsonString(aasContext, "phase") || "Not set"}` : "",
+      aasContext ? `Target Next Phase: ${getJsonString(aasContext, "target_next_phase") || "Not set"}` : "",
+      aasContext ? `Domain: ${getJsonString(aasContext, "domain") || "Not set"}` : "",
+      aasContext ? `AI Acceleration Level: ${String(getJsonNumber(aasContext, "ai_acceleration_level") ?? "Not set")}` : "",
+      aasContext ? `Risk Profile: ${getJsonString(aasContext, "risk_profile") || "Not set"}` : "",
+      aasContext ? `Human Mandate: ${getJsonString(aasContext, "human_mandate") || "Not set"}` : ""
+    ]
+  });
+  sections.push(createParsedSection(fileId, fileName, packageSection, "problem_goal", "high"));
+
+  if (problemStatement) {
+    const baselineSources = getJsonObjectArray(problemStatement, "baseline_sources")
+      .map((source) => {
+        const sourceName = getJsonString(source, "name");
+        const sourceFormat = getJsonString(source, "format");
+        const sourceDescription = getJsonString(source, "description");
+        return joinTaggedValues([sourceName, sourceFormat, sourceDescription]);
+      })
+      .filter(Boolean);
+    const problemSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-problem-statement",
+      title: "Problem statement",
+      marker: "problem_statement",
+      anchorNeedle: "\"problem_statement\"",
+      bodyLines: [
+        `Problem Statement ID: ${getJsonString(problemStatement, "id") || "Not set"}`,
+        `Problem Statement: ${getJsonString(problemStatement, "text") || "Not set"}`,
+        `Baseline: ${getJsonString(problemStatement, "current_baseline") || "Not set"}`,
+        ...buildJsonBulletLines("Impact Areas", getJsonStringArray(problemStatement, "impact_areas")),
+        ...buildJsonBulletLines("Baseline Sources", baselineSources)
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, problemSection, "problem_goal", "high"));
+  }
+
+  for (const [index, outcome] of outcomes.entries()) {
+    const outcomeId = getJsonStringFromKeys(outcome, ["id", "outcome_id"]) || `O-${index + 1}`;
+    const outcomeSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: `json-outcome-${index}`,
+      title: getJsonString(outcome, "title") || `Outcome ${outcomeId}`,
+      marker: `outcomes[${index}]`,
+      anchorNeedle: outcomeId,
+      bodyLines: [
+        `Outcome ID: ${outcomeId}`,
+        `Title: ${getJsonString(outcome, "title") || `Outcome ${outcomeId}`}`,
+        `Outcome Statement: ${getJsonString(outcome, "statement") || "Not set"}`,
+        `Baseline Definition: ${getJsonDisplayValue(outcome, "baseline") || "Not set"}`,
+        `Baseline Source: ${joinTaggedValues(baselineSourceSummary) || "Not set"}`,
+        `Measurement Method: ${joinTaggedValues(getJsonStringArrayFromKeys(outcome, ["measurement_method", "measurement_candidates"])) || "Not set"}`,
+        configurationDefaults ? `Timeframe: ${getJsonDisplayValue(configurationDefaults, "forecast_horizon_months") || "Not set"}` : "",
+        ...buildJsonBulletLines("Target Effects", getJsonStringArray(outcome, "target_effects"))
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, outcomeSection, "outcome_candidate", "high"));
+  }
+
+  for (const [index, epic] of epics.entries()) {
+    const epicId = getJsonStringFromKeys(epic, ["id", "epic_id"]) || `E-${index + 1}`;
+    const outcomeId = getJsonStringFromKeys(epic, ["outcome_id", "outcomeId"]) || defaultOutcomeId;
+    const scopeIn = getJsonStringArrayFromKeys(epic, ["scope_in", "mvp_in_scope"]);
+    const scopeOut = getJsonStringArrayFromKeys(epic, ["scope_out", "mvp_out_of_scope"]);
+    const scopeText = getJsonString(epic, "scope");
+    const epicSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: `json-epic-${index}`,
+      title: getJsonString(epic, "title") || `Epic ${epicId}`,
+      marker: `epics[${index}]`,
+      anchorNeedle: epicId,
+      bodyLines: [
+        `Epic ID: ${epicId}`,
+        `Title: ${getJsonString(epic, "title") || `Epic ${epicId}`}`,
+        `Purpose: ${getJsonString(epic, "purpose") || "Not set"}`,
+        `Outcome ID: ${outcomeId || "Not set"}`,
+        `Outcome Link: ${outcomeId || "Not set"}`,
+        `Scope In: ${scopeText || joinTaggedValues(scopeIn) || "Not set"}`,
+        `Scope Out: ${joinTaggedValues(scopeOut) || "Not set"}`,
+        `Risk Note: ${getJsonString(epic, "risk_note") || "Not set"}`
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, epicSection, "epic_candidate", "high"));
+
+    for (const [storyIndex, story] of getJsonObjectArray(epic, "story_ideas").entries()) {
+      const storyId = getJsonStringFromKeys(story, ["id", "story_id"]) || `${epicId}-SI${storyIndex + 1}`;
+      const storyTitle = getJsonString(story, "title") || `Story Idea ${storyId}`;
+      const storySection = buildJsonSection({
+        fileId,
+        fileName,
+        content,
+        sectionId: `json-epic-${index}-story-${storyIndex}`,
+        title: storyTitle,
+        marker: `epics[${index}].story_ideas[${storyIndex}]`,
+        anchorNeedle: storyId,
+        bodyLines: [
+          `Story ID: ${storyId}`,
+          `Title: ${storyTitle}`,
+          "Story Type: Feature",
+          `Value Intent: ${getJsonString(story, "value_intent") || "Not set"}`,
+          `Expected Behavior: ${getJsonString(story, "expected_behavior") || "Not set"}`,
+          `AI Usage Scope: ${joinTaggedValues(getJsonStringArray(story, "ai_usage_scope")) || "Not set"}`,
+          `AI Acceleration Level: ${String(getJsonNumber(story, "ai_acceleration_level") ?? "Not set")}`,
+          `Outcome ID: ${outcomeId || "Not set"}`,
+          `Outcome Link: ${outcomeId || "Not set"}`,
+          `Epic ID: ${epicId}`,
+          `Epic Link: ${epicId}`,
+          ...buildJsonBulletLines("Candidate Test Ideas", getJsonStringArray(story, "candidate_test_ideas"))
+        ]
+      });
+      sections.push(createParsedSection(fileId, fileName, storySection, "story_candidate", "high"));
+    }
+  }
+
+  if (scope) {
+    const scopeSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-scope-constraints",
+      title: "Additional requirements - MVP scope",
+      marker: "scope",
+      anchorNeedle: "\"scope\"",
+      bodyLines: [
+        ...buildJsonBulletLines("MVP In Scope", getJsonStringArray(scope, "mvp_in_scope")),
+        ...buildJsonBulletLines("MVP Out Of Scope", getJsonStringArray(scope, "mvp_out_of_scope"))
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, scopeSection, "architecture_notes", "high"));
+  }
+
+  if (configurationDefaults) {
+    const thresholdLines = getJsonObjectArray(configurationDefaults, "team_status_thresholds").map((threshold) =>
+      joinTaggedValues([
+        getJsonString(threshold, "status"),
+        getJsonString(threshold, "range"),
+        getJsonString(threshold, "color")
+      ])
+    );
+    const flagLines = getJsonObjectArray(configurationDefaults, "flag_levels").map((flag) =>
+      joinTaggedValues([getJsonString(flag, "id"), getJsonString(flag, "label"), getJsonString(flag, "icon")])
+    );
+    const configurationSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-configuration-constraints",
+      title: "Configuration and planning constraints",
+      marker: "configuration_defaults",
+      anchorNeedle: "\"configuration_defaults\"",
+      bodyLines: [
+        `Planning Unit: ${getJsonString(configurationDefaults, "planning_unit") || "Not set"}`,
+        `Calculation Granularity: ${getJsonString(configurationDefaults, "calculation_granularity") || "Not set"}`,
+        `Reporting Granularity: ${getJsonString(configurationDefaults, "reporting_granularity") || "Not set"}`,
+        `Forecast Horizon: ${getJsonDisplayValue(configurationDefaults, "forecast_horizon_months") || "Not set"}`,
+        ...buildJsonBulletLines("Team Status Thresholds", thresholdLines),
+        ...buildJsonBulletLines("Flag Levels", flagLines)
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, configurationSection, "architecture_notes", "high"));
+  }
+
+  if (dataModelCandidates) {
+    const dataModelLines = Object.entries(dataModelCandidates).map(([entity, fields]) =>
+      `${entity}: ${Array.isArray(fields) ? fields.map((field) => stringifyJsonScalar(field)).filter(Boolean).join(", ") : stringifyJsonScalar(fields)}`
+    );
+    const dataModelSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-data-model-constraints",
+      title: "Data model constraints",
+      marker: "data_model_candidates",
+      anchorNeedle: "\"data_model_candidates\"",
+      bodyLines: buildJsonBulletLines("Data Model Candidates", dataModelLines)
+    });
+    sections.push(createParsedSection(fileId, fileName, dataModelSection, "architecture_notes", "high"));
+  }
+
+  if (referenceData) {
+    const referenceLines = Object.entries(referenceData).map(([key, value]) =>
+      `${key}: ${Array.isArray(value) ? value.length : stringifyJsonScalar(value)} item(s)`
+    );
+    const referenceSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-reference-data",
+      title: "Reference data constraints",
+      marker: "simplified_reference_data",
+      anchorNeedle: "\"simplified_reference_data\"",
+      bodyLines: buildJsonBulletLines("Reference Data", referenceLines)
+    });
+    sections.push(createParsedSection(fileId, fileName, referenceSection, "architecture_notes", "medium"));
+  }
+
+  if (journeyContexts.length > 0) {
+    const journeyLines = journeyContexts.map((journey) =>
+      joinTaggedValues([
+        getJsonString(journey, "id"),
+        getJsonString(journey, "title"),
+        getJsonString(journey, "primary_actor"),
+        getJsonString(journey, "downstream_traceability")
+      ])
+    );
+    const journeySection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-journey-contexts",
+      title: "Journey context design input",
+      marker: "journey_contexts",
+      anchorNeedle: "\"journey_contexts\"",
+      bodyLines: buildJsonBulletLines("Journey Contexts", journeyLines)
+    });
+    sections.push(createParsedSection(fileId, fileName, journeySection, "architecture_notes", "medium"));
+  }
+
+  if (aasContext || aiRiskLedger.length > 0 || tollgateReadiness) {
+    const governanceRequirements = aasContext ? getJsonStringArray(aasContext, "governance_requirements") : [];
+    const riskLines = aiRiskLedger.map((risk) =>
+      joinTaggedValues([
+        getJsonString(risk, "id"),
+        getJsonString(risk, "risk"),
+        getJsonString(risk, "mitigation"),
+        getJsonString(risk, "owner_role"),
+        getJsonString(risk, "status")
+      ])
+    );
+    const remainingDecisionLines = tollgateReadiness ? getJsonStringArray(tollgateReadiness, "remaining_decisions") : [];
+    const governanceSection = buildJsonSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "json-governance-risk-constraints",
+      title: "AI governance and risk constraints",
+      marker: "aas_context.initial_ai_risk_ledger",
+      anchorNeedle: "\"initial_ai_risk_ledger\"",
+      bodyLines: [
+        aasContext ? `Human Mandate: ${getJsonString(aasContext, "human_mandate") || "Not set"}` : "",
+        ...buildJsonBulletLines("Governance Requirements", governanceRequirements),
+        ...buildJsonBulletLines("AI Risk Ledger", riskLines),
+        ...buildJsonBulletLines("Remaining Tollgate Decisions", remainingDecisionLines)
+      ]
+    });
+    sections.push(createParsedSection(fileId, fileName, governanceSection, "architecture_notes", "high"));
+  }
+
+  return {
+    classification,
+    sections
+  };
+}
+
 function parseStructuredJsonArtifact(
   fileId: string,
   fileName: string,
@@ -759,6 +1175,10 @@ function parseStructuredJsonArtifact(
 
   if (!classification) {
     return null;
+  }
+
+  if (isAasFramingImportPackage(document)) {
+    return parseAasFramingJsonArtifact(fileId, fileName, content, document, classification);
   }
 
   const sections: ArtifactParseResult["sections"] = [];
@@ -1111,7 +1531,7 @@ function normalizeImportedReferenceKey(value: string | null | undefined) {
     .replace(/^OUTCOME-/, "OUT-")
     .replace(/^EPC-/, "EPIC-")
     .replace(/^STR-/, "STORY-")
-    .replace(/^SC-/, "STORY-");
+    .replace(/^SC-(?=\d)/, "STORY-");
 }
 
 function buildImportedReferenceAliases(value: string | null | undefined) {
@@ -1148,10 +1568,10 @@ function extractImportedCandidateKey(candidateType: ArtifactAasCandidate["type"]
 
   const pattern =
     candidateType === "outcome"
-      ? /\b(?:OUT|OUTCOME)-\d+\b/i
+      ? /\b(?:(?:OUT|OUTCOME)-\d+|[A-Z]{2,10}-O\d+)\b/i
       : candidateType === "epic"
-        ? /\b(?:EPIC|EPC)-\d+\b/i
-        : /\b(?:STORY|SC|STR)-\d+\b/i;
+        ? /\b(?:(?:EPIC|EPC)-\d+|[A-Z]{2,10}-E\d+)\b/i
+        : /\b(?:(?:STORY|SC|STR)-\d+|[A-Z]{2,10}-E\d+-SI\d+)\b/i;
   const match = normalized.match(pattern);
 
   return normalizeImportedReferenceKey(match?.[0]);
@@ -2205,21 +2625,21 @@ function detectCarryForwardSection(section: ArtifactParsedSection) {
     };
   }
 
-  if (/non[\s-]?functional|nfr|performance|security|availability|privacy|compliance|accessibility|reliability/.test(title)) {
+  if (/non[\s-]?functional|nfr|performance|security|availability|privacy|compliance|accessibility|reliability|governance|risk|tollgate/.test(title)) {
     return {
       category: "nfr_constraint" as const,
       recommendedUse: "cross_cutting_requirement" as const
     };
   }
 
-  if (/additional requirement|additional req|functional requirement|functional req|feature requirement|open issue|assumption|dependency/.test(title)) {
+  if (/additional requirement|additional req|functional requirement|functional req|feature requirement|open issue|assumption|dependency|reference data/.test(title)) {
     return {
       category: "additional_requirement" as const,
       recommendedUse: "framing_constraint" as const
     };
   }
 
-  if (/constraint|integration|platform|technology|persistence|database|api|hosting|architecture/.test(title)) {
+  if (/constraint|integration|platform|technology|persistence|database|data model|api|hosting|architecture|configuration/.test(title)) {
     return {
       category: /wireframe|mockup|screen|page|flow|interaction/.test(text)
         ? ("excluded_design" as const)
@@ -2230,7 +2650,7 @@ function detectCarryForwardSection(section: ArtifactParsedSection) {
     };
   }
 
-  if (/wireframe|mockup|screen flow|user flow|interaction pattern|page layout|ui flow/.test(title)) {
+  if (/wireframe|mockup|screen flow|user flow|interaction pattern|page layout|ui flow|journey context/.test(title)) {
     return {
       category: "excluded_design" as const,
       recommendedUse: "design_input" as const

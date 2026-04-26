@@ -220,7 +220,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   if (files.length === 0) {
     redirect(
       buildRedirect("/intake", {
-        error: "Select one or more text or markdown files before creating an import session."
+        error: "Select one or more text, markdown, or JSON files before creating an import session."
       })
     );
   }
