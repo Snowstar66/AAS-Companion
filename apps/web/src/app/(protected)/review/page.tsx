@@ -30,6 +30,8 @@ import {
 } from "./actions";
 import { recordOutcomeTollgateDecisionAction } from "../outcomes/[outcomeId]/actions";
 
+export const maxDuration = 120;
+
 type ReviewPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };

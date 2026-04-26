@@ -68,9 +68,15 @@ export const getSignedInAccountIdentity = cache(async (): Promise<AccountIdentit
       return null;
     }
 
-    const {
-      data: { user }
-    } = await withDevTiming("web.auth.supabase.getUser", () => supabase.auth.getUser());
+    let user: Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"] | null = null;
+
+    try {
+      const result = await withDevTiming("web.auth.supabase.getUser", () => supabase.auth.getUser());
+      user = result.data.user;
+    } catch (error) {
+      console.warn("[auth] Supabase session lookup failed; treating the request as signed out.", error);
+      return null;
+    }
 
     if (!user) {
       return null;

@@ -20,6 +20,8 @@ import {
   uploadArtifactIntakeFilesAction
 } from "./actions";
 
+export const maxDuration = 120;
+
 type ArtifactIntakePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
