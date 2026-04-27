@@ -323,7 +323,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               </h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                 <LocalizedText
-                  en="Upload text, markdown, or JSON delivery artifacts, inspect the full imported source, review structured candidates, and correct them before promotion. Import always starts with AI-assisted interpretation and falls back to the built-in parser automatically when the AI response is incomplete."
+                  en="Upload text, markdown, JSON, or CSV delivery artifacts, inspect the full imported source, review structured candidates, and correct them before promotion. Import always starts with AI-assisted interpretation and falls back to the built-in parser automatically when the AI response is incomplete."
                   sv="Ladda upp text-, markdown- eller JSON-underlag, granska hela den importerade källan, gå igenom strukturerade kandidater och rätta dem innan promotion. Import startar alltid med AI-stödd tolkning och faller automatiskt tillbaka till den inbyggda parsern när AI-svaret är ofullständigt."
                 />
               </p>

@@ -588,8 +588,14 @@ async function processArtifactIntakeSession(
   });
   let processingModeUsed: "deterministic" | "ai_assisted" = "deterministic";
   let processingNote: string | null = null;
+  const hasTraceabilityPackCsv = initialParsedArtifacts.some((entry) =>
+    entry.parseResult.sections.some((section) => section.sourceReference.sectionMarker.startsWith("traceability_pack"))
+  );
 
-  if (input.processingMode === "ai_assisted") {
+  if (hasTraceabilityPackCsv) {
+    processingNote =
+      "A traceability-pack CSV was detected, so the built-in parser handled the import to preserve declared Outcome, Epic/refinement, Story, requirements, implementation, and verification links.";
+  } else if (input.processingMode === "ai_assisted") {
     try {
       const aiInterpretation = await interpretArtifactFilesWithAi({
         importIntent: input.importIntent,

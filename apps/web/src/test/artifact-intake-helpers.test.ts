@@ -25,8 +25,10 @@ describe("artifact intake helpers", () => {
     expect(isSupportedArtifactFile("story-pack.md")).toBe(true);
     expect(isSupportedArtifactFile("epic-pack.MDX")).toBe(true);
     expect(isSupportedArtifactFile("framing-package.json")).toBe(true);
+    expect(isSupportedArtifactFile("traceability-pack.csv")).toBe(true);
     expect(getArtifactFileExtension("brief.markdown")).toBe(".markdown");
     expect(getArtifactFileExtension("framing-package.JSON")).toBe(".json");
+    expect(getArtifactFileExtension("traceability-pack.CSV")).toBe(".csv");
   });
 
   it("rejects unsupported artifact file types", () => {
@@ -42,6 +44,44 @@ describe("artifact intake helpers", () => {
 
     expect(classification.sourceType).toBe("bmad_prd");
     expect(classification.confidence).toBe("high");
+  });
+
+  it("maps traceability-pack CSV rows into linked review candidates", () => {
+    const csv = [
+      '"row_type","outcome_id","outcome_title","epic_or_refinement","source_story_ideas","source_story_idea_title","delivery_story_id","delivery_story_title","requirements","implementation_files","implementation_symbols","tests_or_verification","coverage_status","traceability_status","notes"',
+      '"delivery_story","OUT-001","Gemensam överblick","SC-E01","SC-E01-SI01","Importera tjänstgöringsgrad","Story 1.1","Importera månadsbeläggning från Excel","FR1; NFR5","apps/web/src/app/api/import/monthly-allocation/route.ts","POST monthly-allocation","pnpm build","implemented","traced_to_original_story_idea","Runtime stöder CSV/TSV."',
+      '"unmapped_new_code","OUT-001","Gemensam överblick","Recommended SC-E06-SI04","","Importera debiteringsutfall","","","TBD","apps/web/src/app/page.tsx","billing actual import","pnpm build","implemented_but_story_missing","requires_new_or_updated_story","Ursprunglig story saknas."'
+    ].join("\n");
+
+    const classification = classifyArtifactSource("traceability-pack.csv", csv);
+    const parsed = parseMarkdownArtifact("file-trace", "traceability-pack.csv", csv);
+    const mapping = mapParsedArtifactsToAasCandidates({
+      importIntent: "design",
+      files: [
+        {
+          id: "file-trace",
+          fileName: "traceability-pack.csv",
+          sourceType: classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ]
+    });
+
+    expect(classification.sourceType).toBe("mixed_markdown_bundle");
+    expect(classification.confidence).toBe("high");
+    expect(parsed.sections.some((section) => section.sourceReference.sectionMarker.startsWith("traceability_pack"))).toBe(true);
+    expect(mapping.candidates.filter((candidate) => candidate.type === "outcome")).toHaveLength(1);
+    expect(mapping.candidates.filter((candidate) => candidate.type === "epic")).toHaveLength(2);
+    expect(mapping.candidates.filter((candidate) => candidate.type === "story")).toHaveLength(2);
+
+    const story = mapping.candidates.find((candidate) => candidate.type === "story" && candidate.title.includes("Importera månadsbeläggning"));
+    expect(story?.relationshipState).toBe("mapped");
+    expect(story?.acceptanceCriteria).toContain("Requirements are preserved: FR1; NFR5");
+    expect(story?.draftRecord?.testDefinition).toContain("pnpm build");
+
+    const unmappedStory = mapping.candidates.find((candidate) => candidate.type === "story" && candidate.title.includes("Importera debiteringsutfall"));
+    expect(unmappedStory?.mappingState).toBe("mapped");
+    expect(unmappedStory?.acceptanceCriteria).toContain("Traceability status is preserved: requires_new_or_updated_story");
   });
 
   it("parses source references and candidate sections from markdown", () => {

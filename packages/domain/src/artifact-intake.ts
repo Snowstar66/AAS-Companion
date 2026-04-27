@@ -17,7 +17,7 @@ import {
   storyTypeSchema
 } from "./enums";
 
-export const supportedArtifactExtensions = [".md", ".mdx", ".markdown", ".txt", ".json"] as const;
+export const supportedArtifactExtensions = [".md", ".mdx", ".markdown", ".txt", ".json", ".csv"] as const;
 
 export const artifactIntakeProcessingModeSchema = z.enum(["deterministic", "ai_assisted"]);
 
@@ -794,6 +794,14 @@ export function classifyArtifactSource(fileName: string, content: string): Artif
     }
   }
 
+  if (parseTraceabilityPackRows(content)) {
+    return {
+      sourceType: "mixed_markdown_bundle",
+      confidence: "high",
+      rationale: "Detected a traceability-pack CSV with Outcome, Epic/refinement, Story, requirements, implementation, and verification columns."
+    };
+  }
+
   const sections = splitMarkdownSections(content);
 
   if (isStructuredStorySpecArtifact({ fileName, content, sections })) {
@@ -1354,6 +1362,282 @@ function parseStructuredJsonArtifact(
   };
 }
 
+type TraceabilityPackRow = Record<string, string>;
+
+const traceabilityPackHeaders = [
+  "row_type",
+  "outcome_id",
+  "outcome_title",
+  "epic_or_refinement",
+  "source_story_ideas",
+  "source_story_idea_title",
+  "delivery_story_id",
+  "delivery_story_title",
+  "requirements",
+  "implementation_files",
+  "implementation_symbols",
+  "tests_or_verification",
+  "coverage_status",
+  "traceability_status",
+  "notes"
+] as const;
+
+function parseCsvRecords(content: string) {
+  const records: string[][] = [];
+  let currentRecord: string[] = [];
+  let currentField = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < content.length; index += 1) {
+    const character = content[index];
+    const nextCharacter = content[index + 1];
+
+    if (character === "\"") {
+      if (inQuotes && nextCharacter === "\"") {
+        currentField += "\"";
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (character === "," && !inQuotes) {
+      currentRecord.push(currentField);
+      currentField = "";
+      continue;
+    }
+
+    if ((character === "\n" || character === "\r") && !inQuotes) {
+      if (character === "\r" && nextCharacter === "\n") {
+        index += 1;
+      }
+
+      currentRecord.push(currentField);
+      if (currentRecord.some((field) => field.trim())) {
+        records.push(currentRecord);
+      }
+      currentRecord = [];
+      currentField = "";
+      continue;
+    }
+
+    currentField += character;
+  }
+
+  currentRecord.push(currentField);
+  if (currentRecord.some((field) => field.trim())) {
+    records.push(currentRecord);
+  }
+
+  return records;
+}
+
+function normalizeCsvHeader(value: string) {
+  return value.replace(/^\uFEFF/, "").trim();
+}
+
+function parseTraceabilityPackRows(content: string) {
+  const records = parseCsvRecords(content);
+  const [rawHeaders, ...dataRecords] = records;
+
+  if (!rawHeaders) {
+    return null;
+  }
+
+  const headers = rawHeaders.map(normalizeCsvHeader);
+  const headerSet = new Set(headers);
+
+  if (!traceabilityPackHeaders.every((header) => headerSet.has(header))) {
+    return null;
+  }
+
+  return dataRecords.map((record) => {
+    const row: TraceabilityPackRow = {};
+
+    for (const [index, header] of headers.entries()) {
+      row[header] = record[index]?.trim() ?? "";
+    }
+
+    return row;
+  });
+}
+
+function splitTraceabilityValues(value: string) {
+  return value
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function readTraceabilityField(row: TraceabilityPackRow, field: (typeof traceabilityPackHeaders)[number]) {
+  return row[field] ?? "";
+}
+
+function buildTraceabilitySection(input: {
+  fileId: string;
+  fileName: string;
+  sectionId: string;
+  title: string;
+  marker: string;
+  lineNumber: number;
+  bodyLines: string[];
+  kind: ArtifactParsedSection["kind"];
+  confidence?: ArtifactParsedSection["confidence"];
+}) {
+  const section: MarkdownSection = {
+    sectionId: input.sectionId,
+    title: input.title,
+    marker: input.marker,
+    lineStart: input.lineNumber,
+    lineEnd: input.lineNumber,
+    text: input.bodyLines.filter((line) => line.trim()).join("\n")
+  };
+
+  return createParsedSection(input.fileId, input.fileName, section, input.kind, input.confidence ?? "high");
+}
+
+function makeTraceabilityEpicKey(index: number) {
+  return `EPC-${String(index + 1).padStart(3, "0")}`;
+}
+
+function makeTraceabilityStoryKey(index: number) {
+  return `STR-${String(index + 1).padStart(3, "0")}`;
+}
+
+function parseTraceabilityPackCsvArtifact(
+  fileId: string,
+  fileName: string,
+  content: string
+): ArtifactParseResult | null {
+  const rows = parseTraceabilityPackRows(content);
+
+  if (!rows || rows.length === 0) {
+    return null;
+  }
+
+  const firstOutcomeId = rows.find((row) => row.outcome_id)?.outcome_id || "OUT-001";
+  const firstOutcomeTitle = rows.find((row) => row.outcome_title)?.outcome_title || "Imported traceability outcome";
+  const classification: ArtifactSourceClassification = {
+    sourceType: "mixed_markdown_bundle",
+    confidence: "high",
+    rationale: "Detected a traceability-pack CSV with Outcome, Epic/refinement, Story, requirements, implementation, and verification columns."
+  };
+  const sections: ArtifactParsedSection[] = [
+    buildTraceabilitySection({
+      fileId,
+      fileName,
+      sectionId: "traceability-outcome-0",
+      title: `${firstOutcomeId} ${firstOutcomeTitle}`,
+      marker: "traceability_pack.outcome",
+      lineNumber: 1,
+      kind: "outcome_candidate",
+      bodyLines: [
+        `Outcome ID: ${firstOutcomeId}`,
+        `Title: ${firstOutcomeTitle}`,
+        `Outcome Statement: ${firstOutcomeTitle}`,
+        "Baseline Definition: Imported traceability pack links delivery stories to requirements, implementation files, implementation symbols, verification evidence, coverage status, and traceability status.",
+        `Baseline Source: ${fileName}`
+      ]
+    })
+  ];
+  const epicKeyBySource = new Map<string, string>();
+
+  for (const [index, row] of rows.entries()) {
+    const sourceEpic = readTraceabilityField(row, "epic_or_refinement") || "Imported traceability";
+    let epicKey = epicKeyBySource.get(sourceEpic);
+
+    if (!epicKey) {
+      epicKey = makeTraceabilityEpicKey(epicKeyBySource.size);
+      epicKeyBySource.set(sourceEpic, epicKey);
+      sections.push(
+        buildTraceabilitySection({
+          fileId,
+          fileName,
+          sectionId: `traceability-epic-${epicKeyBySource.size - 1}`,
+          title: `${epicKey} ${sourceEpic}`,
+          marker: `traceability_pack.epic.${sourceEpic}`,
+          lineNumber: index + 2,
+          kind: "epic_candidate",
+          bodyLines: [
+            `Epic ID: ${epicKey}`,
+            `Title: ${sourceEpic}`,
+            `Purpose: Trace imported delivery evidence for ${sourceEpic}.`,
+            `Outcome Link: ${firstOutcomeId}`,
+            `Scope In: ${sourceEpic}`,
+            "Risk Note: Review rows marked requires_new_or_updated_story or requires_updated_story before promotion."
+          ]
+        })
+      );
+    }
+
+    const storyKey = makeTraceabilityStoryKey(index);
+    const sourceStoryIdeas = splitTraceabilityValues(readTraceabilityField(row, "source_story_ideas"));
+    const requirements = splitTraceabilityValues(readTraceabilityField(row, "requirements")).filter(
+      (entry) => entry.toUpperCase() !== "TBD"
+    );
+    const implementationFiles = splitTraceabilityValues(readTraceabilityField(row, "implementation_files"));
+    const implementationSymbols = splitTraceabilityValues(readTraceabilityField(row, "implementation_symbols"));
+    const verification = splitTraceabilityValues(readTraceabilityField(row, "tests_or_verification"));
+    const coverageStatus = readTraceabilityField(row, "coverage_status");
+    const traceabilityStatus = readTraceabilityField(row, "traceability_status");
+    const notes = readTraceabilityField(row, "notes");
+    const needsStoryUpdate = traceabilityStatus.startsWith("requires");
+    const title =
+      readTraceabilityField(row, "delivery_story_title") ||
+      readTraceabilityField(row, "source_story_idea_title") ||
+      readTraceabilityField(row, "epic_or_refinement") ||
+      `Traceability row ${index + 1}`;
+    const displayStoryId = readTraceabilityField(row, "delivery_story_id") || `Traceability row ${index + 1}`;
+
+    sections.push(
+      buildTraceabilitySection({
+        fileId,
+        fileName,
+        sectionId: `traceability-story-${index}`,
+        title: `${storyKey} ${title}`,
+        marker: `traceability_pack.row.${index + 1}`,
+        lineNumber: index + 2,
+        kind: "story_candidate",
+        confidence: needsStoryUpdate ? "medium" : "high",
+        bodyLines: [
+          `Story ID: ${storyKey}`,
+          `Title: ${title}`,
+          "Test Definition",
+          verification.length > 0 ? verification.map((entry) => `- ${entry}`).join("\n") : "- Manual traceability review required",
+          "Story Type: outcome_delivery",
+          `Value Intent: Preserve traceability for ${displayStoryId} from ${sourceStoryIdeas.join(", ") || "unmapped source"} to ${requirements.join(", ") || "TBD requirements"}.`,
+          `Expected Behavior: ${notes || `Traceability status ${traceabilityStatus}; coverage status ${coverageStatus}.`}`,
+          `Outcome Link: ${firstOutcomeId}`,
+          `Epic Link: ${epicKey}`,
+          `AI Usage Scope: Traceability import, evidence review, human approval`,
+          `Definition of Done: ${[
+            `Coverage status: ${coverageStatus}`,
+            `Traceability status: ${traceabilityStatus}`,
+            implementationFiles.length > 0 ? `Implementation files: ${implementationFiles.join("; ")}` : "",
+            implementationSymbols.length > 0 ? `Implementation symbols: ${implementationSymbols.join("; ")}` : "",
+            verification.length > 0 ? `Verification: ${verification.join("; ")}` : ""
+          ].filter(Boolean).join(" | ")}`,
+          "Acceptance Criteria",
+          `- Source story ideas are preserved: ${sourceStoryIdeas.join("; ") || "none"}`,
+          `- Requirements are preserved: ${requirements.join("; ") || row.requirements || "TBD"}`,
+          `- Implementation files are preserved: ${implementationFiles.join("; ") || "none"}`,
+          `- Implementation symbols are preserved: ${implementationSymbols.join("; ") || "none"}`,
+          `- Verification evidence is preserved: ${verification.join("; ") || "none"}`,
+          `- Coverage status is preserved: ${coverageStatus}`,
+          `- Traceability status is preserved: ${traceabilityStatus}`,
+          notes ? `- Notes are preserved: ${notes}` : ""
+        ]
+      })
+    );
+  }
+
+  return {
+    classification,
+    sections
+  };
+}
+
 function createParsedSection(
   fileId: string,
   fileName: string,
@@ -1381,6 +1665,12 @@ function createParsedSection(
 }
 
 export function parseMarkdownArtifact(fileId: string, fileName: string, content: string): ArtifactParseResult {
+  const traceabilityPackResult = parseTraceabilityPackCsvArtifact(fileId, fileName, content);
+
+  if (traceabilityPackResult) {
+    return traceabilityPackResult;
+  }
+
   const jsonDocument = tryParseJsonArtifactDocument(content);
   const structuredJsonResult = jsonDocument ? parseStructuredJsonArtifact(fileId, fileName, content, jsonDocument) : null;
 

@@ -45,7 +45,7 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
         artifactIntakeRejectedFileSchema.parse({
           fileName: file.fileName,
           mimeType: file.mimeType ?? null,
-          reason: "Only text, markdown, and JSON files (.md, .mdx, .markdown, .txt, .json) are supported in Import."
+          reason: "Only text, markdown, JSON, and CSV files (.md, .mdx, .markdown, .txt, .json, .csv) are supported in Import."
         })
       );
       continue;
@@ -56,7 +56,7 @@ function buildRejectedFiles(files: UploadArtifactFileInput[]) {
         artifactIntakeRejectedFileSchema.parse({
           fileName: file.fileName,
           mimeType: file.mimeType ?? null,
-          reason: "Uploaded text, markdown, or JSON files must contain content before intake can continue."
+          reason: "Uploaded text, markdown, JSON, or CSV files must contain content before intake can continue."
         })
       );
       continue;
@@ -127,7 +127,7 @@ export async function createArtifactIntakeSessionService(input: {
   if (input.files.length === 0) {
     return failure({
       code: "artifact_files_required",
-      message: "Select one or more text, markdown, or JSON files before creating an intake session."
+      message: "Select one or more text, markdown, JSON, or CSV files before creating an intake session."
     });
   }
 
@@ -144,7 +144,7 @@ export async function createArtifactIntakeSessionService(input: {
 
     return failure({
       code: "artifact_files_unsupported",
-      message: rejected[0]?.reason ?? "No supported text or markdown files were uploaded."
+      message: rejected[0]?.reason ?? "No supported text, markdown, JSON, or CSV files were uploaded."
     });
   }
 
