@@ -37,6 +37,17 @@ function splitListField(value: string | null | undefined) {
     .filter(Boolean);
 }
 
+function splitFlexibleListField(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return [];
+  }
+
+  return value
+    .split(/\s*(?:\||;)\s*/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 function splitOriginIds(value: string | null | undefined) {
   if (!value?.trim()) {
     return [];
@@ -99,9 +110,21 @@ function parseCsv(content: string) {
 
 function toRecord(headers: string[], row: string[]) {
   return headers.reduce<Record<string, string>>((result, header, index) => {
-    result[header] = row[index] ?? "";
+    result[header.replace(/^\uFEFF/, "").trim()] = row[index] ?? "";
     return result;
   }, {});
+}
+
+function isTraceabilityPackRecord(record: Record<string, string>) {
+  return (
+    "row_type" in record &&
+    "outcome_id" in record &&
+    "source_story_ideas" in record &&
+    "delivery_story_id" in record &&
+    "requirements" in record &&
+    "implementation_files" in record &&
+    "tests_or_verification" in record
+  );
 }
 
 function normalizeTraceabilityRow(record: Record<string, string>): TraceabilityEvidenceRow {
@@ -124,6 +147,73 @@ function normalizeTraceabilityRow(record: Record<string, string>): TraceabilityE
     codeEvidence: splitListField(record.code_evidence),
     definitionOfDone: record.definition_of_done?.trim() || null
   };
+}
+
+function readRecordField(record: Record<string, string>, field: string) {
+  return record[field]?.trim() ?? "";
+}
+
+function normalizeTraceabilityPackRow(record: Record<string, string>, index: number): TraceabilityEvidenceRow {
+  const outcomeKey = readRecordField(record, "outcome_id");
+  const sourceOriginIds = splitFlexibleListField(readRecordField(record, "source_story_ideas"));
+  const normalizedSourceOriginIds = sourceOriginIds.length > 0 ? sourceOriginIds : ["ADDED"];
+  const sourceStoryIdeaTitle = readRecordField(record, "source_story_idea_title");
+  const deliveryStoryId = readRecordField(record, "delivery_story_id");
+  const deliveryStoryTitle = readRecordField(record, "delivery_story_title");
+  const epicOrRefinement = readRecordField(record, "epic_or_refinement");
+  const requirements = splitFlexibleListField(readRecordField(record, "requirements")).filter(
+    (entry) => entry.toUpperCase() !== "TBD"
+  );
+  const implementationFiles = splitFlexibleListField(readRecordField(record, "implementation_files"));
+  const implementationSymbols = splitFlexibleListField(readRecordField(record, "implementation_symbols"));
+  const testEvidence = splitFlexibleListField(readRecordField(record, "tests_or_verification"));
+  const coverageStatus = readRecordField(record, "coverage_status");
+  const traceabilityStatus = readRecordField(record, "traceability_status");
+  const notes = readRecordField(record, "notes");
+  const refinedStoryId =
+    deliveryStoryId ||
+    normalizedSourceOriginIds[0] ||
+    epicOrRefinement ||
+    `TRACEABILITY-ROW-${index + 1}`;
+  const refinedStoryTitle =
+    deliveryStoryTitle ||
+    sourceStoryIdeaTitle ||
+    epicOrRefinement ||
+    `Traceability row ${index + 1}`;
+
+  return {
+    matchKey: [
+      outcomeKey,
+      normalizedSourceOriginIds.join("|"),
+      refinedStoryId,
+      epicOrRefinement || `row-${index + 1}`
+    ].join("::"),
+    outcomeKey,
+    sourceOriginIds: normalizedSourceOriginIds,
+    sourceOriginNote: [traceabilityStatus, sourceStoryIdeaTitle, notes].filter(Boolean).join(" - ") || null,
+    refinedStoryId,
+    refinedStoryTitle,
+    epicId: epicOrRefinement || null,
+    epicStoryIds: normalizedSourceOriginIds,
+    epicStoryTitle: sourceStoryIdeaTitle || null,
+    implementationArtifacts: implementationFiles,
+    implementationStatus: coverageStatus || null,
+    sourceValueIntent: sourceStoryIdeaTitle || null,
+    sourceExpectedBehavior: notes || null,
+    acceptanceCriteriaSummary: requirements.length > 0 ? requirements.join("; ") : readRecordField(record, "requirements") || null,
+    testEvidence,
+    codeEvidence: implementationSymbols,
+    definitionOfDone:
+      [traceabilityStatus ? `Traceability status: ${traceabilityStatus}` : "", coverageStatus ? `Coverage status: ${coverageStatus}` : ""]
+        .filter(Boolean)
+        .join(" | ") || null
+  };
+}
+
+function normalizeTraceabilityEvidenceRow(record: Record<string, string>, index: number) {
+  return isTraceabilityPackRecord(record)
+    ? normalizeTraceabilityPackRow(record, index)
+    : normalizeTraceabilityRow(record);
 }
 
 function normalizeStringArray(value: unknown) {
@@ -207,7 +297,7 @@ export function buildTraceabilityEvidenceSnapshotFromCsv(input: {
 
   const rows = dataRows
     .map((row) => toRecord(headerRow, row))
-    .map(normalizeTraceabilityRow)
+    .map(normalizeTraceabilityEvidenceRow)
     .filter((row) => row.outcomeKey === input.outcomeKey);
 
   return {

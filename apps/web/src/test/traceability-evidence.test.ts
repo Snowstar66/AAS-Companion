@@ -41,6 +41,32 @@ describe("traceability evidence", () => {
     expect(snapshot?.rows[0]?.implementationArtifacts).toEqual(["artifact-one.md", "artifact-two.md"]);
   });
 
+  it("normalizes implementation traceability-pack csv content into an evidence snapshot", () => {
+    const snapshot = buildTraceabilityEvidenceSnapshotFromCsv({
+      content: [
+        '"row_type","outcome_id","outcome_title","epic_or_refinement","source_story_ideas","source_story_idea_title","delivery_story_id","delivery_story_title","requirements","implementation_files","implementation_symbols","tests_or_verification","coverage_status","traceability_status","notes"',
+        '"delivery_story","OUT-001","Gemensam överblick","SC-E01","SC-E01-SI01","Importera tjänstgöringsgrad","Story 1.1","Importera månadsbeläggning från Excel","FR1; NFR5","apps/web/src/app/api/import/monthly-allocation/route.ts; apps/web/src/domain/baseline-import/import-validator.ts","POST monthly-allocation; validateMonthlyAllocationImport","pnpm build","implemented_for_csv_tsv","traced_to_original_story_idea","Runtime stöder CSV/TSV."',
+        '"unmapped_new_code","OUT-001","Gemensam överblick","Recommended SC-E06-SI04","","Importera debiteringsutfall","","","TBD","apps/web/src/app/page.tsx","billing actual import","pnpm build","implemented_but_story_missing","requires_new_or_updated_story","Ursprunglig story saknas."',
+        '"delivery_story","OUT-999","Other outcome","SC-E99","SC-E99-SI01","Other","Story 9.9","Other","FR99","other.ts","OtherSymbol","pnpm test","implemented","traced","Other outcome row."'
+      ].join("\n"),
+      outcomeKey: "OUT-001",
+      sourcePath: "traceability-pack.csv"
+    });
+
+    expect(snapshot?.rows).toHaveLength(2);
+    expect(snapshot?.rows[0]?.outcomeKey).toBe("OUT-001");
+    expect(snapshot?.rows[0]?.sourceOriginIds).toEqual(["SC-E01-SI01"]);
+    expect(snapshot?.rows[0]?.refinedStoryId).toBe("Story 1.1");
+    expect(snapshot?.rows[0]?.implementationArtifacts).toEqual([
+      "apps/web/src/app/api/import/monthly-allocation/route.ts",
+      "apps/web/src/domain/baseline-import/import-validator.ts"
+    ]);
+    expect(snapshot?.rows[0]?.codeEvidence).toEqual(["POST monthly-allocation", "validateMonthlyAllocationImport"]);
+    expect(snapshot?.rows[0]?.testEvidence).toEqual(["pnpm build"]);
+    expect(snapshot?.rows[1]?.sourceOriginIds).toEqual(["ADDED"]);
+    expect(snapshot?.rows[1]?.definitionOfDone).toContain("requires_new_or_updated_story");
+  });
+
   it("reads stored traceability evidence from an approval snapshot", () => {
     const snapshot = getStoredTraceabilityEvidenceSnapshot(
       {
