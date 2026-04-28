@@ -1149,7 +1149,7 @@ export default async function OutcomeApprovalDocumentPage({
                         </div>
                       ))}
                     </div>
-                  ) : (
+                  ) : outsideHandshakeTraceabilityRows.length === 0 ? (
                     <p className="mt-3 text-sm text-slate-700">
                       {t(
                         language,
@@ -1157,7 +1157,7 @@ export default async function OutcomeApprovalDocumentPage({
                         "Inga ytterligare Delivery Stories utanfÃ¶r det godkÃ¤nda handslaget Ã¤r just nu synliga."
                       )}
                     </p>
-                  )}
+                  ) : null}
 
                   {outsideHandshakeTraceabilityRows.length > 0 ? (
                     <div className="mt-4 space-y-3">

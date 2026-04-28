@@ -332,6 +332,7 @@ describe("Outcome approval document page", () => {
     expect(screen.getAllByText("Reshaped").length).toBeGreaterThan(0);
     expect(screen.queryByText("Not implemented")).toBeNull();
     expect(screen.getByText("Additional delivery outside the approved handshake")).toBeDefined();
+    expect(screen.queryByText("No additional Delivery Stories outside the approved handshake are currently visible.")).toBeNull();
     expect(screen.getByText(/DST-099/i)).toBeDefined();
     expect(screen.getAllByText(/STORY-002 Create reminder/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/US-01 Registrera hushallsprofil/i).length).toBeGreaterThan(0);
