@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, ChevronDown, RotateCcw, Zap } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
@@ -36,6 +36,7 @@ type DownstreamAiInstructionsPageProps = {
 };
 
 const groupOrder: DownstreamPreferenceGroup[] = ["epic", "story", "journey", "design", "build"];
+const DISCOVERY_LOOP_ACCELERATOR_ID = "discovery-loop-accelerator";
 
 function t(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
@@ -81,7 +82,7 @@ function createEmptyCustomInstruction(): CustomInstruction {
 
 function createDiscoveryLoopAcceleratorInstruction(): CustomInstruction {
   return {
-    id: "discovery-loop-accelerator",
+    id: DISCOVERY_LOOP_ACCELERATOR_ID,
     title: "Discovery loop accelerator",
     category: "General",
     priority: "High",
@@ -103,6 +104,7 @@ function normalizeInitiativeType(value: unknown) {
 export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction: _runAgentAction, flash }: DownstreamAiInstructionsPageProps) {
   void _runAgentAction;
   const { language } = useAppChromeLanguage();
+  const feedbackTimerRef = useRef<number | null>(null);
   const deliveryType = normalizeInitiativeType(data.outcome.deliveryType) ?? normalizeInitiativeType(data.outcome.downstreamAiInstructions?.initiativeType) ?? "AD";
   const aiLevel = data.outcome.downstreamAiInstructions?.aiLevel ?? mapAiAccelerationLevelToDownstreamAiLevel(data.outcome.aiAccelerationLevel);
   const downstreamAiInstructionsStorageAvailable =
@@ -124,6 +126,13 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     instructions,
     hasJourneyContext: journeyContextExists
   });
+  const [localFeedback, setLocalFeedback] = useState<{
+    tone: "success" | "warning";
+    message: string;
+  } | null>(null);
+  const hasDiscoveryLoopAccelerator = instructions.customInstructions.some(
+    (instruction) => instruction.id === DISCOVERY_LOOP_ACCELERATOR_ID
+  );
   const naCount = instructions.refinementPreferences.filter((preference) => preference.selectedValue === "N/A").length;
   const serializedInstructions = JSON.stringify(instructions);
   const groupedPreferences: Record<
@@ -182,6 +191,27 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     }));
   }
 
+  function showLocalFeedback(tone: "success" | "warning", message: string) {
+    setLocalFeedback({ tone, message });
+
+    if (feedbackTimerRef.current) {
+      window.clearTimeout(feedbackTimerRef.current);
+    }
+
+    feedbackTimerRef.current = window.setTimeout(() => {
+      setLocalFeedback(null);
+      feedbackTimerRef.current = null;
+    }, 3500);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        window.clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
+
   function moveCustomInstruction(instructionId: string, direction: "up" | "down") {
     setInstructions((current) => {
       const index = current.customInstructions.findIndex((instruction) => instruction.id === instructionId);
@@ -222,6 +252,10 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
       }),
       customInstructions: current.customInstructions
     }));
+    showLocalFeedback(
+      "success",
+      t(language, "Suggested profile restored. Custom instructions were kept.", "Föreslagen profil återställdes. Egna instruktioner behölls.")
+    );
   }
 
   function addDiscoveryLoopAccelerator() {
@@ -240,6 +274,12 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
         customInstructions
       };
     });
+    showLocalFeedback(
+      hasDiscoveryLoopAccelerator ? "warning" : "success",
+      hasDiscoveryLoopAccelerator
+        ? t(language, "Discovery loop accelerator was already active and has been refreshed.", "Discovery loop-acceleratorn var redan aktiv och har uppdaterats.")
+        : t(language, "Discovery loop accelerator added. Save the tuning to persist it in the export package.", "Discovery loop-acceleratorn lades till. Spara tuningen för att behålla den i exportpaketet.")
+    );
   }
 
   return (
@@ -299,6 +339,12 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
 
           {flash?.save === "success" ? <FlashBanner message={t(language, "Downstream AI Instructions saved to the Framing package.", "Downstream AI-instruktioner sparades i Framing-paketet.")} tone="success" /> : null}
           {flash?.save === "error" && flash.message ? <FlashBanner message={flash.message} tone="error" /> : null}
+          {localFeedback ? (
+            <FlashBanner
+              message={localFeedback.message}
+              tone={localFeedback.tone === "success" ? "success" : "error"}
+            />
+          ) : null}
 
           {!downstreamAiInstructionsStorageAvailable ? (
             <FlashBanner
@@ -340,15 +386,46 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
             )}
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button onClick={resetToSuggestedProfile} type="button" variant="secondary">
+            <Button className="gap-2" onClick={resetToSuggestedProfile} type="button" variant="secondary">
+              <RotateCcw className="h-4 w-4" />
               {t(language, "Reset to suggested profile", "Återställ föreslagen profil")}
             </Button>
-            <Button onClick={addDiscoveryLoopAccelerator} type="button" variant="secondary">
-              {t(language, "Add discovery loop accelerator", "Lägg till discovery loop-accelerator")}
+            <Button className="gap-2" onClick={addDiscoveryLoopAccelerator} type="button" variant="secondary">
+              {hasDiscoveryLoopAccelerator ? <CheckCircle2 className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
+              {hasDiscoveryLoopAccelerator
+                ? t(language, "Discovery loop accelerator active", "Discovery loop-accelerator aktiv")
+                : t(language, "Add discovery loop accelerator", "Lägg till discovery loop-accelerator")}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {hasDiscoveryLoopAccelerator ? (
+        <Card className="border-amber-200 bg-amber-50/70 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-950">
+              <Zap className="h-5 w-5" />
+              {t(language, "Discovery loop accelerator active", "Discovery loop-accelerator aktiv")}
+            </CardTitle>
+            <CardDescription className="text-amber-900">
+              {t(
+                language,
+                "Downstream AI will be instructed to work more independently, use available specialist or BMAD-style agents when helpful, batch questions, and escalate only when governance or risk requires human input.",
+                "Downstream AI instrueras att arbeta mer självständigt, använda tillgängliga specialist- eller BMAD-liknande agenter där det hjälper, samla frågor och bara eskalera när governance eller risk kräver mänsklig input."
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-6 text-amber-950">
+              {t(
+                language,
+                "The Governance Envelope still applies. Save Downstream AI Tuning before export if this accelerator should follow the handoff package.",
+                "Governance envelope gäller fortfarande. Spara Downstream AI-tuning före export om acceleratorn ska följa med handoff-paketet."
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader>
