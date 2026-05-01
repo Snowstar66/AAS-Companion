@@ -284,7 +284,7 @@ export type HumanFramingBriefExport = {
   filename: string;
 };
 
-export type FramingAiHandoffProfile = "neutral_governed" | "bmad_prepared";
+export type FramingAiHandoffProfile = "neutral_governed" | "bmad_prepared" | "discovery_loop_accelerated";
 
 export type ProfiledFramingAiHandoff = {
   profile: FramingAiHandoffProfile;
@@ -1097,6 +1097,26 @@ export function buildHumanFramingBriefExport(input: {
 }
 
 function getProfileMetadata(profile: FramingAiHandoffProfile) {
+  if (profile === "discovery_loop_accelerated") {
+    return {
+      label: "Discovery Loop Accelerated",
+      description:
+        "Prepared for a more autonomous downstream discovery loop with available agent roles, while preserving governance, traceability and approval boundaries.",
+      intent: "Accelerated governed discovery loop handoff",
+      guidance: [
+        "Run a discovery loop from the Framing source of truth: inspect Outcome, Epics, Story Ideas, Journey Context, constraints, AI level and approval context before producing downstream artifacts.",
+        "Do not ask for confirmation at every refinement step. Make reasonable documented assumptions, batch open questions, and continue until a meaningful refinement package exists.",
+        "Use available specialist agents or BMAD-style roles when helpful, for example analyst, product, UX, architect, dev and QA perspectives, but keep one consolidated source-of-truth output.",
+        "Escalate to the human only for governance-sensitive decisions, missing critical facts, material scope changes, high-risk data/security/privacy issues, or approval/sign-off boundaries.",
+        "Return discovery outputs as traceable proposals linked back to Outcome -> Epic -> Story Idea -> Journey where applicable, plus assumptions, risks, suggested next experiments and validation checks."
+      ],
+      markdownTitle: "# Discovery Loop Accelerated AI Handoff",
+      markdownIntro:
+        "This package is prepared for a downstream AI or agent group to run a faster governed discovery loop without stopping for approval at every ordinary refinement step.",
+      stemSuffix: "discovery-loop-accelerated-framing-handoff"
+    } as const;
+  }
+
   if (profile === "bmad_prepared") {
     return {
       label: "BMAD Prepared",

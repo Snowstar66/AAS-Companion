@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createDefaultDownstreamAiInstructions } from "@/lib/framing/downstreamInstructionCatalog";
 import { generateBmadExport } from "@/lib/framing/bmadAdapter";
+import { buildProfiledFramingAiHandoff, type FramingBriefExportPayload } from "@/lib/framing/framing-brief-export";
 import { generateDesignHandover } from "@/lib/framing/designHandoverAgent";
 import { runStorySuggestionAgent } from "@/lib/framing/storySuggestionAgent";
 import type { FramingAgentSourceOfTruth } from "@/lib/framing/agentTypes";
@@ -127,5 +128,18 @@ describe("framing ai agents", () => {
     expect(handover.json).toHaveProperty("aiDeliveryHandoff");
     expect(bmad.markdown).toContain("# BMAD Prepared Framing Package");
     expect(bmad.json).toHaveProperty("profile", "bmad_prepared");
+  });
+
+  it("generates an accelerated discovery loop handoff profile", () => {
+    const handover = generateDesignHandover(createSource());
+    const discoveryLoop = buildProfiledFramingAiHandoff({
+      payload: handover.json.aiDeliveryHandoff as FramingBriefExportPayload,
+      markdown: handover.markdown,
+      profile: "discovery_loop_accelerated"
+    });
+
+    expect(discoveryLoop.label).toBe("Discovery Loop Accelerated");
+    expect(discoveryLoop.markdown).toContain("# Discovery Loop Accelerated AI Handoff");
+    expect(discoveryLoop.json.guidance.join("\n")).toContain("Use available specialist agents or BMAD-style roles");
   });
 });

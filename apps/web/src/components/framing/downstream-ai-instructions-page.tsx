@@ -79,6 +79,23 @@ function createEmptyCustomInstruction(): CustomInstruction {
   };
 }
 
+function createDiscoveryLoopAcceleratorInstruction(): CustomInstruction {
+  return {
+    id: "discovery-loop-accelerator",
+    title: "Discovery loop accelerator",
+    category: "General",
+    priority: "High",
+    body: [
+      "Downstream AI should run an accelerated discovery loop from this Framing package instead of asking for approval at every ordinary refinement step.",
+      "Start by inspecting Outcome, Epics, Story Ideas, Journey Context, constraints, AI level, risk posture and approval context.",
+      "Use available specialist agents or BMAD-style roles when helpful, for example analyst, product, UX, architect, dev and QA perspectives, but return one consolidated source-of-truth output.",
+      "Make reasonable documented assumptions, batch open questions, and continue until a meaningful refinement package exists.",
+      "Escalate to the human only for governance-sensitive decisions, missing critical facts, material scope changes, high-risk data/security/privacy issues, or approval/sign-off boundaries.",
+      "Return traceable discovery outputs linked back to Outcome -> Epic -> Story Idea -> Journey where applicable, plus assumptions, risks, suggested next experiments and validation checks."
+    ].join("\n")
+  };
+}
+
 function normalizeInitiativeType(value: unknown) {
   return value === "AD" || value === "AT" || value === "AM" ? value : null;
 }
@@ -207,6 +224,24 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     }));
   }
 
+  function addDiscoveryLoopAccelerator() {
+    setInstructions((current) => {
+      const preset = createDiscoveryLoopAcceleratorInstruction();
+      const existingIndex = current.customInstructions.findIndex((instruction) => instruction.id === preset.id);
+      const customInstructions =
+        existingIndex >= 0
+          ? current.customInstructions.map((instruction, index) => (index === existingIndex ? preset : instruction))
+          : [preset, ...current.customInstructions];
+
+      return {
+        ...current,
+        initiativeType: deliveryType,
+        aiLevel,
+        customInstructions
+      };
+    });
+  }
+
   return (
     <div className="space-y-6">
       <FramingPackagePageHero
@@ -307,6 +342,9 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
           <div className="flex flex-wrap gap-3">
             <Button onClick={resetToSuggestedProfile} type="button" variant="secondary">
               {t(language, "Reset to suggested profile", "Återställ föreslagen profil")}
+            </Button>
+            <Button onClick={addDiscoveryLoopAccelerator} type="button" variant="secondary">
+              {t(language, "Add discovery loop accelerator", "Lägg till discovery loop-accelerator")}
             </Button>
           </div>
         </CardContent>

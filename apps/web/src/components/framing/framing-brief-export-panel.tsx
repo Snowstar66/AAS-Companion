@@ -36,6 +36,11 @@ export function FramingBriefExportPanel({
     markdown: aiMarkdown,
     profile: "bmad_prepared"
   });
+  const discoveryLoopArtifact = buildProfiledFramingAiHandoff({
+    payload: aiPayload,
+    markdown: aiMarkdown,
+    profile: "discovery_loop_accelerated"
+  });
 
   async function handleCopy(value: string, kind: string) {
     await navigator.clipboard.writeText(value);
@@ -120,7 +125,7 @@ export function FramingBriefExportPanel({
               <CardDescription>Start by downloading one package. Open previews only when you need to inspect the exact markdown or JSON.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[neutralArtifact, bmadArtifact].map((artifact) => {
+              {[neutralArtifact, bmadArtifact, discoveryLoopArtifact].map((artifact) => {
                 const profileJson = JSON.stringify(artifact.json, null, 2);
 
                 return (
