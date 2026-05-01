@@ -23,7 +23,7 @@ import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
 import { createDirectionSeed } from "./direction-seed-repository";
 import { createEpic } from "./epic-repository";
-import { createOutcome, updateOutcome } from "./outcome-repository";
+import { advanceOutcomeFramingVersion, createOutcome, updateOutcome } from "./outcome-repository";
 import { createStory } from "./story-repository";
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
@@ -955,6 +955,7 @@ type PromoteArtifactCandidateInput = {
   actorId?: string | null;
   disableAutoPromoteDependencies?: boolean;
   trustPreparedReadiness?: boolean;
+  deferDirectionSeedFramingVersionAdvance?: boolean;
 };
 type PromotionState = {
   seen: Set<string>;
@@ -963,6 +964,7 @@ type PromotionState = {
   epicCache: Map<string, Awaited<ReturnType<Prisma.TransactionClient["epic"]["findFirst"]>> | null>;
   fileCache: Map<string, ReviewFileRecord | null>;
   preferredProjectOutcomeId: string | null | undefined;
+  directionSeedOutcomeIdsForVersionAdvance: Set<string>;
 };
 
 function createPromotionState(): PromotionState {
@@ -972,7 +974,8 @@ function createPromotionState(): PromotionState {
     outcomeCache: new Map<string, Awaited<ReturnType<Prisma.TransactionClient["outcome"]["findFirst"]>> | null>(),
     epicCache: new Map<string, Awaited<ReturnType<Prisma.TransactionClient["epic"]["findFirst"]>> | null>(),
     fileCache: new Map<string, ReviewFileRecord | null>(),
-    preferredProjectOutcomeId: undefined
+    preferredProjectOutcomeId: undefined,
+    directionSeedOutcomeIdsForVersionAdvance: new Set<string>()
   };
 }
 
@@ -1763,10 +1766,14 @@ export async function promoteArtifactCandidate(
                     originType: "imported",
                     createdMode: "promotion",
                     lineageReference,
-                    importedReadinessState: promotedReadinessState
+                    importedReadinessState: promotedReadinessState,
+                    suppressOutcomeFramingVersionAdvance: input.deferDirectionSeedFramingVersionAdvance === true
                   },
                   tx
                 );
+          if (input.deferDirectionSeedFramingVersionAdvance === true) {
+            state.directionSeedOutcomeIdsForVersionAdvance.add(linkedOutcome.id);
+          }
           promotedEntityId = created.id;
         }
 
@@ -1852,6 +1859,7 @@ export async function promoteArtifactCandidatesBulk(input: {
   actorId?: string | null;
   disableAutoPromoteDependencies?: boolean;
   trustPreparedReadiness?: boolean;
+  deferDirectionSeedFramingVersionAdvance?: boolean;
 }) {
   if (input.candidateIds.length === 0) {
     return [];
@@ -1870,12 +1878,20 @@ export async function promoteArtifactCandidatesBulk(input: {
               candidateId,
               actorId: input.actorId ?? null,
               disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false,
-              trustPreparedReadiness: input.trustPreparedReadiness ?? false
+              trustPreparedReadiness: input.trustPreparedReadiness ?? false,
+              deferDirectionSeedFramingVersionAdvance: input.deferDirectionSeedFramingVersionAdvance ?? false
             },
             tx,
             sharedState
           )
         );
+      }
+
+      for (const outcomeId of sharedState.directionSeedOutcomeIdsForVersionAdvance) {
+        await advanceOutcomeFramingVersion(tx, {
+          organizationId: input.organizationId,
+          outcomeId
+        });
       }
 
       return results;

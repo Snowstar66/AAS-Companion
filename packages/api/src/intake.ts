@@ -263,6 +263,7 @@ export async function promoteArtifactCandidatesBulkService(input: {
   actorId?: string | null;
   disableAutoPromoteDependencies?: boolean;
   trustPreparedReadiness?: boolean;
+  deferDirectionSeedFramingVersionAdvance?: boolean;
 }) {
   try {
     return success(
@@ -271,7 +272,8 @@ export async function promoteArtifactCandidatesBulkService(input: {
         candidateIds: input.candidateIds,
         actorId: input.actorId ?? null,
         disableAutoPromoteDependencies: input.disableAutoPromoteDependencies ?? false,
-        trustPreparedReadiness: input.trustPreparedReadiness ?? false
+        trustPreparedReadiness: input.trustPreparedReadiness ?? false,
+        deferDirectionSeedFramingVersionAdvance: input.deferDirectionSeedFramingVersionAdvance ?? false
       })
     );
   } catch (error) {

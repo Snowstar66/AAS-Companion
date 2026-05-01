@@ -105,10 +105,12 @@ export async function createDirectionSeed(input: unknown, db: Prisma.Transaction
       tx
     );
 
-    await advanceOutcomeFramingVersion(tx, {
-      organizationId: parsed.organizationId,
-      outcomeId: parsed.outcomeId
-    });
+    if (!parsed.suppressOutcomeFramingVersionAdvance) {
+      await advanceOutcomeFramingVersion(tx, {
+        organizationId: parsed.organizationId,
+        outcomeId: parsed.outcomeId
+      });
+    }
 
     return seed;
   };

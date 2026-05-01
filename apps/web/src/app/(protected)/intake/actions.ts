@@ -1014,7 +1014,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
         candidateIds: candidateChunk.map((candidate) => candidate.id),
         actorId: session.userId,
         disableAutoPromoteDependencies: true,
-        trustPreparedReadiness: true
+        trustPreparedReadiness: true,
+        deferDirectionSeedFramingVersionAdvance: true
       });
 
       if (!bulkStoryPromoteResult.ok) {

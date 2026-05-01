@@ -58,7 +58,8 @@ const directionSeedCreateInputBaseSchema = directionSeedRecordSchema
     createdMode: governedObjectCreatedModeSchema.optional(),
     lineageReference: governedLineageReferenceSchema.nullish(),
     importedReadinessState: importedGovernedReadinessStateSchema.nullish(),
-    actorId: z.string().nullish()
+    actorId: z.string().nullish(),
+    suppressOutcomeFramingVersionAdvance: z.boolean().optional()
   });
 
 export const directionSeedCreateInputSchema = directionSeedCreateInputBaseSchema.superRefine((value, context) => {
