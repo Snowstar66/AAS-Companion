@@ -131,10 +131,10 @@ function isTraceabilityMatrixRecord(record: Record<string, string>) {
   return (
     "trace_id" in record &&
     "source_ref" in record &&
-    "source_intent" in record &&
     "implementation_artifacts" in record &&
     "verification" in record &&
-    "status" in record
+    "status" in record &&
+    ("source_intent" in record || "source_title" in record || "original_intent" in record)
   );
 }
 
@@ -263,9 +263,14 @@ function normalizeTraceabilityMatrixRow(
 ): TraceabilityEvidenceRow {
   const traceId = readRecordField(record, "trace_id") || `TRACEABILITY-MATRIX-ROW-${index + 1}`;
   const sourceRefs = splitTraceabilityReferences(readRecordField(record, "source_ref"));
-  const sourceIntent = readRecordField(record, "source_intent");
-  const notes = readRecordField(record, "notes");
+  const sourceIntent =
+    readRecordField(record, "source_intent") ||
+    readRecordField(record, "original_intent") ||
+    readRecordField(record, "source_title");
+  const notes = readRecordField(record, "notes") || readRecordField(record, "deviation_or_gap");
   const status = readRecordField(record, "status");
+  const coverageType = readRecordField(record, "coverage_type");
+  const recommendedAction = readRecordField(record, "recommended_action");
   const implementationArtifacts = splitFlexibleListField(readRecordField(record, "implementation_artifacts"));
   const verification = splitFlexibleListField(readRecordField(record, "verification"));
   const commits = splitFlexibleListField(readRecordField(record, "commits"));
@@ -283,13 +288,21 @@ function normalizeTraceabilityMatrixRow(
     epicStoryIds: sourceOriginIds,
     epicStoryTitle: epicRef,
     implementationArtifacts,
-    implementationStatus: status || null,
-    sourceValueIntent: sourceIntent || null,
+    implementationStatus: [status, coverageType].filter(Boolean).join(" - ") || null,
+    sourceValueIntent: readRecordField(record, "source_title") || sourceIntent || null,
     sourceExpectedBehavior: notes || null,
     acceptanceCriteriaSummary: sourceIntent || null,
     testEvidence: verification,
     codeEvidence: commits,
-    definitionOfDone: [status ? `Status: ${status}` : "", notes].filter(Boolean).join(" | ") || null
+    definitionOfDone:
+      [
+        status ? `Status: ${status}` : "",
+        coverageType ? `Coverage: ${coverageType}` : "",
+        notes,
+        recommendedAction ? `Recommended action: ${recommendedAction}` : ""
+      ]
+        .filter(Boolean)
+        .join(" | ") || null
   };
 }
 

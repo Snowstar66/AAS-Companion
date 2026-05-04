@@ -88,6 +88,28 @@ describe("traceability evidence", () => {
     expect(snapshot?.rows[1]?.testEvidence).toEqual(["src/app/actions.test.ts", "src/ui/App.test.tsx"]);
   });
 
+  it("normalizes detailed implementation-status csv content into an evidence snapshot", () => {
+    const snapshot = buildTraceabilityEvidenceSnapshotFromCsv({
+      content: [
+        '"trace_id","source_ref","source_title","source_type","original_intent","status","coverage_type","implementation_artifacts","verification","vibe_coding","deviation_or_gap","recommended_action"',
+        '"TR-OUT-001","OUT-001; PS-001","Forsta, registrera, folja och flytta privata aterkommande kostnader","outcome","Lokal-first oversikt over aterkommande och tidsbundna kostnader.","Implementerat","Karnkrav","src/ui/App.tsx; src/storage/exportImport.ts","src/ui/App.test.tsx; src/storage/exportImport.test.ts","Nej","Appen har aven vuxit med enskilda kop.","Behall som huvudkrav."',
+        '"TR-SC-001","SC-001","Skapa ny kontext","story","Anvandaren ska kunna separera olika ekonomiska sammanhang.","Implementerat","Karnkrav","src/app/actions.ts:addContext; src/ui/App.tsx","src/ui/App.test.tsx","Nej","","Behall."'
+      ].join("\n"),
+      outcomeKey: "OUT-001",
+      sourcePath: "traceability-implementation-status.csv"
+    });
+
+    expect(snapshot?.rows).toHaveLength(2);
+    expect(snapshot?.rows[0]?.outcomeKey).toBe("OUT-001");
+    expect(snapshot?.rows[0]?.sourceOriginIds).toEqual(["OUT-001", "PS-001"]);
+    expect(snapshot?.rows[0]?.refinedStoryTitle).toBe("Lokal-first oversikt over aterkommande och tidsbundna kostnader.");
+    expect(snapshot?.rows[0]?.implementationStatus).toBe("Implementerat - Karnkrav");
+    expect(snapshot?.rows[0]?.implementationArtifacts).toEqual(["src/ui/App.tsx", "src/storage/exportImport.ts"]);
+    expect(snapshot?.rows[0]?.testEvidence).toEqual(["src/ui/App.test.tsx", "src/storage/exportImport.test.ts"]);
+    expect(snapshot?.rows[0]?.definitionOfDone).toContain("Behall som huvudkrav.");
+    expect(snapshot?.rows[1]?.sourceOriginIds).toContain("SC-001");
+  });
+
   it("reads stored traceability evidence from an approval snapshot", () => {
     const snapshot = getStoredTraceabilityEvidenceSnapshot(
       {
