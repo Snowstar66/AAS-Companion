@@ -231,6 +231,10 @@ function expandTraceabilityReference(value: string) {
 
   const [, startPrefix, rawStart, endPrefix, rawEnd] = rangeMatch;
 
+  if (!startPrefix || !rawStart || !endPrefix || !rawEnd) {
+    return [normalized];
+  }
+
   if (startPrefix.toUpperCase() !== endPrefix.toUpperCase()) {
     return [normalized];
   }
