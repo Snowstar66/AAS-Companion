@@ -67,6 +67,27 @@ describe("traceability evidence", () => {
     expect(snapshot?.rows[1]?.definitionOfDone).toContain("requires_new_or_updated_story");
   });
 
+  it("normalizes compact traceability matrix csv content into an evidence snapshot", () => {
+    const snapshot = buildTraceabilityEvidenceSnapshotFromCsv({
+      content: [
+        '"trace_id","source_ref","source_intent","implementation_artifacts","verification","status","commits","notes"',
+        '"TR-OUT-001","OUT-001; PS-001","Lokal-first oversikt.","src/ui/App.tsx; src/domain/calculations.ts","src/ui/App.test.tsx","implemented","","Senare produktutokning."',
+        '"TR-EP-001","EP-001; EPC-001; AD-001..AD-004; SC-001..SC-004","Skapa och isolera ekonomiska sammanhang.","src/app/actions.ts; src/ui/App.tsx","src/app/actions.test.ts; src/ui/App.test.tsx","implemented","c52acd6; e4c3f81","Kontext heter planbok i UI."'
+      ].join("\n"),
+      outcomeKey: "OUT-001",
+      sourcePath: "traceability-matrix.csv"
+    });
+
+    expect(snapshot?.rows).toHaveLength(2);
+    expect(snapshot?.rows[0]?.outcomeKey).toBe("OUT-001");
+    expect(snapshot?.rows[0]?.refinedStoryId).toBe("TR-OUT-001");
+    expect(snapshot?.rows[0]?.implementationArtifacts).toEqual(["src/ui/App.tsx", "src/domain/calculations.ts"]);
+    expect(snapshot?.rows[1]?.sourceOriginIds).toContain("SC-001");
+    expect(snapshot?.rows[1]?.sourceOriginIds).toContain("SC-004");
+    expect(snapshot?.rows[1]?.codeEvidence).toEqual(["c52acd6", "e4c3f81"]);
+    expect(snapshot?.rows[1]?.testEvidence).toEqual(["src/app/actions.test.ts", "src/ui/App.test.tsx"]);
+  });
+
   it("reads stored traceability evidence from an approval snapshot", () => {
     const snapshot = getStoredTraceabilityEvidenceSnapshot(
       {

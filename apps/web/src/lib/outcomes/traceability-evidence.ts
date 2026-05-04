@@ -127,6 +127,17 @@ function isTraceabilityPackRecord(record: Record<string, string>) {
   );
 }
 
+function isTraceabilityMatrixRecord(record: Record<string, string>) {
+  return (
+    "trace_id" in record &&
+    "source_ref" in record &&
+    "source_intent" in record &&
+    "implementation_artifacts" in record &&
+    "verification" in record &&
+    "status" in record
+  );
+}
+
 function normalizeTraceabilityRow(record: Record<string, string>): TraceabilityEvidenceRow {
   return {
     matchKey: record.match_key ?? "",
@@ -210,10 +221,84 @@ function normalizeTraceabilityPackRow(record: Record<string, string>, index: num
   };
 }
 
-function normalizeTraceabilityEvidenceRow(record: Record<string, string>, index: number) {
-  return isTraceabilityPackRecord(record)
-    ? normalizeTraceabilityPackRow(record, index)
-    : normalizeTraceabilityRow(record);
+function expandTraceabilityReference(value: string) {
+  const normalized = value.trim();
+  const rangeMatch = normalized.match(/^([A-Za-z]+)-(\d+)\.\.([A-Za-z]+)-(\d+)$/);
+
+  if (!rangeMatch) {
+    return normalized ? [normalized] : [];
+  }
+
+  const [, startPrefix, rawStart, endPrefix, rawEnd] = rangeMatch;
+
+  if (startPrefix.toUpperCase() !== endPrefix.toUpperCase()) {
+    return [normalized];
+  }
+
+  const start = Number.parseInt(rawStart, 10);
+  const end = Number.parseInt(rawEnd, 10);
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start || end - start > 100) {
+    return [normalized];
+  }
+
+  return Array.from({ length: end - start + 1 }, (_, offset) => {
+    const value = String(start + offset).padStart(rawStart.length, "0");
+    return `${startPrefix.toUpperCase()}-${value}`;
+  });
+}
+
+function splitTraceabilityReferences(value: string | null | undefined) {
+  return splitFlexibleListField(value).flatMap(expandTraceabilityReference);
+}
+
+function normalizeTraceabilityMatrixRow(
+  record: Record<string, string>,
+  index: number,
+  outcomeKey: string
+): TraceabilityEvidenceRow {
+  const traceId = readRecordField(record, "trace_id") || `TRACEABILITY-MATRIX-ROW-${index + 1}`;
+  const sourceRefs = splitTraceabilityReferences(readRecordField(record, "source_ref"));
+  const sourceIntent = readRecordField(record, "source_intent");
+  const notes = readRecordField(record, "notes");
+  const status = readRecordField(record, "status");
+  const implementationArtifacts = splitFlexibleListField(readRecordField(record, "implementation_artifacts"));
+  const verification = splitFlexibleListField(readRecordField(record, "verification"));
+  const commits = splitFlexibleListField(readRecordField(record, "commits"));
+  const sourceOriginIds = sourceRefs.length > 0 ? sourceRefs : ["ADDED"];
+  const epicRef = sourceRefs.find((ref) => /^(?:EP|EPC|EPIC)-/i.test(ref)) ?? null;
+
+  return {
+    matchKey: [outcomeKey, sourceOriginIds.join("|"), traceId].join("::"),
+    outcomeKey,
+    sourceOriginIds,
+    sourceOriginNote: [readRecordField(record, "source_ref"), notes].filter(Boolean).join(" - ") || null,
+    refinedStoryId: traceId,
+    refinedStoryTitle: sourceIntent || traceId,
+    epicId: epicRef,
+    epicStoryIds: sourceOriginIds,
+    epicStoryTitle: epicRef,
+    implementationArtifacts,
+    implementationStatus: status || null,
+    sourceValueIntent: sourceIntent || null,
+    sourceExpectedBehavior: notes || null,
+    acceptanceCriteriaSummary: sourceIntent || null,
+    testEvidence: verification,
+    codeEvidence: commits,
+    definitionOfDone: [status ? `Status: ${status}` : "", notes].filter(Boolean).join(" | ") || null
+  };
+}
+
+function normalizeTraceabilityEvidenceRow(record: Record<string, string>, index: number, outcomeKey: string) {
+  if (isTraceabilityPackRecord(record)) {
+    return normalizeTraceabilityPackRow(record, index);
+  }
+
+  if (isTraceabilityMatrixRecord(record)) {
+    return normalizeTraceabilityMatrixRow(record, index, outcomeKey);
+  }
+
+  return normalizeTraceabilityRow(record);
 }
 
 function normalizeStringArray(value: unknown) {
@@ -297,7 +382,7 @@ export function buildTraceabilityEvidenceSnapshotFromCsv(input: {
 
   const rows = dataRows
     .map((row) => toRecord(headerRow, row))
-    .map(normalizeTraceabilityEvidenceRow)
+    .map((row, index) => normalizeTraceabilityEvidenceRow(row, index, input.outcomeKey))
     .filter((row) => row.outcomeKey === input.outcomeKey);
 
   return {
