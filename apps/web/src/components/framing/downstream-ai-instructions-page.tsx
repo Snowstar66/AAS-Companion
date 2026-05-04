@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, ChevronDown, RotateCcw, Zap } from "lucide-react";
+import { CheckCircle2, ChevronDown, FileCheck2, RotateCcw, Zap } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import type { getOutcomeWorkspaceService } from "@aas-companion/api";
 import { useAppChromeLanguage } from "@/components/layout/app-language";
@@ -9,7 +9,9 @@ import { FramingPackagePageHero } from "@/components/framing/framing-package-pag
 import { CustomInstructionsEditor } from "@/components/framing/custom-instructions-editor";
 import { DownstreamAiInstructionSection } from "@/components/framing/downstream-ai-instruction-section";
 import {
+  TRACEABLE_AI_DELIVERY_PROTOCOL_ID,
   createDefaultDownstreamAiInstructions,
+  createTraceableAiDeliveryProtocolInstruction,
   downstreamPreferenceGroupLabels,
   mapAiAccelerationLevelToDownstreamAiLevel,
   parseDownstreamAiInstructions,
@@ -132,6 +134,9 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
   } | null>(null);
   const hasDiscoveryLoopAccelerator = instructions.customInstructions.some(
     (instruction) => instruction.id === DISCOVERY_LOOP_ACCELERATOR_ID
+  );
+  const hasTraceableAiDeliveryProtocol = instructions.customInstructions.some(
+    (instruction) => instruction.id === TRACEABLE_AI_DELIVERY_PROTOCOL_ID
   );
   const naCount = instructions.refinementPreferences.filter((preference) => preference.selectedValue === "N/A").length;
   const serializedInstructions = JSON.stringify(instructions);
@@ -282,6 +287,30 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     );
   }
 
+  function addTraceableAiDeliveryProtocol() {
+    setInstructions((current) => {
+      const preset = createTraceableAiDeliveryProtocolInstruction();
+      const existingIndex = current.customInstructions.findIndex((instruction) => instruction.id === preset.id);
+      const customInstructions =
+        existingIndex >= 0
+          ? current.customInstructions.map((instruction, index) => (index === existingIndex ? preset : instruction))
+          : [preset, ...current.customInstructions];
+
+      return {
+        ...current,
+        initiativeType: deliveryType,
+        aiLevel,
+        customInstructions
+      };
+    });
+    showLocalFeedback(
+      hasTraceableAiDeliveryProtocol ? "warning" : "success",
+      hasTraceableAiDeliveryProtocol
+        ? t(language, "Traceable AI Delivery Protocol was already active and has been refreshed.", "Traceable AI Delivery Protocol var redan aktivt och har uppdaterats.")
+        : t(language, "Traceable AI Delivery Protocol added. Save the tuning to persist it in the export package.", "Traceable AI Delivery Protocol lades till. Spara tuningen för att behålla det i exportpaketet.")
+    );
+  }
+
   return (
     <div className="space-y-6">
       <FramingPackagePageHero
@@ -396,6 +425,12 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
                 ? t(language, "Discovery loop accelerator active", "Discovery loop-accelerator aktiv")
                 : t(language, "Add discovery loop accelerator", "Lägg till discovery loop-accelerator")}
             </Button>
+            <Button className="gap-2" onClick={addTraceableAiDeliveryProtocol} type="button" variant="secondary">
+              {hasTraceableAiDeliveryProtocol ? <CheckCircle2 className="h-4 w-4" /> : <FileCheck2 className="h-4 w-4" />}
+              {hasTraceableAiDeliveryProtocol
+                ? t(language, "Traceable delivery active", "Spårbar leverans aktiv")
+                : t(language, "Add traceable delivery protocol", "Lägg till spårbar leverans")}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -421,6 +456,33 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
                 language,
                 "The Governance Envelope still applies. Save Downstream AI Tuning before export if this accelerator should follow the handoff package.",
                 "Governance envelope gäller fortfarande. Spara Downstream AI-tuning före export om acceleratorn ska följa med handoff-paketet."
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {hasTraceableAiDeliveryProtocol ? (
+        <Card className="border-emerald-200 bg-emerald-50/70 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-emerald-950">
+              <FileCheck2 className="h-5 w-5" />
+              {t(language, "Traceable AI Delivery Protocol active", "Traceable AI Delivery Protocol aktivt")}
+            </CardTitle>
+            <CardDescription className="text-emerald-900">
+              {t(
+                language,
+                "Downstream AI will be instructed to freeze a baseline, classify changes, maintain trace IDs, decision logs, implementation maps, verification evidence, and final traceability reporting.",
+                "Downstream AI instrueras att frysa baseline, klassificera ändringar, behålla trace-ID:n, decision log, implementation map, verifieringsunderlag och slutlig traceability-rapportering."
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-6 text-emerald-950">
+              {t(
+                language,
+                "Use this for BMAD or implementation handoffs where every delivered artifact needs a documented reason. Save Downstream AI Tuning before export if this protocol should follow the handoff package.",
+                "Använd detta för BMAD- eller implementation-handoffs där varje levererad artefakt behöver ett dokumenterat varför. Spara Downstream AI-tuning före export om protokollet ska följa med handoff-paketet."
               )}
             </p>
           </CardContent>

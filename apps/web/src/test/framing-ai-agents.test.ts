@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultDownstreamAiInstructions } from "@/lib/framing/downstreamInstructionCatalog";
+import {
+  createDefaultDownstreamAiInstructions,
+  createTraceableAiDeliveryProtocolInstruction
+} from "@/lib/framing/downstreamInstructionCatalog";
 import { generateBmadExport } from "@/lib/framing/bmadAdapter";
 import { buildProfiledFramingAiHandoff, type FramingBriefExportPayload } from "@/lib/framing/framing-brief-export";
 import { generateDesignHandover } from "@/lib/framing/designHandoverAgent";
@@ -141,5 +144,27 @@ describe("framing ai agents", () => {
     expect(discoveryLoop.label).toBe("Discovery Loop Accelerated");
     expect(discoveryLoop.markdown).toContain("# Discovery Loop Accelerated AI Handoff");
     expect(discoveryLoop.json.guidance.join("\n")).toContain("Use available specialist agents or BMAD-style roles");
+  });
+
+  it("carries the traceable delivery protocol preset into downstream exports", () => {
+    const source = createSource();
+    source.downstreamAiInstructions?.customInstructions.push(createTraceableAiDeliveryProtocolInstruction());
+    const bmad = generateBmadExport(source);
+    const json = bmad.json as {
+      handover: {
+        aiDeliveryHandoff: FramingBriefExportPayload;
+      };
+    };
+
+    expect(bmad.markdown).toContain("Traceable AI Delivery Protocol");
+    expect(bmad.markdown).toContain("docs/traceability/requirements-baseline.md");
+    expect(json.handover.aiDeliveryHandoff.downstream_ai_instructions?.customInstructions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "traceable-ai-delivery-protocol",
+          priority: "High"
+        })
+      ])
+    );
   });
 });
