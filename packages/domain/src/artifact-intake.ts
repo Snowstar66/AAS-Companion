@@ -16,6 +16,7 @@ import {
   riskProfileSchema,
   storyTypeSchema
 } from "./enums";
+import { journeyContextCollectionSchema, type JourneyContext, type Journey } from "./journey-context";
 
 export const supportedArtifactExtensions = [".md", ".mdx", ".markdown", ".txt", ".json", ".csv"] as const;
 
@@ -144,7 +145,8 @@ export const artifactCandidateDraftRecordSchema = z.object({
   testDefinition: z.string().nullish(),
   definitionOfDone: z.array(z.string()).default([]),
   outcomeCandidateId: z.string().nullish(),
-  epicCandidateId: z.string().nullish()
+  epicCandidateId: z.string().nullish(),
+  journeyContexts: journeyContextCollectionSchema.optional()
 });
 
 export const artifactAasCandidateSchema = z.object({
@@ -1638,6 +1640,390 @@ function parseTraceabilityPackCsvArtifact(
   };
 }
 
+type MarkdownTableRow = Record<string, string>;
+
+function extractNumberedMarkdownSection(content: string, sectionNumber: number) {
+  const lines = normalizeMarkdownForParsing(content).split("\n");
+  const startIndex = lines.findIndex((line) => new RegExp(`^##\\s+${sectionNumber}\\.\\s+`, "i").test(line.trim()));
+
+  if (startIndex < 0) {
+    return null;
+  }
+
+  let endIndex = lines.length;
+
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (/^##\s+\d+\.\s+/i.test(lines[index]?.trim() ?? "")) {
+      endIndex = index;
+      break;
+    }
+  }
+
+  return {
+    title: lines[startIndex]?.replace(/^##\s+/, "").trim() ?? `Section ${sectionNumber}`,
+    text: lines.slice(startIndex, endIndex).join("\n").trim(),
+    lineStart: startIndex + 1,
+    lineEnd: endIndex
+  };
+}
+
+function splitMarkdownTableLine(line: string) {
+  const trimmed = line.trim();
+
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) {
+    return [];
+  }
+
+  return trimmed
+    .slice(1, -1)
+    .split("|")
+    .map((cell) => cell.replace(/<br\s*\/?>/gi, " ").replace(/[*_`]/g, "").replace(/\s+/g, " ").trim());
+}
+
+function isMarkdownTableSeparator(cells: string[]) {
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
+}
+
+function parseMarkdownTables(sectionText: string): MarkdownTableRow[][] {
+  const lines = sectionText.split("\n");
+  const tables: MarkdownTableRow[][] = [];
+
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const headers = splitMarkdownTableLine(lines[index] ?? "");
+    const separator = splitMarkdownTableLine(lines[index + 1] ?? "");
+
+    if (headers.length === 0 || !isMarkdownTableSeparator(separator)) {
+      continue;
+    }
+
+    const rows: MarkdownTableRow[] = [];
+    let rowIndex = index + 2;
+
+    for (; rowIndex < lines.length; rowIndex += 1) {
+      const cells = splitMarkdownTableLine(lines[rowIndex] ?? "");
+
+      if (cells.length === 0) {
+        break;
+      }
+
+      const row: MarkdownTableRow = {};
+
+      for (const [cellIndex, header] of headers.entries()) {
+        row[header] = cells[cellIndex] ?? "";
+      }
+
+      rows.push(row);
+    }
+
+    tables.push(rows);
+    index = rowIndex;
+  }
+
+  return tables;
+}
+
+function getMarkdownRowValue(row: MarkdownTableRow, labels: string[]) {
+  const normalizedLabels = labels.map((label) => normalizeHeading(label));
+  const entry = Object.entries(row).find(([key]) => normalizedLabels.includes(normalizeHeading(key)));
+  return entry?.[1]?.trim() ?? "";
+}
+
+function findSourceLine(content: string, needle: string, fallback: number) {
+  if (!needle.trim()) {
+    return fallback;
+  }
+
+  const index = normalizeMarkdownForParsing(content).indexOf(needle);
+
+  if (index < 0) {
+    return fallback;
+  }
+
+  return normalizeMarkdownForParsing(content).slice(0, index).split("\n").length;
+}
+
+function buildProductRegenerationSection(input: {
+  fileId: string;
+  fileName: string;
+  content: string;
+  sectionId: string;
+  title: string;
+  marker: string;
+  anchorNeedle: string;
+  bodyLines: string[];
+  kind: ArtifactParsedSection["kind"];
+  confidence?: ArtifactParsedSection["confidence"];
+}) {
+  const lineStart = findSourceLine(input.content, input.anchorNeedle, 1);
+  const text = input.bodyLines.filter((line) => line.trim()).join("\n");
+  const section: MarkdownSection = {
+    sectionId: input.sectionId,
+    title: input.title,
+    marker: input.marker,
+    lineStart,
+    lineEnd: lineStart + Math.max(text.split("\n").length - 1, 0),
+    text
+  };
+
+  return createParsedSection(input.fileId, input.fileName, section, input.kind, input.confidence ?? "high");
+}
+
+function parseReferenceIds(value: string, prefix: "EP" | "US") {
+  const pattern = prefix === "EP" ? /\bEP-\d+\b/g : /\bUS-\d+\b/g;
+  return [...new Set((value.match(pattern) ?? []).map((entry) => entry.trim()))];
+}
+
+function parseProductRegenerationJourneySections(content: string) {
+  const normalized = normalizeMarkdownForParsing(content);
+  const matches = [...normalized.matchAll(/^###\s+(JNY-\d+)\s*[-\u2013\u2014]\s*(.+?)\s*$/gim)];
+
+  return matches.map((match, index) => {
+    const start = match.index ?? 0;
+    const nextStart = matches[index + 1]?.index ?? normalized.length;
+    return {
+      id: match[1] ?? `JNY-${String(index + 1).padStart(3, "0")}`,
+      headingTitle: match[2]?.trim() ?? `Journey ${index + 1}`,
+      text: normalized.slice(start, nextStart).trim()
+    };
+  });
+}
+
+function parseProductRegenerationJourneySteps(text: string, journeyId: string) {
+  const stepsBlock = text.match(/Steg:\s*([\s\S]*?)(?:\n\s*Expected journey behavior:|$)/i)?.[1] ?? "";
+
+  return [...stepsBlock.matchAll(/^\s*(\d+)\.\s+(.+?)\s*$/gm)].map((match) => {
+    const index = Number(match[1] ?? 0);
+    const description = match[2]?.trim() ?? "";
+
+    return {
+      id: `${journeyId}-STEP-${String(index).padStart(2, "0")}`,
+      title: summarizeText(description, 72),
+      description
+    };
+  });
+}
+
+function parseProductRegenerationJourneys(content: string, outcomeId: string): JourneyContext[] {
+  const journeySections = parseProductRegenerationJourneySections(content);
+
+  if (journeySections.length === 0) {
+    return [];
+  }
+
+  const journeys: Journey[] = journeySections.map((section) => {
+    const table = parseMarkdownTables(section.text)[0] ?? [];
+    const fields = table.reduce<Record<string, string>>((current, row) => {
+      const field = getMarkdownRowValue(row, ["Field"]);
+      const value = getMarkdownRowValue(row, ["Content"]);
+
+      if (field) {
+        current[normalizeHeading(field)] = value;
+      }
+
+      return current;
+    }, {});
+    const refs = fields["epic/story refs"] ?? "";
+    const expectedJourneyBehavior = section.text.match(/Expected journey behavior:\s*(.+?)\s*$/im)?.[1]?.trim() ?? "";
+
+    return {
+      id: section.id,
+      title: fields.title || section.headingTitle,
+      type: "user",
+      primaryActor: fields["primary actor"] || "User",
+      supportingActors: [],
+      goal: fields.goal || "Not captured yet",
+      trigger: fields.trigger || "Not captured yet",
+      narrative: expectedJourneyBehavior || undefined,
+      valueMoment: expectedJourneyBehavior || undefined,
+      successSignals: expectedJourneyBehavior ? [expectedJourneyBehavior] : [],
+      currentState: undefined,
+      desiredFutureState: expectedJourneyBehavior || undefined,
+      steps: parseProductRegenerationJourneySteps(section.text, section.id),
+      painPoints: [],
+      desiredSupport: expectedJourneyBehavior ? [expectedJourneyBehavior] : [],
+      exceptions: [],
+      notes: refs ? `Source refs: ${refs}` : undefined,
+      linkedEpicIds: parseReferenceIds(refs, "EP"),
+      linkedStoryIdeaIds: parseReferenceIds(refs, "US"),
+      linkedFigmaRefs: [],
+      coverage: {
+        status: "unanalysed"
+      }
+    };
+  });
+
+  return [
+    {
+      id: "jc-product-regeneration",
+      outcomeId,
+      initiativeType: "AD",
+      title: "Mina Utgifter - product regeneration journeys",
+      description: "User journeys imported from product-regeneration-package.md.",
+      journeys,
+      notes: "Generated deterministically from JNY-* sections in the product regeneration package."
+    }
+  ];
+}
+
+function parseProductRegenerationPackageMarkdownArtifact(
+  fileId: string,
+  fileName: string,
+  content: string
+): ArtifactParseResult | null {
+  const normalized = normalizeMarkdownForParsing(content);
+
+  if (
+    !/product regeneration package/i.test(normalized) ||
+    !/##\s+1\.\s+Outcome/i.test(normalized) ||
+    !/##\s+2\.\s+Epic Definitions/i.test(normalized) ||
+    !/##\s+3\.\s+User Story Ideas/i.test(normalized)
+  ) {
+    return null;
+  }
+
+  const classification: ArtifactSourceClassification = {
+    sourceType: "mixed_markdown_bundle",
+    confidence: "high",
+    rationale: "Detected a product regeneration package with explicit Outcome, Epic, Story Idea, Journey, UX, calculation, and constraint sections."
+  };
+  const sections: ArtifactParsedSection[] = [];
+  const outcomeSection = extractNumberedMarkdownSection(content, 1);
+  const epicSection = extractNumberedMarkdownSection(content, 2);
+  const storySection = extractNumberedMarkdownSection(content, 3);
+  const outcomeRows = outcomeSection ? parseMarkdownTables(outcomeSection.text)[0] ?? [] : [];
+  const outcomeRow = outcomeRows.find((row) => getMarkdownRowValue(row, ["ID"])) ?? outcomeRows[0];
+  const outcomeId = outcomeRow ? getMarkdownRowValue(outcomeRow, ["ID"]) || "OUT-001" : "OUT-001";
+  const outcomeTitle = outcomeRow ? getMarkdownRowValue(outcomeRow, ["Outcome title"]) : "Imported product regeneration outcome";
+  const valueOutcome = outcomeRow ? getMarkdownRowValue(outcomeRow, ["Value outcome"]) : "";
+  const primaryActor = outcomeRow ? getMarkdownRowValue(outcomeRow, ["Primary actor"]) : "";
+  const successSignals = outcomeRow ? getMarkdownRowValue(outcomeRow, ["Success signals"]) : "";
+  const journeyContexts = parseProductRegenerationJourneys(content, outcomeId);
+
+  sections.push(
+    buildProductRegenerationSection({
+      fileId,
+      fileName,
+      content,
+      sectionId: "product-regeneration-outcome-0",
+      title: `${outcomeId} ${outcomeTitle || "Product regeneration outcome"}`,
+      marker: "product_regeneration.outcome",
+      anchorNeedle: outcomeId,
+      kind: "outcome_candidate",
+      bodyLines: [
+        `Outcome ID: ${outcomeId}`,
+        `Title: ${outcomeTitle || "Product regeneration outcome"}`,
+        `Problem Statement: Private users and households need a local-first way to understand recurring costs, one-off purchases, cancellation opportunities, and spending impact without account or bank connection.`,
+        `Outcome Statement: ${valueOutcome || outcomeTitle || "Imported product regeneration outcome"}`,
+        `Baseline Definition: Product regeneration package dated 2026-05-05 defines the current product intent, trace IDs, journeys, UX rules, calculation rules, constraints, acceptance checklist, and known gaps.`,
+        `Baseline Source: ${fileName}`,
+        `Measurement Method: ${successSignals || "Regeneration acceptance checklist and linked UX/CALC/CON references."}`,
+        `Journey Contexts JSON: ${JSON.stringify(journeyContexts)}`
+      ]
+    })
+  );
+
+  const epicRows = epicSection ? parseMarkdownTables(epicSection.text)[0] ?? [] : [];
+
+  for (const [index, row] of epicRows.entries()) {
+    const epicId = getMarkdownRowValue(row, ["Epic ID"]);
+
+    if (!/^EP-\d+/i.test(epicId)) {
+      continue;
+    }
+
+    const title = getMarkdownRowValue(row, ["Title"]) || `Epic ${epicId}`;
+    const purpose = getMarkdownRowValue(row, ["Purpose"]);
+    const scopeBoundary = getMarkdownRowValue(row, ["Scope boundary"]);
+    const riskNote = getMarkdownRowValue(row, ["Local risk note"]);
+
+    sections.push(
+      buildProductRegenerationSection({
+        fileId,
+        fileName,
+        content,
+        sectionId: `product-regeneration-epic-${index}`,
+        title: `${epicId} ${title}`,
+        marker: `product_regeneration.epics.${epicId}`,
+        anchorNeedle: `| ${epicId} |`,
+        kind: "epic_candidate",
+        bodyLines: [
+          `Epic ID: ${epicId}`,
+          `Title: ${title}`,
+          `Purpose: ${purpose || title}`,
+          `Outcome Link: ${outcomeId}`,
+          `Scope In: ${scopeBoundary || "Not set"}`,
+          `Risk Note: ${riskNote || "Not set"}`
+        ]
+      })
+    );
+  }
+
+  const storyRows = storySection ? parseMarkdownTables(storySection.text)[0] ?? [] : [];
+
+  for (const [index, row] of storyRows.entries()) {
+    const storyId = getMarkdownRowValue(row, ["Story ID"]);
+
+    if (!/^US-\d+/i.test(storyId)) {
+      continue;
+    }
+
+    const epicId = getMarkdownRowValue(row, ["Epic"]);
+    const title = getMarkdownRowValue(row, ["Story idea title"]) || `Story Idea ${storyId}`;
+    const valueIntent = getMarkdownRowValue(row, ["Value intent"]);
+    const expectedBehavior = getMarkdownRowValue(row, ["Expected behavior"]);
+
+    sections.push(
+      buildProductRegenerationSection({
+        fileId,
+        fileName,
+        content,
+        sectionId: `product-regeneration-story-${index}`,
+        title: `${storyId} ${title}`,
+        marker: `product_regeneration.story_ideas.${storyId}`,
+        anchorNeedle: `| ${storyId} |`,
+        kind: "story_candidate",
+        bodyLines: [
+          `Story ID: ${storyId}`,
+          `Title: ${title}`,
+          "Story Type: outcome_delivery",
+          `Value Intent: ${valueIntent || title}`,
+          `Expected Behavior: ${expectedBehavior || valueIntent || title}`,
+          `Outcome Link: ${outcomeId}`,
+          `Epic Link: ${epicId || "Not set"}`
+        ]
+      })
+    );
+  }
+
+  for (const sectionNumber of [6, 7, 8, 9, 10, 11]) {
+    const section = extractNumberedMarkdownSection(content, sectionNumber);
+
+    if (!section) {
+      continue;
+    }
+
+    sections.push(
+      buildProductRegenerationSection({
+        fileId,
+        fileName,
+        content,
+        sectionId: `product-regeneration-carry-forward-${sectionNumber}`,
+        title: section.title.replace(/^\d+\.\s+/, ""),
+        marker: `product_regeneration.section_${sectionNumber}`,
+        anchorNeedle: `## ${section.title}`,
+        kind: "architecture_notes",
+        confidence: "high",
+        bodyLines: [section.text]
+      })
+    );
+  }
+
+  return {
+    classification,
+    sections
+  };
+}
+
 function createParsedSection(
   fileId: string,
   fileName: string,
@@ -1676,6 +2062,12 @@ export function parseMarkdownArtifact(fileId: string, fileName: string, content:
 
   if (structuredJsonResult) {
     return structuredJsonResult;
+  }
+
+  const productRegenerationResult = parseProductRegenerationPackageMarkdownArtifact(fileId, fileName, content);
+
+  if (productRegenerationResult) {
+    return productRegenerationResult;
   }
 
   const classification = classifyArtifactSource(fileName, content);
@@ -1860,8 +2252,8 @@ function extractImportedCandidateKey(candidateType: ArtifactAasCandidate["type"]
     candidateType === "outcome"
       ? /\b(?:(?:OUT|OUTCOME)-\d+|[A-Z]{2,10}-O\d+)\b/i
       : candidateType === "epic"
-        ? /\b(?:(?:EPIC|EPC)-\d+|[A-Z]{2,10}-E\d+)\b/i
-        : /\b(?:(?:STORY|SC|STR)-\d+|[A-Z]{2,10}-E\d+-SI\d+)\b/i;
+        ? /\b(?:(?:EP|EPIC|EPC)-\d+|[A-Z]{2,10}-E\d+)\b/i
+        : /\b(?:(?:US|STORY|SC|STR)-\d+|[A-Z]{2,10}-E\d+-SI\d+)\b/i;
   const match = normalized.match(pattern);
 
   return normalizeImportedReferenceKey(match?.[0]);
@@ -1952,7 +2344,8 @@ const structuredArtifactFieldLabels = [
   "Epic ID",
   "Outcome ID",
   "Outcome Link",
-  "Epic Link"
+  "Epic Link",
+  "Journey Contexts JSON"
 ] as const;
 
 function parseTaggedFieldLine(line: string) {
@@ -3038,6 +3431,21 @@ function extractTaggedLineList(text: string, label: string) {
     .filter(Boolean);
 }
 
+function extractTaggedJourneyContexts(text: string) {
+  const value = extractTaggedLineValue(text, "Journey Contexts JSON");
+
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    const parsed = journeyContextCollectionSchema.safeParse(JSON.parse(value));
+    return parsed.success ? parsed.data : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function resolveImportedCandidateKey(input: {
   candidateType: ArtifactAasCandidate["type"];
   section: ArtifactParsedSection;
@@ -3201,7 +3609,8 @@ function buildDraftRecordFromParsedSection(input: {
       testDefinition: null,
       definitionOfDone: [],
       outcomeCandidateId: null,
-      epicCandidateId: null
+      epicCandidateId: null,
+      journeyContexts: extractTaggedJourneyContexts(input.section.text)
     } satisfies ArtifactCandidateDraftRecord;
   }
 

@@ -14,10 +14,12 @@ import {
   createArtifactCandidateDraftRecord,
   getArtifactCandidateIssueProgress,
   inferImportedReadinessState,
+  parseJourneyContexts,
   mergeImportedOutcomeIntoExistingOutcome,
   serializeFramingConstraintBundle,
   sanitizeArtifactPersistenceText,
-  sanitizeArtifactPersistenceValue
+  sanitizeArtifactPersistenceValue,
+  type JourneyContext
 } from "@aas-companion/domain";
 import { prisma } from "../client";
 import { appendActivityEvent } from "./activity-repository";
@@ -102,6 +104,47 @@ function lineList(value: string | null | undefined) {
 function mergeUniqueLines(existingValue: string | null | undefined, nextValue: string | null | undefined) {
   const merged = [...new Set([...lineList(existingValue), ...lineList(nextValue)])];
   return merged.length > 0 ? merged.join("\n") : "";
+}
+
+function reanchorImportedJourneyContexts(journeyContexts: JourneyContext[] | null | undefined, outcomeId: string) {
+  return (journeyContexts ?? []).map((context, index) => ({
+    ...context,
+    id: context.id || `imported-journey-context-${index + 1}`,
+    outcomeId
+  }));
+}
+
+function mergeJourneyContexts(existingValue: unknown, imported: JourneyContext[] | null | undefined, outcomeId: string) {
+  const importedContexts = reanchorImportedJourneyContexts(imported, outcomeId);
+
+  if (importedContexts.length === 0) {
+    return undefined;
+  }
+
+  const contextsById = new Map(parseJourneyContexts(existingValue).map((context) => [context.id, context]));
+
+  for (const importedContext of importedContexts) {
+    const existingContext = contextsById.get(importedContext.id);
+
+    if (!existingContext) {
+      contextsById.set(importedContext.id, importedContext);
+      continue;
+    }
+
+    const journeysById = new Map(existingContext.journeys.map((journey) => [journey.id, journey]));
+
+    for (const importedJourney of importedContext.journeys) {
+      journeysById.set(importedJourney.id, importedJourney);
+    }
+
+    contextsById.set(importedContext.id, {
+      ...existingContext,
+      ...importedContext,
+      journeys: [...journeysById.values()]
+    });
+  }
+
+  return [...contextsById.values()];
 }
 
 function isCarryForwardApproved(action: string | undefined) {
@@ -1561,7 +1604,8 @@ export async function promoteArtifactCandidate(
                 outcomeStatement: true,
                 baselineDefinition: true,
                 baselineSource: true,
-                timeframe: true
+                timeframe: true,
+                journeyContexts: true
               }
             });
 
@@ -1580,6 +1624,11 @@ export async function promoteArtifactCandidate(
                 timeframe: draftRecord.timeframe ?? null
               }
             });
+            const mergedJourneyContexts = mergeJourneyContexts(
+              existingOutcome.journeyContexts,
+              draftRecord.journeyContexts,
+              existingOutcome.id
+            );
 
             const updated = await updateOutcome({
               organizationId: candidate.organizationId,
@@ -1597,7 +1646,8 @@ export async function promoteArtifactCandidate(
               importedReadinessState: promotedReadinessState,
               originType: "imported",
               createdMode: "promotion",
-              lineageReference
+              lineageReference,
+              ...(mergedJourneyContexts ? { journeyContexts: mergedJourneyContexts } : {})
             }, tx);
             promotedEntityId = updated.id;
             outcomeCache.set(updated.id, updated);
@@ -1633,8 +1683,25 @@ export async function promoteArtifactCandidate(
               },
               tx
             );
-            promotedEntityId = created.id;
-            outcomeCache.set(created.id, created);
+            const importedJourneyContexts = reanchorImportedJourneyContexts(draftRecord.journeyContexts, created.id);
+
+            if (importedJourneyContexts.length > 0) {
+              const updated = await updateOutcome({
+                organizationId: candidate.organizationId,
+                actorId: input.actorId ?? null,
+                id: created.id,
+                journeyContexts: importedJourneyContexts,
+                importedReadinessState: promotedReadinessState,
+                originType: "imported",
+                createdMode: "promotion",
+                lineageReference
+              }, tx);
+              promotedEntityId = updated.id;
+              outcomeCache.set(updated.id, updated);
+            } else {
+              promotedEntityId = created.id;
+              outcomeCache.set(created.id, created);
+            }
           }
         }
 

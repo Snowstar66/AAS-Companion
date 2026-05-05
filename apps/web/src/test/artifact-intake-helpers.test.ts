@@ -84,6 +84,95 @@ describe("artifact intake helpers", () => {
     expect(unmappedStory?.acceptanceCriteria).toContain("Traceability status is preserved: requires_new_or_updated_story");
   });
 
+  it("imports product regeneration packages into framing candidates and journey context", () => {
+    const content = [
+      "# Demo product regeneration package",
+      "",
+      "## 1. Outcome",
+      "",
+      "| ID | Outcome title | Value outcome | Primary actor | Success signals |",
+      "| --- | --- | --- | --- | --- |",
+      "| OUT-001 | Household cost control | A household can understand recurring costs and one-off purchases. | Private user | User can create wallet, register costs, inspect stats, and export data. |",
+      "",
+      "## 2. Epic Definitions",
+      "",
+      "| Epic ID | Title | Purpose | Scope boundary | Local risk note |",
+      "| --- | --- | --- | --- | --- |",
+      "| EP-001 | Wallet onboarding | Create a separated finance context. | Includes create and select wallet. | Mixed context can distort totals. |",
+      "| EP-002 | Recurring costs | Capture subscriptions and planned costs. | Includes amount, period, category, and payer. | Partial data must not break totals. |",
+      "",
+      "## 3. User Story Ideas",
+      "",
+      "| Story ID | Epic | Story idea title | Value intent | Expected behavior |",
+      "| --- | --- | --- | --- | --- |",
+      "| US-001 | EP-001 | Create first wallet | User can move from empty app to own finance space. | Onboarding saves a named wallet. |",
+      "| US-002 | EP-002 | Add monthly cost | User can register the common cost type. | Form saves amount, month, period, category, and payer. |",
+      "",
+      "## 5. User Journeys",
+      "",
+      "### JNY-001 - Create first control view",
+      "",
+      "| Field | Content |",
+      "| --- | --- |",
+      "| Title | Create first control view |",
+      "| Primary actor | New private user |",
+      "| Goal | Move from empty app to a first understandable view. |",
+      "| Trigger | User opens the app for the first time. |",
+      "| Outcome link | OUT-001 |",
+      "| Epic/story refs | EP-001, EP-002; US-001, US-002 |",
+      "",
+      "Steg:",
+      "1. User creates a wallet.",
+      "2. User adds the first recurring cost.",
+      "",
+      "Expected journey behavior: A saved wallet and first visible timeline exist.",
+      "",
+      "## 6. UX Specification",
+      "",
+      "| UX ID | Attribute | Spec | Linked refs |",
+      "| --- | --- | --- | --- |",
+      "| UX-001 | UX profile | Dense and calm control plane. | OUT-001 |"
+    ].join("\n");
+
+    const parsed = parseMarkdownArtifact("file-product", "product-regeneration-package.md", content);
+    const mapping = mapParsedArtifactsToAasCandidates({
+      importIntent: "framing",
+      files: [
+        {
+          id: "file-product",
+          fileName: "product-regeneration-package.md",
+          sourceType: parsed.classification.sourceType,
+          parsedArtifacts: parsed
+        }
+      ]
+    });
+
+    const outcomes = mapping.candidates.filter((candidate) => candidate.type === "outcome");
+    const epics = mapping.candidates.filter((candidate) => candidate.type === "epic");
+    const stories = mapping.candidates.filter((candidate) => candidate.type === "story");
+
+    expect(parsed.classification.sourceType).toBe("mixed_markdown_bundle");
+    expect(parsed.classification.confidence).toBe("high");
+    expect(outcomes).toHaveLength(1);
+    expect(epics).toHaveLength(2);
+    expect(stories).toHaveLength(2);
+
+    const outcome = outcomes[0];
+    const firstEpic = epics.find((candidate) => candidate.draftRecord?.key === "EP-001");
+    const firstStory = stories.find((candidate) => candidate.draftRecord?.key === "US-001");
+    const journeyContext = outcome?.draftRecord?.journeyContexts?.[0];
+    const journey = journeyContext?.journeys[0];
+
+    expect(outcome?.draftRecord?.key).toBe("OUT-001");
+    expect(journeyContext?.outcomeId).toBe("OUT-001");
+    expect(journey?.id).toBe("JNY-001");
+    expect(journey?.linkedEpicIds).toContain("EP-001");
+    expect(journey?.linkedStoryIdeaIds).toContain("US-001");
+    expect(journey?.steps).toHaveLength(2);
+    expect(firstStory?.inferredEpicCandidateId).toBe(firstEpic?.id);
+    expect(mapping.carryForwardItems.some((item) => item.title.includes("UX Specification"))).toBe(true);
+  });
+
   it("parses source references and candidate sections from markdown", () => {
     const parsed = parseMarkdownArtifact(
       "file-1",
