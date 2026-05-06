@@ -19,6 +19,8 @@ import {
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
 
+const FRAMING_BULK_APPROVAL_STORY_BATCH_LIMIT = 24;
+
 function buildRedirect(pathname: string, params: Record<string, string | number | undefined>) {
   const query = new URLSearchParams();
 
@@ -469,6 +471,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const sessionId = String(formData.get("sessionId") ?? "");
   const fileId = String(formData.get("fileId") ?? "");
   const decision = String(formData.get("decision") ?? "approve") === "reject" ? "reject" : "approve";
+  const autoContinueFramingApproval = String(formData.get("autoContinueFramingApproval") ?? "") === "1";
   const targetOutcomeId = String(formData.get("targetOutcomeId") ?? "") || null;
   const targetEpicCandidateId = String(formData.get("targetEpicCandidateId") ?? "") || null;
   const selectedCandidateIds = formData
@@ -972,6 +975,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   }
 
   const storyCandidatesInOrder = orderedCandidates.filter((entry) => entry.type === "story");
+  const storyCandidatesForThisRequest = storyCandidatesInOrder.slice(0, FRAMING_BULK_APPROVAL_STORY_BATCH_LIMIT);
+  const remainingStoryCandidateCount = Math.max(storyCandidatesInOrder.length - storyCandidatesForThisRequest.length, 0);
   if (resolvedFallbackEpicId) {
     const fallbackOutcomeId = resolvedOutcomeId as string;
     const fallbackStoryPayloads = storyCandidatesInOrder
@@ -1008,8 +1013,8 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     }
   }
 
-  if (storyCandidatesInOrder.length > 0) {
-    for (const candidateChunk of chunkItems(storyCandidatesInOrder, 12)) {
+  if (storyCandidatesForThisRequest.length > 0) {
+    for (const candidateChunk of chunkItems(storyCandidatesForThisRequest, 12)) {
       const bulkStoryPromoteResult = await promoteArtifactCandidatesBulkService({
         organizationId: session.organization.organizationId,
         candidateIds: candidateChunk.map((candidate) => candidate.id),
@@ -1063,9 +1068,26 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     failures.length > 0 ? "error" : "success",
     failures.length > 0
       ? `Approved ${promotedCount} framing item(s), but ${failures.length} still need attention.`
-      : `Approved ${promotedCount} framing item(s) and applied ${selectedCarryForwardSectionIds.length} constraint item(s).`,
+      : remainingStoryCandidateCount > 0
+        ? `Approved ${promotedCount} framing item(s). ${remainingStoryCandidateCount} Story Idea(s) remain and will continue in the next approval batch.`
+        : `Approved ${promotedCount} framing item(s) and applied ${selectedCarryForwardSectionIds.length} constraint item(s).`,
     failures.length > 0 ? failures.slice(0, 3).join(" | ") : null
   );
+
+  if (remainingStoryCandidateCount > 0 && failures.length === 0) {
+    redirect(
+      buildRedirect("/intake", {
+        status: "promoted",
+        sessionId,
+        fileId,
+        autoContinueFramingApproval: "1",
+        targetOutcomeId: resolvedOutcomeId ?? targetOutcomeId ?? undefined,
+        message: autoContinueFramingApproval
+          ? `Approved ${promotedCount} more framing item(s). Continuing with ${remainingStoryCandidateCount} remaining Story Idea(s).`
+          : `Approved ${promotedCount} framing item(s). Continuing automatically with ${remainingStoryCandidateCount} remaining Story Idea(s).`
+      })
+    );
+  }
 
   redirect(
     buildRedirect("/intake", {

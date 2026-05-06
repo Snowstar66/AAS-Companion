@@ -15,6 +15,7 @@ import {
   ArtifactIntakeDispositionButtons
 } from "@/components/intake/artifact-intake-disposition-buttons";
 import { ArtifactIntakeReviewSubmitButtons } from "@/components/intake/artifact-intake-pending-actions";
+import { FramingImportAutoContinue } from "@/components/intake/framing-import-auto-continue";
 import { FramingImportBulkDecisionButtons } from "@/components/intake/framing-import-bulk-decision-buttons";
 
 type ParsedSection = ArtifactParseResult["sections"][number];
@@ -125,6 +126,8 @@ type ArtifactIntakeReviewWorkspaceProps = {
   fileCandidates: IntakeArtifactCandidate[];
   language?: AppLanguage | undefined;
   originCandidateRequested?: boolean | undefined;
+  autoContinueFramingApproval?: boolean | undefined;
+  autoContinueTargetOutcomeId?: string | null | undefined;
   sourceSectionFocusId?: string | null | undefined;
   projectOutcomes: ProjectOutcomeOption[];
   projectEpics: ProjectEpicOption[];
@@ -704,6 +707,7 @@ function FramingImportSpine(props: {
   selectedFile: IntakeArtifactFile;
   selectedCandidate: IntakeArtifactCandidate | null;
   originCandidateRequested?: boolean;
+  autoContinueFramingApproval?: boolean;
   sourceSectionFocusId?: string | null;
   importedOutcomeCandidates: IntakeArtifactCandidate[];
   importedEpicCandidates: IntakeArtifactCandidate[];
@@ -879,6 +883,7 @@ function FramingImportSpine(props: {
           <form action={props.submitFramingBulkApproveAction} className="space-y-4">
             <input name="sessionId" type="hidden" value={props.session.id} />
             <input name="fileId" type="hidden" value={props.selectedFile.id} />
+            {props.autoContinueFramingApproval ? <FramingImportAutoContinue /> : null}
             {props.suppressedOutcomeCandidateIds.map((candidateId) => (
               <input key={candidateId} name="suppressedCandidateIds" type="hidden" value={candidateId} />
             ))}
@@ -889,7 +894,7 @@ function FramingImportSpine(props: {
                   <span className="text-sm font-medium text-foreground">{t(language, "Project Outcome to update or attach to", "Projekt-Outcome att uppdatera eller koppla till")}</span>
                   <select
                     className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                    defaultValue=""
+                    defaultValue={props.defaultTargetOutcomeId}
                     name="targetOutcomeId"
                   >
                     <option value="">{t(language, "Select project Outcome", "Välj projekt-Outcome")}</option>
@@ -1521,6 +1526,8 @@ export function ArtifactIntakeReviewWorkspace({
   selectedFile,
   fileCandidates,
   originCandidateRequested = false,
+  autoContinueFramingApproval = false,
+  autoContinueTargetOutcomeId: requestedAutoContinueTargetOutcomeId = null,
   sourceSectionFocusId = null,
   projectOutcomes,
   projectEpics,
@@ -1609,7 +1616,11 @@ export function ArtifactIntakeReviewWorkspace({
   const importedOutcomeCandidates = actionableCollapsedFramingCandidates.filter((candidate) => candidate.type === "outcome");
   const importedEpicCandidates = actionableCollapsedFramingCandidates.filter((candidate) => candidate.type === "epic");
   const importedStoryCandidates = actionableCollapsedFramingCandidates.filter((candidate) => candidate.type === "story");
-  const defaultTargetOutcomeId = outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0]?.id ?? "" : "";
+  const autoContinueTargetOutcomeId =
+    requestedAutoContinueTargetOutcomeId && outcomeCandidateOptions.some((outcome) => outcome.id === requestedAutoContinueTargetOutcomeId)
+      ? requestedAutoContinueTargetOutcomeId
+      : "";
+  const defaultTargetOutcomeId = autoContinueTargetOutcomeId || (outcomeCandidateOptions.length === 1 ? outcomeCandidateOptions[0]?.id ?? "" : "");
   const projectEpicOptionsForTarget = defaultTargetOutcomeId
     ? (projectEpics ?? []).filter((epic) => epic.outcomeId === defaultTargetOutcomeId)
     : (projectEpics ?? []);
@@ -1673,6 +1684,7 @@ export function ArtifactIntakeReviewWorkspace({
 
       {session.importIntent === "framing" ? (
         <FramingImportSpine
+          autoContinueFramingApproval={autoContinueFramingApproval}
           carryForwardItems={actionableCarryForwardItems}
           defaultBulkEpicCandidateId={defaultBulkEpicCandidateId}
           defaultTargetOutcomeId={defaultTargetOutcomeId}

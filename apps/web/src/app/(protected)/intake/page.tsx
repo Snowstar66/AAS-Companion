@@ -138,6 +138,8 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const originEntityId = getParamValue(query.entityId);
   const sourceSectionId = getParamValue(query.sourceSectionId);
   const queueFilter = getParamValue(query.queue) ?? "all";
+  const autoContinueFramingApproval = getParamValue(query.autoContinueFramingApproval) === "1";
+  const autoContinueTargetOutcomeId = getParamValue(query.targetOutcomeId) ?? null;
   const visibleSessions =
     workspace.state === "ready"
       ? workspace.sessions.filter((artifactSession) => {
@@ -803,6 +805,8 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
               <ArtifactIntakeReviewWorkspace
                 fileCandidates={selectedFileCandidates}
                 language={serverLanguage}
+                autoContinueFramingApproval={autoContinueFramingApproval}
+                autoContinueTargetOutcomeId={autoContinueTargetOutcomeId}
                 originCandidateRequested={Boolean(candidateId || originEntityId)}
                 projectEpics={workspace.projectEpics}
                 projectOutcomes={workspace.projectOutcomes}
