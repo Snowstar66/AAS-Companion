@@ -48,6 +48,50 @@ function splitFlexibleListField(value: string | null | undefined) {
     .filter(Boolean);
 }
 
+function detectCsvDelimiter(content: string) {
+  const firstContentLine = content
+    .split(/\r?\n/)
+    .find((line) => line.trim().length > 0) ?? "";
+  const delimiters = [",", ";", "\t"];
+  let bestDelimiter = ",";
+  let bestCount = -1;
+  let insideQuotes = false;
+
+  const counts = delimiters.reduce<Record<string, number>>((result, delimiter) => {
+    result[delimiter] = 0;
+    return result;
+  }, {});
+
+  for (let index = 0; index < firstContentLine.length; index += 1) {
+    const character = firstContentLine.charAt(index);
+    const nextCharacter = firstContentLine.charAt(index + 1);
+
+    if (character === '"') {
+      if (insideQuotes && nextCharacter === '"') {
+        index += 1;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+      continue;
+    }
+
+    if (!insideQuotes && Object.prototype.hasOwnProperty.call(counts, character)) {
+      counts[character] = (counts[character] ?? 0) + 1;
+    }
+  }
+
+  for (const delimiter of delimiters) {
+    const delimiterCount = counts[delimiter] ?? 0;
+
+    if (delimiterCount > bestCount) {
+      bestDelimiter = delimiter;
+      bestCount = delimiterCount;
+    }
+  }
+
+  return bestDelimiter;
+}
+
 function splitOriginIds(value: string | null | undefined) {
   if (!value?.trim()) {
     return [];
@@ -60,6 +104,7 @@ function splitOriginIds(value: string | null | undefined) {
 }
 
 function parseCsv(content: string) {
+  const delimiter = detectCsvDelimiter(content);
   const rows: string[][] = [];
   let currentField = "";
   let currentRow: string[] = [];
@@ -79,7 +124,7 @@ function parseCsv(content: string) {
       continue;
     }
 
-    if (character === "," && !insideQuotes) {
+    if (character === delimiter && !insideQuotes) {
       currentRow.push(currentField);
       currentField = "";
       continue;
@@ -108,9 +153,28 @@ function parseCsv(content: string) {
   return rows.filter((row) => row.some((field) => field.trim().length > 0));
 }
 
+function normalizeHeaderKey(header: string) {
+  return header
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[^A-Za-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+}
+
 function toRecord(headers: string[], row: string[]) {
   return headers.reduce<Record<string, string>>((result, header, index) => {
-    result[header.replace(/^\uFEFF/, "").trim()] = row[index] ?? "";
+    const cleanHeader = header.replace(/^\uFEFF/, "").trim();
+    const normalizedHeader = normalizeHeaderKey(cleanHeader);
+    const value = row[index] ?? "";
+
+    result[cleanHeader] = value;
+
+    if (normalizedHeader && !(normalizedHeader in result)) {
+      result[normalizedHeader] = value;
+    }
+
     return result;
   }, {});
 }
@@ -138,6 +202,15 @@ function isTraceabilityMatrixRecord(record: Record<string, string>) {
   );
 }
 
+function isImplementationComparisonRecord(record: Record<string, string>) {
+  return (
+    "id" in record &&
+    "type" in record &&
+    "title" in record &&
+    ("handoff_source" in record || "implementation_status" in record || "coverage_class" in record)
+  );
+}
+
 function normalizeTraceabilityRow(record: Record<string, string>): TraceabilityEvidenceRow {
   return {
     matchKey: record.match_key ?? "",
@@ -160,8 +233,22 @@ function normalizeTraceabilityRow(record: Record<string, string>): TraceabilityE
   };
 }
 
-function readRecordField(record: Record<string, string>, field: string) {
-  return record[field]?.trim() ?? "";
+function readRecordField(record: Record<string, string>, ...fields: string[]) {
+  for (const field of fields) {
+    const exactValue = record[field];
+
+    if (typeof exactValue === "string" && exactValue.trim()) {
+      return exactValue.trim();
+    }
+
+    const normalizedValue = record[normalizeHeaderKey(field)];
+
+    if (typeof normalizedValue === "string" && normalizedValue.trim()) {
+      return normalizedValue.trim();
+    }
+  }
+
+  return "";
 }
 
 function normalizeTraceabilityPackRow(record: Record<string, string>, index: number): TraceabilityEvidenceRow {
@@ -306,6 +393,75 @@ function normalizeTraceabilityMatrixRow(
   };
 }
 
+function shouldMarkImplementationComparisonRowAsAdded(record: Record<string, string>) {
+  const type = readRecordField(record, "type").toLowerCase();
+  const inHandoff = readRecordField(record, "in_handoff").toLowerCase();
+
+  return (
+    inHandoff === "no" ||
+    inHandoff === "partly" ||
+    type.startsWith("post_handoff") ||
+    type === "bug_fix" ||
+    type === "test_gap"
+  );
+}
+
+function normalizeImplementationComparisonRow(
+  record: Record<string, string>,
+  index: number,
+  outcomeKey: string
+): TraceabilityEvidenceRow {
+  const id = readRecordField(record, "id") || `IMPLEMENTATION-COMPARISON-ROW-${index + 1}`;
+  const type = readRecordField(record, "type");
+  const title = readRecordField(record, "title") || id;
+  const handoffSource = readRecordField(record, "handoff_source");
+  const implementationStatus = readRecordField(record, "implementation_status");
+  const coverageClass = readRecordField(record, "coverage_class");
+  const implementedSummary = readRecordField(record, "implemented_summary");
+  const deviationsOrNotes = readRecordField(record, "deviations_or_notes", "deviationsOrNotes");
+  const remainingGap = readRecordField(record, "remaining_gap");
+  const implementationArtifacts = splitFlexibleListField(readRecordField(record, "implementation_artifacts"));
+  const tests = splitFlexibleListField(readRecordField(record, "tests"));
+  const evidence = splitFlexibleListField(readRecordField(record, "evidence"));
+  const decisionIds = splitFlexibleListField(readRecordField(record, "decision_ids"));
+  const sourceOriginIds = shouldMarkImplementationComparisonRowAsAdded(record) ? ["ADDED", id] : [id];
+
+  return {
+    matchKey: [outcomeKey, sourceOriginIds.join("|"), id].join("::"),
+    outcomeKey,
+    sourceOriginIds,
+    sourceOriginNote:
+      [
+        type ? `Type: ${type}` : "",
+        handoffSource ? `Handoff source: ${handoffSource}` : "",
+        deviationsOrNotes
+      ]
+        .filter(Boolean)
+        .join(" | ") || null,
+    refinedStoryId: id,
+    refinedStoryTitle: title,
+    epicId: /^(?:EP|EPC|EPIC)-/i.test(id) ? id : null,
+    epicStoryIds: [id],
+    epicStoryTitle: /^(?:EP|EPC|EPIC)-/i.test(id) ? title : null,
+    implementationArtifacts,
+    implementationStatus: [implementationStatus, coverageClass].filter(Boolean).join(" - ") || null,
+    sourceValueIntent: handoffSource || title,
+    sourceExpectedBehavior: implementedSummary || null,
+    acceptanceCriteriaSummary: handoffSource || null,
+    testEvidence: [...tests, ...evidence],
+    codeEvidence: decisionIds,
+    definitionOfDone:
+      [
+        implementationStatus ? `Implementation status: ${implementationStatus}` : "",
+        coverageClass ? `Coverage: ${coverageClass}` : "",
+        remainingGap ? `Remaining gap: ${remainingGap}` : "",
+        deviationsOrNotes
+      ]
+        .filter(Boolean)
+        .join(" | ") || null
+  };
+}
+
 function normalizeTraceabilityEvidenceRow(record: Record<string, string>, index: number, outcomeKey: string) {
   if (isTraceabilityPackRecord(record)) {
     return normalizeTraceabilityPackRow(record, index);
@@ -316,6 +472,27 @@ function normalizeTraceabilityEvidenceRow(record: Record<string, string>, index:
   }
 
   return normalizeTraceabilityRow(record);
+}
+
+function getImplementationComparisonRecordsForOutcome(records: Record<string, string>[], outcomeKey: string) {
+  let activeOutcomeKey: string | null = null;
+  const hasOutcomeBoundaries = records.some((record) => readRecordField(record, "type").toLowerCase() === "outcome");
+
+  return records.filter((record) => {
+    const type = readRecordField(record, "type").toLowerCase();
+    const id = readRecordField(record, "id");
+
+    if (type === "outcome") {
+      activeOutcomeKey = id || null;
+      return id === outcomeKey;
+    }
+
+    if (hasOutcomeBoundaries) {
+      return activeOutcomeKey === outcomeKey;
+    }
+
+    return id === outcomeKey || readRecordField(record, "outcome_key", "outcome_id") === outcomeKey;
+  });
 }
 
 function normalizeStringArray(value: unknown) {
@@ -397,10 +574,14 @@ export function buildTraceabilityEvidenceSnapshotFromCsv(input: {
     return null;
   }
 
-  const rows = dataRows
-    .map((row) => toRecord(headerRow, row))
-    .map((row, index) => normalizeTraceabilityEvidenceRow(row, index, input.outcomeKey))
-    .filter((row) => row.outcomeKey === input.outcomeKey);
+  const records = dataRows.map((row) => toRecord(headerRow, row));
+  const rows = records.some(isImplementationComparisonRecord)
+    ? getImplementationComparisonRecordsForOutcome(records, input.outcomeKey).map((row, index) =>
+        normalizeImplementationComparisonRow(row, index, input.outcomeKey)
+      )
+    : records
+        .map((row, index) => normalizeTraceabilityEvidenceRow(row, index, input.outcomeKey))
+        .filter((row) => row.outcomeKey === input.outcomeKey);
 
   return {
     sourcePath: input.sourcePath,

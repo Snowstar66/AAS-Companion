@@ -110,6 +110,47 @@ describe("traceability evidence", () => {
     expect(snapshot?.rows[1]?.sourceOriginIds).toContain("SC-001");
   });
 
+  it("normalizes implementation comparison csv content grouped under the requested outcome", () => {
+    const snapshot = buildTraceabilityEvidenceSnapshotFromCsv({
+      content: [
+        "id,type,title,handoffSource,inHandoff,implementationStatus,coverageClass,implementedSummary,implementationArtifacts,tests,evidence,decisionIds,deviationsOrNotes,remainingGap",
+        'OUT-001,outcome,Trygg kontroll,"Huvudutfall",yes,implemented_first_slice,handoff_baseline_direct,"Outcome implemented.","index.html; src/app.js",,Dev server responded with HTTP 200,"DEC-001; TECH-001",,',
+        'JNY-001,journey,Skapa forsta kontrollbilden,"Ny privat anvandare",yes,implemented_first_slice,handoff_baseline_direct,"Journey implemented.","src/app.js; src/domain.js",npm test,,,,',
+        'US-001,story,Skapa planbok,"Som anvandare vill jag skapa en planbok",yes,implemented_first_slice,handoff_baseline_direct,"Story implemented.","src/app.js; tests/domain.test.js",npm test,,DEC-001,,',
+        'ADD-001,post_handoff_user_rule,MasterCard import,"User supplied rule",partly,implemented,baseline_plus_user_rule,"Added after handoff.","src/mastercard-import.js","npm test",,"DEC-017",,PDF parser may need more variants.',
+        'OUT-999,outcome,Other outcome,"Other",yes,implemented,handoff_baseline_direct,"Other implemented.","other.ts",,,,,',
+        'US-999,story,Other story,"Other story",yes,implemented,handoff_baseline_direct,"Other story implemented.","other-story.ts",,,,,'
+      ].join("\n"),
+      outcomeKey: "OUT-001",
+      sourcePath: "traceability-implementation-comparison.csv"
+    });
+
+    expect(snapshot?.rows).toHaveLength(4);
+    expect(snapshot?.rows.map((row) => row.refinedStoryId)).toEqual(["OUT-001", "JNY-001", "US-001", "ADD-001"]);
+    expect(snapshot?.rows[0]?.outcomeKey).toBe("OUT-001");
+    expect(snapshot?.rows[0]?.implementationArtifacts).toEqual(["index.html", "src/app.js"]);
+    expect(snapshot?.rows[0]?.testEvidence).toEqual(["Dev server responded with HTTP 200"]);
+    expect(snapshot?.rows[0]?.codeEvidence).toEqual(["DEC-001", "TECH-001"]);
+    expect(snapshot?.rows[2]?.sourceOriginIds).toEqual(["US-001"]);
+    expect(snapshot?.rows[3]?.sourceOriginIds).toEqual(["ADDED", "ADD-001"]);
+    expect(snapshot?.rows[3]?.definitionOfDone).toContain("PDF parser may need more variants.");
+  });
+
+  it("parses semicolon-delimited traceability csv headers when needed", () => {
+    const snapshot = buildTraceabilityEvidenceSnapshotFromCsv({
+      content: [
+        "match_key;outcome_key;source_origin_ids;refined_story_id;refined_story_title;implementation_artifacts;test_evidence",
+        "OUT-001::STORY-001::US-01;OUT-001;STORY-001;US-01;Registrera hushallsprofil;artifact-one.md | artifact-two.md;test-one.ts | test-two.ts"
+      ].join("\n"),
+      outcomeKey: "OUT-001",
+      sourcePath: "traceability-export-semicolon.csv"
+    });
+
+    expect(snapshot?.rows).toHaveLength(1);
+    expect(snapshot?.rows[0]?.implementationArtifacts).toEqual(["artifact-one.md", "artifact-two.md"]);
+    expect(snapshot?.rows[0]?.testEvidence).toEqual(["test-one.ts", "test-two.ts"]);
+  });
+
   it("reads stored traceability evidence from an approval snapshot", () => {
     const snapshot = getStoredTraceabilityEvidenceSnapshot(
       {
