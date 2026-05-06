@@ -178,7 +178,7 @@ describe("Value Spine page", () => {
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
     expect(screen.getByText("Visible Story Ideas")).toBeDefined();
-    expect(screen.getAllByText("Ready for review").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Framing-ready/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Expected behavior:/i).length).toBeGreaterThan(0);
     expect(screen.queryByText("Short description is still missing.")).toBeNull();
   });

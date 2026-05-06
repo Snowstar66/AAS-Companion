@@ -26,8 +26,8 @@ export function FramingSubpageNav({
       tone="compact"
       description={t(
         language,
-        "Use Framing Overview as the main source of truth. Journey Context and Downstream AI Tuning are optional layers that strengthen handoff quality when they are actually needed.",
-        "Använd Framing Overview som huvudsaklig source of truth. Journey Context och Downstream AI-tuning är frivilliga lager som stärker handoff-kvaliteten när de faktiskt behövs."
+        "Use Framing Overview as the approved decision baseline for this Outcome. Value Spine shows the active structure and lineage; Journey Context and Downstream AI Tuning are optional layers that strengthen handoff quality when they are actually needed.",
+        "Använd Framing Overview som godkänd beslutsbaseline för detta Outcome. Value Spine visar aktiv struktur och lineage; Journey Context och Downstream AI-tuning är frivilliga lager som stärker handoff-kvaliteten när de faktiskt behövs."
       )}
       title={t(language, "Framing package navigation", "Navigering i Framing-paketet")}
     >

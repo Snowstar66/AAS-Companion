@@ -295,7 +295,7 @@ describe("Review queue page", () => {
     expect(screen.getAllByText("Framing approvals").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Delivery review").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Import object review" })).toBeDefined();
-    expect(screen.getByText(/Use this page whenever you want one answer to the question/i)).toBeDefined();
+    expect(screen.getByText(/Use this page for one question only/i)).toBeDefined();
     expect(screen.getByText("Needs human action now")).toBeDefined();
     expect(screen.getByText("Imported decisions left")).toBeDefined();
     expect(screen.getByText("Import objects to review")).toBeDefined();

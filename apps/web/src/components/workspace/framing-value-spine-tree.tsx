@@ -356,7 +356,7 @@ function DirectionSeedRow({
             {isReady ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                {t(language, "Ready for review", "Redo för granskning")}
+                {t(language, "Framing-ready", "Framingredo")}
               </span>
             ) : isStarted ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">
@@ -469,7 +469,7 @@ function StoryIdeaRow({ story, language }: { story: TreeStory; language: "en" | 
             {isReady ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                {t(language, "Ready for review", "Redo för granskning")}
+                {t(language, "Framing-ready", "Framingredo")}
               </span>
             ) : isStarted ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700">

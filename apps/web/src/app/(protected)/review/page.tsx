@@ -1336,8 +1336,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
           </h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
             <LocalizedText
-              en="Use this page whenever you want one answer to the question: what still needs a human decision right now? Framing and Value Spine hold the working context, while Human Review separates framing decisions from delivery checkpoints so you do not have to guess what kind of review you are looking at."
-              sv="Använd den här sidan när du vill ha ett tydligt svar på frågan: vad kräver fortfarande ett mänskligt beslut just nu? Framing och Value Spine håller arbetskontexten, medan Human Review skiljer framingbeslut från leveranskontroller så att du slipper gissa vilken typ av granskning du tittar på."
+              en="Use this page for one question only: what still needs a human decision right now? Value Spine shows the active promoted Framing structure and completeness; Human Review only shows open approvals, blockers and import decisions that have not reached a final disposition."
+              sv="Använd den här sidan för en enda fråga: vad kräver fortfarande ett mänskligt beslut just nu? Value Spine visar den aktiva promoverade Framing-strukturen och dess komplettering; Human Review visar bara öppna godkännanden, blockerare och importbeslut som inte har ett slutligt beslut."
             />
           </p>
           <div className="mt-5 grid gap-4 lg:grid-cols-3">
@@ -1347,8 +1347,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 <LocalizedText
-                  en="Start here when you want to know what a human must review, clarify or hand off next."
-                  sv="Börja här när du vill se vad en människa måste granska, förtydliga eller lämna vidare härnäst."
+                  en="Start here when you want to know what is still waiting for a human decision. Completed imports and approved framing stay visible elsewhere."
+                  sv="Börja här när du vill se vad som fortfarande väntar på ett mänskligt beslut. Klara importer och godkänd framing syns kvar på andra ställen."
                 />
               </p>
             </div>
@@ -1358,8 +1358,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 <LocalizedText
-                  en="Story Ideas stay in Framing, while Tollgate 1 approvals for the Framing brief are coordinated here. This is about intent and direction, not delivery execution."
-                  sv="Story Ideas ligger kvar i Framing, medan Tollgate 1-godkännanden för framingbriefen samordnas här. Det här handlar om riktning och intention, inte om leveransexekvering."
+                  en="This lane is for Outcome Tollgate 1 and framing approval decisions. Story Idea completeness belongs in Value Spine unless an import candidate is still waiting for disposition."
+                  sv="Det här spåret gäller Outcome Tollgate 1 och framinggodkännanden. Story Idea-komplettering hör hemma i Value Spine om inte en importkandidat fortfarande väntar på beslut."
                 />
               </p>
             </div>
@@ -1408,8 +1408,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             count={operationalReview.summary.total}
             description={
               <LocalizedText
-                en="All framing reviews and Delivery Story reviews that still need human attention."
-                sv="Alla framinggranskningar och Delivery Story-granskningar som fortfarande behöver mänsklig uppmärksamhet."
+                en="Open Tollgate 1 approvals or blockers that still need a human decision. This does not count completed imported Story Ideas."
+                sv="Öppna Tollgate 1-godkännanden eller blockerare som fortfarande kräver ett mänskligt beslut. Klara importerade Story Ideas räknas inte här."
               />
             }
             label={<LocalizedText en="Needs human action now" sv="Behöver mänsklig åtgärd nu" />}
@@ -1421,8 +1421,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             count={framingReviewItems.length}
             description={
               <LocalizedText
-                en="Outcome tollgates and framing decisions that still need a human reviewer."
-                sv="Outcome-tollgates och framingbeslut som fortfarande behöver en mänsklig granskare."
+                en="Outcome Tollgate 1 approvals still waiting for a reviewer. Framing-ready Story Ideas are tracked in Value Spine, not here."
+                sv="Outcome Tollgate 1-godkännanden som fortfarande väntar på granskare. Framingredo Story Ideas följs i Value Spine, inte här."
               />
             }
             label={<LocalizedText en="Framing approvals" sv="Framing-godkännanden" />}
@@ -1470,8 +1470,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             count={remainingCount}
             description={
               <LocalizedText
-                en="Imported objects waiting to be approved into Framing or Design."
-                sv="Importerade objekt som väntar på att godkännas in i Framing eller Design."
+                en="Imported candidates still waiting for final human disposition before promotion or rejection."
+                sv="Importerade kandidater som fortfarande väntar på slutligt mänskligt beslut före promotion eller avvisning."
               />
             }
             label={<LocalizedText en="Import objects to review" sv="Importobjekt att granska" />}
@@ -1481,8 +1481,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             count={completedCount}
             description={
               <LocalizedText
-                en="Imported candidates that already have a final human decision: approved into project records or discarded."
-                sv="Importerade kandidater som redan har ett slutligt mänskligt beslut: godkända in i projektposter eller avvisade."
+                en="Imported candidates already promoted into project records or rejected. These can still appear as lineage in Value Spine."
+                sv="Importerade kandidater som redan har promoverats till projektposter eller avvisats. De kan fortfarande synas som lineage i Value Spine."
               />
             }
             label={<LocalizedText en="Imported decisions done" sv="Importerade beslut klara" />}
@@ -1501,8 +1501,8 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
             count={remainingCount}
             description={
               <LocalizedText
-                en="Imported objects that still need a human to fix, approve or reject."
-                sv="Importerade objekt som fortfarande behöver en människa för att rätta, godkänna eller avvisa."
+                en="Imported candidates that still need a human to fix, approve, promote or reject."
+                sv="Importerade kandidater som fortfarande behöver en människa för att rätta, godkänna, promovera eller avvisa."
               />
             }
             label={<LocalizedText en="Imported decisions left" sv="Importerade beslut kvar" />}

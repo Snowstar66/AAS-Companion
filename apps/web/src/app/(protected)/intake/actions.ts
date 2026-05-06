@@ -156,7 +156,6 @@ function draftRecordNeedsUpdate(
 }
 
 const FALLBACK_EPIC_OPTION_VALUE = "__fallback_epic__";
-const FRAMING_BULK_APPROVE_STORY_BATCH_SIZE = 8;
 
 function redirectDemoIntakeBlocked() {
   redirect(
@@ -555,22 +554,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const selectedOutcomeCandidateIds = new Set(selectedOutcomeCandidates.map((candidate) => candidate.id));
   const selectedOutcomeCandidateId =
     selectedOutcomeCandidates.length === 1 ? selectedOutcomeCandidates[0]?.id ?? null : null;
-  const allSelectedStoryCandidates = allSelectedCandidates.filter((candidate) => candidate.type === "story");
-  const storyCandidatesForThisRequest =
-    decision === "approve" && allSelectedStoryCandidates.length > FRAMING_BULK_APPROVE_STORY_BATCH_SIZE
-      ? allSelectedStoryCandidates.slice(0, FRAMING_BULK_APPROVE_STORY_BATCH_SIZE)
-      : allSelectedStoryCandidates;
-  const storyCandidateIdsForThisRequest = new Set(storyCandidatesForThisRequest.map((candidate) => candidate.id));
-  const deferredStoryCandidateCount =
-    decision === "approve"
-      ? Math.max(0, allSelectedStoryCandidates.length - storyCandidatesForThisRequest.length)
-      : 0;
-  const candidates =
-    decision === "approve"
-      ? allSelectedCandidates.filter(
-          (candidate) => candidate.type !== "story" || storyCandidateIdsForThisRequest.has(candidate.id)
-        )
-      : allSelectedCandidates;
+  const candidates = allSelectedCandidates;
   const selectedStoryCandidates = candidates.filter((candidate) => candidate.type === "story");
   function readResolvedStoryEpicSelection(candidate: {
     id: string;
@@ -1079,8 +1063,6 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
     failures.length > 0 ? "error" : "success",
     failures.length > 0
       ? `Approved ${promotedCount} framing item(s), but ${failures.length} still need attention.`
-      : deferredStoryCandidateCount > 0
-        ? `Approved ${promotedCount} framing item(s). ${deferredStoryCandidateCount} Story Idea(s) remain for the next approval batch.`
       : `Approved ${promotedCount} framing item(s) and applied ${selectedCarryForwardSectionIds.length} constraint item(s).`,
     failures.length > 0 ? failures.slice(0, 3).join(" | ") : null
   );
@@ -1093,8 +1075,6 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
       message:
         failures.length > 0
           ? `Approved ${promotedCount} selected framing item(s), but ${failures.length} still need attention: ${failures.slice(0, 2).join(" | ")}`
-          : deferredStoryCandidateCount > 0
-            ? `Approved ${promotedCount} selected framing item(s). ${deferredStoryCandidateCount} Story Idea(s) remain; approve the remaining selected items to continue.`
           : `Approved ${promotedCount} selected framing item(s) and applied ${selectedCarryForwardSectionIds.length} approved constraint item(s).`
     })
   );
