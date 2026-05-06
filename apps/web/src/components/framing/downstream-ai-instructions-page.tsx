@@ -39,6 +39,25 @@ type DownstreamAiInstructionsPageProps = {
 
 const groupOrder: DownstreamPreferenceGroup[] = ["epic", "story", "journey", "design", "build"];
 const DISCOVERY_LOOP_ACCELERATOR_ID = "discovery-loop-accelerator";
+const AAS_LEVEL_2_PROMPT_ID = "aas-level-2-structured-acceleration";
+const AAS_LEVEL_3_PROMPT_ID = "aas-level-3-orchestrated-agentic-delivery";
+const AAS_LEVEL_PROMPT_IDS = new Set([AAS_LEVEL_2_PROMPT_ID, AAS_LEVEL_3_PROMPT_ID]);
+
+const aasLevelPromptPresets = {
+  none: null,
+  level2: {
+    id: AAS_LEVEL_2_PROMPT_ID,
+    title: "AAS Level 2 - Structured Acceleration",
+    path: "/downstream-ai-presets/aas-level-2.txt"
+  },
+  level3: {
+    id: AAS_LEVEL_3_PROMPT_ID,
+    title: "AAS Level 3 - Orchestrated Agentic Delivery",
+    path: "/downstream-ai-presets/aas-level-3.txt"
+  }
+} as const;
+
+type AasLevelPromptSelection = keyof typeof aasLevelPromptPresets;
 
 function t(language: "en" | "sv", en: string, sv: string) {
   return language === "sv" ? sv : en;
@@ -138,6 +157,13 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
   const hasTraceableAiDeliveryProtocol = instructions.customInstructions.some(
     (instruction) => instruction.id === TRACEABLE_AI_DELIVERY_PROTOCOL_ID
   );
+  const selectedAasLevelPrompt: AasLevelPromptSelection = instructions.customInstructions.some(
+    (instruction) => instruction.id === AAS_LEVEL_3_PROMPT_ID
+  )
+    ? "level3"
+    : instructions.customInstructions.some((instruction) => instruction.id === AAS_LEVEL_2_PROMPT_ID)
+      ? "level2"
+      : "none";
   const naCount = instructions.refinementPreferences.filter((preference) => preference.selectedValue === "N/A").length;
   const serializedInstructions = JSON.stringify(instructions);
   const groupedPreferences: Record<
@@ -311,6 +337,62 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
     );
   }
 
+  async function applyAasLevelPrompt(selection: AasLevelPromptSelection) {
+    const preset = aasLevelPromptPresets[selection];
+
+    if (!preset) {
+      setInstructions((current) => ({
+        ...current,
+        initiativeType: deliveryType,
+        aiLevel,
+        customInstructions: current.customInstructions.filter((instruction) => !AAS_LEVEL_PROMPT_IDS.has(instruction.id))
+      }));
+      showLocalFeedback(
+        "success",
+        t(language, "AAS acceleration prompt removed. Save the tuning to remove it from the export package.", "AAS-accelerationsprompten togs bort. Spara tuningen för att ta bort den från exportpaketet.")
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(preset.path);
+
+      if (!response.ok) {
+        throw new Error(`Could not load ${preset.path}`);
+      }
+
+      const body = await response.text();
+      const nextInstruction: CustomInstruction = {
+        id: preset.id,
+        title: preset.title,
+        body,
+        category: "General",
+        priority: "High"
+      };
+
+      setInstructions((current) => ({
+        ...current,
+        initiativeType: deliveryType,
+        aiLevel,
+        customInstructions: [
+          nextInstruction,
+          ...current.customInstructions.filter((instruction) => !AAS_LEVEL_PROMPT_IDS.has(instruction.id))
+        ]
+      }));
+      showLocalFeedback(
+        selectedAasLevelPrompt === selection ? "warning" : "success",
+        selectedAasLevelPrompt === selection
+          ? t(language, `${preset.title} was already selected and has been refreshed.`, `${preset.title} var redan vald och har uppdaterats.`)
+          : t(language, `${preset.title} selected. Save the tuning to persist the full prompt in the export package.`, `${preset.title} vald. Spara tuningen för att behålla hela prompten i exportpaketet.`)
+      );
+    } catch {
+      showLocalFeedback(
+        "warning",
+        t(language, "The selected AAS prompt could not be loaded. No tuning was changed.", "Den valda AAS-prompten kunde inte läsas in. Ingen tuning ändrades.")
+      );
+    }
+  }
+
   return (
     <div className="space-y-6">
       <FramingPackagePageHero
@@ -431,6 +513,57 @@ export function DownstreamAiInstructionsPage({ data, saveAction, runAgentAction:
                 ? t(language, "Traceable delivery active", "Spårbar leverans aktiv")
                 : t(language, "Add traceable delivery protocol", "Lägg till spårbar leverans")}
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader>
+          <CardTitle>{t(language, "AAS Acceleration Prompt", "AAS-accelerationsprompt")}</CardTitle>
+          <CardDescription>
+            {t(
+              language,
+              "Choose one downstream governing prompt, or leave this unset. When selected, the full prompt is saved as a high-priority custom instruction and follows the handoff package.",
+              "Välj en styrande downstream-prompt, eller lämna detta tomt. När den väljs sparas hela prompten som en högprioriterad egen instruktion och följer med handoff-paketet."
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 lg:grid-cols-3">
+            <Button
+              className="justify-start gap-2"
+              onClick={() => void applyAasLevelPrompt("none")}
+              type="button"
+              variant={selectedAasLevelPrompt === "none" ? "default" : "secondary"}
+            >
+              {selectedAasLevelPrompt === "none" ? <CheckCircle2 className="h-4 w-4" /> : null}
+              {t(language, "No AAS prompt", "Ingen AAS-prompt")}
+            </Button>
+            <Button
+              className="justify-start gap-2"
+              onClick={() => void applyAasLevelPrompt("level2")}
+              type="button"
+              variant={selectedAasLevelPrompt === "level2" ? "default" : "secondary"}
+            >
+              {selectedAasLevelPrompt === "level2" ? <CheckCircle2 className="h-4 w-4" /> : null}
+              {t(language, "AAS Level 2", "AAS Level 2")}
+            </Button>
+            <Button
+              className="justify-start gap-2"
+              onClick={() => void applyAasLevelPrompt("level3")}
+              type="button"
+              variant={selectedAasLevelPrompt === "level3" ? "default" : "secondary"}
+            >
+              {selectedAasLevelPrompt === "level3" ? <CheckCircle2 className="h-4 w-4" /> : null}
+              {t(language, "AAS Level 3", "AAS Level 3")}
+            </Button>
+          </div>
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-sky-900">
+            {selectedAasLevelPrompt === "level2"
+              ? t(language, "AAS Level 2 is selected and will be prioritized in the exported handoff after saving.", "AAS Level 2 är vald och prioriteras i exporterad handoff efter att du sparat.")
+              : selectedAasLevelPrompt === "level3"
+                ? t(language, "AAS Level 3 is selected and will be prioritized in the exported handoff after saving.", "AAS Level 3 är vald och prioriteras i exporterad handoff efter att du sparat.")
+                : t(language, "No AAS acceleration prompt is selected right now.", "Ingen AAS-accelerationsprompt är vald just nu.")}
           </div>
         </CardContent>
       </Card>

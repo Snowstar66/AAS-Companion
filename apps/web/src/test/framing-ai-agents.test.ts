@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   createDefaultDownstreamAiInstructions,
@@ -166,5 +168,35 @@ describe("framing ai agents", () => {
         })
       ])
     );
+  });
+
+  it("carries selected AAS acceleration prompt bodies into downstream exports", () => {
+    const level2Body = readFileSync(path.join(process.cwd(), "public/downstream-ai-presets/aas-level-2.txt"), "utf8");
+    const level3Body = readFileSync(path.join(process.cwd(), "public/downstream-ai-presets/aas-level-3.txt"), "utf8");
+    const source = createSource();
+
+    source.downstreamAiInstructions?.customInstructions.push({
+      id: "aas-level-3-orchestrated-agentic-delivery",
+      title: "AAS Level 3 - Orchestrated Agentic Delivery",
+      body: level3Body,
+      category: "General",
+      priority: "High"
+    });
+
+    const bmad = generateBmadExport(source);
+    const json = bmad.json as {
+      handover: {
+        aiDeliveryHandoff: FramingBriefExportPayload;
+      };
+    };
+    const exportedPreset = json.handover.aiDeliveryHandoff.downstream_ai_instructions?.customInstructions.find(
+      (instruction) => instruction.id === "aas-level-3-orchestrated-agentic-delivery"
+    );
+
+    expect(level2Body).toContain("Level 2: Structured Acceleration");
+    expect(exportedPreset?.priority).toBe("High");
+    expect(exportedPreset?.body).toBe(level3Body);
+    expect(bmad.markdown).toContain("# AI Acceleration Level 3: Orchestrated Agentic Delivery under AAS");
+    expect(bmad.markdown).toContain("The final report must distinguish between intended process and actually evidenced process.");
   });
 });
