@@ -6,6 +6,7 @@ import { CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 import { Button } from "@aas-companion/ui";
 
 type FramingBulkDecision = "approve" | "reject";
+const FRAMING_APPROVAL_STORY_FORM_BATCH_LIMIT = 10;
 
 const decisionConfig: Record<
   FramingBulkDecision,
@@ -29,6 +30,58 @@ const decisionConfig: Record<
   }
 };
 
+function setHiddenValue(form: HTMLFormElement, name: string, value: string) {
+  const existing = form.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`);
+
+  if (existing) {
+    existing.value = value;
+    return;
+  }
+
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = name;
+  input.value = value;
+  form.append(input);
+}
+
+function getCandidateFieldId(name: string) {
+  const match = name.match(/^candidate:([^:]+):/);
+  return match?.[1] ?? null;
+}
+
+export function prepareFramingApprovalFormBatch(form: HTMLFormElement) {
+  const candidateCheckboxes = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="candidateIds"]'));
+  const selectedCandidateIds = new Set(
+    candidateCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => checkbox.value)
+  );
+  const selectedStoryIds = candidateCheckboxes
+    .filter((checkbox) => checkbox.checked && checkbox.dataset.candidateType === "story")
+    .map((checkbox) => checkbox.value);
+  const deferredStoryIds = new Set(selectedStoryIds.slice(FRAMING_APPROVAL_STORY_FORM_BATCH_LIMIT));
+
+  setHiddenValue(form, "deferredStoryCandidateCount", String(deferredStoryIds.size));
+
+  for (const checkbox of candidateCheckboxes) {
+    if (!checkbox.checked || deferredStoryIds.has(checkbox.value)) {
+      checkbox.disabled = true;
+      selectedCandidateIds.delete(checkbox.value);
+    }
+  }
+
+  for (const field of Array.from(form.elements)) {
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement)) {
+      continue;
+    }
+
+    const candidateId = getCandidateFieldId(field.name);
+
+    if (candidateId && !selectedCandidateIds.has(candidateId)) {
+      field.disabled = true;
+    }
+  }
+}
+
 export function FramingImportBulkDecisionButtons() {
   const { pending } = useFormStatus();
   const [submittedDecision, setSubmittedDecision] = useState<FramingBulkDecision | null>(null);
@@ -49,7 +102,13 @@ export function FramingImportBulkDecisionButtons() {
               disabled={pending}
               key={decision}
               name="decision"
-              onClick={() => setSubmittedDecision(decision)}
+              onClick={(event) => {
+                setSubmittedDecision(decision);
+
+                if (decision === "approve" && event.currentTarget.form) {
+                  prepareFramingApprovalFormBatch(event.currentTarget.form);
+                }
+              }}
               type="submit"
               value={decision}
               variant={config.variant ?? "default"}

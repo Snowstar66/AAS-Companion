@@ -472,6 +472,7 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
   const fileId = String(formData.get("fileId") ?? "");
   const decision = String(formData.get("decision") ?? "approve") === "reject" ? "reject" : "approve";
   const autoContinueFramingApproval = String(formData.get("autoContinueFramingApproval") ?? "") === "1";
+  const deferredStoryCandidateCount = Number.parseInt(String(formData.get("deferredStoryCandidateCount") ?? "0"), 10) || 0;
   const targetOutcomeId = String(formData.get("targetOutcomeId") ?? "") || null;
   const targetEpicCandidateId = String(formData.get("targetEpicCandidateId") ?? "") || null;
   const selectedCandidateIds = formData
@@ -976,7 +977,11 @@ export async function submitFramingBulkApproveFromIntakeAction(formData: FormDat
 
   const storyCandidatesInOrder = orderedCandidates.filter((entry) => entry.type === "story");
   const storyCandidatesForThisRequest = storyCandidatesInOrder.slice(0, FRAMING_BULK_APPROVAL_STORY_BATCH_LIMIT);
-  const remainingStoryCandidateCount = Math.max(storyCandidatesInOrder.length - storyCandidatesForThisRequest.length, 0);
+  const remainingStoryCandidateCount = Math.max(
+    deferredStoryCandidateCount,
+    storyCandidatesInOrder.length - storyCandidatesForThisRequest.length,
+    0
+  );
   if (resolvedFallbackEpicId) {
     const fallbackOutcomeId = resolvedOutcomeId as string;
     const fallbackStoryPayloads = storyCandidatesInOrder

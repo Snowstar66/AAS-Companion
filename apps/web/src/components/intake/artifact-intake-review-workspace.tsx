@@ -962,7 +962,7 @@ function FramingImportSpine(props: {
                     <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
                       <div className="flex items-start gap-3">
                         {outcomeCandidate ? (
-                          <input defaultChecked name="candidateIds" type="checkbox" value={outcomeCandidate.id} />
+                          <input data-candidate-type="outcome" defaultChecked name="candidateIds" type="checkbox" value={outcomeCandidate.id} />
                         ) : null}
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
@@ -1145,7 +1145,7 @@ function FramingImportSpine(props: {
                           <details className="ml-4 rounded-2xl border border-border/70 bg-background" key={epic.id} open>
                             <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
                               <div className="flex items-start gap-3">
-                                <input defaultChecked name="candidateIds" type="checkbox" value={epic.id} />
+                                <input data-candidate-type="epic" defaultChecked name="candidateIds" type="checkbox" value={epic.id} />
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-800">
@@ -1244,7 +1244,7 @@ function FramingImportSpine(props: {
                                   <details className="ml-4 rounded-2xl border border-border/70 bg-muted/10" key={story.id}>
                                     <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
                                       <div className="flex items-start gap-3">
-                                        <input defaultChecked name="candidateIds" type="checkbox" value={story.id} />
+                                        <input data-candidate-type="story" defaultChecked name="candidateIds" type="checkbox" value={story.id} />
                                         <div>
                                           <div className="flex flex-wrap items-center gap-2">
                                             <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">
@@ -1388,7 +1388,7 @@ function FramingImportSpine(props: {
                                 <details className="ml-4 rounded-2xl border border-border/70 bg-muted/10" key={story.id}>
                                   <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-4">
                                     <div className="flex items-start gap-3">
-                                      <input defaultChecked name="candidateIds" type="checkbox" value={story.id} />
+                                      <input data-candidate-type="story" defaultChecked name="candidateIds" type="checkbox" value={story.id} />
                                       <div>
                                         <div className="flex flex-wrap items-center gap-2">
                                           <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-800">

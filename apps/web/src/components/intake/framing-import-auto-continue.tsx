@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { LoaderCircle } from "lucide-react";
+import { prepareFramingApprovalFormBatch } from "@/components/intake/framing-import-bulk-decision-buttons";
 
 export function FramingImportAutoContinue() {
   const markerRef = useRef<HTMLSpanElement>(null);
@@ -9,7 +10,11 @@ export function FramingImportAutoContinue() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const form = markerRef.current?.closest("form");
-      form?.requestSubmit();
+
+      if (form) {
+        prepareFramingApprovalFormBatch(form);
+        form.requestSubmit();
+      }
     }, 900);
 
     return () => window.clearTimeout(timer);
