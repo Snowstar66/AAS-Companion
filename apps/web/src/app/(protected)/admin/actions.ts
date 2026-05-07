@@ -6,6 +6,7 @@ import { membershipRoleSchema } from "@aas-companion/domain";
 import { clearOperationalActivityEventsService } from "@aas-companion/api";
 import {
   createPartyRoleEntry,
+  duplicateOrganizationContextForUser,
   hardDeletePartyRoleEntry,
   hardDeleteOrganizationContextsForUser,
   listPartyRoleEntries,
@@ -14,7 +15,7 @@ import {
   updateOrganizationProjectUser
 } from "@aas-companion/db";
 import { z } from "zod";
-import { clearOrganizationContextCookie } from "@/lib/org-context";
+import { clearOrganizationContextCookie, setOrganizationContextCookie } from "@/lib/org-context";
 import { requireActiveProjectSession, requireProjectAccountIdentity, requireProtectedSession } from "@/lib/auth/guards";
 import { getDemoRoleSeedById } from "@/lib/admin/demo-role-catalog";
 
@@ -45,6 +46,11 @@ const removeProjectUserSchema = z.object({
 });
 
 const demoRoleIdsSchema = z.array(z.string().trim().min(1));
+
+const duplicateProjectSchema = z.object({
+  sourceOrganizationId: z.string().trim().min(1),
+  targetProjectName: z.string().trim().optional()
+});
 
 function isUniqueConstraintError(error: unknown): error is { code: string } {
   return Boolean(
@@ -115,6 +121,79 @@ export async function hardDeleteProjectsAction(formData: FormData) {
         deletedProjects.length === 1
           ? `${deletedProjects[0]?.organizationName ?? "The selected project"} was deleted permanently.`
           : `${deletedProjects.length} projects were deleted permanently.`
+    })
+  );
+}
+
+export async function duplicateProjectAction(formData: FormData) {
+  const session = await requireProtectedSession();
+  const account = await requireProjectAccountIdentity();
+
+  if (session.mode === "demo") {
+    redirect(
+      buildAdminRedirect({
+        status: "blocked",
+        message: "Project duplication is unavailable in Demo. Sign in with a normal account to copy projects."
+      })
+    );
+  }
+
+  const parsed = duplicateProjectSchema.safeParse({
+    sourceOrganizationId: formData.get("sourceOrganizationId"),
+    targetProjectName: formData.get("targetProjectName")
+  });
+
+  if (!parsed.success) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "Choose one project to duplicate."
+      })
+    );
+  }
+
+  let duplicatedProject: Awaited<ReturnType<typeof duplicateOrganizationContextForUser>>;
+
+  try {
+    duplicatedProject = await duplicateOrganizationContextForUser({
+      sourceOrganizationId: parsed.data.sourceOrganizationId,
+      userId: account.userId,
+      targetOrganizationName: parsed.data.targetProjectName ?? null
+    });
+  } catch (error) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The selected project could not be duplicated."
+      })
+    );
+  }
+
+  if (!duplicatedProject) {
+    redirect(
+      buildAdminRedirect({
+        status: "error",
+        message: "That project could not be found for this account."
+      })
+    );
+  }
+
+  await setOrganizationContextCookie(duplicatedProject);
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/framing");
+  revalidatePath("/intake");
+  revalidatePath("/workspace");
+  revalidatePath("/review");
+
+  redirect(
+    buildAdminRedirect({
+      status: "duplicated",
+      message: `${duplicatedProject.organizationName} was created as a full project copy and opened as the active project.`
     })
   );
 }

@@ -154,6 +154,9 @@ describe("Admin page", () => {
     expect(screen.getAllByRole("checkbox", { name: "Create" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("checkbox", { name: "Remove" }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: "Remove from active project" }).length).toBeGreaterThan(0);
+    expect(screen.getByText("Duplicate project")).toBeDefined();
+    expect(screen.getByLabelText("Project to copy")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Duplicate and open" })).toBeDefined();
     expect(screen.getByText(/Hard delete removes the selected projects entirely/i)).toBeDefined();
     expect(screen.getByRole("checkbox", { name: /Hemmakoll/i })).toBeDefined();
     expect(screen.getByRole("checkbox", { name: /Test Project/i })).toBeDefined();

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import {
   AlertTriangle,
   ChevronDown,
+  CopyPlus,
   DatabaseZap,
   Sparkles,
   ShieldAlert,
@@ -19,6 +20,7 @@ import { loadHomeDashboard } from "@/lib/home/dashboard";
 import {
   applyDemoRoleBulkAction,
   clearOperationalLogsAction,
+  duplicateProjectAction,
   hardDeleteProjectsAction,
   removeProjectUserAction,
   updateProjectUserAction
@@ -567,8 +569,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <CardTitle>{t("Projects", "Projekt")}</CardTitle>
                   <CardDescription>
                     {t(
-                      "Mark one or more projects, then hard delete the selection in one operation.",
-                      "Markera ett eller flera projekt och hardradera sedan urvalet i en operation."
+                      "Duplicate a project as a full save-as copy, or mark one or more projects for permanent deletion.",
+                      "Duplicera ett projekt som en fullstandig spara-som-kopia, eller markera ett eller flera projekt for permanent radering."
                     )}
                   </CardDescription>
                 </CardHeader>
@@ -581,6 +583,62 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       )}
                     </div>
                   ) : (
+                    <>
+                    <form action={duplicateProjectAction} className="space-y-4 rounded-3xl border border-sky-200 bg-sky-50/40 p-4">
+                      <div className="flex items-start gap-3">
+                        <CopyPlus className="mt-0.5 h-5 w-5 text-sky-700" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-sky-950">
+                            {t("Duplicate project", "Duplicera projekt")}
+                          </p>
+                          <p className="text-sm leading-6 text-sky-900">
+                            {t(
+                              "Creates a new project with the same governed content, users, roles, intake history, review state, tollgates and logs. The copy opens as the active project.",
+                              "Skapar ett nytt projekt med samma styrda innehall, anvandare, roller, importhistorik, granskningslage, tollgates och loggar. Kopian oppnas som aktivt projekt."
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr),minmax(0,1fr),auto] lg:items-end">
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">
+                            {t("Project to copy", "Projekt att kopiera")}
+                          </span>
+                          <select
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            defaultValue={activeProject?.organizationId ?? projects[0]?.organizationId ?? ""}
+                            name="sourceOrganizationId"
+                          >
+                            {projects.map((project) => (
+                              <option key={project.organizationId} value={project.organizationId}>
+                                {project.organizationName}
+                                {project.isActive ? ` (${t("active", "aktivt")})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">
+                            {t("New project name", "Nytt projektnamn")}
+                          </span>
+                          <input
+                            className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                            name="targetProjectName"
+                            placeholder={t("Leave empty for '<project> copy'", "Lamna tomt for '<projekt> copy'")}
+                            type="text"
+                          />
+                        </label>
+                        <PendingFormButton
+                          className="gap-2"
+                          icon={<CopyPlus className="h-4 w-4" />}
+                          label={t("Duplicate and open", "Duplicera och oppna")}
+                          pendingLabel={t("Duplicating project...", "Duplicerar projekt...")}
+                          showPendingCursor
+                        />
+                      </div>
+                    </form>
+
                     <form action={hardDeleteProjectsAction} className="space-y-4">
                       <div className="rounded-2xl border border-amber-200 bg-amber-50/65 px-4 py-3 text-sm text-amber-900">
                         <div className="flex items-start gap-2">
@@ -661,6 +719,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         />
                       </div>
                     </form>
+                    </>
                   )}
                 </CardContent>
               </Card>

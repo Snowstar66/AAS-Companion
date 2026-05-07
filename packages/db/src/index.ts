@@ -34,6 +34,7 @@ export {
 export {
   createOrganizationContextForUser,
   deleteOrganizationContextForUser,
+  duplicateOrganizationContextForUser,
   hardDeleteOrganizationContextsForUser,
   getAppUserByEmail,
   ensureAppUser,
@@ -48,6 +49,7 @@ export {
   updateOrganizationProjectUser,
   upsertAppUserByEmail,
   type AppUserIdentity,
+  type DuplicateOrganizationContextResult,
   type OrganizationProjectUserIdentity,
   type OrganizationMembershipContext,
   type OrganizationMembershipProjectSummary,
