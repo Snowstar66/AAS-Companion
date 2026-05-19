@@ -540,6 +540,206 @@ function joinTaggedValues(values: string[]) {
   return values.map((value) => value.trim()).filter(Boolean).join(" | ");
 }
 
+function getJsonBooleanFromKeys(record: JsonArtifactRecord | null | undefined, keys: string[]) {
+  if (!record) {
+    return null;
+  }
+
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === "boolean") {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function normalizeJsonJourneyInitiativeType(rawValue: string) {
+  const normalized = rawValue.trim().toUpperCase();
+
+  return normalized === "AT" || normalized === "AM" ? normalized : "AD";
+}
+
+function normalizeJsonJourneyType(rawValue: string) {
+  const normalized = rawValue.trim().toLowerCase();
+
+  if (normalized === "business" || normalized === "operational" || normalized === "support" || normalized === "transformation") {
+    return normalized;
+  }
+
+  return "user";
+}
+
+function normalizeJsonJourneyCoverage(record: JsonArtifactRecord | null) {
+  if (!record) {
+    return undefined;
+  }
+
+  const rawStatus = getJsonString(record, "status");
+  const status =
+    rawStatus === "covered" ||
+    rawStatus === "partially_covered" ||
+    rawStatus === "uncovered" ||
+    rawStatus === "unanalysed"
+      ? rawStatus
+      : "unanalysed";
+
+  return {
+    status,
+    suggestedEpicIds: getJsonStringArrayFromKeys(record, ["suggestedEpicIds", "suggested_epic_ids"]),
+    suggestedStoryIdeaIds: getJsonStringArrayFromKeys(record, [
+      "suggestedStoryIdeaIds",
+      "suggested_story_idea_ids",
+      "linked_story_ideas"
+    ]),
+    notes: getJsonString(record, "notes") || undefined
+  } satisfies Journey["coverage"];
+}
+
+function normalizeJsonJourneyStep(record: JsonArtifactRecord, index: number, journeyId: string) {
+  const id = getJsonStringFromKeys(record, ["id", "stepId", "step_id"]) || `${journeyId}-S${index + 1}`;
+  const title = getJsonString(record, "title") || `Step ${index + 1}`;
+  const description =
+    getJsonString(record, "description") ||
+    getJsonStringFromKeys(record, ["desiredSupport", "desired_support"]) ||
+    getJsonStringFromKeys(record, ["expectedUserValue", "expected_user_value"]) ||
+    getJsonStringFromKeys(record, ["testIntent", "test_intent"]) ||
+    title;
+
+  return {
+    id,
+    title,
+    actor: getJsonString(record, "actor") || undefined,
+    description,
+    currentPain: getJsonStringFromKeys(record, ["currentPain", "current_pain"]) || undefined,
+    desiredSupport:
+      getJsonStringFromKeys(record, ["desiredSupport", "desired_support", "expectedUserValue", "expected_user_value"]) ||
+      undefined,
+    decisionPoint: getJsonBooleanFromKeys(record, ["decisionPoint", "decision_point"]) ?? undefined
+  } satisfies Journey["steps"][number];
+}
+
+function normalizeJsonJourney(record: JsonArtifactRecord, index: number) {
+  const id = getJsonString(record, "id") || `J-${index + 1}`;
+  const title = getJsonString(record, "title") || `Journey ${index + 1}`;
+  const primaryActor =
+    getJsonStringFromKeys(record, ["primaryActor", "primary_actor"]) ||
+    getJsonString(record, "actor") ||
+    "Primary user";
+  const goal =
+    getJsonString(record, "goal") ||
+    getJsonString(record, "purpose") ||
+    getJsonStringFromKeys(record, ["downstreamTraceability", "downstream_traceability"]) ||
+    title;
+  const trigger = getJsonString(record, "trigger") || "Framing import trigger not specified.";
+  const rawSteps = [
+    ...getJsonObjectArray(record, "steps"),
+    ...getJsonObjectArray(record, "journey_steps")
+  ];
+  const steps =
+    rawSteps.length > 0
+      ? rawSteps.map((step, stepIndex) => normalizeJsonJourneyStep(step, stepIndex, id))
+      : [
+          {
+            id: `${id}-S1`,
+            title: title,
+            description:
+              getJsonStringFromKeys(record, ["downstreamTraceability", "downstream_traceability"]) ||
+              getJsonString(record, "purpose") ||
+              goal
+          }
+        ];
+  const humanReviewNeeded = getJsonBooleanFromKeys(record, ["humanReviewNeeded", "human_review_needed"]);
+  const reviewReason = getJsonStringFromKeys(record, ["humanReviewReason", "human_review_reason"]);
+  const traceability = getJsonStringFromKeys(record, ["downstreamTraceability", "downstream_traceability"]);
+
+  return {
+    id,
+    title,
+    type: normalizeJsonJourneyType(getJsonString(record, "type")),
+    primaryActor,
+    goal,
+    trigger,
+    narrative: getJsonString(record, "narrative") || getJsonString(record, "purpose") || undefined,
+    valueMoment: getJsonStringFromKeys(record, ["valueMoment", "value_moment"]) || undefined,
+    successSignals: getJsonStringArrayFromKeys(record, ["successSignals", "success_signals"]),
+    currentState: getJsonStringFromKeys(record, ["currentState", "current_state"]) || undefined,
+    desiredFutureState: getJsonStringFromKeys(record, ["desiredFutureState", "desired_future_state"]) || undefined,
+    steps,
+    painPoints: getJsonStringArrayFromKeys(record, ["painPoints", "pain_points"]),
+    desiredSupport: getJsonStringArrayFromKeys(record, ["desiredSupport", "desired_support"]),
+    notes: joinTaggedValues([
+      traceability,
+      humanReviewNeeded === null ? "" : `Human review needed: ${String(humanReviewNeeded)}`,
+      reviewReason ? `Human review reason: ${reviewReason}` : ""
+    ]) || undefined,
+    linkedEpicIds: getJsonStringArrayFromKeys(record, ["linkedEpicIds", "linked_epics", "linked_epic_ids"]),
+    linkedStoryIdeaIds: getJsonStringArrayFromKeys(record, [
+      "linkedStoryIdeaIds",
+      "linked_story_ideas",
+      "linked_story_idea_ids"
+    ]),
+    coverage: normalizeJsonJourneyCoverage(getJsonObject(record, "coverage"))
+  } satisfies Journey;
+}
+
+function normalizeJsonJourneyContexts(document: JsonArtifactRecord, defaultOutcomeId: string) {
+  const rawContexts = [
+    ...getJsonObjectArray(document, "journey_contexts"),
+    ...getJsonObjectArray(document, "story_journeys")
+  ];
+
+  if (rawContexts.length === 0 || !defaultOutcomeId) {
+    return [];
+  }
+
+  const aasContext = getJsonObject(document, "aas_context");
+  const initiativeType = normalizeJsonJourneyInitiativeType(
+    getJsonStringFromKeys(aasContext, ["initiativeType", "initiative_type", "delivery_type"])
+  );
+  const contexts: JourneyContext[] = [];
+  const looseJourneys: Journey[] = [];
+
+  for (const [index, rawContext] of rawContexts.entries()) {
+    const nestedJourneys = getJsonObjectArray(rawContext, "journeys");
+
+    if (nestedJourneys.length === 0) {
+      looseJourneys.push(normalizeJsonJourney(rawContext, index));
+      continue;
+    }
+
+    const journeys = nestedJourneys.map((journey, journeyIndex) => normalizeJsonJourney(journey, journeyIndex));
+
+    contexts.push({
+      id: getJsonString(rawContext, "id") || `imported-journey-context-${index + 1}`,
+      outcomeId: getJsonStringFromKeys(rawContext, ["outcomeId", "outcome_id", "linked_outcome"]) || defaultOutcomeId,
+      initiativeType: normalizeJsonJourneyInitiativeType(
+        getJsonStringFromKeys(rawContext, ["initiativeType", "initiative_type"]) || initiativeType
+      ),
+      title: getJsonString(rawContext, "title") || `Imported Journey Context ${index + 1}`,
+      description: getJsonString(rawContext, "description") || undefined,
+      journeys,
+      notes: getJsonString(rawContext, "notes") || undefined
+    });
+  }
+
+  if (looseJourneys.length > 0) {
+    contexts.push({
+      id: "imported-story-journeys",
+      outcomeId: defaultOutcomeId,
+      initiativeType,
+      title: "Imported Story Journeys",
+      description: "Imported from flat journey_contexts records.",
+      journeys: looseJourneys
+    });
+  }
+
+  const parsed = journeyContextCollectionSchema.safeParse(contexts);
+  return parsed.success ? parsed.data : [];
+}
+
 function findApproximateLineNumber(content: string, needle: string, fallback: number) {
   const normalizedLines = normalizeMarkdownForParsing(content).split("\n");
   const normalizedNeedle = needle.trim();
@@ -897,6 +1097,7 @@ function parseAasFramingJsonArtifact(
   const journeyContexts = getJsonObjectArray(document, "journey_contexts");
   const aiRiskLedger = getJsonObjectArray(document, "initial_ai_risk_ledger");
   const defaultOutcomeId = getJsonStringFromKeys(outcomes[0], ["id", "outcome_id"]);
+  const normalizedJourneyContexts = normalizeJsonJourneyContexts(document, defaultOutcomeId);
   const baselineSourceSummary = problemStatement
     ? getJsonObjectArray(problemStatement, "baseline_sources")
         .map((source) => joinTaggedValues([getJsonString(source, "name"), getJsonString(source, "format")]))
@@ -972,7 +1173,10 @@ function parseAasFramingJsonArtifact(
         `Baseline Source: ${joinTaggedValues(baselineSourceSummary) || "Not set"}`,
         `Measurement Method: ${joinTaggedValues(getJsonStringArrayFromKeys(outcome, ["measurement_method", "measurement_candidates"])) || "Not set"}`,
         configurationDefaults ? `Timeframe: ${getJsonDisplayValue(configurationDefaults, "forecast_horizon_months") || "Not set"}` : "",
-        ...buildJsonBulletLines("Target Effects", getJsonStringArray(outcome, "target_effects"))
+        ...buildJsonBulletLines("Target Effects", getJsonStringArray(outcome, "target_effects")),
+        index === 0 && normalizedJourneyContexts.length > 0
+          ? `Journey Contexts JSON: ${JSON.stringify(normalizedJourneyContexts)}`
+          : ""
       ]
     });
     sections.push(createParsedSection(fileId, fileName, outcomeSection, "outcome_candidate", "high"));

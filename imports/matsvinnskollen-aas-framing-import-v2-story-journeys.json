@@ -1,0 +1,858 @@
+{
+  "document_type": "AAS Framing Import Package",
+  "product_name": "MatSvinnskollen",
+  "version": "1.1-story-journey-import",
+  "language": "sv-SE",
+  "source_document": "Framing-testpaket: MatSvinnskollen med Story Journeys",
+  "created_at": "2026-05-19",
+  "import_note": "Story Journeys are encoded as flat journey_contexts entries with SJ-* ids because the current importer reads journey_contexts as a flat list. Each SJ-* entry keeps downstream_traceability so Story Journey context survives import.",
+  "value_owner": "Produktagare MatSvinnskollen",
+  "aas_context": {
+    "initiative_id": "OUT-001",
+    "phase": "Framing",
+    "target_next_phase": "Design",
+    "lifecycle_state": "framing",
+    "origin_type": "new",
+    "domain": "Application Development",
+    "delivery_type": "AD",
+    "target_surface": "Mobile app",
+    "target_users": [
+      "Hushall",
+      "Familjer",
+      "Studenter",
+      "Personer som vill minska matsvinn"
+    ],
+    "timeframe": "4 veckor till MVP",
+    "ai_acceleration_level": 2,
+    "recommended_ai_acceleration_level": 2,
+    "risk_profile": "medium",
+    "risk_profile_note": "Original framing uses low_to_medium. Import maps this to medium to preserve caution in the current risk enum.",
+    "human_mandate": "Humans own Outcome approval, AI Acceleration Level, risk acceptance, scope expansion, external data sources, health/allergy/food-safety boundaries and release.",
+    "governance_requirements": [
+      "Outcome, MVP scope and baseline deviation must be approved by Value Owner.",
+      "AI Quality Authority must approve Level 2 and the review model.",
+      "Solution Architect must approve local-first design direction.",
+      "Content Reviewer must approve food/date/safety content guardrails.",
+      "Risk acceptance is pending for Tollgate 1.",
+      "Story Journeys must preserve Outcome to Epic to Story Idea to Test intent traceability.",
+      "Story Journey requiring human review must include review reason.",
+      "Scope-out must be protected against AI-driven expansion, especially cloud sync, login and external APIs."
+    ]
+  },
+  "problem_statement": {
+    "id": "PS-001",
+    "text": "Manga hushall koper mat som sedan gloms bort i kyl, frys eller skafferi. Det ar svart att halla oversikt over vad som finns hemma, vad som snart gar ut och vad som kan anvandas tillsammans i enkla maltider.",
+    "pain_or_friction": [
+      "Anvandaren vet inte alltid vad som finns hemma.",
+      "Varor passerar bast fore-datum utan att anvandas.",
+      "Maltidsplanering sker ofta utan hansyn till befintliga varor.",
+      "Inkopslistor skapas utan koppling till faktisk lagerstatus."
+    ],
+    "affected_users": [
+      "Hushall som vill minska matsvinn",
+      "Personer med begransad matbudget",
+      "Hushall som vill planera enklare vardagsmat"
+    ],
+    "impact_if_not_solved": "Hushallet fortsatter slanga anvandbar mat, koper dubbletter och missar enkla mojligheter att spara pengar och minska miljopaverkan.",
+    "boundary": "Initiativet fokuserar pa hushallets egen oversikt och enkla rekommendationer. Det omfattar inte livsmedelssakerhetsradgivning, medicinska kostrad eller automatisk bestallning av mat.",
+    "current_baseline": "Utgangslaget ar att anvandaren saknar en samlad digital oversikt over matvaror i hemmet och darfor ofta upptacker varor forst nar de redan blivit daliga eller inte langre kanns anvandbara.",
+    "baseline_quality": "assumption_supported",
+    "baseline_sources": [
+      {
+        "name": "Intervjuer med 5 testhushall",
+        "format": "User discovery",
+        "description": "Kvalitativt underlag for nulage, friktion och hushallets nuvarande planering."
+      },
+      {
+        "name": "Enkel nulagesenkat fore MVP-test",
+        "format": "Baseline survey",
+        "description": "Matar upplevd kontroll fore och efter testperiod."
+      },
+      {
+        "name": "Manuell observation av inkopslista",
+        "format": "Observation",
+        "description": "Observerar hur anvandare idag skapar inkopslista utan samlad lagerstatus."
+      }
+    ],
+    "baseline_warnings": [
+      "Baseline ar delvis antagandebaserad och bor starkas efter forsta anvandartest."
+    ],
+    "baseline_metrics": [
+      {
+        "id": "forgotten_items_per_week",
+        "current_value": "Ej exakt matt",
+        "measurement_method": "Sjalvrapportering i onboarding"
+      },
+      {
+        "id": "perceived_inventory_control",
+        "current_value": "2 av 5 i sjalvskattning",
+        "measurement_method": "Enkel enkat fore och efter testperiod"
+      },
+      {
+        "id": "duplicate_purchases",
+        "current_value": "Okant",
+        "measurement_method": "Frivillig sjalvrapportering"
+      }
+    ]
+  },
+  "outcomes": [
+    {
+      "id": "OUT-001",
+      "title": "Minska hushallets matsvinn genom battre oversikt och enklare vardagsbeslut",
+      "statement": "Vi vill uppna att hushall enklare kan minska sitt matsvinn genom att fa battre oversikt over matvaror hemma, bli paminda om varor som snart bor anvandas och fa enkla maltidsforslag baserade pa befintliga varor.",
+      "baseline": "Anvandaren saknar samlad digital oversikt over matvaror i hemmet.",
+      "target_effects": [
+        "Minskad andel utgangna eller bortglomda varor",
+        "Okad anvandning av varor innan bast fore-datum",
+        "Farre dubbla inkop",
+        "Okad upplevd kontroll over hushallets matlager"
+      ],
+      "measurement_method": [
+        "Minst 60 procent av registrerade varor har kategori och datum",
+        "Minst 40 procent av anvandarna markerar minst en vara som anvand inom 14 dagar",
+        "Minst 30 procent av anvandarna anvander forslagsfunktionen minst en gang per vecka",
+        "Sjalvskattad oversikt okar fran baseline till uppfoljning"
+      ],
+      "timeframe": "4 veckor till MVP, 8 veckor till forsta effektmatning",
+      "value_owner": {
+        "name": "Produktagare MatSvinnskollen",
+        "role": "Value Owner",
+        "mandate": "Ager prioritering, outcome och riskacceptans for MVP"
+      }
+    }
+  ],
+  "scope": {
+    "mvp_in_scope": [
+      "Manuell registrering av matvaror",
+      "Kategorisering av varor",
+      "Bast fore-datum eller ungefarigt anvand-fore-datum",
+      "Enkel oversikt over varor som snart bor anvandas",
+      "Enkel inkopslista baserad pa saknade eller forbrukade varor",
+      "Maltidsforslag baserade pa registrerade varor",
+      "Lokal datalagring for MVP",
+      "Enkel export eller rensning av data"
+    ],
+    "mvp_out_of_scope": [
+      "Streckkodsscanning",
+      "Integration med matbutiker",
+      "Automatisk bestallning",
+      "Personliga halsorad",
+      "Allergiradgivning",
+      "Naringsberakning",
+      "Receptdatabas med externa API:er",
+      "Delning mellan hushallsmedlemmar i realtid",
+      "Cloud sync",
+      "Konto/login i MVP"
+    ],
+    "mvp_boundary": "MVP ska visa att anvandaren kan registrera varor, se vad som bor anvandas snart och fa enkla forslag pa vad som kan lagas. Allt annat ar senare forbattring.",
+    "assumptions": [
+      "Anvandaren accepterar manuell registrering i MVP.",
+      "Lokal datalagring racker for forsta test.",
+      "Maltidsforslag kan vara enkla och regelbaserade i forsta versionen."
+    ],
+    "dependencies": [
+      "Beslut om datalagring",
+      "Beslut om recept-/forslagslogik",
+      "Beslut om hur varudatum ska uttryckas utan att ge livsmedelssakerhetsrad"
+    ]
+  },
+  "configuration_defaults": {
+    "planning_unit": "MVP",
+    "target_surface": "Mobile app",
+    "calculation_granularity": "item",
+    "reporting_granularity": "user_test_period",
+    "forecast_horizon_months": "2",
+    "nfrs": [
+      {
+        "id": "NFR-001",
+        "title": "Lokal datalagring i MVP",
+        "description": "Anvandarens matvaror ska lagras lokalt i MVP. Ingen cloud sync eller konto kravs.",
+        "priority": "must"
+      },
+      {
+        "id": "NFR-002",
+        "title": "Lag anvandningsfriktion",
+        "description": "Anvandaren ska kunna lagga till en vara pa under 20 sekunder utan onboarding.",
+        "priority": "must"
+      },
+      {
+        "id": "NFR-003",
+        "title": "Tydlig och lugn UX",
+        "description": "Appen ska skapa kansla av kontroll och enkelhet, inte skuld eller stress.",
+        "priority": "must"
+      },
+      {
+        "id": "NFR-004",
+        "title": "Offline-stod",
+        "description": "Lageroversikt och varningslista ska fungera offline.",
+        "priority": "should"
+      },
+      {
+        "id": "NFR-005",
+        "title": "Forsiktig rekommendationslogik",
+        "description": "Appen far foresla att en vara bor prioriteras men inte avgora om den ar saker att ata.",
+        "priority": "must"
+      },
+      {
+        "id": "NFR-006",
+        "title": "Raderbar data",
+        "description": "Anvandaren ska kunna radera all lokal data.",
+        "priority": "must"
+      },
+      {
+        "id": "NFR-007",
+        "title": "Tillganglighet",
+        "description": "Centrala floden ska stodja god kontrast, tydliga labels och enkel touch-interaktion.",
+        "priority": "should"
+      }
+    ],
+    "ux_profile": "calm_consumer_utility",
+    "style_direction": "Apple-like, clean, warm, low-friction",
+    "color_schema": "soft green + neutral white/gray",
+    "tone": "hjalpsam, lugn, icke-domande",
+    "ux_principles": [
+      "Visa viktigaste nasta atgard forst.",
+      "Undvik skuldskapande formuleringar.",
+      "Gor registrering snabbare an perfekt.",
+      "Anvand tydliga statusnivaer: Bra koll, Bor anvandas snart, Saknas.",
+      "Visa forslag som stod, inte som sanning.",
+      "Undvik plottrig dashboard i MVP.",
+      "Optimera for enhandsgrepp och snabb vardagsanvandning."
+    ],
+    "signature_components": [
+      "Forradsoversikt",
+      "Snart-dags-lista",
+      "Enkel maltidsforslagskort",
+      "Snabbregistrering",
+      "Veckans anvand-forst-lista"
+    ],
+    "ux_no_go": [
+      "Alarmistiska varningar",
+      "Rodmarkerade fel-statusar for vanlig vardagsmat",
+      "Komplex tabellvy",
+      "Enterprise control plane-layout"
+    ]
+  },
+  "ai_acceleration": {
+    "selected_ai_level": "level_2",
+    "recommended_ai_level": "level_2",
+    "rationale": "AI far anvandas strukturerat for att skapa designforslag, bryta ner Epics till Delivery Stories, foresla acceptanskriterier, generera kod och testforslag. Eftersom MVP ar lag till medel risk men kan paverka anvandarens beslut om mat ska AI-output granskas manskligt. Full Level 3 ar inte proportionerligt i MVP.",
+    "ai_usage_intent": [
+      "DESIGN",
+      "CONTENT",
+      "TEST",
+      "CODE"
+    ],
+    "ai_usage_not_allowed": [
+      "AI far inte ge medicinska kostrad.",
+      "AI far inte avgora om mat ar saker att ata.",
+      "AI far inte presentera genererade rad som officiella myndighetsrad.",
+      "AI far inte lagga till cloud sync, login eller externa API:er utan nytt beslut."
+    ],
+    "level_3_controls_selected": [
+      "Traceability from Outcome to Story to Test",
+      "AI usage log",
+      "Decision log",
+      "Evidence summary before release"
+    ],
+    "downgrade_triggers": [
+      "Om baseline inte kan starkas efter anvandartest",
+      "Om scope blir otydligt",
+      "Om externa datakallor eller anvandarkonton infors",
+      "Om AI-genererade rad inte kan granskas tillrackligt"
+    ],
+    "upgrade_to_level_3_conditions": [
+      "Dokumenterad agentworkflow",
+      "AI Risk Ledger etablerad",
+      "Oberoende eller separerad AQA-review",
+      "Reproducerbar test- och promptstruktur",
+      "Tydlig release- och riskacceptansmodell"
+    ]
+  },
+  "human_mandate": {
+    "value_owner": {
+      "name": "Produktagare MatSvinnskollen",
+      "authority": [
+        "Godkanna Outcome",
+        "Prioritera MVP",
+        "Acceptera kvarstaende risk"
+      ]
+    },
+    "ai_quality_authority": {
+      "name": "QA/AI Review Lead",
+      "authority": [
+        "Stoppa release vid otillracklig testbarhet",
+        "Krava omformulering av AI-genererat innehall",
+        "Krava manuell granskning av rad och rekommendationer"
+      ]
+    },
+    "solution_architect": {
+      "name": "Mobile Architect",
+      "authority": [
+        "Godkanna teknisk design",
+        "Godkanna lokal datalagringsmodell",
+        "Stoppa inforande av externa integrationer utan nytt beslut"
+      ]
+    },
+    "content_reviewer": {
+      "name": "Content Reviewer",
+      "authority": [
+        "Granska att appen inte ger livsmedelssakerhetsrad utover godkand formulering",
+        "Sakerstalla forsiktig och anvandarvanlig copy"
+      ]
+    },
+    "requires_human_approval": [
+      "Outcome",
+      "AI Acceleration Level",
+      "Risk acceptance",
+      "Scope expansion",
+      "Externa datakallor",
+      "Halsa, allergi eller livsmedelssakerhet",
+      "Release"
+    ],
+    "ai_may_decide_without_approval": [
+      "Intern filstruktur",
+      "Namn pa testfall",
+      "Forslag pa acceptanskriterier",
+      "Forslag pa UI-copy inom godkand tonalitet",
+      "Story splitting inom befintligt scope"
+    ]
+  },
+  "content_governance": {
+    "recommendation_type": "Household planning support",
+    "source_type": "Product-defined rules + human-reviewed copy",
+    "official_source_claim": false,
+    "content_constraints": [
+      "Appen far inte havda att den foljer myndighetsrad om inte kalla anges.",
+      "Appen far inte avgora om livsmedel ar sakra att ata.",
+      "Appen far inte ge medicinska, allergi- eller dietrelaterade rad.",
+      "Appen ska anvanda formuleringar som kan vara bra att anvanda snart snarare an maste slangas."
+    ],
+    "human_review_required_for": [
+      "Maltidsforslagstexter",
+      "Datumvarningar",
+      "Formuleringar om hallbarhet",
+      "Eventuell hanvisning till externa rad"
+    ],
+    "example_safe_copy": [
+      "Den har varan ar markerad som snart dags att anvanda.",
+      "Kontrollera alltid lukt, utseende och egen bedomning innan du anvander maten.",
+      "Forslaget ar baserat pa vad du har registrerat, inte pa en fullstandig bedomning av maten."
+    ]
+  },
+  "epics": [
+    {
+      "id": "EPIC-001",
+      "outcome_id": "OUT-001",
+      "title": "Hushallslager",
+      "purpose": "Anvandaren ska kunna skapa en enkel oversikt over vilka matvaror som finns hemma.",
+      "scope": "Inkluderar manuell registrering, kategori och ungefarigt datum. Exkluderar streckkodsscanning och externa produktdatabaser.",
+      "scope_out": [
+        "Streckkodsscanning",
+        "Externa produktdatabaser"
+      ],
+      "story_ideas": [
+        {
+          "id": "SI-001",
+          "title": "Lagg till matvara manuellt",
+          "value_intent": "Anvandaren ska snabbt kunna registrera en vara.",
+          "expected_behavior": "Anvandaren kan ange namn, kategori, antal och eventuellt datum.",
+          "candidate_test_ideas": [
+            "Verifiera att en vara kan sparas och visas i lageroversikten.",
+            "Verifiera att minsta nodvandiga information racker for att skapa en vara."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        },
+        {
+          "id": "SI-002",
+          "title": "Visa lager i kategorier",
+          "value_intent": "Anvandaren ska fa snabb oversikt over sitt matlager.",
+          "expected_behavior": "Appen grupperar varor i exempelvis kyl, frys, skafferi eller egna kategorier.",
+          "candidate_test_ideas": [
+            "Verifiera att registrerade varor visas i ratt kategori."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        }
+      ]
+    },
+    {
+      "id": "EPIC-002",
+      "outcome_id": "OUT-001",
+      "title": "Datum och prioritering",
+      "purpose": "Anvandaren ska se vilka varor som bor prioriteras.",
+      "scope": "Inkluderar enkel sortering och status baserat pa anvandarens registrerade datum. Exkluderar sakerhetsbedomning av mat.",
+      "scope_out": [
+        "Sakerhetsbedomning av mat"
+      ],
+      "story_ideas": [
+        {
+          "id": "SI-003",
+          "title": "Visa varor som bor anvandas snart",
+          "value_intent": "Anvandaren ska latt hitta varor som riskerar att glommas bort.",
+          "expected_behavior": "Appen visar en lista over varor sorterade efter nar de bor anvandas.",
+          "candidate_test_ideas": [
+            "Verifiera att varor med narmast datum visas hogst upp."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "CONTENT",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        },
+        {
+          "id": "SI-004",
+          "title": "Markera vara som anvand",
+          "value_intent": "Anvandaren ska kunna halla lagret aktuellt.",
+          "expected_behavior": "Anvandaren kan markera en vara som anvand, vilket tar bort eller minskar den i lagret.",
+          "candidate_test_ideas": [
+            "Verifiera att lagret uppdateras efter att en vara markerats som anvand."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        }
+      ]
+    },
+    {
+      "id": "EPIC-003",
+      "outcome_id": "OUT-001",
+      "title": "Maltidsforslag",
+      "purpose": "Anvandaren ska fa enkla forslag pa vad som kan lagas med varor som redan finns.",
+      "scope": "Inkluderar enkla regelbaserade forslag. Exkluderar naringsberakning, allergianpassning och externa receptdatabaser.",
+      "scope_out": [
+        "Naringsberakning",
+        "Allergianpassning",
+        "Externa receptdatabaser"
+      ],
+      "risk_note": "Forslag far inte uppfattas som livsmedelssakerhetsrad.",
+      "story_ideas": [
+        {
+          "id": "SI-005",
+          "title": "Foresla maltid baserat pa valda varor",
+          "value_intent": "Anvandaren ska kunna anvanda befintliga varor mer effektivt.",
+          "expected_behavior": "Appen visar enkla maltidsideer baserat pa nagra registrerade varor.",
+          "candidate_test_ideas": [
+            "Verifiera att forslag endast anvander registrerade eller generiska basvaror.",
+            "Verifiera att forslagstext inte later som sakerhetsrad."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "CONTENT",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        },
+        {
+          "id": "SI-006",
+          "title": "Prioritera varor som snart bor anvandas i forslag",
+          "value_intent": "Forslagen ska hjalpa anvandaren minska svinn.",
+          "expected_behavior": "Appen prioriterar forslag dar snart-dags-varor ingar.",
+          "candidate_test_ideas": [
+            "Verifiera att snart-dags-varor paverkar forslagsordningen."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "CONTENT",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        }
+      ]
+    },
+    {
+      "id": "EPIC-004",
+      "outcome_id": "OUT-001",
+      "title": "Inkopsstod",
+      "purpose": "Anvandaren ska undvika dubbla inkop och enklare se vad som faktiskt saknas.",
+      "scope": "Inkluderar enkel manuell inkopslista. Exkluderar butikskoppling och prisjamforelse.",
+      "scope_out": [
+        "Butikskoppling",
+        "Prisjamforelse"
+      ],
+      "story_ideas": [
+        {
+          "id": "SI-007",
+          "title": "Skapa enkel inkopslista",
+          "value_intent": "Anvandaren ska kunna planera inkop baserat pa vad som saknas.",
+          "expected_behavior": "Anvandaren kan lagga till saknade varor i en inkopslista.",
+          "candidate_test_ideas": [
+            "Verifiera att inkopslistan sparas och kan markeras som klar."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        },
+        {
+          "id": "SI-008",
+          "title": "Visa om vara redan finns hemma",
+          "value_intent": "Anvandaren ska undvika dubbla inkop.",
+          "expected_behavior": "Nar anvandaren lagger till en vara i inkopslistan visas om liknande vara redan finns i lagret.",
+          "candidate_test_ideas": [
+            "Verifiera att appen varnar nar en matchande vara finns i lagret.",
+            "Verifiera att anvandaren fortfarande kan lagga till varan."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        }
+      ]
+    },
+    {
+      "id": "EPIC-005",
+      "outcome_id": "OUT-001",
+      "title": "Datakontroll och radering",
+      "purpose": "Anvandaren ska forsta och kontrollera sin lokala data.",
+      "scope": "Inkluderar enkel radering av lokal data. Exkluderar kontohantering och molnsynk.",
+      "scope_out": [
+        "Kontohantering",
+        "Molnsynk"
+      ],
+      "story_ideas": [
+        {
+          "id": "SI-009",
+          "title": "Radera all lokal data",
+          "value_intent": "Anvandaren ska ha kontroll over sin information.",
+          "expected_behavior": "Anvandaren kan radera alla lokalt sparade varor och listor efter bekraftelse.",
+          "candidate_test_ideas": [
+            "Verifiera att lokal data tas bort efter bekraftad radering.",
+            "Verifiera att radering kraver bekraftelse."
+          ],
+          "ai_usage_scope": [
+            "DESIGN",
+            "TEST",
+            "CODE"
+          ],
+          "ai_acceleration_level": 2
+        }
+      ]
+    }
+  ],
+  "journey_contexts": [
+    {
+      "id": "J-001",
+      "title": "Anvand forst det som snart gar ut",
+      "type": "journey_context",
+      "primary_actor": "Hushallsanvandare",
+      "trigger": "Sondag kvall eller infor matplanering",
+      "goal": "Anvandaren vill snabbt se vad som bor anvandas forst och valja en enkel maltid.",
+      "current_state": "Anvandaren oppnar kyl och skafferi manuellt, forsoker minnas vad som finns och upptacker ofta for sent att nagot borde ha anvants tidigare.",
+      "desired_future_state": "Anvandaren oppnar appen, ser en kort lista over varor som bor anvandas snart och far ett eller flera enkla maltidsforslag.",
+      "linked_story_ideas": [
+        "SI-003",
+        "SI-004",
+        "SI-005",
+        "SI-006"
+      ],
+      "downstream_traceability": "Journey Context. Outcome OUT-001 -> EPIC-002/EPIC-003 -> SI-003, SI-005, SI-006, SI-004 -> test intents for sorted soon-list, recipe suggestions based on registered items and inventory update after use. Steps: J-001-S1 Oppna snart-dags-listan linked SI-003; J-001-S2 Valj varor att anvanda linked SI-005/SI-006; J-001-S3 Markera vara som anvand linked SI-004. Success: relevant item within 10 seconds, at least one item marked used, app feels helpful not blaming."
+    },
+    {
+      "id": "SJ-001",
+      "title": "Story Journey: Registrera forsta matvarorna",
+      "type": "story_journey",
+      "purpose": "Sakerstalla att en ny anvandare snabbt kan skapa sin forsta lageroversikt utan onboarding eller hog friktion.",
+      "primary_actor": "Hushallsanvandare",
+      "trigger": "Anvandaren oppnar appen forsta gangen och vill lagga in vad som finns hemma.",
+      "linked_outcome": "OUT-001",
+      "linked_epics": [
+        "EPIC-001"
+      ],
+      "linked_story_ideas": [
+        "SI-001",
+        "SI-002"
+      ],
+      "human_review_needed": false,
+      "downstream_traceability": "Story Journey SJ-001. Outcome OUT-001 -> EPIC-001 -> SI-001/SI-002. Steps: SJ-001-S1 Starta snabbregistrering linked SI-001, test intent: start registration from home/start page; SJ-001-S2 Ange namn, kategori och antal linked SI-001, test intent: item can be saved with minimum necessary information; SJ-001-S3 Se varan i lageroversikten linked SI-002, test intent: registered item appears in correct view/category. Success: first item under 20 seconds, user understands item was saved, no instructions needed."
+    },
+    {
+      "id": "SJ-002",
+      "title": "Story Journey: Anvand forst det som snart gar ut",
+      "type": "story_journey",
+      "purpose": "Hjalpa anvandaren omsatta lageroversikt till konkret handling som minskar matsvinn.",
+      "primary_actor": "Hushallsanvandare",
+      "trigger": "Anvandaren vill planera dagens eller veckans mat.",
+      "linked_outcome": "OUT-001",
+      "linked_epics": [
+        "EPIC-002",
+        "EPIC-003"
+      ],
+      "linked_story_ideas": [
+        "SI-003",
+        "SI-004",
+        "SI-005",
+        "SI-006"
+      ],
+      "human_review_needed": true,
+      "human_review_reason": "Maltidsforslag och datumformuleringar far inte uppfattas som livsmedelssakerhetsrad.",
+      "downstream_traceability": "Story Journey SJ-002. Outcome OUT-001 -> EPIC-002/EPIC-003 -> SI-003/SI-004/SI-005/SI-006. Steps: SJ-002-S1 Oppna snart-dags-listan linked SI-003, test intent: nearest dates shown highest; SJ-002-S2 Valj vara att anvanda linked SI-003, test intent: selectable item from soon-list; SJ-002-S3 Fa enkelt maltidsforslag linked SI-005, test intent: suggestions use registered items and no external recipe data; SJ-002-S4 Markera vara som anvand linked SI-004, test intent: item removed or reduced in inventory. Success: prioritized item within 10 seconds, at least one relevant suggestion, inventory can be updated after use. Human review required: food/date wording must not imply safety advice."
+    },
+    {
+      "id": "SJ-003",
+      "title": "Story Journey: Undvik dubbla inkop",
+      "type": "story_journey",
+      "purpose": "Hjalpa anvandaren skapa inkopslista utan att kopa varor som redan finns hemma.",
+      "primary_actor": "Hushallsanvandare",
+      "trigger": "Anvandaren planerar inkop.",
+      "linked_outcome": "OUT-001",
+      "linked_epics": [
+        "EPIC-001",
+        "EPIC-004"
+      ],
+      "linked_story_ideas": [
+        "SI-002",
+        "SI-007",
+        "SI-008"
+      ],
+      "human_review_needed": false,
+      "downstream_traceability": "Story Journey SJ-003. Outcome OUT-001 -> EPIC-001/EPIC-004 -> SI-002/SI-007/SI-008. Steps: SJ-003-S1 Oppna inkopslistan linked SI-007, test intent: shopping list opens from main navigation or start; SJ-003-S2 Lagg till vara i inkopslistan linked SI-007, test intent: item can be saved in shopping list; SJ-003-S3 Fa signal om liknande vara redan finns linked SI-008, test intent: app shows simple signal when matching item exists in inventory. Success: user sees if item exists at home, can choose to add anyway, app feels helpful not blocking."
+    },
+    {
+      "id": "SJ-004",
+      "title": "Story Journey: Radera lokal data",
+      "type": "story_journey",
+      "purpose": "Sakerstalla att anvandaren har kontroll over lokalt sparad information.",
+      "primary_actor": "Hushallsanvandare",
+      "trigger": "Anvandaren vill nollstalla appen eller ta bort sin information.",
+      "linked_outcome": "OUT-001",
+      "linked_epics": [
+        "EPIC-005"
+      ],
+      "linked_story_ideas": [
+        "SI-009"
+      ],
+      "human_review_needed": false,
+      "downstream_traceability": "Story Journey SJ-004. Outcome OUT-001 -> EPIC-005 -> SI-009. Steps: SJ-004-S1 Oppna datakontroll linked SI-009, test intent: data control reachable from settings or equivalent; SJ-004-S2 Bekrafta radering linked SI-009, test intent: deletion requires confirmation; SJ-004-S3 Se att data ar raderad linked SI-009, test intent: inventory and shopping list are empty after deletion. Success: user can delete data without account/support, deletion is clear and consequence is understood."
+    }
+  ],
+  "story_journey_validation_rules": {
+    "block_design_candidate_if": [
+      "Story Journey saknar linked_outcome",
+      "Story Journey saknar linked_story_ideas",
+      "Journey step saknar test_intent",
+      "Journey beskriver funktionalitet som ligger i scope_out",
+      "Journey kraver human_review men saknar review_reason"
+    ],
+    "warning_if": [
+      "Story Idea ingar inte i nagon Story Journey trots att den ar user-facing",
+      "Story Journey innehaller fler an 6 steg",
+      "Journey success_signals saknas",
+      "Journey trigger saknas",
+      "Journey ar for losningsdetaljerad for Framing"
+    ]
+  },
+  "bmad_story_journey_usage": [
+    "Gruppera Story Ideas till sammanhangande floden.",
+    "Foresla Delivery Stories i ratt ordning.",
+    "Identifiera saknade stories i anvandarflodet.",
+    "Skapa UI-floden och testscenarier.",
+    "Foresla acceptanskriterier som verifierar bade enskild story och helhetsflode.",
+    "BMAD far inte anvanda Story Journeys for att andra Outcome, utoka scope eller kringga Human Mandate."
+  ],
+  "initial_ai_risk_ledger": [
+    {
+      "id": "RISK-001",
+      "risk": "Datum- och maltidsformuleringar kan uppfattas som livsmedelssakerhetsrad.",
+      "mitigation": "Content Reviewer granskar copy. Appen anvander forsiktig formulering och sager inte om mat ar saker att ata.",
+      "owner_role": "Content Reviewer",
+      "status": "open"
+    },
+    {
+      "id": "RISK-002",
+      "risk": "AI eller BMAD utokar MVP-scope med cloud sync, login eller externa API:er.",
+      "mitigation": "Scope-out och BMAD not allowed-regler maste bevaras i design och stories.",
+      "owner_role": "Value Owner",
+      "status": "open"
+    },
+    {
+      "id": "RISK-003",
+      "risk": "Baseline ar delvis antagandebaserad.",
+      "mitigation": "Stark baseline efter forsta anvandartest och acceptera baseline-avvikelse fore full approval.",
+      "owner_role": "Value Owner",
+      "status": "open"
+    }
+  ],
+  "bmad_handoff_controls": {
+    "bmad_allowed_to": [
+      "Forfina Story Ideas till Delivery Stories",
+      "Foresla acceptanskriterier",
+      "Foresla informationsarkitektur",
+      "Foresla mobil UI-struktur",
+      "Foresla lokal datamodell",
+      "Foresla testfall",
+      "Generera kodforslag inom scope",
+      "Skapa traceability map"
+    ],
+    "bmad_not_allowed_to": [
+      "Andra Outcome",
+      "Andra AI Acceleration Level",
+      "Lagga till cloud sync",
+      "Lagga till login",
+      "Lagga till externa recept-API:er",
+      "Ge medicinska rad",
+      "Presentera livsmedelssakerhet som auktoritativ sanning",
+      "Godkanna release",
+      "Acceptera risk"
+    ],
+    "bmad_must_preserve": [
+      "Outcome -> Epic -> Story -> Test",
+      "Scope in/out",
+      "AI Usage Scope",
+      "Human approval requirements",
+      "NFRs",
+      "UX principles",
+      "Content constraints",
+      "Risk notes",
+      "Story Journey traceability"
+    ],
+    "bmad_must_create_in_design": [
+      "Delivery Stories",
+      "Acceptanskriterier",
+      "Test Definition per Story",
+      "Definition of Done",
+      "Design assumptions",
+      "Data model proposal",
+      "AI usage log",
+      "Open decision log"
+    ]
+  },
+  "tollgate_1_readiness": {
+    "status": "design_candidate",
+    "ready_for_design": [
+      "Problem Statement finns",
+      "Outcome finns",
+      "Baseline finns men behover starkas",
+      "Scope in/out finns",
+      "Riskprofil finns",
+      "Rekommenderad AI-niva finns",
+      "Initial Value Spine finns",
+      "Journey Context finns",
+      "Story Journeys finns som SJ-* journey_contexts",
+      "NFRs finns",
+      "BMAD-handoff controls finns"
+    ],
+    "remaining_decisions": [
+      "Value Owner ska godkanna outcome",
+      "AI Quality Authority ska godkanna AI-niva och reviewmodell",
+      "Content Reviewer ska godkanna gransdragning for mat-/sakerhetsformuleringar",
+      "Baseline-kvalitet ska accepteras som tillracklig for MVP",
+      "Scope-out ska explicit godkannas",
+      "Risk acceptance ska registreras"
+    ],
+    "not_ready_for_full_approval_until": [
+      "Value Owner har godkant outcome",
+      "AI Quality Authority har godkant AI-niva och reviewmodell",
+      "Content Reviewer har godkant content guardrails",
+      "Baseline-kvalitet ar accepterad som tillracklig for MVP",
+      "Inga placeholder stories finns",
+      "Scope-out ar explicit godkant"
+    ]
+  },
+  "approval_context": {
+    "framing_review": {
+      "status": "pending",
+      "required_approvers": [
+        {
+          "role": "Value Owner",
+          "decision": "Godkanner Outcome, MVP-scope och baseline-avvikelse"
+        },
+        {
+          "role": "AI Quality Authority",
+          "decision": "Godkanner AI Level 2 och reviewkrav"
+        },
+        {
+          "role": "Solution Architect",
+          "decision": "Godkanner lokal-first designinriktning"
+        },
+        {
+          "role": "Content Reviewer",
+          "decision": "Godkanner content guardrails"
+        }
+      ]
+    },
+    "approval_record_required_fields": [
+      "approver_name",
+      "role",
+      "mandate_type",
+      "approval_scope",
+      "risk_acceptance",
+      "timestamp",
+      "notes"
+    ]
+  },
+  "hard_validation_rules": {
+    "block_tollgate_approval_if": [
+      "Outcome saknas",
+      "Outcome ar formulerat som output i stallet for effekt",
+      "Baseline saknas utan avvikelse",
+      "Value Owner saknas",
+      "Scope out saknas",
+      "AI Level saknar motivering",
+      "Vald AI Level ar hogre an rekommenderad utan explicit motivering",
+      "Story Ideas innehaller placeholder-text",
+      "Epic saknar scope boundary",
+      "Journey Context ar markerad som covered utan lankade Story Ideas",
+      "Story Journey saknar linked_outcome eller linked_story_ideas",
+      "Story Journey kraver human_review men saknar review_reason",
+      "NFR ar trunkerad eller saknar prioritet",
+      "Approval endast sager OK utan vad som godkants",
+      "Risk acceptance saknas"
+    ]
+  },
+  "export_to_bmad": {
+    "export_profile": "bmad_prepared",
+    "source_of_truth": "framing_brief",
+    "export_should_include": [
+      "Problem Statement",
+      "Outcome Statement",
+      "Baseline",
+      "Scope in/out",
+      "Risk profile",
+      "AI Acceleration Level",
+      "Human Mandate",
+      "Epics",
+      "Story Ideas",
+      "Test intent",
+      "Journey Context",
+      "Story Journeys",
+      "UX principles",
+      "NFRs",
+      "Content guardrails",
+      "BMAD allowed/not allowed",
+      "Approval context",
+      "Validation status",
+      "Open questions"
+    ]
+  },
+  "expected_tool_assessment": {
+    "framing_quality": "strong_but_not_fully_approved",
+    "design_readiness": "design_candidate",
+    "recommended_ai_level": "level_2",
+    "selected_ai_level_valid": true,
+    "value_spine_integrity": "clean",
+    "baseline_quality": "assumption_supported",
+    "tollgate_1_approval_status": "pending",
+    "bmad_handoff_ready": "yes_after_approval"
+  }
+}

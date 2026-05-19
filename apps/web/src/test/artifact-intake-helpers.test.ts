@@ -543,6 +543,27 @@ describe("artifact intake helpers", () => {
             downstream_traceability: "Creates baseline for later reporting."
           }
         ],
+        story_journeys: [
+          {
+            id: "SC-SJ01",
+            title: "Planner reviews import issues",
+            purpose: "Keep the imported baseline reviewable before it becomes planning truth.",
+            primary_actor: "Planner",
+            trigger: "Monthly allocation import has finished.",
+            linked_outcome: "SC-O1",
+            linked_epics: ["SC-E01"],
+            linked_story_ideas: ["SC-E01-SI01"],
+            journey_steps: [
+              {
+                step_id: "SC-SJ01-S1",
+                title: "Review validation issues",
+                expected_user_value: "Planner can see whether the baseline is trustworthy.",
+                test_intent: "Validation issues are visible after import."
+              }
+            ],
+            success_signals: ["Planner can decide whether to accept the baseline."]
+          }
+        ],
         initial_ai_risk_ledger: [
           {
             id: "SC-AIR-01",
@@ -582,6 +603,12 @@ describe("artifact intake helpers", () => {
 
     expect(outcomeCandidate?.draftRecord?.key).toBe("SC-O1");
     expect(outcomeCandidate?.draftRecord?.problemStatement).toContain("Current capacity planning is hard to overview.");
+    expect(outcomeCandidate?.draftRecord?.journeyContexts?.[0]?.outcomeId).toBe("SC-O1");
+    expect(outcomeCandidate?.draftRecord?.journeyContexts?.[0]?.journeys[0]?.id).toBe("SC-J01");
+    expect(outcomeCandidate?.draftRecord?.journeyContexts?.[0]?.journeys.map((journey) => journey.id)).toContain(
+      "SC-SJ01"
+    );
+    expect(outcomeCandidate?.draftRecord?.journeyContexts?.[0]?.journeys[0]?.primaryActor).toBe("Planner");
     expect(epicCandidate?.draftRecord?.key).toBe("SC-E01");
     expect(epicCandidate?.relationshipState).toBe("mapped");
     expect(storyCandidate?.draftRecord?.key).toBe("SC-E01-SI01");
