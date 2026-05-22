@@ -471,9 +471,12 @@ describe("Import page", () => {
     expect(screen.getByText("Recommended: point to the project evidence folder.")).toBeDefined();
     expect(screen.getByText("Good file examples")).toBeDefined();
     expect(screen.getByText("value-spine.csv")).toBeDefined();
+    expect(screen.getByText("Evidence scope")).toBeDefined();
+    expect(screen.getByText("Control Mirror evidence")).toBeDefined();
     expect(screen.getByText("Evidence folder")).toBeDefined();
-    expect(screen.getByText("Evidence target")).toBeDefined();
-    expect(screen.getByText(/Choose Framing for strategy, requirements, epics and stories/i)).toBeDefined();
+    expect(screen.queryByText("Evidence target")).toBeNull();
+    expect(screen.queryByText("Import to Framing")).toBeNull();
+    expect(screen.queryByText(/Choose Framing for strategy, requirements, epics and stories/i)).toBeNull();
     expect(screen.getByText(/not meant for selecting the full repo root/i)).toBeDefined();
     expect(screen.getByText(/Not screenshots, images, PDFs or ZIPs/i)).toBeDefined();
     expect(screen.getByRole("link", { name: /Open review queue/i })).toBeDefined();

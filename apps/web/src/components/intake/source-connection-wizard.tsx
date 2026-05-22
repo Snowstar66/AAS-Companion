@@ -348,8 +348,23 @@ export function SourceConnectionWizard({
           <input name="processingMode" type="hidden" value="ai_assisted" />
           <input name="sourceContext" type="hidden" value={controlMirrorContext ? "control-mirror" : ""} />
           <input name="sourceConnectionMode" type="hidden" value={mode} />
+          {controlMirrorContext ? <input name="importIntent" type="hidden" value="framing" /> : null}
           {controlMirrorContext ? <ControlMirrorFileGuide language={language} mode={mode} /> : null}
           <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+            {controlMirrorContext ? (
+              <div className="rounded-2xl border border-border/70 bg-background px-4 py-3">
+                <p className="text-sm font-medium text-foreground">{t(language, "Evidence scope", "Evidensscope")}</p>
+                <p className="mt-2 text-sm font-semibold text-foreground">{t(language, "Control Mirror evidence", "Control Mirror-evidens")}</p>
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                  {t(
+                    language,
+                    "Import classifies the selected material into framing, Value Spine, test and governance evidence automatically.",
+                    "Importen klassificerar valt underlag till framing-, Value Spine-, test- och governance-evidens automatiskt."
+                  )}
+                </p>
+              </div>
+            ) : null}
+            {!controlMirrorContext ? (
             <label className="block space-y-2">
               <span className="text-sm font-medium text-foreground">
                 {controlMirrorContext ? t(language, "Evidence target", "Evidensmål") : t(language, "Import target", "Importmål")}
@@ -372,6 +387,7 @@ export function SourceConnectionWizard({
                 </span>
               ) : null}
             </label>
+            ) : null}
             <label className="block space-y-2">
               <span className="text-sm font-medium text-foreground">
                 {mode === "folder" ? t(language, "Evidence folder", "Evidensmapp") : t(language, "Evidence files", "Evidensfiler")}
