@@ -1341,12 +1341,20 @@ export default async function ControlMirrorPage({
                 <CardTitle>{t(language, "Control report preview", "Control report-preview")}</CardTitle>
                 <CardDescription>{data.report.executionStatement}</CardDescription>
               </div>
-              <Button asChild className="w-fit gap-2" variant="secondary">
-                <Link href="/control-mirror/export">
-                  <Download className="h-4 w-4" />
-                  {t(language, "Download evidence pack", "Ladda ner evidenspaket")}
-                </Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild className="w-fit gap-2">
+                  <Link href="/control-mirror/customer-report">
+                    <Download className="h-4 w-4" />
+                    {t(language, "Download customer PDF", "Ladda ner kund-PDF")}
+                  </Link>
+                </Button>
+                <Button asChild className="w-fit gap-2" variant="secondary">
+                  <Link href="/control-mirror/export">
+                    <Download className="h-4 w-4" />
+                    {t(language, "Download evidence pack", "Ladda ner evidenspaket")}
+                  </Link>
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

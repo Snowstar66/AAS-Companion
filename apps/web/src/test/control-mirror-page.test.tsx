@@ -581,6 +581,7 @@ describe("Control Mirror page", () => {
     expect(screen.getByText("Record human decision")).toBeDefined();
     expect(screen.getByText("Open in Human Review")).toBeDefined();
     expect(screen.getByText("Control report preview")).toBeDefined();
+    expect(screen.getByRole("link", { name: /download customer pdf/i }).getAttribute("href")).toBe("/control-mirror/customer-report");
     expect(screen.getAllByRole("link", { name: /download evidence pack/i }).some((link) => link.getAttribute("href") === "/control-mirror/export")).toBe(true);
     expect(screen.getByText("Active project")).toBeDefined();
     expect(screen.getByText("Evidence summary")).toBeDefined();
