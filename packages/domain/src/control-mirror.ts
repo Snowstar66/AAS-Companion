@@ -1247,6 +1247,11 @@ function buildConformanceFindings(input: {
   const findings: ControlMirrorConformanceFinding[] = [];
   const framingTokens = buildFramingTokens(input.outcomes);
   const storyByKey = new Map(input.stories.map((story) => [story.key.toLowerCase(), story]));
+  const storyKeysWithImportedTestEvidence = new Set(
+    input.normalizedEvidence
+      .filter((item) => item.evidenceType === "test_evidence" && item.storyId)
+      .map((item) => item.storyId!.toLowerCase())
+  );
   const artifactById = new Map(input.artifacts.map((artifact) => [artifact.id, artifact]));
   const designEvidenceTypes: ControlMirrorNormalizedEvidenceType[] = [
     "framing_design_evidence",
@@ -1327,7 +1332,7 @@ function buildConformanceFindings(input: {
     } else if (!story) {
       status = "built_but_weakly_traced";
       weaklyTracedBuild += 1;
-    } else if (!isPresent(story.testDefinition)) {
+    } else if (!isPresent(story.testDefinition) && !storyKeysWithImportedTestEvidence.has(story.key.toLowerCase())) {
       status = "built_but_unverified";
       releaseRisk += 1;
     } else if (story.acceptanceCriteria.length === 0) {
@@ -1438,17 +1443,30 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
       filePath: artifact.fileName
     }));
   const storyLikeEvidence = normalizedEvidence.filter((item) => item.storyClassification !== "not_story_like");
+  const testCoverage = buildTestCoverage({
+    artifacts,
+    normalizedEvidence,
+    stories
+  });
+  const storyKeysWithImportedTestEvidence = new Set(
+    testCoverage.valueSpineCoverage
+      .filter((item) => item.testEvidenceCount > 0)
+      .map((item) => item.storyKey.toLowerCase())
+  );
+  const hasVerificationEvidence = (story: ControlMirrorStoryInput) =>
+    isPresent(story.testDefinition) || storyKeysWithImportedTestEvidence.has(story.key.toLowerCase());
 
   const storyIdeasReady = directionSeeds.filter((seed) => isPresent(seed.shortDescription) && isPresent(seed.expectedBehavior)).length;
   const storiesWithAcceptanceCriteria = stories.filter((story) => story.acceptanceCriteria.length > 0).length;
   const storiesWithTestDefinition = stories.filter((story) => isPresent(story.testDefinition)).length;
+  const storiesWithVerificationEvidence = stories.filter(hasVerificationEvidence).length;
   const rightBuiltStories = stories.filter(
     (story) =>
       isPresent(story.key) &&
       isPresent(story.outcomeId) &&
       isPresent(story.epicId) &&
       story.acceptanceCriteria.length > 0 &&
-      isPresent(story.testDefinition) &&
+      hasVerificationEvidence(story) &&
       story.tollgateStatus !== "blocked"
   ).length;
   const blockedStories = stories.filter((story) => story.tollgateStatus === "blocked" || story.status === "definition_blocked").length;
@@ -1462,7 +1480,7 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
   const designReadyTotal = directionSeeds.length + stories.length;
   const designReadyValue = storyIdeasReady + storiesWithAcceptanceCriteria;
   const buildConformancePercentage = percentage(rightBuiltStories, stories.length);
-  const testEvidencePercentage = percentage(storiesWithTestDefinition, stories.length);
+  const testEvidencePercentage = percentage(storiesWithVerificationEvidence, stories.length);
 
   const metrics: ControlMirrorMetric[] = [
     {
@@ -1499,12 +1517,12 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
       total: stories.length,
       percentage: buildConformancePercentage,
       status: statusFromPercentage(buildConformancePercentage),
-      description: "Stories with traceability, acceptance criteria and test definition."
+      description: "Stories with traceability, acceptance criteria and verification evidence."
     },
     {
       id: "test-evidence",
       label: "Test Evidence",
-      value: storiesWithTestDefinition,
+      value: storiesWithVerificationEvidence,
       total: stories.length,
       percentage: testEvidencePercentage,
       status: statusFromPercentage(testEvidencePercentage),
@@ -1526,11 +1544,6 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
     requestedAiLevel,
     achievedAiLevel,
     evidence
-  });
-  const testCoverage = buildTestCoverage({
-    artifacts,
-    normalizedEvidence,
-    stories
   });
   const guardrailFindings = buildGuardrailFindings({
     outcomes: input.outcomes,
@@ -1573,7 +1586,7 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
     }));
   }
 
-  if (stories.length > storiesWithTestDefinition) {
+  if (stories.length > storiesWithVerificationEvidence) {
     humanReviewItems.push(enrichControlMirrorHumanReviewItem({
       id: "missing-test-evidence",
       sourceFindingId: "guardrail-test-evidence",
@@ -1581,7 +1594,7 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
       category: "Verification gap",
       decisionNeeded: "Decide whether stories without test evidence can continue.",
       recommendedOption: "APPROVE WITH CONDITION",
-      affectedObject: `${stories.length - storiesWithTestDefinition} story${stories.length - storiesWithTestDefinition === 1 ? "" : "ies"}`,
+      affectedObject: `${stories.length - storiesWithVerificationEvidence} story${stories.length - storiesWithVerificationEvidence === 1 ? "" : "ies"}`,
       blocksRelease: true,
       rationale: "Release readiness should be based on evidence, not only story status."
     }));
@@ -1744,7 +1757,7 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
     buildConformance: {
       rightBuilt: rightBuiltStories,
       partiallyBuilt: Math.max(storiesWithAcceptanceCriteria - rightBuiltStories, 0),
-      builtButUnverified: Math.max(stories.length - storiesWithTestDefinition, 0),
+      builtButUnverified: Math.max(stories.length - storiesWithVerificationEvidence, 0),
       weaklyTraced: artifacts.filter((artifact) => artifact.lineageStatus === "weak").length,
       untracedArtifacts,
       releaseRisk: humanReviewItems.filter((item) => item.blocksRelease).length

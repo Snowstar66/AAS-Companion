@@ -434,6 +434,7 @@ describe("Control Mirror rules", () => {
 
   it("maps test evidence to Value Spine coverage", () => {
     const input = createBaseInput();
+    input.outcomes[0]!.epics[0]!.stories[0]!.testDefinition = "";
     const dashboard = buildControlMirrorDashboard({
       ...input,
       persistentSnapshot: {
@@ -476,6 +477,16 @@ describe("Control Mirror rules", () => {
     expect(dashboard.testEvidence.mappedEvidence[0]!.outcomeId).toBe("outcome-1");
     expect(dashboard.testEvidence.storiesWithPassingTests).toBe(1);
     expect(dashboard.testEvidence.valueSpineCoverage[0]!.coverageState).toBe("passing_tests");
+    expect(dashboard.metrics.find((metric) => metric.id === "test-evidence")).toMatchObject({
+      value: 1,
+      percentage: 100
+    });
+    expect(dashboard.metrics.find((metric) => metric.id === "build-conformance")).toMatchObject({
+      value: 1,
+      percentage: 100
+    });
+    expect(dashboard.buildConformance.builtButUnverified).toBe(0);
+    expect(dashboard.humanReviewItems.some((item) => item.id === "missing-test-evidence")).toBe(false);
   });
 
   it("classifies known evidence artifact types from file names and content", () => {
