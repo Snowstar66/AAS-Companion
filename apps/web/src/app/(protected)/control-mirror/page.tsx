@@ -163,16 +163,17 @@ function ControlFlowDiagram({ language }: { language: AppLanguage }) {
   ];
 
   return (
-    <svg aria-label={t(language, "Control flow diagram", "Diagram över kontrollflöde")} className="h-auto w-full" role="img" viewBox="0 0 900 260">
+    <svg aria-label={t(language, "Control flow diagram", "Diagram över kontrollflöde")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 300">
       <defs>
         <marker id="control-flow-arrow" markerHeight="10" markerWidth="10" orient="auto" refX="9" refY="3">
           <path d="M0,0 L9,3 L0,6 Z" fill="#64748b" />
         </marker>
       </defs>
-      <path d="M112 112 C168 64 236 64 292 112 S416 160 472 112 S596 64 652 112 S776 160 832 112" fill="none" markerEnd="url(#control-flow-arrow)" stroke="#64748b" strokeDasharray="6 8" strokeWidth="3" />
+      <rect fill="#f8fafc" height="260" rx="24" stroke="#dbe4ef" width="780" x="20" y="20" />
+      <path d="M94 114 C154 62 218 62 278 114 S398 166 458 114 S578 62 638 114 S744 160 770 126" fill="none" markerEnd="url(#control-flow-arrow)" stroke="#64748b" strokeDasharray="6 8" strokeWidth="3" />
       {steps.map((step, index) => {
-        const x = 72 + index * 150;
-        const y = index % 2 === 0 ? 72 : 134;
+        const x = 42 + index * 128;
+        const y = index % 2 === 0 ? 78 : 150;
         return (
           <g key={step}>
             <rect fill="#eff6ff" height="84" rx="18" stroke="#bfdbfe" width="124" x={x} y={y} />
@@ -185,7 +186,7 @@ function ControlFlowDiagram({ language }: { language: AppLanguage }) {
           </g>
         );
       })}
-      <text fill="#475569" fontSize="14" textAnchor="middle" x="450" y="238">
+      <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="262">
         {t(language, "Files become evidence, evidence becomes a control decision.", "Filer blir evidens, evidens blir ett kontrollbeslut.")}
       </text>
     </svg>
@@ -202,37 +203,39 @@ function ValueSpineDiagram({
   untracedCount: number;
 }) {
   return (
-    <svg aria-label={t(language, "Value Spine coverage diagram", "Diagram över Value Spine-täckning")} className="h-auto w-full" role="img" viewBox="0 0 900 300">
+    <svg aria-label={t(language, "Value Spine coverage diagram", "Diagram över Value Spine-täckning")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 320">
       <defs>
         <marker id="value-spine-arrow" markerHeight="10" markerWidth="10" orient="auto" refX="9" refY="3">
           <path d="M0,0 L9,3 L0,6 Z" fill="#475569" />
         </marker>
       </defs>
-      <path d="M150 122 H750" markerEnd="url(#value-spine-arrow)" stroke="#475569" strokeWidth="3" />
+      <rect fill="#f8fafc" height="284" rx="24" stroke="#dbe4ef" width="780" x="20" y="18" />
+      <path d="M140 136 H690" markerEnd="url(#value-spine-arrow)" stroke="#475569" strokeWidth="4" />
       {steps.map((step, index) => {
-        const x = 70 + index * 215;
+        const x = 56 + index * 185;
         const tone = getPercentTone(step.percentage);
         return (
           <g key={step.label}>
-            <circle cx={x + 62} cy="122" fill={tone.fill} r="62" stroke={tone.stroke} strokeWidth="2" />
-            <text fill={tone.text} fontSize="17" fontWeight="700" textAnchor="middle" x={x + 62} y="108">
+            <circle cx={x + 66} cy="136" fill="#ffffff" r="74" stroke="#e2e8f0" strokeWidth="2" />
+            <circle cx={x + 66} cy="136" fill={tone.fill} r="62" stroke={tone.stroke} strokeWidth="2.5" />
+            <text fill={tone.text} fontSize="17" fontWeight="700" textAnchor="middle" x={x + 66} y="122">
               {step.label}
             </text>
-            <text fill={tone.text} fontSize="30" fontWeight="750" textAnchor="middle" x={x + 62} y="144">
+            <text fill={tone.text} fontSize="31" fontWeight="800" textAnchor="middle" x={x + 66} y="158">
               {step.percentage}%
             </text>
           </g>
         );
       })}
-      <path d="M665 190 C702 224 736 226 774 198" fill="none" stroke="#ea580c" strokeDasharray="6 8" strokeWidth="2" />
-      <rect fill="#fff7ed" height="54" rx="14" stroke="#fdba74" width="170" x="678" y="212" />
-      <text fill="#7c2d12" fontSize="13" fontWeight="750" textAnchor="middle" x="763" y="234">
+      <path d="M620 204 C654 242 684 240 716 206" fill="none" stroke="#ea580c" strokeDasharray="6 8" strokeWidth="2.5" />
+      <rect fill="#fff7ed" height="58" rx="16" stroke="#fdba74" width="160" x="630" y="222" />
+      <text fill="#7c2d12" fontSize="13" fontWeight="750" textAnchor="middle" x="710" y="246">
         {t(language, "Outside spine", "Utanför spine")}
       </text>
-      <text fill="#7c2d12" fontSize="15" fontWeight="650" textAnchor="middle" x="763" y="254">
+      <text fill="#7c2d12" fontSize="16" fontWeight="700" textAnchor="middle" x="710" y="267">
         {untracedCount} {t(language, "untraced", "ospårade")}
       </text>
-      <text fill="#475569" fontSize="14" textAnchor="middle" x="450" y="286">
+      <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="300">
         {t(language, "A weak link means value traceability breaks before release.", "En svag länk betyder att värdespårningen bryts före release.")}
       </text>
     </svg>
@@ -254,34 +257,37 @@ function AiLevelDiagram({
   const achieved = getAiLevelNumber(achievedAiLevel);
 
   return (
-    <svg aria-label={t(language, "AI level ladder diagram", "Diagram över AI-nivåtrappa")} className="h-auto w-full" role="img" viewBox="0 0 900 260">
+    <svg aria-label={t(language, "AI level ladder diagram", "Diagram över AI-nivåtrappa")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 320">
+      <rect fill="#f8fafc" height="284" rx="24" stroke="#dbe4ef" width="780" x="20" y="18" />
+      <path d="M78 252 H520" stroke="#cbd5e1" strokeWidth="2" />
       {[1, 2, 3].map((level, index) => {
-        const height = 48 + level * 34;
-        const x = 115 + index * 185;
-        const y = 190 - height;
+        const height = 56 + level * 42;
+        const x = 94 + index * 155;
+        const y = 252 - height;
         const isAchieved = level <= achieved;
         const isRequested = level === requested;
         return (
           <g key={level}>
-            <rect fill={isAchieved ? "#dbeafe" : "#f8fafc"} height={height} rx="16" stroke={isRequested ? "#2563eb" : "#cbd5e1"} strokeWidth={isRequested ? "4" : "2"} width="130" x={x} y={y} />
-            <text fill="#0f172a" fontSize="19" fontWeight="750" textAnchor="middle" x={x + 65} y={y + 34}>
+            <rect fill={isAchieved ? "#dbeafe" : "#ffffff"} height={height} rx="18" stroke={isRequested ? "#2563eb" : "#cbd5e1"} strokeWidth={isRequested ? "4" : "2"} width="126" x={x} y={y} />
+            <text fill="#0f172a" fontSize="19" fontWeight="800" textAnchor="middle" x={x + 63} y={y + 36}>
               Level {level}
             </text>
-            <text fill="#475569" fontSize="13" fontWeight="650" textAnchor="middle" x={x + 65} y={y + 58}>
+            <text fill="#475569" fontSize="13" fontWeight="650" textAnchor="middle" x={x + 63} y={y + 60}>
               {isRequested ? t(language, "requested", "begärd") : isAchieved ? t(language, "achieved", "uppnådd") : t(language, "missing", "saknas")}
             </text>
           </g>
         );
       })}
-      <path d="M700 70 H820 V190 H700 Z" fill="#fffbeb" stroke="#fcd34d" strokeWidth="2" />
-      <text fill="#713f12" fontSize="13" fontWeight="700" letterSpacing="3" textAnchor="middle" x="760" y="102">
+      <path d="M600 72 H764 V252 H600 Z" fill="#fffbeb" stroke="#fcd34d" strokeWidth="2.5" />
+      <path d="M632 208 H732" stroke="#f59e0b" strokeLinecap="round" strokeWidth="6" />
+      <text fill="#713f12" fontSize="13" fontWeight="800" letterSpacing="3" textAnchor="middle" x="682" y="110">
         MISSING
       </text>
-      <text fill="#713f12" fontSize="42" fontWeight="800" textAnchor="middle" x="760" y="152">
+      <text fill="#713f12" fontSize="54" fontWeight="850" textAnchor="middle" x="682" y="170">
         {missingCount}
       </text>
-      <text fill="#713f12" fontSize="14" textAnchor="middle" x="760" y="178">
-        evidence items
+      <text fill="#713f12" fontSize="14" textAnchor="middle" x="682" y="196">
+        {t(language, "evidence items", "evidenspunkter")}
       </text>
     </svg>
   );
@@ -304,22 +310,23 @@ function DecisionMapDiagram({
   const activeIndex = Math.max(items.findIndex(([status]) => status === releaseReadiness), 0);
 
   return (
-    <svg aria-label={t(language, "Release decision map", "Beslutskarta för release")} className="h-auto w-full" role="img" viewBox="0 0 900 260">
-      <path d="M104 122 H796" stroke="#cbd5e1" strokeWidth="8" />
-      <path d={`M104 122 H${104 + activeIndex * 173}`} stroke="#2563eb" strokeLinecap="round" strokeWidth="8" />
+    <svg aria-label={t(language, "Release decision map", "Beslutskarta för release")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 320">
+      <rect fill="#f8fafc" height="284" rx="24" stroke="#dbe4ef" width="780" x="20" y="18" />
+      <path d="M100 150 H720" stroke="#cbd5e1" strokeWidth="10" />
+      <path d={`M100 150 H${100 + activeIndex * 155}`} stroke="#2563eb" strokeLinecap="round" strokeWidth="10" />
       {items.map(([status, label], index) => {
-        const cx = 104 + index * 173;
+        const cx = 100 + index * 155;
         const active = status === releaseReadiness;
         return (
           <g key={status}>
-            <circle cx={cx} cy="122" fill={active ? "#2563eb" : "#f8fafc"} r="46" stroke={active ? "#1d4ed8" : "#cbd5e1"} strokeWidth="3" />
-            <text fill={active ? "#ffffff" : "#334155"} fontSize="15" fontWeight="750" textAnchor="middle" x={cx} y="128">
+            <circle cx={cx} cy="150" fill={active ? "#2563eb" : "#ffffff"} r="51" stroke={active ? "#1d4ed8" : "#cbd5e1"} strokeWidth="3" />
+            <text fill={active ? "#ffffff" : "#334155"} fontSize="15" fontWeight="800" textAnchor="middle" x={cx} y="156">
               {label}
             </text>
           </g>
         );
       })}
-      <text fill="#475569" fontSize="14" textAnchor="middle" x="450" y="220">
+      <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="250">
         {t(language, "The highlighted stop is the current recommendation.", "Den markerade stationen är nuvarande rekommendation.")}
       </text>
     </svg>
@@ -568,32 +575,32 @@ export default async function ControlMirrorPage({
         </Card>
 
         <div className="grid gap-5 xl:grid-cols-2" id="control-diagrams">
-          <Card className="border-border/70 shadow-sm">
+          <Card className="overflow-hidden border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>{t(language, "Control flow", "Kontrollflöde")}</CardTitle>
               <CardDescription>{t(language, "How source material becomes a reviewable Control Mirror report.", "Hur källmaterial blir en granskningsbar Control Mirror-rapport.")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-hidden px-4 pb-5">
               <ControlFlowDiagram language={language} />
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="overflow-hidden border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>{t(language, "Value Spine flow", "Value Spine-flöde")}</CardTitle>
               <CardDescription>{t(language, "Outcome to test coverage at a glance.", "Outcome till testevidens i ett svep.")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-hidden px-4 pb-5">
               <ValueSpineDiagram language={language} steps={valueSpineSteps} untracedCount={untracedArtifacts.length} />
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="overflow-hidden border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>{t(language, "AI level ladder", "AI-nivåtrappa")}</CardTitle>
               <CardDescription>{t(language, "Requested level compared with evidence-backed achieved level.", "Begärd nivå jämfört med evidensstödd uppnådd nivå.")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-hidden px-4 pb-5">
               <AiLevelDiagram
                 achievedAiLevel={data.achievedAiLevel}
                 language={language}
@@ -603,12 +610,12 @@ export default async function ControlMirrorPage({
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-sm">
+          <Card className="overflow-hidden border-border/70 shadow-sm">
             <CardHeader>
               <CardTitle>{t(language, "Decision map", "Beslutskarta")}</CardTitle>
               <CardDescription>{t(language, "Where the current release recommendation lands.", "Var nuvarande rekommendation landar.")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-hidden px-4 pb-5">
               <DecisionMapDiagram language={language} releaseReadiness={data.releaseReadiness} />
             </CardContent>
           </Card>

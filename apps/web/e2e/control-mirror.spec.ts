@@ -43,7 +43,10 @@ test("Control Mirror executive cockpit is clear on desktop", async ({ page }) =>
   await expectInViewport(page.getByText("Evidence gaps"), 1000);
   await expect(page.getByText("AI, lineage and Value Spine gaps treated as risk")).toBeVisible();
 
+  await expectRenderedSvg(page, "Control flow diagram");
   await expectRenderedSvg(page, "Value Spine coverage diagram");
+  await expectRenderedSvg(page, "AI level ladder diagram");
+  await expectRenderedSvg(page, "Release decision map");
   await expect(page.getByText("Outside spine")).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
@@ -59,7 +62,15 @@ test("Control Mirror executive cockpit remains usable on mobile", async ({ page 
   await expect(page.getByText("Human decisions")).toBeVisible();
   await expect(page.getByText("Evidence gaps")).toBeVisible();
 
-  await page.getByText("Value Spine flow").scrollIntoViewIfNeeded();
-  await expectRenderedSvg(page, "Value Spine coverage diagram");
+  for (const [heading, diagram] of [
+    ["Control flow", "Control flow diagram"],
+    ["Value Spine flow", "Value Spine coverage diagram"],
+    ["AI level ladder", "AI level ladder diagram"],
+    ["Decision map", "Release decision map"]
+  ] as const) {
+    await page.getByText(heading).scrollIntoViewIfNeeded();
+    await expectRenderedSvg(page, diagram);
+  }
+
   await expectNoHorizontalOverflow(page);
 });
