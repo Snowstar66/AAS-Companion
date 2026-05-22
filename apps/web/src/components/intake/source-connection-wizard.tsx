@@ -175,25 +175,35 @@ function ControlMirrorFileGuide({ language, mode }: { language: AppLanguage; mod
     t(language, "Test plans, test results, QA notes, release notes or sprint status.", "Testplaner, testresultat, QA-noteringar, release notes eller sprintstatus."),
     t(language, "AI level decisions, governance notes and human review logs.", "AI-nivåbeslut, governance-noteringar och human review-loggar.")
   ];
+  const examples = [
+    "prd.md",
+    "architecture.md",
+    "value-spine.csv",
+    "stories.json",
+    "test-results.json",
+    "release-notes.md",
+    "ai-level-decision.md",
+    "human-review-log.csv"
+  ];
 
   return (
     <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4">
       <p className="text-sm font-semibold text-emerald-950">
         {mode === "folder"
-          ? t(language, "Point to the project evidence folder.", "Peka ut mappen med projektunderlag.")
-          : t(language, "Choose the files that prove the project state.", "Välj filerna som bevisar projektets läge.")}
+          ? t(language, "Recommended: point to the project evidence folder.", "Rekommenderat: peka ut mappen med projektunderlag.")
+          : t(language, "Choose the specific evidence files.", "Välj de specifika evidensfilerna.")}
       </p>
       <p className="mt-2 text-sm leading-6 text-emerald-950/80">
         {mode === "folder"
           ? t(
               language,
-              "Use this when you have one local folder containing the documents below. The browser will only upload supported text-like files from the selected folder.",
-              "Använd detta när du har en lokal mapp med dokumenten nedan. Webbläsaren laddar bara upp textlika filer som stöds från den valda mappen."
+              "Use this when the evidence is spread across a local docs/export folder. Select the folder that contains project evidence, not the whole source-code repository.",
+              "Använd detta när underlaget ligger utspritt i en lokal docs-/exportmapp. Välj mappen som innehåller projektunderlaget, inte hela källkodsrepot."
             )
           : t(
               language,
-              "Use this when the evidence is spread across a few known files. You can select multiple files at once.",
-              "Använd detta när underlaget ligger i några kända filer. Du kan välja flera filer samtidigt."
+              "Use this when you already know the exact evidence files. You can select multiple files at once.",
+              "Använd detta när du redan vet exakt vilka evidensfiler som gäller. Du kan välja flera filer samtidigt."
             )}
       </p>
       <ul className="mt-3 grid gap-2 text-sm leading-6 text-emerald-950/85 md:grid-cols-2">
@@ -204,11 +214,32 @@ function ControlMirrorFileGuide({ language, mode }: { language: AppLanguage; mod
           </li>
         ))}
       </ul>
+      <div className="mt-3 rounded-xl border border-emerald-200 bg-background/75 px-3 py-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-900/70">
+          {t(language, "Good file examples", "Bra filexempel")}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {examples.map((example) => (
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-950" key={example}>
+              {example}
+            </span>
+          ))}
+        </div>
+      </div>
+      {mode === "folder" ? (
+        <p className="mt-3 text-sm leading-6 text-emerald-950/80">
+          {t(
+            language,
+            "Folder snapshot means: choose a docs, governance, export or evidence folder. It does not silently scan your disk, and it is not meant for selecting the full repo root.",
+            "Mapp-snapshot betyder: välj en docs-, governance-, export- eller evidensmapp. Den scannar inte disken i tysthet och är inte tänkt för hela repo-roten."
+          )}
+        </p>
+      ) : null}
       <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-emerald-900/70">
         {t(
           language,
-          "Supported now: .md, .mdx, .markdown, .txt, .json and .csv. Not screenshots, images, PDFs, ZIPs or raw code folders.",
-          "Stöds nu: .md, .mdx, .markdown, .txt, .json och .csv. Inte screenshots, bilder, PDF:er, ZIP:ar eller råa kodmappar."
+          "Supported now: .md, .mdx, .markdown, .txt, .json and .csv. Not screenshots, images, PDFs or ZIPs.",
+          "Stöds nu: .md, .mdx, .markdown, .txt, .json och .csv. Inte screenshots, bilder, PDF:er eller ZIP:ar."
         )}
       </p>
     </div>
@@ -223,8 +254,8 @@ export function SourceConnectionWizard({
   summary,
   uploadAction
 }: SourceConnectionWizardProps) {
-  const [mode, setMode] = useState<SourceMode>(sourceMode === "folder" ? "folder" : "files");
   const controlMirrorContext = sourceMode === "control-mirror";
+  const [mode, setMode] = useState<SourceMode>(sourceMode === "folder" || controlMirrorContext ? "folder" : "files");
   const folderInputProps = mode === "folder" ? ({ directory: "", webkitdirectory: "" } as Record<string, string>) : {};
   const accept = ".md,.mdx,.markdown,.txt,.json,.csv,text/markdown,text/plain,application/json,text/csv";
 
@@ -292,10 +323,14 @@ export function SourceConnectionWizard({
           />
           <SourceModeButton
             active={mode === "folder"}
-            description={t(language, "Select a browser-visible folder and import supported files from it.", "Välj en mapp i webbläsaren och importera filer som stöds.")}
+            description={
+              controlMirrorContext
+                ? t(language, "Recommended for Control Mirror: select the evidence/docs folder and let import classify supported files.", "Rekommenderas för Control Mirror: välj evidence-/docs-mappen och låt importen klassificera filer som stöds.")
+                : t(language, "Select a browser-visible folder and import supported files from it.", "Välj en mapp i webbläsaren och importera filer som stöds.")
+            }
             disabled={disabled}
             Icon={FolderOpen}
-            label={t(language, "Folder snapshot", "Mapp-snapshot")}
+            label={controlMirrorContext ? t(language, "Folder snapshot (recommended)", "Mapp-snapshot (rekommenderas)") : t(language, "Folder snapshot", "Mapp-snapshot")}
             onClick={() => setMode("folder")}
           />
           <div className="min-h-[132px] rounded-2xl border border-dashed border-border/70 bg-muted/20 p-4 text-left opacity-75">
@@ -339,7 +374,7 @@ export function SourceConnectionWizard({
             </label>
             <label className="block space-y-2">
               <span className="text-sm font-medium text-foreground">
-                {mode === "folder" ? t(language, "Project folder", "Projektmapp") : t(language, "Artifact files", "Importfiler")}
+                {mode === "folder" ? t(language, "Evidence folder", "Evidensmapp") : t(language, "Evidence files", "Evidensfiler")}
               </span>
               <input
                 {...folderInputProps}
@@ -357,8 +392,8 @@ export function SourceConnectionWizard({
             {mode === "folder"
               ? t(
                   language,
-                  "Supported files from the selected folder are imported as one session. Full relative-path preservation is a later slice.",
-                  "Filer som stöds i den valda mappen importeras som en session. Full bevaring av relativa sökvägar är en senare slice."
+                  "Select a docs, governance, export or evidence folder. Import creates one session from supported files; unsupported files are rejected with feedback.",
+                  "Välj en docs-, governance-, export- eller evidensmapp. Import skapar en session av filer som stöds; filer som inte stöds avvisas med feedback."
                 )
               : t(
                   language,
