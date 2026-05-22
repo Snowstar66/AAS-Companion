@@ -24,6 +24,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 import { AppShell } from "@/components/layout/app-shell";
 import { ActionSummaryCard } from "@/components/shared/action-summary-card";
 import { requireOrganizationContext } from "@/lib/auth/guards";
+import { ControlMirrorAnchorOpener } from "./control-mirror-anchor-opener";
 import {
   archiveControlMirrorEvidencePackExportAction,
   recordControlMirrorEvidencePackExportAcceptanceAction,
@@ -152,7 +153,15 @@ function getAiLevelNumber(level: string) {
   return 1;
 }
 
-function ControlFlowDiagram({ language }: { language: AppLanguage }) {
+function ControlFlowDiagram({
+  language,
+  humanReviewHref,
+  reportHref
+}: {
+  language: AppLanguage;
+  humanReviewHref: string;
+  reportHref: string;
+}) {
   const steps = [
     t(language, "Source", "Källa"),
     t(language, "Snapshot", "Snapshot"),
@@ -174,8 +183,10 @@ function ControlFlowDiagram({ language }: { language: AppLanguage }) {
       {steps.map((step, index) => {
         const x = 42 + index * 121;
         const y = index % 2 === 0 ? 78 : 150;
+        const href = index < 3 ? "#normalization" : index === 3 ? "#conformance" : index === 4 ? humanReviewHref : reportHref;
         return (
-          <g key={step}>
+          <a aria-label={t(language, `Open ${step} evidence`, `Öppna ${step}-underlag`)} className="cursor-pointer" href={href} key={step}>
+            <title>{t(language, `Open ${step} evidence`, `Öppna ${step}-underlag`)}</title>
             <rect fill="#eff6ff" height="84" rx="18" stroke="#bfdbfe" width="124" x={x} y={y} />
             <text fill="#0369a1" fontSize="13" fontWeight="700" textAnchor="middle" x={x + 62} y={y + 28}>
               {String(index + 1).padStart(2, "0")}
@@ -183,7 +194,7 @@ function ControlFlowDiagram({ language }: { language: AppLanguage }) {
             <text fill="#082f49" fontSize="16" fontWeight="650" textAnchor="middle" x={x + 62} y={y + 56}>
               {step}
             </text>
-          </g>
+          </a>
         );
       })}
       <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="262">
@@ -195,11 +206,13 @@ function ControlFlowDiagram({ language }: { language: AppLanguage }) {
 
 function ValueSpineDiagram({
   language,
+  outsideSpineHref,
   steps,
   untracedCount
 }: {
   language: AppLanguage;
-  steps: Array<{ label: string; percentage: number }>;
+  outsideSpineHref: string;
+  steps: Array<{ href: string; label: string; percentage: number }>;
   untracedCount: number;
 }) {
   return (
@@ -215,7 +228,8 @@ function ValueSpineDiagram({
         const x = 56 + index * 185;
         const tone = getPercentTone(step.percentage);
         return (
-          <g key={step.label}>
+          <a aria-label={t(language, `Open ${step.label} traceability evidence`, `Öppna ${step.label}-spårbarhet`)} className="cursor-pointer" href={step.href} key={step.label}>
+            <title>{t(language, `Open ${step.label} traceability evidence`, `Öppna ${step.label}-spårbarhet`)}</title>
             <circle cx={x + 66} cy="136" fill="#ffffff" r="74" stroke="#e2e8f0" strokeWidth="2" />
             <circle cx={x + 66} cy="136" fill={tone.fill} r="62" stroke={tone.stroke} strokeWidth="2.5" />
             <text fill={tone.text} fontSize="17" fontWeight="700" textAnchor="middle" x={x + 66} y="122">
@@ -224,10 +238,12 @@ function ValueSpineDiagram({
             <text fill={tone.text} fontSize="31" fontWeight="800" textAnchor="middle" x={x + 66} y="158">
               {step.percentage}%
             </text>
-          </g>
+          </a>
         );
       })}
       <path d="M620 204 C654 242 684 240 716 206" fill="none" stroke="#ea580c" strokeDasharray="6 8" strokeWidth="2.5" />
+      <a aria-label={t(language, "Open untraced artifacts", "Öppna ospårade artefakter")} className="cursor-pointer" href={outsideSpineHref}>
+        <title>{t(language, "Open untraced artifacts", "Öppna ospårade artefakter")}</title>
       <rect fill="#fff7ed" height="58" rx="16" stroke="#fdba74" width="160" x="630" y="222" />
       <text fill="#7c2d12" fontSize="13" fontWeight="750" textAnchor="middle" x="710" y="246">
         {t(language, "Outside spine", "Utanför spine")}
@@ -235,6 +251,7 @@ function ValueSpineDiagram({
       <text fill="#7c2d12" fontSize="16" fontWeight="700" textAnchor="middle" x="710" y="267">
         {untracedCount} {t(language, "untraced", "ospårade")}
       </text>
+      </a>
       <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="300">
         {t(language, "A weak link means value traceability breaks before release.", "En svag länk betyder att värdespårningen bryts före release.")}
       </text>
@@ -244,11 +261,13 @@ function ValueSpineDiagram({
 
 function AiLevelDiagram({
   achievedAiLevel,
+  evidenceHref,
   language,
   missingCount,
   requestedAiLevel
 }: {
   achievedAiLevel: string;
+  evidenceHref: string;
   language: AppLanguage;
   missingCount: number;
   requestedAiLevel: string;
@@ -278,6 +297,8 @@ function AiLevelDiagram({
           </g>
         );
       })}
+      <a aria-label={t(language, "Open missing AI evidence", "Öppna saknad AI-evidens")} className="cursor-pointer" href={evidenceHref}>
+        <title>{t(language, "Open missing AI evidence", "Öppna saknad AI-evidens")}</title>
       <path d="M600 72 H764 V252 H600 Z" fill="#fffbeb" stroke="#fcd34d" strokeWidth="2.5" />
       <path d="M632 208 H732" stroke="#f59e0b" strokeLinecap="round" strokeWidth="6" />
       <text fill="#713f12" fontSize="13" fontWeight="800" letterSpacing="3" textAnchor="middle" x="682" y="110">
@@ -289,14 +310,17 @@ function AiLevelDiagram({
       <text fill="#713f12" fontSize="14" textAnchor="middle" x="682" y="196">
         {t(language, "evidence items", "evidenspunkter")}
       </text>
+      </a>
     </svg>
   );
 }
 
 function DecisionMapDiagram({
+  activeHref,
   language,
   releaseReadiness
 }: {
+  activeHref: string;
   language: AppLanguage;
   releaseReadiness: string;
 }) {
@@ -317,13 +341,24 @@ function DecisionMapDiagram({
       {items.map(([status, label], index) => {
         const cx = 100 + index * 155;
         const active = status === releaseReadiness;
-        return (
-          <g key={status}>
+        const node = (
+          <g>
             <circle cx={cx} cy="150" fill={active ? "#2563eb" : "#ffffff"} r="51" stroke={active ? "#1d4ed8" : "#cbd5e1"} strokeWidth="3" />
             <text fill={active ? "#ffffff" : "#334155"} fontSize="15" fontWeight="800" textAnchor="middle" x={cx} y="156">
               {label}
             </text>
           </g>
+        );
+
+        return (
+          active ? (
+            <a aria-label={t(language, "Open current release recommendation", "Öppna nuvarande release-rekommendation")} className="cursor-pointer" href={activeHref} key={status}>
+              <title>{t(language, "Open current release recommendation", "Öppna nuvarande release-rekommendation")}</title>
+              {node}
+            </a>
+          ) : (
+            <g key={status}>{node}</g>
+          )
         );
       })}
       <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="250">
@@ -383,11 +418,14 @@ export default async function ControlMirrorPage({
     ...data.guardrails.findings.map((finding) => finding.recommendedAction),
     ...data.conformance.findings.filter((finding) => finding.severity === "high").map((finding) => finding.recommendedAction)
   ].slice(0, 3);
+  const humanReviewHref = "#human-review";
+  const reportPreviewHref = "#control-report-preview";
+  const currentRecommendationHref = data.releaseReadiness === "ready" ? reportPreviewHref : humanReviewHref;
   const valueSpineSteps = [
-    { label: "Outcome", percentage: framingMetric?.percentage ?? 0 },
-    { label: "Epic", percentage: valueSpineMetric?.percentage ?? 0 },
-    { label: "Story", percentage: buildMetric?.percentage ?? 0 },
-    { label: "Test", percentage: testMetric?.percentage ?? 0 }
+    { href: "#normalization", label: "Outcome", percentage: framingMetric?.percentage ?? 0 },
+    { href: "#value-spine-coverage", label: "Epic", percentage: valueSpineMetric?.percentage ?? 0 },
+    { href: "#conformance", label: "Story", percentage: buildMetric?.percentage ?? 0 },
+    { href: "#value-spine-coverage", label: "Test", percentage: testMetric?.percentage ?? 0 }
   ];
   const firstViewportSignals = [
     {
@@ -443,6 +481,7 @@ export default async function ControlMirrorPage({
         badge: formatLabel(data.releaseReadiness)
       }}
     >
+      <ControlMirrorAnchorOpener />
       <section className="space-y-6">
         <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(14,116,144,0.16),_transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
@@ -558,7 +597,7 @@ export default async function ControlMirrorPage({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-75">{t(language, "Next action", "Nästa steg")}</p>
               <div className="mt-3 grid gap-2">
                 <Button asChild className="gap-2">
-                  <Link href="#human-review">
+                  <Link href={humanReviewHref}>
                     <ShieldCheck className="h-4 w-4" />
                     {t(language, "Review blockers", "Granska blockerare")}
                   </Link>
@@ -581,7 +620,7 @@ export default async function ControlMirrorPage({
               <CardDescription>{t(language, "How source material becomes a reviewable Control Mirror report.", "Hur källmaterial blir en granskningsbar Control Mirror-rapport.")}</CardDescription>
             </CardHeader>
             <CardContent className="overflow-hidden px-4 pb-5">
-              <ControlFlowDiagram language={language} />
+              <ControlFlowDiagram humanReviewHref={humanReviewHref} language={language} reportHref={reportPreviewHref} />
             </CardContent>
           </Card>
 
@@ -591,7 +630,7 @@ export default async function ControlMirrorPage({
               <CardDescription>{t(language, "Outcome to test coverage at a glance.", "Outcome till testevidens i ett svep.")}</CardDescription>
             </CardHeader>
             <CardContent className="overflow-hidden px-4 pb-5">
-              <ValueSpineDiagram language={language} steps={valueSpineSteps} untracedCount={untracedArtifacts.length} />
+              <ValueSpineDiagram language={language} outsideSpineHref="#artifacts" steps={valueSpineSteps} untracedCount={untracedArtifacts.length} />
             </CardContent>
           </Card>
 
@@ -603,6 +642,7 @@ export default async function ControlMirrorPage({
             <CardContent className="overflow-hidden px-4 pb-5">
               <AiLevelDiagram
                 achievedAiLevel={data.achievedAiLevel}
+                evidenceHref="#ai-level-evidence"
                 language={language}
                 missingCount={missingAiEvidence.length}
                 requestedAiLevel={data.requestedAiLevel}
@@ -616,7 +656,7 @@ export default async function ControlMirrorPage({
               <CardDescription>{t(language, "Where the current release recommendation lands.", "Var nuvarande rekommendation landar.")}</CardDescription>
             </CardHeader>
             <CardContent className="overflow-hidden px-4 pb-5">
-              <DecisionMapDiagram language={language} releaseReadiness={data.releaseReadiness} />
+              <DecisionMapDiagram activeHref={currentRecommendationHref} language={language} releaseReadiness={data.releaseReadiness} />
             </CardContent>
           </Card>
         </div>
@@ -1160,7 +1200,7 @@ export default async function ControlMirrorPage({
           </CardContent>
         </Card>
 
-        <Card className="border-border/70 shadow-sm">
+        <Card className="border-border/70 shadow-sm" id="ai-level-evidence">
           <CardHeader>
             <div className="flex items-start gap-3">
               <GitBranch className="mt-0.5 h-5 w-5 text-primary" />
@@ -1334,7 +1374,7 @@ export default async function ControlMirrorPage({
           </CardContent>
         </Card>
 
-        <Card className="border-border/70 shadow-sm">
+        <Card className="border-border/70 shadow-sm" id="control-report-preview">
           <CardHeader>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>

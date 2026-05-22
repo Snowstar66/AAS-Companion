@@ -529,6 +529,13 @@ describe("Control Mirror page", () => {
     expect(screen.getByText("Executive summary")).toBeDefined();
     expect(screen.getAllByText("Downgrade AI claim").length).toBeGreaterThan(0);
     expect(screen.getByText("Control flow")).toBeDefined();
+    expect(screen.getByRole("link", { name: /review blockers/i }).getAttribute("href")).toBe("#human-review");
+    expect(screen.getByLabelText("Open Human Review evidence").getAttribute("href")).toBe("#human-review");
+    expect(screen.getByLabelText("Open untraced artifacts").getAttribute("href")).toBe("#artifacts");
+    expect(screen.getByLabelText("Open missing AI evidence").getAttribute("href")).toBe("#ai-level-evidence");
+    expect(screen.getByLabelText("Open current release recommendation").getAttribute("href")).toBe("#human-review");
+    expect(document.getElementById("human-review")).not.toBeNull();
+    expect(document.getElementById("control-report-preview")).not.toBeNull();
     expect(screen.getByText("Upload failed. No snapshot was created.")).toBeDefined();
     expect(screen.getByText("Value Spine flow")).toBeDefined();
     expect(screen.getByText("AI level ladder")).toBeDefined();
