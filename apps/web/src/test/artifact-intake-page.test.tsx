@@ -468,6 +468,10 @@ describe("Import page", () => {
     expect(screen.getByText("Control Mirror evidence contract")).toBeDefined();
     expect(screen.getByText("Connect evidence")).toBeDefined();
     expect(screen.getByText("AI controls")).toBeDefined();
+    expect(screen.getByText("Choose the files that prove the project state.")).toBeDefined();
+    expect(screen.getByText("Evidence target")).toBeDefined();
+    expect(screen.getByText(/Choose Framing for strategy, requirements, epics and stories/i)).toBeDefined();
+    expect(screen.getByText(/Not screenshots, images, PDFs, ZIPs or raw code folders/i)).toBeDefined();
     expect(screen.getByRole("link", { name: /Open review queue/i })).toBeDefined();
     expect(screen.getByRole("button", { name: "Import" })).toBeDefined();
     expect(screen.queryByRole("button", { name: /AI-assisted import/i })).toBeNull();

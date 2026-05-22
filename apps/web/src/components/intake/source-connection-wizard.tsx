@@ -168,6 +168,53 @@ function ControlMirrorEvidenceContract({ language }: { language: AppLanguage }) 
   );
 }
 
+function ControlMirrorFileGuide({ language, mode }: { language: AppLanguage; mode: SourceMode }) {
+  const items = [
+    t(language, "Framing/PRD/UX/architecture documents in Markdown, text or JSON.", "Framing-, PRD-, UX- och arkitekturdokument i Markdown, text eller JSON."),
+    t(language, "Epics, stories, acceptance criteria and Value Spine exports.", "Epics, stories, acceptanskriterier och Value Spine-exporter."),
+    t(language, "Test plans, test results, QA notes, release notes or sprint status.", "Testplaner, testresultat, QA-noteringar, release notes eller sprintstatus."),
+    t(language, "AI level decisions, governance notes and human review logs.", "AI-nivåbeslut, governance-noteringar och human review-loggar.")
+  ];
+
+  return (
+    <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4">
+      <p className="text-sm font-semibold text-emerald-950">
+        {mode === "folder"
+          ? t(language, "Point to the project evidence folder.", "Peka ut mappen med projektunderlag.")
+          : t(language, "Choose the files that prove the project state.", "Välj filerna som bevisar projektets läge.")}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-emerald-950/80">
+        {mode === "folder"
+          ? t(
+              language,
+              "Use this when you have one local folder containing the documents below. The browser will only upload supported text-like files from the selected folder.",
+              "Använd detta när du har en lokal mapp med dokumenten nedan. Webbläsaren laddar bara upp textlika filer som stöds från den valda mappen."
+            )
+          : t(
+              language,
+              "Use this when the evidence is spread across a few known files. You can select multiple files at once.",
+              "Använd detta när underlaget ligger i några kända filer. Du kan välja flera filer samtidigt."
+            )}
+      </p>
+      <ul className="mt-3 grid gap-2 text-sm leading-6 text-emerald-950/85 md:grid-cols-2">
+        {items.map((item) => (
+          <li className="flex gap-2" key={item}>
+            <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-700" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs font-medium uppercase tracking-[0.14em] text-emerald-900/70">
+        {t(
+          language,
+          "Supported now: .md, .mdx, .markdown, .txt, .json and .csv. Not screenshots, images, PDFs, ZIPs or raw code folders.",
+          "Stöds nu: .md, .mdx, .markdown, .txt, .json och .csv. Inte screenshots, bilder, PDF:er, ZIP:ar eller råa kodmappar."
+        )}
+      </p>
+    </div>
+  );
+}
+
 export function SourceConnectionWizard({
   disabled,
   language,
@@ -266,9 +313,12 @@ export function SourceConnectionWizard({
           <input name="processingMode" type="hidden" value="ai_assisted" />
           <input name="sourceContext" type="hidden" value={controlMirrorContext ? "control-mirror" : ""} />
           <input name="sourceConnectionMode" type="hidden" value={mode} />
+          {controlMirrorContext ? <ControlMirrorFileGuide language={language} mode={mode} /> : null}
           <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-foreground">{t(language, "Import target", "Importmål")}</span>
+              <span className="text-sm font-medium text-foreground">
+                {controlMirrorContext ? t(language, "Evidence target", "Evidensmål") : t(language, "Import target", "Importmål")}
+              </span>
               <select
                 className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
                 defaultValue="framing"
@@ -277,6 +327,15 @@ export function SourceConnectionWizard({
                 <option value="framing">{t(language, "Import to Framing", "Importera till Framing")}</option>
                 <option value="design">{t(language, "Import to Design", "Importera till Design")}</option>
               </select>
+              {controlMirrorContext ? (
+                <span className="block text-xs leading-5 text-muted-foreground">
+                  {t(
+                    language,
+                    "Choose Framing for strategy, requirements, epics and stories. Choose Design only for UI/UX design evidence. Control Mirror reads either as evidence after import.",
+                    "Välj Framing för strategi, krav, epics och stories. Välj Design bara för UI/UX-designunderlag. Control Mirror läser båda som evidens efter import."
+                  )}
+                </span>
+              ) : null}
             </label>
             <label className="block space-y-2">
               <span className="text-sm font-medium text-foreground">
