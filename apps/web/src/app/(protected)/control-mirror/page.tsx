@@ -170,9 +170,9 @@ function ControlFlowDiagram({ language }: { language: AppLanguage }) {
         </marker>
       </defs>
       <rect fill="#f8fafc" height="260" rx="24" stroke="#dbe4ef" width="780" x="20" y="20" />
-      <path d="M94 114 C154 62 218 62 278 114 S398 166 458 114 S578 62 638 114 S744 160 770 126" fill="none" markerEnd="url(#control-flow-arrow)" stroke="#64748b" strokeDasharray="6 8" strokeWidth="3" />
+      <path d="M94 114 C150 62 212 62 268 114 S382 166 438 114 S552 62 608 114 S700 158 730 130" fill="none" markerEnd="url(#control-flow-arrow)" stroke="#64748b" strokeDasharray="6 8" strokeWidth="3" />
       {steps.map((step, index) => {
-        const x = 42 + index * 128;
+        const x = 42 + index * 121;
         const y = index % 2 === 0 ? 78 : 150;
         return (
           <g key={step}>
