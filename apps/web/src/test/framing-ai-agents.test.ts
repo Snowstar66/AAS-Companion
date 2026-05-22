@@ -130,8 +130,17 @@ describe("framing ai agents", () => {
 
     expect(handover.markdown).toContain("# Design / Build Handover");
     expect(handover.markdown).toContain("## Downstream AI Instructions");
+    expect(handover.markdown).toContain("BMAD Fair Comparison Evidence Prompt");
+    expect(handover.markdown).toContain("docs/control-mirror/bmad-comparison-manifest.json");
     expect(handover.json).toHaveProperty("aiDeliveryHandoff");
+    expect(
+      (handover.json.aiDeliveryHandoff as FramingBriefExportPayload).downstream_ai_instructions?.generatedGuidance.designAiGuidance
+    ).toEqual(expect.arrayContaining([
+      "## BMAD Fair Comparison Evidence Prompt",
+      expect.stringContaining("bmad-comparison-matrix.csv")
+    ]));
     expect(bmad.markdown).toContain("# BMAD Prepared Framing Package");
+    expect(bmad.markdown).toContain("BMAD Fair Comparison Evidence Prompt");
     expect(bmad.json).toHaveProperty("profile", "bmad_prepared");
   });
 

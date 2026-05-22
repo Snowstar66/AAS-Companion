@@ -95,6 +95,18 @@ function formatCustomInstructions(customInstructions: CustomInstruction[]) {
     }));
 }
 
+export const bmadFairComparisonDesignPrompt = [
+  "## BMAD Fair Comparison Evidence Prompt",
+  "When this handoff moves into BMAD Design, produce comparable evidence for Control Mirror. Do not treat generated plans, UI ideas, diagrams or intended tests as completed implementation evidence.",
+  "Freeze the received Framing package as the comparison baseline before Design starts. Preserve Outcome, Epic, Story Idea, Journey, NFR, UX constraint and scope-out IDs exactly as received.",
+  "For every Design output, proposed Delivery Story, architecture decision, implementation recommendation, test plan, test result, risk or scope change, record which baseline ID or approved decision ID it traces to. If it cannot be traced, classify it as DEC, EXT, DROP, TECH, BUG or RISK before continuing.",
+  "Create or update a machine-readable comparison manifest at docs/control-mirror/bmad-comparison-manifest.json. Each entry must include artifact_path, artifact_type, evidence_state (planned, designed, implemented, tested, rejected or deferred), source_outcome_id, source_epic_id, source_story_idea_id, delivery_story_id when created, decision_id when applicable, test_ids, verification_result and remaining_gap.",
+  "Create or update docs/control-mirror/bmad-comparison-matrix.csv with one row per baseline item, delivery story, decision and test. The matrix must separate baseline scope, refined scope, extra scope, dropped/deferred scope, implementation artifacts, verification evidence and customer-decision-needed items.",
+  "Every generated Delivery Story must include stable IDs, linked Outcome/Epic/Story Idea, value intent, expected behavior, acceptance criteria, AI usage scope, test definition and definition of done. Reuse received IDs where possible; create new IDs only when the relationship is explicit.",
+  "Every test or verification artifact must name the Story ID it verifies and whether the result is passing, failing, manual-only, skipped or not run. If no test was run, say so explicitly instead of implying coverage.",
+  "Final Design handoff must include a short fairness note: what can be compared directly with the original handoff, what changed through a recorded decision, what is extra scope, what is missing, and what evidence proves each claim."
+];
+
 export function validateDownstreamAiInstructions(input: {
   instructions: DownstreamAiInstructions;
   hasJourneyContext: boolean;
@@ -242,6 +254,7 @@ export function generateDownstreamGuidance(input: {
     ].filter((value): value is string => Boolean(value)),
     designAiGuidance: [
       "In Design, inherit the Source of Truth from Outcome, Problem, Baseline, Solution Context, Constraints, UX Principles, Non-functional Requirements, Additional Requirements, Data Sensitivity, Journey Context when present, Epics, Story Ideas, and optional references.",
+      ...bmadFairComparisonDesignPrompt,
       formatPreferenceInstruction(instructions, "D1"),
       formatPreferenceInstruction(instructions, "D2"),
       formatPreferenceInstruction(instructions, "D3"),
