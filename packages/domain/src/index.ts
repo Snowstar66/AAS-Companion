@@ -1,6 +1,7 @@
 export * from "./activity";
 export * from "./artifact-intake";
 export * from "./auth";
+export * from "./control-mirror";
 export * from "./demo";
 export * from "./downstream-ai-instructions";
 export * from "./downstream-guidance-engine";

@@ -452,6 +452,7 @@ describe("Import page", () => {
     render(
       await ArtifactIntakePage({
         searchParams: Promise.resolve({
+          source: "control-mirror",
           sessionId: "session-1",
           fileId: "file-1",
           candidateId: "candidate-1"
@@ -460,6 +461,14 @@ describe("Import page", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Project Import", level: 1 })).toBeDefined();
+    expect(screen.getByText("Connect project evidence")).toBeDefined();
+    expect(screen.getByText("Current imports")).toBeDefined();
+    expect(screen.getByText("Folder snapshot")).toBeDefined();
+    expect(screen.getByText("ZIP snapshot")).toBeDefined();
+    expect(screen.getByText("Control Mirror evidence contract")).toBeDefined();
+    expect(screen.getByText("Connect evidence")).toBeDefined();
+    expect(screen.getByText("AI controls")).toBeDefined();
+    expect(screen.getByRole("link", { name: /Open review queue/i })).toBeDefined();
     expect(screen.getByRole("button", { name: "Import" })).toBeDefined();
     expect(screen.queryByRole("button", { name: /AI-assisted import/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /Create import session/i })).toBeNull();

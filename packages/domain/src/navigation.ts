@@ -42,6 +42,11 @@ export const primaryNavigation: NavigationItem[] = [
     description: "Review, correct, confirm, and approve imports."
   },
   {
+    label: "Control Mirror",
+    href: "/control-mirror",
+    description: "Check delivery conformance, evidence, and AI level."
+  },
+  {
     label: "Governance",
     href: "/governance",
     description: "Roles, AI level, risks, and sign-off traceability."

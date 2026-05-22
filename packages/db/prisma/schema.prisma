@@ -230,6 +230,135 @@ enum ArtifactImportIntent {
   design
 }
 
+enum ControlMirrorSourceType {
+  current_imports
+  manual_artifact_upload
+  uploaded_zip
+  folder_snapshot
+  git_repository_root
+}
+
+enum ControlMirrorSourceSupportStatus {
+  active
+  planned
+  unsupported
+}
+
+enum ControlMirrorSnapshotStatus {
+  scanning
+  completed
+  blocked
+}
+
+enum ControlMirrorArtifactParsingStatus {
+  pending
+  parsed
+  reused
+  unreadable
+  skipped
+}
+
+enum ControlMirrorArtifactLineageStatus {
+  traced
+  weak
+  missing
+}
+
+enum ControlMirrorArtifactChangeStatus {
+  unchanged
+  new
+  modified
+  deleted
+  unreadable
+}
+
+enum ControlMirrorNormalizedEvidenceType {
+  framing_design_evidence
+  architecture_evidence
+  journey_ux_evidence
+  delivery_story_candidate
+  implementation_evidence
+  test_evidence
+  ai_review_evidence
+  ai_risk_ledger
+  decision_log
+  workflow_log
+  final_report
+  unknown_evidence
+}
+
+enum ControlMirrorStoryClassification {
+  framing_story_idea
+  candidate_delivery_story
+  exploration_story
+  epic_candidate
+  acceptance_criteria_candidate
+  journey_ux_context
+  out_of_scope_deferred
+  not_story_like
+}
+
+enum ControlMirrorStoryReadinessState {
+  ready_for_build
+  needs_refinement
+  deferred
+  not_story_like
+}
+
+enum ControlMirrorReviewItemState {
+  open
+  decided
+  deferred
+  superseded
+}
+
+enum ControlMirrorReviewItemSeverity {
+  high
+  medium
+  low
+}
+
+enum ControlMirrorReviewRecommendedOption {
+  approve
+  approve_with_condition
+  reject
+  defer
+  request_change
+}
+
+enum ControlMirrorReviewDecisionType {
+  approve
+  approve_with_controls
+  reject
+  defer
+  downgrade
+  request_exception
+  request_rework
+}
+
+enum ControlMirrorEvidencePackExportFormat {
+  json
+  markdown
+}
+
+enum ControlMirrorEvidencePackExportRetentionState {
+  active
+  archived
+}
+
+enum ControlMirrorEvidencePackExportAcceptanceReviewerRole {
+  product_owner
+  security_privacy
+  aqa
+}
+
+enum ControlMirrorEvidencePackExportAcceptanceDecisionType {
+  accepted
+  accepted_with_conditions
+  changes_requested
+  revoked
+}
+
 enum ArtifactSourceTypeStatus {
   pending
   classified
@@ -278,6 +407,15 @@ model Organization {
   artifactIntakeSessions       ArtifactIntakeSession[]
   artifactIntakeFiles          ArtifactIntakeFile[]
   artifactAasCandidates        ArtifactAasCandidate[]
+  controlMirrorSources         ControlMirrorSource[]
+  controlMirrorSnapshots       ControlMirrorSnapshot[]
+  controlMirrorArtifacts       ControlMirrorArtifact[]
+  controlMirrorNormalizedEvidence ControlMirrorNormalizedEvidence[]
+  controlMirrorHumanReviewItems ControlMirrorHumanReviewItem[]
+  controlMirrorHumanReviewDecisionEvents ControlMirrorHumanReviewDecisionEvent[]
+  controlMirrorEvidencePackExports ControlMirrorEvidencePackExport[]
+  controlMirrorEvidencePackExportAcceptanceDecisions ControlMirrorEvidencePackExportAcceptanceDecision[]
+  controlMirrorEvidencePackExportDownloadEvents ControlMirrorEvidencePackExportDownloadEvent[]
   partyRoleEntries             PartyRoleEntry[]
   agentRegistryEntries         AgentRegistryEntry[]
   governanceRoleRequirements   GovernanceRoleRequirement[]
@@ -294,6 +432,9 @@ model AppUser {
   ownedOutcomes        Outcome[]             @relation("OutcomeValueOwner")
   tollgateDecisions    Tollgate[]            @relation("TollgateDecisionActor")
   createdSignoffRecords SignoffRecord[]      @relation("SignoffCreator")
+  controlMirrorReviewDecisions ControlMirrorHumanReviewDecisionEvent[] @relation("ControlMirrorReviewDecisionActor")
+  controlMirrorExportAcceptanceDecisions ControlMirrorEvidencePackExportAcceptanceDecision[] @relation("ControlMirrorExportAcceptanceActor")
+  controlMirrorExportDownloadEvents ControlMirrorEvidencePackExportDownloadEvent[] @relation("ControlMirrorExportDownloadActor")
   activityEvents       ActivityEvent[]       @relation("ActivityActor")
   createdIntakeSessions ArtifactIntakeSession[] @relation("ArtifactIntakeSessionCreator")
   uploadedIntakeFiles  ArtifactIntakeFile[]  @relation("ArtifactIntakeFileUploader")
@@ -730,4 +871,232 @@ model ArtifactAasCandidate {
   @@index([organizationId, intakeSessionId, reviewStatus])
   @@index([organizationId, fileId, reviewStatus])
   @@index([organizationId, updatedAt, createdAt])
+}
+
+model ControlMirrorSource {
+  id             String                           @id
+  organizationId String
+  label          String
+  sourceType     ControlMirrorSourceType
+  supportStatus  ControlMirrorSourceSupportStatus @default(active)
+  sourceReference String?
+  refreshSupported Boolean                         @default(true)
+  createdBy      String?
+  createdAt      DateTime                         @default(now())
+  updatedAt      DateTime                         @updatedAt
+  organization   Organization                     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  snapshots      ControlMirrorSnapshot[]
+
+  @@index([organizationId, updatedAt, createdAt])
+  @@index([organizationId, sourceType])
+}
+
+model ControlMirrorSnapshot {
+  id             String                      @id
+  organizationId String
+  sourceId       String
+  label          String
+  status         ControlMirrorSnapshotStatus @default(scanning)
+  scanStartedAt  DateTime                    @default(now())
+  scanCompletedAt DateTime?
+  fileCount      Int                         @default(0)
+  unchangedCount Int                         @default(0)
+  newCount       Int                         @default(0)
+  modifiedCount  Int                         @default(0)
+  deletedCount   Int                         @default(0)
+  unreadableCount Int                        @default(0)
+  summaryJson    Json?
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  source         ControlMirrorSource         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  artifacts      ControlMirrorArtifact[]
+  normalizedEvidence ControlMirrorNormalizedEvidence[]
+  humanReviewItems ControlMirrorHumanReviewItem[]
+
+  @@index([organizationId, updatedAt, createdAt])
+  @@index([organizationId, sourceId, scanStartedAt])
+  @@index([organizationId, status])
+}
+
+model ControlMirrorArtifact {
+  id                 String                            @id
+  organizationId     String
+  snapshotId         String
+  sourceFileId       String?
+  filePath           String
+  fileName           String
+  extension          String
+  sizeBytes          Int
+  sourceHash         String
+  lastModifiedAt     DateTime?
+  artifactType       String
+  parsingStatus      ControlMirrorArtifactParsingStatus @default(pending)
+  parsingConfidence  ExtractionConfidence               @default(medium)
+  detectedOutcomeKey String?
+  detectedEpicKey    String?
+  detectedStoryKey   String?
+  detectedAiLevel    AiAccelerationLevel?
+  lineageStatus      ControlMirrorArtifactLineageStatus
+  changeStatus       ControlMirrorArtifactChangeStatus
+  sourceExcerpt      String?
+  parsedJson         Json?
+  createdAt          DateTime                          @default(now())
+  updatedAt          DateTime                          @updatedAt
+  organization       Organization                      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  snapshot           ControlMirrorSnapshot             @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  normalizedEvidence ControlMirrorNormalizedEvidence[]
+
+  @@index([organizationId, snapshotId])
+  @@index([organizationId, artifactType])
+  @@index([organizationId, lineageStatus])
+  @@index([organizationId, changeStatus])
+  @@index([organizationId, filePath])
+}
+
+model ControlMirrorNormalizedEvidence {
+  id                     String                              @id
+  organizationId         String
+  snapshotId             String
+  artifactId             String
+  sourceFileId           String?
+  evidenceType           ControlMirrorNormalizedEvidenceType
+  label                  String
+  sourceSection          String
+  sourceExcerpt          String?
+  storyClassification    ControlMirrorStoryClassification
+  readinessState         ControlMirrorStoryReadinessState
+  missingReadinessFields String[]
+  detectedStoryKey       String?
+  lineageJson            Json?
+  createdAt              DateTime                            @default(now())
+  updatedAt              DateTime                            @updatedAt
+  organization           Organization                        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  snapshot               ControlMirrorSnapshot               @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  artifact               ControlMirrorArtifact               @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, snapshotId])
+  @@index([organizationId, artifactId])
+  @@index([organizationId, evidenceType])
+  @@index([organizationId, storyClassification])
+  @@index([organizationId, readinessState])
+}
+
+model ControlMirrorHumanReviewItem {
+  id                 String                                 @id
+  organizationId     String
+  snapshotId         String?
+  sourceFindingId    String
+  stableFindingKey   String
+  severity           ControlMirrorReviewItemSeverity
+  category           String
+  decisionNeeded     String
+  recommendedOption  ControlMirrorReviewRecommendedOption
+  affectedObject     String
+  affectedOutcomeId  String?
+  affectedEpicId     String?
+  affectedStoryId    String?
+  blocksRelease      Boolean                                @default(false)
+  reviewHref         String
+  valueRationale     String
+  alternatives       String[]                               @default([])
+  riskIfApproved     String
+  riskIfNotApproved  String
+  suggestedResponse  String
+  rationale          String
+  sourceLineageJson  Json?
+  state              ControlMirrorReviewItemState           @default(open)
+  lastSeenAt         DateTime                               @default(now())
+  createdAt          DateTime                               @default(now())
+  updatedAt          DateTime                               @updatedAt
+  organization       Organization                           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  snapshot           ControlMirrorSnapshot?                 @relation(fields: [snapshotId], references: [id], onDelete: SetNull)
+  decisionEvents     ControlMirrorHumanReviewDecisionEvent[]
+
+  @@unique([organizationId, stableFindingKey])
+  @@index([organizationId, state, updatedAt])
+  @@index([organizationId, sourceFindingId])
+  @@index([organizationId, snapshotId])
+  @@index([organizationId, blocksRelease, state])
+}
+
+model ControlMirrorHumanReviewDecisionEvent {
+  id             String                           @id
+  organizationId String
+  reviewItemId   String
+  decisionType   ControlMirrorReviewDecisionType
+  rationale      String
+  priorState     ControlMirrorReviewItemState
+  resultingState ControlMirrorReviewItemState
+  actorId        String
+  createdAt      DateTime                         @default(now())
+  organization   Organization                     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reviewItem     ControlMirrorHumanReviewItem     @relation(fields: [reviewItemId], references: [id], onDelete: Cascade)
+  actor          AppUser                          @relation("ControlMirrorReviewDecisionActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, reviewItemId, createdAt])
+  @@index([organizationId, actorId, createdAt])
+  @@index([organizationId, decisionType, createdAt])
+}
+
+model ControlMirrorEvidencePackExport {
+  id             String                                @id
+  organizationId String
+  snapshotId     String?
+  format         ControlMirrorEvidencePackExportFormat
+  schemaVersion  String
+  fileName       String
+  contentType    String
+  payload        Json
+  markdownContent String?
+  generatedAt    DateTime
+  createdBy      String?
+  createdAt      DateTime                              @default(now())
+  retentionState ControlMirrorEvidencePackExportRetentionState @default(active)
+  retentionPolicyLabel String                           @default("governance_audit_artifact")
+  retentionReviewDueAt DateTime?
+  retentionReviewedAt DateTime?
+  archivedAt     DateTime?
+  archivedBy     String?
+  archiveReason  String?
+  organization   Organization                          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  acceptanceDecisions ControlMirrorEvidencePackExportAcceptanceDecision[]
+  downloadEvents ControlMirrorEvidencePackExportDownloadEvent[]
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, snapshotId, createdAt])
+  @@index([organizationId, format, createdAt])
+  @@index([organizationId, retentionState, createdAt], map: "cm_export_retention_state_idx")
+}
+
+model ControlMirrorEvidencePackExportDownloadEvent {
+  id             String                          @id
+  organizationId String
+  exportId       String
+  actorId        String
+  createdAt      DateTime                        @default(now())
+  organization   Organization                    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  export         ControlMirrorEvidencePackExport @relation(fields: [exportId], references: [id], onDelete: Cascade)
+  actor          AppUser                         @relation("ControlMirrorExportDownloadActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, exportId, createdAt], map: "cm_export_download_event_export_idx")
+  @@index([organizationId, actorId, createdAt], map: "cm_export_download_event_actor_idx")
+}
+
+model ControlMirrorEvidencePackExportAcceptanceDecision {
+  id             String                                                    @id
+  organizationId String
+  exportId       String
+  reviewerRole   ControlMirrorEvidencePackExportAcceptanceReviewerRole
+  decisionType   ControlMirrorEvidencePackExportAcceptanceDecisionType
+  rationale      String
+  actorId        String
+  createdAt      DateTime                                                  @default(now())
+  organization   Organization                                              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  export         ControlMirrorEvidencePackExport                           @relation(fields: [exportId], references: [id], onDelete: Cascade)
+  actor          AppUser                                                    @relation("ControlMirrorExportAcceptanceActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, exportId, createdAt], map: "cm_export_acceptance_export_idx")
+  @@index([organizationId, actorId, createdAt], map: "cm_export_acceptance_actor_idx")
+  @@index([organizationId, reviewerRole, decisionType], map: "cm_export_acceptance_role_decision_idx")
 }

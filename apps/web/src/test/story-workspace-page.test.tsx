@@ -285,12 +285,160 @@ describe("Story Workspace page", () => {
     expect(screen.getByRole("link", { name: "Back to current Epic" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open current Framing" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Open Governance readiness" })).toBeDefined();
-    expect(screen.getByText("Delivery review later")).toBeDefined();
-    expect(screen.getByText("Delivery details later")).toBeDefined();
+    expect(screen.getByText("Returned delivery traceability")).toBeDefined();
+    expect(screen.getByText("Later delivery context")).toBeDefined();
     expect(screen.getAllByText("AI level").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Level 2").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Capture a mushroom find quickly enough to guide later design decisions.").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Make it easier to capture findings while still in the forest.").length).toBeGreaterThan(0);
     expect(screen.queryByText("Value Spine validation")).toBeNull();
+  });
+
+  it("uses story lineage when opening source candidate review from a legacy Story Idea", async () => {
+    const { getStoryWorkspaceService } = await import("@aas-companion/api");
+    vi.mocked(getStoryWorkspaceService).mockResolvedValueOnce({
+      ok: true,
+      data: {
+        story: {
+          id: "story-imported-2",
+          organizationId: "org_demo_control_plane",
+          outcomeId: "outcome-native-1",
+          epicId: "epic-native-1",
+          key: "STR-011",
+          title: "Imported story-backed idea",
+          storyType: "outcome_delivery",
+          valueIntent: "Keep imported source review reachable.",
+          expectedBehavior: "The source review link points back to the imported story candidate.",
+          uxSketchName: null,
+          uxSketchContentType: null,
+          uxSketchDataUrl: null,
+          uxSketches: [],
+          acceptanceCriteria: [],
+          aiUsageScope: [],
+          aiAccelerationLevel: "level_2",
+          testDefinition: null,
+          definitionOfDone: [],
+          status: "definition_blocked",
+          originType: "imported",
+          createdMode: "shared",
+          lifecycleState: "active",
+          archivedAt: null,
+          archiveReason: null,
+          lineageSourceType: "artifact_aas_candidate",
+          lineageSourceId: "candidate-story-2",
+          lineageNote: null,
+          importedReadinessState: "imported_design_ready",
+          createdAt: new Date("2026-03-24T07:00:00.000Z"),
+          updatedAt: new Date("2026-03-24T07:00:00.000Z"),
+          outcome: {
+            id: "outcome-native-1",
+            key: "OUT-010",
+            title: "Scoped native Framing",
+            outcomeStatement: "Make it easier to capture findings while still in the forest.",
+            originType: "native",
+            lifecycleState: "active",
+            importedReadinessState: null,
+            lineageSourceType: null,
+            lineageSourceId: null
+          },
+          epic: {
+            id: "epic-native-1",
+            key: "EPC-010",
+            title: "Scoped native Epic",
+            purpose: "Keep the branch explicit.",
+            scopeBoundary: null,
+            riskNote: null,
+            originType: "native",
+            lifecycleState: "active",
+            importedReadinessState: null,
+            lineageSourceType: null,
+            lineageSourceId: null
+          }
+        },
+        tollgate: null,
+        tollgateReview: null,
+        activities: [],
+        readiness: {
+          state: "blocked",
+          reasons: []
+        },
+        valueSpineValidation: {
+          state: "blocked",
+          reasons: []
+        },
+        importedBuildBlockers: [],
+        removal: {
+          entityType: "story",
+          entityId: "story-imported-2",
+          key: "STR-011",
+          title: "Imported story-backed idea",
+          activeChildren: [],
+          decision: {
+            objectType: "story",
+            lifecycleState: "active",
+            recommendedAction: "archive",
+            hardDelete: {
+              kind: "hard_delete",
+              allowed: true,
+              reversible: false,
+              reasonRequired: false,
+              summary: "Story can be deleted.",
+              blockers: [],
+              affectedChildren: [],
+              affectedActiveChildCount: 0,
+              governanceImpact: {
+                activityEventCount: 0,
+                tollgateCount: 0,
+                hasLineage: true,
+                importedReadinessState: "imported_design_ready"
+              }
+            },
+            archive: {
+              kind: "archive",
+              allowed: true,
+              reversible: true,
+              reasonRequired: true,
+              summary: "Story can be archived.",
+              blockers: [],
+              affectedChildren: [],
+              affectedActiveChildCount: 0,
+              governanceImpact: {
+                activityEventCount: 0,
+                tollgateCount: 0,
+                hasLineage: true,
+                importedReadinessState: "imported_design_ready"
+              }
+            },
+            restore: {
+              kind: "restore",
+              allowed: false,
+              reversible: true,
+              reasonRequired: false,
+              summary: "Story is already active.",
+              blockers: ["Restore becomes available only after archive."],
+              affectedChildren: [],
+              affectedActiveChildCount: 0,
+              governanceImpact: {
+                activityEventCount: 0,
+                tollgateCount: 0,
+                hasLineage: true,
+                importedReadinessState: "imported_design_ready"
+              }
+            }
+          }
+        }
+      }
+    });
+
+    render(
+      await StoryIdeaWorkspacePage({
+        params: Promise.resolve({ storyIdeaId: "story-imported-2" }),
+        searchParams: Promise.resolve({})
+      })
+    );
+
+    const link = screen.getByRole("link", { name: "Open source candidate review" });
+    expect(link.getAttribute("href")).toBe("/intake?candidateId=candidate-story-2&entityId=story-imported-2&entityType=story");
+    expect(screen.getByText("Imported source lineage")).toBeDefined();
   });
 });

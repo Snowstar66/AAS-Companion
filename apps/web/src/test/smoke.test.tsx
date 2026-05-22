@@ -38,6 +38,6 @@ describe("HomePage", () => {
         level: 1
       })
     ).toBeDefined();
-    expect(screen.getByText("Choose or create a project before any operational data is shown.")).toBeDefined();
+    expect(screen.getByText("Dashboard will light up when a project is active")).toBeDefined();
   });
 });

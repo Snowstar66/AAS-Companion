@@ -8,6 +8,7 @@ import {
   CircleHelp,
   Compass,
   FileSearch,
+  Gauge,
   Inbox,
   LayoutDashboard,
   LibraryBig,
@@ -25,6 +26,7 @@ const icons = {
   "/admin": Settings2,
   "/intake": Inbox,
   "/review": FileSearch,
+  "/control-mirror": Gauge,
   "/framing": Compass,
   "/pricing": BriefcaseBusiness,
   "/outcomes": Workflow,
@@ -217,7 +219,7 @@ export function Sidebar({ activeProjectName, activeSectionLabel }: SidebarProps)
           </div>
         </div>
       </div>
-      <style jsx global>{`
+      <style>{`
         :root[data-guidance-visible="false"] .guidance-block,
         :root[data-guidance-visible="false"] .framing-inline-guidance,
         :root[data-guidance-visible="false"] .framing-guidance-copy {

@@ -5,8 +5,8 @@ import { getArtifactCandidateIssueProgress } from "@aas-companion/domain";
 import { DEMO_ORGANIZATION } from "@aas-companion/domain/demo";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
-import { ArtifactIntakeUploadSubmitButton } from "@/components/intake/artifact-intake-pending-actions";
 import { ArtifactIntakeReviewWorkspace } from "@/components/intake/artifact-intake-review-workspace";
+import { SourceConnectionWizard } from "@/components/intake/source-connection-wizard";
 import { LocalizedText } from "@/components/shared/localized-text";
 import { requireProtectedSession } from "@/lib/auth/guards";
 import { loadArtifactIntakeWorkspace } from "@/lib/intake/workspace";
@@ -134,6 +134,7 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
   const error = getParamValue(query.error);
   const message = getParamValue(query.message);
   const status = getParamValue(query.status);
+  const sourceMode = getParamValue(query.source);
   const candidateId = getParamValue(query.candidateId);
   const originEntityId = getParamValue(query.entityId);
   const sourceSectionId = getParamValue(query.sourceSectionId);
@@ -372,100 +373,14 @@ export default async function ArtifactIntakePage({ searchParams }: ArtifactIntak
           <div className={`rounded-2xl border px-4 py-3 text-sm ${flashTone(status)}`}>{message}</div>
         ) : null}
 
-        <Card className="border-border/70 shadow-sm">
-          <CardHeader>
-            <CardTitle>
-              <LocalizedText en="Upload import artifacts" sv="Ladda upp importunderlag" />
-            </CardTitle>
-            <CardDescription>
-              <LocalizedText
-                en={
-                  <>
-                    Supported extensions: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong>,{" "}
-                    <strong>.txt</strong>, and <strong>.json</strong>. Uploads are grouped into a persisted import session
-                    for {workspace.organizationName}.
-                  </>
-                }
-                sv={
-                  <>
-                    JSON stöds också via <strong>.json</strong>.{" "}
-                    Stödda filändelser: <strong>.md</strong>, <strong>.mdx</strong>, <strong>.markdown</strong> och{" "}
-                    <strong>.txt</strong>. Uppladdningar grupperas i en sparad importsession för {workspace.organizationName}.
-                  </>
-                }
-              />
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isDemoSession ? (
-              <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-                <LocalizedText
-                  en="Import writes persisted intake sessions and is therefore disabled in Demo. Leave Demo, then open or create a normal project before uploading import artifacts."
-                  sv="Import skriver sparade importsessioner och är därför avstängd i Demo. Lämna Demo och öppna eller skapa ett vanligt projekt innan du laddar upp importunderlag."
-                />
-              </div>
-            ) : null}
-            <form action={uploadArtifactIntakeFilesAction} className="space-y-4">
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">
-                  <LocalizedText en="Import target" sv="Importmål" />
-                </span>
-                <select
-                  className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
-                  defaultValue="framing"
-                  name="importIntent"
-                >
-                  <option value="framing">
-                    <LocalizedText en="Import to Framing" sv="Importera till Framing" />
-                  </option>
-                  <option value="design">
-                    <LocalizedText en="Import to Design" sv="Importera till Design" />
-                  </option>
-                </select>
-                <p className="text-sm text-muted-foreground">
-                  <LocalizedText
-                    en={
-                      <>
-                        Choose <strong>Framing</strong> when the document should become Outcome, Epics, Story Ideas and
-                        constraints. Choose <strong>Design</strong> when the document already contains concrete stories that
-                        should become Delivery Stories.
-                      </>
-                    }
-                    sv={
-                      <>
-                        Välj <strong>Framing</strong> när dokumentet ska bli Outcome, Epics, Story Ideas och constraints.
-                        Välj <strong>Design</strong> när dokumentet redan innehåller konkreta stories som ska bli Delivery
-                        Stories.
-                      </>
-                    }
-                  />
-                </p>
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-foreground">
-                  <LocalizedText en="Artifact files" sv="Importfiler" />
-                </span>
-                <input
-                  accept=".md,.mdx,.markdown,.txt,.json,text/markdown,text/plain,application/json"
-                  className="block w-full rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-6 text-sm text-muted-foreground file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:file:opacity-90"
-                  multiple
-                  name="files"
-                  type="file"
-                />
-              </label>
-              <div className="flex flex-wrap gap-3">
-                <ArtifactIntakeUploadSubmitButton disabled={isDemoSession} />
-                {isDemoSession ? (
-                  <Button asChild className="gap-2" variant="secondary">
-                    <Link href="/">
-                      <LocalizedText en="Leave Demo and choose project" sv="Lämna Demo och välj projekt" />
-                    </Link>
-                  </Button>
-                ) : null}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <SourceConnectionWizard
+          disabled={isDemoSession}
+          language={serverLanguage}
+          organizationName={workspace.organizationName}
+          sourceMode={sourceMode}
+          summary={workspace.state === "ready" ? workspace.summary : null}
+          uploadAction={uploadArtifactIntakeFilesAction}
+        />
 
         {workspace.state === "unavailable" ? (
           <Card className="border-border/70 shadow-sm">

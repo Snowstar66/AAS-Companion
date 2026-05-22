@@ -1,0 +1,862 @@
+{
+  "document_type": "AAS Framing Import Package",
+  "product_name": "BMAD Log Visualizer MVP",
+  "version": "1.0-import",
+  "language": "sv-SE",
+  "source_document": "aas_framing_package_bmad_log_visualizer_mvp (3).md",
+  "created_at": "2026-05-08",
+  "value_owner": "Ska utses. Till dess får användaren endast betraktas som operativ proxy för framing och MVP-demobeslut, inte som formell releaseägare.",
+  "import_note": "Converted from Markdown to a complete AAS Framing Import Package. SI records are Story Ideas, not delivery stories.",
+  "aas_context": {
+    "phase": "Framing",
+    "target_next_phase": "Design",
+    "domain": "Application Development",
+    "delivery_type": "Desktop-app för visualisering av AI-körningar med BMAD som acceleratorramverk",
+    "ai_acceleration_level": 2,
+    "risk_profile": "medium",
+    "human_mandate": "Human roles own risk acceptance, release decisions, AI level changes, risk closure, and formal production mandate. The app is decision support only.",
+    "governance_requirements": [
+      "BMAD is an artifact source and accelerator, not the governing model.",
+      "workflow-log.md and ai-risk-ledger.md are source of truth for visualized data.",
+      "The MVP is local-only and must not automatically modify source files.",
+      "Design must separate source facts from derived observations.",
+      "Initial AI Acceleration Level for app development is Level 2 - Structured Acceleration.",
+      "Value Owner, AQA, and governance roles must be assigned before Tollgate 1 or documented as deviations."
+    ]
+  },
+  "problem_statement": {
+    "id": "PS-001",
+    "text": "AI-stödda leveranser, särskilt på högre AI Acceleration Level, producerar många artefakter: workflow-loggar, beslut, agent-handoffs, risk ledger, verifieringsunderlag och traceability-dokument. När dessa artefakter främst finns som Markdown-filer blir det svårt för en mänsklig beslutsfattare att snabbt förstå: - vad som har hänt, - vilka gates som är passerade, - vilka risker som kvarstår, - vilka beslut som kräver mänskligt mandat, - hur leveransslices är kopplade till verifiering, - vilka observationer som bör lyftas före nästa fas eller release. Detta skapar risk för att AI-accelererad leverans blir svår att granska, trots att underlaget finns dokumenterat.",
+    "current_baseline": "De tillgängliga loggarna är strukturerade i Markdown och innehåller tabeller, sammanfattningar och statussektioner. De är läsbara för människor men inte optimerade för interaktiv granskning, filtrering eller aggregerad beslutsvy.",
+    "identified_gap": "Det saknas ett lokalt desktop-stöd som kan importera BMAD/AAS-output i Markdown-format, extrahera styrningsdata och presentera den i en granskningsbar vy med drill-down.",
+    "measurable_impact": "MVP:n ska minska tiden för att förstå aktuell leveransstatus, identifiera öppna risker och se gate-/verifieringsstatus från manuellt dokumentläsande till en sammanhållen interaktiv översikt.",
+    "boundary": "MVP:n ska inte fatta beslut, godkänna release eller ändra källfiler automatiskt. Den ska inte ersätta AI Risk Ledger eller AAS Evidence Pack. Den ska visualisera och hjälpa användare att observera, förstå och ta ställning.",
+    "impact_areas": [
+      "Faster understanding of delivery status and gate state.",
+      "Clearer identification of open risks and mandate questions.",
+      "Better traceability between workflow events, risks, decisions, and verification.",
+      "Reduced manual reading time for Markdown-based BMAD/AAS artifacts."
+    ],
+    "baseline_sources": [
+      {
+        "name": "Manual review of workflow-log.md and ai-risk-ledger.md",
+        "format": "Timing and comparison against imported review view",
+        "description": "Measures time to identify risks, open risks, gate/status, verified slices, and source rows before and after the MVP."
+      }
+    ]
+  },
+  "outcomes": [
+    {
+      "id": "OUT-001",
+      "title": "Snabbare och säkrare mänsklig överblick av AI-leverans",
+      "statement": "Minska tiden för en ansvarig användare att förstå status, riskläge och beslutspunkter i en AI-körning genom att visualisera workflow-logg och AI Risk Ledger i en lokal desktop-app.",
+      "baseline": "Initial baseline fastställs i MVP genom manuell genomgång av de två befintliga Markdown-filerna. Baseline-mått ska tas innan Build: - Tid att identifiera antal totala risker - Tid att identifiera öppna risker - Tid att identifiera aktuell gate/status - Tid att identifiera vilka MVP-slices som är verifierade - Tid att hitta relevant radunderlag för en risk eller workflow-händelse",
+      "measurement_method": [
+        "Time to identify total risk count.",
+        "Time to identify open risks.",
+        "Time to identify current gate/status.",
+        "Time to identify which MVP slices are verified.",
+        "Time to find relevant source-row evidence for a risk or workflow event."
+      ],
+      "target_effects": [
+        "För de två bifogade loggfilerna ska användaren inom 2 minuter kunna se: - total riskbild, - öppna risker, - aktuell gate/status, - antal verifierade eller genomförda slices, - drill-down till radnivå för vald risk eller händelse.",
+        "User can see total risk posture, open risks, current gate/status, verified or completed slices, and drill-down to row level within 2 minutes."
+      ],
+      "timeframe": "MVP inom första Build-iteration efter godkänd Design."
+    }
+  ],
+  "scope": {
+    "mvp_in_scope": [
+      "Lokal desktop-app",
+      "Import av workflow-log.md",
+      "Import av ai-risk-ledger.md",
+      "Markdown-tabellparser för kända tabellstrukturer",
+      "Översiktsvy för workflow",
+      "Översiktsvy för risk ledger",
+      "Drill-down per rad",
+      "Filtrering på status, kategori, risk, actor, datum och slice",
+      "Enkel grafisk sammanfattning:",
+      "risker per status",
+      "risker per impact",
+      "händelser över tid",
+      "gate-/slice-status",
+      "Aggregerad observationsvy:",
+      "öppna risker",
+      "otydliga mandat",
+      "tooling- eller verifieringsrisker",
+      "externa release-varningar",
+      "saknade eller avvikande fält"
+    ],
+    "mvp_out_of_scope": [
+      "Automatisk ändring av loggfiler",
+      "Automatisk release- eller riskacceptans",
+      "Molnsynk",
+      "Multi-user collaboration",
+      "Import av godtyckliga ostrukturerade Markdown-filer",
+      "AI-genererad beslutsrekommendation utan mänsklig review",
+      "Full Evidence Pack-import från repo/CI/CD",
+      "Full BMAD-agentrekonstruktion"
+    ]
+  },
+  "experimentation_boundary": {
+    "exploration_layer": [
+      "parser för Markdown-varianter,",
+      "grafkomponenter,",
+      "observationslogik,",
+      "UX-layout,",
+      "lokal indexering,",
+      "valideringsrapport för importerade filer."
+    ],
+    "stable_layer": [
+      "källfilernas integritet,",
+      "datamodell för risk och workflow,",
+      "härledning mellan importerat fält och visualiserad uppgift,",
+      "logik som flaggar risk, mandat eller release-observationer,",
+      "export av rapporter eller beslutsunderlag."
+    ]
+  },
+  "configuration_defaults": {
+    "planning_unit": "MVP",
+    "calculation_granularity": "imported markdown row and normalized object",
+    "reporting_granularity": "project, workflow event, risk, gate, slice and observation",
+    "forecast_horizon_months": "N/A - workflow/risk review over imported source files",
+    "source_files": [
+      "workflow-log.md",
+      "ai-risk-ledger.md"
+    ]
+  },
+  "epics": [
+    {
+      "id": "EP-001",
+      "outcome_id": "OUT-001",
+      "title": "Import och källintegritet",
+      "purpose": "Säkerställa att användaren kan importera de två aktuella Markdown-filerna lokalt utan att originalfiler ändras.",
+      "scope": "",
+      "risk_note": "Felaktig parsing eller tyst bortfall av data kan ge missvisande statusbild.",
+      "story_ideas": [
+        {
+          "id": "SI-001",
+          "title": "Importera workflow-logg",
+          "primary_epic_id": "EP-001",
+          "secondary_epic_id": "EP-002",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Ge användaren möjlighet att ta in en BMAD/AAS workflow-logg som source of truth för visualisering av händelser, gates, approvals och verifieringssteg. Detta är grundförutsättningen för att minska manuell genomläsning och skapa en spårbar statusbild.",
+          "expected_behavior": "Användaren väljer en lokal workflow-log.md. Appen läser filen, validerar att den innehåller förväntade sektioner och visar projektmetadata samt antal extraherade timeline-händelser. Användaren får direkt veta om filen kunde tolkas eller om något saknas.",
+          "candidate_test_ideas": [
+            "Unit-test för parser, integrationstest för importflöde, UI-test för felhantering och golden-file regression mot bifogad workflow-log.md."
+          ],
+          "initial_acceptance_criteria": [
+            "Givet en giltig workflow-logg i Markdown-format, när användaren importerar filen, då visas projekt, startdatum, execution mode och antal timeline-händelser.",
+            "Originalfilen ändras inte vid import.",
+            "Importfel eller saknade sektioner visas med begripligt felmeddelande.",
+            "Importerad fil märks med source-of-truth-referens och importtidpunkt.",
+            "Appen visar om human/user proxy eller mandatstatus finns angiven i loggen."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "CONTENT"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-002",
+          "title": "Importera AI Risk Ledger",
+          "primary_epic_id": "EP-001",
+          "secondary_epic_id": "EP-002",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Ge användaren ett strukturerat och granskningsbart riskunderlag från ai-risk-ledger.md, så att öppna risker, mitigeringar, ägarskap och eskaleringar kan förstås utan manuell tabelläsning.",
+          "expected_behavior": "Användaren importerar en risk ledger i Markdown-format. Appen identifierar riskrader, räknar total riskvolym och visar en första risklista med status, kategori, impact och ägare.",
+          "candidate_test_ideas": [
+            "Parser-unit-test, tabellvariant-test, UI-test för risklista och golden-file regression mot bifogad ai-risk-ledger.md."
+          ],
+          "initial_acceptance_criteria": [
+            "Givet en giltig risk ledger, när filen importeras, då extraheras Risk ID, Status, Category, Description, Impact, Mitigation, Owner och Escalation.",
+            "Antalet extraherade risker matchar källtabellen.",
+            "Öppna risker markeras separat från mitigated risker.",
+            "Saknad eller avvikande risktabell ger valideringsvarning.",
+            "Risk Ledger sammanfattning visas med totaler per status."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-014",
+          "title": "Importvalideringsrapport",
+          "primary_epic_id": "EP-001",
+          "secondary_epic_id": "EP-002",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Skapa förtroende för visualiseringen genom att visa vad som importerats, vad som inte kunde tolkas och vilka avvikelser som finns.",
+          "expected_behavior": "Efter varje import visar appen en valideringsrapport med antal extraherade rader, identifierade sektioner, ignorerade rader och eventuella varningar.",
+          "candidate_test_ideas": [
+            "Parser-test med giltiga och ogiltiga fixtures, UI-test för valideringsrapport och negativtest för trasiga tabeller."
+          ],
+          "initial_acceptance_criteria": [
+            "Efter import visas antal extraherade risker och workflow-händelser.",
+            "Saknade obligatoriska kolumner visas som varning.",
+            "Oväntade kolumner visas som informationsnotering.",
+            "Ignorerade rader räknas och visas.",
+            "Importen kan avbrytas utan att tidigare importerad data förstörs."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-017",
+          "title": "Lokal datahantering",
+          "primary_epic_id": "EP-001",
+          "secondary_epic_id": "EP-006",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Skydda källmaterialets integritet och minska datarisk i MVP genom att hålla import och analys lokal.",
+          "expected_behavior": "Appen importerar och bearbetar filer lokalt. Användaren kan se hur data hanteras och kan rensa importerad data. Ingen nätverksöverföring sker i MVP.",
+          "candidate_test_ideas": [
+            "Unit/integrationstest för storage, manuell säkerhetsreview och verifiering av nätverksfri MVP-körning."
+          ],
+          "initial_acceptance_criteria": [
+            "Importerad data lagras endast lokalt i MVP.",
+            "Användaren kan rensa importerad data.",
+            "Appen visar var data lagras eller att data endast hålls i session.",
+            "Ingen nätverksöverföring sker i MVP utan explicit senare beslut.",
+            "Appen varnar om användaren försöker importera material som verkar innehålla känsliga datafält, om sådan enkel detektion finns i MVP."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        }
+      ]
+    },
+    {
+      "id": "EP-002",
+      "outcome_id": "OUT-001",
+      "title": "Normaliserad datamodell för workflow och risk",
+      "purpose": "Skapa en intern datamodell som kan representera risker, workflow-händelser, gates, slices, beslut och evidence-referenser.",
+      "scope": "",
+      "risk_note": "Modellen får inte blanda källfakta med tolkade observationer.",
+      "story_ideas": [
+        {
+          "id": "SI-003",
+          "title": "Normalisera workflow-händelser",
+          "primary_epic_id": "EP-002",
+          "secondary_epic_id": "EP-004",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Skapa en stabil intern representation av workflow-händelser så att samma källdata kan användas konsekvent i timeline, filtrering, drill-down och observationsvy.",
+          "expected_behavior": "Efter import visas varje händelse som ett strukturerat objekt med datum, aktör, händelse och evidence. Händelser kan sorteras, grupperas och senare kopplas till gates, approvals och slices.",
+          "candidate_test_ideas": [
+            "Unit-test för normalisering, regressionstest för datumparsing och integrationstest mot workflow-dashboard."
+          ],
+          "initial_acceptance_criteria": [
+            "Varje timeline-rad får internt ID, datum, actor, event och evidence.",
+            "Händelser utan datum flaggas som valideringsavvikelse.",
+            "Evidence visas som textreferens utan att appen antar att filen finns lokalt.",
+            "Händelser kan sorteras kronologiskt.",
+            "Händelser kan grupperas per datum och aktör."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-004",
+          "title": "Normalisera riskposter",
+          "primary_epic_id": "EP-002",
+          "secondary_epic_id": "EP-003",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Skapa en datamodell som gör risker aggregerbara och filtrerbara utan att förlora originaltext, källstatus eller eskaleringsinformation.",
+          "expected_behavior": "Appen bevarar alla källfält men skapar även normaliserade fält för status och impact. Detta gör att grafer och filter kan baseras på konsekvent data samtidigt som användaren alltid kan se originaltexten.",
+          "candidate_test_ideas": [
+            "Unit-test för statusklassning, impactklassning och datamodellsmappning."
+          ],
+          "initial_acceptance_criteria": [
+            "Varje riskpost får internt ID och bevarar originalets Risk ID.",
+            "Status kategoriseras utan att originaltexten ändras.",
+            "Impact kategoriseras utan att originaltexten ändras.",
+            "Owner och Escalation följer med till drill-down.",
+            "Appen markerar riskposter med okänd eller ofullständig status."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-019",
+          "title": "Robust hantering av Markdown-varianter",
+          "primary_epic_id": "EP-002",
+          "secondary_epic_id": "EP-001",
+          "outcome_id": "OUT-001",
+          "story_type": "Technical / Refactor",
+          "value_intent": "Minska risken för tyst dataförlust när Markdown-tabeller varierar i whitespace, radbrytningar eller kolumnordning.",
+          "expected_behavior": "Parsern ska vara strikt nog för att varna vid avvikelser men tolerant nog för normala Markdown-varianter. Användaren ska alltid se om något inte kunde tolkas.",
+          "candidate_test_ideas": [
+            "Unit-test med fixtures, mutation/felvariant-test och golden-file regression."
+          ],
+          "initial_acceptance_criteria": [
+            "Parsern hanterar whitespace-varianter.",
+            "Parsern varnar vid saknade kritiska kolumner.",
+            "Parsern ignorerar inte rader utan att rapportera antal ignorerade rader.",
+            "Regressionstest finns för båda bifogade källfilerna.",
+            "Parsern bevarar originaltext även när normaliserade fält skapas."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        }
+      ]
+    },
+    {
+      "id": "EP-003",
+      "outcome_id": "OUT-001",
+      "title": "Visualiserad översikt",
+      "purpose": "Ge användaren en snabb, visuell överblick över projektstatus, riskläge och progression.",
+      "scope": "",
+      "risk_note": "Grafer ska vara spårbara till källdata och inte presenteras som formella beslut.",
+      "story_ideas": [
+        {
+          "id": "SI-005",
+          "title": "Dashboard för workflow-status",
+          "primary_epic_id": "EP-003",
+          "secondary_epic_id": "EP-006",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Ge användaren en snabb översikt över vad som hänt i AI-körningen: start, execution level, gates, verifiering, godkännanden och aktuell status.",
+          "expected_behavior": "När workflow-loggen är importerad ser användaren en dashboard med projektinformation, execution mode, antal händelser, viktiga milstolpar och aktuell gate/status. Från varje översiktsdel kan användaren gå vidare till underliggande händelser.",
+          "candidate_test_ideas": [
+            "UI-komponenttest, snapshot/regressionstest och E2E-test för navigation från dashboard till lista."
+          ],
+          "initial_acceptance_criteria": [
+            "Dashboard visar projekt, startdatum, requested/current execution level och aktuell status när dessa finns i källan.",
+            "Dashboard visar antal importerade workflow-händelser.",
+            "Dashboard visar identifierade gates, approvals och verifieringshändelser.",
+            "Dashboard visar identifierade MVP-slices eller delivery stories när de kan extraheras.",
+            "Varje KPI eller statuskort kan öppnas till underliggande lista."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "DESIGN"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-006",
+          "title": "Dashboard för riskstatus",
+          "primary_epic_id": "EP-003",
+          "secondary_epic_id": "EP-005",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Ge användaren en snabb riskbild så att öppna risker, mitigeringar och impact-fördelning blir synliga utan manuell summering.",
+          "expected_behavior": "När risk ledger är importerad visas en riskdashboard med total riskvolym, mitigated/open/high-risk-fördelning och risker per impact. Användaren kan klicka sig vidare från aggregerad vy till riskraderna.",
+          "candidate_test_ideas": [
+            "Unit-test för aggregering, UI-test för grafdata och E2E-test för drill-down från riskkort."
+          ],
+          "initial_acceptance_criteria": [
+            "Dashboard visar totalt antal risker.",
+            "Dashboard visar risker per status.",
+            "Dashboard visar öppna risker separat.",
+            "Dashboard visar risker per impact.",
+            "Alla aggregerade siffror kan spåras till risklistan.",
+            "Dashboard visar tydligt om inga high-risk-poster finns eller om high-risk-data saknas."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "DESIGN"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-012",
+          "title": "Visualisering av riskfördelning",
+          "primary_epic_id": "EP-003",
+          "secondary_epic_id": "EP-004",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Ge användaren en visuell riskbild som gör det enkelt att förstå proportionen mellan mitigated, open och high-risk samt impact-fördelning.",
+          "expected_behavior": "Risker visas i grafer. När användaren klickar på ett grafsegment filtreras risklistan till motsvarande risker. Siffror i graf och lista ska alltid stämma överens.",
+          "candidate_test_ideas": [
+            "Unit-test för dataset, UI-test för grafinteraktion och regressionstest för aggregerade totalsiffror."
+          ],
+          "initial_acceptance_criteria": [
+            "Risker per status visas i graf eller donut.",
+            "Risker per impact visas i graf.",
+            "Grafens siffror matchar tabellens data.",
+            "Klick på grafsegment filtrerar listan.",
+            "Grafen visar tomt eller varningsläge om riskdata saknas."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "DESIGN"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-013",
+          "title": "Visualisering av workflow-tidslinje",
+          "primary_epic_id": "EP-003",
+          "secondary_epic_id": "EP-004",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Göra körningens progression begriplig genom att visa händelser, gates och verifieringar över tid.",
+          "expected_behavior": "Användaren ser en tidslinje med grupperade händelser per datum och kan borra sig ned till enskilda händelser. Viktiga milstolpar framhävs visuellt.",
+          "candidate_test_ideas": [
+            "UI-test, unit-test för gruppering och regressionstest mot importerad workflow-logg."
+          ],
+          "initial_acceptance_criteria": [
+            "Händelser visas kronologiskt.",
+            "Täta händelser på samma datum kan grupperas.",
+            "Viktiga milstolpar markeras visuellt.",
+            "Klick på milstolpe öppnar underliggande händelser.",
+            "Timeline visar om händelser saknar datum eller har okänd ordning."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "DESIGN"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        }
+      ]
+    },
+    {
+      "id": "EP-004",
+      "outcome_id": "OUT-001",
+      "title": "Drill-down och traceability",
+      "purpose": "Möjliggöra nedborrning från översikt till specifik rad i risk ledger eller workflow-logg.",
+      "scope": "",
+      "risk_note": "Varje visualiserad rad ska kunna kopplas till ursprunglig källa, radtyp och fält.",
+      "story_ideas": [
+        {
+          "id": "SI-007",
+          "title": "Risk drill-down",
+          "primary_epic_id": "EP-004",
+          "secondary_epic_id": "EP-005",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Säkerställa att användaren inte bara ser aggregerad riskstatistik, utan kan förstå varje risks bakgrund, mitigation, ägarskap och eskaleringsvillkor.",
+          "expected_behavior": "När användaren klickar på en riskrad öppnas en detaljvy som visar samtliga källfält, normaliserad status, eventuell observation och tydlig källreferens.",
+          "candidate_test_ideas": [
+            "UI-test för list-till-detail, accessibility-test för dialog/drawer och unit-test för source mapping."
+          ],
+          "initial_acceptance_criteria": [
+            "Klick på riskrad öppnar detaljvy.",
+            "Detaljvy visar Risk ID, Status, Category, Description, Impact, Mitigation, Owner och Escalation.",
+            "Detaljvy visar om risken är öppen, mitigated eller okänd.",
+            "Detaljvy visar källa, importtidpunkt och ursprunglig fältnivå.",
+            "Om risken driver en observation visas kopplingen till observationsvyn."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-008",
+          "title": "Workflow drill-down",
+          "primary_epic_id": "EP-004",
+          "secondary_epic_id": "EP-006",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Ge användaren möjlighet att granska specifika workflow-händelser bakom en status, gate, approval eller verifiering.",
+          "expected_behavior": "När användaren klickar på en timeline-händelse öppnas en detaljvy som visar actor, event, evidence och eventuella härledda kopplingar till slice, gate eller approval.",
+          "candidate_test_ideas": [
+            "Parser-test för slice/gate-detektion, UI-test för detail view och regressionstest mot workflow-loggen."
+          ],
+          "initial_acceptance_criteria": [
+            "Klick på timeline-händelse öppnar detaljvy.",
+            "Detaljvy visar actor, event och evidence.",
+            "Eventuell koppling till slice, gate eller approval visas om den kan härledas.",
+            "Härledda kopplingar märks som härledda och inte som källfakta.",
+            "Detaljvy visar källa och importtidpunkt."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-011",
+          "title": "Filtrering och sök",
+          "primary_epic_id": "EP-004",
+          "secondary_epic_id": "EP-003",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Göra det möjligt för användaren att snabbt hitta relevanta risker, händelser, actors, owners, gates och slices i ett stort loggmaterial.",
+          "expected_behavior": "Användaren kan filtrera risker och workflow-händelser samt använda fritextsök. Resultatet uppdateras direkt utan att ändra importerad data.",
+          "candidate_test_ideas": [
+            "UI-test för filterkombinationer, unit-test för söklogik och E2E-test för reset av filter."
+          ],
+          "initial_acceptance_criteria": [
+            "Risker kan filtreras på status, category, impact och owner.",
+            "Workflow kan filtreras på actor, datum och text.",
+            "Fritextsök fungerar på synliga fält.",
+            "Aktiva filter visas tydligt och kan nollställas.",
+            "Filter påverkar inte underliggande importerad datamodell."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-015",
+          "title": "Källspårning per visualiserat objekt",
+          "primary_epic_id": "EP-004",
+          "secondary_epic_id": "EP-007",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Säkerställa att varje visualiserad uppgift kan förklaras och granskas mot källmaterialet. Detta är centralt för AAS-spårbarhet och AI-review.",
+          "expected_behavior": "När användaren ser en KPI, graf, observation, riskrad eller workflow-händelse kan användaren se vilken importerad källa och vilket källfält uppgiften bygger på.",
+          "candidate_test_ideas": [
+            "Unit-test för source map, UI-test för source badge och traceability-test från graf till källrader."
+          ],
+          "initial_acceptance_criteria": [
+            "Varje riskrad visar källa och radtyp.",
+            "Varje workflow-händelse visar källa och tabellsektion.",
+            "Härledda observationer länkar till minst en källa.",
+            "Appen skiljer visuellt mellan källfakta och härledd observation.",
+            "Exporterade sammanfattningar behåller källreferenser."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        }
+      ]
+    },
+    {
+      "id": "EP-005",
+      "outcome_id": "OUT-001",
+      "title": "Observations- och beslutsvy",
+      "purpose": "Samla det användaren behöver observera eller ta ställning till, utan att appen fattar beslut.",
+      "scope": "",
+      "risk_note": "Observationer ska märkas som beslutsstöd, inte rekommendation eller godkännande.",
+      "story_ideas": [
+        {
+          "id": "SI-009",
+          "title": "Observationsvy för öppna ställningstaganden",
+          "primary_epic_id": "EP-005",
+          "secondary_epic_id": "EP-006",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Hjälpa användaren att se vad som kräver uppmärksamhet innan nästa AAS-fas, demo, release eller kundbeslut. Funktionen ska minska risken att öppna risker, otydliga mandat eller externa release-villkor missas.",
+          "expected_behavior": "Appen visar en samlad observationsvy med öppna risker, otydliga mandat, externa release-varningar, toolingrisker och saknade fält. Varje observation kan öppnas till källraderna som ligger bakom observationen.",
+          "candidate_test_ideas": [
+            "Unit-test för observationsregler, UI-test för observationslista och traceability-test från observation till källa."
+          ],
+          "initial_acceptance_criteria": [
+            "Öppna risker visas som observationer.",
+            "Otydligt mandat visas som observation när källmaterialet anger proxy eller ej verifierat mandat.",
+            "Extern release-varning visas om materialet indikerar att separat beslut krävs.",
+            "Tooling- eller reproducerbarhetsrisk visas som observation när status är öppen.",
+            "Observationer kan öppnas till minst en källrad.",
+            "Observationer presenteras som beslutsstöd, inte som automatiska rekommendationer."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "CONTENT"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        }
+      ]
+    },
+    {
+      "id": "EP-006",
+      "outcome_id": "OUT-001",
+      "title": "AAS-governance metadata",
+      "purpose": "Visa AI Acceleration Level, Human Mandate-status, source of truth och gate-status.",
+      "scope": "",
+      "risk_note": "Otydligt mandat får aldrig presenteras som full formell releasebehörighet.",
+      "story_ideas": [
+        {
+          "id": "SI-010",
+          "title": "Gate- och approval-indikatorer",
+          "primary_epic_id": "EP-006",
+          "secondary_epic_id": "EP-004",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Göra mänskliga beslutspunkter synliga och skilja mellan lokal MVP/demo-approval, implementation gate och extern releasebeslut.",
+          "expected_behavior": "Appen identifierar approval-händelser i workflow-loggen och visar dem med tydlig typning. Användaren ska kunna se vad som faktiskt är godkänt och vad som kräver nytt formellt beslut.",
+          "candidate_test_ideas": [
+            "Unit-test för approval-parsing, E2E-test för filter och manuell AQA-review av mandattexter."
+          ],
+          "initial_acceptance_criteria": [
+            "Appen identifierar approval-händelser i workflow-loggen.",
+            "Appen visar om approval avser lokal MVP/demo, implementation checkpoint eller extern release.",
+            "Appen visar var Human Mandate är proxybaserat eller oklart.",
+            "Appen markerar att formellt beslut måste ligga hos människa.",
+            "Approval-indikatorer länkar till underliggande workflow-händelse."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-018",
+          "title": "AAS metadata-panel",
+          "primary_epic_id": "EP-006",
+          "secondary_epic_id": "EP-003",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Synliggöra AAS-styrinformation så att användaren direkt ser AI-nivå, source of truth, mandatstatus och governance-begränsningar.",
+          "expected_behavior": "En metadata-panel visar AAS-relevanta fält från importerade loggar. Om mandat är oklart eller proxybaserat visas detta som varning, inte som formellt godkännande.",
+          "candidate_test_ideas": [
+            "Parser-test, UI-test och AQA-review av mandat- och risktexter."
+          ],
+          "initial_acceptance_criteria": [
+            "Panelen visar requested/current AI Acceleration Level om det finns i källorna.",
+            "Panelen visar Human Mandate-status om det går att extrahera.",
+            "Panelen visar source of truth.",
+            "Panelen visar tydlig varning när formell mandatägare inte är verifierad.",
+            "Panelen visar att appen inte har mandat att godkänna release eller acceptera risk."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "CONTENT"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        },
+        {
+          "id": "SI-020",
+          "title": "AQA review checklist för MVP",
+          "primary_epic_id": "EP-006",
+          "secondary_epic_id": "EP-007",
+          "outcome_id": "OUT-001",
+          "story_type": "Governance / Quality",
+          "value_intent": "Säkerställa att MVP:n granskas enligt AAS innan demo, intern användning eller vidare Design/Build. Checklistan ska skydda mot felaktig tolkning, bristande spårbarhet och otydligt mandat.",
+          "expected_behavior": "AQA eller utsedd kvalitetsroll kan använda checklistan för att verifiera att MVP:n visar källspårad information, inte skapar egna approvals och inte döljer öppna risker.",
+          "candidate_test_ideas": [
+            "Manuell AQA-review, automatiserade regressionstester och review-record som del av MVP Evidence Pack."
+          ],
+          "initial_acceptance_criteria": [
+            "Review-checklistan verifierar parserprecision mot källfiler.",
+            "Checklistan verifierar att appen inte skapar approvals.",
+            "Checklistan verifierar att observationer är källspårade.",
+            "Checklistan verifierar att risker inte döljs i aggregerad vy.",
+            "Checklistan verifierar att AI Acceleration Level och Human Mandate visas korrekt.",
+            "Checklistan dokumenterar vem som granskat, när och mot vilken appversion."
+          ],
+          "ai_usage_scope": [
+            "CONTENT",
+            "TEST"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        }
+      ]
+    },
+    {
+      "id": "EP-007",
+      "outcome_id": "OUT-001",
+      "title": "Exporterbart framing-/reviewunderlag",
+      "purpose": "Möjliggöra export av en granskningsrapport som kan användas i AAS Design eller Tollgate-underlag.",
+      "scope": "",
+      "risk_note": "Exporten är härledd från källmaterial och ska märkas med källa och tidpunkt.",
+      "story_ideas": [
+        {
+          "id": "SI-016",
+          "title": "Exportera AAS review summary",
+          "primary_epic_id": "EP-007",
+          "secondary_epic_id": "EP-005",
+          "outcome_id": "OUT-001",
+          "story_type": "Feature",
+          "value_intent": "Ge användaren ett kontrollerat underlag som kan användas i AAS Design, AQA-review eller Tollgate-diskussion utan att ersätta originalfilerna.",
+          "expected_behavior": "Användaren kan exportera en sammanfattning som innehåller importkällor, riskbild, workflow-status, observationer och tydlig markering att exporten är härledd från source of truth.",
+          "candidate_test_ideas": [
+            "Unit-test för exportmodell, integrationstest för exportfil och manuell review av governance-formuleringar."
+          ],
+          "initial_acceptance_criteria": [
+            "Export innehåller projekt, importerade källor, riskstatus, workflow-status och observationer.",
+            "Exporten anger att originalfilerna är source of truth.",
+            "Exporten innehåller tidpunkt för generering och appversion.",
+            "Exporten innehåller inga formella approvals som appen själv har skapat.",
+            "Exporten visar kvarstående öppna observationer separat."
+          ],
+          "ai_usage_scope": [
+            "CODE",
+            "TEST",
+            "CONTENT"
+          ],
+          "ai_acceleration_level": 2,
+          "refinement_note": "Framing input: refine in Design before creating any delivery story."
+        }
+      ]
+    }
+  ],
+  "initial_test_structure": {
+    "test_levels": [
+      "Unit: parser, normalisering, aggregering, observationsregler",
+      "Integration: import → datamodell → dashboard",
+      "UI/System: dashboard, filter, drill-down, export",
+      "Regression: de två bifogade Markdown-filerna som golden fixtures",
+      "Security/Privacy light: verifiera lokal datahantering och ingen oavsiktlig nätverksöverföring"
+    ],
+    "test_principle": "Every story idea must have at least one test link. Parser changes must not be accepted without regression against the two original source files."
+  },
+  "initial_ai_risk_ledger": [
+    {
+      "id": "APP-RISK-001",
+      "status": "open",
+      "category": "Governance",
+      "risk": "Användaren kan tolka visualisering som formellt beslut.",
+      "impact": "Medium",
+      "mitigation": "Tydlig märkning: source of truth är källfiler, appen ger beslutsstöd.",
+      "owner_role": "Product / AQA",
+      "escalation": "Re-open inför extern release."
+    },
+    {
+      "id": "APP-RISK-002",
+      "status": "open",
+      "category": "Parsing quality",
+      "risk": "Markdown-parser kan feltolka tabeller eller tappa rader.",
+      "impact": "Medium",
+      "mitigation": "Golden-file regression mot bifogade filer och importvalideringsrapport.",
+      "owner_role": "Developer / QA",
+      "escalation": "Stoppa release vid mismatch."
+    },
+    {
+      "id": "APP-RISK-003",
+      "status": "open",
+      "category": "Mandate",
+      "risk": "Formell Value Owner och AQA är ännu inte utsedda.",
+      "impact": "Medium",
+      "mitigation": "Sätt roller före Design/Tollgate 1.",
+      "owner_role": "Delivery Lead",
+      "escalation": "Sänk AI-nivå om roller saknas."
+    },
+    {
+      "id": "APP-RISK-004",
+      "status": "open",
+      "category": "Data/privacy",
+      "risk": "Framtida loggar kan innehålla känslig kund- eller persondata.",
+      "impact": "Medium",
+      "mitigation": "Lokal-only MVP, ingen nätverksöverföring, dataklassning inför breddning.",
+      "owner_role": "Architect / AQA",
+      "escalation": "Re-open före moln/sync/import av kundmaterial."
+    },
+    {
+      "id": "APP-RISK-005",
+      "status": "open",
+      "category": "AI interpretation",
+      "risk": "AI-genererade sammanfattningar kan överdriva eller feltolka riskläge.",
+      "impact": "Medium",
+      "mitigation": "MVP ska först använda deterministiska regler. AI-sammanfattning kräver separat story och review.",
+      "owner_role": "AIDA / AQA",
+      "escalation": "Kräver nytt AI Acceleration-beslut."
+    },
+    {
+      "id": "APP-RISK-006",
+      "status": "open",
+      "category": "Traceability",
+      "risk": "Härledda observationer kan sakna tydlig källa.",
+      "impact": "Medium",
+      "mitigation": "Alla observationer måste länka till riskrad eller workflow-händelse.",
+      "owner_role": "QA",
+      "escalation": "Stoppa release om källspårning saknas."
+    }
+  ],
+  "role_and_mandate_needs": {
+    "required_roles_before_tollgate_1": [
+      "Value Owner / Business Owner",
+      "Product Owner för MVP-backlog",
+      "AI Delivery Architect",
+      "AI Quality Authority",
+      "Solution Architect",
+      "Delivery Lead"
+    ],
+    "human_mandate_restrictions": [
+      "acceptera risk,",
+      "godkänna release,",
+      "ändra AI Acceleration Level,",
+      "stänga risker,",
+      "bekräfta extern produktionsrelease."
+    ]
+  },
+  "tollgate_1_readiness": {
+    "recommended_decision": "Gå vidare till Design på AI Acceleration Level 2, inte Level 3, tills governance, roller, baseline och teststruktur är etablerade för själva desktop-appens leverans.",
+    "decision_wording": "Vi godkänner att BMAD Log Visualizer MVP går vidare från Framing till Design under AAS, med OUT-001 som styrande Outcome, Level 2 som initial AI Acceleration Level och de två bifogade Markdown-filerna som initiala golden fixtures. Design ska fokusera på import, spårbar datamodell, risk/workflow-visualisering, drill-down och observationsvy. Ingen release eller riskacceptans får automatiseras av appen.",
+    "checklist": [
+      "Problem Statement godkänt",
+      "OUT-001 godkänt med baseline-metod",
+      "MVP-scope bekräftat",
+      "AI Acceleration Level beslutad för apputvecklingen",
+      "Initial riskprofil dokumenterad",
+      "Initial AI Risk Ledger etablerad",
+      "Value Owner utsedd eller avvikelse dokumenterad",
+      "AQA utsedd eller nivå sänkt",
+      "Teststrategi för parser och visualisering accepterad",
+      "Källfilerna godkända som initiala golden fixtures"
+    ],
+    "remaining_decisions": [
+      "Assign Value Owner / Business Owner.",
+      "Assign AI Quality Authority.",
+      "Confirm import format and parser validation as golden-file regression.",
+      "Confirm that the app is decision support, not a release or risk-acceptance engine."
+    ]
+  },
+  "recommended_mvp_order": [
+    "Import och validering av de två Markdown-filerna",
+    "Intern datamodell för risker och workflow-händelser",
+    "Riskdashboard med drill-down",
+    "Workflowdashboard med timeline och drill-down",
+    "Observationsvy",
+    "Export av AAS review summary",
+    "AQA-review och regression mot källfiler"
+  ],
+  "downstream_ai_refinement_readiness": {
+    "assessment": "ready_with_review",
+    "rationale": "Framing package contains problem, outcome, scope, epics, story ideas, test ideas, risks, and tollgate conditions. Story Ideas are intentionally not delivery stories and must be refined during Design.",
+    "known_gaps": [
+      "Formal Value Owner is not assigned.",
+      "AQA and other governance roles need to be assigned.",
+      "Baseline needs to be measured before Build.",
+      "Exact parser import format and row traceability need to be verified against golden fixtures.",
+      "Risk acceptance is not formally decided."
+    ]
+  }
+}

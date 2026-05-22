@@ -205,6 +205,8 @@ describe("Delivery Story page", () => {
     expect(screen.getAllByText("Delivery Story").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Delivery Story definition").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Open build package" })).toBeDefined();
+    expect(screen.getAllByText("Design ready").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Complete the missing delivery inputs before handing this over into build work.")).toBeNull();
     expect(screen.getByText("Origin Story Idea")).toBeDefined();
     expect(screen.getAllByText("Create weekly delivery summary").length).toBeGreaterThan(0);
   });

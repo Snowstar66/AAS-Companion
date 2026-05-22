@@ -107,9 +107,9 @@ function createWorkspaceSnapshot(options?: {
                           expectedBehavior: "An extra delivery slice is added when design uncovers more implementation work.",
                           status: "ready_for_handoff",
                           tollgateStatus: "ready",
-                          originType: "native",
+                          originType: "imported",
                           lifecycleState: "active",
-                          importedReadinessState: null,
+                          importedReadinessState: "imported_design_ready",
                           lineageSourceType: null,
                           lineageSourceId: null,
                           acceptanceCriteria: ["Extra acceptance"],
@@ -205,8 +205,11 @@ describe("Value Spine page", () => {
     render(await WorkspacePage({ searchParams: Promise.resolve({ framing: "outcome-imported" }) }));
 
     expect(screen.getByText("Additional feedback-loop evidence")).toBeDefined();
+    expect(screen.getByText("Feedback-loop evidence")).toBeDefined();
     expect(screen.getByText("Extra delivery scope")).toBeDefined();
     expect(screen.getByText(/Additional in this Epic/i)).toBeDefined();
+    expect(screen.getByRole("link", { name: "Open evidence record" }).getAttribute("href")).toBe("/stories/story-extra-1");
+    expect(screen.getByText("Imported record")).toBeDefined();
   });
 
   it("keeps legacy seedless stories visible as story ideas in framing views", async () => {

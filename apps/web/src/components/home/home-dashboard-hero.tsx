@@ -105,10 +105,19 @@ export function HomeDashboardHero(props: HomeDashboardHeroProps) {
   const blockedCount = props.dashboard.topBlockers.length;
   const pendingCount = props.dashboard.pendingActions.length;
   const hasActiveProject = Boolean(props.activeProjectName);
+  const storyIdeaStats = props.dashboard.storyIdeaStats ?? {
+    total: 0,
+    framingReady: 0,
+    started: 0
+  };
+  const deliveryStoryStats = props.dashboard.deliveryStoryStats ?? {
+    total: 0,
+    readyToStartBuild: 0
+  };
   const readyCount =
     props.dashboard.projectPhase.key === "framing"
-      ? props.dashboard.storyIdeaStats.framingReady
-      : props.dashboard.deliveryStoryStats.readyToStartBuild;
+      ? storyIdeaStats.framingReady
+      : deliveryStoryStats.readyToStartBuild;
 
   const status = deriveProjectStatus(
     {

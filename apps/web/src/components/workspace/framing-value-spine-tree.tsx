@@ -168,6 +168,50 @@ function getStorySurfaceClasses(story: TreeStory, needsAttention: boolean, isRev
   return "border-border/70 bg-background";
 }
 
+function getDeliveryEvidencePresentation(
+  story: TreeStory,
+  storyUx: ReturnType<typeof getStoryUxModel>,
+  language: "en" | "sv"
+) {
+  if (story.originType === "imported" || (story.importedReadinessState ?? "").startsWith("imported")) {
+    return {
+      label: t(language, "Imported record", "Importerad post"),
+      detail: t(
+        language,
+        "This returned story is shown here as feedback-loop evidence in the current Framing branch.",
+        "Den här återförda storyn visas här som feedback-loop-evidens i den aktuella Framing-grenen."
+      )
+    };
+  }
+
+  if (story.status === "in_progress") {
+    return {
+      label: t(language, "In build", "I build"),
+      detail: t(
+        language,
+        "This returned story is still in active build work and remains visible as evidence here.",
+        "Den här återförda storyn är fortfarande i aktivt buildarbete och förblir synlig här som evidens."
+      )
+    };
+  }
+
+  if (story.status === "ready_for_handoff" || story.tollgateStatus === "ready" || story.tollgateStatus === "approved") {
+    return {
+      label: t(language, "Recorded evidence", "Registrerad evidens"),
+      detail: t(
+        language,
+        "This returned story is complete enough to stay visible as delivery evidence in this branch.",
+        "Den här återförda storyn är tillräckligt komplett för att ligga kvar som leveransevidens i den här grenen."
+      )
+    };
+  }
+
+  return {
+    label: storyUx.statusLabel,
+    detail: storyUx.readinessDetail
+  };
+}
+
 function DeliveryStoryChildRow({
   story,
   emphasis = "linked",
@@ -190,6 +234,7 @@ function DeliveryStoryChildRow({
     blockedActionCount: story.blockedActionCount ?? 0
   }, language);
   const missingInputs = getMissingStoryInputs(story);
+  const evidencePresentation = getDeliveryEvidencePresentation(story, storyUx, language);
   const deliveryDescription = story.expectedBehavior?.trim() || storyUx.statusDetail;
   const structureMeta = joinMeta([
     t(language, `Acceptance criteria: ${story.acceptanceCriteria?.length ?? 0}`, `Acceptanskriterier: ${story.acceptanceCriteria?.length ?? 0}`),
@@ -227,9 +272,9 @@ function DeliveryStoryChildRow({
             <span className="font-medium">{t(language, "Delivery description:", "Leveransbeskrivning:")}</span> {deliveryDescription}
           </p>
           <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">{t(language, "Delivery status:", "Leveransstatus:")}</span> {storyUx.statusLabel}
+            <span className="font-medium">{t(language, "Delivery status:", "Leveransstatus:")}</span> {evidencePresentation.label}
           </p>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{storyUx.readinessDetail}</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{evidencePresentation.detail}</p>
           <p className="mt-2 text-xs text-muted-foreground">{structureMeta}</p>
           {missingInputs.length > 0 ? (
             <p className="mt-2 text-xs text-amber-900">

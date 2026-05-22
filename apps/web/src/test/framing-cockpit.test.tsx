@@ -276,7 +276,11 @@ vi.mock("@/lib/cache/project-data", () => ({
 }));
 
 vi.mock("@/app/(protected)/framing/actions", () => ({
-  createDraftOutcomeAction: vi.fn()
+  analyzeJourneyCoverageAction: vi.fn(),
+  createDraftOutcomeAction: vi.fn(),
+  runFramingAgentAction: vi.fn(),
+  saveDownstreamAiInstructionsAction: vi.fn(),
+  saveJourneyContextsAction: vi.fn()
 }));
 
 vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
@@ -292,11 +296,21 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
   recordOutcomeTollgateDecisionAction: vi.fn(),
   reviewOutcomeFramingWithAiAction: vi.fn(),
   restoreOutcomeAction: vi.fn(),
+  saveOutcomeWorkspaceInlineAction: vi.fn(),
   saveOutcomeWorkspaceAction: vi.fn(),
   stageOutcomeAiSuggestionAction: vi.fn(),
   submitOutcomeTollgateAction: vi.fn(),
   validateOutcomeStatementAiAction: vi.fn(),
   validateBaselineDefinitionAiAction: vi.fn()
+}));
+
+vi.mock("@/components/review/outcome-tollgate-approval-section", () => ({
+  OutcomeTollgateApprovalSection: ({ outcomeId }: { outcomeId: string }) => (
+    <div>
+      <h2>Framing handshake</h2>
+      <p>{outcomeId}</p>
+    </div>
+  )
 }));
 
 describe("Framing page", () => {
@@ -311,7 +325,7 @@ describe("Framing page", () => {
   it("opens the active framing directly again by default", async () => {
     render(await FramingPage({}));
 
-    expect(await screen.findByText("Loading current framing")).toBeDefined();
+    expect((await screen.findAllByText("New customer case")).length).toBeGreaterThan(0);
     expect(screen.queryByRole("heading", { name: "Framing Cockpit" })).toBeNull();
   });
 

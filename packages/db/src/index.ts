@@ -124,6 +124,38 @@ export {
   listSignoffRecordsForOrganization,
   listSignoffRecordsForTollgate
 } from "./repositories/signoff-repository";
+export { getControlMirrorDashboardSnapshot } from "./repositories/control-mirror-repository";
+export {
+  createControlMirrorHumanReviewStableKey,
+  getControlMirrorReviewDecisionResultingState,
+  mergeControlMirrorHumanReviewItemsWithQueueState,
+  prepareControlMirrorHumanReviewQueueItems,
+  recordControlMirrorHumanReviewDecision,
+  syncControlMirrorHumanReviewQueueItems,
+  type ControlMirrorReviewDecisionType,
+  type PersistedControlMirrorHumanReviewQueueItem,
+  type PreparedControlMirrorHumanReviewQueueItem
+} from "./repositories/control-mirror-human-review-repository";
+export {
+  createControlMirrorUploadedSnapshot,
+  getLatestControlMirrorSnapshot,
+  refreshControlMirrorCurrentImportsSnapshot
+} from "./repositories/control-mirror-snapshot-repository";
+export {
+  archiveControlMirrorEvidencePackExportRecord,
+  createControlMirrorEvidencePackExportRecord,
+  getControlMirrorEvidencePackExportRecordById,
+  listControlMirrorEvidencePackExportRecords,
+  recordControlMirrorEvidencePackExportAcceptanceDecision,
+  recordControlMirrorEvidencePackExportDownloadEvent,
+  type ControlMirrorEvidencePackExportAcceptanceDecisionRecord,
+  type ControlMirrorEvidencePackExportAcceptanceDecisionType,
+  type ControlMirrorEvidencePackExportAcceptanceReviewerRole,
+  type ControlMirrorEvidencePackExportDownloadEventRecord,
+  type ControlMirrorEvidencePackExportFormat,
+  type ControlMirrorEvidencePackExportDownloadRecord,
+  type ControlMirrorEvidencePackExportRecord
+} from "./repositories/control-mirror-export-repository";
 export { getHomeDashboardSnapshot, getProjectSpineSnapshot, getWorkspaceSnapshot } from "./repositories/workspace-repository";
 export { expectedSeedShape, seedRuntimeEntry } from "./seed";
 

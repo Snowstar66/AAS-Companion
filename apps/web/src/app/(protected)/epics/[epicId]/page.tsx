@@ -245,7 +245,10 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
                     id: story.id,
                     key: story.key,
                     title: story.title,
-                    href: story.sourceDirectionSeedId ? `/stories/${story.id}` : `/story-ideas/${story.id}`,
+                    href:
+                      story.sourceDirectionSeedId || isLikelyDeliveryStory(story, mappedSourceStoryIds)
+                        ? `/stories/${story.id}`
+                        : `/story-ideas/${story.id}`,
                     isCurrent: false,
                     sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
                     valueIntent: story.valueIntent ?? null,
@@ -579,8 +582,8 @@ export default async function EpicWorkspacePage({ params, searchParams }: EpicWo
             {epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>Imported lineage</CardTitle>
-                  <CardDescription>Trace this Epic back to the reviewed import candidate.</CardDescription>
+                  <CardTitle>Imported source lineage</CardTitle>
+                  <CardDescription>Trace this Epic back to the reviewed import candidate that created it.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button asChild className="gap-2" variant="secondary">

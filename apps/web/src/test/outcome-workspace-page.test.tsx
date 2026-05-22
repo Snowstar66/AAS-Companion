@@ -1,6 +1,16 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OutcomeWorkspacePage from "@/app/(protected)/outcomes/[outcomeId]/page";
+import { getCachedOrganizationValueOwnersData } from "@/lib/cache/project-data";
+
+vi.mock("@/components/review/outcome-tollgate-approval-section", () => ({
+  OutcomeTollgateApprovalSection: ({ outcomeId }: { outcomeId: string }) => (
+    <div>
+      <h2>Framing handshake</h2>
+      <p>{outcomeId}</p>
+    </div>
+  )
+}));
 
 vi.mock("@/lib/auth/guards", () => ({
   requireOrganizationContext: vi.fn(async () => ({
@@ -459,37 +469,53 @@ vi.mock("@/app/(protected)/outcomes/[outcomeId]/actions", () => ({
 }));
 
 describe("Outcome page", () => {
+  beforeEach(() => {
+    vi.mocked(getCachedOrganizationValueOwnersData).mockResolvedValue({
+      ok: true,
+      data: []
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
   it(
     "shows native provenance and blocked TG1 posture for a clean draft case",
     async () => {
-    render(
-      await OutcomeWorkspacePage({
-        params: Promise.resolve({ outcomeId: "outcome-native-1" }),
-        searchParams: Promise.resolve({ created: "1" })
-      })
-    );
+      render(
+        await OutcomeWorkspacePage({
+          params: Promise.resolve({ outcomeId: "outcome-native-1" }),
+          searchParams: Promise.resolve({ created: "1" })
+        })
+      );
 
-    expect(await screen.findByText("Clean native case created and ready for framing work.")).toBeDefined();
-    expect(await screen.findByText("Case provenance")).toBeDefined();
-    expect(await screen.findByText("Active Framing context")).toBeDefined();
-    expect(await screen.findByText("Current native working scope")).toBeDefined();
-    expect((await screen.findAllByText("Origin: Native")).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText("Project mode: Clean")).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText("Status: Needs action")).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText("AI validate")).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: "AI review framing" })).toBeDefined();
-    expect((await screen.findAllByText("Export framing packages")).length).toBeGreaterThan(0);
-    expect(await screen.findByRole("button", { name: "Copy Framing Brief" })).toBeDefined();
-    expect(await screen.findByRole("button", { name: "Copy AI Handoff JSON" })).toBeDefined();
-    expect(await screen.findByText("AI and risk")).toBeDefined();
-    expect(await screen.findByText(/AI is a formally chosen acceleration level/i)).toBeDefined();
-    expect(await screen.findByText("How to classify risk in AAS")).toBeDefined();
-    expect(await screen.findByText(/Minor inconvenience, easy workaround/i)).toBeDefined();
-    expect(await screen.findByText("No Epics exist for this case yet.")).toBeDefined();
-    expect(await screen.findByRole("button", { name: "Create Epic" })).toBeDefined();
-    expect((await screen.findByRole("button", { name: "Create Story Idea" })).hasAttribute("disabled")).toBe(true);
-    expect(await screen.findByText("Remove or archive in this project")).toBeDefined();
+      expect(await screen.findByText("Clean native case created and ready for framing work.")).toBeDefined();
+      expect(await screen.findByText("Case provenance")).toBeDefined();
+      expect(await screen.findByText("Active Framing context")).toBeDefined();
+      expect(await screen.findByText("Current native working scope")).toBeDefined();
+      expect((await screen.findAllByText("Origin: Native")).length).toBeGreaterThan(0);
+      expect((await screen.findAllByText("Project mode: Clean")).length).toBeGreaterThan(0);
+      expect((await screen.findAllByText("Status: Needs action")).length).toBeGreaterThan(0);
+      expect((await screen.findAllByText("AI validate")).length).toBeGreaterThan(0);
+      expect(await screen.findByRole("button", { name: "Create Epic" })).toBeDefined();
+      expect((await screen.findByRole("button", { name: "Create Story Idea" })).hasAttribute("disabled")).toBe(true);
+      expect(await screen.findByText("Remove or archive in this project")).toBeDefined();
     },
     15000
   );
+
+  it("keeps the value owner field stable when owner lookup fails", async () => {
+    vi.mocked(getCachedOrganizationValueOwnersData).mockRejectedValueOnce(new Error("owner lookup unavailable"));
+
+    render(
+      await OutcomeWorkspacePage({
+        params: Promise.resolve({ outcomeId: "outcome-native-1" }),
+        searchParams: Promise.resolve({})
+      })
+    );
+
+    expect(await screen.findByText("Loading owners...")).toBeDefined();
+    expect(await screen.findByText("Business case")).toBeDefined();
+  });
 });

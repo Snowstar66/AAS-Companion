@@ -41,7 +41,7 @@ import { FramingValueSpineTree } from "@/components/workspace/framing-value-spin
 import { GovernedLifecycleCard } from "@/components/workspace/governed-lifecycle-card";
 import { WorkspaceStatusSummary } from "@/components/workspace/story-workspace-shared";
 import { requireActiveProjectSession } from "@/lib/auth/guards";
-import { getCachedOrganizationValueOwnersData, getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
+import { getCachedOutcomeTollgateReviewData } from "@/lib/cache/project-data";
 import { buildFramingBriefExport, buildHumanFramingBriefExport } from "@/lib/framing/framing-brief-export";
 import { buildOriginIntakeHref } from "@/lib/intake/origin-link";
 import { isLikelyDeliveryStory } from "@/lib/framing/story-idea-delivery-feedback";
@@ -53,6 +53,7 @@ type OutcomeWorkspaceData = Extract<Awaited<ReturnType<typeof getOutcomeWorkspac
 type FramingOutcomeSectionProps = {
   data: OutcomeWorkspaceData;
   language?: "en" | "sv";
+  valueOwners?: ValueOwnerOption[] | null;
   search: {
     created?: boolean;
     saveState?: string | null;
@@ -83,6 +84,12 @@ type FramingOutcomeSectionProps = {
   validateBaselineDefinitionAiAction: (formData: FormData) => Promise<OutcomeFieldAiActionState>;
   reviewFramingAction: typeof reviewOutcomeFramingWithAiAction;
   initialReviewFramingState: ReviewOutcomeFramingAiActionState;
+};
+
+type ValueOwnerOption = {
+  userId: string;
+  fullName: string | null;
+  email: string;
 };
 
 function translate(language: "en" | "sv", en: string, sv: string) {
@@ -465,6 +472,7 @@ function CollapsibleFramingPanel(props: {
 export function FramingOutcomeSection({
   data,
   language = "en",
+  valueOwners = null,
   search,
   embeddedInFraming = false,
   saveAction,
@@ -935,24 +943,13 @@ export function FramingOutcomeSection({
                 <label className="space-y-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Värdeägare" : "Value owner"}</span>
                   <InlineFieldGuidance guidance={getInlineGuidance("framing.value_owner", language)} />
-                  <Suspense
-                    fallback={
-                      <ValueOwnerFieldFallback
-                        currentOwnerLabel={outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null}
-                        currentOwnerId={outcome.valueOwnerId ?? null}
-                        disabled={isArchived}
-                        language={language}
-                      />
-                    }
-                  >
-                    <DeferredValueOwnerField
-                      currentOwnerId={outcome.valueOwnerId ?? null}
-                      currentOwnerLabel={outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null}
-                      disabled={isArchived}
-                      language={language}
-                      organizationId={outcome.organizationId}
-                    />
-                  </Suspense>
+                  <ValueOwnerField
+                    currentOwnerId={outcome.valueOwnerId ?? null}
+                    currentOwnerLabel={outcome.valueOwner?.fullName ?? outcome.valueOwner?.email ?? null}
+                    disabled={isArchived}
+                    language={language}
+                    owners={valueOwners}
+                  />
                 </label>
                 <label className="space-y-2 xl:col-span-2">
                   <span className="text-sm font-medium text-foreground">{language === "sv" ? "Problemformulering" : "Problem statement"}</span>
@@ -2084,30 +2081,14 @@ function OutcomeTollgateSectionFallback() {
   );
 }
 
-async function DeferredValueOwnerField(props: {
-  organizationId: string;
+function ValueOwnerField(props: {
+  owners: ValueOwnerOption[] | null;
   currentOwnerId: string | null;
   currentOwnerLabel: string | null;
   disabled: boolean;
   language: "en" | "sv";
 }) {
-  let ownersResult: Awaited<ReturnType<typeof getCachedOrganizationValueOwnersData>>;
-
-  try {
-    ownersResult = await getCachedOrganizationValueOwnersData(props.organizationId);
-  } catch (error) {
-    console.error("Failed to load Framing value owners", error);
-    return (
-      <ValueOwnerFieldFallback
-        currentOwnerId={props.currentOwnerId}
-        currentOwnerLabel={props.currentOwnerLabel}
-        disabled={props.disabled}
-        language={props.language}
-      />
-    );
-  }
-
-  if (!ownersResult.ok) {
+  if (!props.owners) {
     return (
       <ValueOwnerFieldFallback
         currentOwnerId={props.currentOwnerId}
@@ -2126,12 +2107,12 @@ async function DeferredValueOwnerField(props: {
       name="valueOwnerId"
     >
       <option value="">{props.language === "sv" ? "Ej tilldelad" : "Unassigned"}</option>
-      {props.currentOwnerId && !ownersResult.data.some((owner) => owner.userId === props.currentOwnerId) ? (
+      {props.currentOwnerId && !props.owners.some((owner) => owner.userId === props.currentOwnerId) ? (
         <option value={props.currentOwnerId}>
           {props.currentOwnerLabel ?? (props.language === "sv" ? "Nuvarande värdeägare" : "Current value owner")}
         </option>
       ) : null}
-      {ownersResult.data.map((owner) => (
+      {props.owners.map((owner) => (
         <option key={owner.userId} value={owner.userId}>
           {formatPersonLabel(owner)}
         </option>

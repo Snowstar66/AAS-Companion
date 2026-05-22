@@ -3,7 +3,7 @@ import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { FramingOutcomeSection } from "@/components/framing/framing-outcome-section";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrganizationContext } from "@/lib/auth/guards";
-import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
+import { getCachedOrganizationValueOwnersData, getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import { runFramingAgentAction } from "../../framing/actions";
 import {
   archiveOutcomeAction,
@@ -32,7 +32,10 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
   const organization = await requireOrganizationContext();
   const { outcomeId } = await params;
   const query = searchParams ? await searchParams : {};
-  const outcomeResult = await getCachedOutcomeWorkspaceData(organization.organizationId, outcomeId);
+  const [outcomeResult, valueOwnersResult] = await Promise.all([
+    getCachedOutcomeWorkspaceData(organization.organizationId, outcomeId),
+    getCachedOrganizationValueOwnersData(organization.organizationId).catch(() => null)
+  ]);
 
   if (!outcomeResult.ok) {
     notFound();
@@ -57,6 +60,7 @@ export default async function OutcomeWorkspacePage({ params, searchParams }: Out
           createEpicAction={createEpicFromOutcomeAction}
           createStoryIdeaAction={createStoryIdeaFromOutcomeAction}
           data={outcomeResult.data}
+        valueOwners={valueOwnersResult?.ok ? valueOwnersResult.data : null}
         hardDeleteAction={hardDeleteOutcomeAction}
         recordTollgateDecisionAction={recordOutcomeTollgateDecisionAction}
         restoreAction={restoreOutcomeAction}

@@ -79,6 +79,10 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
         label: "Human Review",
         description: "Review, correct, confirm, and approve imports."
       },
+      "/control-mirror": {
+        label: "Control Mirror",
+        description: "Check delivery conformance, evidence, and AI level."
+      },
       "/governance": {
         label: "Governance",
         description: "Roles, AI level, risks, and sign-off traceability."
@@ -99,6 +103,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       "Value Spine": "Value Spine",
       Import: "Import",
       "Human Review": "Human Review",
+      "Control Mirror": "Control Mirror",
       Governance: "Governance",
       Help: "Help",
       Admin: "Admin",
@@ -165,6 +170,10 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
         label: "Mänsklig granskning",
         description: "Granska, korrigera, bekräfta och godkänn importer."
       },
+      "/control-mirror": {
+        label: "Control Mirror",
+        description: "Kontrollera leverans, evidens och AI-nivå."
+      },
       "/governance": {
         label: "Styrning",
         description: "Roller, AI-nivå, risker och spårbar sign-off."
@@ -185,6 +194,7 @@ export const appChromeContent: Record<AppLanguage, AppChromeContent> = {
       "Value Spine": "Value Spine",
       Import: "Import",
       "Human Review": "Mänsklig granskning",
+      "Control Mirror": "Control Mirror",
       Governance: "Styrning",
       Help: "Hjälp",
       Admin: "Administration",

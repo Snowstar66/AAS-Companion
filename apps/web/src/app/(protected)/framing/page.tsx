@@ -1,11 +1,10 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { PageViewAnalytics } from "@/components/analytics/page-view-analytics";
 import { FramingOutcomeSection } from "@/components/framing/framing-outcome-section";
 import { AppShell } from "@/components/layout/app-shell";
-import { getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
+import { getCachedOrganizationValueOwnersData, getCachedOutcomeWorkspaceData } from "@/lib/cache/project-data";
 import { FramingCockpit } from "@/components/framing/framing-cockpit";
 import { DownstreamAiInstructionsPage } from "@/components/framing/downstream-ai-instructions-page";
 import { FramingSubpageNav } from "@/components/framing/framing-subpage-nav";
@@ -186,6 +185,30 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
         saveState: getParamValue(query.save) ?? null,
         submitState: getParamValue(query.submit) ?? null
       };
+      const selectedFramingContent =
+        cockpit.state !== "unavailable" && outcomeId
+          ? await SelectedFramingOutcomeSection({
+              activeSubpage:
+                requestedSubpage === "journey-context"
+                  ? "journey-context"
+                  : requestedSubpage === "downstream-ai-instructions"
+                    ? "downstream-ai-instructions"
+                    : "overview",
+              downstreamFlash: {
+                message: getParamValue(query.downstreamMessage) ?? null,
+                save: (getParamValue(query.downstreamSave) as "success" | "error" | null) ?? null
+              },
+              journeyFlash: {
+                analyze: (getParamValue(query.journeyAnalyze) as "success" | "error" | null) ?? null,
+                message: getParamValue(query.journeyMessage) ?? null,
+                save: (getParamValue(query.journeySave) as "success" | "error" | null) ?? null
+              },
+              language: serverLanguage,
+              organizationId: session.organization.organizationId,
+              outcomeId,
+              search: parsedSearch
+            })
+          : null;
 
       return (
         <AppShell
@@ -229,30 +252,7 @@ export default async function FramingPage({ searchParams }: FramingPageProps) {
           ) : (
             <>
               {outcomeId ? (
-                <Suspense fallback={<FramingWorkspaceFallback />}>
-                  <SelectedFramingOutcomeSection
-                    activeSubpage={
-                      requestedSubpage === "journey-context"
-                        ? "journey-context"
-                        : requestedSubpage === "downstream-ai-instructions"
-                          ? "downstream-ai-instructions"
-                          : "overview"
-                    }
-                    language={serverLanguage}
-                    organizationId={session.organization.organizationId}
-                    outcomeId={outcomeId}
-                    search={parsedSearch}
-                    journeyFlash={{
-                      analyze: (getParamValue(query.journeyAnalyze) as "success" | "error" | null) ?? null,
-                      message: getParamValue(query.journeyMessage) ?? null,
-                      save: (getParamValue(query.journeySave) as "success" | "error" | null) ?? null
-                    }}
-                    downstreamFlash={{
-                      message: getParamValue(query.downstreamMessage) ?? null,
-                      save: (getParamValue(query.downstreamSave) as "success" | "error" | null) ?? null
-                    }}
-                  />
-                </Suspense>
+                selectedFramingContent ?? <FramingWorkspaceFallback />
               ) : (
                 <FramingCockpit
                   createAction={createDraftOutcomeAction}
@@ -389,9 +389,13 @@ async function SelectedFramingOutcomeSection(props: {
   };
 }) {
   let selectedOutcome: Awaited<ReturnType<typeof getCachedOutcomeWorkspaceData>>;
+  let valueOwnersResult: Awaited<ReturnType<typeof getCachedOrganizationValueOwnersData>> | null;
 
   try {
-    selectedOutcome = await getCachedOutcomeWorkspaceData(props.organizationId, props.outcomeId);
+    [selectedOutcome, valueOwnersResult] = await Promise.all([
+      getCachedOutcomeWorkspaceData(props.organizationId, props.outcomeId),
+      getCachedOrganizationValueOwnersData(props.organizationId).catch(() => null)
+    ]);
   } catch (error) {
     console.error("Failed to load selected Framing outcome", error);
     return <SelectedFramingOutcomeErrorCard />;
@@ -474,7 +478,8 @@ async function SelectedFramingOutcomeSection(props: {
       saveInlineAction: saveOutcomeWorkspaceInlineAction,
       search: props.search,
       validateBaselineDefinitionAiAction: validateBaselineDefinitionAiAction,
-      validateOutcomeStatementAiAction: validateOutcomeStatementAiAction
+      validateOutcomeStatementAiAction: validateOutcomeStatementAiAction,
+      valueOwners: valueOwnersResult?.ok ? valueOwnersResult.data : null
     });
   } catch (error) {
     console.error("Failed to render selected Framing content", error);

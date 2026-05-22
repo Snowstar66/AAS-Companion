@@ -64,9 +64,9 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
       `Den här leveransstoryn ska tydligt bidra till Epic ${story.epic.key} ${story.epic.title}.`
     );
   const statusTone =
-    storyUx.tone === "success"
+    storyUx.statusLabel === t("In build", "I build")
       ? "approved"
-      : storyUx.readinessLabel === t("Design ready", "Designredo")
+      : storyUx.statusLabel === t("Design ready", "Designredo")
         ? "ready_for_review"
         : "needs_action";
   const completeItems = [
@@ -230,7 +230,7 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
                   </ul>
                 ) : (
                   <p className="mt-2 leading-6 text-muted-foreground">
-                    {t("No blockers remain. This Delivery Story is ready for review.", "Inga blockerare återstår. Den här leveransstoryn är redo för review.")}
+                    {t("No blockers remain. This Delivery Story is ready for build handoff.", "Inga blockerare återstår. Den här leveransstoryn är redo för build-handoff.")}
                   </p>
                 )}
                 {valueSpineBlockers.length > 0 ? (
@@ -246,8 +246,8 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
             description={
               missingReadinessFields.length === 0
                 ? t(
-                    "All required design inputs are present. Review and approval can continue without more field edits.",
-                    "All obligatorisk designindata finns. Review och godkännande kan fortsätta utan fler fältändringar."
+                    "All required design inputs are present. This Delivery Story now carries a complete build-start signal.",
+                    "All obligatorisk designindata finns. Den här leveransstoryn bär nu en komplett build-start-signal."
                   )
                 : t(
                     "Fields highlighted below still need input before the Story can move forward.",
@@ -606,10 +606,10 @@ export function DeliveryStoryWorkspace({ blockers, data, isArchived }: DeliveryS
           <SecondaryPanel
             defaultOpen={false}
             description={t(
-              "Imported lineage is still accessible when you need to trace the source material.",
-              "Importerad lineage är fortfarande tillgänglig när du behöver spåra källmaterialet."
+              "Imported source lineage remains available when you need to trace this Delivery Story back to its reviewed import candidate.",
+              "Importerad käll-lineage finns kvar när du behöver spåra den här leveransstoryn tillbaka till sin granskade importkandidat."
             )}
-            title={t("Imported lineage", "Importerad lineage")}
+            title={t("Imported source lineage", "Importerad käll-lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
               <Link href={buildOriginIntakeHref({ candidateId: story.lineageSourceId, entityId: story.id, entityType: "story" }) ?? "/intake"}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>

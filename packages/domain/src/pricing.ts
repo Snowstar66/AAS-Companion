@@ -286,8 +286,8 @@ export function buildPricingEvaluation(input: PricingSignalSnapshot): PricingEva
       status: input.importedLineageCount > 0 ? "attention" : "covered",
       description:
         input.importedLineageCount > 0
-          ? "Imported lineage is visible in this branch. Pricing does not replace the Human Review gate before promotion."
-          : "Pricing does not create an approval path around Human Review when import is involved later."
+          ? "Imported source lineage is visible in this branch. Pricing does not replace the Human Review gate before promotion."
+          : "Pricing does not create an approval path around Human Review when imported source lineage appears later."
     },
     {
       key: "governance",

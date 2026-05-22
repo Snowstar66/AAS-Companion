@@ -215,6 +215,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   const processingMode = requestedProcessingMode === "deterministic" ? "deterministic" : "ai_assisted";
   const requestedImportIntent = String(formData.get("importIntent") ?? "framing");
   const importIntent = requestedImportIntent === "design" ? "design" : "framing";
+  const sourceContext = String(formData.get("sourceContext") ?? "") === "control-mirror" ? "control-mirror" : undefined;
   const files = formData
     .getAll("files")
     .filter((value): value is File => value instanceof File && value.size > 0);
@@ -222,6 +223,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
   if (files.length === 0) {
     redirect(
       buildRedirect("/intake", {
+        source: sourceContext,
         error: "Select one or more text, markdown, JSON, or CSV files before creating an import session."
       })
     );
@@ -260,6 +262,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
 
     redirect(
       buildRedirect("/intake", {
+        source: sourceContext,
         error: result.errors[0]?.message ?? "Import upload failed."
       })
     );
@@ -294,6 +297,7 @@ export async function uploadArtifactIntakeFilesAction(formData: FormData) {
 
   redirect(
     buildRedirect("/intake", {
+      source: sourceContext,
       status: "uploaded",
       message,
       sessionId: result.data.sessionId

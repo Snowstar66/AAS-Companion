@@ -121,6 +121,30 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
           epicId: epic.id
         }));
     });
+    const selectedFeedbackEvidenceStories = selectedEpics.flatMap((epic) => {
+      const mappedSourceStoryIds = new Set((epic.directionSeeds ?? []).map((seed) => seed.sourceStoryId).filter(Boolean));
+      const hasExplicitStoryIdeas = (epic.directionSeeds ?? []).length > 0;
+      const framingStoryIds = new Set(
+        (epic.stories ?? [])
+          .filter(
+            (story) =>
+              story.lifecycleState === "active" &&
+              !story.sourceDirectionSeedId &&
+              (!hasExplicitStoryIdeas
+                ? story.status === "draft" || story.status === "definition_blocked" || !isLikelyDeliveryStory(story, mappedSourceStoryIds)
+                : !isLikelyDeliveryStory(story, mappedSourceStoryIds))
+          )
+          .map((story) => story.id)
+      );
+
+      return (epic.stories ?? []).filter(
+        (story) =>
+          story.lifecycleState === "active" &&
+          !story.sourceDirectionSeedId &&
+          !framingStoryIds.has(story.id) &&
+          isLikelyDeliveryStory(story, mappedSourceStoryIds)
+      );
+    });
     const selectedStoryIdeas = [
       ...selectedDirectionSeeds.map((seed) => ({
         id: seed.id,
@@ -143,6 +167,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     ];
     const readyStoryIdeas = selectedStoryIdeas.filter((idea) => idea.ready);
     const attentionStoryIdeas = selectedStoryIdeas.filter((idea) => !idea.ready);
+    const firstFeedbackEvidenceStory = selectedFeedbackEvidenceStories[0] ?? null;
     const lineageTargets = [
       ...(selectedOutcome?.lineageSourceType === "artifact_aas_candidate" && selectedOutcome.lineageSourceId
         ? [{
@@ -212,11 +237,11 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 </div>
                 <h1 className="mt-4 text-4xl font-semibold tracking-tight">{t(language, "Project Value Spine", "Projektets Value Spine")}</h1>
                 <p className="mt-3 text-base leading-7 text-muted-foreground">
-                  {t(language, "This page stays inside the active project and its current Framing branch. It should feel like one guided path, not a set of competing branches.", "Den har sidan stannar inom det aktiva projektet och dess nuvarande Framing-gren. Den ska kannas som en guidad vag, inte som flera konkurrerande grenar.")}
+                  {t(language, "This page shows the active Framing branch after import or promotion: Outcome, Epics, Story Ideas, lineage and framing completeness. Human Review only shows open human decisions, so completed imports can be visible here without appearing in the review queue.", "Den har sidan visar den aktiva Framing-grenen efter import eller promotion: Outcome, Epics, Story Ideas, lineage och framing-komplettering. Human Review visar bara oppna manskliga beslut, sa klara importer kan synas har utan att finnas kvar i granskningskon.")}
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 <StatCard
                   actionHref={firstVisibleStoryIdea?.href}
                   actionLabel={firstVisibleStoryIdea ? t(language, "Open first Story Idea", "Oppna forsta Story Idea") : undefined}
@@ -230,16 +255,28 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                   actionLabel={firstLineageTarget?.label}
                   className="border-sky-200 bg-sky-50/85 text-sky-950"
                   count={lineageTargets.length}
-                  description={t(language, "Imported items that still keep a direct review trail.", "Importerade objekt som fortfarande har ett direkt review-spar.")}
-                  label={t(language, "Imported lineage", "Importerad lineage")}
+                  description={t(language, "Promoted project records with imported origin. This is traceability, not an open Human Review queue.", "Promoverade projektposter med importerat ursprung. Detta ar sparbarhet, inte en oppen Human Review-ko.")}
+                  label={t(language, "Imported source lineage", "Importerad kall-lineage")}
+                />
+                <StatCard
+                  actionHref={firstFeedbackEvidenceStory ? `/stories/${firstFeedbackEvidenceStory.id}` : undefined}
+                  actionLabel={firstFeedbackEvidenceStory ? t(language, "Open feedback evidence", "Oppna feedback-evidens") : undefined}
+                  className="border-amber-200 bg-amber-50/85 text-amber-950"
+                  count={selectedFeedbackEvidenceStories.length}
+                  description={t(
+                    language,
+                    "Returned delivery records that were added later as traceable feedback-loop evidence.",
+                    "Återförda leveransposter som lades till senare som spårbar feedback-loop-evidens."
+                  )}
+                  label={t(language, "Feedback-loop evidence", "Feedback-loop-evidens")}
                 />
                 <StatCard
                   actionHref={firstReadyStoryIdea?.href}
                   actionLabel={firstReadyStoryIdea ? t(language, "Open framing-ready idea", "Oppna framingredo ide") : undefined}
                   className="border-emerald-200 bg-emerald-50/85 text-emerald-950"
                   count={readyStoryIdeas.length}
-                  description={t(language, "Story Ideas that already have both value intent and expected behavior.", "Story Ideas som redan har bade value intent och expected behavior.")}
-                  label={t(language, "Ready for review", "Redo for granskning")}
+                  description={t(language, "Story Ideas with enough framing detail for the active Value Spine: value intent and expected behavior are both present.", "Story Ideas med tillracklig framingdetalj for aktiv Value Spine: value intent och expected behavior finns bada pa plats.")}
+                  label={t(language, "Framing-ready Story Ideas", "Framingredo Story Ideas")}
                 />
                 <StatCard
                   actionHref={firstAttentionStoryIdea?.href}
@@ -274,79 +311,86 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
                 emptyStoryMessage={t(language, "No active Story Ideas are currently visible in this Epic.", "Inga aktiva Story Ideas syns just nu i detta epic.")}
                 language={language}
                 mode="framing"
-                epics={selectedEpics.map((epic) => ({
-                  id: epic.id,
-                  key: epic.key,
-                  title: epic.title,
-                  href: `/epics/${epic.id}`,
-                  isCurrent: false,
-                  scopeBoundary: epic.scopeBoundary ?? null,
-                  purpose: epic.purpose ?? null,
-                  originType: epic.originType,
-                  lifecycleState: epic.lifecycleState,
-                  importedReadinessState: epic.importedReadinessState ?? null,
-                  lineageHref:
-                    epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
-                      ? buildOriginIntakeHref({
-                          candidateId: epic.lineageSourceId,
-                          entityId: epic.id,
-                          entityType: "epic"
-                        })
-                      : null,
-                  directionSeeds: (epic.directionSeeds ?? [])
-                    .filter((seed) => seed.lifecycleState === "active")
-                    .map((seed) => ({
-                      id: seed.id,
-                      key: seed.key,
-                      title: seed.title,
-                      href: `/story-ideas/${seed.id}`,
-                      isCurrent: false,
-                      shortDescription: seed.shortDescription ?? null,
-                      expectedBehavior: seed.expectedBehavior ?? null,
-                      uxSketchName: seed.uxSketchName ?? null,
-                      uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
-                      sourceStoryId: seed.sourceStoryId ?? null,
-                      originType: seed.originType,
-                      lifecycleState: seed.lifecycleState,
-                      importedReadinessState: seed.importedReadinessState ?? null,
-                      lineageHref:
-                        seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
-                          ? buildOriginIntakeHref({
-                              candidateId: seed.lineageSourceId,
-                              entityId: seed.id,
-                              entityType: "direction_seed"
-                            })
-                          : null
-                    })),
-                  stories: (epic.stories ?? [])
-                    .filter((story) => story.lifecycleState === "active")
-                    .map((story) => ({
-                      id: story.id,
-                      key: story.key,
-                      title: story.title,
-                      href: story.sourceDirectionSeedId ? `/stories/${story.id}` : `/story-ideas/${story.id}`,
-                      isCurrent: false,
-                      sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
-                      valueIntent: story.valueIntent ?? null,
-                      expectedBehavior: story.expectedBehavior ?? null,
-                      testDefinition: story.testDefinition ?? null,
-                      acceptanceCriteria: story.acceptanceCriteria,
-                      definitionOfDone: story.definitionOfDone,
-                      status: story.status,
-                      originType: story.originType,
-                      lifecycleState: story.lifecycleState,
-                      tollgateStatus: story.tollgateStatus ?? null,
-                      importedReadinessState: story.importedReadinessState ?? null,
-                      lineageHref:
-                        story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
-                          ? buildOriginIntakeHref({
-                              candidateId: story.lineageSourceId,
-                              entityId: story.id,
-                              entityType: "story"
-                            })
-                          : null
-                    }))
-                }))}
+                epics={selectedEpics.map((epic) => {
+                  const mappedSourceStoryIds = new Set((epic.directionSeeds ?? []).map((seed) => seed.sourceStoryId).filter(Boolean));
+
+                  return {
+                    id: epic.id,
+                    key: epic.key,
+                    title: epic.title,
+                    href: `/epics/${epic.id}`,
+                    isCurrent: false,
+                    scopeBoundary: epic.scopeBoundary ?? null,
+                    purpose: epic.purpose ?? null,
+                    originType: epic.originType,
+                    lifecycleState: epic.lifecycleState,
+                    importedReadinessState: epic.importedReadinessState ?? null,
+                    lineageHref:
+                      epic.lineageSourceType === "artifact_aas_candidate" && epic.lineageSourceId
+                        ? buildOriginIntakeHref({
+                            candidateId: epic.lineageSourceId,
+                            entityId: epic.id,
+                            entityType: "epic"
+                          })
+                        : null,
+                    directionSeeds: (epic.directionSeeds ?? [])
+                      .filter((seed) => seed.lifecycleState === "active")
+                      .map((seed) => ({
+                        id: seed.id,
+                        key: seed.key,
+                        title: seed.title,
+                        href: `/story-ideas/${seed.id}`,
+                        isCurrent: false,
+                        shortDescription: seed.shortDescription ?? null,
+                        expectedBehavior: seed.expectedBehavior ?? null,
+                        uxSketchName: seed.uxSketchName ?? null,
+                        uxSketchDataUrl: seed.uxSketchDataUrl ?? null,
+                        sourceStoryId: seed.sourceStoryId ?? null,
+                        originType: seed.originType,
+                        lifecycleState: seed.lifecycleState,
+                        importedReadinessState: seed.importedReadinessState ?? null,
+                        lineageHref:
+                          seed.lineageSourceType === "artifact_aas_candidate" && seed.lineageSourceId
+                            ? buildOriginIntakeHref({
+                                candidateId: seed.lineageSourceId,
+                                entityId: seed.id,
+                                entityType: "direction_seed"
+                              })
+                            : null
+                      })),
+                    stories: (epic.stories ?? [])
+                      .filter((story) => story.lifecycleState === "active")
+                      .map((story) => ({
+                        id: story.id,
+                        key: story.key,
+                        title: story.title,
+                        href:
+                          story.sourceDirectionSeedId || isLikelyDeliveryStory(story, mappedSourceStoryIds)
+                            ? `/stories/${story.id}`
+                            : `/story-ideas/${story.id}`,
+                        isCurrent: false,
+                        sourceDirectionSeedId: story.sourceDirectionSeedId ?? null,
+                        valueIntent: story.valueIntent ?? null,
+                        expectedBehavior: story.expectedBehavior ?? null,
+                        testDefinition: story.testDefinition ?? null,
+                        acceptanceCriteria: story.acceptanceCriteria,
+                        definitionOfDone: story.definitionOfDone,
+                        status: story.status,
+                        originType: story.originType,
+                        lifecycleState: story.lifecycleState,
+                        tollgateStatus: story.tollgateStatus ?? null,
+                        importedReadinessState: story.importedReadinessState ?? null,
+                        lineageHref:
+                          story.lineageSourceType === "artifact_aas_candidate" && story.lineageSourceId
+                            ? buildOriginIntakeHref({
+                                candidateId: story.lineageSourceId,
+                                entityId: story.id,
+                                entityType: "story"
+                              })
+                            : null
+                      }))
+                  };
+                })}
                 outcome={{
                   id: selectedOutcome.id,
                   key: selectedOutcome.key,

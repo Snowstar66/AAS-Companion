@@ -111,13 +111,13 @@ export function getStoryUxModel(input: StoryUxInput, language: AppLanguage = "en
     acceptanceCriteria: input.acceptanceCriteria,
     status: input.status as "draft" | "definition_blocked" | "ready_for_handoff" | "in_progress"
   });
-  const blockers = input.blockers?.length ? input.blockers : readiness.reasons.map((reason) => reason.message);
+  const blockers = input.blockers ?? readiness.reasons.map((reason) => reason.message);
   const openActionCount = 0;
   const missingSignoffCount = 0;
   const isArchived = input.lifecycleState === "archived";
   const isInDelivery = input.status === "in_progress";
-  const isReadyForHandoff = readiness.state === "ready" || input.status === "ready_for_handoff";
-  const isDesignReady = readiness.state === "ready" && !isInDelivery;
+  const hasAuthoritativeReadiness = blockers.length === 0;
+  const isReadyForHandoff = !isArchived && !isInDelivery && hasAuthoritativeReadiness;
   const lifecycleStepDefinitions = getLifecycleStepDefinitions(language);
 
   let statusLabel = translate(language, "Needs action", "Behöver åtgärd");
@@ -132,7 +132,7 @@ export function getStoryUxModel(input: StoryUxInput, language: AppLanguage = "en
     statusLabel = translate(language, "In build", "I build");
     statusDetail = translate(language, "Build work is already active for this Delivery Story.", "Buildarbete pågår redan för den här delivery storyn.");
     tone = "success";
-  } else if (isDesignReady) {
+  } else if (isReadyForHandoff) {
     statusLabel = translate(language, "Design ready", "Designredo");
     statusDetail = translate(language, "Required delivery inputs are present. This Delivery Story is ready to export into build work.", "Nödvändig leveransindata finns. Den här delivery storyn är redo att exporteras till buildarbete.");
     tone = "success";
@@ -142,18 +142,10 @@ export function getStoryUxModel(input: StoryUxInput, language: AppLanguage = "en
     tone = "warning";
   }
 
-  const readinessLabel = isInDelivery
-    ? translate(language, "In build", "I build")
-    : isReadyForHandoff
-      ? translate(language, "Design ready", "Designredo")
-      : translate(language, "Needs action", "Behöver åtgärd");
-  const readinessDetail = isInDelivery
-    ? translate(language, "Build is already active for this Delivery Story.", "Build är redan aktiv för den här delivery storyn.")
-    : isReadyForHandoff
-      ? translate(language, "Acceptance criteria, Test Definition and Definition of Done are all present.", "Acceptanskriterier, testdefinition och definition of done finns alla på plats.")
-      : blockers[0] ?? translate(language, "Complete the missing delivery inputs before handing this over into build work.", "Komplettera saknad leveransindata innan den här lämnas över till buildarbete.");
+  const readinessLabel = statusLabel;
+  const readinessDetail = statusDetail;
 
-  const currentStepIndex = isInDelivery ? 2 : isDesignReady ? 1 : 0;
+  const currentStepIndex = isInDelivery ? 2 : isReadyForHandoff ? 1 : 0;
   const lifecycleSteps = lifecycleStepDefinitions.map((step, index) => {
     const isCurrent = index === currentStepIndex;
     const state: StoryUxStepState =
@@ -208,10 +200,10 @@ export function getStoryUxModel(input: StoryUxInput, language: AppLanguage = "en
             href: "#story-value-spine"
           }
         ]
-      : readiness.state !== "ready"
+    : !hasAuthoritativeReadiness
       ? getMissingInputActions(input, language)
       : [
-              {
+          {
                 label: translate(language, "Open build package", "Öppna buildpaket"),
                 description: translate(language, "Preview the build package that will be used outside this tool for implementation work.", "Förhandsgranska buildpaketet som ska användas utanför verktyget för implementationsarbete."),
                 href: input.id ? `/handoff/${input.id}` : "#story-value-spine"

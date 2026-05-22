@@ -1316,6 +1316,13 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
       const state = getBacklogState(candidate);
       return state === "needs_action" || state === "needs_confirmation" || state === "pending";
     }) ?? null;
+  const activeFramingReviewWorkspace = activeFramingCandidate
+    ? await ActiveFramingReviewWorkspace({
+        candidate: activeFramingCandidate,
+        projectEpics: queue.projectEpics,
+        projectOutcomes: queue.projectOutcomes
+      })
+    : null;
 
   return (
     <AppShell
@@ -1846,15 +1853,9 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
               </CardContent>
             </Card>
 
-            {activeFramingCandidate ? (
-              <Suspense fallback={<ActiveFramingReviewWorkspaceFallback />}>
-                <ActiveFramingReviewWorkspace
-                  candidate={activeFramingCandidate}
-                  projectEpics={queue.projectEpics}
-                  projectOutcomes={queue.projectOutcomes}
-                />
-              </Suspense>
-            ) : !selectedCandidate ? (
+          {activeFramingCandidate ? (
+            activeFramingReviewWorkspace ?? <ActiveFramingReviewWorkspaceFallback />
+          ) : !selectedCandidate ? (
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>Choose one item to start</CardTitle>

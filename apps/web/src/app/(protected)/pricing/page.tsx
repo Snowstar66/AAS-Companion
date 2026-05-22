@@ -93,8 +93,8 @@ function getCopy(language: AppLanguage) {
       baselineExists: "Baseline finns",
       outcomeClarity: "Outcome-tydlighet",
       scopeStability: "Scope-stabilitet",
-      importedLineage: "Importerad lineage",
-      lineageDescription: (epics: number, stories: number) => `Synligt i vald gren: ${epics} epics, ${stories} stories.`,
+      importedLineage: "Importerad käll-lineage",
+      lineageDescription: (epics: number, stories: number) => `Synliga importerade kallposter i vald gren: ${epics} epics, ${stories} stories.`,
       whyRecommended: "Varför denna modell rekommenderas",
       whyRecommendedBody:
         "Rekommendationen uppdateras med Framing-, Value Spine- och governance-signaler, men väljer inget automatiskt.",
@@ -155,8 +155,8 @@ function getCopy(language: AppLanguage) {
     baselineExists: "Baseline exists",
     outcomeClarity: "Outcome clarity",
     scopeStability: "Scope stability",
-    importedLineage: "Imported lineage",
-    lineageDescription: (epics: number, stories: number) => `Visible in the selected branch: ${epics} epics, ${stories} stories.`,
+    importedLineage: "Imported source lineage",
+    lineageDescription: (epics: number, stories: number) => `Visible imported source records in the selected branch: ${epics} epics, ${stories} stories.`,
     whyRecommended: "Why this model is recommended",
     whyRecommendedBody: "The recommendation updates with Framing, Value Spine and governance signals, but it does not auto-select anything.",
     simpleFlow: "Simple selection flow",
@@ -375,7 +375,7 @@ function translateGuardrail(input: { key: string; title: string; description: st
   const translations: Record<string, { title: string; description: string }> = {
     human_review: {
       title: "Human Review ligger separat",
-      description: "Pricing ersätter inte Human Review-gaten före promotion, även om importerad lineage är synlig i grenen."
+      description: "Pricing ersätter inte Human Review-gaten före promotion, även om importerad käll-lineage är synlig i grenen."
     },
     governance: {
       title: "Governance-validering ligger separat",

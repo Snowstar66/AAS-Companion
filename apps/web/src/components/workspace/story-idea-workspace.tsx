@@ -533,13 +533,13 @@ export function StoryIdeaWorkspace({
           <SecondaryPanel
             defaultOpen={false}
             description={t(
-              "Imported lineage is still accessible when you need to trace the source material.",
-              "Importerad lineage är fortfarande tillgänglig när du behöver spåra källmaterialet."
+              "Imported source lineage remains available when you need to trace this Story Idea back to its reviewed import candidate.",
+              "Importerad käll-lineage finns kvar när du behöver spåra den här Story Idean tillbaka till sin granskade importkandidat."
             )}
-            title={t("Imported lineage", "Importerad lineage")}
+            title={t("Imported source lineage", "Importerad käll-lineage")}
           >
             <Button asChild className="gap-2" variant="secondary">
-              <Link href={buildOriginIntakeHref({ candidateId: story.lineageSourceId, entityId: story.id, entityType: "direction_seed" }) ?? "/intake"}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
+              <Link href={buildOriginIntakeHref({ candidateId: story.lineageSourceId, entityId: story.id, entityType: "story" }) ?? "/intake"}>{t("Open source candidate review", "Öppna källkandidatens review")}</Link>
             </Button>
           </SecondaryPanel>
         ) : null}
