@@ -26,6 +26,7 @@ vi.mock("@/app/(protected)/control-mirror/actions", () => ({
   archiveControlMirrorEvidencePackExportAction: vi.fn(),
   recordControlMirrorEvidencePackExportAcceptanceAction: vi.fn(),
   recordControlMirrorHumanReviewDecisionAction: vi.fn(),
+  resetControlMirrorWorkspaceAction: vi.fn(),
   refreshControlMirrorSnapshotAction: vi.fn(),
   submitControlMirrorUploadedSnapshotAction: vi.fn()
 }));
@@ -539,6 +540,8 @@ describe("Control Mirror page", () => {
     expect(screen.getByText("Target: 0 blockers")).toBeDefined();
     expect(screen.getByText("Threshold: any value above 0 needs action.")).toBeDefined();
     expect(screen.getByRole("link", { name: /open decision log/i }).getAttribute("href")).toBe("#decision-prompt-log");
+    expect(screen.getByRole("button", { name: /reset mirror/i })).toBeDefined();
+    expect(screen.getByText("Reset clears Control Mirror snapshots, mirror review decisions and exports, but keeps Framing, stories, signoffs and project imports.")).toBeDefined();
     expect(screen.getByText("Decision & prompt log")).toBeDefined();
     expect(screen.getByText("A backlog-style trail of the questions Control Mirror raised, the answer recorded so far, and what each answer changes.")).toBeDefined();
     expect(screen.getByText("Show log guidance")).toBeDefined();

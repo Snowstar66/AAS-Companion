@@ -7,6 +7,7 @@ import {
   createControlMirrorUploadedSnapshotService,
   recordControlMirrorEvidencePackExportAcceptanceDecisionService,
   recordControlMirrorHumanReviewDecisionService,
+  resetControlMirrorWorkspaceService,
   refreshControlMirrorCurrentImportsSnapshotService
 } from "@aas-companion/api";
 import type { ControlMirrorReviewDecisionType } from "@aas-companion/db";
@@ -62,6 +63,43 @@ export async function refreshControlMirrorSnapshotAction() {
       status: "refreshed",
       snapshotId: result.data.snapshotId,
       message: `Snapshot refreshed: ${result.data.fileCount} artifact(s), ${result.data.normalizedEvidenceCount} normalized evidence item(s), ${result.data.newCount} new, ${result.data.modifiedCount} modified, ${result.data.deletedCount} deleted.`
+    })
+  );
+}
+
+export async function resetControlMirrorWorkspaceAction() {
+  const session = await requireActiveProjectSession();
+
+  if (session.mode === "demo" || session.organization.organizationId === DEMO_ORGANIZATION.organizationId) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: "Control Mirror reset is read-only in Demo. Leave Demo and open a normal project before resetting Control Mirror."
+      })
+    );
+  }
+
+  const result = await resetControlMirrorWorkspaceService({
+    organizationId: session.organization.organizationId,
+    actorId: session.userId
+  });
+
+  revalidatePath("/control-mirror");
+
+  if (!result.ok) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: result.errors[0]?.message ?? "Control Mirror reset failed."
+      })
+    );
+  }
+
+  redirect(
+    buildRedirect({
+      status: "reset",
+      snapshotId: result.data.snapshotId,
+      message: `Control Mirror reset: ${result.data.clearedSnapshots} snapshot(s), ${result.data.clearedReviewItems} review item(s), and ${result.data.clearedExports} export(s) cleared. Framing, stories, signoffs and project imports were kept.`
     })
   );
 }

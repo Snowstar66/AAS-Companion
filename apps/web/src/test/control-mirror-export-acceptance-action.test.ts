@@ -34,6 +34,7 @@ vi.mock("@aas-companion/api", async () => {
     createControlMirrorUploadedSnapshotService: vi.fn(),
     recordControlMirrorEvidencePackExportAcceptanceDecisionService: recordAcceptanceDecisionServiceMock,
     recordControlMirrorHumanReviewDecisionService: vi.fn(),
+    resetControlMirrorWorkspaceService: vi.fn(),
     refreshControlMirrorCurrentImportsSnapshotService: vi.fn()
   };
 });

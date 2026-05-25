@@ -578,6 +578,93 @@ export async function refreshControlMirrorCurrentImportsSnapshot(input: {
   });
 }
 
+export async function resetControlMirrorWorkspace(input: {
+  organizationId: string;
+  actorId?: string | null;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const organization = await tx.organization.findUnique({
+      where: {
+        id: input.organizationId
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!organization) {
+      throw new Error("The selected project is no longer available.");
+    }
+
+    const source = await getOrCreateCurrentImportsSource(input, tx);
+    const [reviewItems, exports, snapshots] = await Promise.all([
+      tx.controlMirrorHumanReviewItem.deleteMany({
+        where: {
+          organizationId: input.organizationId
+        }
+      }),
+      tx.controlMirrorEvidencePackExport.deleteMany({
+        where: {
+          organizationId: input.organizationId
+        }
+      }),
+      tx.controlMirrorSnapshot.deleteMany({
+        where: {
+          organizationId: input.organizationId
+        }
+      })
+    ]);
+    const scanStartedAt = new Date();
+    const snapshot = await tx.controlMirrorSnapshot.create({
+      data: {
+        id: randomUUID(),
+        organizationId: input.organizationId,
+        sourceId: source.id,
+        label: `Reset baseline ${scanStartedAt.toISOString().slice(0, 16).replace("T", " ")}`,
+        status: "completed",
+        scanStartedAt,
+        scanCompletedAt: scanStartedAt,
+        fileCount: 0,
+        unchangedCount: 0,
+        newCount: 0,
+        modifiedCount: 0,
+        deletedCount: 0,
+        unreadableCount: 0,
+        summaryJson: {
+          sourceType: source.sourceType,
+          resetAt: scanStartedAt.toISOString(),
+          resetBy: input.actorId ?? null,
+          clearedSnapshots: snapshots.count,
+          clearedReviewItems: reviewItems.count,
+          clearedExports: exports.count,
+          fileCount: 0,
+          unchangedCount: 0,
+          newCount: 0,
+          modifiedCount: 0,
+          deletedCount: 0,
+          unreadableCount: 0
+        }
+      },
+      include: {
+        artifacts: {
+          orderBy: [{ changeStatus: "asc" }, { filePath: "asc" }]
+        },
+        normalizedEvidence: {
+          orderBy: [{ readinessState: "asc" }, { evidenceType: "asc" }, { label: "asc" }]
+        },
+        source: true
+      }
+    });
+
+    return {
+      snapshot,
+      clearedSnapshots: snapshots.count,
+      clearedReviewItems: reviewItems.count,
+      clearedExports: exports.count
+    };
+  });
+}
+
 export async function getLatestControlMirrorSnapshot(organizationId: string) {
   return prisma.controlMirrorSnapshot.findFirst({
     where: {

@@ -33,6 +33,7 @@ import {
   archiveControlMirrorEvidencePackExportAction,
   recordControlMirrorEvidencePackExportAcceptanceAction,
   recordControlMirrorHumanReviewDecisionAction,
+  resetControlMirrorWorkspaceAction,
   refreshControlMirrorSnapshotAction,
   submitControlMirrorUploadedSnapshotAction
 } from "./actions";
@@ -944,7 +945,20 @@ export default async function ControlMirrorPage({
                     {t(language, "Open decision log", "Oppna beslutslogg")}
                   </Link>
                 </Button>
+                <form action={resetControlMirrorWorkspaceAction}>
+                  <Button className="w-full gap-2" type="submit" variant="secondary">
+                    <RotateCw className="h-4 w-4" />
+                    {t(language, "Reset mirror", "Nollstall mirror")}
+                  </Button>
+                </form>
               </div>
+              <p className="mt-3 text-xs leading-5 opacity-75">
+                {t(
+                  language,
+                  "Reset clears Control Mirror snapshots, mirror review decisions and exports, but keeps Framing, stories, signoffs and project imports.",
+                  "Nollstallning rensar Control Mirror-snapshots, mirror-reviewbeslut och exporter, men behaller Framing, stories, signoffs och projektimporter."
+                )}
+              </p>
             </div>
           </CardContent>
         </Card>

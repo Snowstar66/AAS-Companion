@@ -21,6 +21,7 @@ vi.mock("@aas-companion/db", () => ({
   recordControlMirrorEvidencePackExportAcceptanceDecision: vi.fn(),
   recordControlMirrorEvidencePackExportDownloadEvent: recordControlMirrorEvidencePackExportDownloadEventMock,
   recordControlMirrorHumanReviewDecision: vi.fn(),
+  resetControlMirrorWorkspace: vi.fn(),
   refreshControlMirrorCurrentImportsSnapshot: vi.fn(),
   syncControlMirrorHumanReviewQueueItems: vi.fn()
 }));

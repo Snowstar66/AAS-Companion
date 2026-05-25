@@ -9,6 +9,7 @@ import {
   recordControlMirrorEvidencePackExportAcceptanceDecision,
   recordControlMirrorEvidencePackExportDownloadEvent,
   recordControlMirrorHumanReviewDecision,
+  resetControlMirrorWorkspace,
   refreshControlMirrorCurrentImportsSnapshot,
   syncControlMirrorHumanReviewQueueItems,
   type ControlMirrorReviewDecisionType
@@ -358,6 +359,37 @@ export async function refreshControlMirrorCurrentImportsSnapshotService(input: {
     return failure({
       code: "control_mirror_snapshot_refresh_failed",
       message: error instanceof Error ? error.message : "Control Mirror snapshot refresh failed."
+    });
+  }
+}
+
+export async function resetControlMirrorWorkspaceService(input: {
+  organizationId: string;
+  actorId?: string | null;
+}) {
+  try {
+    const reset = await resetControlMirrorWorkspace(input);
+    const dashboard = await getControlMirrorDashboardSnapshot(input.organizationId);
+
+    if (dashboard) {
+      await syncControlMirrorHumanReviewQueueItems({
+        organizationId: input.organizationId,
+        snapshotId: dashboard.snapshot.isPersistent ? dashboard.snapshot.id : null,
+        items: dashboard.humanReviewItems
+      });
+    }
+
+    return success({
+      snapshotId: reset.snapshot.id,
+      label: reset.snapshot.label,
+      clearedSnapshots: reset.clearedSnapshots,
+      clearedReviewItems: reset.clearedReviewItems,
+      clearedExports: reset.clearedExports
+    });
+  } catch (error) {
+    return failure({
+      code: "control_mirror_reset_failed",
+      message: error instanceof Error ? error.message : "Control Mirror reset failed."
     });
   }
 }
