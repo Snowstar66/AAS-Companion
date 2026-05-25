@@ -685,3 +685,19 @@ export async function getLatestControlMirrorSnapshot(organizationId: string) {
     }
   });
 }
+
+export async function hasControlMirrorCurrentImportFilesAfter(input: {
+  organizationId: string;
+  after: Date;
+}) {
+  const count = await prisma.artifactIntakeFile.count({
+    where: {
+      organizationId: input.organizationId,
+      uploadedAt: {
+        gt: input.after
+      }
+    }
+  });
+
+  return count > 0;
+}

@@ -4,6 +4,7 @@ import {
   createControlMirrorEvidencePackExportRecord,
   getControlMirrorEvidencePackExportRecordById,
   getControlMirrorDashboardSnapshot,
+  hasControlMirrorCurrentImportFilesAfter,
   listControlMirrorEvidencePackExportRecords,
   mergeControlMirrorHumanReviewItemsWithQueueState,
   recordControlMirrorEvidencePackExportAcceptanceDecision,
@@ -32,6 +33,16 @@ function isControlMirrorResetBaseline(dashboard: ControlMirrorDashboard) {
     dashboard.artifacts.length === 0 &&
     dashboard.normalizedEvidence.length === 0 &&
     dashboard.snapshot.label.startsWith("Reset baseline ");
+}
+
+function getResetBaselineScanTime(dashboard: ControlMirrorDashboard) {
+  if (!dashboard.snapshot.scanTime) {
+    return null;
+  }
+
+  const scanTime = new Date(dashboard.snapshot.scanTime);
+
+  return Number.isNaN(scanTime.getTime()) ? null : scanTime;
 }
 
 function clearGeneratedControlMirrorStateAfterReset(dashboard: ControlMirrorDashboard): ControlMirrorDashboard {
@@ -130,13 +141,32 @@ function clearGeneratedControlMirrorStateAfterReset(dashboard: ControlMirrorDash
 
 export async function getControlMirrorDashboardService(organizationId: string) {
   try {
-    const snapshot = await getControlMirrorDashboardSnapshot(organizationId);
+    let snapshot = await getControlMirrorDashboardSnapshot(organizationId);
 
     if (!snapshot) {
       return failure({
         code: "control_mirror_not_found",
         message: "No governed project snapshot was found for this organization."
       });
+    }
+
+    const resetBaselineScanTime = isControlMirrorResetBaseline(snapshot) ? getResetBaselineScanTime(snapshot) : null;
+
+    if (resetBaselineScanTime && await hasControlMirrorCurrentImportFilesAfter({
+      organizationId,
+      after: resetBaselineScanTime
+    })) {
+      await refreshControlMirrorCurrentImportsSnapshot({
+        organizationId
+      });
+      snapshot = await getControlMirrorDashboardSnapshot(organizationId);
+
+      if (!snapshot) {
+        return failure({
+          code: "control_mirror_not_found",
+          message: "No governed project snapshot was found for this organization."
+        });
+      }
     }
 
     if (isControlMirrorResetBaseline(snapshot)) {

@@ -2,9 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 
 const {
   getControlMirrorDashboardSnapshotMock,
+  hasControlMirrorCurrentImportFilesAfterMock,
+  mergeControlMirrorHumanReviewItemsWithQueueStateMock,
+  refreshControlMirrorCurrentImportsSnapshotMock,
   syncControlMirrorHumanReviewQueueItemsMock
 } = vi.hoisted(() => ({
   getControlMirrorDashboardSnapshotMock: vi.fn(),
+  hasControlMirrorCurrentImportFilesAfterMock: vi.fn(),
+  mergeControlMirrorHumanReviewItemsWithQueueStateMock: vi.fn(),
+  refreshControlMirrorCurrentImportsSnapshotMock: vi.fn(),
   syncControlMirrorHumanReviewQueueItemsMock: vi.fn()
 }));
 
@@ -14,13 +20,14 @@ vi.mock("@aas-companion/db", () => ({
   createControlMirrorUploadedSnapshot: vi.fn(),
   getControlMirrorDashboardSnapshot: getControlMirrorDashboardSnapshotMock,
   getControlMirrorEvidencePackExportRecordById: vi.fn(),
+  hasControlMirrorCurrentImportFilesAfter: hasControlMirrorCurrentImportFilesAfterMock,
   listControlMirrorEvidencePackExportRecords: vi.fn(),
-  mergeControlMirrorHumanReviewItemsWithQueueState: vi.fn(),
+  mergeControlMirrorHumanReviewItemsWithQueueState: mergeControlMirrorHumanReviewItemsWithQueueStateMock,
   recordControlMirrorEvidencePackExportAcceptanceDecision: vi.fn(),
   recordControlMirrorEvidencePackExportDownloadEvent: vi.fn(),
   recordControlMirrorHumanReviewDecision: vi.fn(),
   resetControlMirrorWorkspace: vi.fn(),
-  refreshControlMirrorCurrentImportsSnapshot: vi.fn(),
+  refreshControlMirrorCurrentImportsSnapshot: refreshControlMirrorCurrentImportsSnapshotMock,
   syncControlMirrorHumanReviewQueueItems: syncControlMirrorHumanReviewQueueItemsMock
 }));
 
@@ -32,6 +39,7 @@ function createResetBaselineDashboard() {
       id: "reset-snapshot-1",
       isPersistent: true,
       label: "Reset baseline 2026-05-25 18:22",
+      scanTime: "2026-05-25T18:22:00.000Z",
       fileCount: 0
     },
     artifacts: [],
@@ -126,6 +134,7 @@ function createResetBaselineDashboard() {
 describe("Control Mirror dashboard service", () => {
   it("keeps a reset baseline clear until new evidence is imported or refreshed", async () => {
     getControlMirrorDashboardSnapshotMock.mockResolvedValueOnce(createResetBaselineDashboard());
+    hasControlMirrorCurrentImportFilesAfterMock.mockResolvedValueOnce(false);
     syncControlMirrorHumanReviewQueueItemsMock.mockResolvedValueOnce([]);
 
     const result = await getControlMirrorDashboardService("org-demo");
@@ -144,5 +153,49 @@ describe("Control Mirror dashboard service", () => {
     expect(result.data.designProgress.storyIdeas).toBe(0);
     expect(result.data.report.blockingHumanReviewItems).toBe(0);
     expect(result.data.report.recommendedNextStep).toBe("Import or refresh Control Mirror evidence to evaluate the current Framing baseline.");
+  });
+
+  it("refreshes current imports automatically when files were added after reset", async () => {
+    const refreshedDashboard = {
+      ...createResetBaselineDashboard(),
+      snapshot: {
+        id: "current-imports-1",
+        isPersistent: true,
+        label: "Current imports 2026-05-25 19:18",
+        scanTime: "2026-05-25T19:18:00.000Z",
+        sessionCount: 1,
+        fileCount: 24
+      },
+      artifacts: [{ id: "artifact-1" }],
+      normalizedEvidence: [{ id: "evidence-1", sensitiveFindingCount: 0 }],
+      humanReviewItems: []
+    };
+
+    getControlMirrorDashboardSnapshotMock
+      .mockResolvedValueOnce(createResetBaselineDashboard())
+      .mockResolvedValueOnce(refreshedDashboard);
+    hasControlMirrorCurrentImportFilesAfterMock.mockResolvedValueOnce(true);
+    refreshControlMirrorCurrentImportsSnapshotMock.mockResolvedValueOnce({ id: "current-imports-1" });
+    syncControlMirrorHumanReviewQueueItemsMock.mockResolvedValueOnce([]);
+    mergeControlMirrorHumanReviewItemsWithQueueStateMock.mockReturnValueOnce([]);
+
+    const result = await getControlMirrorDashboardService("org-demo");
+
+    expect(result.ok).toBe(true);
+    expect(hasControlMirrorCurrentImportFilesAfterMock).toHaveBeenCalledWith({
+      organizationId: "org-demo",
+      after: new Date("2026-05-25T18:22:00.000Z")
+    });
+    expect(refreshControlMirrorCurrentImportsSnapshotMock).toHaveBeenCalledWith({
+      organizationId: "org-demo"
+    });
+    expect(syncControlMirrorHumanReviewQueueItemsMock).toHaveBeenCalledWith({
+      organizationId: "org-demo",
+      snapshotId: "current-imports-1",
+      items: []
+    });
+    if (!result.ok) return;
+    expect(result.data.snapshot.label).toBe("Current imports 2026-05-25 19:18");
+    expect(result.data.snapshot.fileCount).toBe(24);
   });
 });

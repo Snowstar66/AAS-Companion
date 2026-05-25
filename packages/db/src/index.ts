@@ -139,6 +139,7 @@ export {
 export {
   createControlMirrorUploadedSnapshot,
   getLatestControlMirrorSnapshot,
+  hasControlMirrorCurrentImportFilesAfter,
   resetControlMirrorWorkspace,
   refreshControlMirrorCurrentImportsSnapshot
 } from "./repositories/control-mirror-snapshot-repository";
