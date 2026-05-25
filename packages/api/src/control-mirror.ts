@@ -20,10 +20,113 @@ import {
   buildControlMirrorEvidencePackFileName,
   buildControlMirrorEvidencePackMarkdown,
   ensureControlMirrorEvidencePackAcceptancePolicy,
+  type ControlMirrorDashboard,
   type ControlMirrorEvidencePack,
   type ControlMirrorUploadedSnapshotFileInput
 } from "@aas-companion/domain";
 import { failure, success } from "./shared";
+
+function isControlMirrorResetBaseline(dashboard: ControlMirrorDashboard) {
+  return dashboard.snapshot.isPersistent &&
+    dashboard.snapshot.fileCount === 0 &&
+    dashboard.artifacts.length === 0 &&
+    dashboard.normalizedEvidence.length === 0 &&
+    dashboard.snapshot.label.startsWith("Reset baseline ");
+}
+
+function clearGeneratedControlMirrorStateAfterReset(dashboard: ControlMirrorDashboard): ControlMirrorDashboard {
+  return {
+    ...dashboard,
+    releaseReadiness: "conditional",
+    metrics: [],
+    normalization: {
+      evidenceCount: 0,
+      storyLikeItems: 0,
+      candidateDeliveryStories: 0,
+      storyIdeas: 0,
+      explorationStories: 0,
+      outOfScopeItems: 0,
+      readyForBuild: 0,
+      needsRefinement: 0
+    },
+    conformance: {
+      ...dashboard.conformance,
+      framingAligned: 0,
+      framingPartial: 0,
+      weakValueAlignment: 0,
+      scopeDrift: 0,
+      outOfScope: 0,
+      rightBuilt: 0,
+      weaklyTracedBuild: 0,
+      untracedBuildArtifacts: 0,
+      findings: [],
+      releaseRisk: 0,
+      aiLevelRecommendation: "proceed_with_controls"
+    },
+    guardrails: {
+      checked: 0,
+      passed: 0,
+      flagged: 0,
+      findings: []
+    },
+    designProgress: {
+      storyIdeas: 0,
+      classifiedItems: 0,
+      refinedDeliveryStories: 0,
+      storiesWithAcceptanceCriteria: 0,
+      storiesWithTestDefinition: 0,
+      readyForBuild: 0,
+      blockedStories: 0
+    },
+    buildConformance: {
+      ...dashboard.buildConformance,
+      rightBuilt: 0,
+      partiallyBuilt: 0,
+      builtButUnverified: 0,
+      weaklyTraced: 0,
+      releaseRisk: 0,
+      untracedArtifacts: 0
+    },
+    testEvidence: {
+      ...dashboard.testEvidence,
+      storiesWithNoTest: 0,
+      storiesWithTestDefinitionOnly: 0,
+      storiesWithImplementedTests: 0,
+      storiesWithPassingTests: 0,
+      storiesWithFailingTests: 0,
+      manualVerificationOnly: 0,
+      behaviouralContractTests: 0,
+      brokenValueSpineLinks: 0,
+      mappedEvidence: [],
+      valueSpineCoverage: [],
+      untracedImplementationArtifacts: []
+    },
+    aiEvidence: [],
+    humanReviewItems: [],
+    reviewStateSummary: {
+      open: 0,
+      decided: 0,
+      deferred: 0,
+      superseded: 0,
+      openBlocking: 0,
+      items: []
+    },
+    report: {
+      ...dashboard.report,
+      releaseReadiness: "conditional",
+      evidenceSummaries: [],
+      openHumanReviewItems: 0,
+      blockingHumanReviewItems: 0,
+      scopeDriftItems: 0,
+      untracedArtifacts: 0,
+      requiredApprovals: [],
+      blockingGaps: [],
+      residualRisks: [],
+      decisionLogSummary: "Control Mirror has been reset. Import or refresh evidence before recording new decisions.",
+      recommendedNextStep: "Import or refresh Control Mirror evidence to evaluate the current Framing baseline."
+    }
+  };
+}
 
 export async function getControlMirrorDashboardService(organizationId: string) {
   try {
@@ -34,6 +137,16 @@ export async function getControlMirrorDashboardService(organizationId: string) {
         code: "control_mirror_not_found",
         message: "No governed project snapshot was found for this organization."
       });
+    }
+
+    if (isControlMirrorResetBaseline(snapshot)) {
+      await syncControlMirrorHumanReviewQueueItems({
+        organizationId,
+        snapshotId: snapshot.snapshot.id,
+        items: []
+      });
+
+      return success(clearGeneratedControlMirrorStateAfterReset(snapshot));
     }
 
     const persistedReviewItems = await syncControlMirrorHumanReviewQueueItems({
@@ -375,7 +488,7 @@ export async function resetControlMirrorWorkspaceService(input: {
       await syncControlMirrorHumanReviewQueueItems({
         organizationId: input.organizationId,
         snapshotId: dashboard.snapshot.isPersistent ? dashboard.snapshot.id : null,
-        items: dashboard.humanReviewItems
+        items: isControlMirrorResetBaseline(dashboard) ? [] : dashboard.humanReviewItems
       });
     }
 
