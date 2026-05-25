@@ -376,7 +376,12 @@ type DecisionPromptLogEntry = {
   href: string;
   impact: string;
   key: string;
+  nextActionHref: string;
+  nextActionLabel: string;
   question: string;
+  secondaryActionHref?: string;
+  secondaryActionLabel?: string;
+  source: string;
   status: string;
   statusTone: "good" | "warn" | "stop" | "neutral";
   time: string | null;
@@ -427,18 +432,18 @@ function DecisionPromptLog({
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border/70">
-            <div className="hidden grid-cols-[132px_minmax(260px,1.35fr)_minmax(220px,1fr)_minmax(220px,1fr)_116px] gap-3 border-b border-border/70 bg-muted/25 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:grid">
+            <div className="hidden grid-cols-[120px_minmax(240px,1.1fr)_minmax(240px,1fr)_minmax(190px,0.85fr)_minmax(160px,0.65fr)_96px] gap-3 border-b border-border/70 bg-muted/25 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:grid">
               <span>{t(language, "Type", "Typ")}</span>
               <span>{t(language, "Question", "Fraga")}</span>
+              <span>{t(language, "Where from", "Varifran")}</span>
               <span>{t(language, "Answer", "Svar")}</span>
-              <span>{t(language, "Impact", "Paverkan")}</span>
+              <span>{t(language, "Next", "Nasta")}</span>
               <span className="text-right">{t(language, "Status", "Status")}</span>
             </div>
             <div className="divide-y divide-border/70">
               {entries.map((entry) => (
-                <a
-                  className="grid gap-3 px-4 py-4 transition hover:bg-muted/20 xl:grid-cols-[132px_minmax(260px,1.35fr)_minmax(220px,1fr)_minmax(220px,1fr)_116px]"
-                  href={entry.href}
+                <div
+                  className="grid gap-3 px-4 py-4 transition hover:bg-muted/20 xl:grid-cols-[120px_minmax(240px,1.1fr)_minmax(240px,1fr)_minmax(190px,0.85fr)_minmax(160px,0.65fr)_96px]"
                   key={entry.key}
                 >
                   <div>
@@ -453,12 +458,26 @@ function DecisionPromptLog({
                     <p className="mt-1 text-xs text-muted-foreground">{entry.key}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Answer", "Svar")}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground xl:mt-0">{entry.answer}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Where from", "Varifran")}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground xl:mt-0">{entry.source}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Impact", "Paverkan")}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground xl:mt-0">{entry.impact}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Answer", "Svar")}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground xl:mt-0">{entry.answer}</p>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{entry.impact}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Next", "Nasta")}</p>
+                    <div className="mt-1 flex flex-col gap-2 xl:mt-0">
+                      <Button asChild size="sm" variant={entry.statusTone === "good" ? "secondary" : "default"}>
+                        <Link href={entry.nextActionHref}>{entry.nextActionLabel}</Link>
+                      </Button>
+                      {entry.secondaryActionHref && entry.secondaryActionLabel ? (
+                        <Button asChild size="sm" variant="secondary">
+                          <Link href={entry.secondaryActionHref}>{entry.secondaryActionLabel}</Link>
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="flex items-start justify-start xl:justify-end">
                     <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${getBadgeClasses(entry.statusTone)}`}>
@@ -466,7 +485,7 @@ function DecisionPromptLog({
                       {entry.status}
                     </span>
                   </div>
-                </a>
+                </div>
               ))}
             </div>
           </div>
@@ -600,23 +619,97 @@ export default async function ControlMirrorPage({
       "Börja med rader markerade Action eller Pending, registrera svaret och uppdatera sedan Control Mirror."
     )
   };
+  const getReviewCardHref = (itemId: string) => `#review-item-${itemId}`;
+  const getHumanReviewSource = (item: ControlMirrorDashboard["humanReviewItems"][number]) => {
+    if (item.sourceFindingId === "guardrail-governance-funding") {
+      return t(
+        language,
+        "Generated by the Commercial governance guardrail: requested AI level is Level 2/3, but no funding, Margin Gate, commercial or governance-funding evidence was found in imported artifacts or signoff references.",
+        "Skapad av Commercial governance-regeln: begard AI-niva ar Level 2/3, men Control Mirror hittade ingen funding-, Margin Gate-, commercial- eller governance-funding-evidens i importerade filer eller signoff-referenser."
+      );
+    }
+
+    if (item.sourceFindingId === "guardrail-test-evidence") {
+      return t(
+        language,
+        "Generated by the Test evidence guardrail: at least one release-impacting Story lacks mapped implemented or manual verification evidence.",
+        "Skapad av Test evidence-regeln: minst en releasepaverkande Story saknar mappad implementerad eller manuell verifieringsevidens."
+      );
+    }
+
+    if (item.sourceFindingId === "untraced-artifacts") {
+      return t(
+        language,
+        "Generated from the artifact manifest: implementation or test artifacts were found without Story-ID lineage.",
+        "Skapad fran artifact manifest: implementation eller testartefakter hittades utan Story-ID lineage."
+      );
+    }
+
+    if (item.sourceFindingId === "ai-level-recommendation") {
+      return t(
+        language,
+        "Generated from the AI-level calculation: requested AI level is higher than the evidence-backed achieved level.",
+        "Skapad fran AI-nivaberakningen: begard AI-niva ar hogre an evidensbaserad uppnadd niva."
+      );
+    }
+
+    return `${item.sourceFindingId ?? item.category}: ${item.rationale}`;
+  };
+  const getHumanReviewNextAction = (item: ControlMirrorDashboard["humanReviewItems"][number]) => {
+    const reviewHref = getReviewCardHref(item.id);
+
+    if (item.sourceFindingId === "guardrail-governance-funding") {
+      return {
+        nextActionHref: "/intake?source=control-mirror",
+        nextActionLabel: t(language, "Import funding evidence", "Importera funding-evidens"),
+        secondaryActionHref: reviewHref,
+        secondaryActionLabel: t(language, "Record exception", "Registrera undantag")
+      };
+    }
+
+    if (item.sourceFindingId === "guardrail-test-evidence") {
+      return {
+        nextActionHref: "/intake?source=control-mirror",
+        nextActionLabel: t(language, "Import test evidence", "Importera testevidens"),
+        secondaryActionHref: reviewHref,
+        secondaryActionLabel: t(language, "Record decision", "Registrera beslut")
+      };
+    }
+
+    if (item.sourceFindingId === "untraced-artifacts") {
+      return {
+        nextActionHref: "#artifacts",
+        nextActionLabel: t(language, "Inspect artifacts", "Granska artefakter"),
+        secondaryActionHref: reviewHref,
+        secondaryActionLabel: t(language, "Record decision", "Registrera beslut")
+      };
+    }
+
+    return {
+      nextActionHref: reviewHref,
+      nextActionLabel: t(language, "Open review card", "Oppna review-kort")
+    };
+  };
   const humanReviewDecisionLogEntries: DecisionPromptLogEntry[] = data.humanReviewItems.map((item) => {
     const hasDecision = Boolean(item.latestHumanDecision);
     const reviewState = item.reviewState ?? "open";
     const statusTone = hasDecision ? "good" : item.blocksRelease ? "stop" : "warn";
+    const nextAction = getHumanReviewNextAction(item);
 
     return {
       answer: hasDecision
         ? `${getHumanDecisionLabel(item.latestHumanDecision?.decisionType ?? "")}: ${item.latestHumanDecision?.rationale ?? ""}`
         : `${t(language, "Awaiting answer", "Invantar svar")}. ${t(language, "Suggested", "Forslag")}: ${item.suggestedResponse}`,
-      href: item.reviewHref,
+      href: getReviewCardHref(item.id),
       impact: hasDecision
         ? t(language, "Updates the release recommendation and evidence pack review state.", "Uppdaterar release-rekommendationen och review-status i evidenspaketet.")
         : item.blocksRelease
           ? t(language, "Blocks release or higher AI-level claims until answered.", "Blockerar release eller hogre AI-nivaansprak tills fragan ar besvarad.")
           : t(language, "Can change the recommendation if the answer confirms a gap.", "Kan andra rekommendationen om svaret bekraftar ett gap."),
       key: item.persistedReviewItemId ?? item.id,
+      ...nextAction,
       question: item.decisionNeeded,
+      source: getHumanReviewSource(item),
       status: hasDecision ? getHumanDecisionLabel(item.latestHumanDecision?.decisionType ?? "") : reviewState === "open" ? t(language, "Action", "Atgard") : formatLabel(reviewState),
       statusTone,
       time: item.latestHumanDecision?.createdAt ?? item.persistedUpdatedAt ?? null,
@@ -629,7 +722,10 @@ export default async function ControlMirrorPage({
       href: `/control-mirror/export/${record.id}`,
       impact: `${t(language, "Evidence pack sharing status", "Delningsstatus for evidenspaket")}: ${formatLabel(record.acceptanceSummary.shareReadiness)}`,
       key: decision.id,
+      nextActionHref: `/control-mirror/export/${record.id}`,
+      nextActionLabel: t(language, "Open export", "Oppna export"),
       question: `${formatLabel(decision.reviewerRole)} ${t(language, "acceptance for", "acceptans for")} ${record.fileName}`,
+      source: t(language, "Recorded from Product/Security acceptance on a generated Control Mirror evidence pack export.", "Registrerad fran Product/Security-acceptans pa en genererad Control Mirror evidence pack-export."),
       status: formatLabel(decision.decisionType),
       statusTone: decision.decisionType === "changes_requested" || decision.decisionType === "revoked" ? "stop" as const : decision.decisionType === "accepted_with_conditions" ? "warn" as const : "good" as const,
       time: decision.createdAt,
@@ -645,7 +741,10 @@ export default async function ControlMirrorPage({
       href: `/control-mirror/export/${record.id}`,
       impact: t(language, "Prevents broad governance or external sharing until accepted.", "Hindrar bred governance- eller extern delning tills acceptans finns."),
       key: `${record.id}-acceptance-pending`,
+      nextActionHref: "#control-report-preview",
+      nextActionLabel: t(language, "Record acceptance", "Registrera acceptans"),
       question: `${t(language, "Can this evidence pack be shared", "Kan detta evidenspaket delas")}: ${record.fileName}?`,
+      source: t(language, "Generated from evidence pack sharing policy because required acceptance roles are missing.", "Skapad fran evidence pack-delningens policy eftersom obligatoriska acceptansroller saknas."),
       status: t(language, "Pending", "Vantar"),
       statusTone: "warn" as const,
       time: record.generatedAt,
@@ -1531,12 +1630,28 @@ export default async function ControlMirrorPage({
               </div>
             ) : (
               data.humanReviewItems.map((item) => (
-                <div className={`rounded-2xl border px-4 py-4 ${item.severity === "high" ? "border-rose-200 bg-rose-50 text-rose-900" : "border-amber-200 bg-amber-50 text-amber-900"}`} key={item.id}>
+                <div className={`rounded-2xl border px-4 py-4 ${item.severity === "high" ? "border-rose-200 bg-rose-50 text-rose-900" : "border-amber-200 bg-amber-50 text-amber-900"}`} id={`review-item-${item.id}`} key={item.id}>
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-75">{item.category}</p>
                       <p className="mt-2 font-medium">{item.decisionNeeded}</p>
                       <p className="mt-2 text-sm leading-6">{item.rationale}</p>
+                      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                        <div className="rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">{t(language, "Where this came from", "Var detta kommer fran")}</p>
+                          <p className="mt-2 leading-6">{getHumanReviewSource(item)}</p>
+                        </div>
+                        <div className="rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">{t(language, "What to do now", "Vad du gor nu")}</p>
+                          <p className="mt-2 leading-6">
+                            {item.sourceFindingId === "guardrail-governance-funding"
+                              ? t(language, "Attach a funding, Margin Gate or commercial governance file, then refresh Control Mirror. If this project has no such gate, record a controlled exception here.", "Ladda upp en funding-, Margin Gate- eller commercial governance-fil och uppdatera Control Mirror. Om projektet saknar sadan gate, registrera ett kontrollerat undantag har.")
+                              : item.sourceFindingId === "guardrail-test-evidence"
+                                ? t(language, "Import mapped test evidence or a BMAD comparison matrix with test_ids and verification_result, then refresh Control Mirror.", "Importera mappad testevidens eller en BMAD comparison matrix med test_ids och verification_result och uppdatera Control Mirror.")
+                                : t(language, "Use the recommendation and alternatives below to either add evidence or record a human decision.", "Anvand rekommendationen och alternativen nedan for att antingen lagga till evidens eller registrera ett manskligt beslut.")}
+                          </p>
+                        </div>
+                      </div>
                       <p className="mt-2 text-sm">Affected: {item.affectedObject}</p>
                       <p className="mt-2 text-sm">Value: {item.valueRationale}</p>
                       <p className="mt-2 text-sm">Risk if approved: {item.riskIfApproved}</p>
@@ -1556,7 +1671,7 @@ export default async function ControlMirrorPage({
                         Recommendation: {item.recommendedOption}
                       </span>
                       <Button asChild size="sm" variant="secondary">
-                        <Link href={item.reviewHref}>{t(language, "Open in Human Review", "Öppna i Human Review")}</Link>
+                        <Link href={getHumanReviewNextAction(item).nextActionHref}>{getHumanReviewNextAction(item).nextActionLabel}</Link>
                       </Button>
                       {item.persistedReviewItemId && item.reviewState !== "decided" && item.reviewState !== "deferred" ? (
                         <form action={recordControlMirrorHumanReviewDecisionAction} className="mt-2 grid w-full min-w-[260px] gap-2 rounded-xl border border-current/15 bg-background/70 p-3 text-sm md:w-[300px]">

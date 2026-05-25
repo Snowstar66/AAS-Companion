@@ -542,7 +542,11 @@ describe("Control Mirror page", () => {
     expect(screen.getByText("Decision & prompt log")).toBeDefined();
     expect(screen.getByText("A backlog-style trail of the questions Control Mirror raised, the answer recorded so far, and what each answer changes.")).toBeDefined();
     expect(screen.getByText("Show log guidance")).toBeDefined();
+    expect(screen.getAllByText("Where from").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Next").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Awaiting answer. Suggested: DEFER").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Generated from the AI-level calculation: requested AI level is higher than the evidence-backed achieved level.").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /open review card/i }).some((link) => link.getAttribute("href") === "#review-item-ai-level-mismatch")).toBe(true);
     expect(screen.getByText("Can this evidence pack be shared: aas-demo-session-1-evidence-pack.json?")).toBeDefined();
     expect(screen.getByText("Awaiting required roles: product owner, security privacy, aqa")).toBeDefined();
     expect(screen.getByText("security privacy acceptance for aas-demo-session-1-evidence-pack.md")).toBeDefined();
@@ -574,6 +578,8 @@ describe("Control Mirror page", () => {
     expect(screen.getAllByText("apps/web/src/app/new-runtime/page.tsx").length).toBeGreaterThan(0);
     expect(screen.getAllByText("AI level evidence mismatch").length).toBeGreaterThan(0);
     expect(screen.getByText("Recommendation: DEFER")).toBeDefined();
+    expect(screen.getByText("Where this came from")).toBeDefined();
+    expect(screen.getByText("What to do now")).toBeDefined();
     expect(screen.getByText("Queue state: open")).toBeDefined();
     expect(screen.getByText("Control Mirror reads only user-authorized evidence. Local folders and repositories are never scanned silently.")).toBeDefined();
     expect(screen.getByText("Uploaded snapshot")).toBeDefined();
@@ -596,7 +602,6 @@ describe("Control Mirror page", () => {
     expect(screen.getByText("Outcome/Epic/Story")).toBeDefined();
     expect(screen.getAllByText("outcome-1").length).toBeGreaterThan(0);
     expect(screen.getByText("Record human decision")).toBeDefined();
-    expect(screen.getByText("Open in Human Review")).toBeDefined();
     expect(screen.getByText("Control report preview")).toBeDefined();
     expect(screen.getByRole("link", { name: /download customer pdf/i }).getAttribute("href")).toBe("/control-mirror/customer-report");
     expect(screen.getAllByRole("link", { name: /download evidence pack/i }).some((link) => link.getAttribute("href") === "/control-mirror/export")).toBe(true);
