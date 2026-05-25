@@ -524,22 +524,21 @@ describe("Control Mirror page", () => {
     expect(screen.getByText("Human decisions")).toBeDefined();
     expect(screen.getByText("Evidence gaps")).toBeDefined();
     expect(screen.getByText("AI, lineage and Value Spine gaps treated as risk")).toBeDefined();
-    expect(screen.getByText("Outside spine")).toBeDefined();
-    expect(screen.getByText("1 untraced")).toBeDefined();
     expect(screen.getByText("Executive summary")).toBeDefined();
     expect(screen.getAllByText("Downgrade AI claim").length).toBeGreaterThan(0);
-    expect(screen.getByText("Control flow")).toBeDefined();
     expect(screen.getByRole("link", { name: /review blockers/i }).getAttribute("href")).toBe("#human-review");
-    expect(screen.getByLabelText("Open Human Review evidence").getAttribute("href")).toBe("#human-review");
-    expect(screen.getByLabelText("Open untraced artifacts").getAttribute("href")).toBe("#artifacts");
-    expect(screen.getByLabelText("Open missing AI evidence").getAttribute("href")).toBe("#ai-level-evidence");
-    expect(screen.getByLabelText("Open current release recommendation").getAttribute("href")).toBe("#human-review");
+    expect(screen.getByRole("link", { name: /view evidence dashboard/i }).getAttribute("href")).toBe("#control-dashboard");
+    expect(screen.getByText("Evidence dashboard")).toBeDefined();
+    expect(screen.getByText("What changes the recommendation")).toBeDefined();
+    expect(screen.getByText("Handshake coverage")).toBeDefined();
+    expect(screen.getByLabelText("Handshake coverage stacked bar")).toBeDefined();
+    expect(screen.getByText("Known delivery progress")).toBeDefined();
+    expect(screen.getAllByText("50%").length).toBeGreaterThan(0);
+    expect(screen.getByText("Actionable blockers")).toBeDefined();
+    expect(screen.getByText("Show dashboard guidance")).toBeDefined();
     expect(document.getElementById("human-review")).not.toBeNull();
     expect(document.getElementById("control-report-preview")).not.toBeNull();
     expect(screen.getByText("Upload failed. No snapshot was created.")).toBeDefined();
-    expect(screen.getByText("Value Spine flow")).toBeDefined();
-    expect(screen.getByText("AI level ladder")).toBeDefined();
-    expect(screen.getByText("Decision map")).toBeDefined();
     expect(screen.getByText("Requested AI level")).toBeDefined();
     expect(screen.getAllByText("level 3").length).toBeGreaterThan(0);
     expect(screen.getByText("Achieved AI level")).toBeDefined();
@@ -626,6 +625,7 @@ describe("Control Mirror page", () => {
       organizationId: "org-demo",
       take: 5
     });
+    expect(screen.getByText("Technical audit details")).toBeDefined();
     expect(screen.getByText("Snapshot metadata")).toBeDefined();
     expect(screen.getByText("Report summary")).toBeDefined();
     expect(screen.getByText("Conformance findings")).toBeDefined();

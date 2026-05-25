@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import {
   AlertTriangle,
   ArrowRight,
+  BarChart3,
   CheckCircle2,
   Download,
   FileSearch,
@@ -23,6 +24,7 @@ import {
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@aas-companion/ui";
 import { AppShell } from "@/components/layout/app-shell";
 import { ActionSummaryCard } from "@/components/shared/action-summary-card";
+import { ContextHelp } from "@/components/shared/context-help";
 import { requireOrganizationContext } from "@/lib/auth/guards";
 import { ControlMirrorAnchorOpener } from "./control-mirror-anchor-opener";
 import {
@@ -141,230 +143,199 @@ function getDecisionLabel(status: string, language: AppLanguage) {
   return t(language, "Pause", "Pausa");
 }
 
-function getPercentTone(value: number) {
-  if (value >= 90) return { fill: "#dcfce7", stroke: "#86efac", text: "#052e2b" };
-  if (value >= 50) return { fill: "#fef3c7", stroke: "#fcd34d", text: "#422006" };
-  return { fill: "#ffe4e6", stroke: "#fda4af", text: "#4c0519" };
+function clampPercent(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function getAiLevelNumber(level: string) {
-  if (level === "level_3") return 3;
-  if (level === "level_2") return 2;
-  return 1;
+function percentageOf(value: number, total: number) {
+  return total > 0 ? clampPercent((value / total) * 100) : 0;
 }
 
-function ControlFlowDiagram({
-  language,
-  humanReviewHref,
-  reportHref
+function getSignalClasses(tone: "good" | "warn" | "stop" | "neutral") {
+  if (tone === "good") return "border-emerald-200 bg-emerald-50/85 text-emerald-950";
+  if (tone === "warn") return "border-amber-200 bg-amber-50/85 text-amber-950";
+  if (tone === "stop") return "border-rose-200 bg-rose-50/85 text-rose-950";
+  return "border-slate-200 bg-slate-50/80 text-slate-950";
+}
+
+function getBarClasses(tone: "good" | "warn" | "stop" | "neutral") {
+  if (tone === "good") return "bg-emerald-500";
+  if (tone === "warn") return "bg-amber-500";
+  if (tone === "stop") return "bg-rose-500";
+  return "bg-sky-500";
+}
+
+function MetricBar({
+  detail,
+  href,
+  label,
+  max,
+  tone,
+  value
 }: {
-  language: AppLanguage;
-  humanReviewHref: string;
-  reportHref: string;
+  detail?: string;
+  href?: string;
+  label: string;
+  max: number;
+  tone: "good" | "warn" | "stop" | "neutral";
+  value: number;
 }) {
-  const steps = [
-    t(language, "Source", "Källa"),
-    t(language, "Snapshot", "Snapshot"),
-    t(language, "Evidence", "Evidens"),
-    t(language, "Conformance", "Kontroll"),
-    t(language, "Human Review", "Human Review"),
-    t(language, "Report", "Rapport")
-  ];
+  const percent = percentageOf(value, max);
+  const content = (
+    <div className={`rounded-2xl border p-4 ${getSignalClasses(tone)}`}>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{label}</p>
+        <p className="text-xl font-semibold tabular-nums">{value}</p>
+      </div>
+      <div className="mt-3 h-2 rounded-full bg-white/70">
+        <div className={`h-2 rounded-full ${getBarClasses(tone)}`} style={{ width: `${percent}%` }} />
+      </div>
+      {detail ? <p className="mt-2 text-xs leading-5 opacity-80">{detail}</p> : null}
+    </div>
+  );
+
+  if (!href) {
+    return content;
+  }
 
   return (
-    <svg aria-label={t(language, "Control flow diagram", "Diagram över kontrollflöde")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 300">
-      <defs>
-        <marker id="control-flow-arrow" markerHeight="10" markerWidth="10" orient="auto" refX="9" refY="3">
-          <path d="M0,0 L9,3 L0,6 Z" fill="#64748b" />
-        </marker>
-      </defs>
-      <rect fill="#f8fafc" height="260" rx="24" stroke="#dbe4ef" width="780" x="20" y="20" />
-      <path d="M94 114 C150 62 212 62 268 114 S382 166 438 114 S552 62 608 114 S700 158 730 130" fill="none" markerEnd="url(#control-flow-arrow)" stroke="#64748b" strokeDasharray="6 8" strokeWidth="3" />
-      {steps.map((step, index) => {
-        const x = 42 + index * 121;
-        const y = index % 2 === 0 ? 78 : 150;
-        const href = index < 3 ? "#normalization" : index === 3 ? "#conformance" : index === 4 ? humanReviewHref : reportHref;
-        return (
-          <a aria-label={t(language, `Open ${step} evidence`, `Öppna ${step}-underlag`)} className="cursor-pointer" href={href} key={step}>
-            <title>{t(language, `Open ${step} evidence`, `Öppna ${step}-underlag`)}</title>
-            <rect fill="#eff6ff" height="84" rx="18" stroke="#bfdbfe" width="124" x={x} y={y} />
-            <text fill="#0369a1" fontSize="13" fontWeight="700" textAnchor="middle" x={x + 62} y={y + 28}>
-              {String(index + 1).padStart(2, "0")}
-            </text>
-            <text fill="#082f49" fontSize="16" fontWeight="650" textAnchor="middle" x={x + 62} y={y + 56}>
-              {step}
-            </text>
+    <a aria-label={`Open ${label}`} className="block focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2" href={href}>
+      {content}
+    </a>
+  );
+}
+
+function KnownDeliveryProgressChart({
+  language,
+  progressPercent,
+  stages
+}: {
+  language: AppLanguage;
+  progressPercent: number | null;
+  stages: Array<{ count: number; href: string; label: string }>;
+}) {
+  const max = Math.max(...stages.map((stage) => stage.count), 1);
+
+  return (
+    <Card className="border-border/70 bg-background/95 shadow-sm">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg">{t(language, "Known delivery progress", "Känd leveransprogress")}</CardTitle>
+            <CardDescription className="mt-1 text-sm">
+              {t(language, "Calculated only from visible planned chunks and evidence.", "Beräknas bara från synliga planerade chunks och evidens.")}
+            </CardDescription>
+          </div>
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-right text-sky-950">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-900/80">{t(language, "Known", "Känd")}</p>
+            <p className="text-2xl font-semibold">{progressPercent === null ? "n/a" : `${progressPercent}%`}</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {progressPercent === null ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm leading-6 text-amber-950">
+            {t(language, "No reliable slice plan is visible yet, so Control Mirror will not guess progress.", "Ingen tillförlitlig slice-plan syns än, så Control Mirror gissar inte progress.")}
+          </div>
+        ) : null}
+        {stages.map((stage) => (
+          <a className="block" href={stage.href} key={stage.label}>
+            <div className="grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)_48px] sm:items-center">
+              <p className="text-sm font-medium text-foreground">{stage.label}</p>
+              <div className="h-3 rounded-full bg-slate-100">
+                <div className="h-3 rounded-full bg-sky-500" style={{ width: `${percentageOf(stage.count, max)}%` }} />
+              </div>
+              <p className="text-right text-sm font-semibold tabular-nums text-foreground">{stage.count}</p>
+            </div>
           </a>
-        );
-      })}
-      <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="262">
-        {t(language, "Files become evidence, evidence becomes a control decision.", "Filer blir evidens, evidens blir ett kontrollbeslut.")}
-      </text>
-    </svg>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
-function ValueSpineDiagram({
+function HandshakeCoverageChart({
+  covered,
   language,
-  outsideSpineHref,
-  steps,
-  untracedCount
+  missing,
+  outside,
+  reshaped,
+  total
 }: {
+  covered: number;
   language: AppLanguage;
-  outsideSpineHref: string;
-  steps: Array<{ href: string; label: string; percentage: number }>;
-  untracedCount: number;
+  missing: number;
+  outside: number;
+  reshaped: number;
+  total: number;
 }) {
+  const hasPlan = total > 0;
+
   return (
-    <svg aria-label={t(language, "Value Spine coverage diagram", "Diagram över Value Spine-täckning")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 320">
-      <defs>
-        <marker id="value-spine-arrow" markerHeight="10" markerWidth="10" orient="auto" refX="9" refY="3">
-          <path d="M0,0 L9,3 L0,6 Z" fill="#475569" />
-        </marker>
-      </defs>
-      <rect fill="#f8fafc" height="284" rx="24" stroke="#dbe4ef" width="780" x="20" y="18" />
-      <path d="M140 136 H690" markerEnd="url(#value-spine-arrow)" stroke="#475569" strokeWidth="4" />
-      {steps.map((step, index) => {
-        const x = 56 + index * 185;
-        const tone = getPercentTone(step.percentage);
-        return (
-          <a aria-label={t(language, `Open ${step.label} traceability evidence`, `Öppna ${step.label}-spårbarhet`)} className="cursor-pointer" href={step.href} key={step.label}>
-            <title>{t(language, `Open ${step.label} traceability evidence`, `Öppna ${step.label}-spårbarhet`)}</title>
-            <circle cx={x + 66} cy="136" fill="#ffffff" r="74" stroke="#e2e8f0" strokeWidth="2" />
-            <circle cx={x + 66} cy="136" fill={tone.fill} r="62" stroke={tone.stroke} strokeWidth="2.5" />
-            <text fill={tone.text} fontSize="17" fontWeight="700" textAnchor="middle" x={x + 66} y="122">
-              {step.label}
-            </text>
-            <text fill={tone.text} fontSize="31" fontWeight="800" textAnchor="middle" x={x + 66} y="158">
-              {step.percentage}%
-            </text>
+    <Card className="border-border/70 bg-background/95 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">{t(language, "Handshake coverage", "Handshake coverage")}</CardTitle>
+        <CardDescription className="mt-1 text-sm">
+          {t(language, "Shows how much of the approved handshake has visible delivery evidence.", "Visar hur mycket av godkänt handshake som har synlig leveransevidens.")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {hasPlan ? (
+          <>
+            <div aria-label={t(language, "Handshake coverage stacked bar", "Staplad handshake-täckning")} className="flex h-5 overflow-hidden rounded-full bg-slate-100">
+              <a className="bg-emerald-500" href="#conformance" style={{ width: `${percentageOf(covered, total)}%` }} title={t(language, "Covered", "Täckt")} />
+              <a className="bg-sky-500" href="#conformance" style={{ width: `${percentageOf(reshaped, total)}%` }} title={t(language, "Reshaped", "Omformat")} />
+              <a className="bg-amber-500" href="#human-review" style={{ width: `${percentageOf(missing, total)}%` }} title={t(language, "Missing", "Saknas")} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricBar detail={t(language, "Ready for build", "Redo för build")} href="#conformance" label={t(language, "Covered", "Täckt")} max={total} tone="good" value={covered} />
+              <MetricBar detail={t(language, "Partial delivery evidence", "Delvis leveransevidens")} href="#conformance" label={t(language, "Reshaped", "Omformat")} max={total} tone="neutral" value={reshaped} />
+              <MetricBar detail={t(language, "No proof yet", "Saknar bevis än")} href="#human-review" label={t(language, "Missing", "Saknas")} max={total} tone={missing > 0 ? "warn" : "good"} value={missing} />
+              <MetricBar detail={t(language, "Outside approved scope", "Utanför godkänt scope")} href="#artifacts" label={t(language, "Outside", "Utanför")} max={Math.max(total, outside, 1)} tone={outside > 0 ? "stop" : "good"} value={outside} />
+            </div>
+          </>
+        ) : (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm leading-6 text-amber-950">
+            {t(language, "No approved Story Idea baseline is visible yet, so coverage cannot be calculated fairly.", "Ingen godkänd Story Idea-baseline syns än, så täckning kan inte beräknas rättvist.")}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function BlockerDistributionChart({
+  items,
+  language
+}: {
+  items: Array<{ href: string; label: string; tone: "good" | "warn" | "stop" | "neutral"; value: number }>;
+  language: AppLanguage;
+}) {
+  const max = Math.max(...items.map((item) => item.value), 1);
+
+  return (
+    <Card className="border-border/70 bg-background/95 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">{t(language, "Actionable blockers", "Åtgärdbara blockerare")}</CardTitle>
+        <CardDescription className="mt-1 text-sm">
+          {t(language, "Only items that can change the recommendation are shown here.", "Här visas bara saker som kan ändra rekommendationen.")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {items.map((item) => (
+          <a className="block" href={item.href} key={item.label}>
+            <div className="grid gap-2 sm:grid-cols-[190px_minmax(0,1fr)_48px] sm:items-center">
+              <p className="text-sm font-medium text-foreground">{item.label}</p>
+              <div className="h-3 rounded-full bg-slate-100">
+                <div className={`h-3 rounded-full ${getBarClasses(item.tone)}`} style={{ width: `${percentageOf(item.value, max)}%` }} />
+              </div>
+              <p className="text-right text-sm font-semibold tabular-nums text-foreground">{item.value}</p>
+            </div>
           </a>
-        );
-      })}
-      <path d="M620 204 C654 242 684 240 716 206" fill="none" stroke="#ea580c" strokeDasharray="6 8" strokeWidth="2.5" />
-      <a aria-label={t(language, "Open untraced artifacts", "Öppna ospårade artefakter")} className="cursor-pointer" href={outsideSpineHref}>
-        <title>{t(language, "Open untraced artifacts", "Öppna ospårade artefakter")}</title>
-      <rect fill="#fff7ed" height="58" rx="16" stroke="#fdba74" width="160" x="630" y="222" />
-      <text fill="#7c2d12" fontSize="13" fontWeight="750" textAnchor="middle" x="710" y="246">
-        {t(language, "Outside spine", "Utanför spine")}
-      </text>
-      <text fill="#7c2d12" fontSize="16" fontWeight="700" textAnchor="middle" x="710" y="267">
-        {untracedCount} {t(language, "untraced", "ospårade")}
-      </text>
-      </a>
-      <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="300">
-        {t(language, "A weak link means value traceability breaks before release.", "En svag länk betyder att värdespårningen bryts före release.")}
-      </text>
-    </svg>
-  );
-}
-
-function AiLevelDiagram({
-  achievedAiLevel,
-  evidenceHref,
-  language,
-  missingCount,
-  requestedAiLevel
-}: {
-  achievedAiLevel: string;
-  evidenceHref: string;
-  language: AppLanguage;
-  missingCount: number;
-  requestedAiLevel: string;
-}) {
-  const requested = getAiLevelNumber(requestedAiLevel);
-  const achieved = getAiLevelNumber(achievedAiLevel);
-
-  return (
-    <svg aria-label={t(language, "AI level ladder diagram", "Diagram över AI-nivåtrappa")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 320">
-      <rect fill="#f8fafc" height="284" rx="24" stroke="#dbe4ef" width="780" x="20" y="18" />
-      <path d="M78 252 H520" stroke="#cbd5e1" strokeWidth="2" />
-      {[1, 2, 3].map((level, index) => {
-        const height = 56 + level * 42;
-        const x = 94 + index * 155;
-        const y = 252 - height;
-        const isAchieved = level <= achieved;
-        const isRequested = level === requested;
-        return (
-          <g key={level}>
-            <rect fill={isAchieved ? "#dbeafe" : "#ffffff"} height={height} rx="18" stroke={isRequested ? "#2563eb" : "#cbd5e1"} strokeWidth={isRequested ? "4" : "2"} width="126" x={x} y={y} />
-            <text fill="#0f172a" fontSize="19" fontWeight="800" textAnchor="middle" x={x + 63} y={y + 36}>
-              Level {level}
-            </text>
-            <text fill="#475569" fontSize="13" fontWeight="650" textAnchor="middle" x={x + 63} y={y + 60}>
-              {isRequested ? t(language, "requested", "begärd") : isAchieved ? t(language, "achieved", "uppnådd") : t(language, "missing", "saknas")}
-            </text>
-          </g>
-        );
-      })}
-      <a aria-label={t(language, "Open missing AI evidence", "Öppna saknad AI-evidens")} className="cursor-pointer" href={evidenceHref}>
-        <title>{t(language, "Open missing AI evidence", "Öppna saknad AI-evidens")}</title>
-      <path d="M600 72 H764 V252 H600 Z" fill="#fffbeb" stroke="#fcd34d" strokeWidth="2.5" />
-      <path d="M632 208 H732" stroke="#f59e0b" strokeLinecap="round" strokeWidth="6" />
-      <text fill="#713f12" fontSize="13" fontWeight="800" letterSpacing="3" textAnchor="middle" x="682" y="110">
-        MISSING
-      </text>
-      <text fill="#713f12" fontSize="54" fontWeight="850" textAnchor="middle" x="682" y="170">
-        {missingCount}
-      </text>
-      <text fill="#713f12" fontSize="14" textAnchor="middle" x="682" y="196">
-        {t(language, "evidence items", "evidenspunkter")}
-      </text>
-      </a>
-    </svg>
-  );
-}
-
-function DecisionMapDiagram({
-  activeHref,
-  language,
-  releaseReadiness
-}: {
-  activeHref: string;
-  language: AppLanguage;
-  releaseReadiness: string;
-}) {
-  const items = [
-    ["ready", t(language, "Ready", "Redo")],
-    ["conditional", t(language, "Conditional", "Villkor")],
-    ["human_approval_required", t(language, "Review", "Review")],
-    ["downgrade_required", t(language, "Downgrade", "Sänk")],
-    ["blocked", t(language, "Pause", "Pausa")]
-  ];
-  const activeIndex = Math.max(items.findIndex(([status]) => status === releaseReadiness), 0);
-
-  return (
-    <svg aria-label={t(language, "Release decision map", "Beslutskarta för release")} className="block h-auto w-full max-w-full" role="img" viewBox="0 0 820 320">
-      <rect fill="#f8fafc" height="284" rx="24" stroke="#dbe4ef" width="780" x="20" y="18" />
-      <path d="M100 150 H720" stroke="#cbd5e1" strokeWidth="10" />
-      <path d={`M100 150 H${100 + activeIndex * 155}`} stroke="#2563eb" strokeLinecap="round" strokeWidth="10" />
-      {items.map(([status, label], index) => {
-        const cx = 100 + index * 155;
-        const active = status === releaseReadiness;
-        const node = (
-          <g>
-            <circle cx={cx} cy="150" fill={active ? "#2563eb" : "#ffffff"} r="51" stroke={active ? "#1d4ed8" : "#cbd5e1"} strokeWidth="3" />
-            <text fill={active ? "#ffffff" : "#334155"} fontSize="15" fontWeight="800" textAnchor="middle" x={cx} y="156">
-              {label}
-            </text>
-          </g>
-        );
-
-        return (
-          active ? (
-            <a aria-label={t(language, "Open current release recommendation", "Öppna nuvarande release-rekommendation")} className="cursor-pointer" href={activeHref} key={status}>
-              <title>{t(language, "Open current release recommendation", "Öppna nuvarande release-rekommendation")}</title>
-              {node}
-            </a>
-          ) : (
-            <g key={status}>{node}</g>
-          )
-        );
-      })}
-      <text fill="#475569" fontSize="14" textAnchor="middle" x="410" y="250">
-        {t(language, "The highlighted stop is the current recommendation.", "Den markerade stationen är nuvarande rekommendation.")}
-      </text>
-    </svg>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -409,24 +380,61 @@ export default async function ControlMirrorPage({
   const visibleUntracedImplementationArtifacts = data.testEvidence.untracedImplementationArtifacts.slice(0, 6);
   const visibleGuardrailFindings = data.guardrails.findings.slice(0, 8);
   const missingAiEvidence = data.aiEvidence.filter((item) => !item.present);
-  const framingMetric = data.metrics.find((metric) => metric.id === "framing-alignment");
-  const valueSpineMetric = data.metrics.find((metric) => metric.id === "value-spine-coverage");
-  const buildMetric = data.metrics.find((metric) => metric.id === "build-conformance");
-  const testMetric = data.metrics.find((metric) => metric.id === "test-evidence");
   const topBlockers = [
     ...data.report.blockingGaps,
     ...data.guardrails.findings.map((finding) => finding.recommendedAction),
     ...data.conformance.findings.filter((finding) => finding.severity === "high").map((finding) => finding.recommendedAction)
   ].slice(0, 3);
   const humanReviewHref = "#human-review";
-  const reportPreviewHref = "#control-report-preview";
-  const currentRecommendationHref = data.releaseReadiness === "ready" ? reportPreviewHref : humanReviewHref;
-  const valueSpineSteps = [
-    { href: "#normalization", label: "Outcome", percentage: framingMetric?.percentage ?? 0 },
-    { href: "#value-spine-coverage", label: "Epic", percentage: valueSpineMetric?.percentage ?? 0 },
-    { href: "#conformance", label: "Story", percentage: buildMetric?.percentage ?? 0 },
-    { href: "#value-spine-coverage", label: "Test", percentage: testMetric?.percentage ?? 0 }
+  const approvedChunkCount = data.designProgress.storyIdeas;
+  const coveredHandshakeCount = Math.min(data.designProgress.readyForBuild, approvedChunkCount);
+  const reshapedHandshakeCount = Math.min(data.buildConformance.partiallyBuilt, Math.max(approvedChunkCount - coveredHandshakeCount, 0));
+  const missingHandshakeCount = Math.max(approvedChunkCount - coveredHandshakeCount - reshapedHandshakeCount, 0);
+  const outsideHandshakeCount = untracedArtifacts.length + data.normalization.outOfScopeItems;
+  const knownProgressPercent = approvedChunkCount > 0 ? percentageOf(data.designProgress.readyForBuild, approvedChunkCount) : null;
+  const progressStages = [
+    { href: "#normalization", label: t(language, "Story Ideas", "Story Ideas"), count: data.designProgress.storyIdeas },
+    { href: "#normalization", label: t(language, "Classified", "Klassade"), count: data.designProgress.classifiedItems },
+    { href: "#conformance", label: t(language, "Delivery Stories", "Delivery Stories"), count: data.designProgress.refinedDeliveryStories },
+    { href: "#conformance", label: t(language, "Acceptance criteria", "Acceptanskriterier"), count: data.designProgress.storiesWithAcceptanceCriteria },
+    { href: "#value-spine-coverage", label: t(language, "Test definition", "Testdefinition"), count: data.designProgress.storiesWithTestDefinition },
+    { href: "#conformance", label: t(language, "Ready for build", "Redo för build"), count: data.designProgress.readyForBuild }
   ];
+  const testGapCount = data.testEvidence.storiesWithNoTest + data.testEvidence.storiesWithTestDefinitionOnly + data.testEvidence.brokenValueSpineLinks;
+  const blockerChartItems = [
+    { href: humanReviewHref, label: t(language, "Human review", "Human review"), tone: blockingItems.length > 0 ? "stop" as const : "good" as const, value: blockingItems.length },
+    { href: "#ai-level-evidence", label: t(language, "AI evidence", "AI-evidens"), tone: missingAiEvidence.length > 0 ? "warn" as const : "good" as const, value: missingAiEvidence.length },
+    { href: "#value-spine-coverage", label: t(language, "Test gaps", "Testgap"), tone: testGapCount > 0 ? "warn" as const : "good" as const, value: testGapCount },
+    { href: "#artifacts", label: t(language, "Untraced scope", "Ospårat scope"), tone: untracedArtifacts.length > 0 ? "stop" as const : "good" as const, value: untracedArtifacts.length }
+  ];
+  const dashboardHelp = {
+    title: t(language, "Control Mirror dashboard", "Control Mirror-dashboard"),
+    summary: t(
+      language,
+      "Use the first view for decisions only: recommendation, handshake coverage, known progress and blockers.",
+      "Använd första vyn bara för beslut: rekommendation, handshake-täckning, känd progress och blockerare."
+    ),
+    purpose: t(
+      language,
+      "Separate what is proven from what is planned so the release recommendation is not inflated by intended work.",
+      "Separera det som är bevisat från det som är planerat så att release-rekommendationen inte blåses upp av tänkt arbete."
+    ),
+    belongs: t(
+      language,
+      "Actionable gaps, linked evidence, known chunks, review decisions and report-ready status.",
+      "Åtgärdbara gap, länkad evidens, kända chunks, review-beslut och rapportklar status."
+    ),
+    avoid: t(
+      language,
+      "Raw scan counters, storage policy detail and technical metadata unless you open the audit section.",
+      "Råa scan-räknare, lagringspolicy och teknisk metadata om du inte öppnar audit-delen."
+    ),
+    nextStep: t(
+      language,
+      "Open the largest blocker first, then refresh the snapshot after new evidence has been imported.",
+      "Öppna största blockeraren först och uppdatera sedan snapshot efter att ny evidens importerats."
+    )
+  };
   const firstViewportSignals = [
     {
       label: t(language, "Source judged", "Bedömd källa"),
@@ -483,15 +491,15 @@ export default async function ControlMirrorPage({
     >
       <ControlMirrorAnchorOpener />
       <section className="space-y-6">
-        <div className="rounded-3xl border border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(14,116,144,0.16),_transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.96),rgba(246,248,252,0.92))] p-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="rounded-3xl border border-border/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.94))] p-6 shadow-sm">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             <Gauge className="h-3.5 w-3.5 text-primary" />
             {t(language, "Delivery conformance", "Leveranskontroll")}
           </div>
           <div className="mt-4 grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div>
-              <h1 className="text-4xl font-semibold tracking-tight">Control Mirror</h1>
-              <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
+              <h1 className="text-3xl font-semibold tracking-tight">Control Mirror</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
                 {t(
                   language,
                   "A parallel control view that checks whether design, build, tests and AI level evidence still follow approved Framing and the Value Spine.",
@@ -537,12 +545,12 @@ export default async function ControlMirrorPage({
               const Icon = item.tone === "good" ? CheckCircle2 : item.tone === "stop" ? ShieldAlert : item.tone === "warn" ? AlertTriangle : FileSearch;
 
               return (
-                <div className={`min-h-[148px] rounded-2xl border p-4 ${toneClass}`} key={item.label}>
+                <div className={`min-h-[118px] rounded-2xl border p-4 ${toneClass}`} key={item.label}>
                   <div className="flex items-start gap-3">
                     <Icon className="mt-0.5 h-5 w-5 shrink-0" />
                     <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{item.label}</p>
-                      <p className="mt-2 break-words text-2xl font-semibold leading-tight">{item.value}</p>
+                      <p className="mt-2 break-words text-xl font-semibold leading-tight">{item.value}</p>
                       <p className="mt-2 text-sm leading-6 opacity-80">{item.detail}</p>
                     </div>
                   </div>
@@ -603,9 +611,9 @@ export default async function ControlMirrorPage({
                   </Link>
                 </Button>
                 <Button asChild className="gap-2" variant="secondary">
-                  <Link href="#control-diagrams">
-                    <GitBranch className="h-4 w-4" />
-                    {t(language, "View diagrams", "Visa diagram")}
+                  <Link href="#control-dashboard">
+                    <BarChart3 className="h-4 w-4" />
+                    {t(language, "View evidence dashboard", "Visa evidensdashboard")}
                   </Link>
                 </Button>
               </div>
@@ -613,58 +621,34 @@ export default async function ControlMirrorPage({
           </CardContent>
         </Card>
 
-        <div className="grid gap-5 xl:grid-cols-2" id="control-diagrams">
-          <Card className="overflow-hidden border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>{t(language, "Control flow", "Kontrollflöde")}</CardTitle>
-              <CardDescription>{t(language, "How source material becomes a reviewable Control Mirror report.", "Hur källmaterial blir en granskningsbar Control Mirror-rapport.")}</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-hidden px-4 pb-5">
-              <ControlFlowDiagram humanReviewHref={humanReviewHref} language={language} reportHref={reportPreviewHref} />
-            </CardContent>
-          </Card>
+        <div className="space-y-4" id="control-dashboard">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t(language, "Evidence dashboard", "Evidensdashboard")}</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight">{t(language, "What changes the recommendation", "Det som ändrar rekommendationen")}</h2>
+            </div>
+            <ContextHelp className="md:max-w-xl" pattern={dashboardHelp} summaryLabel={t(language, "Show dashboard guidance", "Visa dashboard-hjälp")} />
+          </div>
 
-          <Card className="overflow-hidden border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>{t(language, "Value Spine flow", "Value Spine-flöde")}</CardTitle>
-              <CardDescription>{t(language, "Outcome to test coverage at a glance.", "Outcome till testevidens i ett svep.")}</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-hidden px-4 pb-5">
-              <ValueSpineDiagram language={language} outsideSpineHref="#artifacts" steps={valueSpineSteps} untracedCount={untracedArtifacts.length} />
-            </CardContent>
-          </Card>
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <HandshakeCoverageChart
+              covered={coveredHandshakeCount}
+              language={language}
+              missing={missingHandshakeCount}
+              outside={outsideHandshakeCount}
+              reshaped={reshapedHandshakeCount}
+              total={approvedChunkCount}
+            />
+            <KnownDeliveryProgressChart language={language} progressPercent={knownProgressPercent} stages={progressStages} />
+          </div>
 
-          <Card className="overflow-hidden border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>{t(language, "AI level ladder", "AI-nivåtrappa")}</CardTitle>
-              <CardDescription>{t(language, "Requested level compared with evidence-backed achieved level.", "Begärd nivå jämfört med evidensstödd uppnådd nivå.")}</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-hidden px-4 pb-5">
-              <AiLevelDiagram
-                achievedAiLevel={data.achievedAiLevel}
-                evidenceHref="#ai-level-evidence"
-                language={language}
-                missingCount={missingAiEvidence.length}
-                requestedAiLevel={data.requestedAiLevel}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden border-border/70 shadow-sm">
-            <CardHeader>
-              <CardTitle>{t(language, "Decision map", "Beslutskarta")}</CardTitle>
-              <CardDescription>{t(language, "Where the current release recommendation lands.", "Var nuvarande rekommendation landar.")}</CardDescription>
-            </CardHeader>
-            <CardContent className="overflow-hidden px-4 pb-5">
-              <DecisionMapDiagram activeHref={currentRecommendationHref} language={language} releaseReadiness={data.releaseReadiness} />
-            </CardContent>
-          </Card>
+          <BlockerDistributionChart items={blockerChartItems} language={language} />
         </div>
 
         <details className="rounded-2xl border border-border/70 bg-background shadow-sm">
           <summary className="flex cursor-pointer list-none flex-col gap-2 px-5 py-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-lg font-semibold">{t(language, "Evidence details", "Evidensdetaljer")}</p>
+              <p className="text-lg font-semibold">{t(language, "Technical audit details", "Tekniska auditdetaljer")}</p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {t(
                   language,
