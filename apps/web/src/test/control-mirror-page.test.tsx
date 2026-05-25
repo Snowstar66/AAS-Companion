@@ -535,6 +535,17 @@ describe("Control Mirror page", () => {
     expect(screen.getByText("Known delivery progress")).toBeDefined();
     expect(screen.getAllByText("50%").length).toBeGreaterThan(0);
     expect(screen.getByText("Actionable blockers")).toBeDefined();
+    expect(screen.getByText("Filled bars are unresolved risk. Good means every row is empty and shows 0.")).toBeDefined();
+    expect(screen.getByText("Target: 0 blockers")).toBeDefined();
+    expect(screen.getByText("Threshold: any value above 0 needs action.")).toBeDefined();
+    expect(screen.getByRole("link", { name: /open decision log/i }).getAttribute("href")).toBe("#decision-prompt-log");
+    expect(screen.getByText("Decision & prompt log")).toBeDefined();
+    expect(screen.getByText("A backlog-style trail of the questions Control Mirror raised, the answer recorded so far, and what each answer changes.")).toBeDefined();
+    expect(screen.getByText("Show log guidance")).toBeDefined();
+    expect(screen.getAllByText("Awaiting answer. Suggested: DEFER").length).toBeGreaterThan(0);
+    expect(screen.getByText("Can this evidence pack be shared: aas-demo-session-1-evidence-pack.json?")).toBeDefined();
+    expect(screen.getByText("Awaiting required roles: product owner, security privacy, aqa")).toBeDefined();
+    expect(screen.getByText("security privacy acceptance for aas-demo-session-1-evidence-pack.md")).toBeDefined();
     expect(screen.getByText("Show dashboard guidance")).toBeDefined();
     expect(document.getElementById("human-review")).not.toBeNull();
     expect(document.getElementById("control-report-preview")).not.toBeNull();

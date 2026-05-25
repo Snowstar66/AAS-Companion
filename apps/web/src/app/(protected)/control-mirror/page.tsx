@@ -9,6 +9,8 @@ import {
   FileSearch,
   Gauge,
   GitBranch,
+  ListChecks,
+  MessageSquareText,
   RotateCw,
   ShieldAlert,
   ShieldCheck
@@ -157,6 +159,13 @@ function getSignalClasses(tone: "good" | "warn" | "stop" | "neutral") {
   if (tone === "warn") return "border-amber-200 bg-amber-50/85 text-amber-950";
   if (tone === "stop") return "border-rose-200 bg-rose-50/85 text-rose-950";
   return "border-slate-200 bg-slate-50/80 text-slate-950";
+}
+
+function getBadgeClasses(tone: "good" | "warn" | "stop" | "neutral") {
+  if (tone === "good") return "border-emerald-200 bg-emerald-50 text-emerald-950";
+  if (tone === "warn") return "border-amber-200 bg-amber-50 text-amber-950";
+  if (tone === "stop") return "border-rose-200 bg-rose-50 text-rose-950";
+  return "border-slate-200 bg-slate-50 text-slate-950";
 }
 
 function getBarClasses(tone: "good" | "warn" | "stop" | "neutral") {
@@ -313,27 +322,155 @@ function BlockerDistributionChart({
   language: AppLanguage;
 }) {
   const max = Math.max(...items.map((item) => item.value), 1);
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  const cardTone = total > 0 ? "border-amber-200 bg-amber-50/35" : "border-emerald-200 bg-emerald-50/45";
 
   return (
-    <Card className="border-border/70 bg-background/95 shadow-sm">
+    <Card className={`shadow-sm ${cardTone}`}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">{t(language, "Actionable blockers", "Åtgärdbara blockerare")}</CardTitle>
-        <CardDescription className="mt-1 text-sm">
-          {t(language, "Only items that can change the recommendation are shown here.", "Här visas bara saker som kan ändra rekommendationen.")}
-        </CardDescription>
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <CardTitle className="text-lg">{t(language, "Actionable blockers", "Atgardbara blockerare")}</CardTitle>
+            <CardDescription className="mt-1 text-sm">
+              {t(language, "Filled bars are unresolved risk. Good means every row is empty and shows 0.", "Fyllda staplar ar olost risk. Bra betyder att varje rad ar tom och visar 0.")}
+            </CardDescription>
+          </div>
+          <div className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold ${total > 0 ? getBadgeClasses("warn") : getBadgeClasses("good")}`}>
+            {total > 0 ? t(language, "Target: 0 blockers", "Mal: 0 blockerare") : t(language, "Target met", "Malet uppnatt")}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>{t(language, "Threshold: any value above 0 needs action.", "Threshold: varje varde over 0 kraver atgard.")}</span>
+          <span aria-hidden="true">/</span>
+          <span>{t(language, "Scale: bars are relative to the largest current blocker count.", "Skala: staplarna ar relativa till storsta aktuella blockerarantalet.")}</span>
+        </div>
         {items.map((item) => (
           <a className="block" href={item.href} key={item.label}>
-            <div className="grid gap-2 sm:grid-cols-[190px_minmax(0,1fr)_48px] sm:items-center">
+            <div className="grid gap-2 rounded-xl px-2 py-1 transition hover:bg-background/70 sm:grid-cols-[190px_minmax(0,1fr)_118px] sm:items-center">
               <p className="text-sm font-medium text-foreground">{item.label}</p>
-              <div className="h-3 rounded-full bg-slate-100">
-                <div className={`h-3 rounded-full ${getBarClasses(item.tone)}`} style={{ width: `${percentageOf(item.value, max)}%` }} />
+              <div className="h-3 rounded-full bg-slate-100" title={item.value === 0 ? t(language, "Clear", "Klar") : t(language, "Needs action", "Kraver atgard")}>
+                <div
+                  aria-label={`${item.label}: ${item.value}`}
+                  className={`h-3 rounded-full ${item.value === 0 ? "bg-emerald-500" : getBarClasses(item.tone)}`}
+                  style={{ width: `${item.value === 0 ? 0 : percentageOf(item.value, max)}%` }}
+                />
               </div>
-              <p className="text-right text-sm font-semibold tabular-nums text-foreground">{item.value}</p>
+              <div className="flex items-center justify-end gap-2">
+                <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${item.value === 0 ? getBadgeClasses("good") : getBadgeClasses(item.tone)}`}>
+                  {item.value === 0 ? t(language, "Clear", "Klar") : t(language, "Action", "Atgard")}
+                </span>
+                <p className="w-5 text-right text-sm font-semibold tabular-nums text-foreground">{item.value}</p>
+              </div>
             </div>
           </a>
         ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+type DecisionPromptLogEntry = {
+  answer: string;
+  href: string;
+  impact: string;
+  key: string;
+  question: string;
+  status: string;
+  statusTone: "good" | "warn" | "stop" | "neutral";
+  time: string | null;
+  type: string;
+};
+
+function DecisionPromptLog({
+  entries,
+  helpPattern,
+  language
+}: {
+  entries: DecisionPromptLogEntry[];
+  helpPattern: Parameters<typeof ContextHelp>[0]["pattern"];
+  language: AppLanguage;
+}) {
+  const openEntries = entries.filter((entry) => entry.statusTone === "warn" || entry.statusTone === "stop").length;
+
+  return (
+    <Card className="border-border/70 bg-background shadow-sm" id="decision-prompt-log">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <ListChecks className="h-5 w-5 text-primary" />
+              <CardTitle className="text-xl">{t(language, "Decision & prompt log", "Besluts- och promptlogg")}</CardTitle>
+            </div>
+            <CardDescription className="mt-2 max-w-3xl text-sm">
+              {t(
+                language,
+                "A backlog-style trail of the questions Control Mirror raised, the answer recorded so far, and what each answer changes.",
+                "En backlog-liknande logg over fragorna Control Mirror stallt, svaret som finns registrerat och vad svaret andrar."
+              )}
+            </CardDescription>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:items-start">
+            <div className={`rounded-2xl border px-4 py-3 text-sm ${openEntries > 0 ? getBadgeClasses("warn") : getBadgeClasses("good")}`}>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{t(language, "Open", "Oppna")}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">{openEntries}</p>
+            </div>
+            <ContextHelp className="lg:max-w-xl" pattern={helpPattern} summaryLabel={t(language, "Show log guidance", "Visa logg-hjalp")} />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {entries.length === 0 ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm leading-6 text-emerald-950">
+            {t(language, "No decision prompts or acceptance questions are visible in the current evidence.", "Inga beslutsfragor eller acceptansfragor syns i nuvarande evidens.")}
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-border/70">
+            <div className="hidden grid-cols-[132px_minmax(260px,1.35fr)_minmax(220px,1fr)_minmax(220px,1fr)_116px] gap-3 border-b border-border/70 bg-muted/25 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:grid">
+              <span>{t(language, "Type", "Typ")}</span>
+              <span>{t(language, "Question", "Fraga")}</span>
+              <span>{t(language, "Answer", "Svar")}</span>
+              <span>{t(language, "Impact", "Paverkan")}</span>
+              <span className="text-right">{t(language, "Status", "Status")}</span>
+            </div>
+            <div className="divide-y divide-border/70">
+              {entries.map((entry) => (
+                <a
+                  className="grid gap-3 px-4 py-4 transition hover:bg-muted/20 xl:grid-cols-[132px_minmax(260px,1.35fr)_minmax(220px,1fr)_minmax(220px,1fr)_116px]"
+                  href={entry.href}
+                  key={entry.key}
+                >
+                  <div>
+                    <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/20 px-2 py-1 text-xs font-semibold text-muted-foreground">
+                      {entry.type}
+                    </span>
+                    <p className="mt-2 text-xs text-muted-foreground">{formatOptionalDate(entry.time)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Question", "Fraga")}</p>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-foreground xl:mt-0">{entry.question}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{entry.key}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Answer", "Svar")}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground xl:mt-0">{entry.answer}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground xl:hidden">{t(language, "Impact", "Paverkan")}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground xl:mt-0">{entry.impact}</p>
+                  </div>
+                  <div className="flex items-start justify-start xl:justify-end">
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${getBadgeClasses(entry.statusTone)}`}>
+                      <MessageSquareText className="h-3.5 w-3.5" />
+                      {entry.status}
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -435,6 +572,92 @@ export default async function ControlMirrorPage({
       "Öppna största blockeraren först och uppdatera sedan snapshot efter att ny evidens importerats."
     )
   };
+  const decisionLogHelp = {
+    title: t(language, "Decision and prompt log", "Besluts- och promptlogg"),
+    summary: t(
+      language,
+      "Use this as the audit-friendly backlog of questions, answers and consequences.",
+      "Anvand detta som en audit-vanlig backlogg med fragor, svar och konsekvenser."
+    ),
+    purpose: t(
+      language,
+      "Make every human or customer-facing control decision visible: what was asked, what was answered, and what the answer changed.",
+      "Gor varje manskligt eller kundnara kontrollbeslut synligt: vad som fragades, vad som svarades och vad svaret andrade."
+    ),
+    belongs: t(
+      language,
+      "Human Review decisions, export acceptance decisions, open approval questions and the current decision impact.",
+      "Human Review-beslut, exportacceptans, oppna godkannandefragor och aktuell beslutspaverkan."
+    ),
+    avoid: t(
+      language,
+      "Raw source dumps, implementation noise and counters that do not change a decision.",
+      "Ra kalltext, implementationsbrus och raknare som inte andrar ett beslut."
+    ),
+    nextStep: t(
+      language,
+      "Start with rows marked Action or Pending, record the answer, then refresh Control Mirror.",
+      "Börja med rader markerade Action eller Pending, registrera svaret och uppdatera sedan Control Mirror."
+    )
+  };
+  const humanReviewDecisionLogEntries: DecisionPromptLogEntry[] = data.humanReviewItems.map((item) => {
+    const hasDecision = Boolean(item.latestHumanDecision);
+    const reviewState = item.reviewState ?? "open";
+    const statusTone = hasDecision ? "good" : item.blocksRelease ? "stop" : "warn";
+
+    return {
+      answer: hasDecision
+        ? `${getHumanDecisionLabel(item.latestHumanDecision?.decisionType ?? "")}: ${item.latestHumanDecision?.rationale ?? ""}`
+        : `${t(language, "Awaiting answer", "Invantar svar")}. ${t(language, "Suggested", "Forslag")}: ${item.suggestedResponse}`,
+      href: item.reviewHref,
+      impact: hasDecision
+        ? t(language, "Updates the release recommendation and evidence pack review state.", "Uppdaterar release-rekommendationen och review-status i evidenspaketet.")
+        : item.blocksRelease
+          ? t(language, "Blocks release or higher AI-level claims until answered.", "Blockerar release eller hogre AI-nivaansprak tills fragan ar besvarad.")
+          : t(language, "Can change the recommendation if the answer confirms a gap.", "Kan andra rekommendationen om svaret bekraftar ett gap."),
+      key: item.persistedReviewItemId ?? item.id,
+      question: item.decisionNeeded,
+      status: hasDecision ? getHumanDecisionLabel(item.latestHumanDecision?.decisionType ?? "") : reviewState === "open" ? t(language, "Action", "Atgard") : formatLabel(reviewState),
+      statusTone,
+      time: item.latestHumanDecision?.createdAt ?? item.persistedUpdatedAt ?? null,
+      type: t(language, "Human Review", "Human Review")
+    };
+  });
+  const exportAcceptanceDecisionLogEntries: DecisionPromptLogEntry[] = exportHistory.flatMap((record) => {
+    const decisionEntries = record.acceptanceSummary.latestDecisions.map((decision) => ({
+      answer: `${formatLabel(decision.decisionType)}: ${decision.rationale}`,
+      href: `/control-mirror/export/${record.id}`,
+      impact: `${t(language, "Evidence pack sharing status", "Delningsstatus for evidenspaket")}: ${formatLabel(record.acceptanceSummary.shareReadiness)}`,
+      key: decision.id,
+      question: `${formatLabel(decision.reviewerRole)} ${t(language, "acceptance for", "acceptans for")} ${record.fileName}`,
+      status: formatLabel(decision.decisionType),
+      statusTone: decision.decisionType === "changes_requested" || decision.decisionType === "revoked" ? "stop" as const : decision.decisionType === "accepted_with_conditions" ? "warn" as const : "good" as const,
+      time: decision.createdAt,
+      type: t(language, "Export acceptance", "Exportacceptans")
+    }));
+
+    if (decisionEntries.length > 0 || record.acceptanceSummary.shareReadiness === "share_ready") {
+      return decisionEntries;
+    }
+
+    return [{
+      answer: `${t(language, "Awaiting required roles", "Invantar obligatoriska roller")}: ${formatRoleList(record.acceptanceSummary.missingRoles)}`,
+      href: `/control-mirror/export/${record.id}`,
+      impact: t(language, "Prevents broad governance or external sharing until accepted.", "Hindrar bred governance- eller extern delning tills acceptans finns."),
+      key: `${record.id}-acceptance-pending`,
+      question: `${t(language, "Can this evidence pack be shared", "Kan detta evidenspaket delas")}: ${record.fileName}?`,
+      status: t(language, "Pending", "Vantar"),
+      statusTone: "warn" as const,
+      time: record.generatedAt,
+      type: t(language, "Export acceptance", "Exportacceptans")
+    }];
+  });
+  const decisionPromptLogEntries = [...humanReviewDecisionLogEntries, ...exportAcceptanceDecisionLogEntries].sort((a, b) => {
+    if (a.statusTone !== "good" && b.statusTone === "good") return -1;
+    if (a.statusTone === "good" && b.statusTone !== "good") return 1;
+
+    return new Date(b.time ?? 0).getTime() - new Date(a.time ?? 0).getTime();
+  });
   const firstViewportSignals = [
     {
       label: t(language, "Source judged", "Bedömd källa"),
@@ -616,6 +839,12 @@ export default async function ControlMirrorPage({
                     {t(language, "View evidence dashboard", "Visa evidensdashboard")}
                   </Link>
                 </Button>
+                <Button asChild className="gap-2" variant="secondary">
+                  <Link href="#decision-prompt-log">
+                    <ListChecks className="h-4 w-4" />
+                    {t(language, "Open decision log", "Oppna beslutslogg")}
+                  </Link>
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -643,6 +872,8 @@ export default async function ControlMirrorPage({
           </div>
 
           <BlockerDistributionChart items={blockerChartItems} language={language} />
+
+          <DecisionPromptLog entries={decisionPromptLogEntries} helpPattern={decisionLogHelp} language={language} />
         </div>
 
         <details className="rounded-2xl border border-border/70 bg-background shadow-sm">
