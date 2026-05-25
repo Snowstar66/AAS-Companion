@@ -1,6 +1,4 @@
 import {
-  applyControlMirrorEvidenceRetentionPolicy,
-  getControlMirrorRetentionModeForSourceType,
   getControlMirrorSourcePolicy
 } from "./control-mirror-source";
 import {
@@ -92,6 +90,20 @@ export type ControlMirrorArtifactType =
   | "workflow_log"
   | "final_report"
   | "unknown_artifact";
+
+type BmadComparisonEntry = {
+  artifactPath: string;
+  artifactType: string;
+  evidenceState: string;
+  sourceOutcomeId: string;
+  sourceEpicId: string;
+  sourceStoryIdeaId: string;
+  deliveryStoryId: string;
+  decisionId: string;
+  testIds: string[];
+  verificationResult: string;
+  remainingGap: string;
+};
 
 export type ControlMirrorNormalizedEvidenceType =
   | "framing_design_evidence"
@@ -649,6 +661,7 @@ function detectStoryId(value: string) {
 export function classifyControlMirrorArtifact(input: Pick<ControlMirrorArtifactInput, "fileName" | "sourceType" | "content">): ControlMirrorArtifactType {
   const haystack = `${input.fileName}\n${input.sourceType ?? ""}\n${input.content ?? ""}`.toLowerCase();
 
+  if (/bmad-comparison-(manifest|matrix)|control-mirror\/bmad-comparison/.test(haystack)) return "decision_log";
   if (/risk.?ledger|risk register|ai risk/.test(haystack)) return "ai_risk_ledger";
   if (/decision.?log|adr-|architecture decision/.test(haystack)) return "decision_log";
   if (/workflow.?log|handoff|role handoff/.test(haystack)) return "workflow_log";
@@ -682,6 +695,238 @@ function mapArtifactTypeToEvidenceType(artifactType: ControlMirrorArtifactType):
   if (artifactType === "workflow_log") return "workflow_log";
   if (artifactType === "final_report") return "final_report";
   return "unknown_evidence";
+}
+
+function getRecordString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+  }
+
+  return "";
+}
+
+function splitListValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => String(entry).trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  return value
+    .split(/[;|,]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function normalizeBmadComparisonRecord(record: Record<string, unknown>): BmadComparisonEntry {
+  const artifactPath = getRecordString(record, ["artifact_path", "artifactPath", "path", "file", "file_path", "implementation_artifacts"]);
+  const artifactType = getRecordString(record, ["artifact_type", "artifactType", "type", "work_item_type", "category"]);
+  const evidenceState = getRecordString(record, ["evidence_state", "evidenceState", "status", "state", "implementation_status"]);
+  const sourceOutcomeId = getRecordString(record, ["source_outcome_id", "sourceOutcomeId", "outcome_id", "outcomeId", "outcome"]);
+  const sourceEpicId = getRecordString(record, ["source_epic_id", "sourceEpicId", "epic_id", "epicId", "epic"]);
+  const sourceStoryIdeaId = getRecordString(record, ["source_story_idea_id", "sourceStoryIdeaId", "story_idea_id", "storyIdeaId", "story_idea"]);
+  const deliveryStoryId = getRecordString(record, ["delivery_story_id", "deliveryStoryId", "story_id", "storyId", "story", "story_key"]);
+  const decisionId = getRecordString(record, ["decision_id", "decisionId", "decision"]);
+  const testIdsValue = record.test_ids ?? record.testIds ?? record.tests ?? record.test_id ?? record.testId;
+  const verificationResult = getRecordString(record, ["verification_result", "verificationResult", "test_result", "testResult", "result"]);
+  const remainingGap = getRecordString(record, ["remaining_gap", "remainingGap", "gap", "known_gap", "knownGap", "customer_decision_needed"]);
+
+  return {
+    artifactPath,
+    artifactType,
+    evidenceState,
+    sourceOutcomeId,
+    sourceEpicId,
+    sourceStoryIdeaId,
+    deliveryStoryId,
+    decisionId,
+    testIds: splitListValue(testIdsValue),
+    verificationResult,
+    remainingGap
+  };
+}
+
+function parseBmadComparisonManifest(content: string): BmadComparisonEntry[] {
+  try {
+    const parsed = JSON.parse(content) as unknown;
+    const records = Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === "object"
+        ? [
+            ...("entries" in parsed && Array.isArray(parsed.entries) ? parsed.entries : []),
+            ...("items" in parsed && Array.isArray(parsed.items) ? parsed.items : []),
+            ...("manifest" in parsed && Array.isArray(parsed.manifest) ? parsed.manifest : [])
+          ]
+        : [];
+
+    return records
+      .filter((record): record is Record<string, unknown> => Boolean(record && typeof record === "object" && !Array.isArray(record)))
+      .map(normalizeBmadComparisonRecord)
+      .filter((entry) => isPresent(entry.artifactPath) || isPresent(entry.deliveryStoryId) || isPresent(entry.sourceStoryIdeaId) || entry.testIds.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function parseControlMirrorCsv(content: string) {
+  const lines = content
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0);
+
+  if (lines.length < 2) {
+    return [];
+  }
+
+  const delimiter = lines[0]!.includes(";") && !lines[0]!.includes(",") ? ";" : ",";
+  const parseLine = (line: string) => {
+    const values: string[] = [];
+    let current = "";
+    let quoted = false;
+
+    for (let index = 0; index < line.length; index += 1) {
+      const character = line[index];
+      const nextCharacter = line[index + 1];
+
+      if (character === "\"" && quoted && nextCharacter === "\"") {
+        current += "\"";
+        index += 1;
+      } else if (character === "\"") {
+        quoted = !quoted;
+      } else if (character === delimiter && !quoted) {
+        values.push(current.trim());
+        current = "";
+      } else {
+        current += character;
+      }
+    }
+
+    values.push(current.trim());
+    return values;
+  };
+  const headers = parseLine(lines[0]!).map((header) => header.trim());
+
+  return lines.slice(1).map((line) => {
+    const values = parseLine(line);
+    return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
+  });
+}
+
+function parseBmadComparisonMatrix(content: string): BmadComparisonEntry[] {
+  return parseControlMirrorCsv(content)
+    .map(normalizeBmadComparisonRecord)
+    .filter((entry) => isPresent(entry.artifactPath) || isPresent(entry.deliveryStoryId) || isPresent(entry.sourceStoryIdeaId) || entry.testIds.length > 0);
+}
+
+function parseBmadComparisonEvidence(fileName: string, content: string) {
+  const normalizedName = fileName.toLowerCase();
+
+  if (normalizedName.endsWith(".json") && /bmad-comparison-manifest|comparison-manifest/.test(normalizedName)) {
+    return parseBmadComparisonManifest(content);
+  }
+
+  if (normalizedName.endsWith(".csv") && /bmad-comparison-matrix|comparison-matrix/.test(normalizedName)) {
+    return parseBmadComparisonMatrix(content);
+  }
+
+  return [];
+}
+
+function getBmadComparisonEvidenceType(entry: BmadComparisonEntry): ControlMirrorNormalizedEvidenceType {
+  const haystack = `${entry.artifactPath} ${entry.artifactType} ${entry.evidenceState} ${entry.verificationResult}`.toLowerCase();
+
+  if (entry.testIds.length > 0 || /\b(test|tested|verification|passing|failing|manual)\b/.test(haystack)) {
+    return "test_evidence";
+  }
+
+  if (/\b(implemented|implementation|src\/|apps\/|packages\/|component|route|page|tested)\b/.test(haystack)) {
+    return "implementation_evidence";
+  }
+
+  if (/\b(decision|rejected|deferred|dropped|customer)\b/.test(`${haystack} ${entry.decisionId} ${entry.remainingGap}`)) {
+    return "decision_log";
+  }
+
+  return "delivery_story_candidate";
+}
+
+function getBmadComparisonReadiness(entry: BmadComparisonEntry, evidenceType: ControlMirrorNormalizedEvidenceType): Pick<ControlMirrorNormalizedEvidenceSummary, "storyClassification" | "readinessState" | "missingReadinessFields"> {
+  const state = entry.evidenceState.toLowerCase();
+  const isDeferred = /\b(rejected|deferred|dropped|drop)\b/.test(state);
+
+  if (isDeferred) {
+    return {
+      storyClassification: "out_of_scope_deferred",
+      readinessState: "deferred",
+      missingReadinessFields: []
+    };
+  }
+
+  if (evidenceType !== "delivery_story_candidate" && evidenceType !== "implementation_evidence" && evidenceType !== "test_evidence") {
+    return {
+      storyClassification: "not_story_like",
+      readinessState: "not_story_like",
+      missingReadinessFields: []
+    };
+  }
+
+  const missingReadinessFields = [
+    ...(isPresent(entry.sourceOutcomeId) ? [] : ["linked outcome"]),
+    ...(isPresent(entry.sourceEpicId) ? [] : ["linked epic"]),
+    ...(isPresent(entry.deliveryStoryId) || isPresent(entry.sourceStoryIdeaId) ? [] : ["story id"]),
+    ...(evidenceType === "test_evidence" || isPresent(entry.verificationResult) || entry.testIds.length > 0 ? [] : ["test definition"])
+  ];
+
+  return {
+    storyClassification: "candidate_delivery_story",
+    readinessState: missingReadinessFields.length === 0 && (evidenceType === "implementation_evidence" || evidenceType === "test_evidence") ? "ready_for_build" : "needs_refinement",
+    missingReadinessFields
+  };
+}
+
+function normalizeBmadComparisonEvidence(input: {
+  artifactId: string;
+  fileName: string;
+  content: string;
+}) {
+  return parseBmadComparisonEvidence(input.fileName, input.content).map<Omit<ControlMirrorNormalizedEvidenceSummary, "id">>((entry, index) => {
+    const evidenceType = getBmadComparisonEvidenceType(entry);
+    const readiness = getBmadComparisonReadiness(entry, evidenceType);
+    const storyId = entry.deliveryStoryId || entry.sourceStoryIdeaId || null;
+    const testSuffix = entry.testIds.length > 0 ? ` tests ${entry.testIds.join(" ")}` : "";
+    const labelParts = [
+      entry.evidenceState || "comparison evidence",
+      entry.artifactType,
+      entry.artifactPath,
+      entry.verificationResult,
+      entry.remainingGap,
+      testSuffix.trim()
+    ].filter(Boolean);
+
+    return {
+      artifactId: input.artifactId,
+      fileName: entry.artifactPath || input.fileName,
+      evidenceType,
+      label: labelParts.join(" | ") || `${input.fileName} row ${index + 1}`,
+      sourceSection: `${input.fileName}#row-${index + 1}`,
+      storyClassification: readiness.storyClassification,
+      readinessState: readiness.readinessState,
+      missingReadinessFields: readiness.missingReadinessFields,
+      storyId
+    };
+  });
 }
 
 function detectStoryClassification(input: {
@@ -786,6 +1031,28 @@ export function normalizeControlMirrorArtifact(input: {
     missingReadinessFields,
     storyId
   };
+}
+
+export function normalizeControlMirrorArtifactEvidence(input: {
+  artifactId: string;
+  fileName: string;
+  artifactType: ControlMirrorArtifactType;
+  content?: string | null;
+  sourceExcerpt?: string | null;
+  storyId?: string | null;
+}): Array<Omit<ControlMirrorNormalizedEvidenceSummary, "id">> {
+  const content = input.content ?? input.sourceExcerpt ?? "";
+  const bmadComparisonEvidence = normalizeBmadComparisonEvidence({
+    artifactId: input.artifactId,
+    fileName: input.fileName,
+    content
+  });
+
+  if (bmadComparisonEvidence.length > 0) {
+    return bmadComparisonEvidence;
+  }
+
+  return [normalizeControlMirrorArtifact(input)];
 }
 
 function buildEvidence(input: BuildControlMirrorInput, artifacts: ControlMirrorArtifactSummary[]) {
@@ -1425,15 +1692,21 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
     };
   });
   const artifacts = input.persistentSnapshot?.artifacts ?? derivedArtifacts;
-  const normalizedEvidence = input.persistentSnapshot?.normalizedEvidence ?? artifacts.map((artifact) => ({
-    id: `normalized-${artifact.id}`,
-    ...normalizeControlMirrorArtifact({
+  const rawArtifactById = new Map(rawArtifacts.map((artifact) => [artifact.id, artifact]));
+  const normalizedEvidence = input.persistentSnapshot?.normalizedEvidence ?? artifacts.flatMap((artifact) => {
+    const rawArtifact = rawArtifactById.get(artifact.id);
+
+    return normalizeControlMirrorArtifactEvidence({
       artifactId: artifact.id,
       fileName: artifact.fileName,
       artifactType: artifact.artifactType,
+      ...(rawArtifact?.content === undefined ? {} : { content: rawArtifact.content }),
       storyId: artifact.storyId
-    })
-  }));
+    }).map((evidence, index) => ({
+      id: `normalized-${artifact.id}-${index + 1}`,
+      ...evidence
+    }));
+  });
   const retentionSummary = summarizeControlMirrorEvidenceRetention(normalizedEvidence);
   const isUploadedSnapshot = (input.persistentSnapshot?.sourceType ?? "").replaceAll(" ", "_").toLowerCase() === "uploaded_zip";
   const unreadableFiles = artifacts

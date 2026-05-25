@@ -4,7 +4,7 @@ import {
   applyControlMirrorEvidenceRetentionPolicy,
   classifyControlMirrorArtifact,
   getControlMirrorRetentionModeForSourceType,
-  normalizeControlMirrorArtifact,
+  normalizeControlMirrorArtifactEvidence,
   validateControlMirrorUploadedSnapshotFiles,
   type ControlMirrorEvidenceRetentionDecision,
   type ControlMirrorArtifactType,
@@ -279,16 +279,18 @@ export async function createControlMirrorUploadedSnapshot(input: {
 
     if (artifactRows.length > 0) {
       await tx.controlMirrorNormalizedEvidence.createMany({
-        data: artifactRows.map((artifact) => {
-          const normalized = normalizeControlMirrorArtifact({
+        data: artifactRows.flatMap((artifact) => {
+          const sourceFile = validation.accepted.find((file) => `uploaded:${file.normalizedPath}` === artifact.sourceFileId);
+          const normalizedItems = normalizeControlMirrorArtifactEvidence({
             artifactId: artifact.id,
             fileName: artifact.fileName,
             artifactType: artifact.artifactType as ControlMirrorArtifactType,
+            ...(sourceFile?.content === undefined ? {} : { content: sourceFile.content }),
             sourceExcerpt: artifact.sourceExcerpt,
             storyId: artifact.detectedStoryKey
           });
 
-          return {
+          return normalizedItems.map((normalized) => ({
             id: randomUUID(),
             organizationId: input.organizationId,
             snapshotId: snapshot.id,
@@ -310,7 +312,7 @@ export async function createControlMirrorUploadedSnapshot(input: {
               filePath: artifact.filePath,
               evidenceRetention: artifact.parsedJson.evidenceRetention
             }
-          };
+          }));
         })
       });
     }
@@ -502,8 +504,8 @@ export async function refreshControlMirrorCurrentImportsSnapshot(input: {
       });
 
       await tx.controlMirrorNormalizedEvidence.createMany({
-        data: allArtifactRows.map((artifact) => {
-          const normalized = normalizeControlMirrorArtifact({
+        data: allArtifactRows.flatMap((artifact) => {
+          const normalizedItems = normalizeControlMirrorArtifactEvidence({
             artifactId: artifact.id,
             fileName: artifact.fileName,
             artifactType: artifact.artifactType as ControlMirrorArtifactType,
@@ -511,7 +513,7 @@ export async function refreshControlMirrorCurrentImportsSnapshot(input: {
             storyId: artifact.detectedStoryKey
           });
 
-          return {
+          return normalizedItems.map((normalized) => ({
             id: randomUUID(),
             organizationId: input.organizationId,
             snapshotId: snapshot.id,
@@ -533,7 +535,7 @@ export async function refreshControlMirrorCurrentImportsSnapshot(input: {
               filePath: artifact.filePath,
               evidenceRetention: readRetentionMetadata(artifact.parsedJson)
             }
-          };
+          }));
         })
       });
     }

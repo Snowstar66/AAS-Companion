@@ -6,7 +6,8 @@ import {
   classifyControlMirrorArtifact,
   getControlMirrorRetentionModeForSourceType,
   getControlMirrorSourcePolicy,
-  normalizeControlMirrorArtifact
+  normalizeControlMirrorArtifact,
+  normalizeControlMirrorArtifactEvidence
 } from "@aas-companion/domain";
 
 function createBaseInput() {
@@ -493,6 +494,114 @@ describe("Control Mirror rules", () => {
     expect(classifyControlMirrorArtifact({ fileName: "qa-review.md", content: "AQA review evidence" })).toBe("qa_review");
     expect(classifyControlMirrorArtifact({ fileName: "decision-log.md", content: "Decision log" })).toBe("decision_log");
     expect(classifyControlMirrorArtifact({ fileName: "risk-ledger.md", content: "AI Risk Ledger" })).toBe("ai_risk_ledger");
+    expect(classifyControlMirrorArtifact({ fileName: "docs/control-mirror/bmad-comparison-manifest.json", content: "[]" })).toBe("decision_log");
+  });
+
+  it("expands BMAD comparison manifest rows into typed Control Mirror evidence", () => {
+    const evidence = normalizeControlMirrorArtifactEvidence({
+      artifactId: "artifact-bmad-manifest",
+      fileName: "docs/control-mirror/bmad-comparison-manifest.json",
+      artifactType: "decision_log",
+      content: JSON.stringify({
+        entries: [
+          {
+            artifact_path: "apps/web/src/app/control-mirror/page.tsx",
+            artifact_type: "implementation",
+            evidence_state: "implemented",
+            source_outcome_id: "outcome-1",
+            source_epic_id: "epic-1",
+            source_story_idea_id: "SC-001",
+            delivery_story_id: "CM-01.1",
+            test_ids: [],
+            verification_result: "",
+            remaining_gap: ""
+          },
+          {
+            artifact_path: "apps/web/src/test/control-mirror-page.test.tsx",
+            artifact_type: "test",
+            evidence_state: "tested",
+            source_outcome_id: "outcome-1",
+            source_epic_id: "epic-1",
+            source_story_idea_id: "SC-001",
+            delivery_story_id: "CM-01.1",
+            test_ids: ["CM-01.1-test"],
+            verification_result: "passing",
+            remaining_gap: ""
+          },
+          {
+            artifact_path: "docs/deferred.md",
+            artifact_type: "scope",
+            evidence_state: "deferred",
+            source_outcome_id: "outcome-1",
+            source_epic_id: "epic-1",
+            source_story_idea_id: "SC-002",
+            delivery_story_id: "",
+            decision_id: "DEC-1",
+            test_ids: [],
+            verification_result: "",
+            remaining_gap: "Customer decision needed"
+          }
+        ]
+      })
+    });
+
+    expect(evidence).toHaveLength(3);
+    expect(evidence[0]).toMatchObject({
+      evidenceType: "implementation_evidence",
+      storyId: "CM-01.1",
+      readinessState: "needs_refinement"
+    });
+    expect(evidence[1]).toMatchObject({
+      evidenceType: "test_evidence",
+      storyId: "CM-01.1",
+      readinessState: "ready_for_build"
+    });
+    expect(evidence[2]).toMatchObject({
+      storyClassification: "out_of_scope_deferred",
+      readinessState: "deferred"
+    });
+  });
+
+  it("uses BMAD comparison matrix rows as test evidence in Control Mirror", () => {
+    const input = createBaseInput();
+    input.outcomes[0]!.epics[0]!.stories[0]!.testDefinition = "";
+
+    const dashboard = buildControlMirrorDashboard({
+      ...input,
+      artifactSessions: [
+        {
+          id: "session-bmad-comparison",
+          label: "BMAD comparison import",
+          importIntent: "design",
+          status: "completed",
+          createdAt: "2026-05-25T10:00:00.000Z",
+          updatedAt: "2026-05-25T10:00:00.000Z",
+          files: [
+            {
+              id: "artifact-bmad-matrix",
+              fileName: "docs/control-mirror/bmad-comparison-matrix.csv",
+              sourceType: "mixed_markdown_bundle",
+              sourceConfidence: "high",
+              sizeBytes: 512,
+              content: [
+                "artifact_path,artifact_type,evidence_state,source_outcome_id,source_epic_id,source_story_idea_id,delivery_story_id,test_ids,verification_result,remaining_gap",
+                "apps/web/src/test/control-mirror-page.test.tsx,test,tested,outcome-1,epic-1,SC-001,CM-01.1,CM-01.1-test,passing,"
+              ].join("\n")
+            }
+          ],
+          candidates: []
+        }
+      ]
+    });
+
+    expect(dashboard.normalizedEvidence.some((item) => item.evidenceType === "test_evidence" && item.storyId === "CM-01.1")).toBe(true);
+    expect(dashboard.testEvidence.mappedEvidence).toHaveLength(1);
+    expect(dashboard.testEvidence.storiesWithPassingTests).toBe(1);
+    expect(dashboard.metrics.find((metric) => metric.id === "test-evidence")).toMatchObject({
+      value: 1,
+      percentage: 100
+    });
+    expect(dashboard.humanReviewItems.some((item) => item.id === "missing-test-evidence")).toBe(false);
   });
 
   it("normalizes story-like artifacts and reports missing build-readiness fields", () => {
