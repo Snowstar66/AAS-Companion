@@ -671,18 +671,33 @@ export default async function ControlMirrorPage({
   ].slice(0, 3);
   const humanReviewHref = "#human-review";
   const approvedChunkCount = data.designProgress.storyIdeas;
-  const coveredHandshakeCount = Math.min(data.designProgress.readyForBuild, approvedChunkCount);
-  const reshapedHandshakeCount = Math.min(data.buildConformance.partiallyBuilt, Math.max(approvedChunkCount - coveredHandshakeCount, 0));
+  const storyIdeaRowsWithEvidence = data.storyIdeaEvidence.filter((row) =>
+    Boolean(row.mappedDeliveryStoryId) ||
+    row.runtimeArtifacts.length > 0 ||
+    row.testArtifacts.length > 0 ||
+    row.testIds.length > 0 ||
+    row.knownLimitations.length > 0 ||
+    Boolean(row.humanApprovalId)
+  );
+  const storyIdeaRowsWithRuntime = data.storyIdeaEvidence.filter((row) => row.runtimeArtifacts.length > 0);
+  const storyIdeaRowsMachineVerified = data.storyIdeaEvidence.filter((row) => row.machineVerified && row.runtimeArtifacts.length > 0);
+  const storyIdeaRowsImplemented = data.storyIdeaEvidence.filter((row) => row.implementationStatus === "implemented");
+  const mappedDeliveryStoryCount = new Set(data.storyIdeaEvidence.map((row) => row.mappedDeliveryStoryId).filter(Boolean)).size;
+  const coveredHandshakeCount = Math.min(storyIdeaRowsMachineVerified.length, approvedChunkCount);
+  const reshapedHandshakeCount = Math.min(
+    Math.max(storyIdeaRowsWithEvidence.length - coveredHandshakeCount, 0),
+    Math.max(approvedChunkCount - coveredHandshakeCount, 0)
+  );
   const missingHandshakeCount = Math.max(approvedChunkCount - coveredHandshakeCount - reshapedHandshakeCount, 0);
-  const outsideHandshakeCount = untracedArtifacts.length + data.normalization.outOfScopeItems;
-  const knownProgressPercent = approvedChunkCount > 0 ? percentageOf(data.designProgress.readyForBuild, approvedChunkCount) : null;
+  const outsideHandshakeCount = Math.max(data.storyIdeaEvidence.length - approvedChunkCount, 0);
+  const knownProgressPercent = approvedChunkCount > 0 ? percentageOf(storyIdeaRowsMachineVerified.length, approvedChunkCount) : null;
   const progressStages = [
     { href: "#normalization", label: t(language, "Story Ideas", "Story Ideas"), count: data.designProgress.storyIdeas },
-    { href: "#normalization", label: t(language, "Classified", "Klassade"), count: data.designProgress.classifiedItems },
-    { href: "#conformance", label: t(language, "Delivery Stories", "Delivery Stories"), count: data.designProgress.refinedDeliveryStories },
-    { href: "#conformance", label: t(language, "Acceptance criteria", "Acceptanskriterier"), count: data.designProgress.storiesWithAcceptanceCriteria },
-    { href: "#value-spine-coverage", label: t(language, "Test definition", "Testdefinition"), count: data.designProgress.storiesWithTestDefinition },
-    { href: "#conformance", label: t(language, "Ready for build", "Redo för build"), count: data.designProgress.readyForBuild }
+    { href: "#story-idea-accountability", label: t(language, "Accounted for", "Omhandertagna"), count: storyIdeaRowsWithEvidence.length },
+    { href: "#story-idea-accountability", label: t(language, "Delivery Stories", "Delivery Stories"), count: mappedDeliveryStoryCount },
+    { href: "#story-idea-accountability", label: t(language, "Implemented", "Implementerade"), count: storyIdeaRowsImplemented.length },
+    { href: "#story-idea-accountability", label: t(language, "Runtime evidence", "Runtime-evidens"), count: storyIdeaRowsWithRuntime.length },
+    { href: "#story-idea-accountability", label: t(language, "Machine verified", "Maskinverifierade"), count: storyIdeaRowsMachineVerified.length }
   ];
   const testGapCount = data.testEvidence.storiesWithNoTest + data.testEvidence.storiesWithTestDefinitionOnly + data.testEvidence.brokenValueSpineLinks;
   const blockerChartItems = [
