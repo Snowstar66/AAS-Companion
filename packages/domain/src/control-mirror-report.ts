@@ -4,6 +4,7 @@ import type {
   ControlMirrorMetric,
   ControlMirrorNormalizedEvidenceSummary,
   ControlMirrorReportSummaryItem,
+  ControlMirrorStoryIdeaEvidenceRow,
   ControlMirrorStatus
 } from "./control-mirror";
 
@@ -131,8 +132,15 @@ export type ControlMirrorEvidencePack = {
     recommendedNextStep: string;
     executionStatement: string;
     evidenceRetentionSummary: string;
+    assurance: {
+      machineVerifiedEvidence: string[];
+      aiSelfReview: string[];
+      humanReviewStillRequired: string[];
+      releaseApprovalStatus: "approved" | "conditional" | "blocked" | "not_approved";
+    };
   };
   evidence: {
+    storyIdeas: ControlMirrorStoryIdeaEvidenceRow[];
     artifacts: Array<{
       id: string;
       fileName: string;
@@ -182,7 +190,22 @@ export type ControlMirrorEvidencePack = {
     rawSourceTextIncluded: false;
     disclosure: string;
   };
+  validation: ControlMirrorEvidencePacketValidation;
   acceptance: ControlMirrorEvidencePackAcceptancePolicy;
+};
+
+export type ControlMirrorEvidencePacketValidationIssue = {
+  id: string;
+  severity: "error" | "warning";
+  storyIdeaId?: string;
+  message: string;
+};
+
+export type ControlMirrorEvidencePacketValidation = {
+  status: "valid" | "invalid";
+  generatedAt: string;
+  issueCount: number;
+  issues: ControlMirrorEvidencePacketValidationIssue[];
 };
 
 export type ControlMirrorEvidencePackAcceptancePolicy = {
@@ -238,18 +261,47 @@ export function buildControlMirrorEvidencePackAcceptancePolicy(input: {
   };
 }
 
-export function ensureControlMirrorEvidencePackAcceptancePolicy(evidencePack: ControlMirrorEvidencePack & {
+type LegacyControlMirrorEvidencePack = Omit<ControlMirrorEvidencePack, "report" | "evidence" | "validation" | "acceptance"> & {
+  report: Omit<ControlMirrorEvidencePack["report"], "assurance"> & {
+    assurance?: ControlMirrorEvidencePack["report"]["assurance"];
+  };
+  evidence: Omit<ControlMirrorEvidencePack["evidence"], "storyIdeas"> & {
+    storyIdeas?: ControlMirrorStoryIdeaEvidenceRow[];
+  };
+  validation?: ControlMirrorEvidencePacketValidation;
   acceptance?: ControlMirrorEvidencePackAcceptancePolicy;
-}): ControlMirrorEvidencePack {
-  if (evidencePack.acceptance) {
-    return evidencePack;
-  }
+};
 
+export function ensureControlMirrorEvidencePackAcceptancePolicy(evidencePack: LegacyControlMirrorEvidencePack): ControlMirrorEvidencePack {
   const sensitiveFindingCount = evidencePack.evidence.normalizedEvidence.reduce((sum, item) => sum + (item.sensitiveFindingCount ?? 0), 0);
+  const storyIdeas = evidencePack.evidence.storyIdeas ?? [];
+  const releaseApprovalStatus =
+    evidencePack.aiLevel.releaseReadiness === "ready"
+      ? "conditional" as const
+      : evidencePack.aiLevel.releaseReadiness === "blocked" || evidencePack.aiLevel.releaseReadiness === "downgrade_required"
+        ? "blocked" as const
+        : "not_approved" as const;
 
   return {
     ...evidencePack,
-    acceptance: buildControlMirrorEvidencePackAcceptancePolicy({
+    report: {
+      ...evidencePack.report,
+      assurance: evidencePack.report.assurance ?? {
+        machineVerifiedEvidence: [],
+        aiSelfReview: [],
+        humanReviewStillRequired: [],
+        releaseApprovalStatus
+      }
+    },
+    evidence: {
+      ...evidencePack.evidence,
+      storyIdeas
+    },
+    validation: evidencePack.validation ?? validateControlMirrorEvidencePacket({
+      generatedAt: evidencePack.generatedAt,
+      storyIdeas
+    }),
+    acceptance: evidencePack.acceptance ?? buildControlMirrorEvidencePackAcceptancePolicy({
       rawSourceTextIncluded: false,
       sensitiveFindingCount
     })
@@ -275,6 +327,115 @@ export function buildControlMirrorEvidencePackFileName(input: {
   return `${safeProjectName}-${safeSnapshotId}-evidence-pack.${input.extension}`;
 }
 
+export function validateControlMirrorEvidencePacket(input: {
+  generatedAt: string;
+  storyIdeas: ControlMirrorStoryIdeaEvidenceRow[];
+}): ControlMirrorEvidencePacketValidation {
+  const issues: ControlMirrorEvidencePacketValidationIssue[] = [];
+
+  for (const row of input.storyIdeas) {
+    const rowHasEvidence =
+      Boolean(row.mappedDeliveryStoryId) ||
+      row.runtimeArtifacts.length > 0 ||
+      row.testArtifacts.length > 0 ||
+      row.testIds.length > 0 ||
+      row.knownLimitations.length > 0 ||
+      Boolean(row.humanApprovalId);
+
+    if (!rowHasEvidence) {
+      issues.push({
+        id: `missing-baseline-evidence-${row.originalStoryIdeaId}`,
+        severity: "error",
+        storyIdeaId: row.originalStoryIdeaId,
+        message: "Baseline Story Idea is present but no accountability evidence row proves its outcome."
+      });
+    }
+
+    if (row.implementationStatus === "implemented" && !row.mappedDeliveryStoryId) {
+      issues.push({
+        id: `implemented-without-delivery-story-${row.originalStoryIdeaId}`,
+        severity: "error",
+        storyIdeaId: row.originalStoryIdeaId,
+        message: "Implemented Story Idea lacks a mapped Delivery Story ID."
+      });
+    }
+
+    if (row.implementationStatus === "implemented" && row.runtimeArtifacts.length === 0) {
+      issues.push({
+        id: `implemented-without-runtime-artifacts-${row.originalStoryIdeaId}`,
+        severity: "error",
+        storyIdeaId: row.originalStoryIdeaId,
+        message: "Implemented Story Idea lacks runtime artifacts."
+      });
+    }
+
+    if (row.implementationStatus === "implemented" && row.testArtifacts.length === 0 && row.testIds.length === 0) {
+      issues.push({
+        id: `implemented-without-test-evidence-${row.originalStoryIdeaId}`,
+        severity: "error",
+        storyIdeaId: row.originalStoryIdeaId,
+        message: "Implemented Story Idea lacks test artifacts or test IDs."
+      });
+    }
+
+    if (
+      row.implementationStatus === "implemented" &&
+      row.knownLimitations.some((limitation) => /\bscope.?out|out.?of.?scope\b/i.test(limitation)) &&
+      !row.humanApprovalId
+    ) {
+      issues.push({
+        id: `scope-out-implemented-without-approval-${row.originalStoryIdeaId}`,
+        severity: "error",
+        storyIdeaId: row.originalStoryIdeaId,
+        message: "Scope-out item is marked implemented without explicit human approval."
+      });
+    }
+
+    if (row.implementationStatus === "implemented" && (!row.verificationRunId || !row.latestTestResult)) {
+      issues.push({
+        id: `stale-or-inconsistent-metadata-${row.originalStoryIdeaId}`,
+        severity: "error",
+        storyIdeaId: row.originalStoryIdeaId,
+        message: "Evidence metadata is stale or inconsistent with the latest verification run."
+      });
+    }
+  }
+
+  return {
+    status: issues.some((issue) => issue.severity === "error") ? "invalid" : "valid",
+    generatedAt: input.generatedAt,
+    issueCount: issues.length,
+    issues
+  };
+}
+
+function buildEvidenceAssurance(input: {
+  dashboard: ControlMirrorDashboard;
+}) {
+  const machineVerifiedEvidence = input.dashboard.storyIdeaEvidence
+    .filter((row) => row.machineVerified)
+    .map((row) => `${row.originalStoryIdeaId}: ${row.latestTestResult ?? "verified"}`);
+  const aiSelfReview = input.dashboard.storyIdeaEvidence
+    .filter((row) => row.aiSelfReview)
+    .map((row) => row.originalStoryIdeaId);
+  const humanReviewStillRequired = input.dashboard.storyIdeaEvidence
+    .filter((row) => row.humanReviewStillRequired)
+    .map((row) => row.originalStoryIdeaId);
+  const releaseApprovalStatus =
+    input.dashboard.releaseReadiness === "ready" && input.dashboard.reviewStateSummary.openBlocking === 0
+      ? "conditional" as const
+      : input.dashboard.releaseReadiness === "blocked" || input.dashboard.releaseReadiness === "downgrade_required"
+        ? "blocked" as const
+        : "not_approved" as const;
+
+  return {
+    machineVerifiedEvidence,
+    aiSelfReview,
+    humanReviewStillRequired,
+    releaseApprovalStatus
+  };
+}
+
 export function buildControlMirrorEvidencePack(dashboard: ControlMirrorDashboard, options: {
   generatedAt?: Date | string;
 } = {}): ControlMirrorEvidencePack {
@@ -283,6 +444,10 @@ export function buildControlMirrorEvidencePack(dashboard: ControlMirrorDashboard
     : options.generatedAt ?? new Date().toISOString();
   const activeMode = dashboard.sourcePolicy.modes.find((mode) => mode.id === dashboard.snapshot.sourceType);
   const sensitiveFindingCount = dashboard.normalizedEvidence.reduce((sum, item) => sum + (item.sensitiveFindingCount ?? 0), 0);
+  const validation = validateControlMirrorEvidencePacket({
+    generatedAt,
+    storyIdeas: dashboard.storyIdeaEvidence
+  });
 
   return {
     schemaVersion: "control-mirror-evidence-pack/v1",
@@ -321,9 +486,11 @@ export function buildControlMirrorEvidencePack(dashboard: ControlMirrorDashboard
       residualRisks: dashboard.report.residualRisks,
       recommendedNextStep: dashboard.report.recommendedNextStep,
       executionStatement: dashboard.report.executionStatement,
-      evidenceRetentionSummary: dashboard.report.evidenceRetentionSummary
+      evidenceRetentionSummary: dashboard.report.evidenceRetentionSummary,
+      assurance: buildEvidenceAssurance({ dashboard })
     },
     evidence: {
+      storyIdeas: dashboard.storyIdeaEvidence,
       artifacts: dashboard.artifacts.map((artifact) => ({
         id: artifact.id,
         fileName: artifact.fileName,
@@ -373,6 +540,7 @@ export function buildControlMirrorEvidencePack(dashboard: ControlMirrorDashboard
       rawSourceTextIncluded: false,
       disclosure: "Evidence packs include metadata, summaries, retention disclosure and review state. Raw source text is not included."
     },
+    validation,
     acceptance: buildControlMirrorEvidencePackAcceptancePolicy({
       rawSourceTextIncluded: false,
       sensitiveFindingCount
@@ -420,6 +588,33 @@ export function buildControlMirrorEvidencePackMarkdown(evidencePack: ControlMirr
     "## Report Summary",
     "",
     renderMarkdownList(evidencePack.report.summaryItems.map((item) => `${item.label}: ${item.value} (${item.status})`)),
+    "",
+    "## Evidence Assurance",
+    "",
+    `- Machine-verified evidence: ${evidencePack.report.assurance.machineVerifiedEvidence.length}`,
+    `- AI self-review: ${evidencePack.report.assurance.aiSelfReview.length}`,
+    `- Human review still required: ${evidencePack.report.assurance.humanReviewStillRequired.length}`,
+    `- Release approval status: ${evidencePack.report.assurance.releaseApprovalStatus}`,
+    "",
+    "## Story Idea Accountability",
+    "",
+    renderMarkdownList(evidencePack.evidence.storyIdeas.map((row) => [
+      `${row.originalStoryIdeaId} (${row.implementationStatus})`,
+      `epic: ${renderMarkdownValue(row.originalEpicId)}`,
+      `title: ${row.title}`,
+      `delivery story: ${renderMarkdownValue(row.mappedDeliveryStoryId)}`,
+      `runtime artifacts: ${row.runtimeArtifacts.length}`,
+      `test artifacts: ${row.testArtifacts.length}`,
+      `test ids: ${row.testIds.join(", ") || "n/a"}`,
+      `latest test result: ${renderMarkdownValue(row.latestTestResult)}`,
+      `human decision: ${renderMarkdownValue(row.humanDecisionRequired)}`
+    ].join("; "))),
+    "",
+    "## Evidence Validation",
+    "",
+    `- Status: ${evidencePack.validation.status}`,
+    `- Issue count: ${evidencePack.validation.issueCount}`,
+    renderMarkdownList(evidencePack.validation.issues.map((issue) => `${issue.severity}: ${issue.message}${issue.storyIdeaId ? ` (${issue.storyIdeaId})` : ""}`)),
     "",
     "## Evidence Retention",
     "",

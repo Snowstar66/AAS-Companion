@@ -310,7 +310,8 @@ export async function createControlMirrorUploadedSnapshot(input: {
               artifactId: artifact.id,
               sourceFileId: artifact.sourceFileId,
               filePath: artifact.filePath,
-              evidenceRetention: artifact.parsedJson.evidenceRetention
+              evidenceRetention: artifact.parsedJson.evidenceRetention,
+              ...(normalized.bmadComparison ? { bmadComparison: normalized.bmadComparison } : {})
             }
           }));
         })
@@ -533,7 +534,8 @@ export async function refreshControlMirrorCurrentImportsSnapshot(input: {
               artifactId: artifact.id,
               sourceFileId: artifact.sourceFileId,
               filePath: artifact.filePath,
-              evidenceRetention: readRetentionMetadata(artifact.parsedJson)
+              evidenceRetention: readRetentionMetadata(artifact.parsedJson),
+              ...(normalized.bmadComparison ? { bmadComparison: normalized.bmadComparison } : {})
             }
           }));
         })

@@ -162,6 +162,7 @@ function createDashboard() {
         sensitiveFindingCount: 1
       }
     ],
+    storyIdeaEvidence: [],
     normalization: {
       evidenceCount: 2,
       storyLikeItems: 1,

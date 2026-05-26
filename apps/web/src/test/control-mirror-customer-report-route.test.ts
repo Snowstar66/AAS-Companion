@@ -56,6 +56,7 @@ function createDashboard() {
         fileName: "qa-results.json"
       }
     ],
+    storyIdeaEvidence: [],
     reviewStateSummary: {
       open: 2,
       openBlocking: 1,

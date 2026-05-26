@@ -137,7 +137,8 @@ describe("framing ai agents", () => {
       (handover.json.aiDeliveryHandoff as FramingBriefExportPayload).downstream_ai_instructions?.generatedGuidance.designAiGuidance
     ).toEqual(expect.arrayContaining([
       "## BMAD Fair Comparison Evidence Prompt",
-      expect.stringContaining("bmad-comparison-matrix.csv")
+      expect.stringContaining("bmad-comparison-matrix.csv"),
+      expect.stringContaining("one explicit row per original Story Idea ID")
     ]));
     expect(bmad.markdown).toContain("# BMAD Prepared Framing Package");
     expect(bmad.markdown).toContain("BMAD Fair Comparison Evidence Prompt");

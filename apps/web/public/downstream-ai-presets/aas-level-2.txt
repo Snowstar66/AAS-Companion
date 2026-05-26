@@ -883,6 +883,38 @@ The final report must include:
 22. How framing-level story ideas were refined into AI-proposed Delivery Stories.
 23. Value created or expected value supported by the delivery.
 
+## Evidence Packet Requirements
+
+Before claiming implementation complete, AI must create and validate an evidence packet with:
+
+- one explicit row per original Story Idea ID,
+- original Epic ID, Story Idea ID, title, value intent and expected behavior,
+- mapped Delivery Story ID,
+- implementation status: implemented, partial, deferred, rejected or out_of_scope,
+- runtime artifacts,
+- test artifacts and test IDs,
+- latest test result,
+- known limitations,
+- human decision required, if any.
+
+The evidence packet must not only summarize Delivery Stories. It must prove that every original Story Idea is accounted for.
+
+Automated evidence validation must fail if:
+
+- any baseline Story Idea is missing from evidence,
+- any implemented Story Idea lacks a Delivery Story mapping,
+- any implemented Story Idea lacks runtime artifacts,
+- any implemented Story Idea lacks test evidence,
+- any scope-out item is marked implemented without explicit human approval,
+- evidence metadata is stale or inconsistent with the latest verification run.
+
+The final report must distinguish:
+
+- machine-verified evidence,
+- AI self-review,
+- human review still required,
+- release approval status.
+
 The final report must be explicit, auditable and honest.
 
 It must not overstate completion, independence, testing, approval or Level 2 compliance.

@@ -44,6 +44,7 @@ function createResetBaselineDashboard() {
     },
     artifacts: [],
     normalizedEvidence: [],
+    storyIdeaEvidence: [],
     metrics: [{ id: "test-evidence", label: "Test Evidence", value: 0, total: 4, percentage: 0, status: "blocked", description: "Old generated metric." }],
     normalization: {
       evidenceCount: 3,
@@ -168,6 +169,7 @@ describe("Control Mirror dashboard service", () => {
       },
       artifacts: [{ id: "artifact-1" }],
       normalizedEvidence: [{ id: "evidence-1", sensitiveFindingCount: 0 }],
+      storyIdeaEvidence: [{ id: "story-evidence-1" }],
       humanReviewItems: []
     };
 

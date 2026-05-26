@@ -91,7 +91,7 @@ export type ControlMirrorArtifactType =
   | "final_report"
   | "unknown_artifact";
 
-type BmadComparisonEntry = {
+export type ControlMirrorBmadComparisonEvidence = {
   artifactPath: string;
   artifactType: string;
   evidenceState: string;
@@ -104,6 +104,8 @@ type BmadComparisonEntry = {
   verificationResult: string;
   remainingGap: string;
 };
+
+type BmadComparisonEntry = ControlMirrorBmadComparisonEvidence;
 
 export type ControlMirrorNormalizedEvidenceType =
   | "framing_design_evidence"
@@ -348,6 +350,33 @@ export type ControlMirrorNormalizedEvidenceSummary = {
   retentionDisclosure?: string;
   redactionApplied?: boolean;
   sensitiveFindingCount?: number;
+  bmadComparison?: ControlMirrorBmadComparisonEvidence;
+};
+
+export type ControlMirrorStoryIdeaEvidenceStatus = "implemented" | "partial" | "deferred" | "rejected" | "out_of_scope";
+
+export type ControlMirrorStoryIdeaEvidenceRow = {
+  originalOutcomeId: string;
+  originalEpicId: string | null;
+  originalStoryIdeaId: string;
+  title: string;
+  valueIntent: string | null;
+  expectedBehavior: string | null;
+  mappedDeliveryStoryId: string | null;
+  implementationStatus: ControlMirrorStoryIdeaEvidenceStatus;
+  runtimeArtifacts: string[];
+  testArtifacts: string[];
+  testIds: string[];
+  latestTestResult: string | null;
+  knownLimitations: string[];
+  humanDecisionRequired: string | null;
+  humanApprovalId: string | null;
+  verificationRunId: string | null;
+  evidenceUpdatedAt: string | null;
+  machineVerified: boolean;
+  aiSelfReview: boolean;
+  humanReviewStillRequired: boolean;
+  releaseApprovalStatus: "approved" | "conditional" | "blocked" | "not_approved";
 };
 
 export type ControlMirrorConformanceFinding = {
@@ -457,6 +486,7 @@ export type ControlMirrorDashboard = {
   metrics: ControlMirrorMetric[];
   artifacts: ControlMirrorArtifactSummary[];
   normalizedEvidence: ControlMirrorNormalizedEvidenceSummary[];
+  storyIdeaEvidence: ControlMirrorStoryIdeaEvidenceRow[];
   normalization: {
     evidenceCount: number;
     storyLikeItems: number;
@@ -594,6 +624,35 @@ function flattenDirectionSeeds(outcomes: ControlMirrorOutcomeInput[]) {
     for (const epic of outcome.epics) {
       for (const seed of epic.directionSeeds) {
         byId.set(seed.id, seed);
+      }
+    }
+  }
+
+  return [...byId.values()];
+}
+
+function flattenDirectionSeedsWithContext(outcomes: ControlMirrorOutcomeInput[]) {
+  const byId = new Map<string, {
+    outcomeId: string;
+    epicId: string | null;
+    seed: ControlMirrorDirectionSeedInput;
+  }>();
+
+  for (const outcome of outcomes) {
+    for (const seed of outcome.directionSeeds) {
+      byId.set(seed.id, {
+        outcomeId: outcome.id,
+        epicId: null,
+        seed
+      });
+    }
+    for (const epic of outcome.epics) {
+      for (const seed of epic.directionSeeds) {
+        byId.set(seed.id, {
+          outcomeId: outcome.id,
+          epicId: epic.id,
+          seed
+        });
       }
     }
   }
@@ -755,6 +814,22 @@ function normalizeBmadComparisonRecord(record: Record<string, unknown>): BmadCom
     testIds: splitListValue(testIdsValue),
     verificationResult,
     remainingGap
+  };
+}
+
+function buildBmadComparisonLineage(entry: BmadComparisonEntry): ControlMirrorBmadComparisonEvidence {
+  return {
+    artifactPath: entry.artifactPath,
+    artifactType: entry.artifactType,
+    evidenceState: entry.evidenceState,
+    sourceOutcomeId: entry.sourceOutcomeId,
+    sourceEpicId: entry.sourceEpicId,
+    sourceStoryIdeaId: entry.sourceStoryIdeaId,
+    deliveryStoryId: entry.deliveryStoryId,
+    decisionId: entry.decisionId,
+    testIds: entry.testIds,
+    verificationResult: entry.verificationResult,
+    remainingGap: entry.remainingGap
   };
 }
 
@@ -924,7 +999,8 @@ function normalizeBmadComparisonEvidence(input: {
       storyClassification: readiness.storyClassification,
       readinessState: readiness.readinessState,
       missingReadinessFields: readiness.missingReadinessFields,
-      storyId
+      storyId,
+      bmadComparison: buildBmadComparisonLineage(entry)
     };
   });
 }
@@ -1671,6 +1747,140 @@ function buildConformanceFindings(input: {
   };
 }
 
+function normalizeEvidenceStatus(value: string): ControlMirrorStoryIdeaEvidenceStatus | null {
+  const normalized = value.toLowerCase().replaceAll("-", "_").replaceAll(" ", "_");
+
+  if (/\bout_?of_?scope\b/.test(normalized)) return "out_of_scope";
+  if (/\brejected?\b/.test(normalized)) return "rejected";
+  if (/\bdeferred?\b|\bdropped?\b/.test(normalized)) return "deferred";
+  if (/\bpartial\b|\bin_progress\b|\bdesigned\b|\bplanned\b/.test(normalized)) return "partial";
+  if (/\bimplemented\b|\btested\b|\bpassing\b|\bverified\b/.test(normalized)) return "implemented";
+  return null;
+}
+
+function chooseStoryIdeaStatus(entries: ControlMirrorBmadComparisonEvidence[]): ControlMirrorStoryIdeaEvidenceStatus {
+  const statuses = entries.map((entry) => normalizeEvidenceStatus(entry.evidenceState)).filter(Boolean);
+
+  if (statuses.includes("rejected")) return "rejected";
+  if (statuses.includes("out_of_scope")) return "out_of_scope";
+  if (statuses.includes("deferred")) return "deferred";
+  if (statuses.includes("implemented")) return "implemented";
+  return "partial";
+}
+
+function uniqueValues(values: Array<string | null | undefined>) {
+  return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))];
+}
+
+function buildStoryIdeaEvidenceRows(input: {
+  outcomes: ControlMirrorOutcomeInput[];
+  normalizedEvidence: ControlMirrorNormalizedEvidenceSummary[];
+}): ControlMirrorStoryIdeaEvidenceRow[] {
+  const baselineIdeas = flattenDirectionSeedsWithContext(input.outcomes);
+  const comparisonEntries = input.normalizedEvidence
+    .map((item) => ({
+      evidence: item,
+      comparison: item.bmadComparison
+    }))
+    .filter((item): item is { evidence: ControlMirrorNormalizedEvidenceSummary; comparison: ControlMirrorBmadComparisonEvidence } => Boolean(item.comparison));
+  const entriesByStoryIdeaId = new Map<string, Array<{ evidence: ControlMirrorNormalizedEvidenceSummary; comparison: ControlMirrorBmadComparisonEvidence }>>();
+
+  for (const entry of comparisonEntries) {
+    const key = entry.comparison.sourceStoryIdeaId || entry.comparison.deliveryStoryId;
+
+    if (!key) {
+      continue;
+    }
+
+    entriesByStoryIdeaId.set(key, [...(entriesByStoryIdeaId.get(key) ?? []), entry]);
+  }
+
+  const baselineRows = baselineIdeas.map(({ outcomeId, epicId, seed }) => {
+    const entries = [
+      ...(entriesByStoryIdeaId.get(seed.id) ?? []),
+      ...(seed.key === seed.id ? [] : entriesByStoryIdeaId.get(seed.key) ?? [])
+    ];
+    const comparisons = entries.map((entry) => entry.comparison);
+    const runtimeArtifacts = uniqueValues(entries
+      .filter((entry) => entry.evidence.evidenceType === "implementation_evidence")
+      .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
+    const testArtifacts = uniqueValues(entries
+      .filter((entry) => entry.evidence.evidenceType === "test_evidence")
+      .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
+    const testIds = uniqueValues(comparisons.flatMap((entry) => entry.testIds));
+    const latestTestResult = uniqueValues(comparisons.map((entry) => entry.verificationResult)).at(-1) ?? null;
+    const knownLimitations = uniqueValues(comparisons.map((entry) => entry.remainingGap));
+    const decisionIds = uniqueValues(comparisons.map((entry) => entry.decisionId));
+    const status = chooseStoryIdeaStatus(comparisons);
+
+    return {
+      originalOutcomeId: outcomeId,
+      originalEpicId: epicId,
+      originalStoryIdeaId: seed.key || seed.id,
+      title: seed.title,
+      valueIntent: seed.shortDescription ?? null,
+      expectedBehavior: seed.expectedBehavior ?? null,
+      mappedDeliveryStoryId: uniqueValues(comparisons.map((entry) => entry.deliveryStoryId)).at(0) ?? null,
+      implementationStatus: status,
+      runtimeArtifacts,
+      testArtifacts,
+      testIds,
+      latestTestResult,
+      knownLimitations,
+      humanDecisionRequired: status === "implemented" && runtimeArtifacts.length > 0 && testArtifacts.length > 0 ? null : "Evidence is incomplete or the item is not fully implemented.",
+      humanApprovalId: decisionIds.at(0) ?? null,
+      verificationRunId: latestTestResult ? `${seed.key || seed.id}:${latestTestResult}` : null,
+      evidenceUpdatedAt: null,
+      machineVerified: testIds.length > 0 && /\bpassing|pass|verified\b/i.test(latestTestResult ?? ""),
+      aiSelfReview: comparisons.some((entry) => /\bai.?review|self.?review|aqa\b/i.test(`${entry.artifactType} ${entry.artifactPath}`)),
+      humanReviewStillRequired: decisionIds.length === 0 && (status !== "implemented" || testArtifacts.length === 0 || runtimeArtifacts.length === 0),
+      releaseApprovalStatus: decisionIds.length > 0 ? "conditional" as const : "not_approved" as const
+    };
+  });
+  const baselineIds = new Set(baselineRows.flatMap((row) => [row.originalStoryIdeaId]));
+  const comparisonOnlyRows = [...entriesByStoryIdeaId.entries()]
+    .filter(([storyIdeaId]) => !baselineIds.has(storyIdeaId))
+    .map(([storyIdeaId, entries]) => {
+      const comparisons = entries.map((entry) => entry.comparison);
+      const runtimeArtifacts = uniqueValues(entries
+        .filter((entry) => entry.evidence.evidenceType === "implementation_evidence")
+        .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
+      const testArtifacts = uniqueValues(entries
+        .filter((entry) => entry.evidence.evidenceType === "test_evidence")
+        .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
+      const testIds = uniqueValues(comparisons.flatMap((entry) => entry.testIds));
+      const decisionIds = uniqueValues(comparisons.map((entry) => entry.decisionId));
+      const latestTestResult = uniqueValues(comparisons.map((entry) => entry.verificationResult)).at(-1) ?? null;
+      const status = chooseStoryIdeaStatus(comparisons);
+
+      return {
+        originalOutcomeId: comparisons[0]?.sourceOutcomeId ?? "unknown",
+        originalEpicId: comparisons[0]?.sourceEpicId || null,
+        originalStoryIdeaId: storyIdeaId,
+        title: storyIdeaId,
+        valueIntent: null,
+        expectedBehavior: null,
+        mappedDeliveryStoryId: uniqueValues(comparisons.map((entry) => entry.deliveryStoryId)).at(0) ?? null,
+        implementationStatus: status,
+        runtimeArtifacts,
+        testArtifacts,
+        testIds,
+        latestTestResult,
+        knownLimitations: uniqueValues(comparisons.map((entry) => entry.remainingGap)),
+        humanDecisionRequired: "Story Idea is present in comparison evidence but not in the active Framing baseline.",
+        humanApprovalId: decisionIds.at(0) ?? null,
+        verificationRunId: latestTestResult ? `${storyIdeaId}:${latestTestResult}` : null,
+        evidenceUpdatedAt: null,
+        machineVerified: testIds.length > 0 && /\bpassing|pass|verified\b/i.test(latestTestResult ?? ""),
+        aiSelfReview: comparisons.some((entry) => /\bai.?review|self.?review|aqa\b/i.test(`${entry.artifactType} ${entry.artifactPath}`)),
+        humanReviewStillRequired: true,
+        releaseApprovalStatus: "not_approved" as const
+      };
+    });
+
+  return [...baselineRows, ...comparisonOnlyRows];
+}
+
 export function buildControlMirrorDashboard(input: BuildControlMirrorInput): ControlMirrorDashboard {
   const stories = flattenStories(input.outcomes);
   const directionSeeds = flattenDirectionSeeds(input.outcomes);
@@ -1716,6 +1926,10 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
       filePath: artifact.fileName
     }));
   const storyLikeEvidence = normalizedEvidence.filter((item) => item.storyClassification !== "not_story_like");
+  const storyIdeaEvidence = buildStoryIdeaEvidenceRows({
+    outcomes: input.outcomes,
+    normalizedEvidence
+  });
   const testCoverage = buildTestCoverage({
     artifacts,
     normalizedEvidence,
@@ -2001,6 +2215,7 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
     metrics,
     artifacts,
     normalizedEvidence,
+    storyIdeaEvidence,
     normalization: {
       evidenceCount: normalizedEvidence.length,
       storyLikeItems: storyLikeEvidence.length,

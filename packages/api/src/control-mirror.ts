@@ -49,6 +49,7 @@ function clearGeneratedControlMirrorStateAfterReset(dashboard: ControlMirrorDash
   return {
     ...dashboard,
     releaseReadiness: "conditional",
+    storyIdeaEvidence: [],
     metrics: [],
     normalization: {
       evidenceCount: 0,

@@ -27,7 +27,16 @@ function createEvidencePackInput() {
             key: "CM-01",
             title: "Conformance dashboard",
             purpose: "Show evidence.",
-            directionSeeds: [],
+            directionSeeds: [
+              {
+                id: "SC-001",
+                key: "SC-001",
+                title: "Open Control Mirror idea",
+                shortDescription: "Give delivery leaders evidence.",
+                expectedBehavior: "Dashboard shows conformance state.",
+                sourceStoryId: null
+              }
+            ],
             stories: [
               {
                 id: "story-1",
@@ -135,6 +144,19 @@ describe("Control Mirror evidence pack export model", () => {
     });
 
     expect(evidencePack.report.summaryItems.map((item) => item.id)).toContain("release-readiness");
+    expect(evidencePack.evidence.storyIdeas[0]).toMatchObject({
+      originalStoryIdeaId: "SC-001",
+      originalEpicId: "epic-1",
+      title: "Open Control Mirror idea",
+      valueIntent: "Give delivery leaders evidence.",
+      expectedBehavior: "Dashboard shows conformance state.",
+      implementationStatus: "partial"
+    });
+    expect(evidencePack.validation.status).toBe("invalid");
+    expect(evidencePack.validation.issues.map((issue) => issue.id)).toContain("missing-baseline-evidence-SC-001");
+    expect(evidencePack.report.assurance).toMatchObject({
+      releaseApprovalStatus: "blocked"
+    });
     expect(evidencePack.report.recommendedNextStep).toBe("Resolve blocking Human Review items before release or higher AI-level claims.");
     expect(evidencePack.evidence.artifacts[0]).toMatchObject({
       fileName: "docs/runtime.ts",
@@ -199,5 +221,123 @@ describe("Control Mirror evidence pack export model", () => {
       rationale: "Attach Story-ID evidence before export.",
       actorId: "user-1"
     });
+  });
+
+  it("validates one evidence row per original Story Idea and flags incomplete implementation evidence", () => {
+    const input = createEvidencePackInput();
+
+    input.outcomes[0]!.epics[0]!.directionSeeds = [
+      {
+        id: "SC-001",
+        key: "SC-001",
+        title: "Fully verified idea",
+        shortDescription: "Keep a complete trace.",
+        expectedBehavior: "Runtime and test evidence are visible.",
+        sourceStoryId: null
+      },
+      {
+        id: "SC-002",
+        key: "SC-002",
+        title: "Missing runtime idea",
+        shortDescription: "Expose missing runtime.",
+        expectedBehavior: "Validation blocks incomplete evidence.",
+        sourceStoryId: null
+      },
+      {
+        id: "SC-003",
+        key: "SC-003",
+        title: "Missing test idea",
+        shortDescription: "Expose missing tests.",
+        expectedBehavior: "Validation blocks untested implementation.",
+        sourceStoryId: null
+      },
+      {
+        id: "SC-004",
+        key: "SC-004",
+        title: "Missing metadata idea",
+        shortDescription: "Expose stale verification.",
+        expectedBehavior: "Validation blocks stale metadata.",
+        sourceStoryId: null
+      },
+      {
+        id: "SC-005",
+        key: "SC-005",
+        title: "Scope-out idea",
+        shortDescription: "Expose missing approval.",
+        expectedBehavior: "Scope-out needs human approval.",
+        sourceStoryId: null
+      },
+      {
+        id: "SC-006",
+        key: "SC-006",
+        title: "Missing accountability idea",
+        shortDescription: "Expose missing rows.",
+        expectedBehavior: "Every baseline idea is accounted for.",
+        sourceStoryId: null
+      }
+    ];
+    const accountabilityInput = {
+      ...input,
+      persistentSnapshot: null,
+      artifactSessions: [
+        {
+          id: "session-bmad",
+          label: "BMAD comparison",
+          importIntent: "design" as const,
+          status: "completed",
+          createdAt: "2026-05-26T08:00:00.000Z",
+          updatedAt: "2026-05-26T08:30:00.000Z",
+          files: [
+            {
+              id: "file-bmad",
+              fileName: "docs/control-mirror/bmad-comparison-matrix.csv",
+              sourceType: "mixed_markdown_bundle",
+              sourceConfidence: "high" as const,
+              sizeBytes: 512,
+              content: [
+                "artifact_path,artifact_type,evidence_state,source_outcome_id,source_epic_id,source_story_idea_id,delivery_story_id,test_ids,verification_result,remaining_gap,decision_id",
+                "apps/web/src/app/control-mirror/page.tsx,implementation,implemented,outcome-1,epic-1,SC-001,CM-01.1,,,",
+                "apps/web/src/test/control-mirror-page.test.tsx,test,tested,outcome-1,epic-1,SC-001,CM-01.1,CM-01.1-test,passing,,",
+                "apps/web/src/test/missing-runtime.test.tsx,test,tested,outcome-1,epic-1,SC-002,CM-01.2,CM-01.2-test,passing,,",
+                "apps/web/src/app/runtime-only.tsx,implementation,implemented,outcome-1,epic-1,SC-003,CM-01.3,,,",
+                "apps/web/src/app/stale.tsx,implementation,implemented,outcome-1,epic-1,SC-004,CM-01.4,,,",
+                "apps/web/src/app/scope-out.tsx,implementation,implemented,outcome-1,epic-1,SC-005,CM-01.5,,passing,out_of_scope item,"
+              ].join("\n")
+            }
+          ],
+          candidates: []
+        }
+      ]
+    };
+
+    const dashboard = buildControlMirrorDashboard(accountabilityInput);
+    const evidencePack = buildControlMirrorEvidencePack(dashboard, {
+      generatedAt: "2026-05-26T09:00:00.000Z"
+    });
+    const issueIds = evidencePack.validation.issues.map((issue) => issue.id);
+
+    expect(evidencePack.evidence.storyIdeas.map((row) => row.originalStoryIdeaId)).toEqual([
+      "SC-001",
+      "SC-002",
+      "SC-003",
+      "SC-004",
+      "SC-005",
+      "SC-006"
+    ]);
+    expect(evidencePack.evidence.storyIdeas[0]).toMatchObject({
+      originalEpicId: "epic-1",
+      mappedDeliveryStoryId: "CM-01.1",
+      runtimeArtifacts: ["apps/web/src/app/control-mirror/page.tsx"],
+      testArtifacts: ["apps/web/src/test/control-mirror-page.test.tsx"],
+      testIds: ["CM-01.1-test"],
+      latestTestResult: "passing",
+      machineVerified: true
+    });
+    expect(evidencePack.report.assurance.machineVerifiedEvidence).toContain("SC-001: passing");
+    expect(issueIds).toContain("implemented-without-runtime-artifacts-SC-002");
+    expect(issueIds).toContain("implemented-without-test-evidence-SC-003");
+    expect(issueIds).toContain("stale-or-inconsistent-metadata-SC-004");
+    expect(issueIds).toContain("scope-out-implemented-without-approval-SC-005");
+    expect(issueIds).toContain("missing-baseline-evidence-SC-006");
   });
 });

@@ -52,6 +52,48 @@ function readEvidenceRetentionMetadata(value: unknown): {
   return metadata;
 }
 
+function readBmadComparisonMetadata(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const lineage = value as { bmadComparison?: unknown };
+
+  if (!lineage.bmadComparison || typeof lineage.bmadComparison !== "object" || Array.isArray(lineage.bmadComparison)) {
+    return {};
+  }
+
+  const comparison = lineage.bmadComparison as {
+    artifactPath?: unknown;
+    artifactType?: unknown;
+    evidenceState?: unknown;
+    sourceOutcomeId?: unknown;
+    sourceEpicId?: unknown;
+    sourceStoryIdeaId?: unknown;
+    deliveryStoryId?: unknown;
+    decisionId?: unknown;
+    testIds?: unknown;
+    verificationResult?: unknown;
+    remainingGap?: unknown;
+  };
+
+  return {
+    bmadComparison: {
+      artifactPath: typeof comparison.artifactPath === "string" ? comparison.artifactPath : "",
+      artifactType: typeof comparison.artifactType === "string" ? comparison.artifactType : "",
+      evidenceState: typeof comparison.evidenceState === "string" ? comparison.evidenceState : "",
+      sourceOutcomeId: typeof comparison.sourceOutcomeId === "string" ? comparison.sourceOutcomeId : "",
+      sourceEpicId: typeof comparison.sourceEpicId === "string" ? comparison.sourceEpicId : "",
+      sourceStoryIdeaId: typeof comparison.sourceStoryIdeaId === "string" ? comparison.sourceStoryIdeaId : "",
+      deliveryStoryId: typeof comparison.deliveryStoryId === "string" ? comparison.deliveryStoryId : "",
+      decisionId: typeof comparison.decisionId === "string" ? comparison.decisionId : "",
+      testIds: Array.isArray(comparison.testIds) ? comparison.testIds.map(String) : [],
+      verificationResult: typeof comparison.verificationResult === "string" ? comparison.verificationResult : "",
+      remainingGap: typeof comparison.remainingGap === "string" ? comparison.remainingGap : ""
+    }
+  };
+}
+
 export async function getControlMirrorDashboardSnapshot(organizationId: string): Promise<ControlMirrorDashboard | null> {
   const [organization, artifactSessions, latestControlMirrorSnapshot, tollgates, signoffRecords] = await Promise.all([
     prisma.organization.findUnique({
@@ -337,7 +379,8 @@ export async function getControlMirrorDashboardSnapshot(organizationId: string):
             readinessState: evidence.readinessState,
             missingReadinessFields: evidence.missingReadinessFields,
             storyId: evidence.detectedStoryKey,
-            ...readEvidenceRetentionMetadata(evidence.lineageJson)
+            ...readEvidenceRetentionMetadata(evidence.lineageJson),
+            ...readBmadComparisonMetadata(evidence.lineageJson)
           }))
         }
       : null,
