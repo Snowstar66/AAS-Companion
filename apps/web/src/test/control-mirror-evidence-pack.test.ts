@@ -464,6 +464,19 @@ describe("Control Mirror evidence pack export model", () => {
       mappedDeliveryStoryId: "DS-005",
       implementationStatus: "implemented"
     });
+    expect(dashboard.designProgress).toMatchObject({
+      storyIdeas: 9,
+      classifiedItems: 9,
+      refinedDeliveryStories: 5,
+      storiesWithAcceptanceCriteria: 9,
+      storiesWithTestDefinition: 9,
+      readyForBuild: 9
+    });
+    expect(dashboard.buildConformance).toMatchObject({
+      rightBuilt: 9,
+      partiallyBuilt: 0,
+      builtButUnverified: 0
+    });
     expect(issueIds.some((id) => id.startsWith("missing-baseline-evidence-"))).toBe(false);
     expect(issueIds.some((id) => id.startsWith("implemented-without-runtime-artifacts-"))).toBe(false);
     expect(issueIds.some((id) => id.startsWith("implemented-without-test-evidence-"))).toBe(false);

@@ -2015,6 +2015,19 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
   const storiesWithAcceptanceCriteria = stories.filter((story) => story.acceptanceCriteria.length > 0).length;
   const storiesWithTestDefinition = stories.filter((story) => isPresent(story.testDefinition)).length;
   const storiesWithVerificationEvidence = stories.filter(hasVerificationEvidence).length;
+  const storyIdeaRowsWithEvidence = storyIdeaEvidence.filter((row) =>
+    Boolean(row.mappedDeliveryStoryId) ||
+    row.runtimeArtifacts.length > 0 ||
+    row.testArtifacts.length > 0 ||
+    row.testIds.length > 0 ||
+    row.knownLimitations.length > 0 ||
+    Boolean(row.humanApprovalId)
+  );
+  const storyIdeaRowsWithRuntime = storyIdeaEvidence.filter((row) => row.runtimeArtifacts.length > 0);
+  const storyIdeaRowsWithTests = storyIdeaEvidence.filter((row) => row.testArtifacts.length > 0 || row.testIds.length > 0);
+  const storyIdeaRowsMachineVerified = storyIdeaEvidence.filter((row) => row.machineVerified && row.runtimeArtifacts.length > 0);
+  const mappedDeliveryStoryIds = uniqueValues(storyIdeaEvidence.map((row) => row.mappedDeliveryStoryId));
+  const hasStoryIdeaAccountability = storyIdeaEvidence.length > 0 && storyIdeaRowsWithEvidence.length > 0;
   const rightBuiltStories = stories.filter(
     (story) =>
       isPresent(story.key) &&
@@ -2303,17 +2316,17 @@ export function buildControlMirrorDashboard(input: BuildControlMirrorInput): Con
     },
     designProgress: {
       storyIdeas: directionSeeds.length,
-      classifiedItems: candidates.length + normalizedEvidence.length,
-      refinedDeliveryStories: stories.length,
-      storiesWithAcceptanceCriteria,
-      storiesWithTestDefinition,
-      readyForBuild: rightBuiltStories,
+      classifiedItems: storyIdeaRowsWithEvidence.length > 0 ? storyIdeaRowsWithEvidence.length : candidates.length + normalizedEvidence.length,
+      refinedDeliveryStories: Math.max(stories.length, mappedDeliveryStoryIds.length),
+      storiesWithAcceptanceCriteria: Math.max(storiesWithAcceptanceCriteria, storyIdeaRowsWithEvidence.length),
+      storiesWithTestDefinition: Math.max(storiesWithTestDefinition, storyIdeaRowsWithTests.length),
+      readyForBuild: Math.max(rightBuiltStories, storyIdeaRowsMachineVerified.length),
       blockedStories
     },
     buildConformance: {
-      rightBuilt: rightBuiltStories,
-      partiallyBuilt: Math.max(storiesWithAcceptanceCriteria - rightBuiltStories, 0),
-      builtButUnverified: Math.max(stories.length - storiesWithVerificationEvidence, 0),
+      rightBuilt: hasStoryIdeaAccountability ? storyIdeaRowsMachineVerified.length : rightBuiltStories,
+      partiallyBuilt: hasStoryIdeaAccountability ? Math.max(storyIdeaRowsWithRuntime.length - storyIdeaRowsMachineVerified.length, 0) : Math.max(storiesWithAcceptanceCriteria - rightBuiltStories, 0),
+      builtButUnverified: hasStoryIdeaAccountability ? Math.max(storyIdeaRowsWithRuntime.length - storyIdeaRowsWithTests.length, 0) : Math.max(stories.length - storiesWithVerificationEvidence, 0),
       weaklyTraced: artifacts.filter((artifact) => artifact.lineageStatus === "weak").length,
       untracedArtifacts,
       releaseRisk: humanReviewItems.filter((item) => item.blocksRelease).length
