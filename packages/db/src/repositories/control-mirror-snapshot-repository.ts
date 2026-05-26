@@ -407,6 +407,7 @@ export async function refreshControlMirrorCurrentImportsSnapshot(input: {
         uploadedAt: true
       }
     });
+    const filesById = new Map(files.map((file) => [file.id, file]));
     const scanStartedAt = new Date();
     const snapshot = await tx.controlMirrorSnapshot.create({
       data: {
@@ -506,10 +507,12 @@ export async function refreshControlMirrorCurrentImportsSnapshot(input: {
 
       await tx.controlMirrorNormalizedEvidence.createMany({
         data: allArtifactRows.flatMap((artifact) => {
+          const sourceFile = artifact.sourceFileId ? filesById.get(artifact.sourceFileId) : undefined;
           const normalizedItems = normalizeControlMirrorArtifactEvidence({
             artifactId: artifact.id,
             fileName: artifact.fileName,
             artifactType: artifact.artifactType as ControlMirrorArtifactType,
+            ...(sourceFile?.content === undefined ? {} : { content: sourceFile.content }),
             sourceExcerpt: artifact.sourceExcerpt,
             storyId: artifact.detectedStoryKey
           });
