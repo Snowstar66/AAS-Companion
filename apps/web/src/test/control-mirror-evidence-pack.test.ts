@@ -340,4 +340,132 @@ describe("Control Mirror evidence pack export model", () => {
     expect(issueIds).toContain("scope-out-implemented-without-approval-SC-005");
     expect(issueIds).toContain("missing-baseline-evidence-SC-006");
   });
+
+  it("accounts for Story Ideas when BMAD evidence uses grouped IDs and story_idea matrix rows", () => {
+    const input = createEvidencePackInput();
+    const storyIdeas = Array.from({ length: 9 }, (_, index) => {
+      const id = `SC-${String(index + 1).padStart(3, "0")}`;
+
+      return {
+        id,
+        key: id,
+        title: `Story Idea ${index + 1}`,
+        shortDescription: `Value intent ${index + 1}`,
+        expectedBehavior: `Expected behavior ${index + 1}`,
+        sourceStoryId: null
+      };
+    });
+    const deliveryByStoryIdea = new Map([
+      ["SC-001", "DS-001"],
+      ["SC-002", "DS-001"],
+      ["SC-003", "DS-002"],
+      ["SC-004", "DS-002"],
+      ["SC-005", "DS-003"],
+      ["SC-006", "DS-003"],
+      ["SC-007", "DS-004"],
+      ["SC-008", "DS-004"],
+      ["SC-009", "DS-005"]
+    ]);
+
+    input.outcomes[0]!.epics[0]!.directionSeeds = storyIdeas;
+    input.persistentSnapshot = null;
+    input.artifactSessions = [
+      {
+        id: "session-matsvinn",
+        label: "Matsvinn Control Mirror docs",
+        importIntent: "design" as const,
+        status: "completed",
+        createdAt: "2026-05-26T06:29:00.000Z",
+        updatedAt: "2026-05-26T06:29:00.000Z",
+        files: [
+          {
+            id: "file-manifest",
+            fileName: "docs/control-mirror/bmad-comparison-manifest.json",
+            sourceType: "mixed_markdown_bundle",
+            sourceConfidence: "high" as const,
+            sizeBytes: 1024,
+            content: JSON.stringify({
+              entries: [
+                {
+                  artifact_path: "app/index.html",
+                  artifact_type: "runtime_ui",
+                  evidence_state: "implemented_and_tested",
+                  source_outcome_id: "OUT-001",
+                  source_epic_id: "EPIC-001,EPIC-002,EPIC-003,EPIC-004,EPIC-005",
+                  source_story_idea_id: storyIdeas.map((idea) => idea.id).join(","),
+                  delivery_story_id: "DS-001,DS-002,DS-003,DS-004,DS-005",
+                  decision_id: "TECH-022",
+                  test_ids: ["tests/story-idea-coverage.test.js"],
+                  verification_result: "passed",
+                  remaining_gap: "Human release review still required."
+                },
+                {
+                  artifact_path: "tests/story-idea-coverage.test.js",
+                  artifact_type: "automated_story_idea_coverage_test",
+                  evidence_state: "tested",
+                  source_outcome_id: "OUT-001",
+                  source_epic_id: "EPIC-001,EPIC-002,EPIC-003,EPIC-004,EPIC-005",
+                  source_story_idea_id: storyIdeas.map((idea) => idea.id).join(","),
+                  delivery_story_id: "DS-001,DS-002,DS-003,DS-004,DS-005",
+                  decision_id: "TECH-022",
+                  test_ids: ["tests/story-idea-coverage.test.js"],
+                  verification_result: "passed",
+                  remaining_gap: "Human release review still required."
+                }
+              ]
+            })
+          },
+          {
+            id: "file-matrix",
+            fileName: "docs/control-mirror/bmad-comparison-matrix.csv",
+            sourceType: "mixed_markdown_bundle",
+            sourceConfidence: "high" as const,
+            sizeBytes: 1024,
+            content: [
+              "row_type,id,baseline_scope,refined_scope,extra_scope,dropped_or_deferred,implementation_artifacts,verification_evidence,customer_decision_needed",
+              ...storyIdeas.map((idea) => [
+                "story_idea",
+                idea.id,
+                idea.title,
+                deliveryByStoryIdea.get(idea.id),
+                "none",
+                "none",
+                "app/index.html; app/app-core.js; app/app.js",
+                "core test and browser smoke passed",
+                "no"
+              ].join(","))
+            ].join("\n")
+          }
+        ],
+        candidates: []
+      }
+    ];
+
+    const dashboard = buildControlMirrorDashboard(input);
+    const evidencePack = buildControlMirrorEvidencePack(dashboard, {
+      generatedAt: "2026-05-26T07:00:00.000Z"
+    });
+    const issueIds = evidencePack.validation.issues.map((issue) => issue.id);
+
+    expect(evidencePack.evidence.storyIdeas).toHaveLength(9);
+    expect(evidencePack.evidence.storyIdeas.map((row) => row.originalStoryIdeaId)).toEqual(storyIdeas.map((idea) => idea.id));
+    expect(evidencePack.evidence.storyIdeas[0]).toMatchObject({
+      originalStoryIdeaId: "SC-001",
+      mappedDeliveryStoryId: "DS-001",
+      implementationStatus: "implemented",
+      runtimeArtifacts: expect.arrayContaining(["app/index.html"]),
+      testArtifacts: expect.arrayContaining(["tests/story-idea-coverage.test.js"]),
+      testIds: expect.arrayContaining(["tests/story-idea-coverage.test.js"]),
+      latestTestResult: "core test and browser smoke passed",
+      machineVerified: true
+    });
+    expect(evidencePack.evidence.storyIdeas[8]).toMatchObject({
+      originalStoryIdeaId: "SC-009",
+      mappedDeliveryStoryId: "DS-005",
+      implementationStatus: "implemented"
+    });
+    expect(issueIds.some((id) => id.startsWith("missing-baseline-evidence-"))).toBe(false);
+    expect(issueIds.some((id) => id.startsWith("implemented-without-runtime-artifacts-"))).toBe(false);
+    expect(issueIds.some((id) => id.startsWith("implemented-without-test-evidence-"))).toBe(false);
+  });
 });

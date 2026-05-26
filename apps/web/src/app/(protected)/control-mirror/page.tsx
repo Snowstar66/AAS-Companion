@@ -315,6 +315,109 @@ function HandshakeCoverageChart({
   );
 }
 
+function StoryIdeaAccountability({
+  language,
+  rows
+}: {
+  language: AppLanguage;
+  rows: ControlMirrorDashboard["storyIdeaEvidence"];
+}) {
+  const handledCount = rows.filter((row) =>
+    Boolean(row.mappedDeliveryStoryId) ||
+    row.runtimeArtifacts.length > 0 ||
+    row.testArtifacts.length > 0 ||
+    row.testIds.length > 0 ||
+    row.knownLimitations.length > 0 ||
+    Boolean(row.humanApprovalId)
+  ).length;
+  const verifiedCount = rows.filter((row) => row.machineVerified && row.runtimeArtifacts.length > 0).length;
+  const reviewCount = rows.filter((row) => row.humanReviewStillRequired || row.humanDecisionRequired).length;
+  const statusTone = handledCount === rows.length && reviewCount === 0 ? "good" : handledCount === rows.length ? "warn" : "stop";
+
+  return (
+    <Card className="border-border/70 bg-background/95 shadow-sm" id="story-idea-accountability">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div>
+            <CardTitle className="text-lg">{t(language, "Story Idea accountability", "Story Idea accountability")}</CardTitle>
+            <CardDescription className="mt-1 text-sm">
+              {t(language, "Shows whether every original Story Idea has delivery, runtime and test evidence.", "Visar om varje original-Story Idea har leverans-, runtime- och testevidens.")}
+            </CardDescription>
+          </div>
+          <div className={`w-fit rounded-2xl border px-4 py-3 text-right ${getSignalClasses(statusTone)}`}>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{t(language, "Handled", "Omhandertagna")}</p>
+            <p className="text-2xl font-semibold tabular-nums">{handledCount}/{rows.length}</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {rows.length === 0 ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm leading-6 text-amber-950">
+            {t(language, "No original Story Idea baseline is visible in the current Control Mirror snapshot.", "Ingen original-Story Idea-baseline syns i aktuell Control Mirror-snapshot.")}
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <MetricBar detail={t(language, "Has at least one accountability signal", "Har minst en accountability-signal")} label={t(language, "Handled", "Omhandertagna")} max={rows.length} tone={handledCount === rows.length ? "good" : "warn"} value={handledCount} />
+              <MetricBar detail={t(language, "Runtime plus passing/verified test evidence", "Runtime plus passing/verified testevidens")} label={t(language, "Machine verified", "Maskinverifierade")} max={rows.length} tone={verifiedCount === rows.length ? "good" : "neutral"} value={verifiedCount} />
+              <MetricBar detail={t(language, "Still needs human decision or review", "Krav pa human decision eller review")} href="#decision-prompt-log" label={t(language, "Human review", "Human review")} max={rows.length} tone={reviewCount > 0 ? "warn" : "good"} value={reviewCount} />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[880px] text-left text-sm">
+                <thead className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2">{t(language, "Story Idea", "Story Idea")}</th>
+                    <th className="px-3 py-2">{t(language, "Delivery", "Leverans")}</th>
+                    <th className="px-3 py-2">{t(language, "Status", "Status")}</th>
+                    <th className="px-3 py-2">{t(language, "Runtime", "Runtime")}</th>
+                    <th className="px-3 py-2">{t(language, "Tests", "Tester")}</th>
+                    <th className="px-3 py-2">{t(language, "Review", "Review")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => {
+                    const reviewNeeded = row.humanReviewStillRequired || Boolean(row.humanDecisionRequired);
+                    const rowTone = row.implementationStatus === "implemented" && row.runtimeArtifacts.length > 0 && (row.testArtifacts.length > 0 || row.testIds.length > 0)
+                      ? "good"
+                      : row.implementationStatus === "partial"
+                        ? "warn"
+                        : "stop";
+
+                    return (
+                      <tr className="border-t border-border/70" key={row.originalStoryIdeaId}>
+                        <td className="max-w-[280px] px-3 py-3">
+                          <p className="font-semibold text-foreground">{row.originalStoryIdeaId}</p>
+                          <p className="mt-1 truncate text-xs text-muted-foreground">{row.title}</p>
+                        </td>
+                        <td className="px-3 py-3 font-medium">{row.mappedDeliveryStoryId ?? "n/a"}</td>
+                        <td className="px-3 py-3">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getBadgeClasses(rowTone)}`}>
+                            {formatLabel(row.implementationStatus)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 tabular-nums">{row.runtimeArtifacts.length}</td>
+                        <td className="px-3 py-3">
+                          <span className="font-medium tabular-nums">{Math.max(row.testArtifacts.length, row.testIds.length)}</span>
+                          {row.latestTestResult ? <span className="ml-2 text-xs text-muted-foreground">{row.latestTestResult}</span> : null}
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getBadgeClasses(reviewNeeded ? "warn" : "good")}`}>
+                            {reviewNeeded ? t(language, "Needed", "Kravs") : t(language, "Clear", "Klar")}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function BlockerDistributionChart({
   items,
   language
@@ -983,6 +1086,8 @@ export default async function ControlMirrorPage({
             />
             <KnownDeliveryProgressChart language={language} progressPercent={knownProgressPercent} stages={progressStages} />
           </div>
+
+          <StoryIdeaAccountability language={language} rows={data.storyIdeaEvidence} />
 
           <BlockerDistributionChart items={blockerChartItems} language={language} />
 

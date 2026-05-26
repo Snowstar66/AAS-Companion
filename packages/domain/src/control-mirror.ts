@@ -790,16 +790,26 @@ function splitListValue(value: unknown) {
 }
 
 function normalizeBmadComparisonRecord(record: Record<string, unknown>): BmadComparisonEntry {
+  const rowType = getRecordString(record, ["row_type", "rowType"]);
   const artifactPath = getRecordString(record, ["artifact_path", "artifactPath", "path", "file", "file_path", "implementation_artifacts"]);
-  const artifactType = getRecordString(record, ["artifact_type", "artifactType", "type", "work_item_type", "category"]);
-  const evidenceState = getRecordString(record, ["evidence_state", "evidenceState", "status", "state", "implementation_status"]);
+  const artifactType = getRecordString(record, ["artifact_type", "artifactType", "type", "work_item_type", "category"]) || rowType;
+  const droppedOrDeferred = getRecordString(record, ["dropped_or_deferred", "droppedOrDeferred"]);
+  const verificationEvidence = getRecordString(record, ["verification_evidence", "verificationEvidence", "tests_or_verification", "testsOrVerification"]);
+  const evidenceState = getRecordString(record, ["evidence_state", "evidenceState", "status", "state", "implementation_status"]) ||
+    (/\bstory_?idea\b/i.test(rowType) && isPresent(verificationEvidence) ? "implemented_and_tested" : "") ||
+    (!/^none$/i.test(droppedOrDeferred) && isPresent(droppedOrDeferred) ? "deferred" : "") ||
+    (isPresent(artifactPath) && isPresent(verificationEvidence) ? "implemented_and_tested" : "") ||
+    (isPresent(artifactPath) ? "implemented" : "") ||
+    (isPresent(verificationEvidence) ? "tested" : "");
   const sourceOutcomeId = getRecordString(record, ["source_outcome_id", "sourceOutcomeId", "outcome_id", "outcomeId", "outcome"]);
   const sourceEpicId = getRecordString(record, ["source_epic_id", "sourceEpicId", "epic_id", "epicId", "epic"]);
-  const sourceStoryIdeaId = getRecordString(record, ["source_story_idea_id", "sourceStoryIdeaId", "story_idea_id", "storyIdeaId", "story_idea"]);
-  const deliveryStoryId = getRecordString(record, ["delivery_story_id", "deliveryStoryId", "story_id", "storyId", "story", "story_key"]);
+  const sourceStoryIdeaId = getRecordString(record, ["source_story_idea_id", "sourceStoryIdeaId", "source_story_ideas", "sourceStoryIdeas", "story_idea_id", "storyIdeaId", "story_idea"]) ||
+    (/\bstory_?idea\b/i.test(rowType) ? getRecordString(record, ["id"]) : "");
+  const deliveryStoryId = getRecordString(record, ["delivery_story_id", "deliveryStoryId", "story_id", "storyId", "story", "story_key"]) ||
+    (/\bstory_?idea\b/i.test(rowType) ? getRecordString(record, ["refined_scope", "refinedScope"]) : "");
   const decisionId = getRecordString(record, ["decision_id", "decisionId", "decision"]);
   const testIdsValue = record.test_ids ?? record.testIds ?? record.tests ?? record.test_id ?? record.testId;
-  const verificationResult = getRecordString(record, ["verification_result", "verificationResult", "test_result", "testResult", "result"]);
+  const verificationResult = getRecordString(record, ["verification_result", "verificationResult", "test_result", "testResult", "result"]) || verificationEvidence;
   const remainingGap = getRecordString(record, ["remaining_gap", "remainingGap", "gap", "known_gap", "knownGap", "customer_decision_needed"]);
 
   return {
@@ -921,12 +931,18 @@ function parseBmadComparisonEvidence(fileName: string, content: string) {
 
 function getBmadComparisonEvidenceType(entry: BmadComparisonEntry): ControlMirrorNormalizedEvidenceType {
   const haystack = `${entry.artifactPath} ${entry.artifactType} ${entry.evidenceState} ${entry.verificationResult}`.toLowerCase();
+  const implementationLike = /\b(implemented|implementation|runtime|ui|src\/|apps\/|packages\/|component|route|page|app\/|index\.html|app-core|app\.js)\b/.test(haystack);
+  const testLike = entry.testIds.length > 0 || /\b(test|tested|verification|passing|failing|manual|smoke)\b/.test(haystack);
 
-  if (entry.testIds.length > 0 || /\b(test|tested|verification|passing|failing|manual)\b/.test(haystack)) {
+  if (implementationLike && !/\btests?\/|\.test\.|\.spec\.|test-evidence|smoke\b/.test(haystack)) {
+    return "implementation_evidence";
+  }
+
+  if (testLike) {
     return "test_evidence";
   }
 
-  if (/\b(implemented|implementation|src\/|apps\/|packages\/|component|route|page|tested)\b/.test(haystack)) {
+  if (implementationLike) {
     return "implementation_evidence";
   }
 
@@ -1772,6 +1788,56 @@ function uniqueValues(values: Array<string | null | undefined>) {
   return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))];
 }
 
+function comparisonStoryIdeaIds(entry: ControlMirrorBmadComparisonEvidence) {
+  const sourceIds = splitListValue(entry.sourceStoryIdeaId);
+
+  return sourceIds.length > 0 ? sourceIds : splitListValue(entry.deliveryStoryId);
+}
+
+function comparisonDeliveryStoryIds(entry: ControlMirrorBmadComparisonEvidence) {
+  return splitListValue(entry.deliveryStoryId);
+}
+
+function comparisonDecisionIds(entry: ControlMirrorBmadComparisonEvidence) {
+  return splitListValue(entry.decisionId);
+}
+
+function isMeaningfulGap(value: string | null | undefined) {
+  const normalized = (value ?? "").trim().toLowerCase();
+
+  return Boolean(normalized) && !/^(no|none|n\/a|not applicable)$/i.test(normalized);
+}
+
+function isRuntimeComparisonArtifact(entry: {
+  evidence: ControlMirrorNormalizedEvidenceSummary;
+  comparison: ControlMirrorBmadComparisonEvidence;
+}) {
+  const haystack = `${entry.comparison.artifactPath} ${entry.comparison.artifactType} ${entry.comparison.evidenceState}`.toLowerCase();
+
+  return entry.evidence.evidenceType === "implementation_evidence" ||
+    /\b(implementation|runtime|ui|app\/|src\/|apps\/|packages\/|index\.html|app-core|app\.js)\b/.test(haystack) &&
+      !/\btests?\/|\.test\.|\.spec\.|test-evidence|smoke\b/.test(haystack);
+}
+
+function isTestComparisonArtifact(entry: {
+  evidence: ControlMirrorNormalizedEvidenceSummary;
+  comparison: ControlMirrorBmadComparisonEvidence;
+}) {
+  const haystack = `${entry.comparison.artifactPath} ${entry.comparison.artifactType} ${entry.comparison.evidenceState} ${entry.comparison.verificationResult}`.toLowerCase();
+
+  return /\btests?\/|\.test\.|\.spec\.|test-evidence|automated_.*test|smoke\b/.test(haystack) ||
+    (entry.evidence.evidenceType === "test_evidence" && !isRuntimeComparisonArtifact(entry));
+}
+
+function firstMappedDeliveryStoryId(comparisons: ControlMirrorBmadComparisonEvidence[]) {
+  const exactIds = uniqueValues(comparisons
+    .filter((entry) => comparisonStoryIdeaIds(entry).length <= 1)
+    .flatMap((entry) => comparisonDeliveryStoryIds(entry)));
+  const fallbackIds = uniqueValues(comparisons.flatMap((entry) => comparisonDeliveryStoryIds(entry)));
+
+  return exactIds.at(0) ?? fallbackIds.at(0) ?? null;
+}
+
 function buildStoryIdeaEvidenceRows(input: {
   outcomes: ControlMirrorOutcomeInput[];
   normalizedEvidence: ControlMirrorNormalizedEvidenceSummary[];
@@ -1786,13 +1852,15 @@ function buildStoryIdeaEvidenceRows(input: {
   const entriesByStoryIdeaId = new Map<string, Array<{ evidence: ControlMirrorNormalizedEvidenceSummary; comparison: ControlMirrorBmadComparisonEvidence }>>();
 
   for (const entry of comparisonEntries) {
-    const key = entry.comparison.sourceStoryIdeaId || entry.comparison.deliveryStoryId;
+    const storyIdeaIds = comparisonStoryIdeaIds(entry.comparison);
 
-    if (!key) {
+    if (storyIdeaIds.length === 0) {
       continue;
     }
 
-    entriesByStoryIdeaId.set(key, [...(entriesByStoryIdeaId.get(key) ?? []), entry]);
+    for (const key of storyIdeaIds) {
+      entriesByStoryIdeaId.set(key, [...(entriesByStoryIdeaId.get(key) ?? []), entry]);
+    }
   }
 
   const baselineRows = baselineIdeas.map(({ outcomeId, epicId, seed }) => {
@@ -1802,15 +1870,15 @@ function buildStoryIdeaEvidenceRows(input: {
     ];
     const comparisons = entries.map((entry) => entry.comparison);
     const runtimeArtifacts = uniqueValues(entries
-      .filter((entry) => entry.evidence.evidenceType === "implementation_evidence")
+      .filter(isRuntimeComparisonArtifact)
       .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
     const testArtifacts = uniqueValues(entries
-      .filter((entry) => entry.evidence.evidenceType === "test_evidence")
+      .filter(isTestComparisonArtifact)
       .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
     const testIds = uniqueValues(comparisons.flatMap((entry) => entry.testIds));
     const latestTestResult = uniqueValues(comparisons.map((entry) => entry.verificationResult)).at(-1) ?? null;
-    const knownLimitations = uniqueValues(comparisons.map((entry) => entry.remainingGap));
-    const decisionIds = uniqueValues(comparisons.map((entry) => entry.decisionId));
+    const knownLimitations = uniqueValues(comparisons.map((entry) => entry.remainingGap).filter(isMeaningfulGap));
+    const decisionIds = uniqueValues(comparisons.flatMap(comparisonDecisionIds));
     const status = chooseStoryIdeaStatus(comparisons);
 
     return {
@@ -1820,7 +1888,7 @@ function buildStoryIdeaEvidenceRows(input: {
       title: seed.title,
       valueIntent: seed.shortDescription ?? null,
       expectedBehavior: seed.expectedBehavior ?? null,
-      mappedDeliveryStoryId: uniqueValues(comparisons.map((entry) => entry.deliveryStoryId)).at(0) ?? null,
+      mappedDeliveryStoryId: firstMappedDeliveryStoryId(comparisons),
       implementationStatus: status,
       runtimeArtifacts,
       testArtifacts,
@@ -1843,13 +1911,13 @@ function buildStoryIdeaEvidenceRows(input: {
     .map(([storyIdeaId, entries]) => {
       const comparisons = entries.map((entry) => entry.comparison);
       const runtimeArtifacts = uniqueValues(entries
-        .filter((entry) => entry.evidence.evidenceType === "implementation_evidence")
+        .filter(isRuntimeComparisonArtifact)
         .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
       const testArtifacts = uniqueValues(entries
-        .filter((entry) => entry.evidence.evidenceType === "test_evidence")
+        .filter(isTestComparisonArtifact)
         .map((entry) => entry.comparison.artifactPath || entry.evidence.fileName));
       const testIds = uniqueValues(comparisons.flatMap((entry) => entry.testIds));
-      const decisionIds = uniqueValues(comparisons.map((entry) => entry.decisionId));
+      const decisionIds = uniqueValues(comparisons.flatMap(comparisonDecisionIds));
       const latestTestResult = uniqueValues(comparisons.map((entry) => entry.verificationResult)).at(-1) ?? null;
       const status = chooseStoryIdeaStatus(comparisons);
 
@@ -1860,13 +1928,13 @@ function buildStoryIdeaEvidenceRows(input: {
         title: storyIdeaId,
         valueIntent: null,
         expectedBehavior: null,
-        mappedDeliveryStoryId: uniqueValues(comparisons.map((entry) => entry.deliveryStoryId)).at(0) ?? null,
+        mappedDeliveryStoryId: firstMappedDeliveryStoryId(comparisons),
         implementationStatus: status,
         runtimeArtifacts,
         testArtifacts,
         testIds,
         latestTestResult,
-        knownLimitations: uniqueValues(comparisons.map((entry) => entry.remainingGap)),
+        knownLimitations: uniqueValues(comparisons.map((entry) => entry.remainingGap).filter(isMeaningfulGap)),
         humanDecisionRequired: "Story Idea is present in comparison evidence but not in the active Framing baseline.",
         humanApprovalId: decisionIds.at(0) ?? null,
         verificationRunId: latestTestResult ? `${storyIdeaId}:${latestTestResult}` : null,
