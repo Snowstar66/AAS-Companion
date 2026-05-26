@@ -26,6 +26,7 @@ vi.mock("@/app/(protected)/control-mirror/actions", () => ({
   archiveControlMirrorEvidencePackExportAction: vi.fn(),
   recordControlMirrorEvidencePackExportAcceptanceAction: vi.fn(),
   recordControlMirrorHumanReviewDecisionAction: vi.fn(),
+  reopenControlMirrorHumanReviewItemAction: vi.fn(),
   resetControlMirrorWorkspaceAction: vi.fn(),
   refreshControlMirrorSnapshotAction: vi.fn(),
   submitControlMirrorUploadedSnapshotAction: vi.fn()

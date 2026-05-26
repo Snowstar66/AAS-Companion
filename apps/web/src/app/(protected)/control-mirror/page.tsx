@@ -33,6 +33,7 @@ import {
   archiveControlMirrorEvidencePackExportAction,
   recordControlMirrorEvidencePackExportAcceptanceAction,
   recordControlMirrorHumanReviewDecisionAction,
+  reopenControlMirrorHumanReviewItemAction,
   resetControlMirrorWorkspaceAction,
   refreshControlMirrorSnapshotAction,
   submitControlMirrorUploadedSnapshotAction
@@ -174,6 +175,22 @@ function getBarClasses(tone: "good" | "warn" | "stop" | "neutral") {
   if (tone === "warn") return "bg-amber-500";
   if (tone === "stop") return "bg-rose-500";
   return "bg-sky-500";
+}
+
+function getReviewStateTone(state: string | null | undefined, severity: string): "good" | "warn" | "stop" | "neutral" {
+  if (state === "decided") return "good";
+  if (state === "deferred") return "warn";
+  if (state === "superseded") return "neutral";
+  return severity === "high" ? "stop" : "warn";
+}
+
+function getReviewCardClasses(state: string | null | undefined, severity: string) {
+  const tone = getReviewStateTone(state, severity);
+
+  if (tone === "good") return "border-emerald-200 bg-emerald-50 text-emerald-950";
+  if (tone === "neutral") return "border-slate-200 bg-slate-50 text-slate-800";
+  if (tone === "warn") return "border-amber-200 bg-amber-50 text-amber-950";
+  return "border-rose-200 bg-rose-50 text-rose-950";
 }
 
 function MetricBar({
@@ -530,6 +547,13 @@ function DecisionPromptLog({
         </div>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 rounded-2xl border border-sky-200 bg-sky-50/70 p-4 text-sm leading-6 text-sky-950">
+          {t(
+            language,
+            "This log shows Control Mirror review decisions and evidence-pack acceptance. Free-form chat replies such as 'OK, continue' only appear here if the downstream run wrote them into a decision log or a Human Review decision.",
+            "Den har loggen visar Control Mirror-reviewbeslut och evidence-pack-acceptans. Fria chattsvar som 'OK, fortsatt' syns bara har om downstream-korningen skrev dem till en beslutslogg eller ett Human Review-beslut."
+          )}
+        </div>
         {entries.length === 0 ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm leading-6 text-emerald-950">
             {t(language, "No decision prompts or acceptance questions are visible in the current evidence.", "Inga beslutsfragor eller acceptansfragor syns i nuvarande evidens.")}
@@ -1748,77 +1772,115 @@ export default async function ControlMirrorPage({
                 {t(language, "No Control Mirror review blockers are visible in the current evidence.", "Inga Control Mirror-reviewblockerare syns i nuvarande evidens.")}
               </div>
             ) : (
-              data.humanReviewItems.map((item) => (
-                <div className={`rounded-2xl border px-4 py-4 ${item.severity === "high" ? "border-rose-200 bg-rose-50 text-rose-900" : "border-amber-200 bg-amber-50 text-amber-900"}`} id={`review-item-${item.id}`} key={item.id}>
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-75">{item.category}</p>
-                      <p className="mt-2 font-medium">{item.decisionNeeded}</p>
-                      <p className="mt-2 text-sm leading-6">{item.rationale}</p>
-                      <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                        <div className="rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">{t(language, "Where this came from", "Var detta kommer fran")}</p>
-                          <p className="mt-2 leading-6">{getHumanReviewSource(item)}</p>
+              data.humanReviewItems.map((item) => {
+                const reviewState = item.reviewState ?? "open";
+                const isHandled = reviewState === "decided";
+                const isDeferred = reviewState === "deferred";
+                const nextAction = getHumanReviewNextAction(item);
+
+                return (
+                  <details className={`rounded-2xl border px-4 py-4 ${getReviewCardClasses(reviewState, item.severity)}`} id={`review-item-${item.id}`} key={item.id} open={!isHandled && !isDeferred}>
+                    <summary className="flex cursor-pointer list-none flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-75">{item.category}</p>
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getBadgeClasses(getReviewStateTone(reviewState, item.severity))}`}>
+                            {isHandled ? t(language, "Handled", "Hanterad") : formatLabel(reviewState)}
+                          </span>
                         </div>
-                        <div className="rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">{t(language, "What to do now", "Vad du gor nu")}</p>
-                          <p className="mt-2 leading-6">
-                            {item.sourceFindingId === "guardrail-governance-funding"
-                              ? t(language, "Attach a funding, Margin Gate or commercial governance file, then refresh Control Mirror. If this project has no such gate, record a controlled exception here.", "Ladda upp en funding-, Margin Gate- eller commercial governance-fil och uppdatera Control Mirror. Om projektet saknar sadan gate, registrera ett kontrollerat undantag har.")
-                              : item.sourceFindingId === "guardrail-test-evidence"
-                                ? t(language, "Import mapped test evidence or a BMAD comparison matrix with test_ids and verification_result, then refresh Control Mirror.", "Importera mappad testevidens eller en BMAD comparison matrix med test_ids och verification_result och uppdatera Control Mirror.")
-                                : t(language, "Use the recommendation and alternatives below to either add evidence or record a human decision.", "Anvand rekommendationen och alternativen nedan for att antingen lagga till evidens eller registrera ett manskligt beslut.")}
+                        <p className="mt-2 font-medium">{item.decisionNeeded}</p>
+                        {item.latestHumanDecision ? (
+                          <p className="mt-2 text-sm leading-6">
+                            {t(language, "Latest decision", "Senaste beslut")}: {getHumanDecisionLabel(item.latestHumanDecision.decisionType)} - {item.latestHumanDecision.rationale}
                           </p>
-                        </div>
+                        ) : (
+                          <p className="mt-2 text-sm leading-6">{item.rationale}</p>
+                        )}
                       </div>
-                      <p className="mt-2 text-sm">Affected: {item.affectedObject}</p>
-                      <p className="mt-2 text-sm">Value: {item.valueRationale}</p>
-                      <p className="mt-2 text-sm">Risk if approved: {item.riskIfApproved}</p>
-                      <p className="mt-2 text-sm">Risk if not approved: {item.riskIfNotApproved}</p>
-                      <p className="mt-2 text-sm">Alternatives: {item.alternatives.join(", ")}</p>
-                      <p className="mt-2 text-sm">Queue state: {item.reviewState ? formatLabel(item.reviewState) : "generated"}</p>
-                      {item.latestHumanDecision ? (
-                        <div className="mt-3 rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
-                          <p className="font-medium">Latest human decision: {getHumanDecisionLabel(item.latestHumanDecision.decisionType)}</p>
-                          <p className="mt-1 leading-6">{item.latestHumanDecision.rationale}</p>
-                          <p className="mt-1 opacity-75">Recorded {item.latestHumanDecision.createdAt}</p>
+                      <div className="flex flex-col items-start gap-2 md:items-end">
+                        <span className="inline-flex w-fit items-center rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">
+                          Recommendation: {item.recommendedOption}
+                        </span>
+                        <span className="text-xs opacity-75">
+                          {isHandled ? t(language, "Open to amend or reopen", "Oppna for att komplettera eller ateroppna") : t(language, "Open item", "Oppet arende")}
+                        </span>
+                      </div>
+                    </summary>
+
+                    <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div className="grid gap-3 lg:grid-cols-2">
+                          <div className="rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">{t(language, "Where this came from", "Var detta kommer fran")}</p>
+                            <p className="mt-2 leading-6">{getHumanReviewSource(item)}</p>
+                          </div>
+                          <div className="rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">{t(language, "What to do now", "Vad du gor nu")}</p>
+                            <p className="mt-2 leading-6">
+                              {item.sourceFindingId === "guardrail-governance-funding"
+                                ? t(language, "Attach a funding, Margin Gate or commercial governance file, then refresh Control Mirror. If this project has no such gate, record a controlled exception here.", "Ladda upp en funding-, Margin Gate- eller commercial governance-fil och uppdatera Control Mirror. Om projektet saknar sadan gate, registrera ett kontrollerat undantag har.")
+                                : item.sourceFindingId === "guardrail-test-evidence"
+                                  ? t(language, "Import mapped test evidence or a BMAD comparison matrix with test_ids and verification_result, then refresh Control Mirror.", "Importera mappad testevidens eller en BMAD comparison matrix med test_ids och verification_result och uppdatera Control Mirror.")
+                                  : t(language, "Use the recommendation and alternatives below to either add evidence or record a human decision.", "Anvand rekommendationen och alternativen nedan for att antingen lagga till evidens eller registrera ett manskligt beslut.")}
+                            </p>
+                          </div>
                         </div>
-                      ) : null}
+                        <p className="mt-2 text-sm">Affected: {item.affectedObject}</p>
+                        <p className="mt-2 text-sm">Value: {item.valueRationale}</p>
+                        <p className="mt-2 text-sm">Risk if approved: {item.riskIfApproved}</p>
+                        <p className="mt-2 text-sm">Risk if not approved: {item.riskIfNotApproved}</p>
+                        <p className="mt-2 text-sm">Alternatives: {item.alternatives.join(", ")}</p>
+                        <p className="mt-2 text-sm">Queue state: {formatLabel(reviewState)}</p>
+                        {item.latestHumanDecision ? (
+                          <div className="mt-3 rounded-xl border border-current/15 bg-background/70 px-3 py-3 text-sm">
+                            <p className="font-medium">Latest human decision: {getHumanDecisionLabel(item.latestHumanDecision.decisionType)}</p>
+                            <p className="mt-1 leading-6">{item.latestHumanDecision.rationale}</p>
+                            <p className="mt-1 opacity-75">Recorded {item.latestHumanDecision.createdAt}</p>
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-col items-start gap-2 md:items-end">
+                        <Button asChild size="sm" variant="secondary">
+                          <Link href={nextAction.nextActionHref}>{nextAction.nextActionLabel}</Link>
+                        </Button>
+                        {item.persistedReviewItemId ? (
+                          <>
+                            {isHandled || isDeferred ? (
+                              <form action={reopenControlMirrorHumanReviewItemAction} className="w-full min-w-[260px] md:w-[300px]">
+                                <input name="reviewItemId" type="hidden" value={item.persistedReviewItemId} />
+                                <Button className="w-full" size="sm" type="submit" variant="secondary">
+                                  {t(language, "Reopen as unhandled", "Ateroppna som ohanterad")}
+                                </Button>
+                              </form>
+                            ) : null}
+                            <form action={recordControlMirrorHumanReviewDecisionAction} className="mt-2 grid w-full min-w-[260px] gap-2 rounded-xl border border-current/15 bg-background/70 p-3 text-sm md:w-[300px]">
+                              <input name="reviewItemId" type="hidden" value={item.persistedReviewItemId} />
+                              <label className="grid gap-1">
+                                <span className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">{isHandled ? "Follow-up decision" : "Human decision"}</span>
+                                <select className="rounded-lg border border-current/20 bg-background px-3 py-2 text-foreground" name="decisionType" required>
+                                  <option value="approve_with_controls">Approve with controls</option>
+                                  <option value="downgrade">Downgrade</option>
+                                  <option value="defer">Defer</option>
+                                  <option value="request_exception">Request exception</option>
+                                  <option value="request_rework">Request rework</option>
+                                  <option value="reject">Reject</option>
+                                </select>
+                              </label>
+                              <label className="grid gap-1">
+                                <span className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">Rationale</span>
+                                <textarea className="min-h-20 rounded-lg border border-current/20 bg-background px-3 py-2 text-foreground" name="rationale" required />
+                              </label>
+                              <Button size="sm" type="submit">
+                                {isHandled ? t(language, "Add follow-up decision", "Lagg till kompletterande beslut") : t(language, "Record human decision", "Registrera manskligt beslut")}
+                              </Button>
+                            </form>
+                          </>
+                        ) : null}
+                      </div>
                     </div>
-                    <div className="flex flex-col items-start gap-2 md:items-end">
-                      <span className="inline-flex w-fit items-center rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">
-                        Recommendation: {item.recommendedOption}
-                      </span>
-                      <Button asChild size="sm" variant="secondary">
-                        <Link href={getHumanReviewNextAction(item).nextActionHref}>{getHumanReviewNextAction(item).nextActionLabel}</Link>
-                      </Button>
-                      {item.persistedReviewItemId && item.reviewState !== "decided" && item.reviewState !== "deferred" ? (
-                        <form action={recordControlMirrorHumanReviewDecisionAction} className="mt-2 grid w-full min-w-[260px] gap-2 rounded-xl border border-current/15 bg-background/70 p-3 text-sm md:w-[300px]">
-                          <input name="reviewItemId" type="hidden" value={item.persistedReviewItemId} />
-                          <label className="grid gap-1">
-                            <span className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">Human decision</span>
-                            <select className="rounded-lg border border-current/20 bg-background px-3 py-2 text-foreground" name="decisionType" required>
-                              <option value="approve_with_controls">Approve with controls</option>
-                              <option value="downgrade">Downgrade</option>
-                              <option value="defer">Defer</option>
-                              <option value="request_exception">Request exception</option>
-                              <option value="request_rework">Request rework</option>
-                              <option value="reject">Reject</option>
-                            </select>
-                          </label>
-                          <label className="grid gap-1">
-                            <span className="text-xs font-semibold uppercase tracking-[0.14em] opacity-75">Rationale</span>
-                            <textarea className="min-h-20 rounded-lg border border-current/20 bg-background px-3 py-2 text-foreground" name="rationale" required />
-                          </label>
-                          <Button size="sm" type="submit">
-                            Record human decision
-                          </Button>
-                        </form>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              ))
+                  </details>
+                );
+              })
             )}
           </CardContent>
         </Card>

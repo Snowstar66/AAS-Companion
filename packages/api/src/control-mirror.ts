@@ -10,6 +10,7 @@ import {
   recordControlMirrorEvidencePackExportAcceptanceDecision,
   recordControlMirrorEvidencePackExportDownloadEvent,
   recordControlMirrorHumanReviewDecision,
+  reopenControlMirrorHumanReviewItem,
   resetControlMirrorWorkspace,
   refreshControlMirrorCurrentImportsSnapshot,
   syncControlMirrorHumanReviewQueueItems,
@@ -621,6 +622,26 @@ export async function recordControlMirrorHumanReviewDecisionService(input: {
     return failure({
       code: "control_mirror_review_decision_failed",
       message: error instanceof Error ? error.message : "Control Mirror review decision could not be recorded."
+    });
+  }
+}
+
+export async function reopenControlMirrorHumanReviewItemService(input: {
+  organizationId: string;
+  reviewItemId: string;
+  actorId: string;
+}) {
+  try {
+    const result = await reopenControlMirrorHumanReviewItem(input);
+
+    return success({
+      reviewItemId: result.reviewItem.id,
+      reviewState: result.reviewItem.state
+    });
+  } catch (error) {
+    return failure({
+      code: "control_mirror_review_reopen_failed",
+      message: error instanceof Error ? error.message : "Control Mirror review item could not be reopened."
     });
   }
 }

@@ -7,6 +7,7 @@ import {
   createControlMirrorUploadedSnapshotService,
   recordControlMirrorEvidencePackExportAcceptanceDecisionService,
   recordControlMirrorHumanReviewDecisionService,
+  reopenControlMirrorHumanReviewItemService,
   resetControlMirrorWorkspaceService,
   refreshControlMirrorCurrentImportsSnapshotService
 } from "@aas-companion/api";
@@ -254,6 +255,45 @@ export async function recordControlMirrorHumanReviewDecisionAction(formData: For
       status: "decision-recorded",
       reviewItemId: result.data.reviewItemId,
       message: "Human decision recorded for Control Mirror review item."
+    })
+  );
+}
+
+export async function reopenControlMirrorHumanReviewItemAction(formData: FormData) {
+  const session = await requireActiveProjectSession();
+  const reviewItemId = String(formData.get("reviewItemId") ?? "");
+
+  if (!reviewItemId) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: "Control Mirror review item is missing."
+      })
+    );
+  }
+
+  const result = await reopenControlMirrorHumanReviewItemService({
+    organizationId: session.organization.organizationId,
+    actorId: session.userId,
+    reviewItemId
+  });
+
+  revalidatePath("/control-mirror");
+
+  if (!result.ok) {
+    redirect(
+      buildRedirect({
+        status: "error",
+        message: result.errors[0]?.message ?? "Control Mirror review item could not be reopened."
+      })
+    );
+  }
+
+  redirect(
+    buildRedirect({
+      status: "review-reopened",
+      reviewItemId: result.data.reviewItemId,
+      message: "Human Review item reopened as unhandled."
     })
   );
 }

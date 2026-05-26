@@ -131,6 +131,7 @@ export {
   mergeControlMirrorHumanReviewItemsWithQueueState,
   prepareControlMirrorHumanReviewQueueItems,
   recordControlMirrorHumanReviewDecision,
+  reopenControlMirrorHumanReviewItem,
   syncControlMirrorHumanReviewQueueItems,
   type ControlMirrorReviewDecisionType,
   type PersistedControlMirrorHumanReviewQueueItem,

@@ -382,3 +382,31 @@ export async function recordControlMirrorHumanReviewDecision(input: {
     };
   });
 }
+
+export async function reopenControlMirrorHumanReviewItem(input: {
+  organizationId: string;
+  reviewItemId: string;
+  actorId: string;
+}, db: typeof prisma = prisma) {
+  if (!input.actorId?.trim()) {
+    throw new Error("A human actor is required before a Control Mirror review item can be reopened.");
+  }
+
+  const updated = await db.controlMirrorHumanReviewItem.update({
+    where: {
+      id: input.reviewItemId,
+      organizationId: input.organizationId
+    },
+    data: {
+      state: "open"
+    },
+    select: {
+      id: true,
+      state: true
+    }
+  });
+
+  return {
+    reviewItem: updated
+  };
+}
